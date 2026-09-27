@@ -599,7 +599,9 @@ function TopicList({
             span, so hideItemIcons hid state along with identity.) */}
         {item.blocked && !hideLabel && <span className="sr-only">, needs attention</span>}
         {!hideLabel && (item.trailing || rowDisclosure) && (
-          <span className="ml-auto flex shrink-0 items-center gap-1 pl-1.5">
+          // `data-htd-trailing`: the stack's selection connector leaves the row from this slot's
+          // right edge, so the line never draws over a count or badge (see `rowExitEl`).
+          <span data-htd-trailing className="ml-auto flex shrink-0 items-center gap-1 pl-1.5">
             {item.trailing}
             {rowDisclosure && !item.disabled && (
               <ChevronRight size={14} aria-hidden className="shrink-0 text-apt-text-dim" />
@@ -1454,6 +1456,19 @@ export function TopicRail({
  * strip for more pane room — each topic stays clickable as its icon, the active
  * icon keeps the gold selection bar, and the header `+` stays put.
  */
+/**
+ * Where a selected row's connector leaves it: the right edge of whatever the row shows last — its
+ * trailing accessory (a count, a badge, the disclosure chevron) when it has one, else its label,
+ * else its icon (a collapsed icon strip). Shared by every stack that draws selection connectors.
+ */
+export function rowExitEl(row: Element): Element | null {
+  return (
+    row.querySelector("[data-htd-trailing]") ??
+    row.querySelector("[data-htd-label]") ??
+    row.querySelector("[data-htd-icon]")
+  )
+}
+
 export function TopicDetail({
   items,
   selectedId,

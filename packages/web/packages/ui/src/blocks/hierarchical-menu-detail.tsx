@@ -45,6 +45,7 @@ import {
   type RailSlot,
   type TopicListSearch,
   hasListTools,
+  rowExitEl,
 } from "./topic-detail"
 import { TopicSelectHint } from "./topic-select-hint"
 import { deepestSelectedLevel } from "./stack-frontier"
@@ -1549,9 +1550,9 @@ function structureSignature(rendered: TopicLevel[]): string {
 
 /**
  * Selection connectors, shared by BOTH stacks: a gold elbow from each selected PARENT row to its
- * selected CHILD row. Every coordinate is measured from the DOM in one snapshot (parent exit = its
- * label end, or its ICON's right when collapsed to an icon strip; child entry = just before its icon;
- * the bend = the child column's left edge), so collapsed/peeking columns work and the parts never
+ * selected CHILD row. Every coordinate is measured from the DOM in one snapshot (parent exit = the
+ * end of its trailing accessory, else its label, else its ICON when collapsed, per `rowExitEl`;
+ * child entry = just before its icon; the bend = the child column's left edge), so collapsed/peeking columns work and the parts never
  * disagree. Columns are matched by `data-htd-col`; the selected row by `aria-current`. The lists slide
  * over ~0.3s, so re-measure on a short rAF loop; a scroll re-measures once via the returned `onScroll`
  * (no re-render). `sig` is the caller's layout+selection signature; when connectors are impossible
@@ -1582,9 +1583,8 @@ function useSelectionConnectors(
         const sel = cont.querySelector(`[data-htd-col="${i}"] [aria-current="true"]`)
         if (!sel) return null
         const r = sel.getBoundingClientRect()
-        const labelEl = sel.querySelector("[data-htd-label]")
         const iconEl = sel.querySelector("[data-htd-icon]")
-        const end = labelEl ?? iconEl
+        const end = rowExitEl(sel)
         // A deletable row's trash button is a sibling of the row button; the connector breaks around
         // it — but ONLY while the trash is actually REVEALED (the row is hovered, or the trash has
         // keyboard focus), not merely because the slot is reserved. The stack re-measures on pointer /

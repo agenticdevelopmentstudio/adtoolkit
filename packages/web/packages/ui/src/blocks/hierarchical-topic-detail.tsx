@@ -38,6 +38,7 @@ import {
   type RailSlot,
   type TopicListSearch,
   hasListTools,
+  rowExitEl,
 } from "./topic-detail"
 import { TopicSelectHint } from "./topic-select-hint"
 import { DETAIL_PANE_ATTR } from "../lib/detail-pane"
@@ -197,8 +198,9 @@ export interface TopicLevel {
   /** Make this level's list searchable: a magnifier in its toolbar pops a query field over the
    *  rows. `{}` lets the rail filter on label + sublabel; pass `query` to own the filtering. */
   search?: TopicListSearch
-  /** Fixed rail width in px for THIS level (default 240 / FULL_RAIL). Widen a level
-   *  whose rows must show on one line (e.g. long API paths). Covered style. */
+  /** Fixed rail width in px for THIS level. Leave it unset: the rail then AUTO-FITS to its rows
+   *  and header (`useRailFit`). Setting it turns auto-fit OFF for this level, for a rail whose
+   *  width is a deliberate choice rather than a consequence of its rows. Covered style. */
   width?: number
   /** An optional leading ROW above this level's topics (scrolls with them, can carry
    *  the selection bar) — e.g. a "New…" affordance. Omit for a plain list. */
@@ -1414,9 +1416,9 @@ function structureSignature(rendered: TopicLevel[]): string {
 
 /**
  * Selection connectors, shared by BOTH stacks: a gold elbow from each selected PARENT row to its
- * selected CHILD row. Every coordinate is measured from the DOM in one snapshot (parent exit = its
- * label end, or its ICON's right when collapsed to an icon strip; child entry = just before its icon;
- * the bend = the child column's left edge), so collapsed/peeking columns work and the parts never
+ * selected CHILD row. Every coordinate is measured from the DOM in one snapshot (parent exit = the
+ * end of its trailing accessory, else its label, else its ICON when collapsed, per `rowExitEl`;
+ * child entry = just before its icon; the bend = the child column's left edge), so collapsed/peeking columns work and the parts never
  * disagree. Columns are matched by `data-htd-col`; the selected row by `aria-current`. The lists slide
  * over ~0.3s, so re-measure on a short rAF loop; a scroll re-measures once via the returned `onScroll`
  * (no re-render). `sig` is the caller's layout+selection signature; when connectors are impossible
@@ -1440,9 +1442,8 @@ function useSelectionConnectors(
         const sel = cont.querySelector(`[data-htd-col="${i}"] [aria-current="true"]`)
         if (!sel) return null
         const r = sel.getBoundingClientRect()
-        const labelEl = sel.querySelector("[data-htd-label]")
         const iconEl = sel.querySelector("[data-htd-icon]")
-        const end = labelEl ?? iconEl
+        const end = rowExitEl(sel)
         // A deletable row's trash button is a sibling of the row button; the connector breaks around
         // it — but ONLY while the trash is actually REVEALED (the row is hovered, or the trash has
         // keyboard focus), not merely because the slot is reserved. The stack re-measures on pointer /
