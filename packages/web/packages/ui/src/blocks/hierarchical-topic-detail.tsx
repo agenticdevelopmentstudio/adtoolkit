@@ -42,9 +42,16 @@ import {
 } from "./topic-detail"
 import { TopicSelectHint } from "./topic-select-hint"
 import { CoverAllControl } from "./cover-all-control"
-import { detailStripTitle, DetailTitleProvider, useDetailTitleHost, type DetailStripTitle } from "./detail-title"
+import {
+  detailStripTitle,
+  DetailTitleProvider,
+  DetailTitleSuppressed,
+  useDetailTitleHost,
+  useSelectedTopicLabel,
+  type DetailStripTitle,
+} from "./detail-title"
 import { DETAIL_PANE_ATTR } from "../lib/detail-pane"
-import { deepestSelectedLevel, selectedTopicLabel } from "./stack-frontier"
+import { deepestSelectedLevel, pinAll, pinKeyFor } from "./stack-frontier"
 
 /** A leaf editor's unsaved-work guard. The package consults `isDirty()` before any select that
  *  clears or replaces the open detail (Back / breadcrumb-up / re-click / shallower select / a
@@ -1048,7 +1055,9 @@ export function HierarchicalTopicDetail({
   // provider wraps the detail itself so it reaches the content wherever the frame mounts it.
   // With neither a pane's title nor the host's, the strip names the selected topic.
   const titleHost = useDetailTitleHost()
-  const stripTitle = detailStripTitle(titleHost, detailTitle ?? selectedTopicLabel(levels))
+  // `null` is the host's opt-out (no strip title at all), so only an ABSENT prop falls back.
+  const topicLabel = useSelectedTopicLabel(levels)
+  const stripTitle = detailStripTitle(titleHost, detailTitle === undefined ? topicLabel : detailTitle)
   const detail = (
     // The swap wrapper: a selection replacing the pane's content crossfades briefly; a first paint
     // just shows. Keyed on the SELECTION signature — the one thing that changes what this pane is
@@ -1063,7 +1072,9 @@ export function HierarchicalTopicDetail({
         style={overview ? { display: "none" } : undefined}
         className="flex min-h-0 min-w-0 flex-1 flex-col"
       >
-        {children}
+        {/* Hidden under the overview, the pane is not what the strip names (code review: the
+            hidden pane's title replaced the fallback above the "Select a …" hint). */}
+        <DetailTitleSuppressed when={overview !== null}>{children}</DetailTitleSuppressed>
       </div>
     </DetailCrossfade>
     </DetailTitleProvider>
@@ -1197,11 +1208,6 @@ function useRailFit() {
 // list sits those few points further left and the slice is covered; the icon (ending at ~26px)
 // keeps a little air after it.
 const COVERED_PEEK = 32
-
-// Suffix on a `pins` key that names a list's pin WHILE IT IS THE CHOOSING FRONTIER — kept apart
-// from the list's ordinary pin so neither leaks into the other state (see CoveredStack's `pinKey`).
-// A NUL can never appear in a level id a host writes, so the two keys cannot collide.
-const FRONTIER_PIN = "\u0000frontier"
 
 /** The width at or below which a container is phone-shaped and the stack is ALWAYS narrow, however
  *  little the host claims its detail pane needs. Above the widest phone in portrait (~430) and well
@@ -1945,8 +1951,7 @@ function CoveredStack({
   // guaranteed never happened (not-hide-frontier-choosing-list). Only a `«` clicked while the list
   // IS the choosing frontier covers it there, and completing the path hands it back to the
   // list's ordinary pin and width pressure, exactly as before.
-  const pinKey = (i: number): string =>
-    i >= coverableCount ? `${rendered[i]!.id}${FRONTIER_PIN}` : rendered[i]!.id
+  const pinKey = (i: number): string => pinKeyFor(rendered[i]!.id, i, coverableCount)
   const pinned = (i: number): boolean => pins[pinKey(i)] ?? false
 
   // COVER LAYER 2 — width pressure. Cover MORE lists, leftmost-first (general → specific), until the
@@ -2197,12 +2202,10 @@ function CoveredStack({
     // no enter re-opens it (apply-disclosure-toggles-immediately).
     setHoverId(null)
     if (e.metaKey || e.ctrlKey) {
-      // Every list's ordinary pin, as always — the choosing frontier's own pin only when the click
-      // came from ITS toggle (the empty detail's), so a ⌘-click on a parent never hides the list
-      // being chosen from.
-      const all: Record<string, boolean> = Object.fromEntries(rendered.map((l) => [l.id, target]))
-      if (parentIndex >= coverableCount) all[pinKey(parentIndex)] = target
-      setPins(all)
+      // The choosing frontier only when the click came from ITS toggle (the empty detail's) — see
+      // `pinAll` for why a ⌘-click on a parent leaves the frontier's pins alone.
+      const ids = rendered.map((l) => l.id)
+      setPins((prev) => pinAll(prev, ids, coverableCount, target, parentIndex >= coverableCount))
       return
     }
     setPins((prev) => ({ ...prev, [pinKey(parentIndex)]: target }))
@@ -2214,7 +2217,8 @@ function CoveredStack({
   const setCoverAll = (target: boolean) => {
     hlog(rendered[0]?.id ?? "htdv", "cover-all", { to: target ? "covered" : "open" })
     setHoverId(null)
-    setPins(Object.fromEntries(rendered.map((_l, i) => [pinKey(i), target])))
+    const ids = rendered.map((l) => l.id)
+    setPins((prev) => pinAll(prev, ids, coverableCount, target, true))
   }
   const coverAllControl = (
     <CoverAllControl

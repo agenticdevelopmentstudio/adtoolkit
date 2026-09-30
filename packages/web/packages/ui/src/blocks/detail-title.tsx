@@ -14,6 +14,7 @@ import {
 import { createPortal } from "react-dom"
 
 import { useIsomorphicLayoutEffect } from "../hooks/useIsomorphicLayoutEffect"
+import { deepestSelectedLevel, selectedTopicLabel } from "./stack-frontier"
 
 /**
  * THE DETAIL TITLE: a pane's title belongs in its stack's detail strip, not in the pane.
@@ -92,6 +93,50 @@ export function DetailTitleProvider({
   )
 }
 
+/**
+ * Withdraws every title registered below while `when` holds — for a pane the stack keeps MOUNTED but
+ * hidden (under the "Select a …" overview, or behind HMDV's held node): it must stay mounted, but the
+ * strip must not name what is not on screen (code review: the hidden MilestonesPane's title replaced
+ * the selected-topic fallback above the hint). Always rendered, whatever `when` is, so toggling it
+ * never re-parents — and so never remounts — the children; a null registrar just unregisters them.
+ */
+export function DetailTitleSuppressed({
+  when,
+  children,
+}: {
+  when: boolean
+  children: ReactNode
+}): ReactElement {
+  const registrar = useContext(RegistrarContext)
+  return <RegistrarContext.Provider value={when ? null : registrar}>{children}</RegistrarContext.Provider>
+}
+
+/**
+ * The strip's DEFAULT title — {@link selectedTopicLabel} — held steady while the pane still shows
+ * the row. The selected row can drop out of its level while it stays open (a notes search or tag
+ * filter that excludes the open note: the backend-filtered level loses it, the selection and the
+ * editor stay), and the bare lookup then blanked the strip while the crumb beside it fell back to
+ * the raw id (code review). So: the label last seen for this exact selection, else — like the crumb
+ * — the id itself (a deep link before its list loads). Undefined only when nothing is selected.
+ */
+export function useSelectedTopicLabel(
+  levels: readonly { selectedId: string | null; items: readonly { id: string; label: string }[] }[],
+): string | undefined {
+  const depth = deepestSelectedLevel(levels)
+  const id = levels[depth]?.selectedId ?? undefined
+  const live = selectedTopicLabel(levels)
+  // Keyed on depth AND id: the same id one level down is a different topic.
+  const key = id === undefined ? undefined : `${depth}\u0000${id}`
+  const [seen, setSeen] = useState<{ key: string; label: string } | null>(null)
+  // Derived during render (React's "adjust state on a prop change" pattern), not in an effect: an
+  // effect would paint the blank strip once before correcting it.
+  if (key !== undefined && live !== undefined && (seen?.key !== key || seen?.label !== live)) {
+    setSeen({ key, label: live })
+  }
+  if (id === undefined) return undefined
+  return live ?? (seen && seen.key === key ? seen.label : id)
+}
+
 /** What a stack hands the strip atop its detail: whether to draw a titled strip at all, and the
  *  title cell to put in it. */
 export interface DetailStripTitle {
@@ -106,13 +151,24 @@ export interface DetailStripTitle {
  *
  * The slot is its own `display: contents` span so the portal's nodes never share a parent with
  * nodes React renders here — the fallback text is a sibling, not a co-tenant.
+ *
+ * The cell IS the pane's heading (level 2, what the title drawers drew inline before they handed
+ * their title here): hoisting the title out of an `<h2>` into a plain span took every pane's
+ * accessible heading with it — screen-reader heading navigation and the hub e2e's
+ * `getByRole("heading", { name: "Profile", level: 2 })` both lost it (code review). A role rather
+ * than an `<h2>` so the slot element never changes type, and only while something is titled, so an
+ * empty strip announces no empty heading. `fallback` null/false is a host's opt-out: no title.
  */
 export function detailStripTitle(host: DetailTitleHost, fallback: ReactNode): DetailStripTitle {
+  const titled =
+    host.published || (fallback !== undefined && fallback !== null && fallback !== false)
   return {
-    titled: host.published || fallback !== undefined,
+    titled,
     cell: (
       <span
         data-htd-detail-title
+        role={titled ? "heading" : undefined}
+        aria-level={titled ? 2 : undefined}
         className="min-w-0 flex-1 truncate font-mono text-[0.8rem] tracking-[0.02em] text-apt-text-muted"
       >
         <span ref={host.slotRef} className="contents" />

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deepestSelectedLevel } from '../blocks/stack-frontier'
+import { deepestSelectedLevel, pinAll, pinKeyFor } from '../blocks/stack-frontier'
 
 const lvl = (selectedId: string | null) => ({ selectedId })
 
@@ -30,5 +30,37 @@ describe('deepestSelectedLevel', () => {
 
   it('is -1 when the hole is the very first level', () => {
     expect(deepestSelectedLevel([lvl(null), lvl('b')])).toBe(-1)
+  })
+})
+
+// The one rule behind every "all" gesture (⌘-click on a «/», and <<< / >>>). Stack [a, b, c] with c
+// the choosing frontier: coverableCount = 2.
+describe('pinAll', () => {
+  const ids = ['a', 'b', 'c']
+  const cFrontier = pinKeyFor('c', 2, 2)
+
+  it('keeps a cover already on the frontier when a PARENT is ⌘-clicked shut', () => {
+    // The detail's « covered c; a ⌘-click on a's toggle must not spring it back open.
+    const next = pinAll({ [cFrontier]: true }, ids, 2, true, false)
+    expect(next).toEqual({ a: true, b: true, [cFrontier]: true })
+  })
+
+  it('never covers the frontier from a parent, and stores no pin that would spring later', () => {
+    const next = pinAll({}, ids, 2, true, false)
+    expect(next).toEqual({ a: true, b: true })
+  })
+
+  it('pins the frontier under BOTH keys from its own toggle (<<<), so it stays covered once chosen in', () => {
+    const next = pinAll({}, ids, 2, true, true)
+    expect(next).toEqual({ a: true, b: true, c: true, [cFrontier]: true })
+  })
+
+  it('opens the frontier from anywhere', () => {
+    const next = pinAll({ c: true, [cFrontier]: true }, ids, 2, false, false)
+    expect(next).toEqual({ a: false, b: false, c: false, [cFrontier]: false })
+  })
+
+  it('keeps the pins of lists not rendered now', () => {
+    expect(pinAll({ gone: true }, ids, 3, true, false)).toMatchObject({ gone: true })
   })
 })

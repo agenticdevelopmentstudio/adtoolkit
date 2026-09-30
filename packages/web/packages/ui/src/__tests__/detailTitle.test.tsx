@@ -14,7 +14,7 @@
 /// <reference types="@testing-library/jest-dom/vitest" />
 import type { ReactNode } from "react"
 import { afterEach, describe, expect, it } from "vitest"
-import { cleanup, render } from "@testing-library/react"
+import { cleanup, render, screen } from "@testing-library/react"
 import { HierarchicalTopicDetail, type TopicLevel } from "../blocks/hierarchical-topic-detail"
 import { HierarchicalMenuDetail } from "../blocks/hierarchical-menu-detail"
 import { SectionHeader } from "../blocks/section-header"
@@ -159,6 +159,63 @@ describe("detail title in the strip", () => {
     )
     expect(strip(container)).toHaveTextContent("Acme Corp")
     expect(pane(container).textContent).not.toContain("Acme Corp")
+  })
+
+  // The review's findings on the strip (code review, full branch).
+  it("is the pane's level-2 heading, so hoisting keeps the accessible heading", () => {
+    render(htdv(<Titled title="Profile" />))
+    expect(screen.getByRole("heading", { name: "Profile", level: 2 })).toBeInTheDocument()
+  })
+
+  it("announces no heading while nothing is titled", () => {
+    const unselected: TopicLevel[] = [{ ...levels[0]!, selectedId: null }]
+    const { container } = render(
+      <HierarchicalTopicDetail levels={unselected} layoutMode="wide" disclosureStyle="covered">
+        <p>body</p>
+      </HierarchicalTopicDetail>,
+    )
+    expect(container.querySelector("[data-htd-detail-title]")?.getAttribute("role") ?? null).toBeNull()
+  })
+
+  it("honours a host's detailTitle={null} as an opt-out, not as 'use the default'", () => {
+    const { container } = render(
+      <HierarchicalTopicDetail levels={levels} layoutMode="wide" disclosureStyle="covered" detailTitle={null}>
+        <p>body</p>
+      </HierarchicalTopicDetail>,
+    )
+    expect(container.querySelector("[data-htd-detail-title]")?.textContent ?? "").toBe("")
+  })
+
+  it("keeps naming the open row after a filter drops it from its level", () => {
+    const { container, rerender } = render(htdv(<p>body</p>))
+    expect(strip(container).textContent).toBe("Acme")
+    const filtered: TopicLevel[] = [{ ...levels[0]!, items: [] }]
+    rerender(
+      <HierarchicalTopicDetail levels={filtered} layoutMode="wide" disclosureStyle="covered">
+        <p>body</p>
+      </HierarchicalTopicDetail>,
+    )
+    expect(strip(container).textContent).toBe("Acme")
+  })
+
+  it("falls back to the selected id, like the crumb, before the row's list loads", () => {
+    const deepLink: TopicLevel[] = [{ ...levels[0]!, items: [] }]
+    const { container } = render(
+      <HierarchicalTopicDetail levels={deepLink} layoutMode="wide" disclosureStyle="covered">
+        <p>body</p>
+      </HierarchicalTopicDetail>,
+    )
+    expect(strip(container).textContent).toBe("acme")
+  })
+
+  it("does not let a pane hidden under the 'Select a …' overview name the strip", () => {
+    const choosing: TopicLevel[] = [levels[0]!, { ...menuLevels[1]!, selectedId: null }]
+    const { container } = render(
+      <HierarchicalTopicDetail levels={choosing} layoutMode="wide" disclosureStyle="covered">
+        <Titled title="Hidden pane" />
+      </HierarchicalTopicDetail>,
+    )
+    expect(strip(container).textContent).toBe("Acme")
   })
 
   it("keeps the title inline with no stack around it", () => {

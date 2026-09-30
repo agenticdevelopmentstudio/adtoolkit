@@ -49,8 +49,15 @@ import {
 } from "./topic-detail"
 import { TopicSelectHint } from "./topic-select-hint"
 import { CoverAllControl } from "./cover-all-control"
-import { detailStripTitle, DetailTitleProvider, useDetailTitleHost, type DetailStripTitle } from "./detail-title"
-import { deepestSelectedLevel, selectedTopicLabel } from "./stack-frontier"
+import {
+  detailStripTitle,
+  DetailTitleProvider,
+  DetailTitleSuppressed,
+  useDetailTitleHost,
+  useSelectedTopicLabel,
+  type DetailStripTitle,
+} from "./detail-title"
+import { deepestSelectedLevel, pinAll, pinKeyFor } from "./stack-frontier"
 import { DETAIL_PANE_ATTR } from "../lib/detail-pane"
 import { useShowDebugFrames, useSlowAnimations, SLOW_ANIM_FACTOR } from "./debug-options"
 // The cascade's DECISIONS — the selection chain's weight, the entrance bounce, the exit curve, the
@@ -873,7 +880,9 @@ export function HierarchicalMenuDetail({
   // provider wraps the detail itself so it reaches the content wherever the frame mounts it.
   // With neither a pane's title nor the host's, the strip names the selected topic.
   const titleHost = useDetailTitleHost()
-  const stripTitle = detailStripTitle(titleHost, detailTitle ?? selectedTopicLabel(levels))
+  // `null` is the host's opt-out (no strip title at all), so only an ABSENT prop falls back.
+  const topicLabel = useSelectedTopicLabel(levels)
+  const stripTitle = detailStripTitle(titleHost, detailTitle === undefined ? topicLabel : detailTitle)
   const detail = (
     <DetailTitleProvider host={titleHost}>
     <>
@@ -882,7 +891,8 @@ export function HierarchicalMenuDetail({
         style={showHeld || overview ? { display: "none" } : undefined}
         className="flex min-h-0 min-w-0 flex-1 flex-col"
       >
-        {children}
+        {/* Hidden under the overview or the held node, the pane is not what the strip names. */}
+        <DetailTitleSuppressed when={showHeld || overview !== null}>{children}</DetailTitleSuppressed>
       </div>
     </>
     </DetailTitleProvider>
@@ -2041,8 +2051,15 @@ function CoveredStack({
   // Covering the list the user JUST clicked in is not this layer's problem: the click roots the
   // branch reveal at that list (see the rail's onSelect below), so a freshly covered parent stays
   // open under the pointer — its new child floating over the detail — until the pointer leaves.
+  //
+  // A pin reaches EVERY list, the unselected frontier included, under the frontier's OWN key (see
+  // `pinKeyFor` and HTDV's covered stack): gating the pin on `coverableCount` made the empty detail's
+  // `«` a dead button here too, and the plain-id pin it stored anyway covered the list later, the
+  // moment the user chose in it (code review). Auto-hide never reaches the frontier — only the
+  // user's own `«` does.
+  const pinKey = (i: number): string => pinKeyFor(rendered[i]!.id, i, coverableCount)
   const pinnedOrAutoHidden = (i: number): boolean => {
-    if (i >= coverableCount) return false
+    if (i >= coverableCount) return pins[pinKey(i)] ?? false
     return pins[rendered[i]!.id] ?? (autoHide && i < frontier)
   }
 
@@ -2061,11 +2078,11 @@ function CoveredStack({
   const isCovered = (i: number) => pinnedOrAutoHidden(i) || i < pressure
   const widthOf = (i: number) => (isCovered(i) ? COVERED_PEEK : railWidth(rendered[i]!))
   // `>>>` pins every list open (a pin beats auto-hide) but cannot lift width pressure, so it is live
-  // only when some list covered now would be open with every list pinned open. `<<<` can reach only
-  // what a pin reaches: the lists above the frontier (`pinnedOrAutoHidden`'s gate).
+  // only when some list covered now would be open with every list pinned open. `<<<` reaches every
+  // list a pin reaches — the choosing frontier included (see `pinKey`).
   const openPressure = pressureFor(() => false)
   const canExpandAll = rendered.some((_l, i) => isCovered(i) && i >= openPressure)
-  const canCollapseAll = rendered.some((_l, i) => i < coverableCount && !isCovered(i))
+  const canCollapseAll = rendered.some((_l, i) => !isCovered(i))
 
   // PHASE 2 — OFF-SCREEN. Every list is down to its peek and they STILL don't leave the detail its
   // minimum: slide the leftmost list off the left edge and shift the whole stack by exactly THAT
@@ -2229,16 +2246,22 @@ function CoveredStack({
     // no enter re-opens it (apply-disclosure-toggles-immediately).
     setHoverId(null)
     if (e.metaKey || e.ctrlKey) {
-      setPins(Object.fromEntries(rendered.map((l) => [l.id, target])))
+      // The choosing frontier only when the click came from ITS toggle — see `pinAll`.
+      const ids = rendered.map((l) => l.id)
+      setPins((prev) => pinAll(prev, ids, coverableCount, target, parentIndex >= coverableCount))
       return
     }
-    setPins((prev) => ({ ...prev, [rendered[parentIndex]!.id]: target }))
+    setPins((prev) => ({ ...prev, [pinKey(parentIndex)]: target }))
   }
 
-  // `<<<` / `>>>` beside the detail's toggle: the ⌘-click "all" of `setCover`, as its own button.
+  // `<<<` / `>>>` beside the detail's toggle: the ⌘-click "all" of the frontier's own `setCover`,
+  // as its own button — the same `pinAll`, so the two cannot leave different stacks (they did: this
+  // pinned the frontier under its plain id, ignored while it was the frontier and then collapsing
+  // the list the moment the user chose in it — code review).
   const setCoverAll = (target: boolean) => {
     setHoverId(null)
-    setPins(Object.fromEntries(rendered.map((l) => [l.id, target])))
+    const ids = rendered.map((l) => l.id)
+    setPins((prev) => pinAll(prev, ids, coverableCount, target, true))
   }
   const coverAllControl = (
     <CoverAllControl
@@ -3028,7 +3051,10 @@ function CascadingStack({
     const target = !isCovered(parentIndex)
     settleToggle()
     if (e.metaKey || e.ctrlKey) {
-      setPins(Object.fromEntries(rendered.map((l) => [l.id, target])))
+      // `pinAll`, not a fresh map: a pin stored on the choosing frontier (which this stack's gate
+      // ignores) would only spring on it once the user chose in it.
+      const ids = rendered.map((l) => l.id)
+      setPins((prev) => pinAll(prev, ids, coverableCount, target, false))
       return
     }
     setPins((prev) => ({ ...prev, [rendered[parentIndex]!.id]: target }))
