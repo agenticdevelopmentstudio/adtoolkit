@@ -56,6 +56,11 @@
       "development": "./src/lib/quantities.ts",
       "import": "./dist/lib/quantities.js"
     },
+    "./lib/money": {
+      "types": "./dist/lib/money.d.ts",
+      "development": "./src/lib/money.ts",
+      "import": "./dist/lib/money.js"
+    },
     "./lib/typography": {
       "types": "./dist/lib/typography.d.ts",
       "development": "./src/lib/typography.ts",

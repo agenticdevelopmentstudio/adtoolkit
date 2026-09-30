@@ -36,4 +36,9 @@ describe("formatDuration", () => {
     expect(formatDuration(3_599_999)).toBe("1.0 h");
     expect(formatDuration(999.7)).toBe("1.0 s");
   });
+
+  it("reads a missing duration as a dash, never `NaN ms`", () => {
+    expect(formatDuration(Number.NaN)).toBe("—");
+    expect(formatDuration(Number.POSITIVE_INFINITY)).toBe("—");
+  });
 });

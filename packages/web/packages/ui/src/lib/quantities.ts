@@ -41,8 +41,10 @@ const DURATION_UNITS: readonly (readonly [unit: string, ms: number])[] = [
  *
  * The unit is chosen AFTER rounding to the one decimal shown, so a value just under a unit
  * boundary reads as the larger unit (`59 999 ms` is `1.0 min`, never `60.0 s`).
+ * A non-finite input (no duration to show) reads `—`, the placeholder `formatMicros` uses.
  */
 export function formatDuration(ms: number): string {
+  if (!Number.isFinite(ms)) return "—";
   for (const [unit, size] of DURATION_UNITS) {
     const shown = Math.round((Math.abs(ms) / size) * 10) / 10;
     if (shown >= 1) return `${(Math.sign(ms) * shown).toFixed(1)} ${unit}`;
