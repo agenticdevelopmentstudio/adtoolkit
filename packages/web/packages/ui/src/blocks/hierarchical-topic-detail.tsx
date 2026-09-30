@@ -41,6 +41,7 @@ import {
   rowExitEl,
 } from "./topic-detail"
 import { TopicSelectHint } from "./topic-select-hint"
+import { CoverAllControl } from "./cover-all-control"
 import { DETAIL_PANE_ATTR } from "../lib/detail-pane"
 import { deepestSelectedLevel } from "./stack-frontier"
 
@@ -1951,16 +1952,21 @@ function CoveredStack({
   // COVER LAYER 2 — width pressure. Cover MORE lists, leftmost-first (general → specific), until the
   // detail keeps its minimum. This layer only ever ADDS a cover: it may take the room back from a
   // list the user pinned open (there is none to give), but never discloses one they pinned shut.
-  let pressure = 0
-  if (containerW > 0) {
-    const listsWidth = (n: number) =>
-      rendered.reduce(
-        (w, l, i) => w + (pinned(i) || i < n ? COVERED_PEEK : railWidth(l)),
-        0,
-      )
-    while (pressure < coverableCount && listsWidth(pressure) + detailMin > containerW) pressure++
+  const pressureFor = (isPinned: (i: number) => boolean): number => {
+    let n = 0
+    if (containerW <= 0) return n
+    const listsWidth = (k: number) =>
+      rendered.reduce((w, l, i) => w + (isPinned(i) || i < k ? COVERED_PEEK : railWidth(l)), 0)
+    while (n < coverableCount && listsWidth(n) + detailMin > containerW) n++
+    return n
   }
+  const pressure = pressureFor(pinned)
   const isCovered = (i: number) => pinned(i) || i < pressure
+  // `>>>` can only lift the USER's covers — width pressure takes back the room it would free — so it
+  // is live only when some list covered now would be open with every pin cleared.
+  const openPressure = pressureFor(() => false)
+  const canExpandAll = rendered.some((_l, i) => isCovered(i) && i >= openPressure)
+  const canCollapseAll = rendered.some((_l, i) => !isCovered(i))
   // The width a list wants before the last-resort squeeze below.
   const rawWidth = (i: number) => (isCovered(i) ? COVERED_PEEK : railWidth(rendered[i]!))
 
@@ -2201,6 +2207,23 @@ function CoveredStack({
     }
     setPins((prev) => ({ ...prev, [pinKey(parentIndex)]: target }))
   }
+
+  // `<<<` / `>>>` beside the detail's toggle: every list, the choosing frontier included (its own
+  // key — this sits next to ITS toggle, exactly like a ⌘-click on it), to one state. Drops the
+  // reveal for the same reason `setCover` does.
+  const setCoverAll = (target: boolean) => {
+    hlog(rendered[0]?.id ?? "htdv", "cover-all", { to: target ? "covered" : "open" })
+    setHoverId(null)
+    setPins(Object.fromEntries(rendered.map((_l, i) => [pinKey(i), target])))
+  }
+  const coverAllControl = (
+    <CoverAllControl
+      canCollapse={canCollapseAll}
+      canExpand={canExpandAll}
+      onCollapseAll={() => setCoverAll(true)}
+      onExpandAll={() => setCoverAll(false)}
+    />
+  )
 
   // The `«`/`»` cover control for a CHILD whose parent is rendered list `parentIndex`. `«` (parent
   // not covered) covers the parent; `»` (parent covered) uncovers it. Purely presentational layout —
@@ -2465,13 +2488,15 @@ function CoveredStack({
           (detailTitle !== undefined ? (
             <div className="flex min-h-[2.15rem] shrink-0 items-center gap-2 border-b border-apt-border bg-apt-nav pr-2">
               <div className="flex w-8 shrink-0 items-center justify-center">{coverControl(rendered.length - 1)}</div>
+              {coverAllControl}
               <span className="min-w-0 flex-1 truncate font-mono text-[0.8rem] tracking-[0.02em] text-apt-text-muted">
                 {detailTitle}
               </span>
             </div>
           ) : (
-            <div className="flex min-h-[2.15rem] shrink-0 items-center border-b border-apt-border bg-apt-nav px-1.5">
+            <div className="flex min-h-[2.15rem] shrink-0 items-center gap-1.5 border-b border-apt-border bg-apt-nav px-1.5">
               {coverControl(rendered.length - 1)}
+              {coverAllControl}
             </div>
           ))}
         {/* Hold the leaf to its min width so it scrolls rather than crushing — but never wider than

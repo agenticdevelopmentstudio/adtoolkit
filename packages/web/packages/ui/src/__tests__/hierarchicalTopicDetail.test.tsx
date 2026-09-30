@@ -22,6 +22,7 @@ import {
   type TopicLevel,
   type TopicSelectOptions,
 } from '../blocks/hierarchical-topic-detail'
+import { HierarchicalMenuDetail } from '../blocks/hierarchical-menu-detail'
 import { offerSwipeBack } from '../lib/swipe-back'
 
 const REGIONS = [
@@ -490,6 +491,104 @@ describe('HierarchicalTopicDetail — the cover toggle on an EMPTY detail', () =
 
     leave(col(2), screen.getByText('detail'))
     expect(boxWidth(2)).toBe('32px')
+  })
+})
+
+describe('HierarchicalTopicDetail — `<<<` / `>>>` collapse and expand every list', () => {
+  const collapseAll = (c: HTMLElement) =>
+    within(detail(c)).getByRole('button', { name: 'Collapse all lists' }) as HTMLButtonElement
+  const expandAll = (c: HTMLElement) =>
+    within(detail(c)).getByRole('button', { name: 'Expand all lists' }) as HTMLButtonElement
+
+  describe('with room for every list', () => {
+    containerWidth(W3_NONE_COVERED)
+
+    it('`<<<` covers every list; `>>>` brings them all back — each live only when it would act', () => {
+      const { container } = render(
+        <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core', topic: 'apps' })}>
+          <p>detail</p>
+        </HierarchicalTopicDetail>,
+      )
+      // Everything is open: there is nothing for `>>>` to do.
+      expect(collapseAll(container).disabled).toBe(false)
+      expect(expandAll(container).disabled).toBe(true)
+
+      fireEvent.click(collapseAll(container))
+      expect([0, 1, 2].map(boxWidth)).toEqual(['32px', '32px', '32px'])
+      expect(detail(container).style.left).toBe('96px')
+      expect(collapseAll(container).disabled).toBe(true)
+      expect(expandAll(container).disabled).toBe(false)
+
+      fireEvent.click(expandAll(container))
+      expect([0, 1, 2].map(boxWidth)).toEqual(['240px', '240px', '240px'])
+      expect(detail(container).style.left).toBe('720px')
+      expect(expandAll(container).disabled).toBe(true)
+    })
+
+    it('`<<<` reaches the choosing frontier too, like the `«` it sits beside', () => {
+      const { container } = render(
+        <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core' })}>
+          <p>detail</p>
+        </HierarchicalTopicDetail>,
+      )
+      fireEvent.click(collapseAll(container))
+      expect(boxWidth(2)).toBe('32px')
+    })
+  })
+
+  describe('with width pressure covering the parents', () => {
+    containerWidth(W3_TWO_COVERED)
+
+    it('`>>>` stays off while only width pressure covers lists — clearing pins would change nothing', () => {
+      const { container } = render(
+        <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core', topic: 'apps' })}>
+          <p>detail</p>
+        </HierarchicalTopicDetail>,
+      )
+      expect(boxWidth(0)).toBe('32px')
+      expect(expandAll(container).disabled).toBe(true)
+
+      fireEvent.click(collapseAll(container))
+      expect(boxWidth(2)).toBe('32px')
+      // Now the frontier's cover is the user's, so `>>>` can lift it — and only it.
+      expect(expandAll(container).disabled).toBe(false)
+      fireEvent.click(expandAll(container))
+      expect([0, 1, 2].map(boxWidth)).toEqual(['32px', '32px', '240px'])
+    })
+  })
+
+  describe('HierarchicalMenuDetail’s covered stack, which mirrors it', () => {
+    containerWidth(W3_NONE_COVERED)
+
+    it('`>>>` pins open what auto-hide covered; `<<<` covers every list again', () => {
+      render(
+        <HierarchicalMenuDetail levels={levelsFor({ region: 'us', eco: 'core', topic: 'apps' })}>
+          <p>detail</p>
+        </HierarchicalMenuDetail>,
+      )
+      const PEEK = '40px' // HMDV's covered peek is wider than HTDV's
+      const btn = (name: string) => screen.getByRole('button', { name }) as HTMLButtonElement
+      // Auto-hide (on by default here) covers the parents — covers a pin can lift, so `>>>` is live.
+      expect(boxWidth(0)).toBe(PEEK)
+      expect(btn('Expand all lists').disabled).toBe(false)
+
+      fireEvent.click(btn('Expand all lists'))
+      expect([0, 1, 2].map(boxWidth)).toEqual(['240px', '240px', '240px'])
+      expect(btn('Expand all lists').disabled).toBe(true)
+
+      fireEvent.click(btn('Collapse all lists'))
+      expect([0, 1, 2].map(boxWidth)).toEqual([PEEK, PEEK, PEEK])
+      expect(btn('Collapse all lists').disabled).toBe(true)
+    })
+  })
+
+  it('is not in the narrow layout', () => {
+    render(
+      <HierarchicalTopicDetail layoutMode="narrow" levels={levelsFor({ region: 'us', eco: 'core', topic: 'apps' })}>
+        <p>detail</p>
+      </HierarchicalTopicDetail>,
+    )
+    expect(document.querySelector('[data-htd-cover-all]')).toBeNull()
   })
 })
 
