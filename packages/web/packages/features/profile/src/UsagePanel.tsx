@@ -9,6 +9,7 @@ import {
 } from "@agenticdevelopertoolkit/ui/blocks";
 import { Progress } from "@agenticdevelopertoolkit/ui/components/progress";
 import { Stat } from "@agenticdevelopertoolkit/ui/components/stat";
+import { formatBytes, formatCount } from "@agenticdevelopertoolkit/ui/lib/quantities";
 
 import { getUsageSummary, usageSummaryKey, type UsageRow } from "@agentic-toolkit/data/profile";
 import { isForbidden } from "@agentic-toolkit/data";
@@ -17,9 +18,7 @@ import {
   capFor,
   capPercent,
   capsFor,
-  formatBytes,
   formatCost,
-  formatCount,
   groupUsage,
   type CapKey,
   type UsageCap,

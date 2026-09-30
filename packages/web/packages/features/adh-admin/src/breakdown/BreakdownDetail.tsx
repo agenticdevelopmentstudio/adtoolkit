@@ -6,7 +6,7 @@ import { DataTable, type DataTableColumn } from "@agenticdevelopertoolkit/ui/com
 import { Alert, AlertTitle, AlertDescription } from "@agenticdevelopertoolkit/ui/components/alert";
 import { errorMessage } from "@agenticdevelopertoolkit/ui/lib/errors";
 import { formatMicros } from "@agentic-toolkit/adh-ui/money";
-import { formatCompact } from "@agentic-toolkit/profile/usage-format";
+import { formatCompact } from "@agenticdevelopertoolkit/ui/lib/quantities";
 import { TimeSeriesChart } from "@agentic-toolkit/adh-ui/components/time-series-chart";
 import {
   useBreakdownDetail,

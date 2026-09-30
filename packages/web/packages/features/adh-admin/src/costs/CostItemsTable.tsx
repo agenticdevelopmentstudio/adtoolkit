@@ -5,7 +5,7 @@ import { Tag } from "lucide-react";
 import { Badge } from "@agenticdevelopertoolkit/ui/components/badge";
 import { Button } from "@agenticdevelopertoolkit/ui/components/button";
 import { formatMicros } from "@agentic-toolkit/adh-ui/money";
-import { formatCompact } from "@agentic-toolkit/profile/usage-format";
+import { formatCompact } from "@agenticdevelopertoolkit/ui/lib/quantities";
 import {
   EditableList,
   useEditableList,

@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { Bot, Boxes, Building2, Info, User, type LucideIcon } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@agenticdevelopertoolkit/ui/components/data-table";
 import { formatMicros } from "@agentic-toolkit/adh-ui/money";
-import { formatCompact, formatCount, formatDuration } from "@agentic-toolkit/profile/usage-format";
+import { formatCompact, formatCount, formatDuration } from "@agenticdevelopertoolkit/ui/lib/quantities";
 import type { Breakdown, BreakdownBy, BreakdownSort } from "../api/insight";
 
 export type BreakdownRow = Breakdown["rows"][number];

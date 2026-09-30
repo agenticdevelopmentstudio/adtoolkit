@@ -12,7 +12,7 @@ import {
   formatCompact,
   formatCount,
   formatDuration,
-} from "@agentic-toolkit/profile/usage-format";
+} from "@agenticdevelopertoolkit/ui/lib/quantities";
 import { DateRangePicker } from "@agentic-toolkit/adh-ui/components/date-range-picker";
 import {
   TimeSeriesChart,
