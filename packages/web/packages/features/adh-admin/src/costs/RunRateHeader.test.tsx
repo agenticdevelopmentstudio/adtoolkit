@@ -48,6 +48,14 @@ describe("RunRateHeader", () => {
     expect(screen.queryByText("≥ $0.00")).toBeNull();
   });
 
+  it("reads Unpriced for the projection too when there is no fixed cost to floor it", () => {
+    header(
+      runRate({ directToDateMicros: null, fixedMonthMicros: 0, projectedMonthMicros: 0, unpricedItems: 1 }),
+    );
+    expect(screen.getAllByText("Unpriced")).toHaveLength(2); // month to date and projected
+    expect(screen.queryByText("≥ $0.00")).toBeNull();
+  });
+
   it("shows exact figures, and no button, when nothing is unpriced", () => {
     header(runRate({ directToDateMicros: 5_000_000, projectedMonthMicros: 35_000_000 }));
     expect(screen.getByText("$5.00")).toBeTruthy();

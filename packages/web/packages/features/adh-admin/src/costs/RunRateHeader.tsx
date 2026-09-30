@@ -43,7 +43,8 @@ export function RunRateHeader({
   // Unpriced items add nothing to the direct figures, so with any of them the figure is a floor
   // and says so (same `≥` as the items table). A month whose direct cost is all unpriced has no
   // figure at all: it reads "Unpriced", never "≥ $0.00". Its projection is still the fixed
-  // part, a floor.
+  // part, a floor — unless there is no fixed cost either, when it too reads "Unpriced".
+  const allUnpriced = runRate?.directToDateMicros === null;
   const monthToDate =
     runRate === undefined
       ? "—"
@@ -51,7 +52,11 @@ export function RunRateHeader({
         ? "Unpriced"
         : formatMicrosFloor(runRate.directToDateMicros, unpriced > 0);
   const projected =
-    runRate === undefined ? "—" : formatMicrosFloor(runRate.projectedMonthMicros, unpriced > 0);
+    runRate === undefined
+      ? "—"
+      : allUnpriced && runRate.projectedMonthMicros === 0
+        ? "Unpriced"
+        : formatMicrosFloor(runRate.projectedMonthMicros, unpriced > 0);
   const fixed = runRate === undefined ? "—" : formatMicros(runRate.fixedMonthMicros);
   return (
     <section
