@@ -188,16 +188,17 @@ const W3_FRONTIER_CLICK_COVERS_IT = 800
 // TWO levels, both selected — so the detail does claim its 576: 1056 / 848 / 640.
 const W2_PARENT_COVERED = 900
 
-describe('HierarchicalTopicDetail — hover reveal, one list at a time', () => {
+describe('HierarchicalTopicDetail — hover reveal, the hovered list and its children', () => {
   containerWidth(W3_TWO_COVERED)
 
-  // Hovering a covered list opens THAT list and nothing else. v1.13 opened every on-screen list at
-  // once (then the hovered list and all its children), so a pass over one peek sprang the whole
-  // hierarchy open (Mike: "the whole hierarchy of menus is disclosing I only want one at a time
-  // disclosing"). Resting layout at this width: list 0 peeks at 0, list 1 peeks at 32, the frontier
-  // list 2 sits disclosed at 64, the detail at 304.
+  // Hovering a covered list opens THAT list and every list below it — never its parents. Opening
+  // every on-screen list sprang the whole hierarchy open (Mike: "the whole hierarchy of menus is
+  // disclosing I only want one at a time disclosing"); opening the hovered list alone hid what
+  // choosing in it would show (Mike: "mouse into a collapsed topic list should disclose that topic
+  // list and any child topic list"). Resting layout at this width: list 0 peeks at 0, list 1 peeks
+  // at 32, the frontier list 2 sits disclosed at 64, the detail at 304.
 
-  it('opens ONLY the hovered list, in place, floating over its neighbours', () => {
+  it('opens the hovered list AND its children, chained in place from its resting left', () => {
     render(
       <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core', topic: 'apps' })}>
         <p>detail</p>
@@ -210,46 +211,59 @@ describe('HierarchicalTopicDetail — hover reveal, one list at a time', () => {
     enter(col(0))
 
     expect(boxWidth(0)).toBe('240px')
+    expect(boxWidth(1)).toBe('240px')
+    expect(boxWidth(2)).toBe('240px')
     expect(boxLeft(0)).toBe('0px')
-    // Its child stays exactly where it was — still a peek, not opened alongside it.
-    expect(boxWidth(1)).toBe('32px')
-    expect(boxLeft(1)).toBe('32px')
-    expect(boxLeft(2)).toBe('64px')
-    // The opened list spans its neighbours' ground, so it must paint ABOVE them — lifting them too
-    // (they sit to its right, and the lift climbs rightward) would draw them over it.
+    expect(boxLeft(1)).toBe('240px')
+    expect(boxLeft(2)).toBe('480px')
+    // The branch climbs rightward so each list paints over the ground of the one before it.
     const z = (i: number) => Number(col(i).style.zIndex)
-    expect(z(0)).toBeGreaterThan(z(1))
-    expect(z(0)).toBeGreaterThan(z(2))
+    expect(z(1)).toBeGreaterThan(z(0))
+    expect(z(2)).toBeGreaterThan(z(1))
   })
 
-  it('never opens the hovered list’s parents or children', () => {
+  it('never opens the hovered list’s parents', () => {
     render(
       <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core', topic: 'apps' })}>
         <p>detail</p>
       </HierarchicalTopicDetail>,
     )
-    enter(col(1)) // hover the SECOND list: its parent stays a peek
+    enter(col(1)) // hover the SECOND list: its parent stays a peek, its child comes along
     expect(boxWidth(0)).toBe('32px')
     expect(boxWidth(1)).toBe('240px')
     expect(boxLeft(1)).toBe('32px')
-    expect(boxLeft(2)).toBe('64px')
-    expect(Number(col(1).style.zIndex)).toBeGreaterThan(Number(col(2).style.zIndex))
+    expect(boxWidth(2)).toBe('240px')
+    expect(boxLeft(2)).toBe('272px')
   })
 
-  it('hands the reveal to the next peek the pointer enters — one open at a time', () => {
+  it('keeps the branch open while the pointer walks right into a child', () => {
+    render(
+      <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core', topic: 'apps' })}>
+        <p>detail</p>
+      </HierarchicalTopicDetail>,
+    )
+    enter(col(0))
+    leave(col(0), col(1))
+    enter(col(1))
+    // Walking the cascade is not a new hover: the root stays open behind the pointer.
+    expect(boxWidth(0)).toBe('240px')
+    expect(boxWidth(1)).toBe('240px')
+  })
+
+  it('re-roots at a shallower peek the pointer walks left onto', () => {
     render(
       <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core', topic: 'apps' })}>
         <p>detail</p>
       </HierarchicalTopicDetail>,
     )
     enter(col(1))
-    expect(boxWidth(1)).toBe('240px')
+    expect(boxWidth(0)).toBe('32px')
 
-    // Walking LEFT onto the parent's peek: the parent opens and the list the pointer left closes.
+    // Walking LEFT onto the parent's peek: the branch now roots there, so it opens too.
     leave(col(1), col(0))
     enter(col(0))
     expect(boxWidth(0)).toBe('240px')
-    expect(boxWidth(1)).toBe('32px')
+    expect(boxWidth(1)).toBe('240px')
   })
 
   it('stays open when a row inside it is selected — only leaving collapses it', () => {
@@ -300,7 +314,7 @@ describe('HierarchicalTopicDetail — hover reveal, one list at a time', () => {
       </HierarchicalTopicDetail>,
     )
     expect(boxWidth(0)).toBe('240px')
-    expect(boxWidth(1)).toBe('32px')
+    expect(boxWidth(1)).toBe('240px')
 
     // And it still closes on the one thing that should close it: the pointer leaving.
     leave(col(0), screen.getByText('detail'))
@@ -419,9 +433,8 @@ describe('HierarchicalTopicDetail — hover reveal, one list at a time', () => {
         <p>detail</p>
       </HierarchicalTopicDetail>,
     )
-    // A CLICK roots the classic branch at the clicked list — the clicked list AND its children,
-    // where a pointer ENTER opens the one hovered list alone. Click a row in the MIDDLE covered
-    // list: the branch opens at it, list 0 stays a peek behind it.
+    // A CLICK roots the same branch a pointer ENTER does — the clicked list AND its children.
+    // Click a row in the MIDDLE covered list: the branch opens at it, list 0 stays a peek behind it.
     fireEvent.click(railRow(/Temporal/))
     expect(boxWidth(0)).toBe('32px') // a click must never spring the user's collapsed parents open
 

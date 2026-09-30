@@ -294,10 +294,6 @@ type SurfaceState = {
   autoHide: boolean
   pins: Record<string, boolean>
   hoverId: string | null
-  /** How the open reveal was rooted: a pointer ENTER opens ONLY the hovered list (`true`), the
-   *  covering CLICK opens the clicked list's own branch (`false`) — a click on a visible row must
-   *  never spring the user's collapsed parents open (not-expand-parents-on-select). */
-  hoverOnly: boolean
   /** NARROW mode: the pane index the stack was last PAINTED at. The slide animates from here to
    *  wherever the new selection puts the top pane — and since selecting is a route change that
    *  remounts everything, a pane would otherwise mount already at its final position with nothing to
@@ -533,14 +529,13 @@ export function HierarchicalMenuDetail({
     autoHide: autoHideTopics,
     pins: {},
     hoverId: null,
-    hoverOnly: false,
     narrowTop: null,
     autoSelected: {},
     heldDetail: null,
     pendingLeafSig: null,
     mode: SETTLED,
   }
-  const { autoHide, pins, hoverId, hoverOnly } = surface
+  const { autoHide, pins, hoverId } = surface
 
   // CASCADE INTERACTION LOG (dev-only, `apt:debug:cascade-log`; see cascade-log.ts). Scope is
   // surface + instance: the instance bumps on the remount a selection causes, so surface state
@@ -589,7 +584,6 @@ export function HierarchicalMenuDetail({
         autoHide: autoHideTopics,
         pins: {},
         hoverId: null,
-        hoverOnly: false,
         narrowTop: null,
         autoSelected: {},
         heldDetail: null,
@@ -615,7 +609,6 @@ export function HierarchicalMenuDetail({
           autoHide: !p.autoHide,
           pins: {},
           hoverId: null,
-          hoverOnly: false,
           // An explicit toggle SETTLES the cascade's machine too (apply-disclosure-toggles-
           // immediately): the new mode must show its work on the click, not at the next pointer exit.
           mode: settleModeOn("toggle"),
@@ -632,8 +625,7 @@ export function HierarchicalMenuDetail({
     [patchSurface],
   )
   const setHoverId = useCallback(
-    (id: string | null, only = false) =>
-      patchSurface((p) => ({ ...p, hoverId: id, hoverOnly: id === null ? false : only })),
+    (id: string | null) => patchSurface((p) => ({ ...p, hoverId: id })),
     [patchSurface],
   )
   const setNarrowTop = useCallback(
@@ -860,7 +852,7 @@ export function HierarchicalMenuDetail({
         heldDetail: null,
         pendingLeafSig: null,
         ...(plan.autoCollapse && cascading
-          ? { mode: settleModeOn("final-choice"), hoverId: null, hoverOnly: false }
+          ? { mode: settleModeOn("final-choice"), hoverId: null }
           : {}),
       }
     })
@@ -947,7 +939,6 @@ export function HierarchicalMenuDetail({
           heldDetail: null,
           pendingLeafSig: null,
           hoverId: null,
-          hoverOnly: false,
         }
       }),
     [patchSurface],
@@ -978,7 +969,6 @@ export function HierarchicalMenuDetail({
     pins,
     setPins,
     hoverId,
-    hoverOnly,
     setHoverId,
     narrowTop: surface.narrowTop,
     setNarrowTop,
@@ -1465,10 +1455,7 @@ interface StackProps {
    *  the frame's surface store, not by the stack, so a selection — which remounts this subtree — can't
    *  yank the branch shut from under a pointer that is still inside it. */
   hoverId: string | null
-  /** True when the open reveal was rooted by a pointer ENTER (open ONLY the hovered list); false
-   *  for the covering-click root (the clicked list's own branch — parents stay put). */
-  hoverOnly: boolean
-  setHoverId: (id: string | null, only?: boolean) => void
+  setHoverId: (id: string | null) => void
   /** NARROW mode's animation origin — the pane index last painted (see `SurfaceState.narrowTop`), and
    *  the setter that records the pane the stack has now settled on. */
   narrowTop: number | null
@@ -2003,7 +1990,6 @@ function CoveredStack({
   pins,
   setPins,
   hoverId,
-  hoverOnly,
   setHoverId,
   containerW,
   children,
@@ -2101,15 +2087,14 @@ function CoveredStack({
   })
   const restingDetailLeft = Math.max(0, x - offshift)
 
-  // THE REVEAL GROUP — mode depends on how it was rooted (`hoverOnly`):
-  //   - pointer ENTER on a covered list → ONLY that list opens, in place, floating over whatever
-  //     lies to its right. Opening every on-screen list at once (what this used to do) sprang the
-  //     whole hierarchy open under a pointer that was only asking about one of them (Mike: "the
-  //     whole hierarchy of menus is disclosing I only want one at a time disclosing"). Walking to
-  //     a neighbouring peek re-roots the reveal there, so the lists open one at a time;
-  //   - the covering CLICK → only the clicked list and its children (the classic branch). A click
-  //     on a visible row must never spring the user's collapsed parents open — the root exists only
-  //     so the clicked list doesn't snap shut under the pointer.
+  // THE REVEAL GROUP — the root list and every list below it (its BRANCH), never its parents.
+  // A pointer ENTER on a covered list roots it there; so does the covering CLICK (the root exists
+  // so the clicked list doesn't snap shut under the pointer). Two earlier shapes were wrong: an
+  // enter that opened EVERY on-screen list sprang the whole hierarchy open under a pointer asking
+  // about one list (Mike: "the whole hierarchy of menus is disclosing I only want one at a time
+  // disclosing"), and opening the hovered list alone hid what choosing in it would show (Mike:
+  // "mouse into a collapsed topic list should disclose that topic list and any child topic list").
+  // Walking onto a shallower peek re-roots the branch there; a parent never opens on its own.
   // Members lay out side by side at full width, floating over the detail. Nothing under the group
   // moves; the detail keeps its geometry and is simply overlapped, and dropping the group (pointer
   // out) animates every member straight back to the layout above. Off-screen (drilled-down) lists
@@ -2122,15 +2107,11 @@ function CoveredStack({
   // onSelect); this is where a blind root that ended up covering nothing becomes the no-op it
   // should be.
   const hoverRoot = hoverId === null ? -1 : rendered.findIndex((l) => l.id === hoverId)
-  const groupTo = (root: number) => (hoverOnly ? root : rendered.length - 1)
   const hoverIndex =
-    hoverRoot >= 0 && rendered.some((_, i) => i >= hoverRoot && i <= groupTo(hoverRoot) && isCovered(i))
-      ? hoverRoot
-      : -1
+    hoverRoot >= 0 && rendered.some((_, i) => i >= hoverRoot && isCovered(i)) ? hoverRoot : -1
   const effectiveHoverId = hoverIndex >= 0 ? hoverId : null
   const groupStart = hoverIndex
-  const groupEnd = hoverIndex >= 0 ? groupTo(hoverIndex) : -1
-  const inGroup = (i: number) => hoverIndex >= 0 && i >= groupStart && i <= groupEnd
+  const inGroup = (i: number) => hoverIndex >= 0 && i >= groupStart
 
   // The group is lifted above the detail (z-50+) so it floats OVER the UI. On CLOSE the lift must
   // LINGER for the wipe-shut transition (z-index can't animate) — else the lists would drop behind
@@ -2150,25 +2131,16 @@ function CoveredStack({
   // lift region trails with it: capture the group start alongside the id so the wipe-shut lifts
   // exactly the members that were open, whichever mode rooted them.
   const zRoot = zLiftId === null ? -1 : rendered.findIndex((l) => l.id === zLiftId)
-  //
-  // The END trails too: a one-list reveal lifts ONLY that list. Lifting everything to its right
-  // (REVEAL_Z + i climbs rightward) would paint the next list over the one that just opened across it.
   const [zStart, setZStart] = useState<number>(groupStart)
-  const [zEnd, setZEnd] = useState<number>(groupEnd)
   useEffect(() => {
-    if (groupStart >= 0) {
-      setZStart(groupStart)
-      setZEnd(groupEnd)
-    }
-  }, [groupStart, groupEnd])
+    if (groupStart >= 0) setZStart(groupStart)
+  }, [groupStart])
   const zFrom = zRoot === -1 ? -1 : zStart >= 0 ? zStart : zRoot
-  const zTo = zEnd >= 0 ? zEnd : rendered.length - 1
   const revealLeft: number[] = []
   if (hoverIndex >= 0) {
-    // The group opens in place: chain full widths from its first member's resting left (for the
-    // expand-all mode that is the container's left edge once `offshift` is applied).
+    // The group opens in place: chain full widths from its root's resting left.
     let rx = left[groupStart] ?? 0
-    for (let i = groupStart; i <= groupEnd; i++) {
+    for (let i = groupStart; i < rendered.length; i++) {
       revealLeft[i] = rx
       rx += railWidth(rendered[i]!)
     }
@@ -2183,10 +2155,9 @@ function CoveredStack({
   // reading — it slides aside (possibly clipping at the container's right edge on deep stacks)
   // and slides back when the reveal closes. The lists still float over the covered PEEKS behind
   // them; only the detail yields.
-  // Measured to the group's END, not the last rendered list: a one-list (pointer) reveal fills
-  // `revealLeft` for that list alone.
+  const lastIdx = rendered.length - 1
   const revealRight =
-    hoverIndex >= 0 ? revealLeft[groupEnd]! + railWidth(rendered[groupEnd]!) - offshift : -1
+    hoverIndex >= 0 && lastIdx >= 0 ? revealLeft[lastIdx]! + railWidth(rendered[lastIdx]!) - offshift : -1
   const detailLeft = Math.max(restingDetailLeft, revealRight)
   const detailWidth = containerW > 0 ? Math.max(0, containerW - detailLeft) : 0
 
@@ -2333,24 +2304,24 @@ function CoveredStack({
         // The lift is a property of the group: while it is open every member floats above the detail;
         // on close the lift LINGERS (zLiftId trails hoverId) so the wipe-shut happens over the UI
         // instead of behind it. The members keep their relative order (left → right) inside the lift.
-        const zLifted = !offscreen && zFrom >= 0 && i >= zFrom && i <= zTo
+        const zLifted = !offscreen && zFrom >= 0 && i >= zFrom
         // The group floats as ONE card over the UI, so BOTH its outer edges are edges: its trailing
         // edge shadows the detail it covers, and its LEADING edge shadows the peek stack it slid out
         // of (a peek's own `border-r` is clipped away with the rest of its rail, so that shadow IS
         // the boundary — without it the opened list bleeds into the icon strip behind it). Members
         // inside the group abut each other and are separated by their own rail borders.
-        const groupTrailing = revealed && i === groupEnd
+        const groupTrailing = revealed && i === rendered.length - 1
         const groupLeading = revealed && i === groupStart && i > 0
         return (
           <div
             key={level.id}
             data-htd-col={i}
-            // Entering a COVERED list opens it — that list alone (hoverOnly), so moving to another
-            // peek hands the reveal over to it. Entering a list already inside the open group keeps
-            // it; entering a disclosed list outside the group closes it.
+            // Entering a COVERED list opens the branch rooted at it. Entering a list already inside the
+            // open branch keeps it (the pointer is walking the cascade, not opening a new one);
+            // entering a disclosed list outside the branch closes it.
             onPointerEnter={() => {
               if (inGroup(i)) return
-              setHoverId(covered && !offscreen ? level.id : null, true)
+              setHoverId(covered && !offscreen ? level.id : null)
             }}
             // Closing is the GROUP's business (see onGroupPointerLeave): a leave into a revealed child
             // must not collapse the branch the pointer is still inside.
@@ -2412,7 +2383,7 @@ function CoveredStack({
               // completes the path covers nothing at/below this list, and the blind root is dropped
               // as meaningless (see the reveal group above).
               onSelect={(id) => {
-                if (!inGroup(i)) setHoverId(level.id, false)
+                if (!inGroup(i)) setHoverId(level.id)
                 railOnSelect(level, attemptExit)(id)
               }}
               emptyLabel={level.emptyLabel ?? "Nothing here yet."}
