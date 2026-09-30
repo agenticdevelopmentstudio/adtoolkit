@@ -116,7 +116,7 @@ export function FocusedTopicDetail({
         <Fragment key={focusedId}>
           {focusedTitle && (
             <div className="px-6 pt-4 pb-2">
-              <SectionHeader title={focusedTitle} help={help} />
+              <SectionHeader paneTitle title={focusedTitle} help={help} />
             </div>
           )}
           {children}
@@ -124,7 +124,7 @@ export function FocusedTopicDetail({
       ) : (
         <>
           <div className="px-6 pt-4 pb-2">
-            <SectionHeader title={allTitle} help={allHelp} />
+            <SectionHeader paneTitle title={allTitle} help={allHelp} />
           </div>
           {items.length === 0 ? (
             <p className="px-6 pb-4 text-sm text-apt-text-muted">{allEmptyLabel}</p>

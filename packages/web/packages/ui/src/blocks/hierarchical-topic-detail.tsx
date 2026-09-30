@@ -42,6 +42,7 @@ import {
 } from "./topic-detail"
 import { TopicSelectHint } from "./topic-select-hint"
 import { CoverAllControl } from "./cover-all-control"
+import { detailStripTitle, DetailTitleProvider, useDetailTitleHost, type DetailStripTitle } from "./detail-title"
 import { DETAIL_PANE_ATTR } from "../lib/detail-pane"
 import { deepestSelectedLevel } from "./stack-frontier"
 
@@ -1043,10 +1044,15 @@ export function HierarchicalTopicDetail({
   // IS a remount (React reconciles by position), which resets their state and unregisters their
   // levels, looping the stack between the two states (a mount/fetch storm, found live). Inline
   // display (not the `hidden` attribute) so the flex utility class can't override it.
+  // The pane's title rides the detail strip, not the pane (see detail-title.tsx). The
+  // provider wraps the detail itself so it reaches the content wherever the frame mounts it.
+  const titleHost = useDetailTitleHost()
+  const stripTitle = detailStripTitle(titleHost, detailTitle)
   const detail = (
     // The swap wrapper: a selection replacing the pane's content crossfades briefly; a first paint
     // just shows. Keyed on the SELECTION signature — the one thing that changes what this pane is
     // showing from the stack's point of view.
+    <DetailTitleProvider host={titleHost}>
     <DetailCrossfade
       memoryKey={detailMemoryKey}
       token={levels.map((l) => l.selectedId ?? "·").join("|")}
@@ -1059,6 +1065,7 @@ export function HierarchicalTopicDetail({
         {children}
       </div>
     </DetailCrossfade>
+    </DetailTitleProvider>
   )
 
   // THE SERVER SEED (`ssrDetail`). The portal above contributes NOTHING until a layout effect has
@@ -1086,7 +1093,7 @@ export function HierarchicalTopicDetail({
     frontier,
     minDetailWidth,
     detailWidth,
-    detailTitle,
+    detailTitle: stripTitle,
     attemptExit,
     pins,
     setPins,
@@ -1317,7 +1324,8 @@ interface StackProps {
   /** The frame's `detailWidth`: when set, the wide detail pane is exactly this wide (and
    *  `minDetailWidth` already equals it). */
   detailWidth?: string
-  detailTitle?: ReactNode
+  /** The strip's title: a pane's own (see detail-title.tsx), else the frame's `detailTitle`. */
+  detailTitle: DetailStripTitle
   attemptExit: (action: () => void) => void
   /** Hide every list but the leaf-most, even when there is room (see HierarchicalTopicDetail). */
   /** Per-level user intent from the `«`/`»` toggles: true = pinned hidden, false = pinned disclosed. */
@@ -1823,20 +1831,11 @@ function MinimizedStack({
         // A fixed-width pane ends short of the container: the border is its edge.
         className={cn("flex min-w-0 flex-col overflow-auto bg-apt-surface", detailWidth && "border-r border-apt-border")}
       >
-        {detailTitle !== undefined ? (
+        {(detailTitle.titled || (backOnRail === -1 && showBack)) && (
           <div className="flex min-h-[2.15rem] shrink-0 items-center gap-2 border-b border-apt-border bg-apt-nav px-2">
             {backOnRail === -1 && showBack && backButton}
-            <span className="min-w-0 flex-1 truncate font-mono text-[0.8rem] tracking-[0.02em] text-apt-text-muted">
-              {detailTitle}
-            </span>
+            {detailTitle.cell}
           </div>
-        ) : (
-          backOnRail === -1 &&
-          showBack && (
-            <div className="flex min-h-[2.15rem] shrink-0 items-center border-b border-apt-border bg-apt-nav px-2">
-              {backButton}
-            </div>
-          )
         )}
         {/* Hold the leaf to its min width so it scrolls rather than crushing — but never wider than
             the viewport, so on a phone (where every list has drilled off) the form reflows to the
@@ -2481,24 +2480,16 @@ function CoveredStack({
       >
         {/* The frontier list is the detail's "parent": its cover toggle rides the detail's top-left.
             The strip is the rails' titled-header height (2.15rem) EITHER WAY, so the top row aligns
-            across every column; a detailTitle only adds the title text beside the toggle. Without a
+            across every column; the title (a pane's own, or the frame's detailTitle) sits beside the toggles. Without a
             title this used to fall back to a compact `py-1.5` strip, which left the detail's header
             visibly shorter than the list headers beside it — the one column that didn't line up. */}
-        {rendered.length > 0 &&
-          (detailTitle !== undefined ? (
-            <div className="flex min-h-[2.15rem] shrink-0 items-center gap-2 border-b border-apt-border bg-apt-nav pr-2">
-              <div className="flex w-8 shrink-0 items-center justify-center">{coverControl(rendered.length - 1)}</div>
-              {coverAllControl}
-              <span className="min-w-0 flex-1 truncate font-mono text-[0.8rem] tracking-[0.02em] text-apt-text-muted">
-                {detailTitle}
-              </span>
-            </div>
-          ) : (
-            <div className="flex min-h-[2.15rem] shrink-0 items-center gap-1.5 border-b border-apt-border bg-apt-nav px-1.5">
-              {coverControl(rendered.length - 1)}
-              {coverAllControl}
-            </div>
-          ))}
+        {rendered.length > 0 && (
+          <div className="flex min-h-[2.15rem] shrink-0 items-center gap-2 border-b border-apt-border bg-apt-nav pr-2">
+            <div className="flex w-8 shrink-0 items-center justify-center">{coverControl(rendered.length - 1)}</div>
+            {coverAllControl}
+            {detailTitle.cell}
+          </div>
+        )}
         {/* Hold the leaf to its min width so it scrolls rather than crushing — but never wider than
             the viewport, so on a phone the form reflows to the full width instead of scrolling.
             Rendered EMPTY — the frame slots its persistent detail host in here (see
@@ -2785,14 +2776,10 @@ function NarrowStack({
         aria-hidden={levels.length !== anim || undefined}
         inert={levels.length !== anim || undefined}
       >
-        {backButton && (
+        {(backButton || detailTitle.titled) && (
           <div className="flex min-h-[2.15rem] shrink-0 items-center gap-2 border-b border-apt-border bg-apt-nav px-1.5">
             {backButton}
-            {detailTitle !== undefined && (
-              <span className="min-w-0 flex-1 truncate font-mono text-[0.8rem] tracking-[0.02em] text-apt-text-muted">
-                {detailTitle}
-              </span>
-            )}
+            {detailTitle.cell}
           </div>
         )}
         {/* Rendered EMPTY — the frame slots its persistent detail host in here (see

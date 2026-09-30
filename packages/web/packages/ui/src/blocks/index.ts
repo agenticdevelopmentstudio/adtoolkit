@@ -107,6 +107,13 @@ export {
   useHierarchicalMenuDetailView,
   type HierarchicalDetailViewProps,
 } from "./hierarchical-detail-view";
+// A pane's title, drawn in its stack's detail strip rather than inside the pane.
+export {
+  useDetailTitle,
+  useDetailTitleHost,
+  DetailTitleProvider,
+  type DetailTitleHost,
+} from "./detail-title";
 // Dev-only debug switches (mouse-detection frames, 10x-slow animations). They live here because
 // this package owns the behaviour; a consuming app's Debug panel flips them, and the app applies
 // `slowAnimationVars` to <html> once (see its AppShell) so portaled dialogs/menus scale too.
