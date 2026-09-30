@@ -3,17 +3,20 @@ import { preserveDirectivesPlugin } from 'esbuild-plugin-preserve-directives'
 
 export default defineConfig({
   // adh-ui's exports map is hand-listed (no `./blocks/*` or `./components/*`
-  // wildcards — every block lives behind one `./blocks` barrel and the only
-  // component subpath is `./components/rdid-editor`), so the entry list is
-  // hand-listed too: these seven are exactly this package's public surface.
+  // wildcards — every block lives behind one `./blocks` barrel and the
+  // component subpaths are listed one by one), so the entry list is hand-listed
+  // too: these are exactly this package's public surface.
   entry: [
     'src/index.ts',
     'src/lib/rdid.ts',
     'src/lib/invitations-endpoints.ts',
     'src/lib/invitations-types.ts',
     'src/lib/help-ids.ts',
+    'src/lib/money.ts',
     'src/blocks/index.ts',
     'src/components/rdid-editor.tsx',
+    'src/components/time-series-chart.tsx',
+    'src/components/date-range-picker.tsx',
   ],
   outDir: 'dist',
   format: ['esm'],

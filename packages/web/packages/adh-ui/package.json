@@ -39,6 +39,11 @@
       "development": "./src/lib/help-ids.ts",
       "import": "./dist/lib/help-ids.js"
     },
+    "./money": {
+      "types": "./dist/lib/money.d.ts",
+      "development": "./src/lib/money.ts",
+      "import": "./dist/lib/money.js"
+    },
     "./blocks": {
       "types": "./dist/blocks/index.d.ts",
       "development": "./src/blocks/index.ts",
@@ -48,6 +53,16 @@
       "types": "./dist/components/rdid-editor.d.ts",
       "development": "./src/components/rdid-editor.tsx",
       "import": "./dist/components/rdid-editor.js"
+    },
+    "./components/time-series-chart": {
+      "types": "./dist/components/time-series-chart.d.ts",
+      "development": "./src/components/time-series-chart.tsx",
+      "import": "./dist/components/time-series-chart.js"
+    },
+    "./components/date-range-picker": {
+      "types": "./dist/components/date-range-picker.d.ts",
+      "development": "./src/components/date-range-picker.tsx",
+      "import": "./dist/components/date-range-picker.js"
     },
     "./sources.css": "./sources.css"
   },
@@ -71,6 +86,7 @@
     "clsx": "^2.1.1",
     "harper.js": "^2.4.0",
     "lucide-react": "^1.16.0",
+    "recharts": "^3.10.1",
     "tailwind-merge": "^2.6.0"
   },
   "peerDependencies": {
