@@ -13,20 +13,41 @@ import {
 } from "@agenticdevelopertoolkit/ui/components/dialog";
 import { DialogActions } from "@agenticdevelopertoolkit/ui/components/dialog-actions";
 import { Field } from "@agenticdevelopertoolkit/ui/blocks";
-import { useCreateRate, type InsightItem } from "../api/insight";
+import {
+  useCreateRate,
+  useRates,
+  type CreateRateBody,
+  type InsightItem,
+  type UsageRate,
+} from "../api/insight";
 import { todayUtc } from "./days";
 import { PRICE_BASES, shiftDecimal, toMicrosPerUnit, type PriceBasis } from "./decimal";
 
-type CreateRateBody = Parameters<ReturnType<typeof useCreateRate>["mutateAsync"]>[0];
-
-/** The rate in effect for `key` (the latest start among the item's rates for it), if any. */
-function currentRate(item: InsightItem, key: string) {
-  return item.rates
-    .filter((r) => r.quantityKey === key)
-    .sort((a, b) => b.effectiveFrom.localeCompare(a.effectiveFrom))[0];
+/**
+ * The rate in effect for `key` on `day`: this item's latest rate that has started by then. It
+ * comes from the rate table, not `item.rates` (every rate that applied on SOME day of the viewed
+ * month, which can be future-dated or stale against the day being priced).
+ */
+export function rateInEffect(
+  rates: readonly UsageRate[],
+  item: InsightItem,
+  key: string,
+  day: string,
+): UsageRate | undefined {
+  return rates
+    .filter(
+      (r) =>
+        r.category === item.category &&
+        r.provider === item.provider &&
+        r.sku === item.sku &&
+        r.quantityKey === key &&
+        r.effectiveFrom <= day,
+    )
+    .sort((x, y) => y.effectiveFrom.localeCompare(x.effectiveFrom))[0];
 }
 
-type KeyDraft = { text: string; basis: PriceBasis };
+/** `text` is null until the operator types, so the field keeps showing the current baseline. */
+type KeyDraft = { text: string | null; basis: PriceBasis };
 
 /**
  * Sets the price of one cost item: a per-unit rate for each of its quantity keys, effective from a
@@ -46,40 +67,43 @@ export function SetPriceDialog({
   const createRate = useCreateRate();
   const keys = useMemo(() => (item ? Object.keys(item.quantities).sort() : []), [item]);
 
-  const [drafts, setDrafts] = useState<Record<string, KeyDraft>>(() =>
-    Object.fromEntries(
-      keys.map((key) => [
-        key,
-        { text: item ? (currentRate(item, key)?.microsPerUnit ?? "") : "", basis: "micros-per-unit" },
-      ]),
-    ),
-  );
+  const rates = useRates().data;
+  const [drafts, setDrafts] = useState<Record<string, KeyDraft>>({});
   const [effectiveFrom, setEffectiveFrom] = useState(todayUtc);
   const [saved, setSaved] = useState<ReadonlySet<string>>(new Set());
   const [failure, setFailure] = useState<{ key: string; message: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
+  // The rate in effect on the chosen day, per key: the baseline the field shows and the
+  // "unchanged, don't re-send" check compares against. Recomputed as the date changes.
+  const baseline = (key: string) =>
+    item && rates ? rateInEffect(rates, item, key, effectiveFrom)?.microsPerUnit : undefined;
+
   // What each key would send: nothing (blank, unchanged, or already saved), a value, or a field error.
   const plan = keys.map((key) => {
-    const draft = drafts[key] ?? { text: "", basis: "micros-per-unit" as const };
-    const prefilled = item ? currentRate(item, key)?.microsPerUnit : undefined;
-    if (saved.has(key) || draft.text.trim() === "") {
-      return { key, send: null, error: null as string | null };
+    const draft = drafts[key] ?? { text: null, basis: "micros-per-unit" as const };
+    const prefilled = baseline(key);
+    const text = draft.text ?? (draft.basis === "micros-per-unit" ? (prefilled ?? "") : "");
+    if (saved.has(key) || text.trim() === "") {
+      return { key, text, send: null, error: null as string | null };
     }
-    const converted = toMicrosPerUnit(draft.text, draft.basis);
-    if (!converted.ok) return { key, send: null, error: converted.message };
+    const converted = toMicrosPerUnit(text, draft.basis);
+    if (!converted.ok) return { key, text, send: null, error: converted.message };
     if (prefilled !== undefined && shiftDecimal(prefilled, 0) === converted.value) {
-      return { key, send: null, error: null };
+      return { key, text, send: null, error: null };
     }
-    return { key, send: converted.value, error: null };
+    return { key, text, send: converted.value, error: null };
   });
   const toSend = plan.filter((p) => p.send !== null);
   const blocked = plan.some((p) => p.error !== null) || effectiveFrom === "";
   const canSave = toSend.length > 0 && !blocked && !busy;
 
   const setDraft = (key: string, change: Partial<KeyDraft>) =>
-    setDrafts((prev) => ({ ...prev, [key]: { ...prev[key]!, ...change } }));
+    setDrafts((prev) => ({
+      ...prev,
+      [key]: { text: null, basis: "micros-per-unit", ...prev[key], ...change },
+    }));
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -128,19 +152,23 @@ export function SetPriceDialog({
           </DialogDescription>
         </DialogHeader>
         <form ref={formRef} onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {plan.map(({ key, error }) => {
-            const draft = drafts[key]!;
+          {plan.map(({ key, text, error }) => {
+            const draft = drafts[key] ?? { text: null, basis: "micros-per-unit" as const };
             const message = error ?? (failure?.key === key ? failure.message : undefined);
             return (
               <Field key={key} label={<span className="font-mono">{key}</span>} error={message}>
                 <div className="flex gap-2">
                   <Input
                     aria-label={`${key} price`}
-                    value={draft.text}
+                    value={text}
                     onChange={(e) => setDraft(key, { text: e.target.value })}
                     disabled={saved.has(key)}
                     inputMode="decimal"
-                    placeholder="blank to leave unpriced"
+                    placeholder={
+                      baseline(key) !== undefined
+                        ? "blank to keep the current rate"
+                        : "blank to leave unpriced"
+                    }
                     className="text-right tabular-nums"
                   />
                   <Select
@@ -165,6 +193,8 @@ export function SetPriceDialog({
               aria-label="Effective from"
               value={effectiveFrom}
               onChange={(e) => setEffectiveFrom(e.target.value)}
+              // Keys that landed carry this date; changing it now would split one price change.
+              disabled={saved.size > 0}
             />
           </Field>
           {/* Enter submits through this; the visible confirm below requests the same submit. */}

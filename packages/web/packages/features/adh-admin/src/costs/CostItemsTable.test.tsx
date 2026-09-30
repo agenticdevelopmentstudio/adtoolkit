@@ -6,6 +6,7 @@ import type { InsightItem } from "../api/insight";
 
 vi.mock("../api/insight", () => ({
   useCreateRate: () => ({ mutateAsync: vi.fn() }),
+  useRates: () => ({ data: [] }),
 }));
 
 afterEach(cleanup);

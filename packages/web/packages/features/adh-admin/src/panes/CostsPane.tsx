@@ -27,6 +27,7 @@ export function CostsPane() {
         onMonthChange={setMonth}
         maxMonth={current}
         runRate={runRate.data}
+        error={runRate.error}
         onShowUnpriced={() => itemsRef.current?.scrollIntoView?.({ behavior: "smooth" })}
       />
 
@@ -35,7 +36,7 @@ export function CostsPane() {
         <CostItemsTable
           items={items.data?.items}
           loading={items.isLoading}
-          error={items.error ?? runRate.error}
+          error={items.error}
         />
       </section>
 

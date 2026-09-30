@@ -3,6 +3,8 @@
 import { Input } from "@agenticdevelopertoolkit/ui/components/input";
 import { Label } from "@agenticdevelopertoolkit/ui/components/label";
 import { Button } from "@agenticdevelopertoolkit/ui/components/button";
+import { Alert, AlertTitle, AlertDescription } from "@agenticdevelopertoolkit/ui/components/alert";
+import { errorMessage } from "@agenticdevelopertoolkit/ui/lib/errors";
 import { formatMicros } from "@agentic-toolkit/adh-ui/money";
 import type { RunRate } from "../api/insight";
 
@@ -25,6 +27,7 @@ export function RunRateHeader({
   onMonthChange,
   maxMonth,
   runRate,
+  error,
   onShowUnpriced,
 }: {
   month: string;
@@ -32,15 +35,27 @@ export function RunRateHeader({
   /** The latest month the backend accepts (the current one). */
   maxMonth: string;
   runRate: RunRate | undefined;
+  /** The run-rate read's failure, shown here rather than under the items. */
+  error?: unknown;
   onShowUnpriced: () => void;
 }) {
   const unpriced = runRate?.unpricedItems ?? 0;
-  const money = (micros: number | undefined) => (micros === undefined ? "—" : formatMicros(micros));
+  // Unpriced items add nothing to the direct figures, so with any of them the figure is a floor
+  // and says so (same `≥` as the items table) rather than headlining a bare $0.00.
+  const floor = unpriced > 0 ? "≥ " : "";
+  const money = (micros: number | undefined, floored = false) =>
+    micros === undefined ? "—" : `${floored ? floor : ""}${formatMicros(micros)}`;
   return (
     <section
       aria-label="Run rate"
       className="mb-6 rounded-lg border border-apt-border bg-apt-surface p-4"
     >
+      {error != null && (
+        <Alert variant="error" className="mb-4">
+          <AlertTitle>Couldn't load the run rate</AlertTitle>
+          <AlertDescription>{errorMessage(error)}</AlertDescription>
+        </Alert>
+      )}
       <div className="flex flex-wrap items-end gap-6">
         <div className="flex flex-col gap-1">
           <Label htmlFor="costs-month">Month</Label>
@@ -54,12 +69,12 @@ export function RunRateHeader({
         </div>
         <Stat
           label="Month to date"
-          value={money(runRate?.directToDateMicros)}
+          value={money(runRate?.directToDateMicros, true)}
           title={runRate ? `Direct cost over ${runRate.elapsedDays} complete days` : undefined}
         />
         <Stat
           label="Projected month end"
-          value={money(runRate?.projectedMonthMicros)}
+          value={money(runRate?.projectedMonthMicros, true)}
           title="Direct to date ÷ elapsed days × days in month, plus fixed"
         />
         <Stat label="Fixed" value={money(runRate?.fixedMonthMicros)} />

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState, type FormEvent } from "react";
-import { CalendarX, Pencil, Plus } from "lucide-react";
+import { CalendarX, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAction } from "@agenticdevelopertoolkit/ui/hooks/useAction";
 import { Button } from "@agenticdevelopertoolkit/ui/components/button";
 import { Input } from "@agenticdevelopertoolkit/ui/components/input";
@@ -22,6 +22,7 @@ import {
 } from "../components/editable-list";
 import {
   useCreateFixedCost,
+  useDeleteFixedCost,
   useFixedCosts,
   useUpdateFixedCost,
   type FixedCost,
@@ -228,6 +229,7 @@ export function FixedCostDialog({
 export function FixedCostsList() {
   const { data, isLoading, error } = useFixedCosts();
   const updateCost = useUpdateFixedCost();
+  const deleteCost = useDeleteFixedCost();
   const ending = useAction();
   const [dialog, setDialog] = useState<{ cost: FixedCost | null } | null>(null);
 
@@ -289,15 +291,19 @@ export function FixedCostsList() {
 
   const selected = list.selectedRows.length === 1 ? list.selectedRows[0]! : null;
   const today = todayUtc();
-  // An open-ended cost can be ended. The last charged day is today, or its own start when that
-  // is still ahead (a cost cannot end before it begins).
-  const canEnd = selected !== null && selected.effectiveTo === null;
+  // A cost that has not begun cannot be "ended" without still charging its first day, so it is
+  // deleted instead (the backend allows that until it starts). One that is running and open-ended
+  // is ended: its last charged day is today.
+  const notBegun = selected !== null && selected.effectiveFrom > today;
+  const canEnd = selected !== null && !notBegun && selected.effectiveTo === null;
   const endCost = (cost: FixedCost) =>
     void ending.run(async () => {
-      await updateCost.mutateAsync({
-        id: cost.id,
-        changes: { effectiveTo: cost.effectiveFrom > today ? cost.effectiveFrom : today },
-      });
+      await updateCost.mutateAsync({ id: cost.id, changes: { effectiveTo: today } });
+      list.clearSelection();
+    });
+  const removeCost = (cost: FixedCost) =>
+    void ending.run(async () => {
+      await deleteCost.mutateAsync(cost.id);
       list.clearSelection();
     });
 
@@ -307,8 +313,8 @@ export function FixedCostsList() {
         list={list}
         ariaLabel="Fixed costs"
         loading={isLoading}
-        error={error ?? (ending.error ? new Error(ending.error) : undefined)}
-        errorTitle="Couldn't load or update the fixed costs"
+        error={error}
+        errorTitle="Couldn't load the fixed costs"
         columnWidthsKey="admin-costs-fixed"
         describeRow={(c) => `${c.provider} ${c.label}`}
         searchPlaceholder="Provider or label"
@@ -329,15 +335,34 @@ export function FixedCostsList() {
               <Pencil data-icon="inline-start" />
               Edit
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              disabled={!canEnd || ending.busy}
-              onClick={() => canEnd && endCost(selected)}
-            >
-              <CalendarX data-icon="inline-start" />
-              End cost
-            </Button>
+            {notBegun ? (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={ending.busy}
+                onClick={() => removeCost(selected)}
+              >
+                <Trash2 data-icon="inline-start" />
+                Delete
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="ghost"
+                disabled={!canEnd || ending.busy}
+                onClick={() => canEnd && endCost(selected)}
+              >
+                <CalendarX data-icon="inline-start" />
+                End cost
+              </Button>
+            )}
+            {/* A failed end/delete is about the action, not the list, so it sits by the action
+                (cleared by the next attempt) instead of in the list's "couldn't load" slot. */}
+            {ending.error && (
+              <span role="alert" className="text-sm text-apt-red">
+                {ending.error}
+              </span>
+            )}
           </>
         }
       />
