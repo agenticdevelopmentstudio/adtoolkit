@@ -336,6 +336,30 @@ describe('HierarchicalTopicDetail — whole-branch hover reveal', () => {
     expect(detail(container).style.left).toBe(resting)
   })
 
+  it('goes back behind the detail when the pointer leaves it for ANOTHER stack’s column', () => {
+    // In the hub this stack sits beside the workspace menu's own HierarchicalMenuDetail, whose
+    // columns carry the same `data-htd-col`. Leaving the revealed list for the menu read the menu's
+    // list 0 as this stack's list 0, so the reveal stayed open (Mike: "should move to the back again
+    // when the mouse exits the topic list to the left top right bottom of the topic list").
+    render(
+      <div>
+        <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core', topic: 'apps' })}>
+          <p>detail</p>
+        </HierarchicalTopicDetail>
+        <div data-htd-col="0">
+          <span>menu row</span>
+        </div>
+      </div>,
+    )
+    enter(col(0))
+    expect(boxWidth(0)).toBe('240px')
+
+    const foreign = screen.getByText('menu row')
+    leave(col(0), foreign)
+    fireEvent.pointerOver(foreign)
+    expect(boxWidth(0)).toBe('32px')
+  })
+
   it('collapses back to the previous state when the pointer leaves the whole branch', () => {
     render(
       <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core', topic: 'apps' })}>

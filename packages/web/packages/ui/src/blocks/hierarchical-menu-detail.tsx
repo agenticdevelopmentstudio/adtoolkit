@@ -2182,10 +2182,19 @@ function CoveredStack({
   // hovered list into one of its revealed children must NOT collapse it. So a leave only closes when
   // the pointer landed outside every member — `relatedTarget` (the element being entered) is not in a
   // column at or below the hovered one. Leaving the window entirely gives a null target → close.
+  //
+  // Only THIS stack's columns count. `data-htd-col` is every stack's attribute, and the hub nests
+  // them — the HTDV sits in the workspace menu's detail, beside the menu's own columns. An unscoped
+  // `closest` read the menu's list 0 as this stack's list 0, so a pointer leaving the revealed list
+  // for the menu was "still in the branch" and the list never went back (Mike: "should move to the
+  // back again when the mouse exits the topic list to the left top right bottom"). So walk out
+  // past any foreign column to the first one that is a direct child of this container.
   const columnIndexOf = (target: EventTarget | null): number => {
     if (!(target instanceof Element)) return -1
-    const col = target.closest("[data-htd-col]")
-    return col ? Number(col.getAttribute("data-htd-col")) : -1
+    for (let col = target.closest("[data-htd-col]"); col; col = col.parentElement?.closest("[data-htd-col]") ?? null) {
+      if (col.parentElement === containerRef.current) return Number(col.getAttribute("data-htd-col"))
+    }
+    return -1
   }
   const onGroupPointerLeave = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (hoverIndex < 0) return
