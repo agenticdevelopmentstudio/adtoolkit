@@ -52,6 +52,7 @@ import {
 } from "./detail-title"
 import { DETAIL_PANE_ATTR } from "../lib/detail-pane"
 import { deepestSelectedLevel, pinAll, pinKeyFor } from "./stack-frontier"
+import { DetailHeaderProvider, DetailHeaderRow } from "./detail-header"
 
 /** A leaf editor's unsaved-work guard. The package consults `isDirty()` before any select that
  *  clears or replaces the open detail (Back / breadcrumb-up / re-click / shallower select / a
@@ -625,6 +626,7 @@ export function HierarchicalTopicDetail({
   minDetailWidth: minDetailWidthProp = MIN_DETAIL_DEFAULT,
   detailWidth,
   detailTitle,
+  detailHelp,
   exitGuard = null,
   manualCollapse = true,
   disclosureStyle = "covered",
@@ -685,6 +687,10 @@ export function HierarchicalTopicDetail({
   /** A title shown in the detail (leaf) pane's top strip, aligned with the rail
    *  headers — names what the pane is showing (covered style). */
   detailTitle?: ReactNode
+  /** The view's own help, in the detail header's "?" slot while no pane claims it. The header
+   *  always carries the view's API button and "?" on its far right — a pane portals its own in,
+   *  and what nothing claims is drawn disabled (see {@link DetailHeaderRow}). */
+  detailHelp?: ReactNode
   /** The leaf editor's unsaved-work guard. When dirty, Back / breadcrumb-up / re-click /
    *  selecting a shallower row / swapping to a sibling at the deepest level first raise the
    *  platform's discard alert (Discard / Stay). Omit for no guard. */
@@ -1127,6 +1133,7 @@ export function HierarchicalTopicDetail({
     // internally. A root that could outgrow that height (a flex item's default `min-height:
     // auto` is its content's height) would push the page past the viewport instead of
     // scrolling its own panes.
+    <DetailHeaderProvider fallbackHelp={detailHelp}>
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <TopBar
         rootLabel={rootLabel}
@@ -1163,6 +1170,7 @@ export function HierarchicalTopicDetail({
           Stay → keep the dirty editor. It never saves — that is the editor's own affordance. */}
       <UnsavedChangesAlert {...exitAlertProps} />
     </div>
+    </DetailHeaderProvider>
   )
 }
 
@@ -1838,12 +1846,7 @@ function MinimizedStack({
         // A fixed-width pane ends short of the container: the border is its edge.
         className={cn("flex min-w-0 flex-col overflow-auto bg-apt-surface", detailWidth && "border-r border-apt-border")}
       >
-        {(detailTitle.titled || (backOnRail === -1 && showBack)) && (
-          <div className="flex min-h-[2.15rem] shrink-0 items-center gap-2 border-b border-apt-border bg-apt-nav px-2">
-            {backOnRail === -1 && showBack && backButton}
-            {detailTitle.cell}
-          </div>
-        )}
+        <DetailHeaderRow lead={backOnRail === -1 && showBack ? backButton : undefined} title={detailTitle} />
         {/* Hold the leaf to its min width so it scrolls rather than crushing — but never wider than
             the viewport, so on a phone (where every list has drilled off) the form reflows to the
             full width instead of forcing a horizontal scroll. Rendered EMPTY — the frame slots its
@@ -2488,13 +2491,12 @@ function CoveredStack({
             across every column; the title (a pane's own, or the frame's detailTitle) sits beside the toggles. Without a
             title this used to fall back to a compact `py-1.5` strip, which left the detail's header
             visibly shorter than the list headers beside it — the one column that didn't line up. */}
-        {rendered.length > 0 && (
-          <div className="flex min-h-[2.15rem] shrink-0 items-center gap-2 border-b border-apt-border bg-apt-nav pr-2">
-            <div className="flex w-8 shrink-0 items-center justify-center">{coverControl(rendered.length - 1)}</div>
-            {coverAllControl}
-            {detailTitle.cell}
-          </div>
-        )}
+        <DetailHeaderRow
+          lead={rendered.length > 0 ? coverControl(rendered.length - 1) : undefined}
+          leadCell
+          tools={rendered.length > 0 ? coverAllControl : undefined}
+          title={rendered.length > 0 ? detailTitle : undefined}
+        />
         {/* Hold the leaf to its min width so it scrolls rather than crushing — but never wider than
             the viewport, so on a phone the form reflows to the full width instead of scrolling.
             Rendered EMPTY — the frame slots its persistent detail host in here (see
@@ -2781,12 +2783,7 @@ function NarrowStack({
         aria-hidden={levels.length !== anim || undefined}
         inert={levels.length !== anim || undefined}
       >
-        {(backButton || detailTitle.titled) && (
-          <div className="flex min-h-[2.15rem] shrink-0 items-center gap-2 border-b border-apt-border bg-apt-nav px-1.5">
-            {backButton}
-            {detailTitle.cell}
-          </div>
-        )}
+        <DetailHeaderRow lead={backButton || undefined} title={detailTitle} />
         {/* Rendered EMPTY — the frame slots its persistent detail host in here (see
             StackProps.detailSlot), which is how the deep detail SURVIVES the flip into narrow.
             `detailSeed` is the one exception: the server-rendered detail, held only until the

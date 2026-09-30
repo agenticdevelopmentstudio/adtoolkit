@@ -3,11 +3,11 @@ id: 0bba1f5b-bc8d-4f76-b1c9-329b627f7ee8
 title: Hierarchical Topic / Detail View
 domain: agenticdevelopertoolkit://recipes/hierarchical-topic-detail
 type: recipe
-version: 1.21.1
+version: 1.22.0
 status: review
 language: en
 created: 2026-06-30
-modified: 2026-09-25
+modified: 2026-09-30
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
@@ -503,6 +503,7 @@ and the stack oscillates between the two states (React's max-update-depth crash)
 ### Per-view layout — topic lists
 
 - **render-icon-name-rows**: Each topic row MUST render as `[icon] [name]`.
+- **no-unrequested-sublabels**: A topic row MUST NOT carry a subtitle (`sublabel`, `inlineSublabel`, `preview`) unless the product owner asked for that list to have one. The default row is `[icon] [name]` and nothing under it: an id, slug or path echoed beneath the name is noise that crowds the list and truncates. Whatever it would say belongs in the detail.
 - **fix-list-width**: A topic list MUST be a fixed width — slightly wider than its widest topic — with consistent leading and trailing padding.
 - **offer-new-topic-button**: A topic list MAY carry a "new topic" (`onNew`) create affordance, rendered as a compact **`+` button right-justified in the list header** (NOT a leading row); activating it MUST open the create MODAL (see **create-in-modal**). The `+` carries its `newLabel` as its accessible name + tooltip, and MAY tint gold (`newActive`) while the modal is open.
 - **offer-title-actions**: A topic list MAY carry extra compact controls right-justified in its TITLE row, just ahead of the `+` (`titleActions` — e.g. the status board's Sites list hosts its Auto Configure action there, freeing the `headerSlot` filter field to take the full row width via `ListHeader`'s `search.grow`). Title-row actions render only with a titled, un-collapsed header; keep them one line high.
@@ -1192,6 +1193,7 @@ than extracted alongside the rest of the logic; `unit-test-coverage` is passed o
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.22.0 | 2026-09-30 | Mike Fullerton | New requirement **no-unrequested-sublabels**: a topic row carries no subtitle unless one was asked for; the Applications list's rdid subtitles were the case that prompted it. |
 | 1.21.1 | 2026-09-25 | Mike Fullerton | Corrected disclosure/pin, unsaved-exit alert, wideFloor, own-unselection, hover-reveal, and minimized-style drag-snap sections; frontier passages now match the fixed-in-every-state detail minimum; shortened frontmatter summary. Added best-practices compliance rows (separation-of-concerns: partial, unit-test-coverage: passed). |
 | 1.21.0 | 2026-09-22 | Mike Fullerton | Lint pass: renamed every requirement to subject-only kebab-case (no `must-`/`should-`/`may-` prefix) everywhere it's cited in this recipe (on-main Change History rows below 1.20.0 are unchanged, per the immutability rule — they still use the old prefixed names, and so does existing source test code); reformatted Design Decisions into Decision/Rationale/Approved and added one for the suspended reduced-motion MUST; rebuilt Compliance as linked catalog checks (added accessibility/platform-compliance/internationalization, RTL failed); removed two stale narrative blockquotes and corrected several source-contradicting passages (narrow/wideFloor formula, covered-peek size 32px, branch-reveal wording, detail-action-bar wording); corrected wrong SwiftUI/Compose/WinUI 3 API claims in Platform Notes; completed the `TopicLevel`/`TopicDetailItem` interface sketches; fixed the update-url-on-select requirement and T3 to stop implying an auto-selected default; sorted Change History descending and moved the stray `headerSlot` props row into the interface sketch; renumbered T49-T53 and reconciled T18/T25/T26/T28a/T28c/T51 to current requirement names and values; added a reference-consumer note and replaced hardcoded example URLs/paths with placeholders. |
 | 1.20.0 | 2026-09-22 | Mike Fullerton | **Platform Notes REVISED to include all five platform translations** (SwiftUI, Compose, AppKit/UIKit, WinUI 3). Each bullet describes the native control or composition a developer would start from and how it differs from the web source. The web implementation details remain the comprehensive reference; the new translations guide cross-platform porting without prescribing the implementation. |

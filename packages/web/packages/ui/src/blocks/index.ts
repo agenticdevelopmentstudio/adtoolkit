@@ -95,6 +95,22 @@ export {
   type TopicSelectOptions,
 } from "./hierarchical-topic-detail";
 export { deepestSelectedLevel } from "./stack-frontier";
+// The detail pane's ONE header row, shared by both stacks' layouts: control, title, then the view's
+// API button and "?" help on the far right — slots each stack owns, which a pane claims through
+// DetailHeaderPortal and which fall back to the disabled buttons.
+export {
+  DetailHeaderRow,
+  DetailHeaderProvider,
+  DetailHeaderPortal,
+  useDetailHeader,
+  useHasDetailHeader,
+  DisabledApiButton,
+  DisabledHelpButton,
+  NO_API_ENDPOINT,
+  NO_HELP,
+  type DetailHeaderHost,
+  type DetailHeaderKind,
+} from "./detail-header";
 // Hierarchical Menu Details View — the cascading (vertical nested-menu) experiment, isolated as its
 // own component so HTDV stays at its pre-experiment shape. Shares HTDV's TopicLevel/PaneExitGuard.
 export { HierarchicalMenuDetail } from "./hierarchical-menu-detail";

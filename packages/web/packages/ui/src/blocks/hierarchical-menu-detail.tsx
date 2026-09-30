@@ -58,6 +58,7 @@ import {
   type DetailStripTitle,
 } from "./detail-title"
 import { deepestSelectedLevel, pinAll, pinKeyFor } from "./stack-frontier"
+import { DetailHeaderProvider, DetailHeaderRow } from "./detail-header"
 import { DETAIL_PANE_ATTR } from "../lib/detail-pane"
 import { useShowDebugFrames, useSlowAnimations, SLOW_ANIM_FACTOR } from "./debug-options"
 // The cascade's DECISIONS — the selection chain's weight, the entrance bounce, the exit curve, the
@@ -386,6 +387,7 @@ export function HierarchicalMenuDetail({
   showBreadcrumb = true,
   minDetailWidth = "28rem",
   detailTitle,
+  detailHelp,
   exitGuard = null,
   manualCollapse = true,
   disclosureStyle = "covered",
@@ -421,6 +423,10 @@ export function HierarchicalMenuDetail({
   /** A title shown in the detail (leaf) pane's top strip, aligned with the rail
    *  headers — names what the pane is showing (covered style). */
   detailTitle?: ReactNode
+  /** The view's own help, in the detail header's "?" slot while no pane claims it. The header
+   *  always carries the view's API button and "?" on its far right — a pane portals its own in,
+   *  and what nothing claims is drawn disabled (see {@link DetailHeaderRow}). */
+  detailHelp?: ReactNode
   /** The leaf editor's unsaved-work guard. When dirty, Back / breadcrumb-up / re-click /
    *  selecting a shallower row / swapping to a sibling at the deepest level first raises a
    *  Discard/Stay alert. Omit for no guard. */
@@ -1003,6 +1009,7 @@ export function HierarchicalMenuDetail({
   }
 
   return (
+    <DetailHeaderProvider fallbackHelp={detailHelp}>
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <TopBar
         rootLabel={rootLabel}
@@ -1032,6 +1039,7 @@ export function HierarchicalMenuDetail({
 
       <UnsavedChangesAlert {...exitAlertProps} />
     </div>
+    </DetailHeaderProvider>
   )
 }
 
@@ -1961,12 +1969,7 @@ function MinimizedStack({
           width) the Back button rides the top of this pane. The inner div holds a minimum width so
           the pane scrolls horizontally rather than crushing when its column is narrower. */}
       <section key="__detail__" className="flex min-w-0 flex-col overflow-auto bg-apt-surface">
-        {(detailTitle.titled || (backOnRail === -1 && showBack)) && (
-          <div className="flex min-h-[2.15rem] shrink-0 items-center gap-2 border-b border-apt-border bg-apt-nav px-2">
-            {backOnRail === -1 && showBack && backButton}
-            {detailTitle.cell}
-          </div>
-        )}
+        <DetailHeaderRow lead={backOnRail === -1 && showBack ? backButton : undefined} title={detailTitle} />
         {/* Hold the leaf to its min width so it scrolls rather than crushing — but never wider than
             the viewport, so on a phone (where every list has drilled off) the form reflows to the
             full width instead of forcing a horizontal scroll. */}
@@ -2493,13 +2496,12 @@ function CoveredStack({
             across every column; the title (a pane's own, or the frame's detailTitle) sits beside the toggles. Without a
             title this used to fall back to a compact `py-1.5` strip, which left the detail's header
             visibly shorter than the list headers beside it — the one column that didn't line up. */}
-        {rendered.length > 0 && (
-          <div className="flex min-h-[2.15rem] shrink-0 items-center gap-2 border-b border-apt-border bg-apt-nav pr-2">
-            <div className="flex w-8 shrink-0 items-center justify-center">{coverControl(rendered.length - 1)}</div>
-            {coverAllControl}
-            {detailTitle.cell}
-          </div>
-        )}
+        <DetailHeaderRow
+          lead={rendered.length > 0 ? coverControl(rendered.length - 1) : undefined}
+          leadCell
+          tools={rendered.length > 0 ? coverAllControl : undefined}
+          title={rendered.length > 0 ? detailTitle : undefined}
+        />
         {/* Hold the leaf to its min width so it scrolls rather than crushing — but never wider than
             the viewport, so on a phone the form reflows to the full width instead of scrolling. */}
         <div
@@ -3630,12 +3632,11 @@ function CascadingStack({
           !dragging && "transition-[left] duration-[calc(300ms*var(--apt-anim-scale,1))] ease-in-out",
         )}
       >
-        {rendered.length > 0 && (
-          <div className="flex min-h-[2.15rem] shrink-0 items-center gap-2 border-b border-apt-border bg-apt-nav pr-2">
-            <div className="flex w-8 shrink-0 items-center justify-center">{immersionControl}</div>
-            {detailTitle.cell}
-          </div>
-        )}
+        <DetailHeaderRow
+          lead={rendered.length > 0 ? immersionControl : undefined}
+          leadCell
+          title={rendered.length > 0 ? detailTitle : undefined}
+        />
         <DetailContent token={structureSignature(rendered)} minWidth={minDetailWidth} mem={mem}>
           {children}
         </DetailContent>
@@ -3811,12 +3812,7 @@ function NarrowStack({
         aria-hidden={levels.length !== anim || undefined}
         inert={levels.length !== anim || undefined}
       >
-        {(backButton || detailTitle.titled) && (
-          <div className="flex min-h-[2.15rem] shrink-0 items-center gap-2 border-b border-apt-border bg-apt-nav px-1.5">
-            {backButton}
-            {detailTitle.cell}
-          </div>
-        )}
+        <DetailHeaderRow lead={backButton || undefined} title={detailTitle} />
         <div className="flex min-h-0 w-full flex-1 flex-col">{children}</div>
       </section>
     </div>
