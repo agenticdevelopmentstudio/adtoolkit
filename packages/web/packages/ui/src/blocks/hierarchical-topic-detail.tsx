@@ -44,7 +44,7 @@ import { TopicSelectHint } from "./topic-select-hint"
 import { CoverAllControl } from "./cover-all-control"
 import { detailStripTitle, DetailTitleProvider, useDetailTitleHost, type DetailStripTitle } from "./detail-title"
 import { DETAIL_PANE_ATTR } from "../lib/detail-pane"
-import { deepestSelectedLevel } from "./stack-frontier"
+import { deepestSelectedLevel, selectedTopicLabel } from "./stack-frontier"
 
 /** A leaf editor's unsaved-work guard. The package consults `isDirty()` before any select that
  *  clears or replaces the open detail (Back / breadcrumb-up / re-click / shallower select / a
@@ -1046,8 +1046,9 @@ export function HierarchicalTopicDetail({
   // display (not the `hidden` attribute) so the flex utility class can't override it.
   // The pane's title rides the detail strip, not the pane (see detail-title.tsx). The
   // provider wraps the detail itself so it reaches the content wherever the frame mounts it.
+  // With neither a pane's title nor the host's, the strip names the selected topic.
   const titleHost = useDetailTitleHost()
-  const stripTitle = detailStripTitle(titleHost, detailTitle)
+  const stripTitle = detailStripTitle(titleHost, detailTitle ?? selectedTopicLabel(levels))
   const detail = (
     // The swap wrapper: a selection replacing the pane's content crossfades briefly; a first paint
     // just shows. Keyed on the SELECTION signature — the one thing that changes what this pane is

@@ -5,7 +5,8 @@
  * control, the title should not be in the details pane, this should be part of the shared code".
  * So this asserts it in a REAL HTDV and HMDV rather than a stand-in strip: the title lands in
  * `[data-htd-detail-title]` beside `[data-htd-cover-all]` and nowhere inside `[data-htd-detail]`;
- * the stack's own `detailTitle` prop still shows when no pane claims the slot; the title is
+ * the stack's own `detailTitle` prop still shows when no pane claims the slot, and with neither the
+ * strip names the selected topic (Mike: "the title in the topic view by default"); the title is
  * withdrawn when its pane unmounts (the registration CLEANUP path — distinct from a pane that
  * stays mounted and passes null); the LAST of two simultaneous registrants wins while the other
  * draws inline; and outside any stack the pane simply keeps its title inline.
@@ -32,7 +33,7 @@ const levels: TopicLevel[] = [
 
 // HMDV draws its root level as the top menu, so the detail strip needs a level below it.
 const menuLevels: TopicLevel[] = [
-  levels[0],
+  levels[0]!,
   {
     id: "teams",
     title: "Teams",
@@ -104,10 +105,36 @@ describe("detail title in the strip", () => {
     expect(strip(container).textContent).not.toContain("Acme Corp")
   })
 
-  it("withdraws it when a still-mounted pane passes null", () => {
+  it("withdraws it when a still-mounted pane passes null, back to the selected topic", () => {
     const { container, rerender } = render(htdv(<Titled title="Acme Corp" />))
     rerender(htdv(<Titled title={null} />))
-    expect(strip(container).textContent).toBe("")
+    expect(strip(container).textContent).toBe("Acme")
+  })
+
+  // Mike: "It should be the title in the topic view by default, but this should be overridable by
+  // the details pane".
+  it("defaults to the selected topic's label when neither pane nor host names it", () => {
+    const { container } = render(htdv(<p>body</p>))
+    expect(strip(container).textContent).toBe("Acme")
+  })
+
+  it("names nothing when nothing is selected", () => {
+    const unselected: TopicLevel[] = [{ ...levels[0]!, selectedId: null }]
+    const { container } = render(
+      <HierarchicalTopicDetail levels={unselected} layoutMode="wide" disclosureStyle="covered">
+        <p>body</p>
+      </HierarchicalTopicDetail>,
+    )
+    expect(container.querySelector("[data-htd-detail-title]")?.textContent ?? "").toBe("")
+  })
+
+  it("defaults to the selected topic in HMDV too", () => {
+    const { container } = render(
+      <HierarchicalMenuDetail levels={menuLevels} layoutMode="wide">
+        <p>body</p>
+      </HierarchicalMenuDetail>,
+    )
+    expect(strip(container).textContent).toBe("Core")
   })
 
   it("gives the strip to the LAST registrant; the other draws inline", () => {

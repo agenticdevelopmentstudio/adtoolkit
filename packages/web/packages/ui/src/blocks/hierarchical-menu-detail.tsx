@@ -50,7 +50,7 @@ import {
 import { TopicSelectHint } from "./topic-select-hint"
 import { CoverAllControl } from "./cover-all-control"
 import { detailStripTitle, DetailTitleProvider, useDetailTitleHost, type DetailStripTitle } from "./detail-title"
-import { deepestSelectedLevel } from "./stack-frontier"
+import { deepestSelectedLevel, selectedTopicLabel } from "./stack-frontier"
 import { DETAIL_PANE_ATTR } from "../lib/detail-pane"
 import { useShowDebugFrames, useSlowAnimations, SLOW_ANIM_FACTOR } from "./debug-options"
 // The cascade's DECISIONS — the selection chain's weight, the entrance bounce, the exit curve, the
@@ -871,8 +871,9 @@ export function HierarchicalMenuDetail({
   // children publish) must ride through the hold untouched.
   // The pane's title rides the detail strip, not the pane (see detail-title.tsx). The
   // provider wraps the detail itself so it reaches the content wherever the frame mounts it.
+  // With neither a pane's title nor the host's, the strip names the selected topic.
   const titleHost = useDetailTitleHost()
-  const stripTitle = detailStripTitle(titleHost, detailTitle)
+  const stripTitle = detailStripTitle(titleHost, detailTitle ?? selectedTopicLabel(levels))
   const detail = (
     <DetailTitleProvider host={titleHost}>
     <>
