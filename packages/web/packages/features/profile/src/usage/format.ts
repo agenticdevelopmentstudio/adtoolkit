@@ -27,6 +27,31 @@ export function formatBytes(n: number): string {
   return [rendered, BYTE_UNITS[unit]].join(" ");
 }
 
+const COMPACT = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+
+/** A count shortened for a chart axis or a dense cell: `340`, `1.2K`, `3.4M`. */
+export function formatCompact(n: number): string {
+  return COMPACT.format(n);
+}
+
+const DURATION_UNITS: readonly (readonly [unit: string, ms: number])[] = [
+  ["h", 3_600_000],
+  ["min", 60_000],
+  ["s", 1_000],
+];
+
+/**
+ * Milliseconds of work (server or database time), in the largest unit it reaches: `850 ms`,
+ * `1.2 s`, `4.5 min`, `2.0 h`. Time summed over a range runs to hours, and a bare ms count
+ * that long is unreadable.
+ */
+export function formatDuration(ms: number): string {
+  for (const [unit, size] of DURATION_UNITS) {
+    if (Math.abs(ms) >= size) return `${(ms / size).toFixed(1)} ${unit}`;
+  }
+  return `${Math.round(ms)} ms`;
+}
+
 /**
  * Micro-dollars as money. A metering page routinely shows spend BELOW a cent — a handful of
  * chat turns is worth thousands of µUSD, not millions — and rounding those to `$0.00` would

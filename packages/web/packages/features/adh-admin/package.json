@@ -47,6 +47,7 @@
     "@agentic-toolkit/api-explorer": "workspace:*",
     "@agentic-toolkit/auth": "workspace:*",
     "@agentic-toolkit/data": "workspace:*",
+    "@agentic-toolkit/profile": "workspace:*",
     "@agentic-toolkit/resource": "workspace:*",
     "@tanstack/react-query": "^5.62.0",
     "clsx": "^2.1.1",

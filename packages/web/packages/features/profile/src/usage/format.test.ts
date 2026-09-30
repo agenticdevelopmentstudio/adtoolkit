@@ -1,7 +1,16 @@
 import { describe, it, expect } from "vitest";
 import type { UsageRow } from "@agentic-toolkit/data/profile";
 
-import { capsFor, capPercent, formatBytes, formatCost, formatCount, groupUsage } from "./format";
+import {
+  capsFor,
+  capPercent,
+  formatBytes,
+  formatCompact,
+  formatCost,
+  formatCount,
+  formatDuration,
+  groupUsage,
+} from "./format";
 
 const UNCAPPED = {
   quotaRequests: null,
@@ -57,6 +66,21 @@ describe("formatBytes / formatCount", () => {
 
   it("groups counts", () => {
     expect(formatCount(1234567)).toBe("1,234,567");
+  });
+});
+
+describe("formatCompact / formatDuration", () => {
+  it("shortens large counts and leaves small ones", () => {
+    expect(formatCompact(340)).toBe("340");
+    expect(formatCompact(1_200_000)).toBe("1.2M");
+  });
+
+  it("reads milliseconds in the largest unit reached", () => {
+    expect(formatDuration(0)).toBe("0 ms");
+    expect(formatDuration(850)).toBe("850 ms");
+    expect(formatDuration(1_200)).toBe("1.2 s");
+    expect(formatDuration(270_000)).toBe("4.5 min");
+    expect(formatDuration(7_200_000)).toBe("2.0 h");
   });
 });
 

@@ -11,6 +11,8 @@ import {
   FolderSync,
   Gauge,
   Receipt,
+  ChartLine,
+  ChartPie,
   KeyRound,
   type LucideIcon,
 } from "lucide-react";
@@ -37,6 +39,8 @@ export type AdminTopicId =
   | "llm-providers"
   | "usage"
   | "costs"
+  | "usage-overview"
+  | "breakdown"
   | "reserved-identifiers";
 
 /** One admin section. `id` doubles as the route segment, both on the admin site's own path
@@ -114,6 +118,18 @@ export const ADMIN_TOPICS: AdminTopic[] = [
     label: "Costs",
     description: "Run rate, cost items, and the prices behind them",
     icon: Receipt,
+  },
+  {
+    id: "usage-overview",
+    label: "Usage overview",
+    description: "Platform traffic, time, tokens and direct cost over time",
+    icon: ChartLine,
+  },
+  {
+    id: "breakdown",
+    label: "Breakdown",
+    description: "Usage and cost per organization, ecosystem, user or persona",
+    icon: ChartPie,
   },
   {
     id: "reserved-identifiers",

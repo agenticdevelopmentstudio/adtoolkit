@@ -13,12 +13,17 @@
   "sideEffects": [
     "**/*.css"
   ],
-  "comment:exports": "`development` → src for `next dev` (HMR); prod skips it → dist. `./sources.css` is the Tailwind @source self-registration a host @imports once. One entry only: every module here renders, so there is no server-safe half to keep off the `use client` chunk.",
+  "comment:exports": "`development` → src for `next dev` (HMR); prod skips it → dist. `./sources.css` is the Tailwind @source self-registration a host @imports once. `./usage-format` is the one non-rendering module: the usage quantity/money formatters, shared with the admin console's usage reports so a figure reads the same on both.",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "development": "./src/index.ts",
       "import": "./dist/index.js"
+    },
+    "./usage-format": {
+      "types": "./dist/usage/format.d.ts",
+      "development": "./src/usage/format.ts",
+      "import": "./dist/usage/format.js"
     },
     "./sources.css": "./sources.css"
   },

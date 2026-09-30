@@ -5,6 +5,7 @@ import { Tag } from "lucide-react";
 import { Badge } from "@agenticdevelopertoolkit/ui/components/badge";
 import { Button } from "@agenticdevelopertoolkit/ui/components/button";
 import { formatMicros } from "@agentic-toolkit/adh-ui/money";
+import { formatCompact } from "@agentic-toolkit/profile/usage-format";
 import {
   EditableList,
   useEditableList,
@@ -40,13 +41,11 @@ const SOURCE_VARIANT: Record<Source, "neutral" | "accent" | "orange" | "blue" | 
   customer_key: "neutral",
 };
 
-const COMPACT = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
-
 /** `input_tokens 1.2M · requests 340`, the item's quantities in a line. */
 export function quantitiesText(quantities: InsightItem["quantities"]): string {
   return Object.entries(quantities)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, n]) => `${key} ${COMPACT.format(n)}`)
+    .map(([key, n]) => `${key} ${formatCompact(n)}`)
     .join(" · ");
 }
 
@@ -74,7 +73,8 @@ export function CostCell({ item }: { item: InsightItem }) {
   );
 }
 
-const itemId = (item: InsightItem) => `${item.category}/${item.provider}/${item.sku}`;
+/** An item's identity across reports: category, provider and SKU. */
+export const itemId = (item: InsightItem) => `${item.category}/${item.provider}/${item.sku}`;
 
 /** The month's cost items, each with the source of its price, and Set price on the selected one. */
 export function CostItemsTable({

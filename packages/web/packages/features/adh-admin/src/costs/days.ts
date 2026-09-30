@@ -15,3 +15,15 @@ export function monthRange(month: string): { from: string; to: string } {
   const last = new Date(Date.UTC(year, mon, 0)).getUTCDate();
   return { from: `${month}-01`, to: `${month}-${String(last).padStart(2, "0")}` };
 }
+
+/** `day` moved by `n` days (negative for earlier). */
+export function addDays(day: string, n: number): string {
+  const d = new Date(`${day}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+/** The `n` days ending on (and including) `today`, the reports' default window. */
+export function lastDays(n: number, today: string = todayUtc()): { from: string; to: string } {
+  return { from: addDays(today, 1 - n), to: today };
+}

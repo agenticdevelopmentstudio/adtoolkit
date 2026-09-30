@@ -1118,6 +1118,9 @@ importers:
       '@agentic-toolkit/data':
         specifier: workspace:*
         version: link:../../data
+      '@agentic-toolkit/profile':
+        specifier: workspace:*
+        version: link:../profile
       '@agentic-toolkit/resource':
         specifier: workspace:*
         version: link:../../resource

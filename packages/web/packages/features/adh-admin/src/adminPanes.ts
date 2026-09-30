@@ -2,6 +2,7 @@ import type { ComponentType, ReactNode } from "react";
 
 import { AuditPane } from "./panes/AuditPane";
 import { AuthenticationPane } from "./panes/AuthenticationPane";
+import { BreakdownPane } from "./panes/BreakdownPane";
 import { CostsPane } from "./panes/CostsPane";
 import { FeatureFlagsPane } from "./panes/FeatureFlagsPane";
 import { FeedbackPane } from "./panes/FeedbackPane";
@@ -11,6 +12,7 @@ import { MessagingPane } from "./panes/MessagingPane";
 import { ReservedIdentifiersPane } from "./panes/ReservedIdentifiersPane";
 import { ServerBagsPane } from "./panes/ServerBagsPane";
 import { SyncPane } from "./panes/SyncPane";
+import { UsageOverviewPane } from "./panes/UsageOverviewPane";
 import { UsagePane } from "./panes/UsagePane";
 import { UsersPane } from "./panes/UsersPane";
 
@@ -37,5 +39,7 @@ export const ADMIN_PANES: Record<AdminTopicId, ComponentType<{ help?: ReactNode 
   "llm-providers": LlmProvidersPane,
   usage: UsagePane,
   costs: CostsPane,
+  "usage-overview": UsageOverviewPane,
+  breakdown: BreakdownPane,
   "reserved-identifiers": ReservedIdentifiersPane,
 };
