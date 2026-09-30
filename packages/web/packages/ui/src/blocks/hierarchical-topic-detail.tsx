@@ -1197,6 +1197,11 @@ function useRailFit() {
 // keeps a little air after it.
 const COVERED_PEEK = 32
 
+// Suffix on a `pins` key that names a list's pin WHILE IT IS THE CHOOSING FRONTIER — kept apart
+// from the list's ordinary pin so neither leaks into the other state (see CoveredStack's `pinKey`).
+// A NUL can never appear in a level id a host writes, so the two keys cannot collide.
+const FRONTIER_PIN = "\u0000frontier"
+
 /** The width at or below which a container is phone-shaped and the stack is ALWAYS narrow, however
  *  little the host claims its detail pane needs. Above the widest phone in portrait (~430) and well
  *  below any window someone reads two panes in. Deliberately a raw CSS px count and not scaled by
@@ -1938,10 +1943,22 @@ function CoveredStack({
   // Covering the list the user JUST clicked in is not this layer's problem: the click roots the
   // branch reveal at that list (see the rail's onSelect below), so a freshly covered parent stays
   // open under the pointer — its new child floating over the detail — until the pointer leaves.
-  const pinned = (i: number): boolean => {
-    if (i >= coverableCount) return false
-    return pins[rendered[i]!.id] ?? false
-  }
+  //
+  // A pin reaches EVERY list, the unselected frontier included. `coverableCount` exempts the
+  // frontier from WIDTH PRESSURE (the machine must never cover the list being chosen from), not
+  // from the user: gating the pin on it made the `«` on an empty detail a dead button — it flipped
+  // the pin, logged the toggle, and nothing slid (Mike: "clicking the << button on an empty
+  // details view should slide it over, it doesn't"). A covered frontier is still one hover away.
+  //
+  // The frontier's pin is its OWN key, not the list's: a pin set on a list while it held a
+  // selection must not follow it back into the choosing state when that selection is cleared —
+  // there it would hide the very list the user now has to choose from, which the old gate
+  // guaranteed never happened (not-hide-frontier-choosing-list). Only a `«` clicked while the list
+  // IS the choosing frontier covers it there, and completing the path hands it back to the
+  // list's ordinary pin and width pressure, exactly as before.
+  const pinKey = (i: number): string =>
+    i >= coverableCount ? `${rendered[i]!.id}${FRONTIER_PIN}` : rendered[i]!.id
+  const pinned = (i: number): boolean => pins[pinKey(i)] ?? false
 
   // COVER LAYER 2 — width pressure. Cover MORE lists, leftmost-first (general → specific), until the
   // detail keeps its minimum. This layer only ever ADDS a cover: it may take the room back from a
@@ -2071,15 +2088,14 @@ function CoveredStack({
   const leftOf = (i: number) => (inGroup(i) ? revealLeft[i]! : left[i]!) - offshift
   const boxWidth = (i: number) => (inGroup(i) ? railWidth(rendered[i]!) : widthOf(i))
 
-  // The reveal PUSHES THE DETAIL RIGHT instead of floating over it (v1.13.1): the detail's left
-  // edge tracks the open group's right edge, so the user never loses sight of what they were
-  // reading — it slides aside (possibly clipping at the container's right edge on deep stacks)
-  // and slides back when the reveal closes. The lists still float over the covered PEEKS behind
-  // them; only the detail yields.
-  const lastIdx = rendered.length - 1
-  const revealRight =
-    hoverIndex >= 0 && lastIdx >= 0 ? revealLeft[lastIdx]! + railWidth(rendered[lastIdx]!) - offshift : -1
-  const detailLeft = Math.max(restingDetailLeft, revealRight)
+  // The reveal FLOATS OVER THE DETAIL; the detail never moves for it. v1.13.1 pushed the detail's
+  // left edge out to the open group's right edge instead, and that made a hover a layout change:
+  // every pass of the pointer over a peek slid the whole pane aside and back, clipping it at the
+  // container's edge on deep stacks. A covered list is a glance, so it is drawn over the pane in
+  // place and the pane stays exactly where it was (Mike: "do not move the details pane, instead
+  // show the parent topic list OVER the details pane in the current position"). The group's
+  // z-lift, opaque background and trailing shadow are what make it read as a card on top.
+  const detailLeft = restingDetailLeft
 
   // THE SEED'S LEFT EDGE. `restingDetailLeft` is the fit pass's answer, and the fit pass does not
   // run without a measurement: both loops above are inside `if (containerW > 0)`, so before the
@@ -2181,10 +2197,15 @@ function CoveredStack({
     // no enter re-opens it (apply-disclosure-toggles-immediately).
     setHoverId(null)
     if (e.metaKey || e.ctrlKey) {
-      setPins(Object.fromEntries(rendered.map((l) => [l.id, target])))
+      // Every list's ordinary pin, as always — the choosing frontier's own pin only when the click
+      // came from ITS toggle (the empty detail's), so a ⌘-click on a parent never hides the list
+      // being chosen from.
+      const all: Record<string, boolean> = Object.fromEntries(rendered.map((l) => [l.id, target]))
+      if (parentIndex >= coverableCount) all[pinKey(parentIndex)] = target
+      setPins(all)
       return
     }
-    setPins((prev) => ({ ...prev, [rendered[parentIndex]!.id]: target }))
+    setPins((prev) => ({ ...prev, [pinKey(parentIndex)]: target }))
   }
 
   // The `«`/`»` cover control for a CHILD whose parent is rendered list `parentIndex`. `«` (parent

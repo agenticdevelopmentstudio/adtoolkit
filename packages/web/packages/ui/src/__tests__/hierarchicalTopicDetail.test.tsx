@@ -311,6 +311,31 @@ describe('HierarchicalTopicDetail — whole-branch hover reveal', () => {
     expect(boxWidth(0)).toBe('32px')
   })
 
+  it('floats the revealed lists OVER the detail — the detail pane never moves for a hover', () => {
+    // v1.13.1 pushed the detail right to the open group's edge, so every pass of the pointer over a
+    // peek slid the whole pane aside and back (Mike: "do not move the details pane, instead show
+    // the parent topic list OVER the details pane in the current position").
+    const { container } = render(
+      <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core', topic: 'apps' })}>
+        <p>detail</p>
+      </HierarchicalTopicDetail>,
+    )
+    const resting = detail(container).style.left
+    expect(resting).toBe('304px')
+
+    enter(col(0))
+    expect(boxWidth(0)).toBe('240px')
+    expect(detail(container).style.left).toBe(resting)
+    // Floating ABOVE it, not beside it: every member outranks the detail's z-index.
+    const detailZ = Number(detail(container).style.zIndex)
+    for (const i of [0, 1, 2]) expect(Number(col(i).style.zIndex)).toBeGreaterThan(detailZ)
+
+    // Leaving the list for the detail it floats over closes it — and the detail still hasn't moved.
+    leave(col(2), screen.getByText('detail'))
+    expect(boxWidth(0)).toBe('32px')
+    expect(detail(container).style.left).toBe(resting)
+  })
+
   it('collapses back to the previous state when the pointer leaves the whole branch', () => {
     render(
       <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core', topic: 'apps' })}>
@@ -408,6 +433,88 @@ describe('HierarchicalTopicDetail — whole-branch hover reveal', () => {
   })
 })
 
+describe('HierarchicalTopicDetail — the cover toggle on an EMPTY detail', () => {
+  containerWidth(W3_NONE_COVERED)
+
+  it('`«` covers the choosing frontier list, `»` brings it back', () => {
+    // The detail of an unselected frontier is only a landing, so width pressure never covers the
+    // list being chosen from — but that exemption used to swallow the USER's toggle too: the `«`
+    // flipped the pin and nothing slid (Mike: "clicking the << button on an empty details view
+    // should slide it over, it doesn't").
+    const { container } = render(
+      <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core' })}>
+        <p>detail</p>
+      </HierarchicalTopicDetail>,
+    )
+    expect(boxWidth(2)).toBe('240px')
+    expect(detail(container).style.left).toBe('720px')
+
+    fireEvent.click(within(detail(container)).getByRole('button', { name: /^Cover previous list/ }))
+    expect(boxWidth(2)).toBe('32px')
+    expect(detail(container).style.left).toBe('512px')
+
+    // Covered, the toggle reads `»` and re-discloses it.
+    fireEvent.click(within(detail(container)).getByRole('button', { name: /^Uncover previous list/ }))
+    expect(boxWidth(2)).toBe('240px')
+    expect(detail(container).style.left).toBe('720px')
+  })
+
+  it('a covered frontier floats over the empty detail on hover, without moving it', () => {
+    const { container } = render(
+      <HierarchicalTopicDetail levels={levelsFor({ region: 'us', eco: 'core' })}>
+        <p>detail</p>
+      </HierarchicalTopicDetail>,
+    )
+    fireEvent.click(within(detail(container)).getByRole('button', { name: /^Cover previous list/ }))
+    expect(detail(container).style.left).toBe('512px')
+
+    enter(col(2))
+    expect(boxWidth(2)).toBe('240px')
+    expect(detail(container).style.left).toBe('512px')
+
+    leave(col(2), screen.getByText('detail'))
+    expect(boxWidth(2)).toBe('32px')
+  })
+})
+
+describe('HierarchicalTopicDetail — the frontier pin never leaks into the auto collapse', () => {
+  containerWidth(W3_NONE_COVERED)
+  const tree = (sel: Parameters<typeof levelsFor>[0], surface: string) => (
+    <HierarchicalTopicDetail levels={levelsFor(sel, surface)}>
+      <p>detail</p>
+    </HierarchicalTopicDetail>
+  )
+
+  it('a list pinned shut while selected comes back DISCLOSED when it is the choosing frontier again', () => {
+    // The pin is on the list; clearing its selection makes it the list the user has to choose
+    // from, which must never come back hidden (not-hide-frontier-choosing-list).
+    const { rerender } = render(tree({ region: 'us', eco: 'core', topic: 'apps' }, 'leak-a'))
+    fireEvent.click(within(col(2)).getByRole('button', { name: /^Cover previous list/ }))
+    expect(boxWidth(1)).toBe('32px')
+
+    rerender(tree({ region: 'us' }, 'leak-a'))
+    expect(boxWidth(1)).toBe('240px')
+  })
+
+  it('a frontier covered from the empty detail hands back to width pressure once the path completes', () => {
+    const { container, rerender } = render(tree({ region: 'us', eco: 'core' }, 'leak-b'))
+    fireEvent.click(within(detail(container)).getByRole('button', { name: /^Cover previous list/ }))
+    expect(boxWidth(2)).toBe('32px')
+
+    // Selected now, it is an ordinary list again: at this width all three fit, so it is disclosed.
+    rerender(tree({ region: 'us', eco: 'core', topic: 'apps' }, 'leak-b'))
+    expect(boxWidth(2)).toBe('240px')
+  })
+
+  it('⌘-click cover-all from a PARENT toggle leaves the choosing frontier open', () => {
+    render(tree({ region: 'us', eco: 'core' }, 'leak-c'))
+    fireEvent.click(within(col(2)).getByRole('button', { name: /^Cover previous list/ }), { metaKey: true })
+    expect(boxWidth(0)).toBe('32px')
+    expect(boxWidth(1)).toBe('32px')
+    expect(boxWidth(2)).toBe('240px')
+  })
+})
+
 describe('HierarchicalTopicDetail — the click that pushes a choosing frontier', () => {
   const resizeTo = containerWidth(W3_FRONTIER_ONE_COVERED)
 
@@ -457,8 +564,8 @@ describe('HierarchicalTopicDetail — the click that pushes a choosing frontier'
     // itself coverable — which at this width squeezes all three lists into peeks, the one the
     // click landed in included, with the pointer still inside it. That is the exact state
     // pointer-enter names, but the pointer never moved, so no enter will ever fire. The select roots
-    // the branch itself: the clicked list stays open where it is, floating over the detail, and the
-    // detail is pushed right to clear it.
+    // the branch itself: the clicked list stays open where it is, floating over the detail — and
+    // the detail stays exactly where it lands, under the card.
     function Stack() {
       const [topic, setTopic] = useState<string | null>(null)
       return (
@@ -485,7 +592,7 @@ describe('HierarchicalTopicDetail — the click that pushes a choosing frontier'
     expect(boxWidth(1)).toBe('32px')
     expect(boxWidth(2)).toBe('240px') // covered in LAYOUT, held open by the reveal
     expect(boxLeft(2)).toBe('64px') // in place, behind the two peeks — it did not travel
-    expect(detail(container).style.left).toBe('304px') // pushed clear of the floating card
+    expect(detail(container).style.left).toBe('96px') // not pushed: the card floats over it
 
     // The pointer leaving the branch is what settles the stack into its covered layout.
     leave(col(2), screen.getByText('detail'))
