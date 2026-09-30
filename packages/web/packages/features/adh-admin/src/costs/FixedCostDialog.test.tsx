@@ -79,6 +79,15 @@ describe("FixedCostDialog", () => {
     expect((screen.getByLabelText("Monthly amount (dollars)") as HTMLInputElement).value).toBe("20");
   });
 
+  it("refuses to save an edit that blanks the label, as create does", () => {
+    render(<FixedCostDialog cost={cost()} open onClose={vi.fn()} />);
+    fireEvent.change(screen.getByLabelText("Label"), { target: { value: "   " } });
+    expect(save().disabled).toBe(true);
+    expect(screen.getByRole("status").textContent).toBe("A label is required.");
+    fireEvent.click(save());
+    expect(updateAsync).not.toHaveBeenCalled();
+  });
+
   it("shows the backend's 409 message inline", async () => {
     updateAsync.mockRejectedValue(new Error("a started fixed cost keeps its amount"));
     render(<FixedCostDialog cost={cost()} open onClose={vi.fn()} />);

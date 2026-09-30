@@ -5,7 +5,7 @@ import { Button } from "@agenticdevelopertoolkit/ui/components/button";
 import { DataTable, type DataTableColumn } from "@agenticdevelopertoolkit/ui/components/data-table";
 import { Alert, AlertTitle, AlertDescription } from "@agenticdevelopertoolkit/ui/components/alert";
 import { errorMessage } from "@agenticdevelopertoolkit/ui/lib/errors";
-import { formatMicros } from "@agentic-toolkit/adh-ui/money";
+import { formatMicros, formatMicrosFloor } from "@agenticdevelopertoolkit/ui/lib/money";
 import { formatCompact } from "@agenticdevelopertoolkit/ui/lib/quantities";
 import { TimeSeriesChart } from "@agentic-toolkit/adh-ui/components/time-series-chart";
 import {
@@ -15,6 +15,7 @@ import {
   type InsightRange,
 } from "../api/insight";
 import { CostCell, itemId, quantitiesText } from "../costs/CostItemsTable";
+import { directTotal } from "../costs/totals";
 
 const ITEM_COLUMNS: DataTableColumn<InsightItem>[] = [
   { key: "category", header: "Category", width: "8rem", render: (item) => item.category },
@@ -56,6 +57,11 @@ export function BreakdownDetail({
 }) {
   const detail = useBreakdownDetail(by, itemKey, range);
   const daily = detail.data?.daily ?? [];
+  // A day can be priced and still carry unpriced lines, so the range total is a floor whenever any
+  // day has one — the chart draws only the priced part of such a day.
+  const total = directTotal(daily);
+  const totalText =
+    total.directMicros === null ? "Unpriced" : formatMicrosFloor(total.directMicros, total.isFloor);
 
   return (
     <section
@@ -82,7 +88,19 @@ export function BreakdownDetail({
           {/* Two scales, so two charts. An unpriced day is a gap, never a $0.00. */}
           <div className="mb-6 grid gap-6 lg:grid-cols-2">
             <div>
-              <h3 className="mb-2 text-sm font-medium text-apt-text-muted">Daily direct cost</h3>
+              <div className="mb-2 flex items-baseline justify-between gap-4">
+                <h3 className="text-sm font-medium text-apt-text-muted">Daily direct cost</h3>
+                <span
+                  className="text-sm tabular-nums text-apt-text"
+                  title={
+                    total.isFloor
+                      ? "Some days have unpriced lines, so this total and those days are a floor"
+                      : undefined
+                  }
+                >
+                  {`Total ${totalText}`}
+                </span>
+              </div>
               <TimeSeriesChart
                 points={daily.map((d) => ({ x: d.day, directMicros: d.directMicros }))}
                 series={[{ key: "directMicros", label: "Direct cost" }]}

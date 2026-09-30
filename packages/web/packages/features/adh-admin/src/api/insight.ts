@@ -15,7 +15,7 @@ import { authedJson } from "./http";
 // reports it touched.
 //
 // Every money field is an integer µUSD count, or `null` when unpriced; format it with
-// `formatMicros` from `@agentic-toolkit/adh-ui/money`.
+// `formatMicros` from `@agenticdevelopertoolkit/ui/lib/money`.
 
 /** An inclusive calendar-day range, both ends `YYYY-MM-DD` (UTC days). */
 export interface InsightRange {

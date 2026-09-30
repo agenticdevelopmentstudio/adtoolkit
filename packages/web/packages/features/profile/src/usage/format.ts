@@ -1,4 +1,5 @@
 import type { UsageRow } from "@agentic-toolkit/data/profile";
+import { formatMicros } from "@agenticdevelopertoolkit/ui/lib/money";
 import { formatBytes, formatCount } from "@agenticdevelopertoolkit/ui/lib/quantities";
 
 /**
@@ -12,14 +13,12 @@ import { formatBytes, formatCount } from "@agenticdevelopertoolkit/ui/lib/quanti
 /**
  * Micro-dollars as money. A metering page routinely shows spend BELOW a cent — a handful of
  * chat turns is worth thousands of µUSD, not millions — and rounding those to `$0.00` would
- * read as "nothing was billed" when something was. Sub-cent amounts therefore keep four
- * decimals; everything else is ordinary currency.
+ * read as "nothing was billed" when something was. The toolkit's `formatMicros` already keeps
+ * four decimals below a cent, so this delegates to it: the Usage panel and the admin cost views
+ * round the same µUSD to the same text (1,005,000 reads `$1.01` in both).
  */
-export function formatCost(micros: number): string {
-  const dollars = micros / 1_000_000;
-  if (micros === 0) return "$0.00";
-  if (Math.abs(micros) < 10_000) return ["$", dollars.toFixed(4)].join("");
-  return ["$", dollars.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })].join("");
+export function formatCost(micros: number | null): string {
+  return formatMicros(micros);
 }
 
 // ── Caps ───────────────────────────────────────────────────────────────────────

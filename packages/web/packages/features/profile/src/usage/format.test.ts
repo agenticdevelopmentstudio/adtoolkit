@@ -42,6 +42,16 @@ describe("formatCost", () => {
     expect(formatCost(12_345_678_901)).toBe("$12,345.68");
   });
 
+  // Delegates to the toolkit's formatMicros, which rounds half-cents on the integer: the old
+  // float division read 1,005,000 µUSD as $1.00 here while the admin views read $1.01.
+  it("rounds a half cent up, the same as every other money surface", () => {
+    expect(formatCost(1_005_000)).toBe("$1.01");
+  });
+
+  it("reads an unpriced amount as a dash, never as zero", () => {
+    expect(formatCost(null)).toBe("—");
+  });
+
   it("shows an untouched counter as $0.00, not $0.0000", () => {
     expect(formatCost(0)).toBe("$0.00");
   });

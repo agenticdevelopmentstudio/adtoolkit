@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { CalendarX, Pencil, Plus, Trash2 } from "lucide-react";
 import { useAction } from "@agenticdevelopertoolkit/ui/hooks/useAction";
 import { Button } from "@agenticdevelopertoolkit/ui/components/button";
@@ -14,7 +14,7 @@ import {
 } from "@agenticdevelopertoolkit/ui/components/dialog";
 import { DialogActions } from "@agenticdevelopertoolkit/ui/components/dialog-actions";
 import { Field } from "@agenticdevelopertoolkit/ui/blocks";
-import { formatMicros } from "@agentic-toolkit/adh-ui/money";
+import { formatMicros } from "@agenticdevelopertoolkit/ui/lib/money";
 import {
   EditableList,
   useEditableList,
@@ -88,10 +88,13 @@ export function FixedCostDialog({
 
   // What the form would send, or why it cannot be sent (shown beside the amount).
   const amount = dollarsToMicros(form.dollars);
+  // A label is required on an edit too: the backend would store the blank one the create refuses.
   const problem =
     cost === null && (form.provider.trim() === "" || form.label.trim() === "")
       ? "Provider and label are required."
-      : !locked && !amount.ok
+      : form.label.trim() === ""
+        ? "A label is required."
+        : !locked && !amount.ok
         ? amount.message
         : form.to !== "" && form.to < form.from
           ? "The end date is before the start."
@@ -292,17 +295,26 @@ export function FixedCostsList() {
   const selected = list.selectedRows.length === 1 ? list.selectedRows[0]! : null;
   const today = todayUtc();
   // A cost that has not begun cannot be "ended" without still charging its first day, so it is
-  // deleted instead (the backend allows that until it starts). One that is running and open-ended
-  // is ended: its last charged day is today.
-  const notBegun = selected !== null && selected.effectiveFrom > today;
+  // deleted instead — the backend allows re-pricing and deleting while `effectiveFrom >= today`, so
+  // one starting today counts as not begun. One that is running and open-ended is ended: its last
+  // charged day is today.
+  const notBegun = selected !== null && !hasStarted(selected, today);
   const canEnd = selected !== null && !notBegun && selected.effectiveTo === null;
+  // The action's failure belongs to the row it was about: choosing another row clears it.
+  const [showEndingError, setShowEndingError] = useState(false);
+  const selectedId = selected?.id ?? null;
+  useEffect(() => setShowEndingError(false), [selectedId]);
+  const act = (action: () => Promise<void>) => {
+    setShowEndingError(true);
+    void ending.run(action);
+  };
   const endCost = (cost: FixedCost) =>
-    void ending.run(async () => {
+    act(async () => {
       await updateCost.mutateAsync({ id: cost.id, changes: { effectiveTo: today } });
       list.clearSelection();
     });
   const removeCost = (cost: FixedCost) =>
-    void ending.run(async () => {
+    act(async () => {
       await deleteCost.mutateAsync(cost.id);
       list.clearSelection();
     });
@@ -357,8 +369,9 @@ export function FixedCostsList() {
               </Button>
             )}
             {/* A failed end/delete is about the action, not the list, so it sits by the action
-                (cleared by the next attempt) instead of in the list's "couldn't load" slot. */}
-            {ending.error && (
+                (cleared by the next attempt or another selection) instead of in the list's
+                "couldn't load" slot. */}
+            {ending.error && showEndingError && (
               <span role="alert" className="text-sm text-apt-red">
                 {ending.error}
               </span>

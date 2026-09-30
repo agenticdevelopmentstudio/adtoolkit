@@ -6,11 +6,11 @@ import { Select } from "@agenticdevelopertoolkit/ui/components/select";
 import { Pagination } from "@agenticdevelopertoolkit/ui/components/pagination";
 import { Alert, AlertTitle, AlertDescription } from "@agenticdevelopertoolkit/ui/components/alert";
 import { errorMessage } from "@agenticdevelopertoolkit/ui/lib/errors";
-import { formatMicros } from "@agentic-toolkit/adh-ui/money";
+import { formatMicros } from "@agenticdevelopertoolkit/ui/lib/money";
 import {
   DateRangePicker,
   type DateRange,
-} from "@agentic-toolkit/adh-ui/components/date-range-picker";
+} from "@agenticdevelopertoolkit/ui/components/date-range-picker";
 import { useBreakdown, type BreakdownBy, type BreakdownSort } from "../api/insight";
 import { BreakdownTable, ESTIMATE_HINT, unattributedLast } from "../breakdown/BreakdownTable";
 import { BreakdownDetail } from "../breakdown/BreakdownDetail";

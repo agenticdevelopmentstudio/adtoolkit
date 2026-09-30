@@ -3,9 +3,10 @@
 import { useMemo } from "react";
 import { Bot, Boxes, Building2, Info, User, type LucideIcon } from "lucide-react";
 import { DataTable, type DataTableColumn } from "@agenticdevelopertoolkit/ui/components/data-table";
-import { formatMicros } from "@agentic-toolkit/adh-ui/money";
+import { formatMicrosFloor } from "@agenticdevelopertoolkit/ui/lib/money";
 import { formatCompact, formatCount, formatDuration } from "@agenticdevelopertoolkit/ui/lib/quantities";
 import type { Breakdown, BreakdownBy, BreakdownSort } from "../api/insight";
+import { llmTokenTotal } from "../costs/totals";
 
 export type BreakdownRow = Breakdown["rows"][number];
 
@@ -31,9 +32,7 @@ export function unattributedLast(rows: readonly BreakdownRow[]): BreakdownRow[] 
   ];
 }
 
-/** Input + output + cache tokens (reasoning is already inside output). */
-const tokensOf = ({ llmTokens: t }: BreakdownRow) =>
-  t.input + t.output + t.cacheRead + t.cacheWrite;
+const tokensOf = (row: BreakdownRow) => llmTokenTotal(row.llmTokens);
 
 /**
  * A row's direct cost. `null` is unpriced — "Unpriced", never `$0.00`; a priced row that still has
@@ -42,9 +41,22 @@ const tokensOf = ({ llmTokens: t }: BreakdownRow) =>
 export function DirectCell({ row }: { row: BreakdownRow }) {
   if (row.directMicros === null) return <span className="text-apt-orange">Unpriced</span>;
   return (
-    <span className="tabular-nums">
-      {row.unpricedLines > 0 ? "≥ " : ""}
-      {formatMicros(row.directMicros)}
+    <span className="tabular-nums">{formatMicrosFloor(row.directMicros, row.unpricedLines > 0)}</span>
+  );
+}
+
+/**
+ * A row's estimate: direct plus its hosting share. Any unpriced direct part makes it a floor; a row
+ * whose direct cost is all unpriced and that has no hosting share has no figure at all, so it reads
+ * "Unpriced" rather than "≥ $0.00".
+ */
+export function EstimatedCell({ row }: { row: BreakdownRow }) {
+  if (row.directMicros === null && row.hostingShareMicros === 0) {
+    return <span className="text-apt-orange">Unpriced</span>;
+  }
+  return (
+    <span className="tabular-nums text-apt-text-muted">
+      {formatMicrosFloor(row.estimatedMicros, row.directMicros === null || row.unpricedLines > 0)}
     </span>
   );
 }
@@ -130,12 +142,7 @@ export function BreakdownTable({
         sortable: true,
         align: "end",
         width: "10rem",
-        render: (row) => (
-          <span className="tabular-nums text-apt-text-muted">
-            {row.directMicros === null || row.unpricedLines > 0 ? "≥ " : ""}
-            {formatMicros(row.estimatedMicros)}
-          </span>
-        ),
+        render: (row) => <EstimatedCell row={row} />,
       },
     ],
     [Icon],
@@ -153,11 +160,13 @@ export function BreakdownTable({
       sort={{ key: sort, dir: "desc" }}
       onSortChange={(next) => onSortChange(next.key as BreakdownSort)}
       selectedIds={openKey ? new Set([openKey]) : undefined}
-      // One row open at a time: a click selects it, and selecting is opening.
+      // One row open at a time: a click selects it, and selecting is opening. Alt-click and Space
+      // ADD to the selection, so the set still holds the open row — the row to open is the other one.
       onSelectionChange={(ids) => {
-        const [key] = ids;
+        const key = [...ids].find((id) => id !== openKey);
         if (key !== undefined) onOpen(key);
       }}
+      onRowActivate={onOpen}
     />
   );
 }

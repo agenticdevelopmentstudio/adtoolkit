@@ -6,14 +6,14 @@ import { Select } from "@agenticdevelopertoolkit/ui/components/select";
 import { Stat } from "@agenticdevelopertoolkit/ui/components/stat";
 import { Alert, AlertTitle, AlertDescription } from "@agenticdevelopertoolkit/ui/components/alert";
 import { errorMessage } from "@agenticdevelopertoolkit/ui/lib/errors";
-import { formatMicros } from "@agentic-toolkit/adh-ui/money";
+import { formatMicros, formatMicrosFloor } from "@agenticdevelopertoolkit/ui/lib/money";
 import {
   formatBytes,
   formatCompact,
   formatCount,
   formatDuration,
 } from "@agenticdevelopertoolkit/ui/lib/quantities";
-import { DateRangePicker } from "@agentic-toolkit/adh-ui/components/date-range-picker";
+import { DateRangePicker } from "@agenticdevelopertoolkit/ui/components/date-range-picker";
 import {
   TimeSeriesChart,
   type TimeSeriesPoint,
@@ -25,6 +25,7 @@ import {
   type InsightOverview,
 } from "../api/insight";
 import { lastDays, todayUtc } from "../costs/days";
+import { directTotal, llmTokenTotal } from "../costs/totals";
 
 // The platform's metered usage over time: traffic, the time spent serving it, LLM tokens,
 // messaging, and the direct cost it priced out to. The enforcement/tiers console is the separate
@@ -118,30 +119,25 @@ export interface OverviewTotals {
   smsSegments: number;
   /** `null` when every bucket is unpriced. */
   directMicros: number | null;
-  /** Some bucket is unpriced, so the direct figure is a floor. */
+  /** Some bucket has an unpriced line, so the direct figure is a floor. */
   directIsFloor: boolean;
 }
 
 /** The range's totals over every bucket. Tokens total input + output + cache (reasoning is in output). */
 export function overviewTotals(points: readonly OverviewPoint[]): OverviewTotals {
   const sum = (f: (p: OverviewPoint) => number) => points.reduce((n, p) => n + f(p), 0);
-  const priced = points.filter((p) => p.directMicros !== null);
+  const direct = directTotal(points);
   return {
     requests: sum((p) => p.requests),
     bytesIn: sum((p) => p.bytesIn),
     bytesOut: sum((p) => p.bytesOut),
     serverMs: sum((p) => p.serverMs),
     dbMs: sum((p) => p.dbMs),
-    llmTokens: sum(
-      ({ llmTokens: t }) => t.input + t.output + t.cacheRead + t.cacheWrite,
-    ),
+    llmTokens: sum((p) => llmTokenTotal(p.llmTokens)),
     emails: sum((p) => p.emails),
     smsSegments: sum((p) => p.smsSegments),
-    directMicros:
-      priced.length === 0 && points.length > 0
-        ? null
-        : priced.reduce((n, p) => n + p.directMicros!, 0),
-    directIsFloor: priced.length > 0 && priced.length < points.length,
+    directMicros: direct.directMicros,
+    directIsFloor: direct.isFloor,
   };
 }
 
@@ -149,7 +145,7 @@ function Totals({ totals }: { totals: OverviewTotals }) {
   const direct =
     totals.directMicros === null
       ? "Unpriced"
-      : `${totals.directIsFloor ? "≥ " : ""}${formatMicros(totals.directMicros)}`;
+      : formatMicrosFloor(totals.directMicros, totals.directIsFloor);
   const stats: [string, string][] = [
     ["Requests", formatCount(totals.requests)],
     ["Data in", formatBytes(totals.bytesIn)],

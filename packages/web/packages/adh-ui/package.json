@@ -39,11 +39,6 @@
       "development": "./src/lib/help-ids.ts",
       "import": "./dist/lib/help-ids.js"
     },
-    "./money": {
-      "types": "./dist/lib/money.d.ts",
-      "development": "./src/lib/money.ts",
-      "import": "./dist/lib/money.js"
-    },
     "./blocks": {
       "types": "./dist/blocks/index.d.ts",
       "development": "./src/blocks/index.ts",
@@ -58,11 +53,6 @@
       "types": "./dist/components/time-series-chart.d.ts",
       "development": "./src/components/time-series-chart.tsx",
       "import": "./dist/components/time-series-chart.js"
-    },
-    "./components/date-range-picker": {
-      "types": "./dist/components/date-range-picker.d.ts",
-      "development": "./src/components/date-range-picker.tsx",
-      "import": "./dist/components/date-range-picker.js"
     },
     "./sources.css": "./sources.css"
   },

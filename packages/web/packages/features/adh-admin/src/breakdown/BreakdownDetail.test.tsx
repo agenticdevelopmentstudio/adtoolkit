@@ -38,8 +38,8 @@ const detail: Detail = {
   label: "Main ecosystem",
   items: [item(), item({ sku: "priced", source: "rate", costMicros: 1_500_000, unpricedLines: 0 })],
   daily: [
-    { day: "2026-09-01", directMicros: null, requests: 2 },
-    { day: "2026-09-02", directMicros: 1_500_000, requests: 1 },
+    { day: "2026-09-01", directMicros: null, unpricedLines: 1, requests: 2 },
+    { day: "2026-09-02", directMicros: 1_500_000, unpricedLines: 0, requests: 1 },
   ],
 };
 
@@ -56,6 +56,35 @@ describe("BreakdownDetail", () => {
       "Direct cost",
       "Requests",
     ]);
+  });
+
+  it("totals the range as a floor when an unpriced day leaves part out", () => {
+    useBreakdownDetail.mockReturnValue({ data: detail, isLoading: false, error: null });
+    render(<BreakdownDetail by="ecosystem" itemKey="k1" range={{ from: "a", to: "b" }} onClose={vi.fn()} />);
+    expect(screen.getByText("Total ≥ $1.50")).toBeTruthy();
+  });
+
+  it("totals the range as a floor when a priced day still has unpriced lines", () => {
+    const priced: Detail = {
+      ...detail,
+      daily: [
+        { day: "2026-09-01", directMicros: 500_000, unpricedLines: 2, requests: 2 },
+        { day: "2026-09-02", directMicros: 1_500_000, unpricedLines: 0, requests: 1 },
+      ],
+    };
+    useBreakdownDetail.mockReturnValue({ data: priced, isLoading: false, error: null });
+    render(<BreakdownDetail by="ecosystem" itemKey="k1" range={{ from: "a", to: "b" }} onClose={vi.fn()} />);
+    expect(screen.getByText("Total ≥ $2.00")).toBeTruthy();
+  });
+
+  it("totals the range exactly when every day is fully priced", () => {
+    const priced: Detail = {
+      ...detail,
+      daily: [{ day: "2026-09-02", directMicros: 1_500_000, unpricedLines: 0, requests: 1 }],
+    };
+    useBreakdownDetail.mockReturnValue({ data: priced, isLoading: false, error: null });
+    render(<BreakdownDetail by="ecosystem" itemKey="k1" range={{ from: "a", to: "b" }} onClose={vi.fn()} />);
+    expect(screen.getByText("Total $1.50")).toBeTruthy();
   });
 
   it("closes", () => {

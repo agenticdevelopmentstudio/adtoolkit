@@ -32,10 +32,20 @@ const header = (rr: RunRate | undefined, extra: { error?: unknown; onShowUnprice
 
 describe("RunRateHeader", () => {
   it("prefixes month to date and projected with a floor marker when items are unpriced", () => {
-    header(runRate({ unpricedItems: 2 }));
-    expect(screen.getAllByText("≥ $0.00")).toHaveLength(1); // month to date
-    expect(screen.getByText("≥ $20.00")).toBeTruthy(); // projected; fixed stays exact
-    expect(screen.getByText("$20.00")).toBeTruthy();
+    header(
+      runRate({ directToDateMicros: 3_000_000, projectedMonthMicros: 29_000_000, unpricedItems: 2 }),
+    );
+    expect(screen.getByText("≥ $3.00")).toBeTruthy(); // month to date
+    expect(screen.getByText("≥ $29.00")).toBeTruthy(); // projected
+    expect(screen.getByText("$20.00")).toBeTruthy(); // fixed stays exact
+  });
+
+  it("reads Unpriced, never ≥ $0.00, when the whole month's direct cost is unpriced", () => {
+    header(runRate({ directToDateMicros: null, unpricedItems: 2 }));
+    expect(screen.getByText("Unpriced")).toBeTruthy(); // month to date
+    // The projection is the fixed part alone, and the unpriced direct part can only add to it.
+    expect(screen.getByText("≥ $20.00")).toBeTruthy();
+    expect(screen.queryByText("≥ $0.00")).toBeNull();
   });
 
   it("shows exact figures, and no button, when nothing is unpriced", () => {

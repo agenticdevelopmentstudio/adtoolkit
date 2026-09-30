@@ -30,7 +30,7 @@ function literalKeyHeads(): string[][] {
       if (!/queryKey:|\bkey: \[|as const/.test(line)) continue;
       const match = keyLine.exec(line);
       if (!match) continue;
-      heads.push(match[1].split(",").map((s) => JSON.parse(s.trim()) as string));
+      heads.push(match[1]!.split(",").map((s) => JSON.parse(s.trim()) as string));
     }
   }
   return heads;

@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { Tag } from "lucide-react";
 import { Badge } from "@agenticdevelopertoolkit/ui/components/badge";
 import { Button } from "@agenticdevelopertoolkit/ui/components/button";
-import { formatMicros } from "@agentic-toolkit/adh-ui/money";
+import { formatMicrosFloor } from "@agenticdevelopertoolkit/ui/lib/money";
 import { formatCompact } from "@agenticdevelopertoolkit/ui/lib/quantities";
 import {
   EditableList,
@@ -67,8 +67,7 @@ export function CostCell({ item }: { item: InsightItem }) {
       className="tabular-nums"
       title={floor ? `${item.unpricedLines} line(s) have no price, so this is a floor` : undefined}
     >
-      {floor ? "≥ " : ""}
-      {formatMicros(item.costMicros)}
+      {formatMicrosFloor(item.costMicros, floor)}
     </span>
   );
 }

@@ -5,7 +5,7 @@ import { Label } from "@agenticdevelopertoolkit/ui/components/label";
 import { Button } from "@agenticdevelopertoolkit/ui/components/button";
 import { Alert, AlertTitle, AlertDescription } from "@agenticdevelopertoolkit/ui/components/alert";
 import { errorMessage } from "@agenticdevelopertoolkit/ui/lib/errors";
-import { formatMicros } from "@agentic-toolkit/adh-ui/money";
+import { formatMicros, formatMicrosFloor } from "@agenticdevelopertoolkit/ui/lib/money";
 import type { RunRate } from "../api/insight";
 
 function Stat({ label, value, title }: { label: string; value: string; title?: string }) {
@@ -41,10 +41,18 @@ export function RunRateHeader({
 }) {
   const unpriced = runRate?.unpricedItems ?? 0;
   // Unpriced items add nothing to the direct figures, so with any of them the figure is a floor
-  // and says so (same `≥` as the items table) rather than headlining a bare $0.00.
-  const floor = unpriced > 0 ? "≥ " : "";
-  const money = (micros: number | undefined, floored = false) =>
-    micros === undefined ? "—" : `${floored ? floor : ""}${formatMicros(micros)}`;
+  // and says so (same `≥` as the items table). A month whose direct cost is all unpriced has no
+  // figure at all: it reads "Unpriced", never "≥ $0.00". Its projection is still the fixed
+  // part, a floor.
+  const monthToDate =
+    runRate === undefined
+      ? "—"
+      : runRate.directToDateMicros === null
+        ? "Unpriced"
+        : formatMicrosFloor(runRate.directToDateMicros, unpriced > 0);
+  const projected =
+    runRate === undefined ? "—" : formatMicrosFloor(runRate.projectedMonthMicros, unpriced > 0);
+  const fixed = runRate === undefined ? "—" : formatMicros(runRate.fixedMonthMicros);
   return (
     <section
       aria-label="Run rate"
@@ -69,15 +77,15 @@ export function RunRateHeader({
         </div>
         <Stat
           label="Month to date"
-          value={money(runRate?.directToDateMicros, true)}
+          value={monthToDate}
           title={runRate ? `Direct cost over ${runRate.elapsedDays} complete days` : undefined}
         />
         <Stat
           label="Projected month end"
-          value={money(runRate?.projectedMonthMicros, true)}
+          value={projected}
           title="Direct to date ÷ elapsed days × days in month, plus fixed"
         />
-        <Stat label="Fixed" value={money(runRate?.fixedMonthMicros)} />
+        <Stat label="Fixed" value={fixed} />
         {unpriced > 0 && (
           <Button variant="ghost" size="sm" onClick={onShowUnpriced}>
             {unpriced === 1 ? "1 unpriced item" : `${unpriced} unpriced items`}

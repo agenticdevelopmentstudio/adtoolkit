@@ -31,6 +31,7 @@ const point = (over: Partial<Point> = {}): Point => ({
   smsSegments: 1,
   storageOps: 0,
   directMicros: 1_000_000,
+  unpricedLines: 0,
   ...over,
 });
 
@@ -53,9 +54,17 @@ describe("overviewTotals", () => {
   });
 
   it("is Unpriced when every bucket is, and a floor when only some are", () => {
-    expect(overviewTotals([point({ directMicros: null })]).directMicros).toBeNull();
-    expect(overviewTotals([point(), point({ directMicros: null })])).toMatchObject({
+    const unpriced = point({ directMicros: null, unpricedLines: 1 });
+    expect(overviewTotals([unpriced]).directMicros).toBeNull();
+    expect(overviewTotals([point(), unpriced])).toMatchObject({
       directMicros: 1_000_000,
+      directIsFloor: true,
+    });
+  });
+
+  it("is a floor when a priced bucket still has unpriced lines", () => {
+    expect(overviewTotals([point(), point({ unpricedLines: 2 })])).toMatchObject({
+      directMicros: 2_000_000,
       directIsFloor: true,
     });
   });
@@ -79,7 +88,7 @@ describe("UsageOverviewPane", () => {
 
   it("reads Unpriced, never $0.00, when every bucket is unpriced", () => {
     useInsightOverview.mockReturnValue({
-      data: { interval: "day", points: [point({ directMicros: null })] },
+      data: { interval: "day", points: [point({ directMicros: null, unpricedLines: 1 })] },
       isLoading: false,
       error: null,
     });
@@ -87,6 +96,17 @@ describe("UsageOverviewPane", () => {
     const totals = within(screen.getByRole("region", { name: "Totals" }));
     expect(totals.getByText("Unpriced")).toBeTruthy();
     expect(totals.queryByText("$0.00")).toBeNull();
+  });
+
+  it("marks the direct total a floor when a priced bucket has unpriced lines", () => {
+    useInsightOverview.mockReturnValue({
+      data: { interval: "day", points: [point(), point({ unpricedLines: 3 })] },
+      isLoading: false,
+      error: null,
+    });
+    render(<UsageOverviewPane />);
+    const totals = within(screen.getByRole("region", { name: "Totals" }));
+    expect(totals.getByText("≥ $2.00")).toBeTruthy();
   });
 
   it("refetches with the chosen interval", () => {
