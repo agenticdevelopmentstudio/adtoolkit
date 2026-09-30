@@ -35,6 +35,14 @@ describe('Btn', () => {
     expect(btn.textContent).toBe('Go')
   })
 
+  it('treats a null detail as no detail', () => {
+    const { container } = render(<Btn href="#a" detail={null}>Go</Btn>)
+    const btn = container.firstElementChild!
+    expect(btn.className).not.toContain('lp-btn--detailed')
+    expect(btn.querySelector('.lp-btn__detail')).toBeNull()
+    expect(btn.textContent).toBe('Go')
+  })
+
   it('takes lg and a detail line under the label', () => {
     const { container } = render(
       <Btn href="#a" size="lg" detail="28.8 MB">

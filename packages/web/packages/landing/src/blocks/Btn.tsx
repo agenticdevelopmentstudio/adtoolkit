@@ -26,17 +26,20 @@ export function Btn({
   detail?: ReactNode
   children: ReactNode
 }): ReactElement {
+  // `null` is "no detail", as it is anywhere else a ReactNode is optional —
+  // not an empty second line.
+  const detailed = detail !== undefined && detail !== null
   const cls = [
     'lp-btn',
     `lp-btn--${variant}`,
     size === 'lg' ? 'lp-btn--lg' : '',
-    detail !== undefined ? 'lp-btn--detailed' : '',
+    detailed ? 'lp-btn--detailed' : '',
   ]
     .filter(Boolean)
     .join(' ')
   return (
     <a className={cls} href={href}>
-      {detail !== undefined ? (
+      {detailed ? (
         <>
           <span className="lp-btn__label">{children}</span>
           <span className="lp-btn__detail">{detail}</span>
