@@ -148,10 +148,19 @@ describe("insightApi price tables", () => {
   });
 });
 
+// Explicit row types: each hook returns its own result type, which a bare tuple array would
+// unify into one (and then reject the other rows).
+type QueryRow = [name: string, hook: () => { isSuccess: boolean }, url: string];
+type MutationRow = [
+  name: string,
+  hook: () => { mutateAsync: (vars: never) => Promise<unknown> },
+  vars: unknown,
+];
+
 describe("query hooks", () => {
   beforeEach(() => authedJson.mockResolvedValue({ rows: [] }));
 
-  it.each([
+  it.each<QueryRow>([
     ["useRunRate", () => useRunRate("2026-09"), "/api/usage/insight/run-rate?month=2026-09"],
     [
       "useInsightItems",
@@ -196,19 +205,19 @@ describe("query hooks", () => {
 describe("mutation hooks invalidate every insight read", () => {
   beforeEach(() => authedJson.mockResolvedValue({}));
 
-  it.each([
+  it.each<MutationRow>([
     ["useCreateRate", () => useCreateRate(), { category: "llm", provider: "p", sku: "s", quantityKey: "k", microsPerUnit: "1" }],
     ["useUpdateRate", () => useUpdateRate(), { id: "r1", changes: { note: "n" } }],
     ["useDeleteRate", () => useDeleteRate(), "r1"],
     ["useCreateFixedCost", () => useCreateFixedCost(), { provider: "p", label: "l", monthlyMicros: 1, effectiveFrom: "2026-09-01" }],
     ["useUpdateFixedCost", () => useUpdateFixedCost(), { id: "f1", changes: { label: "l" } }],
     ["useDeleteFixedCost", () => useDeleteFixedCost(), "f1"],
-  ] as const)("%s", async (_name, hook, vars) => {
+  ])("%s", async (_name, hook, vars) => {
     const { client, wrapper } = harness();
     const spy = vi.spyOn(client, "invalidateQueries");
     const { result } = renderHook(hook, { wrapper });
-    // Each hook's own variables type; the table pairs them by row.
-    await (result.current.mutateAsync as (v: unknown) => Promise<unknown>)(vars);
+    // Each hook takes its own variables; the table pairs them by row.
+    await result.current.mutateAsync(vars as never);
     expect(spy).toHaveBeenCalledWith({ queryKey: INSIGHT_QUERY_KEY });
   });
 });

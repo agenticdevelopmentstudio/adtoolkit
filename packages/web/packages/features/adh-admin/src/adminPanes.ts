@@ -2,6 +2,7 @@ import type { ComponentType, ReactNode } from "react";
 
 import { AuditPane } from "./panes/AuditPane";
 import { AuthenticationPane } from "./panes/AuthenticationPane";
+import { CostsPane } from "./panes/CostsPane";
 import { FeatureFlagsPane } from "./panes/FeatureFlagsPane";
 import { FeedbackPane } from "./panes/FeedbackPane";
 import { InvitationsPane } from "./panes/InvitationsPane";
@@ -17,7 +18,7 @@ import type { AdminTopicId } from "./adminTopics";
 
 // Apart from adminTopics.ts so the topic list stays cheap to import: the admin site's shell (and
 // any rail or route that only needs the names, icons and the id guard) reads `./topics`, and a
-// module that ALSO held this map would pull all twelve panes — react-query, the editors, the
+// module that ALSO held this map would pull all the panes — react-query, the editors, the
 // dialogs — into every chunk that wanted a label.
 
 /** Every topic's detail pane, keyed by {@link AdminTopicId}. Both hosts (the admin site's own
@@ -35,5 +36,6 @@ export const ADMIN_PANES: Record<AdminTopicId, ComponentType<{ help?: ReactNode 
   authentication: AuthenticationPane,
   "llm-providers": LlmProvidersPane,
   usage: UsagePane,
+  costs: CostsPane,
   "reserved-identifiers": ReservedIdentifiersPane,
 };

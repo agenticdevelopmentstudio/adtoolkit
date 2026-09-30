@@ -10,6 +10,7 @@ import {
   Cable,
   FolderSync,
   Gauge,
+  Receipt,
   KeyRound,
   type LucideIcon,
 } from "lucide-react";
@@ -35,6 +36,7 @@ export type AdminTopicId =
   | "authentication"
   | "llm-providers"
   | "usage"
+  | "costs"
   | "reserved-identifiers";
 
 /** One admin section. `id` doubles as the route segment, both on the admin site's own path
@@ -106,6 +108,12 @@ export const ADMIN_TOPICS: AdminTopic[] = [
     label: "Usage Limits",
     description: "Metering tiers and the enforcement switch",
     icon: Gauge,
+  },
+  {
+    id: "costs",
+    label: "Costs",
+    description: "Run rate, cost items, and the prices behind them",
+    icon: Receipt,
   },
   {
     id: "reserved-identifiers",

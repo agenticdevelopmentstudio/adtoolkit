@@ -36,7 +36,7 @@ export interface TimeSeriesChartProps {
 
 /**
  * The categorical series colours, in their fixed assignment order — the toolkit's own
- * theme-independent tagging hues (`--color-apt-cat-*`, which sit outside the status
+ * tagging hues, hue-stable across themes (`--color-apt-cat-*`, which sit outside the status
  * spectrum), ordered so adjacent series stay apart for colour-blind readers. A series
  * keeps its slot by position in `series`, never by rank in the data.
  */

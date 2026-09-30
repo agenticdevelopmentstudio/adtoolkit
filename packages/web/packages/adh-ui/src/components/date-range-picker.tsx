@@ -24,8 +24,10 @@ export interface DateRangePickerProps {
 /**
  * Two native date fields, From and To. Native rather than a calendar popover: the
  * browser's own picker is keyboard- and screen-reader-complete for free. Each end
- * bounds the other (`from` can't pass `to`), so the range can't be inverted from
- * the UI; a cleared field is ignored rather than reported as an empty day.
+ * bounds the other (`from` can't pass `to`), so the picker itself steers away from an
+ * inverted range — though a typed date bypasses min/max, so a caller that needs a
+ * valid range must still check it. A cleared field is ignored rather than reported as
+ * an empty day.
  */
 export function DateRangePicker({ value, onChange, min, max, className }: DateRangePickerProps) {
   const id = React.useId()
