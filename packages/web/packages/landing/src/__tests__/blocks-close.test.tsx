@@ -25,6 +25,28 @@ describe('Btn', () => {
     rerender(<Btn href="#a" variant="ghost">Go</Btn>)
     expect(container.firstElementChild!.className).toContain('lp-btn--ghost')
   })
+
+  it('is plain text and not large by default', () => {
+    const { container } = render(<Btn href="#a">Go</Btn>)
+    const btn = container.firstElementChild!
+    expect(btn.className).not.toContain('lp-btn--lg')
+    expect(btn.className).not.toContain('lp-btn--detailed')
+    expect(btn.querySelector('.lp-btn__label')).toBeNull()
+    expect(btn.textContent).toBe('Go')
+  })
+
+  it('takes lg and a detail line under the label', () => {
+    const { container } = render(
+      <Btn href="#a" size="lg" detail="28.8 MB">
+        Download
+      </Btn>
+    )
+    const btn = container.firstElementChild!
+    expect(btn.className).toContain('lp-btn--lg')
+    expect(btn.className).toContain('lp-btn--detailed')
+    expect(btn.querySelector('.lp-btn__label')!.textContent).toBe('Download')
+    expect(btn.querySelector('.lp-btn__detail')!.textContent).toBe('28.8 MB')
+  })
 })
 
 describe('StatusPill', () => {

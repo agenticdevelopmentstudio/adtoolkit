@@ -146,7 +146,7 @@ under **Install**.
 | `Contact` | blocks | A `Closer` plus a mailto link and an optional colophon line. |
 | `Trust` | blocks | The hero's inline trust-signal list (free, platform, etc). |
 | `Cta` | blocks | The hero's button row wrapper. |
-| `Btn` | blocks | A link styled as a button; `variant="primary"` (default) or `"ghost"`. |
+| `Btn` | blocks | A link styled as a button; `variant="primary"` (default) or `"ghost"`; `size="lg"` for the page's one real action, and `detail` for a smaller second line under the label (a file size, a format). |
 | `StatusPill` | blocks | The hero's status line; `free` switches to the accented "free" treatment (`--lp-status-free-border`). |
 | `Hero` | blocks | The one centred `Screen` on the page: glow, mark, headline, tagline, children (`Cta`/`Trust`/`StatusPill`, in the host's own order). |
 

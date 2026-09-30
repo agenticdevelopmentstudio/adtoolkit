@@ -141,6 +141,28 @@
   border-color: var(--lp-accent, #9a9a9a);
   color: var(--lp-accent-bright, #d8d8d8);
 }
+/* The page's one real action. Bigger in every direction — padding, type and
+ * minimum width — so it reads as the destination rather than a route, and the
+ * min-width keeps a pair of them the same size when their labels differ. */
+.lp-btn.lp-btn--lg {
+  justify-content: center;
+  min-width: 15rem;
+  padding: 1.15rem 2.2rem;
+  font-size: 1.02rem;
+}
+/* Label over detail, centred. `white-space: nowrap` from `.lp-btn` still holds
+ * per line, so the detail never wraps under a narrow label. */
+.lp-btn.lp-btn--detailed {
+  flex-direction: column;
+  gap: 0.3rem;
+  line-height: 1.2;
+}
+.lp-btn__detail {
+  font-size: 0.7em;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  opacity: 0.72;
+}
 
 /* ---- trust strip ----
  * The things a visitor wants settled before they read a feature list, on one
