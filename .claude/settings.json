@@ -7,7 +7,8 @@
     "typescript-lsp@claude-plugins-official": true,
     "chrome-devtools-mcp@chrome-devtools-plugins": true,
     "vscode-langservers@claude-code-lsps": true,
-    "graphql-lsp@claude-code-lsps": true
+    "graphql-lsp@claude-code-lsps": true,
+    "swift-lsp@claude-plugins-official": true
   },
   "extraKnownMarketplaces": {
     "chrome-devtools-plugins": {

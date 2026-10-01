@@ -1,10 +1,14 @@
 # agenticdevelopertoolkit
 
-A set of reusable per-platform packages — sixteen web libraries (`ui`,
-`chat`, `editing`, `markdown`, `search`, `themes`, and more, listed in full
-below), a Swift package for Apple, and a Python package for Terminal.
-Android and Windows are port plans in `docs/planning/ports/`, with no code
-yet.
+A set of reusable per-platform packages — the shared web libraries (`ui`,
+`chat`, `editing`, `markdown`, `search`, `themes`, and more, listed below)
+plus the adh app platform and its feature packages, a workspace of Xcode
+projects for Apple, and a Python package for Terminal. Android and Windows are
+port plans in `docs/planning/ports/`, with no code yet.
+
+The repo also absorbed `agentictoolkit`, history and all: its Apple
+frameworks, AI plugins and host app, its web app platform, and its cookbook
+now live here, so shared code has one home.
 
 Persona-chat wiring is one capability among them, not the toolkit's
 identity: the `chat` package's `PersonaChatBackend` splices the
@@ -25,11 +29,19 @@ platform.
 | Platform | Folder | Manifest | Status |
 |---|---|---|---|
 | Web (TS) | `packages/web/` | `package.json` (pnpm workspace) | active |
-| Apple | `packages/apple/` | `Package.swift` + `project.yml` | active |
+| Apple | `packages/apple/` | `agenticdevelopertoolkit.xcworkspace` + one `project.yml` (XcodeGen) per project | active |
 | Terminal (Python) | `packages/terminal/` | `pyproject.toml` | active |
 | Android | `packages/android/` | (TBD) | placeholder |
 | Windows | `packages/windows/` | (TBD) | placeholder |
 | Demo site | `websites/demo/` | `package.json` | active |
+| Reference site | `websites/site/` | `package.json` | active |
+
+The Apple platform is a workspace of XcodeGen-backed Xcode projects:
+`AgenticDeveloperToolkit` (the multi-platform core and UI frameworks),
+`AgenticDeveloperHubClient`, `AgenticToolkit` (the macOS-first product
+frameworks), `AgenticToolkitApp` (host app), and `AIPlugins`
+(`AIPluginsShared.framework` plus the `.aiplugin` bundles).
+`AvatarAnimationEngine` and `SampleApp` stand outside the workspace.
 
 The web platform is a pnpm monorepo with libraries under
 `packages/web/packages/`:
@@ -73,6 +85,22 @@ The web platform is a pnpm monorepo with libraries under
 - `@agenticdevelopertoolkit/viewport` — iOS-correct viewport / keyboard
   primitives.
 
+Beside them sits the adh app platform, still under its original
+`@agentic-toolkit/*` scope:
+
+- `@agentic-toolkit/adh` — family site chrome: header, footer, legal.
+- `@agentic-toolkit/adh-ui` — the adh vocabulary the shared UI must not know
+  about: rdid pickers and editors, invitation panes, the delete-entity
+  danger zone.
+- `@agentic-toolkit/auth` / `data` / `resource` / `crud` — the app platform.
+- `@agentic-toolkit/api-explorer` — the API reference surface.
+- `@agentic-toolkit/messaging` — DMs, notifications, presence.
+- `@agentic-toolkit/persona` — the crossing consumers use to reach the
+  persona vocabulary (`chat`, `themes`, `viewport`) without pulling a persona in.
+- the packages under `packages/web/packages/features/` — one per product area
+  (projects, teams, research, notebook, ecosystems, …), plus `bitbag`, the
+  persona himself.
+
 ## Build
 
 One-shot bootstrap (installs the web workspace and runs theme codegen):
@@ -92,10 +120,14 @@ cd packages/web && pnpm test
 cd packages/terminal && pip install -e . && pytest
 
 # Apple
-cd packages/apple && open Package.swift
+open packages/apple/agenticdevelopertoolkit.xcworkspace
+# Full xcodebuild commands in .claude/CLAUDE.md
 
 # Demo site (local dev)
 cd websites && ./run.sh
+
+# Reference site
+cd websites/site && npm install && npm run dev
 ```
 
 ## Design
@@ -104,8 +136,11 @@ How this repo is laid out, how it's consumed, and the recipe for building
 sibling toolkit repos the same way:
 [`docs/repo-pattern.md`](docs/repo-pattern.md).
 
-Consumer setup walkthrough (git submodule path):
+Consumer setup walkthrough (git submodule path, web and Apple):
 [`docs/consuming-as-submodule.md`](docs/consuming-as-submodule.md).
+
+Web-platform docs (adoption, migration, Next.js consumer wiring):
+[`docs/web/`](docs/web/).
 
 ## Planning
 
