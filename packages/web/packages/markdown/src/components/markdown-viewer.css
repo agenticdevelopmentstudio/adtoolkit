@@ -270,6 +270,19 @@
   font-family: ui-monospace, monospace;
 }
 
+/* `wrap`: long code lines wrap at the pane's edge instead of scrolling sideways. */
+.adh-mv-prose--wrap pre.shiki,
+.adh-mv-prose--wrap pre.shiki code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* JsonRenderer's note above text that didn't parse. */
+.adh-mv-json-note {
+  color: var(--mdv-text-muted);
+  font-style: italic;
+}
+
 .adh-mv-prose hr {
   border: none;
   border-top: 1px solid var(--mdv-border);

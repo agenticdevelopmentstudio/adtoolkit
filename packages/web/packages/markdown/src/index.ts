@@ -13,6 +13,11 @@ export type { MarkdownViewerProps } from './components/MarkdownViewer'
 export { MarkdownRenderer } from './components/MarkdownRenderer'
 export type { MarkdownRendererProps } from './components/MarkdownRenderer'
 
+// JSON / JSON Lines, pretty-printed in the same code-block styling (`wrap` as MarkdownRenderer)
+export { JsonRenderer, JSON_HIGHLIGHT_LIMIT } from './components/JsonRenderer'
+export type { JsonRendererProps } from './components/JsonRenderer'
+export { prettyJson, fenceCode } from './lib/pretty-json'
+
 // Server-rendered markdown (RSC) — SSR/crawlable, no client "Rendering…" flash. Same engine +
 // CSS as MarkdownRenderer; use this in server components / prerendered docs routes.
 export { MarkdownContent } from './components/MarkdownContent'

@@ -6,6 +6,8 @@ import { processMarkdown } from '../lib/process-markdown'
 export interface MarkdownRendererProps {
   /** Raw markdown string (frontmatter may or may not be present — it is stripped). */
   content: string
+  /** Wrap long lines in code blocks instead of scrolling them sideways. */
+  wrap?: boolean
 }
 
 type RenderState =
@@ -25,7 +27,7 @@ type RenderState =
  * other states), NOT injected HTML — so the dangerouslySetInnerHTML sink below
  * only ever receives rehype-sanitize output.
  */
-export function MarkdownRenderer({ content }: MarkdownRendererProps): React.JSX.Element {
+export function MarkdownRenderer({ content, wrap = false }: MarkdownRendererProps): React.JSX.Element {
   const [render, setRender] = useState<RenderState>({ phase: 'rendering' })
 
   useEffect(() => {
@@ -66,7 +68,7 @@ export function MarkdownRenderer({ content }: MarkdownRendererProps): React.JSX.
 
   return (
     <div
-      className="adh-mv-prose"
+      className={wrap ? 'adh-mv-prose adh-mv-prose--wrap' : 'adh-mv-prose'}
       // `render.html` is ALWAYS rehype-sanitize output — the error path renders a
       // separate React pane above, never this sink. XSS-safe (c6).
       dangerouslySetInnerHTML={{ __html: render.html }}
