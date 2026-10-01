@@ -234,7 +234,9 @@ foundations; `AgenticToolkitMacOS` is the feature-rich macOS framework consumed
 by the host app, plugins, Whippet, and Stenographer.
 `AgenticToolkitSystemMonitor` samples disk, memory, CPU and process groups
 (Docker, Ollama) through `SystemMonitorEngine` with no UI, so a CLI or daemon
-can link it; `AgenticToolkitSystemMonitorUI` is the themed System Status window.
+can link it. `UniversalControlMonitor` (not in `standardMonitors()`) follows
+Universal Control's session messages through a `log stream` child and goes
+critical while this Mac is dropping a source Mac's input; `AgenticToolkitSystemMonitorUI` is the themed System Status window.
 
 Aggregate targets in `AgenticToolkit/project.yml`: `AgenticToolkitMacOSAll`
 (every macOS framework), `AgenticToolkitMacOSTestsAll` (those plus every test

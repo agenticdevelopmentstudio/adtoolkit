@@ -201,6 +201,12 @@ struct UniversalControlMonitorTests {
         #expect(reading.level == .normal)
     }
 
+    @Test func noSessionYetSaysSo() {
+        let reading = monitor([], now: 0).sample()
+        #expect(reading.level == .normal)
+        #expect(reading.value == "Running")
+    }
+
     @Test func anUnreadableLogIsUnavailable() {
         let reading = monitor([], now: 0, failure: "log exited 64").sample()
         #expect(reading.level == .unknown)

@@ -82,8 +82,11 @@ public final class UniversalControlMonitor: SystemMonitor {
                     + " · input from \(name(session.previousSource, in: session)) was dropped"
             )
         }
-        if !session.hasSessionState, let failure = feed.failure {
-            return .unavailable(id: id, title: title, detail: failure)
+        if !session.hasSessionState {
+            if let failure = feed.failure { return .unavailable(id: id, title: title, detail: failure) }
+            // Until the history read lands, or for an hour with no session.
+            return MonitorReading(id: id, title: title, level: .normal, value: "Running",
+                                  detail: "No session logged in the last hour")
         }
 
         let connected = session.connectedDevices
