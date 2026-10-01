@@ -42,4 +42,10 @@ public final class InMemorySettingsStorageProvider: SettingsStorageProvider {
             storage[key.name] != nil
         }
     }
+
+    public func keys(withPrefix prefix: String) -> [String] {
+        queue.sync {
+            storage.keys.filter { $0.hasPrefix(prefix) }
+        }
+    }
 }

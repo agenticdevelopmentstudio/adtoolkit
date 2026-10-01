@@ -422,7 +422,8 @@ open class SingleWindowController: NSWindowController, NSWindowDelegate {
     /// controller by `WindowManager.shared.restoreOnLaunch()`; hosts should
     /// call that single entry point rather than this per-controller method.
     public func restoreVisibilityIfNeeded() {
-        guard let spec = windowSpec, spec.persistsVisibility else { return }
+        guard let spec = windowSpec, spec.persistsVisibility,
+              spec.behavior.contains(.canReopenOnLaunch) else { return }
         if WindowManager.shared.frames.loadVisibility(for: windowID) == true {
             showWindow()
         }

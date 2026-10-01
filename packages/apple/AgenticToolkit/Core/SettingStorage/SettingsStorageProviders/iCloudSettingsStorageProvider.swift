@@ -105,6 +105,10 @@ public final class iCloudSettingsStorageProvider: SettingsStorageProvider {
         store.object(forKey: key.name) != nil
     }
 
+    public func keys(withPrefix prefix: String) -> [String] {
+        store.dictionaryRepresentation.keys.filter { $0.hasPrefix(prefix) }
+    }
+
     private static func isNativelySupported<T>(_ type: T.Type) -> Bool {
         // NSUbiquitousKeyValueStore supports a slightly narrower set than UserDefaults.
         // Notably, URL and Date are NOT natively supported — they go through Codable.

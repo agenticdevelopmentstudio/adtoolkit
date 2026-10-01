@@ -61,6 +61,10 @@ public final class UserDefaultsSettingsStorageProvider: SettingsStorageProvider 
         defaults.object(forKey: key.name) != nil
     }
 
+    public func keys(withPrefix prefix: String) -> [String] {
+        defaults.dictionaryRepresentation().keys.filter { $0.hasPrefix(prefix) }
+    }
+
     /// Types that `UserDefaults` stores natively without JSON encoding.
     private static func isNativelySupported<T>(_ type: T.Type) -> Bool {
         type == Int.self || type == Double.self || type == Float.self ||

@@ -1,10 +1,13 @@
 import AppKit
 import XCTest
+import AgenticToolkitCore
 @testable import AgenticToolkitMacOS
 
 /// The host registers every window the same way; whether one reopens at launch
 /// is decided by its own `WindowSpec`, chosen where the window is built. These
-/// tests pin that the host's `register(id:make:)` carries no restore decision.
+/// tests pin that the host's `register(id:make:)` carries no restore decision,
+/// that only windows saved as visible are built, and that the user's
+/// reopen-on-launch policy is honored.
 @MainActor
 final class WindowManagerRegisterTests: XCTestCase {
 
@@ -29,33 +32,51 @@ final class WindowManagerRegisterTests: XCTestCase {
         required init?(coder: NSCoder) { fatalError() }
     }
 
+    private let manager = WindowManager.shared
+    private var ids: [String] = []
+
+    override func setUp() async throws {
+        try await super.setUp()
+        usePolicy(.always)
+    }
+
+    override func tearDown() async throws {
+        for id in ids {
+            manager.registry.controller(forID: id)?.close()
+            manager.frames.clearVisibility(for: id)
+        }
+        UserSettings.shared.remove(UserSettings.reopenOnLaunchPolicy)
+        try await super.tearDown()
+    }
+
+    private func usePolicy(_ policy: ReopenOnLaunchPolicy) {
+        UserSettings.shared.set(policy, for: UserSettings.reopenOnLaunchPolicy)
+    }
+
+    private func newID(_ name: String) -> String {
+        let id = "test.register.\(name).\(UUID().uuidString)"
+        ids.append(id)
+        return id
+    }
+
+    /// Records `visible` as last session's state for `id`, the way a default
+    /// window does when it is shown or closed.
+    private func seedVisibility(_ visible: Bool, for id: String) {
+        autoreleasepool {
+            let last = TestWC(windowID: id, behavior: .default)
+            manager.frames.saveVisibility(visible, for: id)
+            _ = last
+        }
+    }
+
     func testRegisteredWindowsReopenByTheirOwnSpec() {
-        let manager = WindowManager.shared
-        let defaultID = "test.register.default.\(UUID().uuidString)"
-        let optedOutID = "test.register.optout.\(UUID().uuidString)"
+        let defaultID = newID("default")
+        let optedOutID = newID("optout")
+        seedVisibility(true, for: defaultID)
+        seedVisibility(true, for: optedOutID)
+
         var reopens: TestWC?
         var staysShut: TestWC?
-        defer {
-            reopens?.close()
-            staysShut?.close()
-            manager.frames.clearVisibility(for: defaultID)
-            manager.frames.clearVisibility(for: optedOutID)
-        }
-
-        // Last session: both windows were open when the app quit.
-        let lastReopens = TestWC(windowID: defaultID, behavior: .default)
-        let lastStaysShut = TestWC(
-            windowID: optedOutID, behavior: WindowSpec.Behavior.default.subtracting(.persistsVisibility)
-        )
-        lastReopens.showWindow()
-        lastStaysShut.showWindow()
-        manager.isTerminating = true
-        lastReopens.window?.orderOut(nil)
-        lastStaysShut.window?.orderOut(nil)
-        manager.isTerminating = false
-
-        // This launch: the host registers both identically. Each factory's new
-        // controller replaces last session's in the registry under the same id.
         manager.register(id: defaultID) { reopens = TestWC(windowID: defaultID, behavior: .default) }
         manager.register(id: optedOutID) {
             staysShut = TestWC(
@@ -65,6 +86,58 @@ final class WindowManagerRegisterTests: XCTestCase {
         manager.restoreOnLaunch()
 
         XCTAssertEqual(reopens?.isVisible, true, "a default window left open reopens")
+        XCTAssertNotNil(staysShut, "a window saved as visible is built so its spec can decide")
         XCTAssertEqual(staysShut?.isVisible, false, "a window built without .persistsVisibility stays shut")
+    }
+
+    func testWindowWithoutCanReopenOnLaunchStaysShut() {
+        let id = newID("nocanreopen")
+        seedVisibility(true, for: id)
+
+        var window: TestWC?
+        manager.register(id: id) {
+            window = TestWC(windowID: id, behavior: WindowSpec.Behavior.default.subtracting(.canReopenOnLaunch))
+        }
+        manager.restoreOnLaunch()
+
+        XCTAssertNotNil(window)
+        XCTAssertEqual(window?.isVisible, false)
+    }
+
+    func testWindowSavedClosedIsNeverBuilt() {
+        let closedID = newID("closed")
+        let neverShownID = newID("nevershown")
+        seedVisibility(false, for: closedID)
+
+        var built: [String] = []
+        manager.register(id: closedID) { built.append(closedID) }
+        manager.register(id: neverShownID) { built.append(neverShownID) }
+        manager.restoreOnLaunch()
+
+        XCTAssertEqual(built, [], "only a window saved as visible is worth building")
+    }
+
+    func testPolicyNeverRestoresNothing() {
+        let id = newID("policynever")
+        seedVisibility(true, for: id)
+        usePolicy(.never)
+
+        var built = false
+        manager.register(id: id) { built = true }
+        manager.restoreOnLaunch()
+
+        XCTAssertFalse(built, "\"Restore windows on launch: Never\" applies to every window")
+        XCTAssertEqual(manager.frames.savedVisibility(for: id), true, "the policy leaves the saved state alone")
+    }
+
+    func testUnclaimedVisibleFlagIsReportedAndCleared() {
+        let orphanID = newID("orphan")
+        seedVisibility(true, for: orphanID)
+        XCTAssertTrue(manager.frames.visibleWindowIDs().contains(orphanID), "the default storage lists visible ids")
+
+        manager.restoreOnLaunch()
+
+        XCTAssertNil(manager.frames.savedVisibility(for: orphanID))
+        XCTAssertFalse(manager.frames.visibleWindowIDs().contains(orphanID))
     }
 }

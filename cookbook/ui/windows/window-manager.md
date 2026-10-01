@@ -151,41 +151,47 @@ screen manager.
 
 ### Launch restore
 
-- **register-restorable**: Registering a restorable id MUST store the
-  factory under the id, replacing any factory previously stored under the
-  same id, and MUST NOT call the factory.
-- **restore-builds-all**: The launch-restore pass MUST call every
-  registered factory exactly once per invocation, in unspecified order.
+- **register-window**: Registering a window id (`register(id:make:)`)
+  MUST store the factory under the id, replacing any factory previously
+  stored under the same id, and MUST NOT call the factory. The host
+  registers every window it has; whether one reopens is never the host's
+  call (the deprecated `registerRestorable` forwards here).
+- **restore-policy**: The launch-restore pass MUST skip the factory,
+  visibility and missing-factory steps entirely when the
+  reopen-on-launch-policy setting resolves to "do not reopen", and MUST
+  leave every persisted visibility untouched in that case.
+- **restore-builds-saved-visible**: The launch-restore pass MUST call, once
+  per invocation and in unspecified order, the factory of every registered
+  id that has no live registry controller and whose raw persisted
+  visibility is exactly true. It MUST NOT call the factory of an id saved
+  as closed or never saved.
 - **restore-visibility-pass**: After running the factories, the
   launch-restore pass MUST run the visibility-restore step on the live
   controller for every id in the registry's registered ids.
 - **restore-visibility-rule**: The visibility-restore step MUST show the
-  window only when the controller's spec persists visibility and the last
-  persisted visibility for its window id is exactly true; a persisted false
-  or no persisted value MUST leave it closed.
+  window only when the controller's spec both persists visibility and can
+  reopen on launch, and the last persisted visibility for its window id is
+  exactly true; a persisted false or no persisted value MUST leave it
+  closed.
 - **restore-missing-factory-log**: For each id reported by the storage's
   visible-window-ids operation that has neither a registered factory nor a
   live registry controller, the launch-restore pass MUST log one error
-  `restoreOnLaunch: visible window '<id>' has no registered factory` with
-  the id marked public.
+  `restoreOnLaunch: visible window '<id>' has no registered factory; clearing its flag`
+  with the id marked public, and MUST then clear that id's persisted
+  visibility so the gap is reported once rather than on every launch.
 - **restore-then-reopen**: The launch-restore pass MUST run the
   reopen-recents step after the visibility pass and the missing-factory
   check.
 - **restore-reentrant**: The launch-restore pass MAY be called again (the
   source recommends it on reactivation, such as a second-launch distributed
-  notification); each call reruns every factory and the full pass.
+  notification); each call reruns the full pass, building only windows not
+  already live.
 - **visible-ids-default**: Storage that does not implement the
   visible-window-ids operation MUST report an empty list.
-- **visible-ids-settings-store**: NEEDS REVIEW: Not implemented in source.
-  The settings-store-backed storage backend, the default storage of the
-  window manager and the shared window manager, does not implement the
-  visible-window-ids operation, so it inherits the empty default, and the
-  missing-factory error declared by the storage protocol's doc comment
-  ("Lets the launch-restore pass detect a window that was visible but has
-  no registered factory") never fires in the default configuration;
-  settling it needs either a key-enumeration API on the settings store or
-  an explicit statement that the check applies only to the
-  platform-preferences backend.
+- **visible-ids-settings-store**: The settings-store-backed storage backend
+  MUST report every id whose namespaced visibility key holds true, found
+  through the settings store's key-enumeration operation
+  (`keys(withPrefix:)`, non-secure provider only).
 
 ### Reopen on launch
 
@@ -366,9 +372,9 @@ service, not a visual component.
 | wm-003 | terminating-consumer | Same, termination flag false; call the window-will-close callback | Persisted visibility becomes false |
 | wm-004 | recent-limit-write | Recent-windows-count set to 7, apply the recent-document count from settings; then set to 3 and apply again | The platform's recent-documents limit setting reads 7, then 3 (`WindowManagerRecentsTests`) |
 | wm-005 | recent-limit-mirror, recent-limit-on-init | Touch the shared window manager; set recent-windows-count to 12; wait one main-queue turn | The platform's recent-documents limit setting reads 12 |
-| wm-006 | register-restorable, restore-builds-all | Register factories alpha and beta; run the launch-restore pass | Both factories ran; built set is {alpha, beta} (`WindowManagerSimulatedRelaunchTests`) |
-| wm-007 | register-restorable | Register a restorable id without running the launch-restore pass | Factory has not run |
-| wm-008 | register-restorable | Register two factories under the same id; run the launch-restore pass | Only the second factory runs |
+| wm-006 | register-window, restore-builds-saved-visible | Persist alpha visible, beta hidden, gamma never; register all three; run the launch-restore pass with policy "always" | Built set is {alpha} (`WindowManagerSimulatedRelaunchTests`) |
+| wm-007 | register-window | Register a window id without running the launch-restore pass | Factory has not run |
+| wm-008 | register-window | Register two factories under the same id; run the launch-restore pass | Only the second factory runs |
 | wm-009 | restore-visibility-pass, restore-visibility-rule | Registered visibility-persisting controller with persisted visibility true; run the launch-restore pass | Window is shown |
 | wm-010 | restore-visibility-rule | Same with persisted false, and again with no persisted value | Window stays closed in both cases |
 | wm-011 | restore-missing-factory-log | The platform-preferences storage backend holding visibility true for "ghost"; no factory, no controller; run the launch-restore pass | One error log naming "ghost" |
@@ -536,7 +542,7 @@ Subsystem: `com.agentic-cookbook.agentictoolkit` | Category: `WindowManager`
 
 | Event | Level | Message |
 |-------|-------|---------|
-| Persisted-visible window with no factory and no live controller during the launch-restore pass | error | `restoreOnLaunch: visible window '<id>' has no registered factory` (ID public) |
+| Persisted-visible window with no factory and no live controller during the launch-restore pass | error | `restoreOnLaunch: visible window '<id>' has no registered factory; clearing its flag` (ID public) |
 
 Registry changes, storage reads and writes, codec failures, reopen
 decisions, document-open failures and screenshot failures are not logged.
@@ -628,8 +634,8 @@ decisions, document-open failures and screenshot failures are not logged.
 **Rationale**: AppKit sends `windowWillClose:` to still-visible windows after `applicationWillTerminate`; persisting hidden there stopped windows left open from reopening (`WindowManagerTerminationTests`).
 **Approved**: pending
 
-**Decision**: Restore is driven by registered factories (`registerRestorable`) rather than hosts hand-constructing controllers.
-**Rationale**: The doc comment says this ensures "a window can't silently miss restore"; the missing-factory error log exists to surface the remaining wiring gap loudly.
+**Decision**: Restore is driven by registered factories (`register(id:make:)`) rather than hosts hand-constructing controllers, and whether a window reopens is its own `WindowSpec.behavior`, never the host's registration.
+**Rationale**: The host only says how to build each window; a second host-side list of "restorable" windows is one more thing to fall out of step. Only windows saved as visible are built, so registering every window costs nothing at launch. The missing-factory error log surfaces the remaining wiring gap loudly, once.
 **Approved**: pending
 
 **Decision**: The recent-documents cap is set by writing the `NSRecentDocumentsLimit` user default.
@@ -679,7 +685,7 @@ decisions, document-open failures and screenshot failures are not logged.
 | [no-pii-in-logs](agenticdevelopercookbook://compliance/privacy-and-data#no-pii-in-logs) | passed | Privacy and Data |
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | passed | Privacy and Data |
 
-separation-of-concerns passes because frame persistence (`WindowFrameManager`), live lookup (`WindowRegistry`), storage (`WindowStateStorage` and its two implementations), key namespacing (`WindowStateNamespace`) and capture (`WindowScreenshot`) are separate types behind a thin coordinator. unit-test-coverage is partial: the termination latch, recent-limit mirror, factory execution, registry visibility, namespace isolation and screenshot failure paths have tests, but `reopenRecentsOnLaunch()`, `windowDidInteract(_:kind:)` and the missing-factory log do not. explicit-error-handling fails because storage encode/decode failures and document-open failures are discarded without a signal (the open questions on storage-codec-failure and reopen-open-failure). data-integrity is partial because corrupt stored state reads as never-saved and is overwritten, and the two storage implementations disagree on a non-boolean visibility value. state-recovery passes because frames and visibility persist across launches and `restoreOnLaunch()` replays them. graceful-degradation passes because a headless run skips reopen, a missing capture symbol yields `nil`, and an empty window ID is ignored. health-observability is partial because the missing-factory wiring gap is logged, but that check is inert under the default storage (the open question on visible-ids-settings-store). main-thread-freedom passes because every main-actor operation is bounded by the number of window IDs or recent documents, and document opening is asynchronous. no-pii-in-logs passes because the single log line carries only a host-chosen window ID. data-minimization passes because the namespace stores a hash instead of the bundle path.
+separation-of-concerns passes because frame persistence (`WindowFrameManager`), live lookup (`WindowRegistry`), storage (`WindowStateStorage` and its two implementations), key namespacing (`WindowStateNamespace`) and capture (`WindowScreenshot`) are separate types behind a thin coordinator. unit-test-coverage is partial: the termination latch, recent-limit mirror, factory execution, registry visibility, namespace isolation, the reopen policy, the missing-factory clear and screenshot failure paths have tests, but `reopenRecentsOnLaunch()` and `windowDidInteract(_:kind:)` do not. explicit-error-handling fails because storage encode/decode failures and document-open failures are discarded without a signal (the open questions on storage-codec-failure and reopen-open-failure). data-integrity is partial because corrupt stored state reads as never-saved and is overwritten, and the two storage implementations disagree on a non-boolean visibility value. state-recovery passes because frames and visibility persist across launches and `restoreOnLaunch()` replays them. graceful-degradation passes because a headless run skips reopen, a missing capture symbol yields `nil`, and an empty window ID is ignored. health-observability passes because the missing-factory wiring gap is logged under every storage backend. main-thread-freedom passes because every main-actor operation is bounded by the number of window IDs or recent documents, and document opening is asynchronous. no-pii-in-logs passes because the single log line carries only a host-chosen window ID. data-minimization passes because the namespace stores a hash instead of the bundle path.
 
 ## Change History
 

@@ -210,4 +210,12 @@ final class InMemorySettingsStoreTests: XCTestCase {
         let next = await iterator.next()
         XCTAssertEqual(next, 11)
     }
+
+    func testKeysWithPrefixListsOnlyStoredMatches() {
+        store.set(3, for: UserSettings.launchCount)
+        store.set(Date(), for: UserSettings.lastOpened)
+        store.set("x", for: UserSettings.displayName)
+
+        XCTAssertEqual(Set(store.keys(withPrefix: "test.la")), ["test.launchCount", "test.lastOpened"])
+    }
 }

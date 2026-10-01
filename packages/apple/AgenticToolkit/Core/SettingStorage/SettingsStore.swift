@@ -46,6 +46,11 @@ open class SettingsStore: SettingsStorageProvider {
     where Value: Decodable, Value: Encodable, Value: Sendable {
         storageProvider(for: key).contains(key)
     }
+
+    /// Non-secure keys only: secure values are never enumerated.
+    public func keys(withPrefix prefix: String) -> [String] {
+        settingsProvider.keys(withPrefix: prefix)
+    }
 }
 
 extension SettingsStore {

@@ -122,25 +122,15 @@ public final class WindowManager {
 
     // MARK: - Launch restore
 
-    /// One-shot restore for everything window-related. Hosts call this once
-    /// from `applicationDidFinishLaunching` after their restorable
-    /// `SingleWindowController`s have been constructed (construction
-    /// registers them with `registry`). For each live controller, re-shows
-    /// the window if its spec opts in and the last saved visibility was
-    /// `true`; then routes through `reopenRecentsOnLaunch()` to repopulate
-    /// document windows per the user's policy.
-    ///
-    /// Re-invoke on reactivation (e.g. a second-launch
-    /// `DistributedNotification`) so persisted-visible windows reappear
-    /// when an LSUIElement app is re-frontmost.
     /// Tells the manager how to build the window `id`: `make` constructs its
     /// controller (which self-registers with `registry`) **without** showing it.
     /// The host registers every window it has, once, before `restoreOnLaunch()`.
     ///
     /// The host does not decide, and does not need to know, whether a window
     /// comes back at launch. That is the window's own `WindowSpec.behavior`,
-    /// chosen where the window is built — `.persistsVisibility` is on by
-    /// default, and a window that should not reopen turns it off there.
+    /// chosen where the window is built — `.canReopenOnLaunch` and
+    /// `.persistsVisibility` are on by default, and a window that should not
+    /// reopen turns them off there.
     public func register(id: String, make: @escaping @MainActor () -> Void) {
         windowFactories[id] = make
     }
@@ -151,26 +141,46 @@ public final class WindowManager {
         register(id: id, make: make)
     }
 
+    /// One-shot restore for everything window-related. Hosts call this once
+    /// from `applicationDidFinishLaunching`, after `register(id:make:)`-ing
+    /// their windows. Unless the user's `reopenOnLaunchPolicy` says not to,
+    /// every window saved as visible is built and handed to its controller's
+    /// `restoreVisibilityIfNeeded()`, which re-shows it if its spec opts in.
+    /// Windows saved as closed are not built at all. Then routes through
+    /// `reopenRecentsOnLaunch()` to repopulate document windows.
+    ///
+    /// A visible flag that no registered window and no live controller claims
+    /// cannot be restored: it is logged as a host wiring gap and cleared, so
+    /// it is reported once rather than on every launch.
+    ///
+    /// Re-invoke on reactivation (e.g. a second-launch
+    /// `DistributedNotification`) so persisted-visible windows reappear
+    /// when an LSUIElement app is re-frontmost.
     public func restoreOnLaunch() {
-        // Build every registered window (cheap — the NSWindow is created
-        // lazily on first show) so it's in the registry for the restore pass below.
-        for make in windowFactories.values { make() }
+        let policy = UserSettings.reopenOnLaunchPolicy.currentValue
+        if policy.shouldReopen(systemDefault: ReopenOnLaunchPolicy.systemDefault) {
+            restoreSavedVisibleWindows()
+        }
+        reopenRecentsOnLaunch()
+    }
+
+    private func restoreSavedVisibleWindows() {
+        for (id, make) in windowFactories
+        where registry.controller(forID: id) == nil && frames.savedVisibility(for: id) == true {
+            make()
+        }
 
         for id in registry.registeredIDs {
             registry.controller(forID: id)?.restoreVisibilityIfNeeded()
         }
 
-        // A window that was visible last session but neither registered nor already
-        // live can't be restored — surface the host wiring gap loudly rather than
-        // silently leaving the window closed.
         for id in frames.visibleWindowIDs()
         where windowFactories[id] == nil && registry.controller(forID: id) == nil {
             Self.logger.error(
-                "restoreOnLaunch: visible window '\(id, privacy: .public)' has no registered factory"
+                "restoreOnLaunch: visible window '\(id, privacy: .public)' has no registered factory; clearing its flag"
             )
+            frames.clearVisibility(for: id)
         }
-
-        reopenRecentsOnLaunch()
     }
 
     // MARK: - Reopen on launch

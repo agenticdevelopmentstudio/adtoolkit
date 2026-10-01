@@ -58,6 +58,14 @@ public struct SettingsStoreWindowStateStorage: WindowStateStorage {
         settings.remove(visibilitySetting(for: id))
     }
 
+    public func visibleWindowIDs() -> [String] {
+        let prefix = WindowStateNamespace.qualify(visibilityKeyPrefix)
+        return settings.keys(withPrefix: prefix).compactMap { key in
+            guard settings.get(WindowVisibilitySetting(name: key)) else { return nil }
+            return String(key.dropFirst(prefix.count))
+        }
+    }
+
     private func stateSetting(for id: String) -> WindowStateSetting {
         WindowStateSetting(name: WindowStateNamespace.qualify(keyPrefix + id))
     }

@@ -1,4 +1,5 @@
 import XCTest
+import AgenticToolkitCore
 @testable import AgenticToolkitMacOS
 
 /// Save → relaunch → restore simulations for the per-screen-set, top-left
@@ -454,23 +455,28 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
 
     // MARK: - Restore registration
 
-    func testRestoreOnLaunchBuildsEveryRegisteredWindow() {
+    func testRestoreOnLaunchBuildsOnlyWindowsSavedVisible() {
         let provider = MockScreenProvider(screens: [Self.builtin()])
+        let storage = MockStorage()
+        storage.visibility = ["alpha": true, "beta": false]
         let windowManager = WindowManager(
             screenProvider: provider,
-            storage: MockStorage(),
+            storage: storage,
             screenManager: ScreenManager(screenProvider: provider, storage: MockScreenSetStorage())
         )
+        UserSettings.shared.set(ReopenOnLaunchPolicy.always, for: UserSettings.reopenOnLaunchPolicy)
+        defer { UserSettings.shared.remove(UserSettings.reopenOnLaunchPolicy) }
 
         var built: Set<String> = []
         windowManager.register(id: "alpha") { built.insert("alpha") }
         windowManager.register(id: "beta") { built.insert("beta") }
+        windowManager.register(id: "gamma") { built.insert("gamma") }
 
         windowManager.restoreOnLaunch()
 
-        // Every registered factory runs so its controller is in the registry for the
-        // visibility-restore pass — the host no longer hand-constructs each window.
-        XCTAssertEqual(built, ["alpha", "beta"])
+        // Only a window left open last session is built for the visibility-restore
+        // pass; one saved closed, or never shown, waits until something opens it.
+        XCTAssertEqual(built, ["alpha"])
     }
 }
 

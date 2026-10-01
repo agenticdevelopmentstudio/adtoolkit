@@ -260,9 +260,17 @@ public final class WindowFrameManager {
         return storage.loadVisibility(for: id)
     }
 
+    /// The raw saved visibility for `id`, read before its window exists.
+    /// `loadVisibility(for:)` answers only once the window's spec is
+    /// registered; this is how `WindowManager.restoreOnLaunch()` decides
+    /// which windows are worth building at all.
+    public func savedVisibility(for id: String) -> Bool? {
+        storage.loadVisibility(for: id)
+    }
+
     /// IDs of every window saved as visible (across launches). Used by
-    /// `WindowManager.restoreOnLaunch()` to flag a window that was visible but
-    /// isn't registered for restore.
+    /// `WindowManager.restoreOnLaunch()` to find a window that was visible but
+    /// that nothing registered, so cannot be restored.
     public func visibleWindowIDs() -> [String] {
         storage.visibleWindowIDs()
     }

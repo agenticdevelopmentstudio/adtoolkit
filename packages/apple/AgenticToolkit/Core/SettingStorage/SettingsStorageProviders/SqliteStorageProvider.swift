@@ -110,6 +110,12 @@ public final class SqliteStorageProvider: SettingsStorageProvider {
         }
     }
 
+    public func keys(withPrefix prefix: String) -> [String] {
+        queue.sync {
+            self.selectKeys(withPrefix: prefix)
+        }
+    }
+
     // MARK: - SQL helpers (run on `queue`)
 
     private func readData(forKey name: String) -> Data? {
@@ -176,6 +182,27 @@ public final class SqliteStorageProvider: SettingsStorageProvider {
         guard prepare == SQLITE_OK else { return false }
         sqlite3_bind_text(statement, 1, (name as NSString).utf8String, -1, Self.transient)
         return sqlite3_step(statement) == SQLITE_ROW
+    }
+
+    private func selectKeys(withPrefix prefix: String) -> [String] {
+        guard let database else { return [] }
+        var statement: OpaquePointer?
+        defer { sqlite3_finalize(statement) }
+        // substr, not LIKE: a prefix holding `_` or `%` must match literally.
+        let sql = "SELECT key FROM settings_kv WHERE substr(key, 1, length(?1)) = ?1;"
+        guard sqlite3_prepare_v2(database, sql, -1, &statement, nil) == SQLITE_OK else {
+            let message = String(cString: sqlite3_errmsg(database))
+            Self.logger.error("prepare SELECT keys failed: \(message, privacy: .public)")
+            return []
+        }
+        sqlite3_bind_text(statement, 1, (prefix as NSString).utf8String, -1, Self.transient)
+        var keys: [String] = []
+        while sqlite3_step(statement) == SQLITE_ROW {
+            if let text = sqlite3_column_text(statement, 0) {
+                keys.append(String(cString: text))
+            }
+        }
+        return keys
     }
 
     /// SQLite needs a non-static, transient binder so it copies the bound bytes.

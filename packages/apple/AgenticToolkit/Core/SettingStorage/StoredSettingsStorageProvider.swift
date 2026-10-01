@@ -22,6 +22,12 @@ public protocol SettingsStorageProvider: AnyObject {
     /// Checks whether a value has been explicitly stored.
     func contains<Value: ValueType>(_ key: any StorableSetting<Value>) -> Bool
 
+    /// The names of every stored value whose name starts with `prefix`.
+    ///
+    /// For callers that key a family of values by an id they cannot list up
+    /// front (one value per window, say) and need to find the ones written.
+    func keys(withPrefix prefix: String) -> [String]
+
     /// Publishes the key name whenever any value changes (set or removed).
     var changes: AnyPublisher<String, Never> { get }
 }
