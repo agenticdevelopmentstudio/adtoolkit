@@ -1,0 +1,1808 @@
+//
+//  extension-runtime.js
+//  AgenticToolkit
+//
+//  The bounded runtime a VS Code *web* extension sees inside its JSContext.
+//  ExtensionHost evaluates this once per context, before the extension's own
+//  code, and then deletes the two globals it talks to the host through — so an
+//  extension can reach exactly what this file hands it and nothing else.
+//
+//  Three things live here, and only three:
+//
+//    1. The CommonJS module wrapper and a `require` that resolves `vscode`.
+//    2. The small slice of the web platform an extension may legitimately
+//       expect from a JSContext, which supplies none of it: console, timers,
+//       TextEncoder/TextDecoder, URL and URLSearchParams.
+//    3. The NotImplemented stub mechanism — the load-bearing part. Everything
+//       the `vscode` namespace does not implement *yet* throws a named error
+//       and is recorded, so an extension that reaches for a missing member
+//       fails loudly and the user can be told which member it was.
+//
+
+'use strict';
+
+(function (global) {
+    'use strict';
+
+    // The host's block table. Captured into this closure and deleted from the
+    // global object by ExtensionHost immediately after this script runs, so
+    // extension code cannot call back into the app through it.
+    var host = global.__host;
+
+    // The intrinsics the verdict depends on, captured while this file is the
+    // only code that has ever run in this context.
+    //
+    // `.call` resolves dynamically through `Function.prototype`, and the
+    // extension's own top-level code runs before its `activate` is ever
+    // reached. Measured in real JavaScriptCore: an extension whose top level
+    // does `Function.prototype.call = function () {}` makes
+    // `activate.call(exports, context)` return `undefined` without calling
+    // anything, so the shim sees no thenable, reports `done(true, '')`, and the
+    // host records a clean activation for an extension whose `activate` never
+    // ran. That false success is the exact outcome this file exists to prevent,
+    // and it needs no malice: a bundled SES/lockdown shim or a
+    // call-instrumenting polyfill does it by accident.
+    //
+    // So the three paths that can produce a wrong *verdict* go through
+    // `reflectApply` instead: the module wrapper in `run`, `activate` and
+    // `then` in `callActivate`, and `tail`'s slice, which feeds them their
+    // arguments.
+    //
+    // A fourth path joins them for a different reason. `fireTimer` dispatching
+    // a timer callback cannot produce a wrong verdict — activation has already
+    // been reported honestly by then — but it is the one dynamic call whose
+    // failure is *silence*: a poisoned `apply` dropped every `setTimeout` and
+    // `setInterval` callback with no callback, no error and no console line,
+    // forever. Degrading loudly is the contract; that one did not.
+    //
+    // This is not a sandbox, and widening it would imply one. Everything else
+    // here still resolves its methods dynamically, because everything else
+    // degrades a console line or a formatted value rather than the answer to
+    // "did this extension activate?" — measured, for each of the three that
+    // remain.
+    var reflectApply = Reflect.apply;
+    var arraySlice = Array.prototype.slice;
+
+    // =====================================================================
+    // MARK: - Value formatting (console)
+    // =====================================================================
+
+    var FORMAT_MAX_DEPTH = 4;
+
+    function formatFunction(value) {
+        return value.name ? '[Function: ' + value.name + ']' : '[Function (anonymous)]';
+    }
+
+    function formatEntries(parts, open, close) {
+        if (parts.length === 0) {
+            return open + close;
+        }
+        return open + ' ' + parts.join(', ') + ' ' + close;
+    }
+
+    function formatKey(key) {
+        return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(key) ? key : JSON.stringify(key);
+    }
+
+    // `console.log({ a: 1 })` must not arrive as `[object Object]`. Node's
+    // `util.inspect` shape is what a developer reading a log expects, so this
+    // approximates it: quoted strings once nested, cycles marked rather than
+    // followed, and a depth cap so a deep object cannot produce a log line
+    // nobody can read.
+    function format(value, depth, seen) {
+        if (value === null) {
+            return 'null';
+        }
+        var type = typeof value;
+        if (type === 'undefined') {
+            return 'undefined';
+        }
+        if (type === 'string') {
+            return depth === 0 ? value : JSON.stringify(value);
+        }
+        if (type === 'number' || type === 'boolean' || type === 'bigint') {
+            return String(value);
+        }
+        if (type === 'symbol') {
+            return String(value);
+        }
+        if (type === 'function') {
+            return formatFunction(value);
+        }
+
+        if (value instanceof Error) {
+            var described = (value.name || 'Error') + ': ' + (value.message || '');
+            return value.stack ? described + '\n' + value.stack : described;
+        }
+        if (value instanceof Date) {
+            return isNaN(value.getTime()) ? 'Invalid Date' : value.toISOString();
+        }
+        if (value instanceof RegExp) {
+            return String(value);
+        }
+
+        if (seen.indexOf(value) !== -1) {
+            return '[Circular]';
+        }
+        if (depth >= FORMAT_MAX_DEPTH) {
+            return Array.isArray(value) ? '[Array]' : '[Object]';
+        }
+
+        seen.push(value);
+        try {
+            return formatContainer(value, depth, seen);
+        } finally {
+            seen.pop();
+        }
+    }
+
+    function formatContainer(value, depth, seen) {
+        var parts = [];
+        var index;
+
+        if (Array.isArray(value)) {
+            for (index = 0; index < value.length; index += 1) {
+                parts.push(format(value[index], depth + 1, seen));
+            }
+            return formatEntries(parts, '[', ']');
+        }
+        if (typeof Map !== 'undefined' && value instanceof Map) {
+            value.forEach(function (entryValue, entryKey) {
+                parts.push(format(entryKey, depth + 1, seen) + ' => ' + format(entryValue, depth + 1, seen));
+            });
+            return 'Map(' + value.size + ') ' + formatEntries(parts, '{', '}');
+        }
+        if (typeof Set !== 'undefined' && value instanceof Set) {
+            value.forEach(function (entryValue) {
+                parts.push(format(entryValue, depth + 1, seen));
+            });
+            return 'Set(' + value.size + ') ' + formatEntries(parts, '{', '}');
+        }
+
+        var keys = Object.keys(value);
+        for (index = 0; index < keys.length; index += 1) {
+            parts.push(formatKey(keys[index]) + ': ' + format(value[keys[index]], depth + 1, seen));
+        }
+
+        // A class instance says which class, the way `util.inspect` does; a
+        // plain object says nothing extra.
+        var constructorName = value.constructor && value.constructor.name;
+        var prefix = constructorName && constructorName !== 'Object' ? constructorName + ' ' : '';
+        return prefix + formatEntries(parts, '{', '}');
+    }
+
+    // Node's `util.format` specifiers, because extension authors write
+    // `console.log('%s took %dms', name, elapsed)` and a host that printed the
+    // format string literally would make its own logging look broken.
+    var SPECIFIER_PATTERN = /%([sdifjoOc%])/g;
+
+    // Node's rule for `%s` is "objects that have no user defined toString
+    // function are inspected", and the distinction earns its keep here: a
+    // namespace stub carries one, and `[VSCodeNamespace vscode.window]` says
+    // considerably more than the `{}` an inspection of an empty-looking proxy
+    // would. Built-in `toString`s do not count as user-defined, so `%s` of an
+    // array still inspects to `[ 1, 2 ]` rather than collapsing to `1,2`.
+    var BUILT_IN_TO_STRINGS = [
+        Object.prototype.toString,
+        Array.prototype.toString,
+        Error.prototype.toString,
+        Date.prototype.toString,
+        RegExp.prototype.toString,
+        Function.prototype.toString
+    ];
+
+    function hasUserDefinedToString(value) {
+        var candidate;
+        try {
+            candidate = value.toString;
+        } catch (error) {
+            // A throwing getter is not a `toString` worth calling.
+            return false;
+        }
+        return typeof candidate === 'function' && BUILT_IN_TO_STRINGS.indexOf(candidate) === -1;
+    }
+
+    function applySpecifier(specifier, value) {
+        switch (specifier) {
+        case 's':
+            if (typeof value === 'string') { return value; }
+            if (value === null || typeof value !== 'object') { return format(value, 0, []); }
+            return hasUserDefinedToString(value) ? String(value) : format(value, 0, []);
+        case 'd':
+            return typeof value === 'bigint' ? String(value) : String(Number(value));
+        case 'i':
+            return typeof value === 'bigint' ? String(value) : String(parseInt(value, 10));
+        case 'f':
+            return String(parseFloat(value));
+        case 'j':
+            try {
+                return JSON.stringify(value);
+            } catch (error) {
+                return '[Circular]';
+            }
+        case 'o':
+        case 'O':
+            return format(value, 0, []);
+        default:
+            // '%c' is a CSS directive for browser devtools. There is no styling
+            // here, so it consumes its argument and prints nothing, which is
+            // what Node does too.
+            return '';
+        }
+    }
+
+    // What one hostile argument degrades to.
+    //
+    // Describing a value means reading it, and every read can run the
+    // extension's own code: a getter, a `Proxy` trap, a `toString`. `format`
+    // reads arbitrary keys and arbitrary property values off whatever it is
+    // handed, so any of them can throw - and `console.log` is the one call an
+    // extension author assumes cannot fail. An exception escaping here lands in
+    // the author's frame as a control-flow surprise *and* costs the host's
+    // console observer the line entirely, which is the half nobody can debug.
+    //
+    // Per argument rather than around the whole call, deliberately: a log line
+    // with one bad value in it still carries every other value the author
+    // wanted to see. `format`'s cycle bookkeeping is unaffected - its `seen`
+    // stack is popped in a `finally`, so a throw from any depth unwinds it
+    // before arriving here.
+    var UNFORMATTABLE = '[unformattable value]';
+
+    function formatSafely(value) {
+        try {
+            return format(value, 0, []);
+        } catch (error) {
+            return UNFORMATTABLE;
+        }
+    }
+
+    function formatArguments(args) {
+        var parts = [];
+        var next = 0;
+        if (args.length > 0 && typeof args[0] === 'string' && args[0].indexOf('%') !== -1) {
+            next = 1;
+            parts.push(args[0].replace(SPECIFIER_PATTERN, function (match, specifier) {
+                if (specifier === '%') {
+                    return '%';
+                }
+                if (next >= args.length) {
+                    // Node leaves an unsatisfied specifier standing rather than
+                    // printing `undefined`, so the author can see they are one
+                    // argument short.
+                    return match;
+                }
+                var value = args[next];
+                next += 1;
+                // `applySpecifier` is a throw site in its own right and not
+                // only through `format`: `%s` calls `String(value)`, `%d` and
+                // `%i` call `Number`/`parseInt`, and each of those runs a
+                // user-supplied `toString` or `valueOf`.
+                try {
+                    return applySpecifier(specifier, value);
+                } catch (error) {
+                    return UNFORMATTABLE;
+                }
+            }));
+        }
+        for (; next < args.length; next += 1) {
+            parts.push(formatSafely(args[next]));
+        }
+        return parts.join(' ');
+    }
+
+    // =====================================================================
+    // MARK: - console
+    // =====================================================================
+
+    function makeConsoleMethod(level) {
+        return function () {
+            host.console(level, formatArguments(arguments));
+        };
+    }
+
+    global.console = {
+        log: makeConsoleMethod('log'),
+        info: makeConsoleMethod('info'),
+        warn: makeConsoleMethod('warn'),
+        error: makeConsoleMethod('error'),
+        debug: makeConsoleMethod('debug')
+    };
+
+    // =====================================================================
+    // MARK: - Timers
+    // =====================================================================
+    //
+    // The callback lives here; the clock lives in Swift. That split is what
+    // makes teardown real: ExtensionHost cancels every outstanding timer when
+    // it disposes, and a cancelled timer can never reach this table again.
+
+    var nextTimerID = 1;
+    var timers = Object.create(null);
+
+    // The largest id this runtime can hand out and the largest delay it will
+    // honour are the same number, and not by coincidence: both cross to the
+    // host as a 32-bit integer, and `setTimeout`'s delay is a signed 32-bit
+    // millisecond count on every platform an extension author has ever used.
+    // Roughly 24.8 days.
+    var TIMER_MAX_INT32 = 2147483647;
+
+    function schedule(callback, delay, args, repeats, apiName) {
+        if (typeof callback !== 'function') {
+            throw new TypeError(apiName + ' requires a function as its first argument.');
+        }
+        var delayMilliseconds = Number(delay);
+        if (!isFinite(delayMilliseconds) || delayMilliseconds < 0) {
+            delayMilliseconds = 0;
+        }
+        // Clamped rather than wrapped. A browser takes the delay modulo 2^32,
+        // so `setTimeout(fn, 1e25)` fires almost immediately there; clamping
+        // makes a nonsense delay behave like the "never, practically" the
+        // author was reaching for instead of like "now". Either way the number
+        // stops here: Swift's mirror of this clamp is the guard that matters,
+        // because this line is extension-reachable and that one is not.
+        if (delayMilliseconds > TIMER_MAX_INT32) {
+            delayMilliseconds = TIMER_MAX_INT32;
+        }
+        var timerID = nextTimerID;
+        nextTimerID += 1;
+        timers[timerID] = { callback: callback, args: args, repeats: repeats };
+        host.scheduleTimer(timerID, delayMilliseconds, repeats);
+        return timerID;
+    }
+
+    // `clearTimeout(4294967297)` used to cancel timer 1.
+    //
+    // The id crosses to the host as a number and is range-checked on both
+    // sides, but only this side knows which ids were ever *issued*. An id this
+    // table does not hold cannot cancel anything, and forwarding it is strictly
+    // worse than ignoring it: the JS `delete` finds no key, so the shim stays
+    // silent, while the host is handed a value that may land on a live timer.
+    // The platform ignores an unknown id silently, and so does this.
+    function cancel(timerID) {
+        var key = Number(timerID);
+        if (!isFinite(key) || Math.floor(key) !== key || key < 1 || key > TIMER_MAX_INT32) {
+            return;
+        }
+        if (!Object.prototype.hasOwnProperty.call(timers, key)) {
+            return;
+        }
+        delete timers[key];
+        host.cancelTimer(key);
+    }
+
+    function tail(args) {
+        return reflectApply(arraySlice, args, [2]);
+    }
+
+    global.setTimeout = function (callback, delay) {
+        return schedule(callback, delay, tail(arguments), false, 'setTimeout');
+    };
+
+    global.setInterval = function (callback, delay) {
+        return schedule(callback, delay, tail(arguments), true, 'setInterval');
+    };
+
+    global.clearTimeout = cancel;
+    global.clearInterval = cancel;
+
+    // Called by ExtensionHost when a timer it owns comes due. An exception in
+    // the callback is reported rather than propagated: it belongs to the
+    // extension, and letting it escape here would surface as an unattributed
+    // failure of whatever the host happened to be doing.
+    function fireTimer(timerID) {
+        var timer = timers[timerID];
+        if (!timer) {
+            return;
+        }
+        if (!timer.repeats) {
+            delete timers[timerID];
+        }
+        try {
+            reflectApply(timer.callback, undefined, timer.args);
+        } catch (error) {
+            host.console('error', 'Uncaught exception in a timer callback: ' + formatSafely(error));
+        }
+    }
+
+    // =====================================================================
+    // MARK: - The NotImplemented contract
+    // =====================================================================
+    //
+    // A stub that returns `undefined` produces an extension that appears to
+    // activate and then does nothing, with no way for anyone to learn why.
+    // So: reaching for a member this host does not implement records the full
+    // member path and throws an error naming it. Property *access* throws,
+    // not just invocation, because most of the VS Code API's absent members
+    // are values rather than functions — `vscode.workspace.workspaceFolders`
+    // handed back as a throwing function would be quiet in exactly the way
+    // this mechanism exists to prevent.
+    //
+    // Replacing a stub with a real implementation is a one-line change:
+    // `__extensionRuntime.defineMember(namespacePath, name, value)` puts it in
+    // the namespace's member table. The stub path is only ever reached for keys
+    // the table does not hold, so stages 5.3-5.7 each fill in a slice without
+    // touching this machinery.
+
+    // Keys the language, the debugger and bundled CommonJS interop shims probe
+    // on any object they are handed. Throwing on these would fail an extension
+    // before its first statement ran, and none of them is an extension asking
+    // for an API member — so they are answered rather than recorded.
+    //
+    // Two thirds of this list is *derived* rather than guessed, which matters:
+    // an empirical list is one nobody can extend correctly, and the omissions
+    // in one are invisible until an extension trips on them.
+    //
+    //   1. Symbol keys are handled by the `typeof key === 'symbol'` branch in
+    //      the trap below, not by this list. That covers every well-known
+    //      symbol at once — `Symbol.toPrimitive`, `Symbol.iterator`,
+    //      `Symbol.toStringTag`, `Symbol.hasInstance`,
+    //      `Symbol.for('nodejs.util.inspect.custom')` — and it is sound rather
+    //      than lucky: the VS Code API has no symbol-keyed member, so a symbol
+    //      access can never be an author asking for one.
+    //   2. Everything on `Object.prototype`, read off `Object.prototype`. No
+    //      VS Code API member collides with any of these names.
+    //   3. A short interop tail that genuinely is empirical — but every entry
+    //      names who reaches for it, so the next person can judge an addition
+    //      instead of accreting one.
+    var INTEROP_PROBE_KEYS = [
+        'then',        // Promise adoption: `await vscode`, `Promise.resolve(ns)`
+        'toJSON',      // JSON.stringify
+        '__esModule',  // Babel / TypeScript / webpack / esbuild CommonJS-ESM interop
+        'default',     // the same interop shims, on the path where __esModule is absent
+        'inspect',     // Node's legacy util.inspect hook
+        'prototype',   // debuggers, and `instanceof`-shaped duck typing
+        'nodeType',    // DOM duck typing in libraries bundled into web extensions
+        '$$typeof'     // React element duck typing, ditto
+    ];
+
+    var PROBE_KEYS = Object.getOwnPropertyNames(Object.prototype).concat(INTEROP_PROBE_KEYS);
+
+    // What those probes answer *with*.
+    //
+    // `undefined` is the wrong answer for the three coercion hooks, and wrong
+    // in the expensive direction: with no callable `toString` or `valueOf`,
+    // `'config: ' + vscode` and `` `${vscode.window}` `` throw
+    // `TypeError: Cannot convert object to primitive value`, which names
+    // neither the namespace nor the extension nor a member. A namespace that
+    // stringifies to something saying what it is beats both that throw and a
+    // bare `undefined`.
+    //
+    // Two properties of what this returns, for whoever edits it next:
+    //
+    //   1. **These must not be the built-ins.** `hasUserDefinedToString`, the
+    //      `%s` half of the console formatter, decides between `String(value)`
+    //      and an inspection by checking the `toString` it finds against
+    //      `BUILT_IN_TO_STRINGS`. Returning `Object.prototype.toString` here
+    //      would look like a tidy simplification and would quietly turn
+    //      `console.log('%s', vscode.window)` from
+    //      `[VSCodeNamespace vscode.window]` into `{}`.
+    //   2. **Identity is not stable.** A fresh closure per access means
+    //      `vscode.toString !== vscode.toString`. Nothing here depends on
+    //      that, and caching one closure per (path, key) would be equally
+    //      correct — but interop that compares function identity across two
+    //      reads would see it, so it is a fact rather than an accident.
+    function probeValue(path, table, key) {
+        switch (key) {
+        case 'toString':
+        case 'toLocaleString':
+        case 'valueOf':
+        case 'inspect':
+            return function () { return '[VSCodeNamespace ' + path + ']'; };
+        case 'hasOwnProperty':
+            return function (probed) { return Object.prototype.hasOwnProperty.call(table, probed); };
+        case 'propertyIsEnumerable':
+            // Not an alias for `hasOwnProperty`: it answers the narrower
+            // question, which is the same answer only for as long as every
+            // member is an enumerable data property. `defineMember` writes
+            // plain assignments today, but a member installed with
+            // `Object.defineProperty` would make the two diverge, and the
+            // wrong one of them would be the one that had never been written
+            // down as a shortcut.
+            return function (probed) {
+                var descriptor = Object.getOwnPropertyDescriptor(table, probed);
+                return descriptor !== undefined && descriptor.enumerable === true;
+            };
+        case 'isPrototypeOf':
+            return function () { return false; };
+        default:
+            return undefined;
+        }
+    }
+
+    function notImplementedError(memberPath) {
+        var error = new Error(
+            memberPath + ' is not implemented yet. This extension host implements the VS Code ' +
+            'API one member at a time, and ' + memberPath + ' is not available in this build.'
+        );
+        error.name = 'NotImplementedError';
+        error.memberPath = memberPath;
+        return error;
+    }
+
+    // Feature detection — `'registerCommand' in vscode.commands`,
+    // `Object.getOwnPropertyDescriptor(...)` — is *supposed* to answer quietly:
+    // an honest "no" is the correct behaviour and throwing at it would break
+    // the extensions that ask politely. But a negative answer is still an
+    // extension saying which member it wanted, and task 5.8's report is more
+    // useful for knowing what an extension looked for and did not find than for
+    // knowing only what it tripped over. So the probe is recorded without being
+    // refused.
+    function recordNegativeProbe(path, key) {
+        if (typeof key === 'symbol' || PROBE_KEYS.indexOf(key) !== -1) {
+            return;
+        }
+        host.recordNegativeProbe(path + '.' + key);
+    }
+
+    // `members` is the table of members that *are* implemented at `path`.
+    // Everything else under `path` is recorded and throws.
+    function makeStubNamespace(path, members) {
+        var table = members || Object.create(null);
+        return new Proxy(Object.create(null), {
+            get: function (target, key) {
+                // JSC itself reads symbol keys (Symbol.toPrimitive,
+                // Symbol.iterator) while coercing and iterating. Never an
+                // extension asking for an API member.
+                if (typeof key === 'symbol') {
+                    return undefined;
+                }
+                if (key in table) {
+                    return table[key];
+                }
+                if (PROBE_KEYS.indexOf(key) !== -1) {
+                    return probeValue(path, table, key);
+                }
+                var memberPath = path + '.' + key;
+                host.recordNotImplemented(memberPath);
+                throw notImplementedError(memberPath);
+            },
+            has: function (target, key) {
+                if (typeof key !== 'symbol' && key in table) {
+                    return true;
+                }
+                recordNegativeProbe(path, key);
+                return false;
+            },
+            set: function (target, key) {
+                throw new TypeError(
+                    'Cannot assign to ' + path + '.' + String(key) + ': the VS Code API is read-only.'
+                );
+            },
+            deleteProperty: function (target, key) {
+                throw new TypeError(
+                    'Cannot delete ' + path + '.' + String(key) + ': the VS Code API is read-only.'
+                );
+            },
+            ownKeys: function () {
+                return Object.keys(table);
+            },
+            getOwnPropertyDescriptor: function (target, key) {
+                if (typeof key === 'symbol' || !(key in table)) {
+                    recordNegativeProbe(path, key);
+                    return undefined;
+                }
+                return { value: table[key], enumerable: true, configurable: true, writable: false };
+            }
+        });
+    }
+
+    // The object `activate(context)` receives.
+    //
+    // Every member of it throws by name, as it always has, with exactly one
+    // exception: `subscriptions` is a real, mutable array. That is upstream's
+    // own shape rather than a convenience — `extHostExtensionService.ts:527`
+    // builds the context with `Object.freeze({ ..., subscriptions: [], ... })`,
+    // so the *property* is immutable and the array it holds is not. The proxy's
+    // `set` trap already refuses `context.subscriptions = []`, which is the
+    // half `Object.freeze` provides; what an extension actually writes —
+    // `context.subscriptions.push(disposable)`, or handing the array to an
+    // event as its third argument — mutates the array and goes through
+    // untouched.
+    //
+    // This is the member that gated essentially every real extension. It is
+    // read on the first line of a great many `activate` functions, so reading
+    // it threw before the extension had done anything at all, and the ledger
+    // then recorded `context.subscriptions` against extensions whose only
+    // mistake was being ordinary.
+    function makeActivationContext() {
+        var table = Object.create(null);
+        table.subscriptions = [];
+        return makeStubNamespace('context', table);
+    }
+
+    // Upstream's `dispose(context.subscriptions)`
+    // (`vs/base/common/lifecycle.ts:332`), which is deliberately not the
+    // obvious loop. Three of its properties are load-bearing: it disposes in
+    // **insertion order**; it **skips falsy entries** rather than reporting
+    // them, because `push(maybeDisposable)` is a shape real extensions write
+    // and a `null` in the list is not a failure; and it **catches each
+    // failure**, so one disposable that throws cannot strand the ones queued
+    // behind it. Upstream collects the errors and rethrows them together at the
+    // end; this collects them and hands them back, because the caller is
+    // `ExtensionHost.dispose()` — teardown, which has nothing useful to do with
+    // an exception but every reason to log what failed.
+    //
+    // The list is emptied, which upstream does not do: its `dispose` answers a
+    // *new* empty array and leaves the original populated, safe there because
+    // the context dies with the call. Here `ExtensionHost.dispose()` is
+    // documented safe to call more than once, and a second teardown must not
+    // dispose the same objects again. Emptying also bounds a disposable that
+    // pushes onto the list while being disposed: `length` is read live, exactly
+    // as upstream's iterator does, so the growth is visited once and then
+    // cleared.
+    function disposeSubscriptions(context) {
+        var pending = context.subscriptions;
+        var failures = [];
+        var disposed = 0;
+        for (var index = 0; index < pending.length; index += 1) {
+            var entry = pending[index];
+            if (!entry) {
+                continue;
+            }
+            try {
+                // Not guarded by a `typeof entry.dispose === 'function'` test:
+                // upstream calls it and lets the TypeError land in the same
+                // collection as any other failure, and an extension that pushed
+                // a non-disposable wants to be told so rather than have it
+                // silently skipped.
+                entry.dispose();
+                disposed += 1;
+            } catch (error) {
+                failures.push(describeThrown(error));
+            }
+        }
+        pending.length = 0;
+        return { disposed: disposed, failures: failures };
+    }
+
+    // The namespaces stages 5.3-5.7 fill in. Listing one here is what makes
+    // `vscode.commands.registerCommand` record the *full* path rather than
+    // stopping at `vscode.commands` — the namespace is traversable, its
+    // members are not. A name absent from this list (`vscode.Uri`, say) is
+    // itself the unimplemented member, which is the honest answer for an API
+    // surface this host has made no plan for yet.
+    var VSCODE_NAMESPACES = ['commands', 'workspace', 'window', 'languages', 'lm'];
+
+    // The seam stages 5.3-5.7 land on, and the reason the tables are *kept*
+    // rather than passed anonymously into `makeStubNamespace`. A table nothing
+    // holds a reference to cannot be added to afterwards, which would have made
+    // "replacing a stub is a local change" true only of a rewrite of this
+    // block.
+    var vscodeMembers = Object.create(null);
+    var namespaceTables = Object.create(null);
+    namespaceTables.vscode = vscodeMembers;
+
+    VSCODE_NAMESPACES.forEach(function (name) {
+        var table = Object.create(null);
+        namespaceTables['vscode.' + name] = table;
+        vscodeMembers[name] = makeStubNamespace('vscode.' + name, table);
+    });
+    var vscode = makeStubNamespace('vscode', vscodeMembers);
+
+    // =====================================================================
+    // MARK: - The vscode value types
+    // =====================================================================
+    //
+    // Four things an extension constructs rather than receives, and so four
+    // things no Swift adaptor can hand it: `new vscode.TreeItem(...)` is the
+    // first line of every `getTreeItem`, and `new vscode.EventEmitter()` is
+    // how a provider says its tree changed. Upstream builds all four in
+    // JavaScript too (`extHostTypes.ts`), and that is the argument for doing
+    // it here rather than minting objects from Swift: `instanceof` has to
+    // answer yes. An object built by JSValue would be an impostor with the
+    // right properties.
+    //
+    // They are installed on the `vscode` member table below rather than
+    // through `defineMember`, which refuses anything but a known *namespace*
+    // path and is the seam for the members a Swift adaptor implements. These
+    // have no Swift half to install.
+    //
+    // **Nothing here reads the host, and nothing here is a stub.** A type in
+    // this section is implemented; a type this host has not built is absent
+    // from the table and throws by name, which is the whole mechanism this
+    // file exists for.
+
+    // `vscode.TreeItemCollapsibleState` (`vscode.d.ts:11530-11543`). Plain
+    // numbers, matching the declaration, because an extension both writes
+    // `vscode.TreeItemCollapsibleState.Collapsed` and — far more often than
+    // the docs suggest — writes the literal `1`.
+    var TreeItemCollapsibleState = Object.freeze({
+        None: 0,
+        Collapsed: 1,
+        Expanded: 2
+    });
+
+    // `vscode.ThemeIcon` (`vscode.d.ts:3339`). An id and an optional colour;
+    // the colour is carried and never read, because this host resolves an
+    // icon to an SF Symbol and a symbol takes its colour from the pane.
+    //
+    // `File` and `Folder` are upstream's two static instances (`:3345`,
+    // `:3350`), and they are instances rather than ids: an extension writes
+    // `item.iconPath = vscode.ThemeIcon.Folder` and the reader downstream
+    // sees the same shape it sees for `new vscode.ThemeIcon('gear')`.
+    function ThemeIcon(id, color) {
+        if (typeof id !== 'string') {
+            throw new TypeError('vscode.ThemeIcon requires an id string.');
+        }
+        this.id = id;
+        if (color !== undefined) {
+            this.color = color;
+        }
+    }
+    ThemeIcon.File = new ThemeIcon('file');
+    ThemeIcon.Folder = new ThemeIcon('folder');
+
+    // `vscode.TreeItem` (`vscode.d.ts:11391`). Every other member — `id`,
+    // `description`, `tooltip`, `iconPath`, `command`, `contextValue`,
+    // `resourceUri`, `accessibilityInformation` — is a plain writable
+    // property an extension assigns after construction, so the constructor
+    // sets only what upstream's does.
+    //
+    // The first argument is `string | TreeItemLabel | Uri`, and which one it
+    // is decides which property it lands on: a `Uri`-shaped value is a
+    // `resourceUri` whose label the host derives from the path
+    // (`vscode.d.ts:11396-11400`). Shape rather than `instanceof` because
+    // this host has no `vscode.Uri` class to be an instance of — an
+    // extension that reached for one got the NotImplemented error, and an
+    // object carrying `fsPath` or `path` is what a bundled polyfill hands
+    // over instead.
+    function TreeItem(labelOrResourceUri, collapsibleState) {
+        if (labelOrResourceUri !== null && typeof labelOrResourceUri === 'object'
+            && (typeof labelOrResourceUri.fsPath === 'string'
+                || (typeof labelOrResourceUri.path === 'string'
+                    && typeof labelOrResourceUri.label !== 'string'))) {
+            this.resourceUri = labelOrResourceUri;
+        } else {
+            this.label = labelOrResourceUri;
+        }
+        // Upstream leaves it `undefined` when the caller omits it and reads
+        // `undefined` as `None` at use (`vscode.d.ts:11467-11471`). Written
+        // through as `None` instead, so an extension that logs its own item
+        // sees the value the host will act on rather than a hole.
+        this.collapsibleState = collapsibleState === undefined
+            ? TreeItemCollapsibleState.None
+            : collapsibleState;
+    }
+
+    // `vscode.EventEmitter` (`vscode.d.ts:1786`), and the one type in this
+    // section that is load-bearing rather than convenient: `onDidChangeTreeData`
+    // is an `Event`, an extension has no other way to make one, and without it
+    // a tree can be drawn once and never refreshed.
+    //
+    // `event` is a property holding a closure rather than a method, because
+    // that is how extensions pass it: `onDidChangeTreeData = emitter.event`
+    // is assigned to a field and called later with no receiver, so a method
+    // would lose `this`. The closure captures the listener list directly.
+    //
+    // Listeners are copied before delivery: a listener that disposes itself —
+    // or registers another — must not change the array being walked, which is
+    // upstream's own rule (`event.ts`'s `_deliveryQueue`). A listener that
+    // throws does not stop its siblings; it is reported on the console and
+    // the rest still run, because one misbehaving subscriber taking out an
+    // unrelated one is the failure that is impossible to diagnose from the
+    // outside.
+    function EventEmitter() {
+        var listeners = [];
+        var disposed = false;
+
+        this.event = function (listener, thisArgs, disposables) {
+            if (typeof listener !== 'function') {
+                throw new TypeError('An Event requires a listener function.');
+            }
+            var registration = { listener: listener, thisArgs: thisArgs };
+            if (!disposed) {
+                listeners.push(registration);
+            }
+            var subscription = {
+                dispose: function () {
+                    var at = listeners.indexOf(registration);
+                    if (at !== -1) {
+                        listeners.splice(at, 1);
+                    }
+                }
+            };
+            // `event.ts:1976-1978` — an array argument receives the
+            // disposable too, which is the `emitter.event(fn, null, context
+            // .subscriptions)` shape extensions write.
+            if (disposables && typeof disposables.push === 'function') {
+                disposables.push(subscription);
+            }
+            return subscription;
+        };
+
+        this.fire = function (data) {
+            if (disposed) {
+                return;
+            }
+            var current = listeners.slice();
+            for (var index = 0; index < current.length; index += 1) {
+                try {
+                    reflectApply(current[index].listener, current[index].thisArgs, [data]);
+                } catch (error) {
+                    console.error('An event listener threw: ' + describeThrown(error));
+                }
+            }
+        };
+
+        this.dispose = function () {
+            disposed = true;
+            listeners.length = 0;
+        };
+    }
+
+    Object.defineProperty(vscodeMembers, 'TreeItem', {
+        value: TreeItem, enumerable: true, configurable: true, writable: true
+    });
+    Object.defineProperty(vscodeMembers, 'TreeItemCollapsibleState', {
+        value: TreeItemCollapsibleState, enumerable: true, configurable: true, writable: true
+    });
+    Object.defineProperty(vscodeMembers, 'ThemeIcon', {
+        value: ThemeIcon, enumerable: true, configurable: true, writable: true
+    });
+    Object.defineProperty(vscodeMembers, 'EventEmitter', {
+        value: EventEmitter, enumerable: true, configurable: true, writable: true
+    });
+
+    // Installs one real implementation over one stub. Stage 5.3 registers
+    // `vscode.commands.registerCommand` by calling this with a Swift block; the
+    // stub path is only ever reached for keys the table does not hold, so its
+    // siblings go on throwing and nothing else in this file changes.
+    //
+    // Refuses an unknown namespace rather than creating one: a typo would
+    // otherwise install a member nothing can reach and report success, which is
+    // the quiet failure this whole file exists to avoid.
+    function defineMember(namespacePath, name, value) {
+        var table = namespaceTables[namespacePath];
+        if (!table) {
+            throw new Error(
+                "Cannot implement '" + name + "' on '" + namespacePath + "': no such namespace. " +
+                'Known namespaces: ' + Object.keys(namespaceTables).join(', ') + '.'
+            );
+        }
+        // A plain assignment here would throw under `'use strict'` if a prior
+        // `defineLiveMember` call for this same name left a getter-only
+        // accessor on `table` — assigning to a property that has a getter but
+        // no setter is a TypeError, `configurable: true` notwithstanding (see
+        // `defineLiveMember`'s comment below). Going through
+        // `Object.defineProperty` with a plain data descriptor sidesteps that:
+        // it replaces whatever descriptor is already there, accessor or data,
+        // rather than writing through it.
+        Object.defineProperty(table, name, {
+            value: value,
+            enumerable: true,
+            configurable: true,
+            writable: true
+        });
+    }
+
+    // Installs one real implementation whose value is read at every access,
+    // rather than written once.
+    //
+    // `defineMember` above is a plain assignment, which is right for a member
+    // whose value cannot change — a function, a class, a sub-namespace. It is
+    // wrong for a member that *reports app state*:
+    // `vscode.workspace.workspaceFolders` and `vscode.workspace.name` are
+    // read by an extension's top-level code during activation, and this host
+    // activates extensions at app launch, ahead of any project window. Written
+    // once, those members recorded "no workspace" and kept saying it for the
+    // life of the process, whatever the user opened afterwards.
+    //
+    // `enumerable: true` is load-bearing, not decorative: the proxy's
+    // `ownKeys` trap is `Object.keys(table)` and `probeValue`'s
+    // `propertyIsEnumerable` answers from the descriptor, so a
+    // non-enumerable member would vanish from both while still being
+    // readable. `configurable: true` is what lets a later `defineMember` for
+    // the same name replace this one — but only because `defineMember`
+    // installs through `Object.defineProperty`, not through a plain
+    // assignment. `configurable: true` permits *redefinition*; it says
+    // nothing about *assignment*. Under `'use strict'`, assigning to a
+    // property that has a getter but no setter throws a TypeError
+    // regardless of configurability — the engine never gets as far as
+    // asking whether the property could be redefined, because assignment
+    // and redefinition are different operations. So a plain `table[name] =
+    // value` would have thrown here even with `configurable: true` in
+    // place; going through `defineProperty` on both sides is what actually
+    // makes installation order not matter.
+    //
+    // No setter: the namespace proxy's `set` trap already refuses assignment
+    // one level up, and a getter-only property makes the same refusal true of
+    // the table itself.
+    function defineLiveMember(namespacePath, name, getter) {
+        var table = namespaceTables[namespacePath];
+        if (!table) {
+            throw new Error(
+                "Cannot implement '" + name + "' on '" + namespacePath + "': no such namespace. " +
+                'Known namespaces: ' + Object.keys(namespaceTables).join(', ') + '.'
+            );
+        }
+        Object.defineProperty(table, name, {
+            get: getter,
+            enumerable: true,
+            configurable: true
+        });
+    }
+
+    // Deliberately not implemented in this task, and this stub is the record
+    // of that decision rather than a comment promising one later. Giving
+    // arbitrary extension JavaScript unrestricted network access is a
+    // user-facing security posture, not a shim detail; it gets its own task
+    // with a stated policy. Recorded like any other missing member, so the
+    // extension report can tell a user their extension wanted the network.
+    global.fetch = function () {
+        host.recordNotImplemented('fetch');
+        throw notImplementedError('fetch');
+    };
+
+    // =====================================================================
+    // MARK: - require
+    // =====================================================================
+
+    function require(specifier) {
+        if (specifier === 'vscode') {
+            return vscode;
+        }
+        // Named, because "module not found" without the name is the least
+        // useful thing a bundler-adjacent failure can say.
+        var error = new Error(
+            "Cannot find module '" + specifier + "'. This extension host resolves only 'vscode'; " +
+            'a web extension must be bundled with every other dependency inlined.'
+        );
+        error.name = 'ModuleNotFoundError';
+        error.code = 'MODULE_NOT_FOUND';
+        error.specifier = specifier;
+        throw error;
+    }
+
+    // =====================================================================
+    // MARK: - TextEncoder / TextDecoder
+    // =====================================================================
+    //
+    // UTF-8 only, and it says so rather than mis-decoding: a decoder asked for
+    // an encoding it does not have would otherwise hand back plausible-looking
+    // mojibake that nothing downstream can detect.
+
+    var UTF8_LABELS = [
+        'utf-8', 'utf8', 'unicode-1-1-utf-8', 'unicode11utf8', 'unicode20utf8', 'x-unicode20utf8'
+    ];
+    var REPLACEMENT = String.fromCharCode(0xFFFD);
+
+    function TextEncoder() {}
+
+    Object.defineProperty(TextEncoder.prototype, 'encoding', {
+        get: function () { return 'utf-8'; }
+    });
+
+    TextEncoder.prototype.encode = function (input) {
+        var text = input === undefined ? '' : String(input);
+        var bytes = [];
+        for (var index = 0; index < text.length; index += 1) {
+            var code = text.charCodeAt(index);
+            if (code >= 0xD800 && code <= 0xDBFF && index + 1 < text.length) {
+                var low = text.charCodeAt(index + 1);
+                if (low >= 0xDC00 && low <= 0xDFFF) {
+                    code = 0x10000 + ((code - 0xD800) << 10) + (low - 0xDC00);
+                    index += 1;
+                }
+            }
+            if (code >= 0xD800 && code <= 0xDFFF) {
+                // A lone surrogate is not encodable; the WHATWG encoding
+                // standard substitutes U+FFFD rather than emitting garbage.
+                code = 0xFFFD;
+            }
+            if (code < 0x80) {
+                bytes.push(code);
+            } else if (code < 0x800) {
+                bytes.push(0xC0 | (code >> 6), 0x80 | (code & 0x3F));
+            } else if (code < 0x10000) {
+                bytes.push(0xE0 | (code >> 12), 0x80 | ((code >> 6) & 0x3F), 0x80 | (code & 0x3F));
+            } else {
+                bytes.push(
+                    0xF0 | (code >> 18),
+                    0x80 | ((code >> 12) & 0x3F),
+                    0x80 | ((code >> 6) & 0x3F),
+                    0x80 | (code & 0x3F)
+                );
+            }
+        }
+        return new Uint8Array(bytes);
+    };
+
+    function TextDecoder(label) {
+        var requested = label === undefined ? 'utf-8' : String(label).trim().toLowerCase();
+        if (UTF8_LABELS.indexOf(requested) === -1) {
+            throw new RangeError(
+                "TextDecoder: '" + label + "' is not supported. This extension host decodes UTF-8 only."
+            );
+        }
+    }
+
+    Object.defineProperty(TextDecoder.prototype, 'encoding', {
+        get: function () { return 'utf-8'; }
+    });
+
+    function bytesOf(input) {
+        if (input === undefined || input === null) {
+            return new Uint8Array(0);
+        }
+        if (input instanceof Uint8Array) {
+            return input;
+        }
+        if (typeof ArrayBuffer !== 'undefined' && input instanceof ArrayBuffer) {
+            return new Uint8Array(input);
+        }
+        if (input.buffer instanceof ArrayBuffer) {
+            return new Uint8Array(input.buffer, input.byteOffset, input.byteLength);
+        }
+        throw new TypeError('TextDecoder.decode expects an ArrayBuffer or a typed array.');
+    }
+
+    // Every UTF-8 validity rule lives in these three functions, and all of them
+    // are decided from the *lead* and the *second* byte - which is the only
+    // arrangement that gets both halves of the answer right.
+    //
+    // The verdict half: an overlong sequence spells an ASCII character in two,
+    // three or four bytes. `[0xE0,0x80,0xAF]` decoded to `/` here and
+    // `[0xC0,0x80]` to NUL, so an extension that decoded untrusted bytes and
+    // then checked the result for a path separator or a terminator was handed
+    // one its own validation never saw. That is the classic overlong filter
+    // bypass, and it is why the minimums below are not a tidiness exercise.
+    //
+    // The *count* half, which is why this rejects on the second byte rather
+    // than checking a minimum after the code point is assembled: WHATWG treats
+    // an out-of-range second byte as an error and then re-reads that byte as a
+    // fresh lead, so `[0xE0,0x80,0xAF]` is three replacement characters, not
+    // one. A decoder that assembled first could never produce three however
+    // correct its verdict was, and a host whose replacement count disagrees
+    // with every other decoder silently changes the length of a string an
+    // extension is about to index into. Each row of the test was measured
+    // against Node rather than reasoned about.
+    function sequenceLength(leadByte) {
+        if (leadByte < 0x80) { return 1; }
+        // 0xC0 and 0xC1 can only ever begin an overlong two-byte sequence, and
+        // 0xF5-0xFF can only ever begin one above U+10FFFF. Neither is a lead.
+        if (leadByte >= 0xC2 && leadByte <= 0xDF) { return 2; }
+        if (leadByte >= 0xE0 && leadByte <= 0xEF) { return 3; }
+        if (leadByte >= 0xF0 && leadByte <= 0xF4) { return 4; }
+        return 0;
+    }
+
+    // 0xE0 and 0xF0 carry no payload bits of their own worth having, so their
+    // second byte is what rules out the overlong three- and four-byte forms.
+    // 0xED's ceiling excludes the surrogate range; 0xF4's excludes everything
+    // above U+10FFFF.
+    function secondByteLowerBound(leadByte) {
+        if (leadByte === 0xE0) { return 0xA0; }
+        if (leadByte === 0xF0) { return 0x90; }
+        return 0x80;
+    }
+
+    function secondByteUpperBound(leadByte) {
+        if (leadByte === 0xED) { return 0x9F; }
+        if (leadByte === 0xF4) { return 0x8F; }
+        return 0xBF;
+    }
+
+    function leadBits(leadByte, length) {
+        if (length === 1) { return leadByte; }
+        if (length === 2) { return leadByte & 0x1F; }
+        if (length === 3) { return leadByte & 0x0F; }
+        return leadByte & 0x07;
+    }
+
+    // Encoding only. Every validity question was already answered above, so a
+    // code point that reaches here is one this decoder is certain of.
+    function appendCodePoint(text, codePoint) {
+        if (codePoint > 0xFFFF) {
+            var offset = codePoint - 0x10000;
+            return text + String.fromCharCode(0xD800 + (offset >> 10), 0xDC00 + (offset & 0x3FF));
+        }
+        return text + String.fromCharCode(codePoint);
+    }
+
+    TextDecoder.prototype.decode = function (input) {
+        var bytes = bytesOf(input);
+        var text = '';
+        var index = 0;
+        while (index < bytes.length) {
+            var lead = bytes[index];
+            var length = sequenceLength(lead);
+            if (length === 0) {
+                text += REPLACEMENT;
+                index += 1;
+                continue;
+            }
+            if (length === 1) {
+                text += String.fromCharCode(lead);
+                index += 1;
+                continue;
+            }
+
+            var available = bytes.length - index - 1;
+            var codePoint = leadBits(lead, length);
+            var consumed = 0;
+            var rejected = false;
+            for (var offset = 1; offset < length; offset += 1) {
+                if (offset > available) { break; }
+                var continuation = bytes[index + offset];
+                var lower = offset === 1 ? secondByteLowerBound(lead) : 0x80;
+                var upper = offset === 1 ? secondByteUpperBound(lead) : 0xBF;
+                if (continuation < lower || continuation > upper) {
+                    rejected = true;
+                    break;
+                }
+                codePoint = (codePoint << 6) | (continuation & 0x3F);
+                consumed += 1;
+            }
+
+            if (rejected) {
+                // One error for the bytes consumed so far, and the byte that
+                // broke the sequence goes back to be read as a lead of its own.
+                text += REPLACEMENT;
+                index += 1 + consumed;
+                continue;
+            }
+            if (consumed < length - 1) {
+                // The input ended mid-sequence: one error for the whole pending
+                // sequence, and there is nothing left to re-read.
+                text += REPLACEMENT;
+                index = bytes.length;
+                continue;
+            }
+            index += length;
+            text = appendCodePoint(text, codePoint);
+        }
+        return text;
+    };
+
+    global.TextEncoder = TextEncoder;
+    global.TextDecoder = TextDecoder;
+
+    // =====================================================================
+    // MARK: - URL / URLSearchParams
+    // =====================================================================
+    //
+    // A pragmatic WHATWG subset, not the full parser: enough for the URLs an
+    // extension actually builds and takes apart, and a `TypeError` naming the
+    // input for anything it cannot parse. Failing loudly on an exotic URL is
+    // the same trade the NotImplemented stubs make — a wrong `hostname` read
+    // back from a silently mangled parse is the expensive outcome.
+    //
+    // What is still a subset, measured against Node's WHATWG implementation
+    // rather than guessed, so the next person can weigh an addition instead of
+    // rediscovering it:
+    //
+    //   * The **query** is not percent-encoded: a space in it survives as
+    //     itself where WHATWG writes `%20`. It is the half that round-trips
+    //     through `URLSearchParams`, whose own serializer owns that escaping,
+    //     and rewriting `_search` on the way in would give one value two
+    //     owners. The path and the fragment are both encoded.
+    //   * A non-special scheme with an empty path gains a slash it should not
+    //     have: `new URL('//other', 'vscode-resource://a/b').href` reads back
+    //     `vscode-resource://other/` where WHATWG gives
+    //     `vscode-resource://other`. Worth knowing because webview extensions
+    //     really do use that scheme; the rule behind it (an empty path with a
+    //     host becomes `/`) is right for the special schemes and for `file:`.
+    //   * The host is taken as written: no IDNA, no IPv4 shorthand
+    //     canonicalization (`http://1.1` stays `1.1` where WHATWG gives
+    //     `1.0.0.1`), and no forbidden-host-character check.
+    //   * Backslashes are ordinary path characters. WHATWG treats them as
+    //     slashes in a special URL.
+
+    var SPECIAL_PORTS = {
+        'http:': '80', 'https:': '443', 'ws:': '80', 'wss:': '443', 'ftp:': '21', 'file:': ''
+    };
+
+    // WHATWG's "special scheme" set is exactly the keys above, and it decides
+    // more than the default port: how many slashes may precede an authority,
+    // and whether an empty host is a failure. `hasOwnProperty` rather than a
+    // truthiness test, because `file:`'s value is the empty string and a
+    // scheme spelled `toString:` must not inherit an answer from a prototype.
+    function schemeIsSpecial(protocol) {
+        return Object.prototype.hasOwnProperty.call(SPECIAL_PORTS, protocol);
+    }
+
+    function encodeFormComponent(text) {
+        return encodeURIComponent(text).replace(/%20/g, '+').replace(/[!'()~]/g, function (character) {
+            return '%' + character.charCodeAt(0).toString(16).toUpperCase();
+        });
+    }
+
+    function decodeFormComponent(text) {
+        try {
+            return decodeURIComponent(String(text).replace(/\+/g, ' '));
+        } catch (error) {
+            return String(text);
+        }
+    }
+
+    function URLSearchParams(init) {
+        // `_pairs` is the whole state; every accessor below reads or rewrites
+        // it, which is what keeps the spec's insertion order observable
+        // through `toString` and the iterators.
+        Object.defineProperty(this, '_pairs', { value: [], writable: true, enumerable: false });
+        Object.defineProperty(this, '_owner', { value: null, writable: true, enumerable: false });
+        if (init === undefined || init === null || init === '') {
+            return;
+        }
+        if (init instanceof URLSearchParams) {
+            this._pairs = init._pairs.slice();
+            return;
+        }
+        if (Array.isArray(init)) {
+            for (var index = 0; index < init.length; index += 1) {
+                this._pairs.push([String(init[index][0]), String(init[index][1])]);
+            }
+            return;
+        }
+        if (typeof init === 'object') {
+            Object.keys(init).forEach(function (key) {
+                this._pairs.push([key, String(init[key])]);
+            }, this);
+            return;
+        }
+        var text = String(init);
+        if (text.charAt(0) === '?') {
+            text = text.slice(1);
+        }
+        text.split('&').forEach(function (chunk) {
+            if (chunk === '') {
+                return;
+            }
+            var split = chunk.indexOf('=');
+            if (split === -1) {
+                this._pairs.push([decodeFormComponent(chunk), '']);
+            } else {
+                this._pairs.push([
+                    decodeFormComponent(chunk.slice(0, split)),
+                    decodeFormComponent(chunk.slice(split + 1))
+                ]);
+            }
+        }, this);
+    }
+
+    // A mutation through `url.searchParams` has to reach `url.search` and
+    // `url.href`; without this the two disagree the moment anyone calls
+    // `set`, and the disagreement is invisible until something serializes.
+    URLSearchParams.prototype._changed = function () {
+        if (this._owner) {
+            this._owner._search = this.toString();
+        }
+    };
+
+    URLSearchParams.prototype.append = function (name, value) {
+        this._pairs.push([String(name), String(value)]);
+        this._changed();
+    };
+
+    URLSearchParams.prototype.set = function (name, value) {
+        var key = String(name);
+        var replaced = false;
+        var next = [];
+        for (var index = 0; index < this._pairs.length; index += 1) {
+            if (this._pairs[index][0] !== key) {
+                next.push(this._pairs[index]);
+            } else if (!replaced) {
+                next.push([key, String(value)]);
+                replaced = true;
+            }
+        }
+        if (!replaced) {
+            next.push([key, String(value)]);
+        }
+        this._pairs = next;
+        this._changed();
+    };
+
+    URLSearchParams.prototype.get = function (name) {
+        var key = String(name);
+        for (var index = 0; index < this._pairs.length; index += 1) {
+            if (this._pairs[index][0] === key) {
+                return this._pairs[index][1];
+            }
+        }
+        return null;
+    };
+
+    URLSearchParams.prototype.getAll = function (name) {
+        var key = String(name);
+        return this._pairs.filter(function (pair) { return pair[0] === key; })
+            .map(function (pair) { return pair[1]; });
+    };
+
+    URLSearchParams.prototype.has = function (name) {
+        return this.get(name) !== null;
+    };
+
+    URLSearchParams.prototype['delete'] = function (name) {
+        var key = String(name);
+        this._pairs = this._pairs.filter(function (pair) { return pair[0] !== key; });
+        this._changed();
+    };
+
+    URLSearchParams.prototype.sort = function () {
+        this._pairs.sort(function (left, right) {
+            if (left[0] < right[0]) { return -1; }
+            if (left[0] > right[0]) { return 1; }
+            return 0;
+        });
+        this._changed();
+    };
+
+    URLSearchParams.prototype.forEach = function (callback, thisArg) {
+        this._pairs.slice().forEach(function (pair) {
+            callback.call(thisArg, pair[1], pair[0], this);
+        }, this);
+    };
+
+    URLSearchParams.prototype.entries = function () {
+        return this._pairs.map(function (pair) { return [pair[0], pair[1]]; })[Symbol.iterator]();
+    };
+
+    URLSearchParams.prototype.keys = function () {
+        return this._pairs.map(function (pair) { return pair[0]; })[Symbol.iterator]();
+    };
+
+    URLSearchParams.prototype.values = function () {
+        return this._pairs.map(function (pair) { return pair[1]; })[Symbol.iterator]();
+    };
+
+    URLSearchParams.prototype[Symbol.iterator] = URLSearchParams.prototype.entries;
+
+    Object.defineProperty(URLSearchParams.prototype, 'size', {
+        get: function () { return this._pairs.length; }
+    });
+
+    URLSearchParams.prototype.toString = function () {
+        return this._pairs.map(function (pair) {
+            return encodeFormComponent(pair[0]) + '=' + encodeFormComponent(pair[1]);
+        }).join('&');
+    };
+
+    // scheme : [//[user[:password]@]host[:port]] path [?query] [#fragment]
+    var ABSOLUTE_PATTERN = new RegExp(
+        '^([A-Za-z][A-Za-z0-9+.-]*):' +      // scheme
+        '(//(?:([^/?#@]*)@)?([^/?#]*))?' +   // authority
+        '([^?#]*)' +                         // path
+        '(?:\\?([^#]*))?' +                  // query
+        '(?:#([\\s\\S]*))?$'                 // fragment
+    );
+
+    function splitAuthority(url, authority) {
+        var hostText = authority || '';
+        var colon = hostText.lastIndexOf(':');
+        var bracket = hostText.lastIndexOf(']');
+        if (colon !== -1 && colon > bracket) {
+            url._port = hostText.slice(colon + 1);
+            hostText = hostText.slice(0, colon);
+        } else {
+            url._port = '';
+        }
+        url._hostname = hostText.toLowerCase();
+        if (url._port !== '' && SPECIAL_PORTS[url._protocol] === url._port) {
+            url._port = '';
+        }
+    }
+
+    function splitCredentials(url, credentials) {
+        if (credentials === undefined) {
+            url._username = '';
+            url._password = '';
+            return;
+        }
+        var colon = credentials.indexOf(':');
+        if (colon === -1) {
+            url._username = credentials;
+            url._password = '';
+        } else {
+            url._username = credentials.slice(0, colon);
+            url._password = credentials.slice(colon + 1);
+        }
+    }
+
+    // The WHATWG "path percent-encode set", plus everything above ASCII, minus
+    // the two characters that cannot reach a path here (`?` and `#` are split
+    // off before parsing). A space is the one that matters in practice:
+    // `new URL('./a b', base).pathname` has to read back `/a%20b`, because an
+    // extension that builds a path from a file name and then hands the result
+    // to something that fetches it needs the same string the browser would
+    // have produced. `%` is deliberately absent, so an already-encoded path
+    // survives instead of being encoded twice.
+    //
+    // The surrogate *pair* alternative comes first and is load-bearing.
+    // Without it the single-unit class matches each half of an astral
+    // character separately, `encodeURIComponent` refuses a lone half, and
+    // the fallback hands the pair back unencoded: a path ending in an emoji
+    // reads back as itself where WHATWG gives `%F0%9F%98%80`. An emoji in a
+    // file name is the shape an extension is most likely to produce, and it
+    // was the one the single-unit class missed - BMP non-ASCII was always
+    // encoded correctly.
+    var PATH_ESCAPES = /[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u0000-\u001F\u007F-\uFFFF "<>`{}]/g;
+
+    // WHATWG's "fragment percent-encode set": C0 controls, space, `"`, `<`,
+    // `>` and a backtick, plus everything above ASCII. Narrower than the
+    // path set - `{` and `}` are legal in a fragment - and the same pair
+    // alternative for the same reason.
+    var FRAGMENT_ESCAPES = /[\uD800-\uDBFF][\uDC00-\uDFFF]|[\u0000-\u001F\u007F-\uFFFF "<>`]/g;
+
+    function percentEncode(text, escapes) {
+        return text.replace(escapes, function (character) {
+            try {
+                return encodeURIComponent(character);
+            } catch (error) {
+                // A *genuine* lone surrogate - an unpaired half, which the
+                // alternative above cannot match - has no UTF-8 encoding
+                // and `encodeURIComponent` refuses it. Left as written
+                // rather than replaced by something that reads like a real
+                // character.
+                return character;
+            }
+        });
+    }
+
+    function percentEncodePath(path) {
+        return percentEncode(path, PATH_ESCAPES);
+    }
+
+    // The fragment has no second owner to defer to, which is what separates
+    // it from the query: `_search` round-trips through `URLSearchParams`,
+    // whose own serializer owns that escaping, and nothing at all owns
+    // `_hash`.
+    function percentEncodeFragment(fragment) {
+        return percentEncode(fragment, FRAGMENT_ESCAPES);
+    }
+
+    // Lexical `.`/`..` removal, RFC 3986 section 5.2.4, and then the path
+    // percent-encode set.
+    function normalizePath(path) {
+        if (path === '') {
+            return '';
+        }
+        var absolute = path.charAt(0) === '/';
+        var trailing = path.charAt(path.length - 1) === '/';
+        var output = [];
+        path.split('/').forEach(function (segment) {
+            if (segment === '' || segment === '.') {
+                return;
+            }
+            if (segment === '..') {
+                if (output.length > 0) {
+                    output.pop();
+                }
+                return;
+            }
+            output.push(segment);
+        });
+        var joined = output.join('/');
+        if (absolute) {
+            joined = '/' + joined;
+        }
+        if (trailing && joined.charAt(joined.length - 1) !== '/') {
+            joined += '/';
+        }
+        return percentEncodePath(joined);
+    }
+
+    function resolveAgainst(base, reference) {
+        if (reference === '') {
+            return base._pathname;
+        }
+        if (reference.charAt(0) === '/') {
+            return normalizePath(reference);
+        }
+        var directory = base._pathname.slice(0, base._pathname.lastIndexOf('/') + 1);
+        return normalizePath((directory === '' ? '/' : directory) + reference);
+    }
+
+    function parseAbsolute(url, match) {
+        url._protocol = match[1].toLowerCase() + ':';
+        splitCredentials(url, match[3]);
+        if (match[2] === undefined) {
+            url._hostname = '';
+            url._port = '';
+        } else {
+            splitAuthority(url, match[4]);
+        }
+        url._pathname = normalizePath(match[5] || '');
+        url._search = match[6] === undefined ? '' : match[6];
+        url._hash = match[7] === undefined ? '' : percentEncodeFragment(match[7]);
+    }
+
+    function parseRelative(url, text, base) {
+        var resolvedBase = base instanceof URL ? base : new URL(String(base));
+        var reference = text;
+
+        var hashIndex = reference.indexOf('#');
+        url._hash = hashIndex === -1
+            ? ''
+            : percentEncodeFragment(reference.slice(hashIndex + 1));
+        if (hashIndex !== -1) {
+            reference = reference.slice(0, hashIndex);
+        }
+        var queryIndex = reference.indexOf('?');
+        url._search = queryIndex === -1 ? '' : reference.slice(queryIndex + 1);
+        if (queryIndex !== -1) {
+            reference = reference.slice(0, queryIndex);
+        }
+
+        url._protocol = resolvedBase._protocol;
+        url._username = resolvedBase._username;
+        url._password = resolvedBase._password;
+        url._hostname = resolvedBase._hostname;
+        url._port = resolvedBase._port;
+        url._pathname = resolveAgainst(resolvedBase, reference);
+        if (queryIndex === -1 && reference === '') {
+            url._search = resolvedBase._search;
+        }
+    }
+
+    function URL(input, base) {
+        var text = String(input === undefined ? '' : input).trim();
+        var match = ABSOLUTE_PATTERN.exec(text);
+
+        if (match) {
+            parseAbsolute(this, match);
+        } else if (base === undefined || base === null) {
+            throw new TypeError("Invalid URL: '" + text + "'");
+        } else if (text.slice(0, 2) === '//') {
+            // A protocol-relative reference borrows the base's scheme and
+            // replaces everything after it. Left to the relative path resolver
+            // this parses *plausibly* — `//cdn.example.com/x` against
+            // `https://a.com/p/` folds the host into the path and `hostname`
+            // reads back `a.com` — which is the one silent mis-parse in a file
+            // whose whole policy is to fail loudly instead.
+            var baseURL = base instanceof URL ? base : new URL(String(base));
+            var reference = text;
+            // WHATWG's "special authority slashes" state skips a *run* of
+            // slashes between a special scheme and its authority, so
+            // `///x` against `https://a.com/p/` is host `x` and path `/`, not
+            // an empty host and a path of `/x` — another `hostname` that reads
+            // back wrong. `file:` is excluded because its own state machine
+            // keeps the extra slash (`file:///x` is host-less by design), and
+            // so is every non-special scheme.
+            if (schemeIsSpecial(baseURL._protocol) && baseURL._protocol !== 'file:') {
+                reference = '//' + reference.replace(/^\/+/, '');
+            }
+            var borrowed = ABSOLUTE_PATTERN.exec(baseURL._protocol + reference);
+            if (!borrowed) {
+                throw new TypeError("Invalid URL: '" + text + "'");
+            }
+            parseAbsolute(this, borrowed);
+            // `//` alone, or `//?q`: a special scheme with no host is a parse
+            // failure in WHATWG rather than a URL whose `hostname` is empty,
+            // and this file would rather throw with the input in the message
+            // than hand back something that cannot be requested.
+            if (this._hostname === '' && schemeIsSpecial(this._protocol) && this._protocol !== 'file:') {
+                throw new TypeError("Invalid URL: '" + text + "'");
+            }
+        } else {
+            parseRelative(this, text, base);
+        }
+
+        // `file:` always has an authority position, empty host or not — the
+        // `href` getter below already writes its `//` unconditionally — so it
+        // gets the same empty-path treatment a host-ful URL gets. Without it
+        // `new URL('file:')` reads back `file://`, which is a URL with an
+        // empty *host* rather than an empty path.
+        if (this._pathname === '' && (this._hostname !== '' || this._protocol === 'file:')) {
+            this._pathname = '/';
+        }
+
+        var params = new URLSearchParams(this._search);
+        params._owner = this;
+        Object.defineProperty(this, '_params', { value: params, enumerable: false });
+    }
+
+    function defineURLAccessor(name, getter, setter) {
+        Object.defineProperty(URL.prototype, name, { get: getter, set: setter, enumerable: true });
+    }
+
+    defineURLAccessor('protocol', function () { return this._protocol; });
+    defineURLAccessor('username', function () { return this._username; });
+    defineURLAccessor('password', function () { return this._password; });
+    defineURLAccessor('hostname', function () { return this._hostname; });
+    defineURLAccessor('port', function () { return this._port; });
+    defineURLAccessor('pathname', function () { return this._pathname; });
+
+    defineURLAccessor('host', function () {
+        return this._port === '' ? this._hostname : this._hostname + ':' + this._port;
+    });
+
+    defineURLAccessor('origin', function () {
+        return this._hostname === '' ? 'null' : this._protocol + '//' + this.host;
+    });
+
+    defineURLAccessor('search',
+        function () { return this._search === '' ? '' : '?' + this._search; },
+        function (value) {
+            var text = String(value);
+            this._search = text.charAt(0) === '?' ? text.slice(1) : text;
+            // Re-parse rather than mutate: `search` and `searchParams` are two
+            // views of one value, and the setter is the only place they can
+            // drift apart.
+            this._params._pairs = new URLSearchParams(this._search)._pairs;
+        });
+
+    defineURLAccessor('hash',
+        function () { return this._hash === '' ? '' : '#' + this._hash; },
+        function (value) {
+            var text = String(value);
+            this._hash = percentEncodeFragment(
+                text.charAt(0) === '#' ? text.slice(1) : text);
+        });
+
+    defineURLAccessor('searchParams', function () { return this._params; });
+
+    defineURLAccessor('href', function () {
+        var text = this._protocol;
+        if (this._hostname !== '' || this._protocol === 'file:') {
+            text += '//';
+            if (this._username !== '') {
+                text += this._username;
+                if (this._password !== '') {
+                    text += ':' + this._password;
+                }
+                text += '@';
+            }
+            text += this.host;
+        }
+        return text + this._pathname + this.search + this.hash;
+    });
+
+    URL.prototype.toString = function () { return this.href; };
+    URL.prototype.toJSON = function () { return this.href; };
+
+    global.URL = URL;
+    global.URLSearchParams = URLSearchParams;
+
+    // =====================================================================
+    // MARK: - The module wrapper
+    // =====================================================================
+
+    // The CommonJS shape, so both `module.exports = …` and `exports.activate =
+    // …` work — the two spellings VS Code extensions actually ship, and an
+    // extension that used the other one would otherwise export nothing and
+    // "activate" into silence.
+    //
+    // `wrapper` arrives already compiled, from the host, and that is the whole
+    // point of the split. This file used to build it with `new Function` and a
+    // trailing `//# sourceURL=` directive — but JavaScriptCore attributes
+    // dynamically compiled code to no script at all. Measured against the real
+    // engine: a throw from inside `new Function` (or `eval`) code produces
+    // stack frames of the form `boom@` with an empty location, and an error
+    // object with no `sourceURL` property, whether the directive is spelled
+    // `//#` or `//@` and wherever in the body it is placed. The directive is a
+    // Web Inspector affordance; it never reaches `Error.stack`.
+    //
+    // So the host compiles the wrapper as its own script through
+    // `evaluateScript(_:withSourceURL:)`, and the extension's own path and line
+    // numbers survive into every stack trace. The person this task serves most
+    // directly is an author reading the stack of their own throw.
+    //
+    // The wrapper's parameters are the CommonJS five and nothing else: it is
+    // compiled in the global scope, so the extension sees no internals of this
+    // file.
+    function run(wrapper, filename, dirname) {
+        var module = { exports: {} };
+        reflectApply(wrapper, module.exports, [module.exports, require, module, filename, dirname]);
+        return module.exports;
+    }
+
+    // Total by construction, because one of its callers is a promise reaction
+    // job — a place where a throw reaches *nothing*. There is no `catch` above
+    // a reaction, JSC does not route the derived promise's rejection to the
+    // context's exception handler, and the host is suspended on a continuation
+    // that has no timeout by design. A `describeThrown` that threw there would
+    // leave `done` uncalled and hang activation with nothing logged.
+    //
+    // Describing a value means reading it, and any read can run extension
+    // code: `instanceof` runs a Proxy's `getPrototypeOf` trap, a property
+    // access runs a getter, and `format` walks whatever it is handed. Listing
+    // those reads would be a claim that expires the next time `format` grows a
+    // branch, so here is the one that does not: **the entire body is inside one
+    // `try`, and the `catch` performs `typeof` and concatenates two literals.**
+    // `typeof` is the one question about a value that cannot run user code, and
+    // concatenating two strings cannot throw. Total by construction, whatever
+    // `format` becomes.
+    function describeThrown(value) {
+        try {
+            return value instanceof Error
+                ? format(value, 0, [])
+                : 'Non-Error thrown: ' + format(value, 0, []);
+        } catch (error) {
+            return 'A rejection reason that could not be described (' + (typeof value) + ').';
+        }
+    }
+
+    // Calls the extension's `activate` and reports how it *ended*, which is not
+    // the same question as whether the call returned.
+    //
+    // `activate(context): any | Thenable<any>` is what VS Code declares, and
+    // `export async function activate()` is the shape most real extensions
+    // ship. An async `activate` that throws produces a rejected promise, and
+    // JSC routes unhandled rejections nowhere — not to the context's exception
+    // handler, not anywhere the host can see. Reporting a clean activation for
+    // an extension that failed is the exact outcome this whole file exists to
+    // prevent, so the rejection is caught here, where it is visible, and handed
+    // back through `done`.
+    //
+    // `done` is called on every path, including the one where there is no
+    // `activate` to call: the host suspends until it arrives, so a path that
+    // skipped it would hang activation rather than fail it. Once is the normal
+    // case; a thenable that calls both arms, rejects twice, or throws from
+    // `then` after already settling can produce a second call, and that is
+    // deliberate — the host resumes its continuation once and ignores the
+    // rest, so calling `done` twice costs nothing and never calling it costs
+    // an activation that never returns.
+    function callActivate(exports, activationContext, done) {
+        var activate;
+        try {
+            activate = exports && exports.activate;
+        } catch (error) {
+            done(false, describeThrown(error));
+            return false;
+        }
+        if (typeof activate !== 'function') {
+            done(true, '');
+            return false;
+        }
+        var result;
+        try {
+            result = reflectApply(activate, exports, [activationContext]);
+        } catch (error) {
+            done(false, describeThrown(error));
+            return true;
+        }
+        // Deliberately outside a `try`: this read is still inside the host's
+        // `invokeMethod`, so a `.then` getter that throws escapes to the
+        // context's exception handler and the host's `pendingException`
+        // fallback turns it into a failed activation. That fallback is the
+        // only thing covering this line — see `callActivate` in
+        // ExtensionHost.swift.
+        var then = result === null || result === undefined ? undefined : result.then;
+        if (typeof then !== 'function') {
+            done(true, '');
+            return true;
+        }
+        // Past this line the synchronous window is over: the arms run as
+        // promise reaction jobs, where a throw is caught by nothing and would
+        // strand `done`. Two defences, and together they are the whole reason
+        // this call cannot hang activation. The arms themselves do only two
+        // things — call `describeThrown`, which is total, and call `done`,
+        // which is the host's block — so neither arm has a throw site left.
+        // The `try` covers `then` itself, which is extension code and may
+        // throw before either arm runs, or after one of them already has.
+        // Calling `done` twice is harmless by design: the host takes and nils
+        // the continuation before resuming it, so the second call is a no-op.
+        try {
+            reflectApply(then, result, [
+                function () { done(true, ''); },
+                function (reason) { done(false, describeThrown(reason)); }
+            ]);
+        } catch (error) {
+            done(false, describeThrown(error));
+        }
+        return true;
+    }
+
+    // ExtensionHost captures this object and then deletes both globals, so
+    // nothing an extension can reach leads back to the host.
+    global.__extensionRuntime = {
+        run: run,
+        fireTimer: fireTimer,
+        callActivate: callActivate,
+        // The seam. Stages 5.3-5.7 each install real members through this and
+        // change nothing else here.
+        defineMember: defineMember,
+        // The same seam for a member that reports app state and so must be
+        // read at every access — see `defineLiveMember`.
+        defineLiveMember: defineLiveMember,
+        // The argument `activate(context)` receives: a recorded, throwing stub
+        // like every other unimplemented surface, except for `subscriptions`,
+        // which is real. See `makeActivationContext`.
+        makeActivationContext: makeActivationContext,
+        // Teardown's half of that same member. The host calls it while the
+        // context is still alive, which is the only window in which the
+        // disposables are still callable.
+        disposeSubscriptions: disposeSubscriptions
+    };
+}(this));

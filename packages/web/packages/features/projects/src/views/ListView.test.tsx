@@ -1,0 +1,424 @@
+// @vitest-environment jsdom
+//
+// Component test for ListView — the LIST WITH DETAILS view of the work-items surface: the items as
+// an inline-editable table on top, the selected item's full record below. It owns its own writes
+// (the row commit control PATCHes / DELETEs and then calls `onChanged`), so the API client is the
+// only boundary mocked here.
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+
+vi.mock("@agentic-toolkit/data/projects", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    projectWorkItemsApi: {
+      update: vi.fn(),
+      remove: vi.fn(),
+      move: vi.fn(),
+      // The details pane reads a card's links. Stubbed rather than left off: without it the
+      // relations section renders its error state in every test that opens a detail, which
+      // would make a genuine failure there indistinguishable from the wiring being absent.
+      relations: { list: vi.fn(), add: vi.fn(), remove: vi.fn() },
+    },
+  };
+});
+
+import { ListView } from "./ListView";
+import { itemWordsOf } from "../vocabulary";
+import { projectWorkItemsApi, type WorkItem } from "@agentic-toolkit/data/projects";
+import { type ProjectStatus, type ProjectParticipant } from "@agentic-toolkit/data/projects";
+
+const update = vi.mocked(projectWorkItemsApi.update);
+const remove = vi.mocked(projectWorkItemsApi.remove);
+const move = vi.mocked(projectWorkItemsApi.move);
+const listRelations = vi.mocked(projectWorkItemsApi.relations.list);
+
+const TODO: ProjectStatus = {
+  id: "s1", projectId: "p1", key: "todo", label: "To do", category: "todo", position: 0,
+  createdAt: "2026-07-03T00:00:00Z",
+};
+const DOING: ProjectStatus = {
+  id: "s2", projectId: "p1", key: "doing", label: "In progress", category: "in_progress", position: 1,
+  createdAt: "2026-07-03T00:00:00Z",
+};
+
+const PARTICIPANT: ProjectParticipant = {
+  id: "pp1", projectId: "p1", participantKind: "customer", participantId: "cust-1",
+  role: "member", addedBy: null, addedAt: "2026-07-03T00:00:00Z",
+};
+
+const ITEM: WorkItem = {
+  id: "w1",
+  projectId: "p1",
+  itemKey: "",
+  title: "Design the landing page",
+  description: "Hero, pricing, footer.",
+  statusId: "s1",
+  assigneeKind: "customer",
+  assigneeId: "cust-1",
+  priority: 3, // High
+  startDate: null,
+  dueDate: "2026-08-01",
+  labels: ["design"],
+  parentId: null,
+  iterationId: null,
+  milestoneId: null,
+  estimate: null,
+  rank: "V0",
+  createdAt: "2026-07-03T00:00:00Z",
+  updatedAt: "2026-07-03T00:00:00Z",
+};
+
+function renderList(
+  items: WorkItem[] = [ITEM],
+  onChanged = vi.fn().mockResolvedValue(undefined),
+  // The per-board settings, defaulted to the shape every test below assumes. Only the
+  // "board settings" block passes anything here.
+  settings: Partial<React.ComponentProps<typeof ListView>> = {},
+) {
+  render(
+    <ListView
+      projectId="p1"
+      items={items}
+      statuses={[TODO, DOING]}
+      participants={[PARTICIPANT]}
+      iterations={[]}
+      milestones={[]}
+      estimateScale="none"
+      onChanged={onChanged}
+      {...settings}
+    />,
+  );
+  return { onChanged };
+}
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  update.mockImplementation((id, patch) => Promise.resolve({ ...ITEM, id, ...patch } as WorkItem));
+  remove.mockResolvedValue(undefined);
+  move.mockImplementation((id) => Promise.resolve({ ...ITEM, id } as WorkItem));
+  listRelations.mockResolvedValue([]);
+});
+
+afterEach(cleanup);
+
+describe("ListView (list with details)", () => {
+  it("renders every column as an in-place editor seeded from the row", () => {
+    renderList();
+    // The title is an inline EDITOR (an input), not static text — that is the point of the view.
+    expect(screen.getByDisplayValue("Design the landing page")).not.toBeNull();
+    expect(
+      (screen.getByRole("combobox", { name: /^Status —/ }) as HTMLSelectElement).value,
+    ).toBe("s1");
+    expect(
+      (screen.getByRole("combobox", { name: /^Assignee —/ }) as HTMLSelectElement).value,
+    ).toBe("customer:cust-1");
+    expect(
+      (screen.getByRole("combobox", { name: /^Priority —/ }) as HTMLSelectElement).value,
+    ).toBe("3");
+  });
+
+  it("commits an edited row as a PATCH of ONLY the touched fields", async () => {
+    const { onChanged } = renderList();
+
+    fireEvent.change(screen.getByRole("combobox", { name: /^Status —/ }), {
+      target: { value: "s2" },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Save changes work item Design the landing page" }),
+    );
+
+    // Only `statusId` travelled — a patch can never clobber a field this user didn't touch.
+    await waitFor(() => expect(update).toHaveBeenCalledWith("w1", { statusId: "s2" }));
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+  });
+
+  it("discards an edited row with ✕, writing nothing", async () => {
+    renderList();
+
+    const title = screen.getByDisplayValue("Design the landing page");
+    fireEvent.change(title, { target: { value: "Renamed" } });
+    expect(screen.getByDisplayValue("Renamed")).not.toBeNull();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Discard changes work item Design the landing page" }),
+    );
+
+    expect(screen.getByDisplayValue("Design the landing page")).not.toBeNull();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("refuses to commit an emptied title, keeping the draft and showing the row's error", async () => {
+    renderList();
+
+    fireEvent.change(screen.getByDisplayValue("Design the landing page"), {
+      target: { value: "   " },
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "Save changes work item Design the landing page" }),
+    );
+
+    expect(await screen.findByText("A title is required.")).not.toBeNull();
+    expect(update).not.toHaveBeenCalled();
+    // The draft survives the refusal — read the raw value (getByDisplayValue normalises whitespace).
+    const title = screen.getByRole("textbox", { name: /^Title —/ }) as HTMLInputElement;
+    expect(title.value).toBe("   ");
+  });
+
+  it("arms a delete with the trash and destroys the row on ✓", async () => {
+    const { onChanged } = renderList();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Delete work item Design the landing page" }),
+    );
+    // Armed: the same ✓ now confirms the delete rather than saving edits.
+    fireEvent.click(
+      screen.getByRole("button", { name: "Confirm delete work item Design the landing page" }),
+    );
+
+    await waitFor(() => expect(remove).toHaveBeenCalledWith("w1"));
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("shows the selected item's WHOLE record in the details pane — including non-column fields", async () => {
+    renderList();
+
+    // Nothing selected yet.
+    expect(screen.getByText("Select a work item to see its full record.")).not.toBeNull();
+
+    fireEvent.click(screen.getByDisplayValue("Design the landing page"));
+
+    // Fields that are NOT columns, so the list alone could never show them.
+    expect(await screen.findByText("Hero, pricing, footer.")).not.toBeNull(); // description
+    expect(screen.getByText("design")).not.toBeNull(); // labels
+    expect(screen.getByText("Created")).not.toBeNull(); // timestamps
+  });
+
+  it("renders the empty label when there are no items", () => {
+    renderList([]);
+    expect(screen.getByText("No work items yet.")).not.toBeNull();
+  });
+});
+
+/* ── The sub-item tree ────────────────────────────────────────────────────── */
+
+// `parentId` is a real field on every work item and this is the ONLY view that shows it, so these
+// pin the two things the flattener can't: that the hierarchy reaches the screen, and that it
+// stands down when the list is filtered.
+describe("ListView sub-item tree", () => {
+  const CHILD: WorkItem = {
+    ...ITEM,
+    id: "w2",
+    title: "Write the hero copy",
+    description: "",
+    parentId: "w1",
+    rank: "V0",
+  };
+  const SIBLING: WorkItem = {
+    ...ITEM,
+    id: "w3",
+    title: "Pick the pricing table",
+    description: "",
+    parentId: "w1",
+    rank: "V1",
+  };
+  /** A root that sorts AFTER the parent, so "the child follows its parent" is a claim about the
+   *  tree rather than a coincidence of the input order. */
+  const OTHER_ROOT: WorkItem = {
+    ...ITEM,
+    id: "w4",
+    title: "Ship it",
+    description: "",
+    parentId: null,
+    rank: "V1",
+  };
+
+  /** The titles in the order the table renders them. Reads the inputs, since every title cell in
+   *  this view is an editor rather than text. */
+  function titleOrder(): string[] {
+    return screen
+      .getAllByRole("textbox", { name: /^Title —/ })
+      .map((el) => (el as HTMLInputElement).value);
+  }
+
+  it("puts a child under its parent, before the next root", () => {
+    // Deliberately shuffled: the order on screen must come from parentId + rank, not from
+    // the order the API happened to return.
+    renderList([OTHER_ROOT, SIBLING, ITEM, CHILD]);
+
+    expect(titleOrder()).toEqual([
+      "Design the landing page",
+      "Write the hero copy",
+      "Pick the pricing table",
+      "Ship it",
+    ]);
+  });
+
+  it("hides a subtree when its parent is collapsed, and brings it back", () => {
+    renderList([ITEM, CHILD]);
+
+    // Expanded by default — nothing a project contains is hidden until someone hides it.
+    expect(titleOrder()).toContain("Write the hero copy");
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse Design the landing page" }));
+    expect(titleOrder()).toEqual(["Design the landing page"]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Expand Design the landing page" }));
+    expect(titleOrder()).toContain("Write the hero copy");
+  });
+
+  it("gives a leaf no toggle at all", () => {
+    renderList([ITEM, CHILD]);
+
+    // The parent has one; the childless row does not — a leaf gets the width, not a dead control.
+    expect(screen.getByRole("button", { name: "Collapse Design the landing page" })).not.toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /^(Expand|Collapse) Write the hero copy$/ }),
+    ).toBeNull();
+  });
+
+  it("shows each row's key in its own read-only first column", () => {
+    renderList([{ ...ITEM, itemKey: "WEB-42" }]);
+    expect(screen.getByText("WEB-42")).not.toBeNull();
+    // Read-only: every other column in this view is an in-place editor, the key is not —
+    // renaming a card must never be a side effect of clicking its name.
+    expect(screen.queryByRole("textbox", { name: /WEB-42/ })).toBeNull();
+  });
+
+  it("filters on the KEY as well as the title", () => {
+    // Someone reading `WEB-42` in a commit message pastes it here; matching only titles
+    // would answer "no results" for a key that plainly exists.
+    renderList([
+      { ...ITEM, id: "w1", title: "Design the landing page", itemKey: "WEB-42" },
+      { ...ITEM, id: "w2", title: "Write the hero copy", itemKey: "WEB-7" },
+    ]);
+
+    fireEvent.change(screen.getByPlaceholderText("Filter work items…"), {
+      target: { value: "web-7" }, // lower case: a key is quoted however it is typed
+    });
+
+    expect(titleOrder()).toEqual(["Write the hero copy"]);
+  });
+
+  it("goes flat while a filter is on, so a match is never indented under a hidden parent", () => {
+    renderList([ITEM, CHILD]);
+
+    fireEvent.change(screen.getByPlaceholderText("Filter work items…"), {
+      target: { value: "hero" },
+    });
+
+    expect(titleOrder()).toEqual(["Write the hero copy"]);
+    // No toggles anywhere: a filtered list is a list of matches, not a hierarchy.
+    expect(screen.queryByRole("button", { name: /^(Expand|Collapse) / })).toBeNull();
+  });
+});
+
+/* ── Reordering ───────────────────────────────────────────────────────────── */
+
+// ListView is the only view whose order is the BOARD order, so it is the only one that can move a
+// card. These pin the three things the ↑/↓ pair has to get right: it names a NEIGHBOUR (never an
+// index), that neighbour is a SIBLING (never whatever row happens to be above on screen), and the
+// affordance stands down when the list is a filtered selection rather than the list.
+describe("ListView reordering", () => {
+  const FIRST: WorkItem = { ...ITEM, id: "w1", title: "Design the landing page", rank: "V0" };
+  const SECOND: WorkItem = { ...ITEM, id: "w4", title: "Ship it", rank: "V1" };
+  const CHILD_A: WorkItem = {
+    ...ITEM, id: "w2", title: "Write the hero copy", parentId: "w1", rank: "V0",
+  };
+  const CHILD_B: WorkItem = {
+    ...ITEM, id: "w3", title: "Pick the pricing table", parentId: "w1", rank: "V1",
+  };
+
+  const up = (title: string) => screen.getByRole("button", { name: `Move up work item ${title}` });
+  const down = (title: string) =>
+    screen.getByRole("button", { name: `Move down work item ${title}` });
+
+  it("moves a card DOWN by naming the sibling it should land after", async () => {
+    const { onChanged } = renderList([FIRST, SECOND]);
+
+    fireEvent.click(down("Design the landing page"));
+
+    await waitFor(() => expect(move).toHaveBeenCalledWith("w1", { afterId: "w4" }));
+    // The surface re-reads, so every view repaints on the new order together.
+    await waitFor(() => expect(onChanged).toHaveBeenCalled());
+  });
+
+  it("moves a card UP by naming the sibling it should land before", async () => {
+    renderList([FIRST, SECOND]);
+
+    fireEvent.click(up("Ship it"));
+
+    await waitFor(() => expect(move).toHaveBeenCalledWith("w4", { beforeId: "w1" }));
+  });
+
+  it("disables the arrow at each end of the list, and leaves it rendered", () => {
+    renderList([FIRST, SECOND]);
+
+    expect(up("Design the landing page")).toHaveProperty("disabled", true);
+    expect(down("Design the landing page")).toHaveProperty("disabled", false);
+    expect(up("Ship it")).toHaveProperty("disabled", false);
+    expect(down("Ship it")).toHaveProperty("disabled", true);
+  });
+
+  it("moves a child among its SIBLINGS, not against the row above it on screen", async () => {
+    // The first child's row is preceded by its PARENT's row, which is not a sibling and not a
+    // legal neighbour — so its ↑ is dead, and its ↓ names the other child rather than anything
+    // at the root.
+    renderList([FIRST, CHILD_A, CHILD_B, SECOND]);
+
+    expect(up("Write the hero copy")).toHaveProperty("disabled", true);
+    fireEvent.click(down("Write the hero copy"));
+
+    await waitFor(() => expect(move).toHaveBeenCalledWith("w2", { afterId: "w3" }));
+  });
+
+  it("drops the reorder column entirely while a filter is on", () => {
+    renderList([FIRST, SECOND]);
+    expect(screen.queryAllByRole("button", { name: /^Move (up|down) / })).not.toHaveLength(0);
+
+    fireEvent.change(screen.getByPlaceholderText("Filter work items…"), {
+      target: { value: "ship" },
+    });
+
+    // What is on screen is now a selection, not the list: "up" would move the card above a
+    // sibling that is filtered out, and the row would sit exactly where it already was.
+    expect(screen.queryAllByRole("button", { name: /^Move (up|down) / })).toHaveLength(0);
+  });
+});
+
+// The two per-board SETTINGS, each at its NON-default value. Ranking defaults ON and the nouns
+// default to "work item(s)", which is what every test above already exercises.
+describe("ListView — board settings", () => {
+  it("drops the Priority editor entirely on a board that does not rank", () => {
+    renderList([ITEM], vi.fn(), { priorityScale: "none" });
+
+    // The whole column goes, editor and header alike: a select whose every row answers a question
+    // this board declined to ask is a fifth of the table's width spent on nothing. ITEM is
+    // priority 3, so the value is present to render — the SETTING is what suppresses it.
+    expect(screen.queryByLabelText("Priority — Design the landing page")).toBeNull();
+    expect(screen.queryByText("Priority")).toBeNull();
+    // The row survives with its other editors intact.
+    expect(screen.getByLabelText("Status — Design the landing page")).not.toBeNull();
+  });
+
+  it("keeps the Priority editor at the default scale", () => {
+    renderList();
+    expect(screen.getByLabelText("Priority — Design the landing page")).not.toBeNull();
+  });
+
+  it("calls the rows by the board's OWN word, in the filter box and the empty state", () => {
+    renderList([], vi.fn(), { words: itemWordsOf({ itemNoun: "story", itemNounPlural: "stories" }) });
+
+    expect(screen.getByPlaceholderText("Filter stories…")).not.toBeNull();
+    // Not "No storys" — the plural is the author's, never derived from the singular.
+    expect(screen.getByText("No stories yet.")).not.toBeNull();
+  });
+
+  it("names the board's card in the unselected details prompt", () => {
+    renderList([ITEM], vi.fn(), {
+      words: itemWordsOf({ itemNoun: "story", itemNounPlural: "stories" }),
+    });
+    expect(screen.getByText("Select a story to see its full record.")).not.toBeNull();
+  });
+});

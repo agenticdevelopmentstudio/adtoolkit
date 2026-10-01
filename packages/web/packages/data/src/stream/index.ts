@@ -1,0 +1,167 @@
+'use client'
+
+// The shared SSE transport: read the access token (EventSource can't set an
+// Authorization header, so it rides the query string), open the stream, listen for one
+// event, and fall back to an interval + window-focus poll when there's no live channel.
+//
+// It lives in `data` rather than in a feature because a live stream is a READ of the
+// backend, the same as every client in this package — it began in `@agentic-toolkit/messaging`
+// when the inbox and DMs were its only callers, and moved down here the moment Projects
+// needed one too. A feature importing a transport from another feature is the shape this
+// avoids; the messaging hooks now import it from here and nothing else changed.
+//
+// It is SELF-HEALING: the poll fallback keeps trying to (re)open SSE with a freshly
+// read token, so it recovers from BOTH (a) a first mount that happens before the token
+// is written (post-login) — the old per-hook code latched onto polling for the session
+// — and (b) an access token that expires mid-session (the reconnect 401s → CLOSED →
+// poll → a poll tick refreshes the token and re-opens live SSE). Each caller supplies
+// only its url, event name, payload handler and poll action (SRP).
+
+import { readAccessToken } from '@agentic-toolkit/auth/client'
+
+/** Default poll cadence (ms) for the SSE fallback — one place, every caller. */
+export const DEFAULT_SSE_POLL_INTERVAL_MS = 20_000
+
+/** A live SSE connection (or its poll fallback); `close()` tears down everything. */
+export interface SseHandle {
+  close(): void
+}
+
+export interface ConnectSseOptions {
+  /** Stream URL WITHOUT the token — the helper appends `?access_token=` / `&access_token=`. */
+  url: string
+  /**
+   * The SSE event name(s) to listen for (e.g. 'message', 'notification').
+   *
+   * A list, for a stream that says more than one kind of thing on one connection — shipr's
+   * run log interleaves `line`, `state` and `end`, and those are three facts about one run,
+   * not three streams. Splitting them across three EventSources would open three connections
+   * to one route and give the log three independently-reconnecting cursors.
+   */
+  event: string | readonly string[]
+  /** Called with each event's raw `data` string and the event NAME that carried it; the
+   *  caller parses as needed. Single-event callers can ignore the second argument. */
+  onEvent: (data: string, event: string) => void
+  /**
+   * Event name(s) after which the stream is OVER and must not be reopened.
+   *
+   * A server that closes after its terminal frame looks, to EventSource, exactly like a
+   * dropped connection: the browser reconnects, the server replays the terminal frame and
+   * closes again, and a finished run becomes a reconnect loop that never ends. Naming the
+   * terminal event lets the handle close itself instead — the caller still sees the frame
+   * first, because the payload is delivered before the teardown.
+   */
+  closeOn?: string | readonly string[]
+  /** Fallback action, run on an interval + on window focus while polling. */
+  onPoll: () => void
+  /** Fallback poll cadence (ms); defaults to {@link DEFAULT_SSE_POLL_INTERVAL_MS}. */
+  pollIntervalMs?: number
+}
+
+/**
+ * Open a token-in-query SSE stream listening for `event` (or every name in it), with a self-healing poll
+ * fallback. Returns a handle whose `close()` removes the listener, clears the poll
+ * timer/focus handler and closes the stream. A no-op on the server (no `window`).
+ */
+export function connectSse(opts: ConnectSseOptions): SseHandle {
+  if (typeof window === 'undefined') return { close() {} }
+  const pollIntervalMs = opts.pollIntervalMs ?? DEFAULT_SSE_POLL_INTERVAL_MS
+
+  let closed = false
+  let source: EventSource | null = null
+  let pollTimer: number | null = null
+  let focusHandler: (() => void) | null = null
+
+  const names: readonly string[] =
+    typeof opts.event === 'string' ? [opts.event] : opts.event
+  const terminal = new Set<string>(
+    opts.closeOn == null
+      ? []
+      : typeof opts.closeOn === 'string'
+        ? [opts.closeOn]
+        : opts.closeOn,
+  )
+
+  // One listener object rather than one closure per name, so add/remove stay symmetrical
+  // however many names there are: `handleEvent` receives the event, and `type` is the name
+  // the browser dispatched it under.
+  const handler: EventListenerObject = {
+    handleEvent(event: Event) {
+      opts.onEvent((event as MessageEvent).data, event.type)
+      if (terminal.has(event.type)) teardown()
+    },
+  }
+
+  const listen = (s: EventSource) => {
+    for (const name of names) s.addEventListener(name, handler)
+  }
+  const unlisten = (s: EventSource) => {
+    for (const name of names) s.removeEventListener(name, handler)
+  }
+
+  // Everything `close()` does, callable from inside the listener — a terminal frame ends
+  // the stream for the same reasons the caller's own `close()` does.
+  const teardown = () => {
+    closed = true
+    if (source) {
+      unlisten(source)
+      source.onerror = null
+      source.close()
+      source = null
+    }
+    stopPolling()
+  }
+
+  const stopPolling = () => {
+    if (pollTimer != null) {
+      window.clearInterval(pollTimer)
+      pollTimer = null
+    }
+    if (focusHandler) {
+      window.removeEventListener('focus', focusHandler)
+      focusHandler = null
+    }
+  }
+
+  // Try to open the live stream with the CURRENT token; returns whether one is now open.
+  // Reading the token fresh each attempt is what makes reconnect-after-expiry and
+  // open-after-late-login both work.
+  const openSse = (): boolean => {
+    if (closed || source) return source != null
+    if (!('EventSource' in window)) return false
+    const token = readAccessToken()
+    if (!token) return false
+    const sep = opts.url.includes('?') ? '&' : '?'
+    const s = new EventSource(`${opts.url}${sep}access_token=${encodeURIComponent(token)}`)
+    listen(s)
+    // Only a permanent close (CLOSED) triggers the fallback — e.g. a 401 on reconnect
+    // once the token expired. A transient blip (CONNECTING) is left to the browser's
+    // own auto-reconnect. On a hard close, drop to polling; a poll tick will re-open.
+    s.onerror = () => {
+      if (s.readyState !== EventSource.CLOSED) return
+      unlisten(s)
+      s.onerror = null
+      s.close()
+      if (source === s) source = null
+      startPolling()
+    }
+    source = s
+    return true
+  }
+
+  const startPolling = () => {
+    if (closed || pollTimer != null) return
+    focusHandler = opts.onPoll
+    window.addEventListener('focus', focusHandler)
+    pollTimer = window.setInterval(() => {
+      opts.onPoll()
+      // The poll (authedJson) refreshes the token; try to upgrade back to live SSE.
+      if (!source && openSse()) stopPolling()
+    }, pollIntervalMs)
+  }
+
+  // Prefer live SSE; poll when there's no token / EventSource yet (a poll tick retries).
+  if (!openSse()) startPolling()
+
+  return { close: teardown }
+}

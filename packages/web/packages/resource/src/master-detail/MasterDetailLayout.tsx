@@ -1,0 +1,532 @@
+"use client";
+
+import type { ReactNode } from "react";
+import { Plus, Trash2 } from "lucide-react";
+
+import { AlertModal } from "@agenticdevelopertoolkit/ui/components/alert-modal";
+import { cn } from "@agenticdevelopertoolkit/ui/lib/utils";
+import { Button } from "@agenticdevelopertoolkit/ui/components/button";
+import { Separator } from "@agenticdevelopertoolkit/ui/components/separator";
+import { useDetailTitle } from "@agenticdevelopertoolkit/ui/blocks/detail-title";
+import { SaveCancelButtons } from "./SaveCancelButtons";
+import { HelpPopover } from "../HelpPopover";
+import { ToolbarPortal } from "../rail-host";
+import { HeaderApiButton } from "../header-api-button";
+import { DetailHeaderActions } from "../detail-header-actions";
+import type { RecordAffordanceProps } from "../record-affordance";
+
+export interface MasterDetailItem {
+  id: string;
+  label: string;
+  sublabel?: string;
+}
+
+/**
+ * Actions for the top button bar. When provided, the layout renders the bar
+ * (Create | Cancel Save … Delete) and the detail must NOT render its own
+ * footer/buttons — these drive create/save/cancel/delete instead. The consumer
+ * (pane) owns the form draft + dirty/validity state and computes the can* flags.
+ */
+export interface MasterDetailActions {
+  onCreate: () => void;
+  createLabel?: string;
+  onCancel: () => void;
+  canCancel: boolean;
+  onSave: () => void;
+  canSave: boolean;
+  /** Why Save is disabled, or null when nothing is blocking it — rendered beside the button so a
+   *  grey Save always says why. Supplied by useMasterDetailForm from the same `validate` that
+   *  computes `canSave`; optional so hand-built bars that have no reason to give can omit it.
+   *  PRESENCE, not just truthiness, is load-bearing: `ButtonBar` keys the caption row's whole
+   *  mounted lifetime on whether this key was set AT ALL (`undefined`) — a bar built by
+   *  `useMasterDetailForm` always sets it (to a string or to `null`) and so always gets a row that
+   *  holds its line even with nothing to say; a hand-built bar that never sets it gets no row. */
+  blockedReason?: string | null;
+  saving?: boolean;
+  onDelete: () => void;
+  canDelete: boolean;
+  /** Delete-confirm modal, owned by useMasterDetailForm: a non-null `deletePrompt`
+   *  opens the shared AlertModal; the rest drive its actions. Optional so the few
+   *  hand-built action bars without delete can omit them. */
+  deletePrompt?: string | null;
+  onConfirmDelete?: () => void;
+  onCancelDelete?: () => void;
+  deleting?: boolean;
+}
+
+function ItemList({
+  items,
+  selectedId,
+  onSelect,
+  emptyLabel,
+}: {
+  items: MasterDetailItem[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  emptyLabel: string;
+}) {
+  if (items.length === 0) {
+    return <p className="px-1 py-2 text-sm text-apt-text-muted">{emptyLabel}</p>;
+  }
+  return (
+    <ul className="flex flex-col gap-1">
+      {items.map((item) => {
+        const active = item.id === selectedId;
+        return (
+          <li key={item.id}>
+            <button
+              type="button"
+              onClick={() => onSelect(item.id)}
+              aria-current={active ? "true" : undefined}
+              className={cn(
+                "w-full rounded-md border border-l-2 px-3 py-2 text-left transition-colors",
+                active
+                  ? "border-apt-border border-l-apt-gold bg-apt-surface-2 text-apt-text"
+                  : "border-transparent text-apt-text-muted hover:bg-apt-surface-2/50 hover:text-apt-text",
+              )}
+            >
+              <span className="block truncate text-sm font-medium">{item.label}</span>
+              {item.sublabel && (
+                <span className="block truncate text-xs text-apt-text-muted">{item.sublabel}</span>
+              )}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** Feature title row that sits above the button bar: the feature name in the
+ * accent color on the left, any `trailing` affordance on the right.
+ *
+ * Inside a detail stack the NAME moves up into the stack's detail strip, beside `<<< | >>>`
+ * (Mike: "the title should not be in the details pane"); a row left with no `trailing` is not
+ * drawn at all. Outside a stack it draws as before.
+ *
+ * The view's API button and "?" help go to the DETAIL HEADER, help on the far right
+ * ({@link DetailHeaderActions}); inline here only with no host header. The API slot is
+ * ALWAYS drawn: the host's live button for `api`, or a disabled one saying this view has
+ * no endpoint. Pass `showApi={false}` only where a {@link ButtonBar} in the same pane
+ * already carries it. */
+export function FeatureTitle({
+  title,
+  trailing,
+  api,
+  showApi = true,
+  help,
+}: {
+  title: ReactNode;
+  /** Optional non-API affordance, left of the API button. */
+  trailing?: ReactNode;
+  /** The endpoint this view is about; omit (or null) for a view with none. */
+  api?: RecordAffordanceProps | null;
+  /** Draw the API slot. Off only when the pane's own ButtonBar already draws it. */
+  showApi?: boolean;
+  help?: ReactNode;
+}) {
+  const { hoisted, portal } = useDetailTitle(title);
+  if (hoisted && !trailing)
+    return (
+      <>
+        {portal}
+        <DetailHeaderActions api={api} showApi={showApi} help={help} />
+      </>
+    );
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-4 px-6 pb-2",
+        hoisted ? "justify-end pt-4" : "justify-between pt-8",
+      )}
+    >
+      {portal}
+      {!hoisted && (
+        <h2 className="font-mono text-sm font-medium tracking-wide text-apt-gold">
+          {title}
+        </h2>
+      )}
+      <div className="flex items-center gap-2">
+        {trailing}
+        <DetailHeaderActions api={api} showApi={showApi} help={help} />
+      </div>
+    </div>
+  );
+}
+
+/** The recessed master/detail action bar (Create … Delete │ Cancel Save).
+ * Exported so single-record editors (e.g. the ecosystem Settings pane) can show
+ * the same bar without the master list. */
+export function ButtonBar({
+  actions,
+  showCreate = true,
+  showDelete = true,
+  title,
+  leading,
+  trailing,
+  api,
+  showApi,
+  status,
+  help,
+  hoist = true,
+}: {
+  actions: MasterDetailActions;
+  /** Hide the leading "New …" button — e.g. single-record Settings panes where
+   *  creation happens through the resource view's top-bar "New …" button instead. */
+  showCreate?: boolean;
+  /** Hide the Delete button — e.g. resource Settings panes where deletion lives
+   *  in the entity pane's own Danger section instead. */
+  showDelete?: boolean;
+  /** Centered title naming the details pane's contents (the bar may have no buttons). */
+  title?: ReactNode;
+  /** Content after New/Delete on the left — a read-only badge, a bulk action on the selection. */
+  leading?: ReactNode;
+  /** Optional non-API affordance on the right, left of the API button. Generic slot — the pane
+   *  owns what goes here. The record's API button goes in `api`, never here. */
+  trailing?: ReactNode;
+  /** The endpoint the pane is about, for the header's API button just left of "?" — the host's
+   *  live button when it can draw one, else a disabled "API" saying this view has no endpoint
+   *  ({@link HeaderApiButton}). Omit or pass null for a view with no endpoint. */
+  api?: RecordAffordanceProps | null;
+  /** Draw the API slot. Defaults to on for the pane's header bar (`hoist`) and for a nested bar
+   *  that names its own `api`; off for a nested bar without one, whose pane header already has
+   *  it — two API buttons stacked in one pane cannot say which is whose. */
+  showApi?: boolean;
+  /** A saving / saved / error line for the bar's live caption row (below the bar, where
+   *  `blockedReason` shows). A blocked reason, when there is one, wins the row. */
+  status?: ReactNode;
+  /** Help text for the right-justified "?" — describes the pane's contents. */
+  help?: ReactNode;
+  /**
+   * Send the bar to the host's full-width toolbar slot. Default, and right for a bar that acts
+   * on THE PANE.
+   *
+   * Pass `false` for a master/detail nested inside another pane's detail. There is one slot, and
+   * a nested bar hoisted into it lands beside the outer pane's own bar — two toolbars stacked in
+   * the page header, the inner one naming buttons that act on a list scrolled somewhere below,
+   * and no way to tell from looking which Delete deletes what. That was invisible while the
+   * standalone host published no slot at all (`ToolbarPortal` fell back to rendering inline, so
+   * BOTH bars stayed where they were declared); the moment the slot became real it was the first
+   * thing on screen.
+   */
+  hoist?: boolean;
+}) {
+  const {
+    onCreate,
+    createLabel = "New",
+    onCancel,
+    canCancel,
+    onSave,
+    canSave,
+    // `undefined` (the key absent) and `null` (the key present, no reason right now) are two
+    // different facts, and the destructuring default below would collapse them into the same
+    // `null` — so the channel test reads `actions.blockedReason` BEFORE that default applies.
+    // See `hasBlockedReasonChannel` (Mike, 2026-09-25).
+    blockedReason = null,
+    saving = false,
+    onDelete,
+    canDelete,
+    deletePrompt,
+    onConfirmDelete,
+    onCancelDelete,
+    deleting = false,
+  } = actions;
+  // Whether this bar has a reason to report AT ALL — a hand-built bar that never sets
+  // `blockedReason` (the prop is optional) gets no caption row, ever. A bar that DOES set it
+  // (even to `null`, meaning "nothing's wrong right now") keeps the row mounted so the caption can
+  // change without the row itself mounting/unmounting under it — see the caption comment below.
+  const hasBlockedReasonChannel = actions.blockedReason !== undefined || status !== undefined;
+  const drawApi = showApi ?? (hoist || api !== undefined);
+  // Inside a detail stack the title rides the stack's detail strip instead of the bar (see
+  // FeatureTitle). `titlePortal` renders beside the bar, never inside it: the bar may itself be
+  // portalled into the host's toolbar slot, and the title must not follow it there.
+  const { hoisted: titleHoisted, portal: titlePortal } = useDetailTitle(title);
+  // [New]  ⟷  [Delete] │ [Cancel] [Save] — all borderless "[icon] title".
+  // A recessed (darker) strip with top + bottom borders reads as a distinct bar,
+  // set off from the tab row above (via the FeatureTabs gap) and the topic|details
+  // below (the bottom border + the lighter panel behind them).
+  const bar = (
+    <div
+      role="toolbar"
+      aria-label="Editing actions"
+      // `w-full min-w-0` because this is no longer always a block child of the pane. Portalled
+      // into the host's toolbar slot it is a FLEX ITEM, and a flex item sizes to its content: the
+      // recessed strip stopped short of the window, its `border-y` ended mid-air, and the
+      // absolutely-centred `title` — centred on the BAR — sat left of the page it names. Full
+      // width is what it always had inline, so this asks for it rather than inheriting it.
+      className="relative flex min-h-[2.75rem] w-full min-w-0 items-center gap-1 border-y border-apt-border bg-apt-bg px-6 py-2"
+    >
+      {showCreate && (
+        <>
+          <Button variant="ghost" size="sm" onClick={onCreate}>
+            <Plus data-icon="inline-start" />
+            {createLabel}
+          </Button>
+          <div className="mx-1 h-5 w-px bg-apt-border" aria-hidden />
+        </>
+      )}
+      {showDelete && (
+        <Button
+          variant="destructive-ghost"
+          size="sm"
+          onClick={onDelete}
+          disabled={!canDelete}
+        >
+          <Trash2 data-icon="inline-start" />
+          Delete
+        </Button>
+      )}
+      {leading}
+      {/* Centered title naming the pane's contents — absolutely centred so it stays put
+          regardless of the left/right buttons; pointer-events-none so it never blocks them. */}
+      {title && !titleHoisted && (
+        <h2 className="pointer-events-none absolute left-1/2 max-w-[60%] -translate-x-1/2 truncate font-mono text-sm font-medium tracking-wide text-apt-gold">
+          {title}
+        </h2>
+      )}
+      <div className="flex-1" />
+      <SaveCancelButtons
+        canCancel={canCancel}
+        canSave={canSave}
+        saving={saving}
+        onCancel={onCancel}
+        onSave={onSave}
+      />
+      {trailing && <div className="ml-1 flex items-center">{trailing}</div>}
+      {/* The pane's API button and help live in the DETAIL HEADER (help on the far right), not in
+          this bar; a nested bar keeps its own inline, since the header already names the pane's. */}
+      {hoist ? (
+        <DetailHeaderActions api={api} showApi={drawApi} help={help} helpClassName="ml-1" />
+      ) : (
+        <>
+          {drawApi && (
+            <div className="ml-1 flex items-center">
+              <HeaderApiButton api={api} />
+            </div>
+          )}
+          {help && (
+            <HelpPopover triggerClassName="ml-1">
+              {help}
+            </HelpPopover>
+          )}
+        </>
+      )}
+    </div>
+  );
+  // Why Save is grey, from the FIRST frame — not gated on `dirty`. The detail below shows only
+  // `form.error`, which `save()` alone sets and `canSave` keeps unreachable by click, so without this
+  // every master/detail create opens on a dead Save with no explanation anywhere on screen. An EDIT
+  // opens on a loaded, valid row where `blockedReason` is null, so it stays quiet on its own.
+  //
+  // Its OWN line under the bar, not a span inside it: the bar's title is absolutely centred, so an
+  // in-flow span left of Save painted straight over any title long enough to reach it — the team
+  // pane's "Use reverse-domain form…" sat on top of "Settings (… Participants Team)" and neither
+  // could be read (Mike, 2026-09-24).
+  //
+  // The ROW stays mounted for the bar's whole life once it has a channel at all (see
+  // `hasBlockedReasonChannel` above) — only the TEXT inside it swaps. It used to mount/unmount on
+  // `blockedReason`'s truthiness, which shifted the detail pane below by a full line on every
+  // reason-appears/reason-clears edit (G39, Mike, 2026-09-25): the live region has to stay put for
+  // a screen reader to keep tracking it, and a sighted user shouldn't feel the page jump every time
+  // they fix (or break) a field. A non-breaking space holds the line's height when there's nothing
+  // to say, rather than an empty string, which most browsers collapse a block's height around.
+  // Right-aligned so it reads as Save's caption; `truncate` (with the full text as `title`) rather
+  // than the old wrap, because an unbounded caption is exactly what grows the row it's meant to
+  // hold steady — a narrow viewport is where that showed up.
+  const strip = (
+    <div className="flex w-full min-w-0 flex-col">
+      {bar}
+      {hasBlockedReasonChannel && (
+        <p
+          role="status"
+          title={blockedReason || undefined}
+          className="truncate border-b border-apt-border bg-apt-bg px-6 py-1 text-right text-xs text-apt-text-muted"
+        >
+          {blockedReason || status || " "}
+        </p>
+      )}
+    </div>
+  );
+  // The bar hoists to the host's full-width strip above the rails whenever there is a host to
+  // hoist into — the hub's workspace chrome and, since the toolbar slot became real there, the
+  // standalone rail host too. With no host at all (a legacy route, a test that stubs the registry)
+  // `ToolbarPortal` falls back to rendering inline, which is also what `hoist={false}` asks for
+  // deliberately — see the prop.
+  return (
+    <>
+      {titlePortal}
+      {hoist ? <ToolbarPortal>{strip}</ToolbarPortal> : strip}
+      {/* Shared confirm modal for delete — replaces the old native confirm(). */}
+      <AlertModal
+        open={deletePrompt != null}
+        tone="error"
+        title="Confirm deletion"
+        description={deletePrompt ?? undefined}
+        confirmLabel="Delete"
+        confirmVariant="destructive"
+        cancelLabel="Cancel"
+        busy={deleting}
+        onConfirm={() => onConfirmDelete?.()}
+        onCancel={() => onCancelDelete?.()}
+      />
+    </>
+  );
+}
+
+/**
+ * Two-pane master/detail shell. With `actions`, it renders the new design: a top
+ * button bar, a dark-gray panel, and a full-height divider between the topic list
+ * and the details. Without `actions` it renders the legacy layout (rail with its
+ * own New button; the detail supplies its own footer) — kept for features not yet
+ * migrated to the button bar.
+ */
+export function MasterDetailLayout({
+  items,
+  selectedId,
+  onSelect,
+  onNew,
+  newLabel = "New",
+  emptyLabel = "Nothing here yet.",
+  actions,
+  title,
+  trailing,
+  api,
+  help,
+  nested = false,
+  children,
+}: {
+  items: MasterDetailItem[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onNew?: () => void;
+  newLabel?: string;
+  emptyLabel?: string;
+  actions?: MasterDetailActions;
+  /** Feature title shown (accent-colored) in a row above the button bar. */
+  title?: ReactNode;
+  /** Optional non-API affordance on the button bar, left of the API button. */
+  trailing?: ReactNode;
+  /** The endpoint for the bar's API button — see {@link ButtonBar}'s `api`. */
+  api?: RecordAffordanceProps | null;
+  /** Optional "?" help; shown on the far right of the title row. */
+  help?: ReactNode;
+  /** This layout sits INSIDE another pane's detail, so its bar stays with its own list rather
+   *  than hoisting into the host's one toolbar slot — see {@link ButtonBar}'s `hoist`. */
+  nested?: boolean;
+  children: ReactNode;
+}) {
+  if (actions) {
+    // Fills its container's height; the topic|details divider (the aside's
+    // right border) therefore runs full height. The gray panel background lives
+    // on the whole content column (.settings-content), not here.
+    return (
+      // Toolbar sits flush above the topic|details; it's pushed down (gap above,
+      // in FeatureTabs) so the bar's BOTTOM edge lands on the nav divider, with
+      // the topic|details beginning right below it.
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <ButtonBar
+          actions={actions}
+          title={title}
+          trailing={trailing}
+          api={api}
+          help={help}
+          hoist={!nested}
+        />
+        <div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)] md:grid-cols-[220px_minmax(0,1fr)]">
+          <aside className="overflow-y-auto border-b border-apt-border px-6 py-4 md:border-r md:border-b-0">
+            <ItemList
+              items={items}
+              selectedId={selectedId}
+              onSelect={onSelect}
+              emptyLabel={emptyLabel}
+            />
+          </aside>
+          <section className="flex min-w-0 flex-col gap-6 overflow-y-auto px-6 py-4">
+            {children}
+          </section>
+        </div>
+      </div>
+    );
+  }
+
+  // Legacy (no bar). It fills its container and never grows it: the list and the detail each
+  // scroll in place. It used to be a `min-h-[440px]` grid that grew with its content, so opening a
+  // long record resized the whole pane under the user.
+  return (
+    <div className="grid min-h-0 min-w-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)] gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
+      <aside className="flex min-h-0 flex-col gap-3 overflow-y-auto md:border-r md:border-apt-border md:pr-6">
+        {onNew && (
+          <Button variant="outline" size="sm" className="justify-start" onClick={onNew}>
+            <Plus data-icon="inline-start" />
+            {newLabel}
+          </Button>
+        )}
+        <ItemList
+          items={items}
+          selectedId={selectedId}
+          onSelect={onSelect}
+          emptyLabel={emptyLabel}
+        />
+      </aside>
+      <section className="flex min-h-0 min-w-0 flex-col gap-6 overflow-y-auto">{children}</section>
+    </div>
+  );
+}
+
+/** A titled block inside the detail pane, with an optional right-aligned action. */
+export function DetailSection({
+  title,
+  action,
+  children,
+}: {
+  title: string;
+  action?: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-4">
+      <div className="flex min-h-8 items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold tracking-wide text-apt-text uppercase">{title}</h3>
+        {action}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** Footer with a dirty indicator and Cancel/Save actions. Legacy (pre button bar). */
+export function DetailFooter({
+  dirty,
+  saving = false,
+  onCancel,
+  onSave,
+  saveLabel = "Save",
+  leading,
+}: {
+  dirty: boolean;
+  saving?: boolean;
+  onCancel: () => void;
+  onSave: () => void;
+  saveLabel?: string;
+  leading?: ReactNode;
+}) {
+  return (
+    <div className="mt-auto flex flex-col gap-4">
+      <Separator />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="text-sm text-apt-text-muted">
+          {dirty ? "You have unsaved changes." : "All changes saved."}
+        </span>
+        <div className="flex items-center gap-2">
+          {leading}
+          <Button variant="outline" onClick={onCancel} disabled={saving || !dirty}>
+            Cancel
+          </Button>
+          <Button onClick={onSave} disabled={saving || !dirty}>
+            {saving ? "Saving…" : saveLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

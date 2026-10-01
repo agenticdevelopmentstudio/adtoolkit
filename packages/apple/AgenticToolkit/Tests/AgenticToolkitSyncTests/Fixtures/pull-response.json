@@ -1,0 +1,39 @@
+{
+  "manifest": [
+    { "resource": "content.contacts", "schemaVersion": 1 },
+    { "resource": "content.lists", "schemaVersion": 1 },
+    { "resource": "content.list_items", "schemaVersion": 1 }
+  ],
+  "changes": [
+    {
+      "resource": "content.contacts",
+      "id": "0197a5e0-0000-7000-8000-000000000001",
+      "op": "upsert",
+      "syncVersion": "1041",
+      "data": {
+        "id": "0197a5e0-0000-7000-8000-000000000001",
+        "customer_id": "0197a5e0-aaaa-7000-8000-000000000001",
+        "deleted_at": null,
+        "ecosystem_id": "eco-1",
+        "owner_kind": "customer",
+        "owner_id": "",
+        "person_user_id": null,
+        "full_name": "Groceries",
+        "nickname": "",
+        "email": "",
+        "phone": "",
+        "notes": "milk, eggs",
+        "created_at": "2026-07-16 12:00:00",
+        "updated_at": "2026-07-16 12:00:00"
+      }
+    },
+    {
+      "resource": "content.contacts",
+      "id": "0197a5e0-0000-7000-8000-000000000002",
+      "op": "delete",
+      "syncVersion": "1042"
+    }
+  ],
+  "cursor": "eyJoIjoiOTAwMCIsIngiOiI5MDAwIiwidiI6IjEwNDIifQ",
+  "hasMore": false
+}

@@ -1,0 +1,94 @@
+import Testing
+import AppKit
+import Foundation
+import AgenticDeveloperToolkitUI
+@testable import AgenticToolkitMacOS
+
+@MainActor
+@Suite("NoteEditorViewController")
+struct NoteEditorViewControllerTests {
+
+    private func loaded() -> NoteEditorViewController {
+        let controller = NoteEditorViewController()
+        _ = controller.view
+        return controller
+    }
+
+    private func note(content: String = "# Groceries\n\nMilk") -> Note {
+        Note(id: UUID(), content: content,
+             createdDate: Date(), modifiedDate: Date(), isPinned: false)
+    }
+
+    @Test("showing a note loads its markdown into the editor")
+    func showLoadsContent() {
+        let controller = loaded()
+        controller.show(note: note())
+        #expect(controller.editorController.content == "# Groceries\n\nMilk")
+    }
+
+    @Test("all three modes are offered in the full notes window")
+    func fullEditorOffersPreview() {
+        #expect(loaded().editorController.isPreviewAvailable)
+    }
+
+    @Test("loading a note programmatically does not report an edit")
+    func programmaticLoadIsNotAnEdit() {
+        let controller = loaded()
+        let recorder = ChangeRecorder()
+        controller.delegate = recorder
+        controller.show(note: note())
+        #expect(recorder.contentChanges.isEmpty)
+    }
+
+    @Test("a typed edit reaches the delegate with the note's id")
+    func typedEditNotifiesTheDelegate() {
+        let controller = loaded()
+        let recorder = ChangeRecorder()
+        controller.delegate = recorder
+        let note = note()
+        controller.show(note: note)
+        controller.editorController.simulateUserEdit("# Groceries\n\nMilk\nBread")
+        #expect(recorder.contentChanges == [note.id])
+    }
+
+    @Test("showing no note clears the editor")
+    func showingNilClears() {
+        let controller = loaded()
+        controller.show(note: note())
+        controller.show(note: nil)
+        #expect(controller.editorController.content.isEmpty)
+    }
+
+    @Test("quick note is edit-only — no room for a mode switcher")
+    func quickNoteIsEditOnly() {
+        let controller = QuickNoteWindowController(onSave: { _ in })
+        _ = controller.window
+        #expect(controller.editorController.isPreviewAvailable == false)
+        #expect(controller.editorController.mode == .edit)
+    }
+
+    @Test("quick note opens at its intended size, not the container's collapsed one")
+    func quickNoteOpensAtIntendedSize() {
+        let controller = QuickNoteWindowController(onSave: { _ in })
+        controller.showNearStatusItem(buttonFrame: NSRect(x: 100, y: 100, width: 20, height: 20))
+        controller.window?.contentView?.layoutSubtreeIfNeeded()
+        let contentSize = controller.window?.contentView?.frame.size
+        #expect(contentSize == NSSize(width: 360, height: 260))
+        // Well above the toolbar's own 32pt: a collapsed container leaves the
+        // editor's whole view exactly toolbar-height, with zero room left
+        // for the text pane.
+        #expect(controller.editorController.view.frame.height > 100)
+    }
+
+    @Test("quick note opens with the caret already in the editor")
+    func quickNoteFocusesTheEditor() {
+        let controller = QuickNoteWindowController(onSave: { _ in })
+        controller.showNearStatusItem(buttonFrame: NSRect(x: 100, y: 100, width: 20, height: 20))
+        #expect(controller.window?.firstResponder is NSTextView)
+    }
+}
+
+private final class ChangeRecorder: NoteEditorViewControllerDelegate {
+    var contentChanges: [UUID] = []
+    func noteEditorDidChangeContent(_ content: String, for id: UUID) { contentChanges.append(id) }
+}

@@ -1,0 +1,20 @@
+@import 'tailwindcss';
+
+@source "../../packages/*/dist/**/*.{js,d.ts}";
+@source "../examples/**/*.{ts,tsx}";
+@source "../src/**/*.{ts,tsx}";
+
+@import '@agenticdevelopertoolkit/chat/css/base.css';
+@import '@agenticdevelopertoolkit/chat/css/modes/inline.css';
+@import '@agenticdevelopertoolkit/chat/css/modes/three-pane.css';
+@import '@agenticdevelopertoolkit/chat/css/modes/mobile.css';
+@import '@agenticdevelopertoolkit/chat/css/components/content-overlay.css';
+
+@import '@agenticdevelopertoolkit/controls/appearance-mode-toggle/styles.css';
+@import '@agenticdevelopertoolkit/controls/dev-banner/styles.css';
+@import '@agenticdevelopertoolkit/controls/filtered-list/styles.css';
+@import '@agenticdevelopertoolkit/controls/logging-panel/styles.css';
+@import '@agenticdevelopertoolkit/controls/orb-row/styles.css';
+@import '@agenticdevelopertoolkit/controls/search-dialog/styles.css';
+@import '@agenticdevelopertoolkit/controls/source-code-panel/styles.css';
+@import '@agenticdevelopertoolkit/controls/user-settings/styles.css';

@@ -1,0 +1,1099 @@
+import Testing
+import Foundation
+import GRDB
+import AgenticToolkitSync
+@testable import AgenticToolkitMarkdown
+
+@Suite("MarkdownProjection")
+struct MarkdownProjectionTests {
+
+    private func store() throws -> MarkdownStore {
+        try MarkdownStore(path: ":memory:", customerID: "cust-1", ecosystemID: "eco-1")
+    }
+
+    @Test("it claims all nine mirrored resources and nothing else")
+    func claimsTheNine() {
+        #expect(MarkdownProjection().resources == Set([
+            "content.markdown", "content.notes", "content.docs", "content.papers",
+            "content.categories", "content.category_edges", "content.category_items",
+            "content.keywords", "content.keyword_items"
+        ]))
+    }
+
+    @Test("documents and their markers are pull-only; taxonomy is not")
+    func pullOnlySetMatchesADH() {
+        #expect(Set(MarkdownProjection.pullOnlyResources) == Set([
+            "content.markdown", "content.notes", "content.docs", "content.papers"
+        ]))
+    }
+
+    @Test("no generic mirror table is created for a claimed resource")
+    func noGenericMirrors() throws {
+        let store = try store()
+        try store.database.read { conn in
+            for table in ["content_markdown", "content_categories", "content_notes"] {
+                let exists = try conn.tableExists(table)
+                #expect(exists == false, "unexpected generic mirror \(table)")
+            }
+        }
+    }
+
+    /// Cross-checks `MarkdownProjection.knownColumns(for:)` — the
+    /// hand-maintained column lists `specificColumns` builds from — against
+    /// what the real schema actually created, via `PRAGMA table_info`. The
+    /// resource *set* cannot drift from `MarkdownSchema.tables` any more
+    /// (`claimsTheNine` pins that structurally), but each resource's column
+    /// *list* is still prose a schema edit can silently outrun; this is what
+    /// would catch a column added to one table's DDL and forgotten here.
+    @Test("known columns for every resource match the real schema")
+    func columnListsMatchTheRealSchema() throws {
+        let store = try store()
+        try store.database.read { conn in
+            for resource in MarkdownProjection().resources.sorted() {
+                let table = String(resource.dropFirst("content.".count))
+                let rows = try Row.fetchAll(conn, sql: "PRAGMA table_info(\(table))")
+                let actual = Set(rows.map { $0["name"] as String })
+                let known = MarkdownProjection.knownColumns(for: resource)
+                #expect(actual == known, "\(resource): schema has \(actual), projection knows \(known)")
+            }
+        }
+    }
+
+    /// The final review asked for `owner_kind`/`owner_id` to be added to the
+    /// drift guard "or documented as deliberately local-only". Neither applies:
+    /// they are already in `specificColumns["content.markdown"]`, so
+    /// `columnListsMatchTheRealSchema`'s set *equality* covers them the way it
+    /// covers every other column — and they are not local-only either, they
+    /// are adh's own columns. What is true is that they never appear in a
+    /// staged wire payload, and the reason is structural rather than a
+    /// decision about these two fields: `content.markdown` is pull-only, so
+    /// `GRDBSyncStore.stage` refuses it outright and *no* markdown column is
+    /// ever staged. Both halves are asserted here so the question is not
+    /// re-raised from prose.
+    @Test("owner columns are covered by the drift guard, and no markdown column is ever staged")
+    func ownerColumnsAreCoveredAndMarkdownIsNeverStaged() throws {
+        #expect(MarkdownProjection.knownColumns(for: "content.markdown")
+            .isSuperset(of: ["owner_kind", "owner_id"]))
+        #expect(MarkdownProjection.pullOnlyResources.contains("content.markdown"))
+
+        let store = try store()
+        #expect(throws: SyncStoreFailure.pullOnlyResource("content.markdown")) {
+            try store.database.write { conn in
+                try store.syncStore.stage(
+                    LocalMutation(
+                        resource: "content.markdown", rowId: "m1", type: .upsert,
+                        data: ["owner_id": .string("cust-1")]),
+                    in: conn)
+            }
+        }
+    }
+
+    @Test("a pulled document lands in typed columns and reads back as a document")
+    func pulledDocumentIsTyped() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(
+                resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "5",
+                data: [
+                    "title": .string("From the server"),
+                    "content": .string("# From the server\n\nBody."),
+                    "content_hash": .string("abc"),
+                    "size_bytes": .number(26),
+                    "current_version": .number(3),
+                    "visibility": .string("public"),
+                    "stage": .string("final"),
+                    "owner_kind": .string("customer"),
+                    "owner_id": .string("cust-1"),
+                    "created_at": .string("2026-01-01T00:00:00Z"),
+                    "updated_at": .string("2026-01-02T00:00:00Z")
+                ])
+        ], advancingTo: nil)
+
+        let document = try #require(try store.document(id: "m1"))
+        #expect(document.content == "# From the server\n\nBody.")
+        #expect(document.visibility == .public)
+        #expect(document.stage == .final)
+        #expect(document.currentVersion == 3)
+        try store.database.read { conn in
+            let syncVersion = try Int.fetchOne(
+                conn, sql: "SELECT sync_version FROM markdown WHERE id = 'm1'")
+            #expect(syncVersion == 5)
+        }
+    }
+
+    @Test("a pulled delete tombstones both flags")
+    func pulledDeleteTombstones() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("t"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z")])
+        ], advancingTo: nil)
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .delete, syncVersion: "2", data: nil)
+        ], advancingTo: nil)
+        #expect(try store.document(id: "m1") == nil)
+        try store.database.read { conn in
+            let isDeleted = try Int.fetchOne(
+                conn, sql: "SELECT is_deleted FROM markdown WHERE id = 'm1'")
+            #expect(isDeleted == 1)
+        }
+    }
+
+    /// The failure mode fix #1 closes: a full-row pull (not a local patch)
+    /// that restores a previously server-deleted document. adh's wire format
+    /// omits a key whose new value is null, so the restore payload carries
+    /// `is_deleted` implicitly (never mentioned — defaults to 0 via
+    /// `excluded.is_deleted`) but never mentions `deleted_at` either, since
+    /// its new value is null. Before the force-bind fix, `deleted_at` stayed
+    /// at its stale tombstoned value forever: `document(id:)` (gates on
+    /// `is_deleted` alone) would show the row again, but `liveRow`/`liveRows`
+    /// (`WHERE deleted_at IS NULL`) would hide it forever.
+    @Test("a server delete followed by a server restore clears both tombstones on a document")
+    func restoreAfterDeleteClearsTombstoneForDocument() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("t"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z")])
+        ], advancingTo: nil)
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .delete, syncVersion: "2", data: nil)
+        ], advancingTo: nil)
+        #expect(try store.document(id: "m1") == nil)
+        #expect(try store.syncStore.liveRow(resource: "content.markdown", id: "m1") == nil)
+
+        // The restore payload never mentions `deleted_at` or `is_deleted` —
+        // exactly what adh's omit-null-keys wire format would send.
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "3",
+                       data: ["title": .string("t"), "content": .string("restored"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-03T00:00:00Z")])
+        ], advancingTo: nil)
+
+        let restored = try #require(try store.document(id: "m1"))
+        #expect(restored.content == "restored")
+        #expect(restored.isDeleted == false)
+        #expect(try store.syncStore.liveRow(resource: "content.markdown", id: "m1") != nil)
+    }
+
+    /// The taxonomy flavor of the same fix: none of the five taxonomy tables
+    /// have an `is_deleted` fallback, so before the force-bind fix a restore
+    /// was not merely inconsistent but unrecoverable — the row would stay
+    /// invisible to `liveRow`/`liveRows` forever.
+    @Test("a server delete followed by a server restore clears the tombstone on a taxonomy row")
+    func restoreAfterDeleteClearsTombstoneForTaxonomyRow() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.categories", id: "c1", op: .upsert, syncVersion: "1",
+                       data: ["name": .string("Recipes"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z")])
+        ], advancingTo: nil)
+        #expect(try store.syncStore.liveRow(resource: "content.categories", id: "c1") != nil)
+
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.categories", id: "c1", op: .delete, syncVersion: "2", data: nil)
+        ], advancingTo: nil)
+        #expect(try store.syncStore.liveRow(resource: "content.categories", id: "c1") == nil)
+
+        // Restore payload never mentions `deleted_at`.
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.categories", id: "c1", op: .upsert, syncVersion: "3",
+                       data: ["name": .string("Recipes (restored)"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-03T00:00:00Z")])
+        ], advancingTo: nil)
+
+        let row = try #require(try store.syncStore.liveRow(resource: "content.categories", id: "c1"))
+        #expect(row["name"] == .string("Recipes (restored)"))
+    }
+
+    /// Pins the behaviour deviation 3 (Task 12's original decision) exists
+    /// to protect, now that fix #1 forces `deleted_at`/`is_deleted` into
+    /// every upsert's `SET` clause: a local `stage(_:)` mutation whose
+    /// payload omits `customer_id` (as every taxonomy write does — the
+    /// column was already set moments earlier by the raw `INSERT` in the
+    /// same transaction) must not null it out. The force-bind fix only
+    /// widens the always-assigned set by `deleted_at`/`is_deleted`; it must
+    /// not have widened it to `customer_id` too.
+    @Test("a local stage mutation omitting customer_id does not null it out")
+    func localStageDoesNotClobberCustomerID() throws {
+        let store = try store()
+        let category = try store.createCategory(name: "Recipes")
+        try store.database.read { conn in
+            let customerID = try String.fetchOne(
+                conn, sql: "SELECT customer_id FROM categories WHERE id = ?",
+                arguments: [category.id])
+            #expect(customerID == "cust-1")
+        }
+    }
+
+    @Test("liveRows reads a typed row back in the mirror's own shape")
+    func liveRowsRoundTrip() throws {
+        let store = try store()
+        _ = try store.createCategory(name: "Recipes")
+        let rows = try store.syncStore.liveRows(resource: "content.categories")
+        #expect(rows.count == 1)
+        #expect(rows[0]["name"] == .string("Recipes"))
+        #expect(rows[0]["id"] != nil)
+    }
+
+    @Test("a resync truncates every projected table")
+    func resyncTruncates() async throws {
+        let store = try store()
+        _ = try store.createDocument(content: "local", markers: [.note])
+        _ = try store.createCategory(name: "Recipes")
+        try await store.syncStore.resetForResync()
+        try store.database.read { conn in
+            let markdownCount = try Int.fetchOne(conn, sql: "SELECT COUNT(*) FROM markdown")
+            let notesCount = try Int.fetchOne(conn, sql: "SELECT COUNT(*) FROM notes")
+            let categoriesCount = try Int.fetchOne(conn, sql: "SELECT COUNT(*) FROM categories")
+            #expect(markdownCount == 0)
+            #expect(notesCount == 0)
+            #expect(categoriesCount == 0)
+        }
+    }
+
+    @Test("purging a parent resource without its children is refused up front, naming both")
+    func partialFamilyPurgeIsRefused() async throws {
+        let store = try store()
+        _ = try store.createDocument(content: "local", markers: [.note])
+        await #expect(throws: MarkdownProjectionError.purgeWouldOrphanRows(
+            resource: "content.markdown", referencedBy: "content.notes", rows: 1)) {
+            try await store.syncStore.purgeResources(["content.markdown"])
+        }
+        // The refusal happens before any DELETE, so nothing was lost.
+        try store.database.read { conn in
+            let markdownCount = try Int.fetchOne(conn, sql: "SELECT COUNT(*) FROM markdown")
+            let notesCount = try Int.fetchOne(conn, sql: "SELECT COUNT(*) FROM notes")
+            #expect(markdownCount == 1)
+            #expect(notesCount == 1)
+        }
+    }
+
+    @Test("purging a whole family succeeds, in whatever order the deletes run")
+    func wholeFamilyPurgeSucceeds() async throws {
+        let store = try store()
+        _ = try store.createDocument(content: "local", markers: [.note])
+        try await store.syncStore.purgeResources(
+            ["content.markdown", "content.notes", "content.docs", "content.papers"])
+        try store.database.read { conn in
+            let markdownCount = try Int.fetchOne(conn, sql: "SELECT COUNT(*) FROM markdown")
+            let notesCount = try Int.fetchOne(conn, sql: "SELECT COUNT(*) FROM notes")
+            #expect(markdownCount == 0)
+            #expect(notesCount == 0)
+        }
+    }
+
+    @Test("purging a parent with no dependent rows left is allowed")
+    func partialPurgeWithNoDependentRowsIsAllowed() async throws {
+        let store = try store()
+        _ = try store.createDocument(content: "local", markers: [])   // no marker row
+        try await store.syncStore.purgeResources(["content.markdown"])
+        try store.database.read { conn in
+            let markdownCount = try Int.fetchOne(conn, sql: "SELECT COUNT(*) FROM markdown")
+            #expect(markdownCount == 0)
+        }
+    }
+
+    /// `defer_foreign_keys` is connection-scoped and resets itself to `OFF`
+    /// when the transaction that set it ends (see `truncate`'s doc comment).
+    /// This pins that it really does not leak onto the pooled connection
+    /// `resetForResync` used, by distinguishing "immediate" from "deferred"
+    /// checking the only way that's actually observable: insert a child row
+    /// referencing a not-yet-existing parent, then insert the parent,
+    /// *within one transaction*. Under immediate (correct, non-leaked)
+    /// checking the child insert throws on its own statement, before the
+    /// parent insert ever runs. Under leaked deferred checking, both inserts
+    /// would succeed and the transaction would commit clean, since the
+    /// dangling reference is resolved by the time of commit.
+    @Test("defer_foreign_keys does not leak past resetForResync onto later writes")
+    func deferForeignKeysDoesNotLeakPastResetForResync() async throws {
+        let store = try store()
+        try await store.syncStore.resetForResync()
+        #expect(throws: (any Error).self) {
+            try store.database.write { conn in
+                try conn.execute(
+                    sql: """
+                        INSERT INTO notes (id, markdown_id, created_at, updated_at)
+                        VALUES ('n1', 'not-yet-created', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')
+                        """)
+                try conn.execute(
+                    sql: """
+                        INSERT INTO markdown (id, title, content, created_at, updated_at)
+                        VALUES ('not-yet-created', 't', 'c', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')
+                        """)
+            }
+        }
+    }
+
+    @Test("sync_txid and sync_stamped_at round-trip through a pulled upsert")
+    func syncTxidRoundTrips() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("t"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z"),
+                              "sync_stamped_at": .string("2026-01-01T00:00:01Z"),
+                              "sync_txid": .number(99)])
+        ], advancingTo: nil)
+        try store.database.read { conn in
+            let syncTxid = try Int.fetchOne(
+                conn, sql: "SELECT sync_txid FROM markdown WHERE id = 'm1'")
+            #expect(syncTxid == 99)
+            // `sync_stamped_at` is one of `timestampColumns` (round 1 fix
+            // #5), so it must come out normalised the same as
+            // created_at/updated_at, not merely non-nil.
+            let syncStampedAt = try String.fetchOne(
+                conn, sql: "SELECT sync_stamped_at FROM markdown WHERE id = 'm1'")
+            #expect(syncStampedAt == "2026-01-01T00:00:01.000Z")
+        }
+    }
+
+    @Test("an unparseable timestamp is stored verbatim rather than dropped")
+    func unparseableTimestampFallsBackToVerbatim() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("t"), "content": .string("c"),
+                              "created_at": .string("not-a-date"),
+                              "updated_at": .string("2026-01-01T00:00:00Z")])
+        ], advancingTo: nil)
+        try store.database.read { conn in
+            let createdAt = try String.fetchOne(
+                conn, sql: "SELECT created_at FROM markdown WHERE id = 'm1'")
+            #expect(createdAt == "not-a-date")
+        }
+    }
+
+    @Test("a non-fractional server timestamp is normalised to the fractional form on ingest")
+    func timestampNormalisedOnIngest() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("t"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z")])
+        ], advancingTo: nil)
+        try store.database.read { conn in
+            let createdAt = try String.fetchOne(
+                conn, sql: "SELECT created_at FROM markdown WHERE id = 'm1'")
+            let updatedAt = try String.fetchOne(
+                conn, sql: "SELECT updated_at FROM markdown WHERE id = 'm1'")
+            #expect(createdAt == "2026-01-01T00:00:00.000Z")
+            #expect(updatedAt == "2026-01-01T00:00:00.000Z")
+        }
+    }
+
+    /// `.` (0x2E) sorts before `Z` (0x5A) in ASCII, so an un-normalised
+    /// non-fractional stamp sorts *after* a fractional one from the same
+    /// second under plain string ordering — the exact inversion this task
+    /// exists to kill. `timestampNormalisedOnIngest` only pins the stored
+    /// string; this pins the ordering consequence that string alone doesn't
+    /// prove: m1's `updated_at` is chronologically earlier (no fraction) and
+    /// m2's is chronologically later (explicit `.500` fraction) within the
+    /// same second — `ORDER BY updated_at` must return them in that
+    /// chronological order, which only holds once both are normalised to the
+    /// same fractional shape.
+    @Test("normalised timestamps sort in true chronological order, not raw string order")
+    func timestampNormalisationFixesChronologicalOrdering() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("earlier"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z")])
+        ], advancingTo: nil)
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m2", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("later"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00.500Z")])
+        ], advancingTo: nil)
+        try store.database.read { conn in
+            let ids = try String.fetchAll(
+                conn, sql: "SELECT id FROM markdown ORDER BY updated_at ASC")
+            #expect(ids == ["m1", "m2"])
+        }
+    }
+
+    /// `deleted_at` is a `timestampColumns` member like `created_at`/
+    /// `updated_at`, but neither of the other normalisation tests exercises
+    /// it directly — `pulledDeleteTombstones` sets it via `markDeleted`
+    /// (which stamps `Date()` itself, already fractional), not via a value
+    /// arriving in an upsert payload. This exercises the column directly:
+    /// a pulled upsert can carry a non-fractional `deleted_at` (adh sending
+    /// a tombstoned row's full state), and it must come out normalised the
+    /// same way `created_at`/`updated_at` do.
+    @Test("a non-fractional deleted_at in an upsert payload is normalised on ingest")
+    func deletedAtColumnIsNormalisedOnIngest() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("t"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z"),
+                              "deleted_at": .string("2026-01-01T00:00:00Z")])
+        ], advancingTo: nil)
+        try store.database.read { conn in
+            let deletedAt = try String.fetchOne(
+                conn, sql: "SELECT deleted_at FROM markdown WHERE id = 'm1'")
+            #expect(deletedAt == "2026-01-01T00:00:00.000Z")
+            // This payload — `deleted_at` present, `is_deleted` absent — is
+            // exactly the shape fix #1's round-2 regression fell into:
+            // `excluded.is_deleted` falling back to the column's own
+            // `DEFAULT 0` would leave `is_deleted = 0` while `deleted_at` is
+            // non-null, the two flags disagreeing. `is_deleted` must be
+            // *derived* from `deleted_at` here, not defaulted independently.
+            let isDeleted = try Int.fetchOne(
+                conn, sql: "SELECT is_deleted FROM markdown WHERE id = 'm1'")
+            #expect(isDeleted == 1)
+        }
+    }
+
+    /// The regression fix #1's round-1 force-bind introduced: a payload that
+    /// carries a genuine tombstone (`deleted_at` present) but omits
+    /// `is_deleted` — the shape `deletedAtColumnIsNormalisedOnIngest` above
+    /// already sends — must hide the row through *both* of the projection's
+    /// visibility gates, not just one. `document(id:)` gates on `is_deleted`
+    /// alone; `liveRow`/`rows`/`row` gate on `deleted_at` alone. Before this
+    /// round's fix, `is_deleted` silently defaulted to 0 (unset) while
+    /// `deleted_at` stayed non-null, so the two disagreed: `document(id:)`
+    /// showed a server-deleted document as live while `liveRow` still hid
+    /// it.
+    @Test("deleted_at without is_deleted hides the row via document(id:) and liveRow")
+    func deletedAtWithoutIsDeletedHidesTheRowEverywhere() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("t"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z"),
+                              "deleted_at": .string("2026-01-02T00:00:00Z")])
+        ], advancingTo: nil)
+        #expect(try store.document(id: "m1") == nil)
+        #expect(try store.syncStore.liveRow(resource: "content.markdown", id: "m1") == nil)
+    }
+
+    /// `JSONValue` decodes every JSON number as `Double`, and `Int(_:)` traps
+    /// on anything outside `Int64` — so a single oversized number in a pulled
+    /// row used to crash the app inside `GRDBSyncStore`'s batch transaction,
+    /// leaving the cursor unadvanced so the next launch re-pulled the same
+    /// batch and crashed again. `isFinite` alone never covered this: `1e19` is
+    /// perfectly finite.
+    @Test("an out-of-Int64-range number in a payload is stored, not trapped on")
+    func oversizedNumbersDoNotTrap() async throws {
+        let store = try store()
+        let extremes: [(String, Double)] = [
+            ("m1", 1e19), ("m2", -1e19),
+            // The exact boundary that makes `<=` wrong: `Double(Int64.max)`
+            // rounds up to 2^63, which is not representable as an `Int64`.
+            ("m3", Double(Int64.max)), ("m4", Double(Int64.min)),
+            ("m5", .infinity)
+        ]
+        for (id, value) in extremes {
+            try await store.syncStore.apply([
+                SyncChange(resource: "content.markdown", id: id, op: .upsert, syncVersion: "1",
+                           data: ["title": .string("t"), "content": .string("c"),
+                                  "size_bytes": .number(value),
+                                  "created_at": .string("2026-01-01T00:00:00Z"),
+                                  "updated_at": .string("2026-01-01T00:00:00Z")])
+            ], advancingTo: nil)
+        }
+        let (stored, minimum) = try store.database.read { conn in
+            (try Int.fetchOne(conn, sql: "SELECT COUNT(*) FROM markdown"),
+             try Int64.fetchOne(conn, sql: "SELECT size_bytes FROM markdown WHERE id = 'm4'"))
+        }
+        #expect(stored == extremes.count)
+        // `Double(Int64.min)` is exactly -2^63 and *is* representable, so it is
+        // the one extreme that still lands as an integer.
+        #expect(minimum == Int64.min)
+    }
+
+    /// The disagreement the old two-condition derivation could not see: a
+    /// full-row pull supplying a real tombstone *and* an explicit falsy
+    /// `is_deleted` matched neither condition, so both values were written
+    /// through untouched and the row was deleted to one visibility gate and
+    /// live to the other.
+    @Test("a falsy is_deleted beside a real deleted_at does not un-delete the row")
+    func falsyIsDeletedBesideATombstoneStaysDeleted() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("t"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z"),
+                              "deleted_at": .string("2026-01-02T00:00:00Z"),
+                              "is_deleted": .bool(false)])
+        ], advancingTo: nil)
+        #expect(try store.document(id: "m1") == nil)
+        #expect(try store.syncStore.liveRow(resource: "content.markdown", id: "m1") == nil)
+        let isDeleted = try store.database.read { conn in
+            try Int.fetchOne(conn, sql: "SELECT is_deleted FROM markdown WHERE id = 'm1'")
+        }
+        #expect(isDeleted == 1)
+    }
+
+    /// adh's `is_deleted` is a Postgres `boolean`, and JSON is not the only
+    /// serialiser that has ever crossed that wire: `"t"` is Postgres's own text
+    /// spelling of `true`. Reading it as falsy hides a delete from one gate and
+    /// not the other, which is the same corruption from the other direction.
+    @Test("a string is_deleted is read as the boolean it spells")
+    func stringIsDeletedIsTruthy() async throws {
+        let store = try store()
+        for (id, flag) in [("m1", "t"), ("m2", "true"), ("m3", "1")] {
+            try await store.syncStore.apply([
+                SyncChange(resource: "content.markdown", id: id, op: .upsert, syncVersion: "1",
+                           data: ["title": .string("t"), "content": .string("c"),
+                                  "created_at": .string("2026-01-01T00:00:00Z"),
+                                  "updated_at": .string("2026-01-01T00:00:00Z"),
+                                  "is_deleted": .string(flag)])
+            ], advancingTo: nil)
+            #expect(try store.document(id: id) == nil, "\(flag)")
+            // Deleted with no stamp of its own: one is written now rather than
+            // left NULL, so both gates agree.
+            #expect(try store.syncStore.liveRow(resource: "content.markdown", id: id) == nil, "\(flag)")
+        }
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m4", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("t"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z"),
+                              "is_deleted": .string("f")])
+        ], advancingTo: nil)
+        #expect(try store.document(id: "m4") != nil)
+    }
+
+    /// The fix for concern B (round 2): `upsert`'s `isFullRow` parameter is
+    /// what stops a local `stage(_:)` partial patch from force-clearing a
+    /// tombstone the way a full-row pull is allowed to. This pins the
+    /// behaviour directly, independent of whether any current
+    /// `MarkdownTaxonomy` write method actually does this today — a future
+    /// one staging a partial patch against an existing, previously-deleted
+    /// taxonomy row must not resurrect it.
+    @Test("a partial local stage against a tombstoned row leaves the tombstone intact")
+    func partialLocalStageDoesNotResurrectATombstonedRow() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.categories", id: "c1", op: .upsert, syncVersion: "1",
+                       data: ["name": .string("Recipes"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z")])
+        ], advancingTo: nil)
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.categories", id: "c1", op: .delete, syncVersion: "2", data: nil)
+        ], advancingTo: nil)
+        #expect(try store.syncStore.liveRow(resource: "content.categories", id: "c1") == nil)
+
+        // A partial local patch — the `stage(_:)` shape every
+        // `MarkdownTaxonomy` write method sends — against the now-tombstoned
+        // row. It never mentions `deleted_at`.
+        try store.database.write { conn in
+            try store.syncStore.stage(LocalMutation(
+                resource: "content.categories", rowId: "c1", type: .upsert,
+                data: ["name": .string("renamed")]), in: conn)
+        }
+
+        #expect(try store.syncStore.liveRow(resource: "content.categories", id: "c1") == nil)
+        try store.database.read { conn in
+            let deletedAt = try String.fetchOne(
+                conn, sql: "SELECT deleted_at FROM categories WHERE id = 'c1'")
+            #expect(deletedAt != nil)
+        }
+    }
+
+    /// The mirror image of `deletedAtColumnIsNormalisedOnIngest`: a full-row
+    /// pull that supplies `is_deleted` truthy but omits `deleted_at`
+    /// entirely. Before this round's fix, `deleted_at` was force-bound from
+    /// `excluded.deleted_at`, which — with `deleted_at` absent from `data` —
+    /// resolves to NULL on both the plain `INSERT` (no `DEFAULT`, nullable)
+    /// and the `ON CONFLICT` branch: `is_deleted = 1` while `deleted_at` is
+    /// still NULL, the two flags disagreeing the other way round from
+    /// `deletedAtColumnIsNormalisedOnIngest`. This is the INSERT-branch half
+    /// of the regression: the row has never existed locally before, so the
+    /// plain `INSERT` list (not `ON CONFLICT ... SET`) is what has to carry
+    /// the derived `deleted_at`.
+    @Test("is_deleted without deleted_at stamps deleted_at on first insert")
+    func isDeletedWithoutDeletedAtStampsDeletedAtOnInsert() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("t"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z"),
+                              "is_deleted": .number(1)])
+        ], advancingTo: nil)
+
+        try store.database.read { conn in
+            let isDeleted = try Int.fetchOne(
+                conn, sql: "SELECT is_deleted FROM markdown WHERE id = 'm1'")
+            let deletedAt = try String.fetchOne(
+                conn, sql: "SELECT deleted_at FROM markdown WHERE id = 'm1'")
+            #expect(isDeleted == 1)
+            #expect(deletedAt != nil)
+        }
+        #expect(try store.document(id: "m1") == nil)
+        #expect(try store.syncStore.liveRow(resource: "content.markdown", id: "m1") == nil)
+    }
+
+    /// Same regression, the UPDATE-branch half: the row is pulled live first
+    /// (so `document(id:)` can be seen to return it), then a second full-row
+    /// pull lands `is_deleted` truthy with no `deleted_at`, this time hitting
+    /// `ON CONFLICT ... SET` on an existing row rather than the plain
+    /// `INSERT`. Both branches take different SQL paths — `bound`/`arguments`
+    /// feed the `INSERT` list, `assignmentColumns` feeds `ON CONFLICT ...
+    /// SET` — so a fix that only closes one leaves the other silently
+    /// corrupting rows that already existed locally.
+    @Test("is_deleted without deleted_at stamps deleted_at on an existing row")
+    func isDeletedWithoutDeletedAtStampsDeletedAtOnUpdate() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "1",
+                       data: ["title": .string("t"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-01T00:00:00Z")])
+        ], advancingTo: nil)
+        let live = try #require(try store.document(id: "m1"))
+        #expect(live.isDeleted == false)
+
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "2",
+                       data: ["title": .string("t"), "content": .string("c"),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-02T00:00:00Z"),
+                              "is_deleted": .number(1)])
+        ], advancingTo: nil)
+
+        try store.database.read { conn in
+            let isDeleted = try Int.fetchOne(
+                conn, sql: "SELECT is_deleted FROM markdown WHERE id = 'm1'")
+            let deletedAt = try String.fetchOne(
+                conn, sql: "SELECT deleted_at FROM markdown WHERE id = 'm1'")
+            #expect(isDeleted == 1)
+            #expect(deletedAt != nil)
+        }
+        #expect(try store.document(id: "m1") == nil)
+        #expect(try store.syncStore.liveRow(resource: "content.markdown", id: "m1") == nil)
+    }
+
+    // MARK: - Frontmatter claims and the pull path
+
+    /// A document whose frontmatter carries both keys `MarkdownNoteStorage`
+    /// ever claims, so a test can change one and leave the other alone.
+    private func claimedFrontmatter(title: String, body: String = "Milk\n") -> String {
+        "---\ntitle: \(title)\npinned: true\n---\n\(body)"
+    }
+
+    private func seedClaimed(
+        _ store: MarkdownStore, id: String, content: String, keys: Set<String>
+    ) throws {
+        _ = try store.createDocument(
+            content: content, markers: [.note], id: id, ownedFrontmatterKeys: keys)
+    }
+
+    /// A full-row pull of `content.markdown` — what `GRDBSyncStore.apply`
+    /// sends, and the only path that replaces `content` from the server.
+    private func pullMarkdown(
+        _ store: MarkdownStore, id: String, content: String, syncVersion: String
+    ) async throws {
+        try await store.syncStore.apply([
+            SyncChange(resource: "content.markdown", id: id, op: .upsert, syncVersion: syncVersion,
+                       data: ["title": .string("t"), "content": .string(content),
+                              "created_at": .string("2026-01-01T00:00:00Z"),
+                              "updated_at": .string("2026-01-02T00:00:00Z")])
+        ], advancingTo: nil)
+    }
+
+    /// The app renamed the note, claiming `title:`; someone then edited the
+    /// document on the web and typed their own. The claim is a statement about
+    /// bytes that no longer exist, and leaving it standing is what let
+    /// `strippedContent` hide a human's `title:` from the editor and the next
+    /// save overwrite it.
+    @Test("a pull that changes a claimed key's value releases that claim")
+    func pullReleasesTheClaimOnAChangedKey() async throws {
+        let store = try store()
+        try seedClaimed(
+            store, id: "m1", content: claimedFrontmatter(title: "Groceries"),
+            keys: ["title", "pinned"])
+
+        try await pullMarkdown(
+            store, id: "m1", content: claimedFrontmatter(title: "Shopping"), syncVersion: "2")
+
+        #expect(try store.ownedFrontmatterKeys(forDocument: "m1") == ["pinned"])
+    }
+
+    /// The chosen rule, asserted directly: only the claims whose key changed
+    /// value are released. `content.markdown` is pull-only, so every local
+    /// edit leaves through the REST outbox and comes back down this same path
+    /// — the common pull is the app's own push echoed back, and releasing
+    /// every claim on any pull would disown the app's own `title:`/`pinned:`
+    /// at the first round trip. `mayWrite` refuses to touch an unowned key
+    /// whose value differs, so the next rename would then be a silent no-op.
+    @Test("a pull that leaves claimed keys byte-identical keeps those claims")
+    func pullKeepsTheClaimOnAnUnchangedKey() async throws {
+        let store = try store()
+        try seedClaimed(
+            store, id: "m1", content: claimedFrontmatter(title: "Groceries"),
+            keys: ["title", "pinned"])
+
+        // The body changes; neither claimed key does.
+        try await pullMarkdown(
+            store, id: "m1",
+            content: claimedFrontmatter(title: "Groceries", body: "Milk\nEggs\n"),
+            syncVersion: "2")
+
+        #expect(try store.ownedFrontmatterKeys(forDocument: "m1") == ["pinned", "title"])
+    }
+
+    /// Claims are keyed by document, and the release reads and deletes by that
+    /// id alone — a busy pull batch must not cost an untouched note its
+    /// frontmatter.
+    @Test("a pull only disturbs the claims of the document it names")
+    func pullLeavesAnotherDocumentsClaimsAlone() async throws {
+        let store = try store()
+        try seedClaimed(
+            store, id: "m1", content: claimedFrontmatter(title: "Groceries"),
+            keys: ["title", "pinned"])
+        try seedClaimed(
+            store, id: "m2", content: claimedFrontmatter(title: "Recipes"), keys: ["title"])
+
+        try await pullMarkdown(
+            store, id: "m2", content: claimedFrontmatter(title: "Dinner"), syncVersion: "2")
+
+        #expect(try store.ownedFrontmatterKeys(forDocument: "m2").isEmpty)
+        #expect(try store.ownedFrontmatterKeys(forDocument: "m1") == ["pinned", "title"])
+    }
+
+    // MARK: - Partial patches and the two delete columns
+
+    /// The half of the partial path that *is* knowable: a patch that names
+    /// both delete columns and contradicts itself has no half to prefer, so it
+    /// is refused rather than half-written. `stage(_:)` cannot reach
+    /// `content.markdown` today (it is pull-only), so the projection is called
+    /// directly — the guard is a structural backstop, not a live code path.
+    ///
+    /// `title` and `content` ride along for the same `NOT NULL` reason as the
+    /// test below; without the guard this payload does not fail, it *succeeds*
+    /// and leaves a row that is tombstoned and not-deleted at once.
+    @Test("a partial patch whose two delete columns disagree is refused")
+    func partialPatchWithDisagreeingDeleteStateIsRefused() throws {
+        let store = try store()
+        try seedClaimed(store, id: "m1", content: "Milk\n", keys: [])
+
+        try store.database.write { conn in
+            #expect(throws: MarkdownProjectionError.partialPatchDeleteStateDisagrees(
+                resource: "content.markdown", id: "m1")) {
+                try MarkdownProjection().upsert(
+                    resource: "content.markdown", id: "m1", syncVersion: 2,
+                    data: ["title": .string("Groceries"), "content": .string("Milk\n"),
+                           "deleted_at": .string("2026-01-03T00:00:00Z"),
+                           "is_deleted": .number(0)],
+                    isFullRow: false, in: conn)
+            }
+        }
+    }
+
+    /// The other half, and the stated limit: a patch naming only one of the
+    /// two columns writes only that one. The missing half is exactly what the
+    /// patch is silent about — deriving it would either write a column the
+    /// caller never named (the force-bind that used to resurrect tombstoned
+    /// rows) or invent a timestamp. This pins that the gap is deliberate, so a
+    /// later reader cannot mistake it for an oversight or close it silently.
+    @Test("a partial patch naming one delete column leaves the other untouched")
+    func partialPatchNamingOneDeleteColumnLeavesTheOtherAlone() throws {
+        let store = try store()
+        try seedClaimed(store, id: "m1", content: "Milk\n", keys: [])
+
+        try store.database.write { conn in
+            // `title` and `content` ride along because both are `NOT NULL`
+            // with no `DEFAULT` and SQLite validates that on the row the
+            // `INSERT` would build, before it notices the conflict. The patch
+            // is still partial in the sense that matters here — it names one
+            // delete column and not the other.
+            try MarkdownProjection().upsert(
+                resource: "content.markdown", id: "m1", syncVersion: 2,
+                data: ["title": .string("Groceries"), "content": .string("Milk\n"),
+                       "is_deleted": .number(1)],
+                isFullRow: false, in: conn)
+        }
+
+        try store.database.read { conn in
+            let isDeleted = try Int.fetchOne(
+                conn, sql: "SELECT is_deleted FROM markdown WHERE id = 'm1'")
+            let deletedAt = try String.fetchOne(
+                conn, sql: "SELECT deleted_at FROM markdown WHERE id = 'm1'")
+            #expect(isDeleted == 1)
+            #expect(deletedAt == nil)
+        }
+    }
+
+    // MARK: - A full row clears what it omits (final-review H1)
+
+    /// adh's wire format *omits* a key whose new value is null, so on a full
+    /// row an absent column means NULL — not "unchanged". Before the fix
+    /// `bound` was built from the keys `data` actually carried, so an omitted
+    /// nullable column was neither inserted nor assigned and simply kept its
+    /// previous value: a document unpublished upstream kept its
+    /// `public_route` locally, and forever.
+    @Test("a full-row pull that omits a nullable column clears it")
+    func fullRowPullClearsOmittedNullableColumns() async throws {
+        let store = try store()
+        try await store.syncStore.apply([
+            SyncChange(
+                resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "1",
+                data: [
+                    "title": .string("Published"), "content": .string("Body."),
+                    "visibility": .string("public"), "public_route": .string("/notes/one"),
+                    "frontmatter": .string("{\"adh_source\":\"x\"}"),
+                    "latest_version_id": .string("v-1"),
+                    "sync_stamped_at": .string("2026-01-01T00:00:00.000Z"),
+                    "created_at": .string("2026-01-01T00:00:00Z"),
+                    "updated_at": .string("2026-01-01T00:00:00Z")
+                ])
+        ], advancingTo: nil)
+        try store.database.read { conn in
+            let route = try String.fetchOne(
+                conn, sql: "SELECT public_route FROM markdown WHERE id = 'm1'")
+            #expect(route == "/notes/one")
+        }
+
+        // The same document, unpublished upstream: adh sends the row with the
+        // four now-null keys simply missing.
+        try await store.syncStore.apply([
+            SyncChange(
+                resource: "content.markdown", id: "m1", op: .upsert, syncVersion: "2",
+                data: [
+                    "title": .string("Published"), "content": .string("Body."),
+                    "visibility": .string("private"),
+                    "created_at": .string("2026-01-01T00:00:00Z"),
+                    "updated_at": .string("2026-01-02T00:00:00Z")
+                ])
+        ], advancingTo: nil)
+
+        try store.database.read { conn in
+            let row = try #require(try Row.fetchOne(
+                conn,
+                sql: """
+                    SELECT public_route, frontmatter, latest_version_id, sync_stamped_at
+                    FROM markdown WHERE id = 'm1'
+                    """))
+            #expect(row["public_route"] as String? == nil)
+            #expect(row["frontmatter"] as String? == nil)
+            #expect(row["latest_version_id"] as String? == nil)
+            #expect(row["sync_stamped_at"] as String? == nil)
+        }
+    }
+
+    /// The consequence the omission actually had. `uq_markdown_author_route`
+    /// is `UNIQUE (customer_id, public_route) WHERE public_route IS NOT NULL`,
+    /// so a stale route on the first document makes the second document's
+    /// pull fail — sync wedges on the same batch every time, and no amount of
+    /// retrying clears it.
+    @Test("a route freed upstream can be claimed by another document")
+    func aRouteFreedUpstreamIsAvailableAgain() async throws {
+        let store = try store()
+        func pull(id: String, route: String?, version: String) async throws {
+            var data: [String: JSONValue] = [
+                "title": .string(id), "content": .string("Body."),
+                "customer_id": .string("cust-1"),
+                "created_at": .string("2026-01-01T00:00:00Z"),
+                "updated_at": .string("2026-01-01T00:00:00Z")
+            ]
+            if let route {
+                data["public_route"] = .string(route)
+                data["visibility"] = .string("public")
+            }
+            try await store.syncStore.apply([
+                SyncChange(
+                    resource: "content.markdown", id: id, op: .upsert,
+                    syncVersion: version, data: data)
+            ], advancingTo: nil)
+        }
+
+        try await pull(id: "m1", route: "/shared", version: "1")
+        try await pull(id: "m1", route: nil, version: "2")
+        // Before the fix this threw `SQLITE_CONSTRAINT_UNIQUE`, because m1
+        // still held `/shared`.
+        try await pull(id: "m2", route: "/shared", version: "3")
+
+        try store.database.read { conn in
+            let route = try String.fetchOne(
+                conn, sql: "SELECT public_route FROM markdown WHERE id = 'm2'")
+            #expect(route == "/shared")
+        }
+    }
+
+    /// `nullableColumns(for:)` is the hand-maintained list the fix above binds
+    /// as explicit NULLs, and it is exactly as capable of drifting from the
+    /// DDL as `knownColumns(for:)` was. `PRAGMA table_info`'s `notnull` flag
+    /// is the authority; a column made nullable upstream and not added here
+    /// would silently go back to "absence means unchanged".
+    @Test("the nullable column lists match the real schema")
+    func nullableColumnListsMatchTheRealSchema() throws {
+        let store = try store()
+        try store.database.read { conn in
+            for resource in MarkdownProjection().resources.sorted() {
+                let table = String(resource.dropFirst("content.".count))
+                let rows = try Row.fetchAll(conn, sql: "PRAGMA table_info(\(table))")
+                let actual = Set(rows.filter { ($0["notnull"] as Int) == 0 }
+                    .map { $0["name"] as String })
+                let declared = MarkdownProjection.nullableColumns(for: resource)
+                #expect(actual == declared,
+                        "\(resource): schema nullable \(actual), projection declares \(declared)")
+            }
+        }
+    }
+
+    /// The companion to the test above, and the one that would have caught
+    /// the required list being short by eleven columns.
+    ///
+    /// `requiredColumns(for:)` names the columns `upsert` must bind even when
+    /// the patch omits them, because SQLite validates `NOT NULL` while
+    /// building the candidate row of an `INSERT … ON CONFLICT` — before it
+    /// discovers the conflict and switches to `UPDATE`. The authority is
+    /// `PRAGMA table_info`'s `notnull`/`dflt_value` pair: not-null with no
+    /// default is a column nothing can fall back to. `id` and `sync_version`
+    /// are excluded because the store passes both separately and
+    /// `columns(for:)` does not list them.
+    @Test("the required column lists match the real schema")
+    func requiredColumnListsMatchTheRealSchema() throws {
+        let store = try store()
+        try store.database.read { conn in
+            for resource in MarkdownProjection().resources.sorted() {
+                let table = String(resource.dropFirst("content.".count))
+                let rows = try Row.fetchAll(conn, sql: "PRAGMA table_info(\(table))")
+                let actual = Set(
+                    rows.filter {
+                        ($0["notnull"] as Int) == 1
+                            && ($0["dflt_value"] as String?) == nil
+                            && !["id", "sync_version"].contains($0["name"] as String)
+                    }
+                    .map { $0["name"] as String })
+                let declared = MarkdownProjection.requiredColumns(for: resource)
+                #expect(actual == declared,
+                        "\(resource): schema requires \(actual), projection declares \(declared)")
+            }
+        }
+    }
+
+    // MARK: - A pulled id is resolved through the local pairing (final-review M2)
+
+    /// A document created here gets a client-minted id; adh answers its
+    /// `create` with an id of its own, and `_markdown_remote_id` records the
+    /// pairing. Nothing consulted that pairing on the way *in*, so the first
+    /// pull of the document this client had just created inserted a second
+    /// row under adh's id — the same note twice in the list, and every later
+    /// local edit landing on the copy the server would never hear about.
+    @Test("a pulled row under adh's id updates the local row it is paired with")
+    func aPulledRowResolvesThroughTheRemoteIDPairing() async throws {
+        let store = try store()
+        let created = try store.createDocument(content: "# Local\n\nMine.", markers: [.note])
+        let writer = RemoteIDMintingWriter(minting: "adh-99")
+        try await store.drainRemoteQueue(into: writer, limit: 10)
+        #expect(try store.remoteID(forDocument: created.id) == "adh-99")
+
+        try await store.syncStore.apply([
+            SyncChange(
+                resource: "content.markdown", id: "adh-99", op: .upsert, syncVersion: "7",
+                data: [
+                    "title": .string("Local"), "content": .string("# Local\n\nServer said so."),
+                    "created_at": .string("2026-01-01T00:00:00Z"),
+                    "updated_at": .string("2026-01-03T00:00:00Z")
+                ])
+        ], advancingTo: nil)
+
+        try store.database.read { conn in
+            let rowCount = try Int.fetchOne(conn, sql: "SELECT COUNT(*) FROM markdown")
+            #expect(rowCount == 1)
+        }
+        let reloaded = try #require(try store.document(id: created.id))
+        #expect(reloaded.content == "# Local\n\nServer said so.")
+    }
+
+    /// The marker tables reference the document by id too, so resolving only
+    /// the `content.markdown` row would leave `notes.markdown_id` pointing at
+    /// an id no row has — a foreign key violation, or a silently orphaned
+    /// marker.
+    @Test("a pulled marker's markdown_id is resolved through the same pairing")
+    func aPulledMarkerResolvesItsDocumentReference() async throws {
+        let store = try store()
+        let created = try store.createDocument(content: "# Local", markers: [])
+        let writer = RemoteIDMintingWriter(minting: "adh-100")
+        try await store.drainRemoteQueue(into: writer, limit: 10)
+
+        try await store.syncStore.apply([
+            SyncChange(
+                resource: "content.notes", id: "note-1", op: .upsert, syncVersion: "1",
+                data: [
+                    "markdown_id": .string("adh-100"),
+                    "created_at": .string("2026-01-01T00:00:00Z"),
+                    "updated_at": .string("2026-01-01T00:00:00Z")
+                ])
+        ], advancingTo: nil)
+
+        try store.database.read { conn in
+            let reference = try String.fetchOne(
+                conn, sql: "SELECT markdown_id FROM notes WHERE id = 'note-1'")
+            #expect(reference == created.id)
+        }
+    }
+
+    /// `markDeleted` is the other half of the pull path; a tombstone arriving
+    /// under adh's id has to land on the same local row an upsert would.
+    @Test("a tombstone under adh's id deletes the local row it is paired with")
+    func aTombstoneResolvesThroughTheRemoteIDPairing() async throws {
+        let store = try store()
+        let created = try store.createDocument(content: "# Local", markers: [])
+        let writer = RemoteIDMintingWriter(minting: "adh-101")
+        try await store.drainRemoteQueue(into: writer, limit: 10)
+
+        try await store.syncStore.apply([
+            SyncChange(
+                resource: "content.markdown", id: "adh-101", op: .delete,
+                syncVersion: "9", data: nil)
+        ], advancingTo: nil)
+
+        #expect(try store.document(id: created.id) == nil)
+    }
+
+    // MARK: - A value that cannot be encoded says so (final-review L4)
+
+    /// `value(_:column:)` used to fall back to `""` for an array or object it
+    /// could not turn into JSON text, which writes an empty string into a
+    /// column whose whole content is structured — the failure surfaced later,
+    /// somewhere else, as a document with no frontmatter.
+    @Test("a value that cannot be encoded throws rather than writing an empty string")
+    func unencodableValueThrows() throws {
+        let store = try store()
+        try store.database.write { conn in
+            #expect(throws: MarkdownProjectionError.unencodableValue(column: "frontmatter")) {
+                try MarkdownProjection().upsert(
+                    resource: "content.markdown", id: "m1", syncVersion: 1,
+                    data: [
+                        "title": .string("t"), "content": .string("c"),
+                        "frontmatter": .object(["bad": .number(.infinity)]),
+                        "created_at": .string("2026-01-01T00:00:00Z"),
+                        "updated_at": .string("2026-01-01T00:00:00Z")
+                    ],
+                    isFullRow: true, in: conn)
+            }
+        }
+    }
+}
+
+/// Answers a `create` with the id adh would have minted, so a test can watch
+/// the pairing it produces be consulted on the way back in.
+private actor RemoteIDMintingWriter: MarkdownRemoteWriter {
+    private let mintedID: String
+
+    init(minting mintedID: String) { self.mintedID = mintedID }
+
+    func send(_ remoteOp: MarkdownRemoteOp) async throws -> String? {
+        remoteOp.intent == .create ? mintedID : nil
+    }
+}

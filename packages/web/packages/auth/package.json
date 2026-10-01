@@ -1,0 +1,79 @@
+{
+  "name": "@agentic-toolkit/auth",
+  "version": "0.1.0",
+  "description": "Shared authentication for Agentic Developer Hub sites — capabilities-based AuthProvider with SSO/MFA, Bearer HTTP client with CAS refresh, auth gates, login/signup cards, and the BFF proxy.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist"
+  ],
+  "comment:exports": "`development` → src for `next dev` (HMR, no build/restart); prod (NODE_ENV=production) skips it → dist. Matches the sibling @agentic-toolkit/data pattern.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "development": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "development": "./src/client.ts",
+      "import": "./dist/client.js"
+    },
+    "./ui": {
+      "types": "./dist/ui/index.d.ts",
+      "development": "./src/ui/index.ts",
+      "import": "./dist/ui/index.js"
+    },
+    "./server": {
+      "types": "./dist/server/index.d.ts",
+      "development": "./src/server/index.ts",
+      "import": "./dist/server/index.js"
+    },
+    "./styles.css": "./dist/styles/auth.css"
+  },
+  "scripts": {
+    "build": "tsup && pnpm run build:types && pnpm run build:css",
+    "build:types": "tsc --emitDeclarationOnly -p tsconfig.build.json",
+    "build:css": "node ../../copy-css.mjs",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist .turbo",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@simplewebauthn/browser": "^13.3.0",
+    "@agenticdevelopertoolkit/ui": "link:../../../../external/agenticdevelopertoolkit/packages/web/packages/ui"
+  },
+  "peerDependencies": {
+    "next": ">=15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@base-ui/react": "1.5.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^24.0.0",
+    "@types/react": "19.2.16",
+    "@types/react-dom": "19.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "esbuild-plugin-preserve-directives": "^0.0.11",
+    "harper.js": "^2.4.0",
+    "jsdom": "^29.0.2",
+    "lucide-react": "^1.16.0",
+    "next": "^15.1.0",
+    "tailwind-merge": "^2.6.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.4"
+  }
+}

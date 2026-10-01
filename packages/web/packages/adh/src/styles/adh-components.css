@@ -1,0 +1,1218 @@
+/* Component styles for @agentic-toolkit/adh.
+ * Consumes the --adh-* tokens defined by the active theme
+ * (see @agenticdevelopertoolkit/themes/styles/adh*.css). Import this once
+ * globally in the consumer app (e.g. app/globals.css).
+ *
+ * The rules below are semantic classes, but the premise this header used to state —
+ * "no Tailwind utilities are used inside the component package, because Tailwind v4 in
+ * a consumer app does not scan node_modules by default" — is no longer true of the
+ * package as a whole, and believing it is what left the gap Task 5.5 closed. The
+ * package now carries ~150 className literals across header/, debug-env/, help/,
+ * legal/, footer/, components/, debug/ and themes/. The second half of that sentence
+ * was always right and is exactly why the registration below is needed: an unscanned
+ * utility is not a build error, it is an unstyled component.
+ */
+
+/* The family's Tailwind @theme (apt-* color utilities → M3 role vars) lives in the
+ * themes package — the token owner. Re-imported here so every site gets it through
+ * the one stylesheet import it already has: a site imports @agentic-toolkit/adh/styles.css,
+ * which resolves to adh-site.css, whose first line is this file. (Until Task 5.10
+ * that one import was @adh-shared/adh/styles.css; that package no longer exists.) */
+@import "@agenticdevelopertoolkit/themes/tailwind.css";
+
+/* Skins for the ui primitives that style via semantic classes (a public
+ * theming surface — see that file's header). Owned by @agenticdevelopertoolkit/ui;
+ * re-imported here so every site gets it through this one import. */
+@import "@agenticdevelopertoolkit/ui/styles/components.css";
+
+/* The debug trigger's positioning AND — the load-bearing half — the Tailwind @source
+ * registration for @agentic-toolkit/adh's debug-env sources, which own FloatingWindow:
+ * the shell BOTH the debug console and the Help modal render inside. Task 5.2 moved
+ * that subtree out of this package, so the `@source "../../../adh/src/**"` below stopped
+ * covering it and `shadow-2xl`/`cursor-move` silently stopped being emitted fleet-wide
+ * (see that file's header for the full account). Imported here for the same reason as
+ * the ui skins above: this is the one stylesheet every chrome-bearing site reaches, so
+ * the registration rides along with it.
+ *
+ * RELATIVE, unlike the two imports above, and deliberately: adh-debug.css is a sibling
+ * file inside THIS package, so `./` travels with the package into `pnpm deploy`'s
+ * materialized tree. The bare-specifier argument that used to be written here belonged
+ * to the version of this import that lived in @adh-shared/adh, where reaching this file
+ * meant crossing into the submodule and a relative `../../../external/...` path would
+ * silently dangle. Same-package now, so there is nothing to cross. */
+@import "./adh-debug.css";
+
+/* Tailwind @source registration for this package — see the package-root sources.css. */
+@import "../../sources.css";
+
+.adh-header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+}
+
+/* The family-wide "Developer Preview Release" strip, spanning the full width above
+   the bar. Accent-tinted with a rule under it so it reads as a system notice rather
+   than as page content, and pinned to a fixed height (see the :root block) because
+   --adh-header-height is computed from it. Every value is a themeable token; the
+   fallbacks are the shipped look. */
+.adh-header__preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--adh-header-preview-height, 1.125rem);
+  padding: 0 0.75rem;
+  background: var(
+    --adh-header-preview-bg,
+    color-mix(in srgb, var(--color-accent) 16%, var(--color-surface))
+  );
+  border-bottom: 1px solid
+    var(
+      --adh-header-preview-border-color,
+      color-mix(in srgb, var(--color-accent) 45%, transparent)
+    );
+  color: var(--adh-header-preview-color, var(--color-accent));
+}
+
+/* Trigger + panel in one relatively-positioned box, so the panel hangs off the strip's
+   bottom edge and a single `mouseleave` covers the pair (see PreviewNotice.tsx — the
+   panel is a DOM descendant, which is what `mouseleave` is defined over). */
+.adh-header__preview-disclosure {
+  position: relative;
+  display: flex;
+  align-items: center;
+  /* Part of the chain that arms the headline's ellipsis — see the min-width note on
+     `.adh-header__preview-text`. Every flex ancestor between the strip and that text
+     has to be shrinkable, or the text's own `min-width: 0` is unreachable. */
+  min-width: 0;
+}
+
+/* The strip's whole content IS the disclosure trigger. Reset to a bare inline row: the
+   strip already owns the colour and the height, and a UA button's background, border
+   and font would draw a control inside an 18px notice. */
+.adh-header__preview-trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--adh-header-preview-gap, 0.35rem);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* The caution glyphs flanking the headline, and the caret that says there is more.
+   They ride the strip's own colour (currentColor), which is what leaves the headline
+   the one differently-coloured thing in the row. */
+.adh-header__preview-icon,
+.adh-header__preview-caret {
+  width: var(--adh-header-preview-icon-size, 0.6875rem);
+  height: var(--adh-header-preview-icon-size, 0.6875rem);
+  /* The strip is a fixed 1.125rem and these sit next to clipping text: never let them
+     be the thing that shrinks. */
+  flex: none;
+}
+
+/* Points at the panel it opened. */
+.adh-header__preview-trigger[aria-expanded='true'] .adh-header__preview-caret {
+  transform: rotate(180deg);
+}
+
+/* The revealed sentence. Centred by translate rather than by a `left` + pinned `right`
+   pair: that combination resolves to width ZERO before the first client measurement
+   inside any clipped ancestor, and it does so only in the SSR bytes, where nothing
+   looking at the running page can see it. */
+.adh-header__preview-panel {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  left: 50%;
+  transform: translateX(-50%);
+  /* Above `.adh-header__container`, which is a sibling subtree in the banner's own
+     stacking context. */
+  z-index: 60;
+  width: max-content;
+  max-width: min(22rem, calc(100vw - 2rem));
+  padding: 0.5rem 0.75rem;
+  border: 1px solid
+    var(
+      --adh-header-preview-border-color,
+      color-mix(in srgb, var(--color-accent) 45%, transparent)
+    );
+  border-radius: 0.375rem;
+  background: var(--adh-header-preview-panel-bg, var(--color-surface));
+  color: var(--adh-header-preview-panel-color, var(--color-text-primary));
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--color-text-primary) 22%, transparent);
+  font-size: var(--adh-header-preview-panel-size, 0.75rem);
+  line-height: 1.45;
+  text-align: center;
+  white-space: normal;
+}
+
+.adh-header__preview-text {
+  /* line-height 1 so the glyphs, not their leading, decide what fits the strip. */
+  font-family: var(--adh-header-preview-font, var(--font-mono));
+  font-size: var(--adh-header-preview-size, 0.625rem);
+  line-height: 1;
+  /* The headline alone departs from the strip's colour — the icons and caret stay on
+     currentColor, so the phrase is what the eye lands on. A ROLE, not a literal: an
+     unthemed family still gets a legible headline through the second fallback. */
+  color: var(
+    --adh-header-preview-text-color,
+    var(--color-warning, var(--color-text-primary))
+  );
+  letter-spacing: var(--adh-header-preview-letter-spacing, 0.14em);
+  text-transform: var(--adh-header-preview-transform, uppercase);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* Without this the ellipsis above is DEAD CODE. This is a flex item of
+     `.adh-header__preview`, so its `min-width` resolves to `auto`, which for a
+     `nowrap` box is its full content width — it can never be squeezed narrower than
+     its own text, so the overflow it would clip cannot occur and the strip simply
+     overflows the viewport instead. `min-width: 0` lets it shrink, which is what
+     arms both the clip and the ellipsis. Reachable now that `previewNotice` lets a
+     host supply words longer than the default's. */
+  min-width: 0;
+}
+
+/* THREE columns, not a flex row with an absolutely-positioned title dropped on top
+ * (G47, Mike, 2026-09-25). The title used to be `position: absolute; left: 50%` —
+ * centred on the CONTAINER, with no regard for how wide `.adh-header__lead` (the site
+ * switcher / workspace trigger) actually was — so a long trigger (e.g. WorkspaceMenu's
+ * "${label} Workspace") that crossed the container's own midpoint sat UNDER the title's
+ * text instead of pushing it aside: an absolutely positioned box is out of flow, so
+ * nothing about it participates in the sibling layout that would otherwise make room.
+ * `minmax(0, 1fr) auto minmax(0, 1fr)` is the same symmetric-outer-tracks trick already
+ * used below for `.adh-home__toolbar`: the two `1fr` tracks are forced equal, which is
+ * what makes the middle (`auto`) column sit at the container's true centre regardless of
+ * how the lead/nav content is sized — and because the title is now IN FLOW, a wide lead
+ * or nav can only ever grow into its OWN track, never onto the title's.
+ * `justify-content: space-between` is dropped: with explicit `grid-column` on every
+ * child below, there is nothing left for it to distribute. */
+.adh-header__container {
+  position: relative;
+  width: 100%;
+  padding: 0 1.5rem;
+  height: var(--adh-header-bar-height, 3.5rem);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.adh-header__page-title {
+  grid-column: 2;
+  justify-self: center;
+  /* A percentage here would resolve against the MIDDLE column's own size, which is
+   * `auto` (sized BY this element's content) — a circular basis no browser can resolve
+   * usefully, unlike the old absolute box's `max-width: 50%`, which resolved against
+   * the container. `vw` sidesteps the circularity while keeping the same JOB: stop one
+   * long title from squeezing the lead/nav tracks toward their `0` floor. */
+  max-width: 50vw;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  font-family: var(--adh-header-page-title-font, var(--font-mono));
+  font-size: var(--adh-header-page-title-size, 0.8rem);
+  letter-spacing: var(--adh-header-page-title-letter-spacing, 0.08em);
+  text-transform: var(--adh-header-page-title-transform, uppercase);
+  color: var(--adh-header-page-title-color, var(--color-text-primary));
+}
+
+@media (max-width: 640px) {
+  .adh-header__page-title {
+    display: none;
+  }
+
+  /* With the title gone the middle track is empty, and the equal outer tracks that
+     existed only to centre it just halve the bar: the brand's 8rem floor (below)
+     overran its half into the nav at 390px (Mike, 2026-09-25 — e2e "the header fits a
+     phone"). So the nav takes its content width and the brand gets the rest, which is
+     what the flex row this grid replaced did. A `center` slot is never hidden, so a
+     bar that has one keeps the three tracks. The brand STRETCHES to its track rather
+     than hugging its start: `justify-self: start` sizes it to its content, which the
+     track cannot shrink, so the site name overran the nav instead of taking its
+     ellipsis. */
+  .adh-header__container:not(:has(> .adh-header__center)) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .adh-header__container:not(:has(> .adh-header__center)) > .adh-header__lead {
+    justify-self: stretch;
+  }
+
+  .adh-header__container:not(:has(> .adh-header__center)) > .adh-header__nav {
+    grid-column: 2;
+  }
+}
+
+/* The help-enabled title is a BUTTON, so it has to take back the pointer events
+   the plain title deliberately refuses — the base class sets `pointer-events: none`
+   because a title nobody can click should not eat clicks aimed past it. */
+.adh-header__page-title--help {
+  pointer-events: auto;
+  cursor: pointer;
+  /* No `margin-inline: 0` compensation here any more (G47, Mike, 2026-09-25): that
+     override existed only because the title used to be centred by `left: 50%` +
+     `translate(-50%, -50%)`, and `translate()`'s offset is computed from the box's
+     OWN (border-box) width while `left`'s offset separately bakes in the margin — an
+     asymmetric interaction that shifted the title 4px left of centre despite
+     HelpEnabled's `-mx-1 px-1` being symmetric on both sides. Centring now happens
+     via `justify-self: center` on the grid item above, which centres the box's
+     MARGIN box within its grid area — symmetric margins stay symmetric, so the skew
+     this compensated for cannot recur, and removing it restores the intended
+     4px hover-highlight bleed. */
+}
+
+/* ...but not when there is nothing to open. HelpEnabled keeps the caller's class on
+   its unresolved-id fallback — the class is the title's LAYOUT, and dropping it moved
+   the title off centre — and marks that span `data-slot="help-enabled-plain"`. Here
+   that undoes the two lines above, so a plain span does not offer a pointer cursor
+   for a click that does nothing. */
+.adh-header__page-title--help[data-slot='help-enabled-plain'] {
+  pointer-events: none;
+  cursor: auto;
+}
+
+/* Truncation moves inward: the trigger is a flex container, and `text-overflow`
+   does not apply to one. Its flex item does the ellipsis instead. */
+.adh-header__page-title-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* Doubled class = (0,2,0), so this beats HelpEnabled's Tailwind `inline-flex`
+   whatever order the two stylesheets land in. Without it, whether the title
+   disappears on a phone depends on stylesheet order rather than on this rule. */
+@media (max-width: 640px) {
+  .adh-header__page-title--help.adh-header__page-title--help {
+    display: none;
+  }
+}
+
+.adh-header__title {
+  font-family: var(--adh-header-title-font, var(--font-serif));
+  font-style: var(--adh-header-title-style, italic);
+  font-size: var(--adh-header-title-size, 1.15rem);
+  font-weight: var(--adh-header-title-weight, 400);
+  color: var(--adh-header-title-color, var(--color-accent));
+  text-decoration: none;
+}
+
+.adh-header__title:hover {
+  color: var(--adh-header-title-color-hover, var(--color-accent-bright));
+}
+
+.adh-header__nav {
+  display: flex;
+  align-items: center;
+  gap: var(--adh-header-nav-gap, 1.25rem);
+  font-family: var(--adh-header-nav-font, var(--font-mono));
+  font-size: var(--adh-header-nav-size, 0.75rem);
+  letter-spacing: var(--adh-header-nav-letter-spacing, 0.04em);
+  /* The right cluster: the container's third grid column (G47, Mike, 2026-09-25).
+   * `justify-self: end` hugs the right edge the way `justify-content: space-between`
+   * used to; `min-width: 0` lets this shrink below its content size, the same
+   * shrink-to-fit `.adh-header__container` used to grant every flex child by default. */
+  grid-column: 3;
+  justify-self: end;
+  min-width: 0;
+}
+
+.adh-header__nav-link {
+  color: var(--adh-header-nav-link-color, var(--color-text-secondary));
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  transition: color calc(0.2s * var(--apt-anim-scale, 1));
+}
+
+.adh-header__nav-link:hover {
+  color: var(--adh-header-nav-link-hover-color, var(--color-accent));
+}
+
+.adh-header__nav-link[data-active] {
+  color: var(--adh-header-nav-link-active-color, var(--color-accent));
+}
+
+.adh-header__nav-link--button {
+  cursor: pointer;
+}
+
+/* An icon-only control in the header's actions row — the glyph counterpart of
+ * .adh-header__nav-link, and deliberately NOT a <Button variant="ghost" size="icon">.
+ * The shared button is a labelled affordance: it sits at full text colour and fills
+ * its box on hover, which is right for a thing with a word in it and wrong for a row
+ * of quiet glyphs, where it reads as a strip of pills. What the actions row actually
+ * does — and has done on every site that hand-rolled one of these — is dim at rest,
+ * brighten on hover, no ground. That is the identity, written once here.
+ *
+ * The box is the same 2.25rem square as .adh-button--size-icon, so a header carrying
+ * both lines up, and the same as the `p-2` around a 1.25rem glyph these replaced.
+ * `position: relative` is the anchor for a corner badge (see the colour-mode toggle);
+ * it costs nothing to a control without one. */
+.adh-header__icon-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: none;
+  border-radius: var(--pc-radius, 0.375rem);
+  background: transparent;
+  color: var(--adh-header-icon-button-color, var(--color-text-dim));
+  cursor: pointer;
+  transition: color calc(0.2s * var(--apt-anim-scale, 1));
+}
+
+.adh-header__icon-button:hover {
+  color: var(--adh-header-icon-button-hover-color, var(--color-text-primary));
+}
+
+.adh-header__icon-button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* The glyph. Sized here rather than at each call site so every icon control in the
+   row is one size, and so the package needs no Tailwind utility to draw itself — this
+   stylesheet ships prebuilt, a utility depends on each host's @source config. */
+.adh-header__icon-button > svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+/* The colour-mode toggle's own rules are NOT here. It is `ColorModeToggle` in
+   @agenticdevelopertoolkit/ui, a control that takes `mode` + `onChange` and nothing else, so its
+   CSS travels with it in ui's components.css — which this file @imports at the top, so
+   every site still receives it through the one import it already has. Wearing
+   `.adh-header__icon-button` in this row is the HOST's choice, made at the call site;
+   the control's own sheet claims only what its faces and corner badge need in order to
+   be placed, and claims the badge's size with a compound selector precisely because
+   `.adh-header__icon-button > svg` above would otherwise out-specify it. */
+
+/* Interactive centre slot (e.g. the status site's live indicator + refresh).
+   Centred like the page title — same grid column, same reasoning (G47, Mike,
+   2026-09-25) — but stays clickable (the page title's `pointer-events: none` was
+   only ever there because THAT slot renders inert text) and lets its content size
+   itself rather than truncating with an ellipsis. */
+.adh-header__center {
+  grid-column: 2;
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  /* `vw`, not `%`, for the same reason as `.adh-header__page-title`'s `max-width`
+     just above: a percentage here would resolve against this column's own `auto`
+     size, which this element's content DECIDES — a circular basis. */
+  max-width: 60vw;
+}
+
+/* Left cluster: the site-name switcher, with its status badge(s) stacked
+   underneath. Stacking (rather than the old inline badge row) is what keeps this
+   cluster narrow enough for a phone-width header.
+   The container's FIRST grid column (G47, Mike, 2026-09-25) — `minmax(0, 1fr)`, the
+   same as the nav's column 3, which is what makes the title in column 2 sit at the
+   bar's true centre regardless of how wide either cluster's content is. `min-width: 0`
+   lets this shrink below its content size rather than forcing the column wider than
+   its equal 1fr share (which would in turn push the title off-centre) — unlike the
+   old flex layout's `flex-shrink: 0`, which held the brand at its full natural width
+   unconditionally and deferred every squeeze onto the nav; here both flanking columns
+   share the squeeze, symmetrically, by construction. */
+.adh-header__lead {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.15rem;
+  grid-column: 1;
+  justify-self: start;
+  min-width: 0;
+}
+
+/* The lead's first ROW: the site-name switcher and, beside it, whatever the header's
+   `debugMenu` slot holds. A row of its own because .adh-header__lead is a COLUMN — the
+   badges stack UNDER the brand, so a sibling dropped straight into the lead would land
+   under the brand too, not after it. Renders identically to the bare switcher when the
+   slot is empty. SiteHeader always leaves it empty now; the slot stays for a host of
+   AdhHeader that has a menu of its own to put beside the switcher. */
+.adh-header__brand-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+  /* The lead is a COLUMN that hugs its start, so this row is sized to its content
+     unless something caps it — and a row wider than the lead is a site name drawn
+     over the nav, not ellipsed (Mike, 2026-09-25 — phone header, 390px). */
+  max-width: 100%;
+}
+
+/* One line, always — a wrapped brand is what blows out the fixed-height bar. */
+.adh-header__lead .adh-header__title {
+  white-space: nowrap;
+}
+
+/* Status badges, stacked under the site-name switcher (see .adh-header__lead). */
+.adh-header__badges {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* .adh-header__badge* are hook classes only (theme-editor surface): the skin
+   is the ui <Badge> the header renders. */
+
+/* Auth-cluster spinner: shown in the login slot while the session is still
+   resolving, so a sign-in that resolves in the background never flashes the
+   "login / join" buttons first. Sized to sit where those buttons would. */
+.adh-header__auth-spinner {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-text-secondary);
+  border-radius: 50%;
+  animation: adh-header-auth-spin 0.7s linear infinite;
+}
+
+@keyframes adh-header-auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Site-specific functional controls injected at the start of the right-hand
+   nav cluster (e.g. cookbook's search/sidebar/theme). */
+.adh-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* The primary nav links. A pure grouping box — `display: contents`
+   means it creates NO box of its own, so the links stay direct participants in
+   the nav's flex row and the bar looks exactly as it did before they were
+   wrapped. The wrapper exists solely so they can collapse as a unit below. */
+.adh-header__links {
+  display: contents;
+}
+
+/* On a phone the bar holds the brand (+ its badge) and the auth cluster — the
+   primary links would push the nav clean off the right edge. Measured, not guessed:
+   hub signed in at 390px wants ~494px for brand trigger + three links + bell, avatar
+   and chevron + the container's gutters.
+
+   They're not lost — the site menu (the brand dropdown) carries them, at exactly this
+   breakpoint and only at it: `useHeaderLinksCollapsed` matches this same query, and
+   `SiteMenu`'s `navSection` builds a row per link while it does. That is a JS gate on
+   purpose; rows merely hidden here would still be tab-reachable and would still answer
+   the popover's search box on a desktop that shows none of them.
+
+   Keep the two in step. The claim "the menu carries the destinations" was written here
+   before anything did, and stayed for as long as it took a review to notice a phone
+   with no primary nav on any adh site.
+
+   Login / join stay in the bar, since signing in is the one thing a signed-out visitor
+   came to do. */
+@media (max-width: 768px) {
+  .adh-header__links {
+    display: none;
+  }
+
+  /* Putting the links down was not enough on its own. Signed in at 390px the bar
+     still wanted 429.8px: 233.8 of brand (site name + dev-tools square), 124 of nav
+     (site actions + avatar trigger), and 72 of pure gutter. That is a historical
+     measurement, taken while the dev-tools square still rendered beside the site name;
+     the square is gone, so today's brand is narrower by it. The two rules below take
+     that last 429.8 apart from the cheap end first.
+
+     Gutters and the cluster gap are desktop-sized above this query, and 72px of a
+     390px screen is 18% of it spent on nothing. 1rem is what a phone gutter is
+     elsewhere in this sheet; the gap is only ever a MINIMUM separation here, since
+     the container's two equal `1fr` columns are what actually hold the clusters at
+     opposite edges (G47, Mike, 2026-09-25 — was `justify-content: space-between`,
+     before the header became a 3-column grid). */
+  .adh-header__container {
+    padding: 0 1rem;
+    gap: 0.75rem;
+  }
+
+  /* …and the brand is the give of last resort, but a FLOORED one, unlike the give
+     the base `.adh-header__lead` rule already grants every width (`min-width: 0` —
+     G47, Mike, 2026-09-25): unfloored, the one thing here with actual text in it is
+     also the one thing a crowded phone bar would crush to nothing, wrapping the site
+     name over three lines and pushing the badge out of the bar. 8rem still reads as a
+     name, and no site name can widen the bar past the viewport any more. The site
+     NAME is the one term here whose width the header does not control, so it is the
+     term that has to yield — measured, hub signed in at 390px put the nav's right
+     edge at 405.8px against a 390px document, i.e. a phone with a horizontally
+     scrolling page and the avatar caret off-screen. */
+  .adh-header__lead {
+    min-width: 8rem;
+  }
+
+  /* An ellipsis needs a shrinkable box at every level between the flex item and the
+     text. SiteSwitcher renders one of two shapes: a plain link, which IS the text's
+     box, or a popover trigger, which wraps the text in a bare `<span>`. Both are flex
+     items, so `overflow` clips without a `display` change, and `white-space: nowrap`
+     is already on `.adh-header__lead .adh-header__title` for both to inherit. */
+  .adh-header__lead .adh-header__title,
+  .adh-header__lead .adh-nav-popover__trigger > span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* The caret is a fixed glyph — 12px. Left shrinkable it takes its proportional share
+     of the squeeze and comes out misshapen, which buys the text almost nothing. */
+  .adh-header__lead .adh-nav-popover__chevron {
+    flex-shrink: 0;
+  }
+}
+
+/* ── The workspace chooser ───────────────────────────────────────────────────────
+   ONE mount at every width: a full-width bar under the header carrying the picker and
+   nothing else — no visible label, since the trigger reads as the workspace's name. No
+   breakpoint, no portal and no `mounted` gate, so nothing here depends on hydration order
+   and there is no second copy to keep in step. A feature site's bar only: the hub's
+   switcher is its header's WorkspaceMenu.
+
+   Sticky BENEATH the sticky header (.adh-header is `position: sticky; top: 0; z-index: 50`),
+   so the chooser stays reachable while the landing view scrolls, at a z-index below the
+   header's and above the page.
+
+   A flex row centring its one child. This was a `1fr auto 1fr` grid, whose equal outer
+   tracks kept the chooser centred on the BAR while the hub's bar also carried a "New
+   Organization" action. The action went, then the hub stopped mounting this bar, and with
+   nothing beside the chooser there is nothing for tracks to balance. A second child would
+   share the row and pull the chooser off centre, which is why WorkspaceBar renders none. */
+.adh-home__toolbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: sticky;
+  top: var(--adh-header-height, 3.5rem);
+  z-index: 40;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  /* Solid, so content scrolling under it stays covered — same reason .adh-footer has one. */
+  background: var(--color-surface);
+}
+
+/* The one child is PopupMenu's own root. It takes no class from us (WorkspacePicker's
+   `className` reaches the trigger inside it), hence the structural selector. A flex item
+   floors at `min-width: auto`, the full unwrapped width of the workspace's name, so without
+   this a name wider than the bar never reaches the trigger's ellipsis: it overflows, and a
+   centred row overflows BOTH edges, the left one where no scrolling reaches it. `0` lets
+   the root shrink to the bar, and the name truncates.
+
+   The grid this replaced overflowed as well, despite a `min-width: 0` that said otherwise:
+   that sat on a flex wrapper around the picker, and the root inside the wrapper kept its
+   floor. Measured in Chromium at 390px with a name whose trigger wants ~560px: under the
+   grid the trigger ran 200px past the right edge and the page scrolled sideways; in a
+   centred row without this rule it lost 100px off each side; with it, it truncates. */
+.adh-home__toolbar > * {
+  min-width: 0;
+}
+
+.adh-footer {
+  /* Pinned to the bottom of the window: sticky keeps it in flow (sits at the
+     viewport bottom on short pages, stays visible while tall pages scroll
+     behind it) without breaking window-scroll-based JS. Solid background so
+     content scrolling behind it stays covered. */
+  position: sticky;
+  bottom: 0;
+  z-index: 45;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  font-family: var(--adh-footer-font, var(--font-mono));
+  font-size: var(--adh-footer-size, 0.7rem);
+  letter-spacing: var(--adh-footer-letter-spacing, 0.04em);
+  color: var(--adh-footer-color, var(--color-text-dim));
+}
+
+.adh-footer__container {
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  /* Pack to the right and let the copyright's auto margin push itself left, rather
+     than `space-between` + an auto margin on the links. The two are identical while
+     everything fits on one line — one auto margin absorbs the free space either way —
+     but they differ once the row wraps, and `space-between` gets the wrapped case
+     wrong: it re-runs per line, so whichever child wraps onto a line of its own lands
+     hard LEFT, opposite the edge it sits on at every wider width. `flex-end` keeps
+     every line right-aligned, so nothing changes sides at a breakpoint. (Which child
+     wraps depends on the order — today the links nav is last and wraps first — so this
+     is written to hold for any of them rather than for one named element.) */
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.adh-footer__copyright {
+  /* The one item that is not right-aligned. An auto margin here, rather than
+     `justify-content: space-between` on the container, is what survives wrapping —
+     see the note above. It must stay on the copyright and be the ONLY auto margin in
+     the bar: a second one on the same line splits the free space between the two and
+     strands everything after it in the middle. */
+  margin-right: auto;
+}
+
+.adh-footer__links {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.adh-footer__link {
+  color: var(--adh-footer-link-color, var(--color-text-secondary));
+  text-decoration: none;
+}
+
+.adh-footer__link:hover {
+  color: var(--adh-footer-link-color-hover, var(--color-accent));
+}
+
+/* FOOTER MENUS (FooterMenu) — a popover-trigger button and the panel it opens.
+   The trigger reads as one of the bar's links, so it takes their type and colour by
+   inheritance and only drops the button chrome.
+
+   The host keeps its menu's anchor name to itself (`anchor-scope`), so a panel can only
+   find the caret beside it. An anchor name is otherwise document-wide, and the LAST
+   element in the document to declare it is the one every panel naming it opens at: the
+   theme editor shows a specimen footer beside the page's own, and the page's copyright
+   menu opened at the specimen's caret, inside the console. The specimen's menus carry
+   ids of their own too (SiteFooter's `specimen`), which is all a browser without
+   `anchor-scope` gets. */
+.adh-footer__menu-host {
+  display: inline-flex;
+  anchor-scope: all;
+}
+
+.adh-footer__menu-trigger,
+.adh-footer__menu-item {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+/* The trigger's popup indicator (FooterMenu), dimmed like the header's caret so the
+   label stays the thing you read.
+
+   It is also the panel's ANCHOR — not the whole trigger. Anchored to the trigger, the
+   copyright's menu opened off the far end of "© 2026 Agentic Development Studio", a
+   whole label's width from the caret that says it opens a menu, and read as some other
+   control's. The name arrives as a custom property set per menu (FooterMenu derives it
+   from the panel's id), because `anchor-name` must be unique per bar and a class
+   cannot be; the host above keeps it from reaching any other bar. */
+.adh-footer__menu-caret {
+  anchor-name: var(--adh-footer-menu-anchor);
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  margin-left: 0.2em;
+  vertical-align: -0.15em;
+  opacity: 0.7;
+}
+
+/* Closed must be `display:none` explicitly: the open rule below sets `display`, and
+   an author rule beats the UA's `[popover]:not(:popover-open)` — the same trap
+   `.adh-modal` documents. The links inside stay in the DOM, so they are crawlable. */
+.adh-footer__menu:not(:popover-open) {
+  display: none;
+}
+
+/* Where anchor positioning is missing, the menu parks just above the bar, centred —
+   the UA's default for a popover is the middle of the viewport, which reads as a
+   dialog rather than as the bar's own menu. */
+.adh-footer__menu {
+  position: fixed;
+  inset: auto 0 3rem;
+  width: max-content;
+  min-width: 9rem;
+  margin: 0 auto;
+  padding: 0.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  background: var(--color-surface-raised, var(--color-surface));
+  color: inherit;
+  box-shadow: 0 12px 32px -12px color-mix(in srgb, var(--color-shadow, #000) 60%, transparent);
+  font-family: var(--adh-footer-font, var(--font-mono));
+  font-size: var(--adh-footer-size, 0.7rem);
+  letter-spacing: var(--adh-footer-letter-spacing, 0.04em);
+}
+
+.adh-footer__menu:popover-open {
+  display: block;
+}
+
+@supports (position-area: top) {
+  .adh-footer__menu {
+    position-anchor: var(--adh-footer-menu-anchor);
+    inset: auto;
+    margin: 0 0 0.5rem;
+    /* Opens UP from its caret — the bar is on the bottom edge — starting at the caret
+       and running right; near the right edge (Legal) it flips to end at the caret
+       instead of running off the screen. */
+    position-area: top span-right;
+    position-try-fallbacks: flip-inline;
+  }
+}
+
+.adh-footer__menu-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adh-footer__menu-item {
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.3rem;
+}
+
+.adh-footer__menu-item:hover,
+.adh-footer__menu-item:focus-visible {
+  background: var(--color-surface-hover, rgba(255, 255, 255, 0.06));
+  outline: none;
+}
+
+/* Avatar menu — trigger sitting inside the header bar. The whole chip is
+   the dropdown trigger (a <button>), so clicks anywhere on name/avatar/
+   chevron open the menu. */
+.adh-avatar-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.5rem;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  transition: color calc(0.2s * var(--apt-anim-scale, 1)), background-color calc(0.2s * var(--apt-anim-scale, 1));
+}
+
+.adh-avatar-menu-trigger:hover,
+.adh-avatar-menu-trigger[data-popup-open] {
+  color: var(--color-accent);
+  background: var(--color-surface-hover, rgba(255, 255, 255, 0.04));
+}
+
+.adh-avatar-menu-trigger:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.adh-avatar-menu-trigger__avatar-wrap {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+}
+
+.adh-avatar-menu-trigger__avatar {
+  height: 2rem;
+  width: 2rem;
+}
+
+.adh-avatar-menu-trigger__chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.75rem;
+  width: 1.25rem;
+  color: inherit;
+}
+
+.adh-avatar-menu-trigger__chevron-icon,
+.adh-avatar-menu-trigger__fallback-icon {
+  height: 1rem;
+  width: 1rem;
+}
+
+/* Avatar menu — dropdown popup */
+.adh-avatar-menu {
+  min-width: 17rem;
+  border-radius: 0.875rem;
+  background: var(--color-surface-raised, #14141a);
+  border: 1px solid var(--color-border, #2a2a35);
+  padding: 0.5rem;
+  color: var(--color-text-primary, #e8e6e3);
+  box-shadow: 0 16px 40px -12px color-mix(in srgb, var(--color-shadow, #000) 60%, transparent);
+}
+
+.adh-avatar-menu__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.625rem 0.75rem 0.75rem;
+}
+
+.adh-avatar-menu__identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.adh-avatar-menu__name {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  line-height: 1.25;
+}
+
+.adh-avatar-menu__settings {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2rem;
+  width: 2rem;
+  border-radius: 9999px;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color calc(0.2s * var(--apt-anim-scale, 1)), background-color calc(0.2s * var(--apt-anim-scale, 1));
+}
+
+.adh-avatar-menu__settings:hover {
+  color: var(--color-accent);
+  background: var(--color-surface-hover, rgba(255, 255, 255, 0.06));
+}
+
+.adh-avatar-menu__settings-icon {
+  height: 1.1rem;
+  width: 1.1rem;
+}
+
+.adh-avatar-menu__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  /* Block padding as ui's touch-row PARAMETERS, not `padding`. Every avatar row is a
+     DropdownMenuItem or DropdownMenuLinkItem, so it also carries ui's
+     `.adh-dropdown-menu__item`, whose base rule reads these for its block padding and
+     supplies the 0.75rem inline padding, and ui's one coarse-pointer rule adds the 30%
+     touch growth ("Touch rows" in @agenticdevelopertoolkit/ui's components.css). A
+     `padding` here overrode that rule (equal specificity, later in the cascade), which
+     is why this sheet once carried its own copy. */
+  --adh-touch-row-pt: 0.55rem;
+  --adh-touch-row-pb: 0.55rem;
+  font-size: 0.93rem;
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  text-decoration: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  outline: none;
+}
+
+.adh-avatar-menu__item:hover,
+.adh-avatar-menu__item:focus,
+.adh-avatar-menu__item[data-highlighted] {
+  background: var(--color-surface-hover, rgba(255, 255, 255, 0.05));
+  color: var(--color-text-primary);
+}
+
+.adh-avatar-menu__item[data-active] {
+  color: var(--color-accent);
+}
+
+/* No text-transform: the menu authors its own labels now, so the casing in the JSX is
+   the casing on screen. `capitalize` was here to tidy the lowercase nav labels a site
+   used to hand in (hub's "home"/"contact"); applied to these it would title-case
+   "Log out" into "Log Out". */
+.adh-avatar-menu__item-label {
+  flex: 1;
+}
+
+.adh-avatar-menu__item-icon {
+  height: 1rem;
+  width: 1rem;
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* A row's trailing state note — Debug Options' "Sim: prod". Quieter than the label and
+   warning-coloured, because what it reports (this site is being viewed AS production)
+   is exactly the thing a developer forgets they switched on. */
+.adh-avatar-menu__item-hint {
+  font-size: 0.75rem;
+  color: var(--color-warning, #e08a3c);
+  white-space: nowrap;
+}
+
+/* Avatar primitive (.adh-avatar / __image / __fallback) is owned by
+ * @agenticdevelopertoolkit/ui/styles/components.css, @import'ed at the top of this file — a
+ * drifted duplicate used to live here. Because it landed BELOW this file's own
+ * .adh-avatar-menu* block, and both @import order plus these two rule families share
+ * (0,1,0) specificity with no @layer, the duplicate silently demoted the header avatar
+ * menu fleet-wide (fix round 1, C1/I2). Removed; ui's copy is the only one now. */
+
+/* Button primitive */
+.adh-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+  border-radius: var(--pc-radius, 0.375rem);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: color 0.15s, background-color 0.15s, border-color 0.15s;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.adh-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 1px var(--color-accent);
+}
+
+.adh-button:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.adh-button--default {
+  background: var(--color-accent);
+  color: var(--color-surface);
+}
+
+.adh-button--default:hover {
+  background: var(--color-accent-bright);
+}
+
+.adh-button--outline {
+  border-color: var(--color-border);
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+.adh-button--outline:hover {
+  background: var(--color-surface-hover);
+}
+
+.adh-button--ghost {
+  background: transparent;
+  color: var(--color-text-primary);
+}
+
+.adh-button--ghost:hover {
+  background: var(--color-surface-hover);
+}
+
+.adh-button--link {
+  background: transparent;
+  color: var(--color-accent);
+  text-underline-offset: 4px;
+}
+
+.adh-button--link:hover {
+  text-decoration: underline;
+}
+
+.adh-button--size-default {
+  height: 2.25rem;
+  padding: 0.5rem 1rem;
+}
+
+.adh-button--size-sm {
+  height: 2rem;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+}
+
+.adh-button--size-lg {
+  height: 2.5rem;
+  padding: 0 1.5rem;
+}
+
+.adh-button--size-icon {
+  height: 2.25rem;
+  width: 2.25rem;
+  padding: 0;
+}
+
+.adh-button__icon {
+  height: 1rem;
+  width: 1rem;
+  flex-shrink: 0;
+}
+
+/* Dropdown menu primitive (.adh-dropdown-menu__content/__item/__label/__separator/etc,
+ * plus the 13 other selectors that duplicated @agenticdevelopertoolkit/ui/styles/components.css,
+ * @import'ed at the top of this file) is owned by ui — a drifted duplicate used to live
+ * here, including a stale Radix-era `[data-state='open']` sub-trigger variant that
+ * matched nothing (ui's own base-ui-powered `[data-popup-open]` rule is the live one).
+ * Removed in fix round 1 (C1/I2); ui's copy is the only one now. .adh-dropdown-menu__shortcut
+ * below is NOT part of this — ui does not define it, it stays toolkit-owned. */
+.adh-dropdown-menu__shortcut {
+  margin-left: auto;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: var(--color-text-dim);
+}
+
+/* Shared app shell — the basic layout every site renders. The flex column +
+   full viewport height + flex-growing main pins the footer to the bottom of
+   the window on short pages (sticky-footer pattern) without overlapping
+   content on tall ones. */
+.adh-app-shell {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+
+.adh-app-shell__main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* The sticky-chrome geometry, in one place. Two readers, and they want DIFFERENT
+   numbers, which is why this is four vars rather than one:
+
+   - `--adh-header-height` is the TOTAL height of the sticky banner — the preview
+     strip plus the bar. It is what a page offsets its OWN sticky elements by
+     (adh-docs' + api-explorer's sidebars, devteam's whole layout), and those live in
+     other packages, so its meaning must not quietly change under them. Adding the
+     strip made the banner taller; the total had to grow with it or every one of those
+     sidebars would sit a strip's height too high, tucked under the bar.
+   - `--adh-header-bar-height` is the BAR row alone, consumed only by
+     `.adh-header__container`. Splitting it out is what let the total grow without the
+     bar shrinking.
+
+   Keep the strip's height a fixed token rather than letting its content size it: the
+   total above is computed from it, so a content-derived height would make
+   `--adh-header-height` a number nothing actually measures. `.adh-header__preview`
+   centres its text in exactly this height.
+
+   - `--adh-chrome-bar-height` is every bar UNDER the workspace chooser: the stack's
+     toolbar strip and its breadcrumb strip. (A third, the home bar — `resource`'s
+     strip — read it too until it went on 2026-09-24, when every list took its own
+     toolbar.) They were each sized by their own content and so came out ragged — a bar
+     holding a search field (`Input` is `h-9`) stood 53px, one holding a `size="sm"`
+     button 45px, the breadcrumb 33px. One token, read as a `min-height` by both, makes
+     them exactly equal at 2.75rem for any content up to 36px tall, which is the tallest
+     control either carries. A MINIMUM and not a fixed height because the breadcrumb trail
+     wraps: a two-line trail must make its bar taller rather than be clipped by it.
+     Chosen to fit that 36px control with the `py-1` the bars keep, so the common case
+     lands on the token exactly rather than merely above it.
+
+     The chooser itself is deliberately NOT on this token — it is the workspace-level
+     bar, one step up from the page-level bars this sizes, and it keeps its own height
+     the way the header above it keeps `--adh-header-bar-height`. */
+:root {
+  --adh-header-bar-height: 3.5rem;
+  --adh-header-preview-height: 1.125rem;
+  --adh-header-height: calc(
+    var(--adh-header-bar-height) + var(--adh-header-preview-height)
+  );
+  --adh-chrome-bar-height: 2.75rem;
+}
+
+/* Shared not-found body. */
+.adh-not-found {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 5rem 1.5rem;
+  text-align: center;
+}
+
+.adh-not-found__title {
+  font-family: var(--font-serif);
+  font-size: 3rem;
+  color: var(--color-accent);
+  margin: 0;
+}
+
+.adh-not-found__text {
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.adh-not-found__link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+
+.adh-not-found__link:hover {
+  text-decoration: underline;
+}
+
+/* Shared /home placeholder. */
+.adh-home-placeholder {
+  width: 100%;
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 5rem 1.5rem 6rem;
+}
+
+.adh-home-placeholder__eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin: 0 0 1.25rem;
+}
+
+.adh-home-placeholder__title {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+  margin: 0 0 1rem;
+}
+
+.adh-home-placeholder__accent {
+  color: var(--color-accent);
+  font-style: italic;
+}
+
+.adh-home-placeholder__text {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  color: var(--color-text-secondary);
+  margin: 0;
+  max-width: 36rem;
+}

@@ -1,0 +1,740 @@
+#!/usr/bin/env python3
+"""Generic, config-driven macOS release library: sign, notarize, package,
+record release metadata, publish.
+
+No product names live here — a caller (e.g. Stenographer's own
+`scripts/release.py`) supplies identities, identifiers, bundle paths and repo
+names. Every external command (codesign, notarytool, stapler, ditto,
+pkgbuild, productbuild, gh, git, and a caller-supplied `generate_keys` tool)
+is invoked through an injected `Runner`, never `subprocess` directly, so
+callers can fully unit test a release without touching a keychain, Apple's
+notary service, or GitHub.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import plistlib
+import shutil
+import subprocess
+import tempfile
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Sequence
+from xml.parsers.expat import ExpatError
+from xml.sax.saxutils import escape
+
+Runner = Callable[[list[str]], "subprocess.CompletedProcess[str]"]
+
+_BUNDLE_SUFFIXES = {".framework", ".appex", ".xpc", ".app", ".aiplugin", ".bundle"}
+_MACHO_MAGICS = {"cafebabe", "feedfacf", "cffaedfe", "feedface", "cefaedfe"}
+_PERMITTED_VIEWER_PERMISSIONS = {"WRITE", "MAINTAIN", "ADMIN"}
+
+#: Filename `build_pkg` gives the component package it builds from the
+#: staged app root. `render_distribution`'s `pkg_ref` defaults to the same
+#: constant so the two agree by construction instead of by convention.
+COMPONENT_PKG = "component.pkg"
+
+
+@dataclass(frozen=True)
+class ReleaseAsset:
+    url: str
+    size: int
+    sha256: str
+
+
+@dataclass(frozen=True)
+class ReleaseEntry:
+    version: str
+    build: int
+    date: str
+    minimum_system_version: str
+    notes: str
+    pkg: ReleaseAsset
+    zip: ReleaseAsset
+
+
+class PreflightError(Exception):
+    """Raised by `preflight` listing every failed check, one per line."""
+
+
+def preflight(
+    *,
+    identities: list[str],
+    notary_profile: str | None,
+    releases_json: dict,
+    version: str,
+    run: Runner,
+    build: int | None = None,
+    require_clean_main: Path | None = None,
+    main_branch: str = "main",
+    require_pushed: bool = True,
+    sparkle_account: str | None = None,
+    generate_keys: Path | None = None,
+    github_repo: str | None = None,
+) -> None:
+    """Check every release precondition and raise once, listing every
+    failure (not just the first), each with the fix that clears it.
+
+    `build` is the bundle's CFBundleVersion: it must exceed every published
+    `build` in `releases_json`, because Sparkle compares CFBundleVersion and
+    never offers an update whose build is not newer.
+
+    With `require_clean_main`, the checkout must also be on `main_branch`
+    and, unless `require_pushed` is False, have HEAD on its upstream and
+    every submodule's pinned commit on one of that submodule's remote
+    branches, so a release is only ever built from published source.
+    """
+    failures: list[str] = []
+
+    found = run(["security", "find-identity", "-v", "-p", "basic"])
+    stdout = found.stdout or ""
+    lines = stdout.splitlines()
+    for prefix in identities:
+        if not any(f"{prefix}:" in line for line in lines):
+            failures.append(
+                f"missing signing identity '{prefix}' — create it in "
+                "Xcode → Settings → Accounts → Manage Certificates"
+            )
+
+    if notary_profile:
+        history = run(["xcrun", "notarytool", "history", "--keychain-profile", notary_profile])
+        if history.returncode != 0:
+            failures.append(
+                f"notarytool cannot use keychain profile '{notary_profile}' — create it with "
+                f"`xcrun notarytool store-credentials {notary_profile}`"
+            )
+
+    existing_versions = {r.get("version") for r in releases_json.get("releases", [])}
+    if version in existing_versions:
+        failures.append(f"{version} is already released — bump the version before releasing")
+
+    if build is not None:
+        published = [r.get("build") for r in releases_json.get("releases", [])]
+        newest = max((b for b in published if isinstance(b, int)), default=None)
+        if newest is not None and build <= newest:
+            failures.append(
+                f"build number {build} is not greater than the newest published build "
+                f"{newest} — Sparkle would never offer this update; raise "
+                "CURRENT_PROJECT_VERSION above it"
+            )
+
+    if require_clean_main is not None:
+        repo = require_clean_main
+        status = run(["git", "-C", str(repo), "status", "--porcelain"])
+        if status.returncode != 0:
+            failures.append(
+                f"git status failed in {repo} — {(status.stderr or '').strip() or 'check the repo path'}"
+            )
+        elif (status.stdout or "").strip():
+            failures.append(
+                f"{repo} has uncommitted changes — commit or stash them before releasing"
+            )
+
+        branch = run(["git", "-C", str(repo), "rev-parse", "--abbrev-ref", "HEAD"])
+        if branch.returncode != 0:
+            failures.append(
+                f"git rev-parse failed in {repo} — {(branch.stderr or '').strip() or 'check the repo path'}"
+            )
+        else:
+            current = (branch.stdout or "").strip()
+            if current != main_branch:
+                failures.append(
+                    f"{repo} is on branch '{current}', not {main_branch} — "
+                    f"checkout {main_branch} before releasing"
+                )
+
+        if require_pushed:
+            failures.extend(_unpushed_failures(repo, run))
+
+    if sparkle_account is not None:
+        if generate_keys is None:
+            failures.append(
+                "sparkle_account was given without a generate_keys path — pass "
+                "generate_keys=<path to Sparkle's generate_keys tool>"
+            )
+        else:
+            keys = run([str(generate_keys), "--account", sparkle_account, "-p"])
+            if keys.returncode != 0:
+                failures.append(
+                    f"Sparkle account '{sparkle_account}' has no signing key — run "
+                    f"`{generate_keys} --account {sparkle_account}` to create one"
+                )
+
+    if github_repo is not None:
+        auth = run(["gh", "auth", "status"])
+        if auth.returncode != 0:
+            failures.append("gh is not authenticated — run `gh auth login`")
+
+        view = run(["gh", "repo", "view", github_repo, "--json", "viewerPermission"])
+        if view.returncode != 0:
+            failures.append(
+                f"gh repo view {github_repo} failed — check the repo name and your access"
+            )
+        else:
+            try:
+                permission = json.loads(view.stdout or "{}").get("viewerPermission")
+            except json.JSONDecodeError:
+                permission = None
+            if permission not in _PERMITTED_VIEWER_PERMISSIONS:
+                failures.append(
+                    f"insufficient permission on {github_repo} (have {permission!r}) — "
+                    "request write access to the repo"
+                )
+
+        tag = f"v{version}"
+        released = run(["gh", "release", "view", tag, "--repo", github_repo])
+        if released.returncode == 0:
+            failures.append(
+                f"GitHub release {tag} already exists on {github_repo} — bump the version, or "
+                f"delete it with `gh release delete {tag} --repo {github_repo}`"
+            )
+
+    if failures:
+        raise PreflightError("\n".join(failures))
+
+
+def _unpushed_failures(repo: Path, run: Runner) -> list[str]:
+    """HEAD must be on its upstream, and each submodule's pinned commit on one
+    of that submodule's remote-tracking branches. A remote-tracking ref only
+    ever holds commits that were on the remote, so no fetch is needed: a stale
+    ref can under-report a push, never invent one."""
+    failures: list[str] = []
+    ahead = run(["git", "-C", str(repo), "rev-list", "--count", "@{u}..HEAD"])
+    count = (ahead.stdout or "").strip()
+    if ahead.returncode != 0:
+        failures.append(
+            f"{repo}'s branch has no upstream "
+            f"({(ahead.stderr or '').strip() or 'git rev-list failed'}) — "
+            "push it with `git push -u origin HEAD` before releasing"
+        )
+    elif not count.isdigit():
+        failures.append(f"could not tell whether {repo} is pushed (git rev-list printed {count!r})")
+    elif int(count) > 0:
+        failures.append(
+            f"{repo} has {count} commit(s) not on its upstream — push them before releasing"
+        )
+
+    status = run(["git", "-C", str(repo), "submodule", "status", "--recursive"])
+    if status.returncode != 0:
+        failures.append(
+            f"git submodule status failed in {repo} — {(status.stderr or '').strip()}"
+        )
+        return failures
+    for line in (status.stdout or "").splitlines():
+        fields = line[1:].split()
+        if len(fields) < 2:
+            continue
+        sha, path = fields[0], fields[1]
+        if line[0] == "-":
+            failures.append(
+                f"submodule {path} in {repo} is not checked out — "
+                "`git submodule update --init --recursive`"
+            )
+            continue
+        contains = run(["git", "-C", str(repo / path), "branch", "-r", "--contains", sha])
+        if contains.returncode != 0 or not (contains.stdout or "").strip():
+            failures.append(
+                f"submodule {path} pins {sha[:12]}, which is on none of its remote branches — "
+                f"push it (`git -C {repo / path} push`), or fetch if it already is"
+            )
+    return failures
+
+
+def _is_bundle_dir(path: Path) -> bool:
+    return path.is_dir() and path.suffix in _BUNDLE_SUFFIXES
+
+
+def _is_macho(path: Path) -> bool:
+    try:
+        with path.open("rb") as f:
+            head = f.read(4)
+    except OSError:
+        return False
+    return head.hex() in _MACHO_MAGICS
+
+
+def _main_executable_path(bundle: Path) -> Path | None:
+    """Resolved path to `bundle`'s own main executable, per `CFBundleExecutable`
+    in its Info.plist — `Contents/Info.plist` for .app/.xpc/.appex,
+    `Resources/Info.plist` (falling back to `Versions/Current/Resources/Info.plist`)
+    for a .framework. Returns None if the plist or the key is missing, e.g. for
+    a bundle that carries no executable of its own.
+    """
+    if bundle.suffix == ".framework":
+        plist_candidates = [
+            bundle / "Resources/Info.plist",
+            bundle / "Versions/Current/Resources/Info.plist",
+        ]
+        executable_dir = bundle / "Versions/Current"
+    else:
+        plist_candidates = [bundle / "Contents/Info.plist"]
+        executable_dir = bundle / "Contents/MacOS"
+
+    for plist_path in plist_candidates:
+        try:
+            with plist_path.open("rb") as f:
+                info = plistlib.load(f)
+        except (OSError, plistlib.InvalidFileException):
+            continue
+        name = info.get("CFBundleExecutable")
+        if not name:
+            continue
+        try:
+            return (executable_dir / name).resolve()
+        except OSError:
+            return None
+    return None
+
+
+def signing_order(bundle: Path) -> list[Path]:
+    """Nested code deepest-first, the outer bundle last.
+
+    Every nested bundle (.app/.xpc/.appex/.framework/…) is included, and so
+    is every Mach-O file reachable inside `bundle` that is not some nested
+    bundle's own main executable — including a bare helper executable that
+    lives inside a nested bundle but isn't what that bundle's Info.plist
+    names as `CFBundleExecutable` (e.g. Sparkle.framework's `Autoupdate`,
+    which sits beside the framework's real main executable and otherwise
+    keeps its ad-hoc signature). Paths are deduplicated by their resolved,
+    symlink-free location, and a symlink itself (e.g. a framework's
+    `Versions/Current` alias) is never yielded.
+    """
+    contents = bundle / "Contents"
+    bundle_paths: list[Path] = []
+    macho_paths: list[Path] = []
+    if contents.exists():
+        for path in contents.rglob("*"):
+            if not path.is_symlink() and _is_bundle_dir(path):
+                bundle_paths.append(path)
+
+        # The outer bundle's own main executable is signed by signing the
+        # bundle itself; signing it separately first would only give it a
+        # second, stale signature (with whatever entitlements it was built
+        # with) that the bundle signature then replaces.
+        main_executables = {
+            exe for b in [*bundle_paths, bundle] if (exe := _main_executable_path(b)) is not None
+        }
+
+        seen: set[Path] = set()
+        for path in contents.rglob("*"):
+            if path.is_symlink() or not path.is_file() or not _is_macho(path):
+                continue
+            try:
+                real = path.resolve()
+            except OSError:
+                continue
+            if real in seen or real in main_executables:
+                continue
+            seen.add(real)
+            macho_paths.append(path)
+
+    nested = bundle_paths + macho_paths
+    # Deepest first; siblings have no signing dependency on each other, so the
+    # path tiebreak only makes the order stable across filesystems.
+    nested.sort(key=lambda p: (-len(p.relative_to(bundle).parts), str(p)))
+    nested.append(bundle)
+    return nested
+
+
+#: Entitlements AMFI honours only when a provisioning profile embedded in the
+#: same code item authorises them. A Developer ID binary that claims one with
+#: no profile of its own is SIGKILLed at launch ("no matching profile"), yet
+#: notarization accepts it — so nothing downstream catches it.
+PROFILE_RESTRICTED_ENTITLEMENTS = (
+    "com.apple.application-identifier",
+    "com.apple.developer.team-identifier",
+)
+
+
+def has_own_profile(path: Path) -> bool:
+    """True when `path` is a bundle carrying its own
+    `Contents/embedded.provisionprofile`. A bare Mach-O never does."""
+    return path.is_dir() and (path / "Contents/embedded.provisionprofile").is_file()
+
+
+def signed_entitlements(path: Path, *, run: Runner) -> dict:
+    """The entitlements in `path`'s existing code signature, read with
+    `codesign -d --entitlements :- <path>`. Unsigned code, or a signature
+    carrying no entitlements, yields `{}`."""
+    shown = run(["codesign", "-d", "--entitlements", ":-", str(path)])
+    text = (shown.stdout or "").strip()
+    if shown.returncode != 0 or not text:
+        return {}
+    try:
+        value = plistlib.loads(text.encode())
+    except (ValueError, ExpatError) as exc:
+        raise RuntimeError(f"cannot parse the entitlements codesign reports for {path}: {exc}")
+    return value if isinstance(value, dict) else {}
+
+
+def _entitlements_file(path: Path) -> dict:
+    try:
+        with path.open("rb") as f:
+            value = plistlib.load(f)
+    except (OSError, ValueError, ExpatError) as exc:
+        raise RuntimeError(f"cannot read entitlements file {path}: {exc}")
+    if not isinstance(value, dict):
+        raise RuntimeError(f"entitlements file {path} is not a dictionary plist")
+    return value
+
+
+def restricted_entitlement_problems(
+    bundle: Path, *, entitlements: dict[Path, Path], run: Runner
+) -> list[str]:
+    """One line per nested code item (never `bundle` itself) that has no
+    embedded provisioning profile of its own yet would be signed with a
+    `PROFILE_RESTRICTED_ENTITLEMENTS` key.
+
+    An item mapped in `entitlements` is judged by that file; every other item
+    by the entitlements already in its signature — exactly what
+    `sign_bundle`'s `--preserve-metadata=entitlements` would carry forward.
+    Call it with `entitlements={}` after signing to check what was actually
+    signed.
+    """
+    problems: list[str] = []
+    for path in signing_order(bundle):
+        if path == bundle or has_own_profile(path):
+            continue
+        mapped = entitlements.get(path)
+        claimed = _entitlements_file(mapped) if mapped is not None else signed_entitlements(path, run=run)
+        restricted = [key for key in PROFILE_RESTRICTED_ENTITLEMENTS if key in claimed]
+        if restricted:
+            source = f"entitlements file {mapped}" if mapped is not None else "its existing signature"
+            problems.append(
+                f"{path.relative_to(bundle.parent)} has no embedded.provisionprofile but "
+                f"{source} carries {', '.join(restricted)} — AMFI kills it at launch under "
+                "Developer ID; sign it with an entitlements file that omits "
+                f"{' and '.join(PROFILE_RESTRICTED_ENTITLEMENTS)}"
+            )
+    return problems
+
+
+def check_restricted_entitlements(
+    bundle: Path, *, entitlements: dict[Path, Path], run: Runner
+) -> None:
+    """Raise `RuntimeError` listing every `restricted_entitlement_problems` line."""
+    problems = restricted_entitlement_problems(bundle, entitlements=entitlements, run=run)
+    if problems:
+        raise RuntimeError("\n".join(problems))
+
+
+def sign_bundle(
+    bundle: Path,
+    *,
+    identity: str,
+    entitlements: dict[Path, Path],
+    runtime: bool,
+    timestamp: bool,
+    run: Runner,
+) -> None:
+    """Sign `bundle` and every path `signing_order` yields for it, deepest
+    first. A path the caller maps in `entitlements` is signed with
+    `--entitlements <that file>`. Every other *nested* path (never the
+    top-level `bundle` itself) is signed with `--preserve-metadata=entitlements`
+    instead, so a nested bundle that already carries entitlements it needs
+    (e.g. Sparkle's `Downloader.xpc`, sandboxed and unmapped) keeps them —
+    matching Sparkle's documented Developer ID re-signing order.
+
+    Before any `codesign`, and again on the finished signatures,
+    `check_restricted_entitlements` refuses a nested item without its own
+    provisioning profile that would claim `com.apple.application-identifier`
+    or `com.apple.developer.team-identifier` — Xcode injects both into
+    development-signed helpers, and preserving them into a Developer ID
+    signature gets the helper SIGKILLed at launch.
+    """
+    check_restricted_entitlements(bundle, entitlements=entitlements, run=run)
+    for path in signing_order(bundle):
+        argv = ["codesign", "--force", "--sign", identity]
+        if runtime:
+            argv += ["--options", "runtime"]
+        if timestamp:
+            argv += ["--timestamp"]
+        entitlements_path = entitlements.get(path)
+        if entitlements_path is not None:
+            argv += ["--entitlements", str(entitlements_path)]
+        elif path != bundle:
+            argv.append("--preserve-metadata=entitlements")
+        argv.append(str(path))
+        result = run(argv)
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr)
+
+    verify = run(["codesign", "--verify", "--deep", "--strict", "--verbose=2", str(bundle)])
+    if verify.returncode != 0:
+        raise RuntimeError(verify.stderr)
+
+    check_restricted_entitlements(bundle, entitlements={}, run=run)
+
+
+def notarize(path: Path, *, profile: str, run: Runner) -> None:
+    with tempfile.TemporaryDirectory(prefix="macos_release_notarize_") as tmp:
+        target = path
+        if path.suffix == ".app":
+            target = Path(tmp) / f"{path.stem}.zip"
+            zipped = run(["ditto", "-c", "-k", "--keepParent", str(path), str(target)])
+            if zipped.returncode != 0:
+                raise RuntimeError(zipped.stderr)
+
+        submit = run(
+            [
+                "xcrun", "notarytool", "submit", str(target),
+                "--keychain-profile", profile,
+                "--wait", "--output-format", "json",
+            ]
+        )
+        if submit.returncode != 0:
+            raise RuntimeError(submit.stderr)
+
+        info = json.loads(submit.stdout)
+        if info.get("status") != "Accepted":
+            submission_id = info.get("id", "")
+            log = run(["xcrun", "notarytool", "log", submission_id, "--keychain-profile", profile])
+            raise RuntimeError(log.stdout or log.stderr)
+
+    staple = run(["xcrun", "stapler", "staple", str(path)])
+    if staple.returncode != 0:
+        raise RuntimeError(staple.stderr)
+
+    validate = run(["xcrun", "stapler", "validate", str(path)])
+    if validate.returncode != 0:
+        raise RuntimeError(validate.stderr)
+
+
+def make_update_zip(app: Path, dest: Path, *, run: Runner) -> Path:
+    result = run(["ditto", "-c", "-k", "--sequesterRsrc", "--keepParent", str(app), str(dest)])
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr)
+    return dest
+
+
+def render_distribution(
+    *,
+    title: str,
+    identifier: str,
+    version: str,
+    pkg_ref: str = COMPONENT_PKG,
+    optional_choices: list[tuple[str, str, str, str]],
+    installation_check_js: str | None,
+    allow_external_scripts: bool = False,
+    minimum_os_version: str | None = None,
+) -> str:
+    """Render a productbuild Distribution.xml.
+
+    `optional_choices` items are `(id, title, description, pkg_ref)`: each
+    optional choice references its own small component pkg, since Installer
+    does not tell postinstall scripts which choices were selected — the
+    optional choice installs a marker-file component instead.
+
+    `installation_check_js` is wrapped in a `<![CDATA[…]]>` section so it can
+    contain `<`, `&&`, etc. without XML-escaping; it must not itself contain
+    the CDATA terminator `]]>`. `allow_external_scripts=True` emits
+    `allow-external-scripts="yes"` on `<options>`, required for check/postinstall
+    JS that calls `system.run` (e.g. to probe `/usr/bin/python3`).
+
+    `minimum_os_version` (the app's LSMinimumSystemVersion) emits
+    `<allowed-os-versions>`, so Installer refuses the package up front on an
+    older macOS instead of installing an app that cannot launch there.
+    """
+    if installation_check_js and "]]>" in installation_check_js:
+        raise ValueError("installation_check_js must not contain the CDATA terminator ']]>'")
+
+    def esc(text: str) -> str:
+        return escape(text, {'"': "&quot;"})
+
+    options_attrs = 'customize="allow" require-scripts="false" hostArchitectures="arm64"'
+    if allow_external_scripts:
+        options_attrs += ' allow-external-scripts="yes"'
+
+    lines = [
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<installer-gui-script minSpecVersion="2">',
+        f"    <title>{esc(title)}</title>",
+        f"    <options {options_attrs}/>",
+        '    <domains enable_localSystem="true"/>',
+    ]
+
+    if minimum_os_version:
+        lines.append("    <allowed-os-versions>")
+        lines.append(f'        <os-version min="{esc(minimum_os_version)}"/>')
+        lines.append("    </allowed-os-versions>")
+
+    if installation_check_js:
+        lines.append('    <installation-check script="pm_install_check();"/>')
+        lines.append(
+            "    <script><![CDATA[function pm_install_check() { "
+            f"{installation_check_js}"
+            " }]]></script>"
+        )
+
+    lines.append("    <choices-outline>")
+    lines.append(f'        <line choice="{esc(identifier)}"/>')
+    for choice_id, _title, _description, _pkg in optional_choices:
+        lines.append(f'        <line choice="{esc(choice_id)}"/>')
+    lines.append("    </choices-outline>")
+
+    lines.append(f'    <choice id="{esc(identifier)}" title="{esc(title)}" visible="false">')
+    lines.append(f'        <pkg-ref id="{esc(identifier)}"/>')
+    lines.append("    </choice>")
+
+    for choice_id, choice_title, choice_description, _pkg in optional_choices:
+        lines.append(
+            f'    <choice id="{esc(choice_id)}" title="{esc(choice_title)}" '
+            f'description="{esc(choice_description)}" start_selected="false">'
+        )
+        lines.append(f'        <pkg-ref id="{esc(choice_id)}"/>')
+        lines.append("    </choice>")
+
+    lines.append(f'    <pkg-ref id="{esc(identifier)}" version="{esc(version)}">{esc(pkg_ref)}</pkg-ref>')
+    for choice_id, _title, _description, choice_pkg in optional_choices:
+        lines.append(f'    <pkg-ref id="{esc(choice_id)}">{esc(choice_pkg)}</pkg-ref>')
+
+    lines.append("</installer-gui-script>")
+    return "\n".join(lines)
+
+
+def build_pkg(
+    app: Path,
+    *,
+    identifier: str,
+    version: str,
+    scripts: Path,
+    distribution: str,
+    identity: str | None,
+    dest: Path,
+    run: Runner,
+    extra_packages: Sequence[Path] = (),
+) -> Path:
+    """Build the component pkg from a *staged, non-relocatable* root so that
+    Installer always targets the copy at `/Applications`, never "upgrading"
+    some other same-bundle-ID copy in place (e.g. a DerivedData build).
+    """
+    with tempfile.TemporaryDirectory(prefix="macos_release_pkg_") as tmp:
+        tmp_path = Path(tmp)
+
+        root = tmp_path / "root"
+        root.mkdir()
+        staged_app = root / app.name
+        stage_result = run(["ditto", str(app), str(staged_app)])
+        if stage_result.returncode != 0:
+            raise RuntimeError(stage_result.stderr)
+
+        component_plist = tmp_path / "component.plist"
+        analyze_result = run(["pkgbuild", "--analyze", "--root", str(root), str(component_plist)])
+        if analyze_result.returncode != 0:
+            raise RuntimeError(analyze_result.stderr)
+        if not component_plist.exists():
+            raise RuntimeError(f"pkgbuild --analyze did not write {component_plist}")
+
+        with component_plist.open("rb") as f:
+            component_entries = plistlib.load(f)
+        for entry in component_entries:
+            entry["BundleIsRelocatable"] = False
+        with component_plist.open("wb") as f:
+            plistlib.dump(component_entries, f)
+
+        component = tmp_path / COMPONENT_PKG
+        component_result = run(
+            [
+                "pkgbuild",
+                "--root", str(root),
+                "--component-plist", str(component_plist),
+                "--install-location", "/Applications",
+                "--scripts", str(scripts),
+                "--identifier", identifier,
+                "--version", version,
+                str(component),
+            ]
+        )
+        if component_result.returncode != 0:
+            raise RuntimeError(component_result.stderr)
+
+        for extra in extra_packages:
+            if extra.name == COMPONENT_PKG:
+                raise ValueError(
+                    f"extra_packages entry {extra} collides with the reserved component "
+                    f"pkg filename {COMPONENT_PKG!r}"
+                )
+            shutil.copy2(extra, tmp_path / extra.name)
+
+        distribution_path = tmp_path / "Distribution.xml"
+        distribution_path.write_text(distribution)
+
+        product_argv = [
+            "productbuild",
+            "--distribution", str(distribution_path),
+            "--package-path", str(tmp_path),
+        ]
+        if identity:
+            product_argv += ["--sign", identity]
+        product_argv.append(str(dest))
+
+        product_result = run(product_argv)
+        if product_result.returncode != 0:
+            raise RuntimeError(product_result.stderr)
+
+    return dest
+
+
+def asset_for(path: Path, url: str) -> ReleaseAsset:
+    digest = hashlib.sha256()
+    size = 0
+    with path.open("rb") as f:
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            digest.update(chunk)
+            size += len(chunk)
+    return ReleaseAsset(url=url, size=size, sha256=digest.hexdigest())
+
+
+def _asset_dict(asset: ReleaseAsset) -> dict:
+    return {"url": asset.url, "size": asset.size, "sha256": asset.sha256}
+
+
+def _version_tuple(version: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in version.split("."))
+
+
+def merge_release(existing: dict, entry: ReleaseEntry) -> dict:
+    """Schema 1: `releases` is always kept sorted newest-first by numeric
+    version (descending), regardless of merge order; `latest` is the version
+    at the front. Merging an entry whose version already exists replaces
+    that entry in place."""
+    schema = existing.get("schema")
+    if schema != 1:
+        raise ValueError(f"unsupported releases schema: {schema!r}")
+
+    releases = [r for r in existing.get("releases", []) if r.get("version") != entry.version]
+    releases.append(
+        {
+            "version": entry.version,
+            "build": entry.build,
+            "date": entry.date,
+            "minimumSystemVersion": entry.minimum_system_version,
+            "notes": entry.notes,
+            "pkg": _asset_dict(entry.pkg),
+            "zip": _asset_dict(entry.zip),
+        }
+    )
+    releases.sort(key=lambda r: _version_tuple(r["version"]), reverse=True)
+    return {"schema": 1, "latest": releases[0]["version"], "releases": releases}
+
+
+def publish_github_release(
+    *,
+    repo: str,
+    tag: str,
+    title: str,
+    notes_file: Path,
+    assets: list[Path],
+    run: Runner,
+) -> None:
+    argv = [
+        "gh", "release", "create", tag,
+        *[str(asset) for asset in assets],
+        "--repo", repo,
+        "--title", title,
+        "--notes-file", str(notes_file),
+    ]
+    result = run(argv)
+    if result.returncode != 0:
+        raise RuntimeError(result.stderr)

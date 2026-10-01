@@ -1,0 +1,136 @@
+import AppKit
+import AgenticToolkitCore
+
+/// Reusable Settings panel offering a theme picker and a text-size slider.
+/// Reads/writes via `UserSettings.appearanceMode` and `UserSettings.textSize`;
+/// system integration (applying `NSApp.appearance`, propagating text size)
+/// is wired up by the host.
+@MainActor
+public final class AppearanceSettingsPanelViewController: ComposableSettings.SettingsPanelViewController {
+
+    public init() {
+        super.init(with: ComposableSettings.SettingsPanelDescriptor(
+            title: "Appearance",
+            icon: NSImage(systemSymbolName: "paintbrush", accessibilityDescription: nil)
+        ))
+    }
+
+    public required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    public override var helpContent: ComposableSettings.PanelHelp? {
+        ComposableSettings.PanelHelp(topics: [
+            .init(
+                title: "Light and Dark",
+                body: "This is the system appearance the app asks macOS for — the one that "
+                    + "decides how standard controls, menus and sheets are drawn. Auto "
+                    + "follows whatever the Mac is currently doing, including the automatic "
+                    + "switch at sunset."
+            ),
+            .init(
+                title: "Appearance vs. Theme",
+                body: "This is not the color theme. The theme (in Theme settings) sets the "
+                    + "app's own colors and fonts; this setting decides which side of "
+                    + "light/dark the *system* chrome around them is drawn on. A dark theme "
+                    + "under a light appearance is legal and occasionally what you want."
+            ),
+            .init(
+                title: "Text Size",
+                body: "A single scale applied across the app's text. It multiplies the "
+                    + "theme's own type sizes rather than replacing them, so a theme with "
+                    + "deliberately large headings keeps that relationship at every step."
+            )
+        ])
+    }
+
+    public override func viewDidLoad() {
+        super.viewDidLoad()
+        self.settingsView.addGroup(createAppearanceGroup())
+        self.settingsView.addGroup(createTextSizeGroup())
+    }
+
+    func createAppearanceGroup() -> ComposableSettings.GroupView {
+        let group = ComposableSettings.GroupView(withTitle: "Appearance")
+
+        let viewModel = ComposableSettings.ChoiceViewModel<AppearanceMode>(
+            title: "Theme",
+            setting: UserSettings.appearanceMode,
+            choices: AppearanceMode.allCases.map {
+                .init(label: $0.label, value: $0)
+            }
+        )
+        group.addSettingSubview(ComposableSettings.PopupMenuChoiceView(viewModel: viewModel))
+
+        return group
+    }
+
+    func createTextSizeGroup() -> ComposableSettings.GroupView {
+        let group = ComposableSettings.GroupView(withTitle: "Text Size")
+
+        let viewModel = ComposableSettings.ChoiceViewModel<TextSize>(
+            title: "Size",
+            setting: UserSettings.textSize,
+            choices: TextSize.allCases.map { .init(label: $0.label, value: $0) }
+        )
+        group.addSettingSubview(ComposableSettings.ChoiceSliderView(viewModel: viewModel))
+
+        return group
+    }
+}
+
+public enum AppearanceMode: String, CaseIterable, Sendable, Codable {
+    case auto
+    case light
+    case dark
+
+    public var label: String {
+        switch self {
+        case .auto:  return "Auto"
+        case .light: return "Light"
+        case .dark:  return "Dark"
+        }
+    }
+
+    /// `nil` means "follow the system" — assign to `NSApp.appearance` to clear
+    /// any prior override.
+    public var nsAppearance: NSAppearance? {
+        switch self {
+        case .auto:  return nil
+        case .light: return NSAppearance(named: .aqua)
+        case .dark:  return NSAppearance(named: .darkAqua)
+        }
+    }
+}
+
+/// Discrete text-size scale exposed by the Appearance settings panel.
+///
+/// Apps decide how to map this to actual font sizes (point sizes, dynamic
+/// type categories, multipliers) — this type just tracks the user's choice.
+public enum TextSize: String, CaseIterable, Sendable, Codable, Equatable {
+    case xSmall, small, medium, large, xLarge, xxLarge, xxxLarge
+
+    public var label: String {
+        switch self {
+        case .xSmall:   return "Extra Small"
+        case .small:    return "Small"
+        case .medium:   return "Medium"
+        case .large:    return "Large"
+        case .xLarge:   return "Extra Large"
+        case .xxLarge:  return "XX Large"
+        case .xxxLarge: return "XXX Large"
+        }
+    }
+}
+
+extension UserSettings {
+
+    /// Whether the dock icon is visible.
+    static public var showDockIcon = UserSetting<Bool>("show_dock_icon", default: false)
+
+    /// Appearance mode: "light" / "dark" / "auto".
+    static public var appearanceMode = UserSetting<AppearanceMode>("appearance_mode", default: .auto)
+
+    /// Discrete text-size scale (xSmall…xxxLarge).
+    static public var textSize = UserSetting<TextSize>("text_size", default: .medium)
+}

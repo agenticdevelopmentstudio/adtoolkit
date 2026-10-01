@@ -1,0 +1,136 @@
+name: AgenticToolkitApp
+options:
+  bundleIdPrefix: com.agentic-toolkit
+  developmentLanguage: en
+  deploymentTarget:
+    macOS: "26.0"
+  groupSortPosition: top
+  generateEmptyDirectories: false
+  xcodeVersion: "2640"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.3"
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+    GCC_TREAT_WARNINGS_AS_ERRORS: YES
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+    SDKROOT: macosx
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEAD_CODE_STRIPPING: YES
+    DEVELOPMENT_TEAM: K2NA732JAX
+    ENABLE_MODULE_VERIFIER: YES
+    ENABLE_TESTABILITY: YES
+    MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS: "gnu11 gnu++14"
+    PRODUCT_NAME: $(TARGET_NAME)
+    STRING_CATALOG_GENERATE_SYMBOLS: YES
+    SWIFT_ENABLE_EXPLICIT_MODULES: NO
+    LD_RUNPATH_SEARCH_PATHS:
+      - $(inherited)
+      - "@executable_path/../Frameworks"
+
+projectReferences:
+  AgenticToolkit:
+    path: ../AgenticToolkit/AgenticToolkit.xcodeproj
+
+targetTemplates:
+  SwiftLint:
+    preBuildScripts:
+      - name: SwiftLint
+        basedOnDependencyAnalysis: false
+        script: |
+          if [[ "$(uname -m)" == "arm64" ]]; then
+            export PATH="/opt/homebrew/bin:$PATH"
+          fi
+          if which swiftlint >/dev/null; then
+            swiftlint lint --quiet --strict
+          else
+            echo "warning: SwiftLint not installed; brew install swiftlint to enable"
+          fi
+
+targets:
+  AgenticToolkitApp:
+    type: application
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - path: AgenticToolkitApp
+        excludes:
+          - "Info.plist"
+          - "AgenticToolkitApp.entitlements"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.agentic-toolkit.app
+        INFOPLIST_FILE: AgenticToolkitApp/Info.plist
+        CODE_SIGN_ENTITLEMENTS: AgenticToolkitApp/AgenticToolkitApp.entitlements
+        CODE_SIGN_IDENTITY: "Apple Development"
+        CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        COMBINE_HIDPI_IMAGES: YES
+    dependencies:
+      - target: AgenticToolkit/AgenticToolkitCore
+        embed: true
+        codeSign: true
+      - target: AgenticToolkit/AgenticToolkitCoreUI
+        embed: true
+        codeSign: true
+      - target: AgenticToolkit/AgenticToolkitCoreMacOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkit/AgenticToolkitMacOS
+        embed: true
+        codeSign: true
+      # AgenticToolkitMacOS links it (WindowManager's screen identity,
+      # matching and change detection), so the host must embed it.
+      - target: AgenticToolkit/AgenticToolkitDisplays
+        embed: true
+        codeSign: true
+      # Embedded so the framework loads into the host process; each .aiplugin
+      # links it without embedding and resolves to this one loaded image at dlopen.
+      - target: AgenticToolkit/AIPluginKit
+        embed: true
+        codeSign: true
+
+  AgenticToolkitAppTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - AgenticToolkitAppTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.agentic-toolkit.app.tests
+        GENERATE_INFOPLIST_FILE: YES
+        BUNDLE_LOADER: $(TEST_HOST)
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/AgenticToolkitApp.app/Contents/MacOS/AgenticToolkitApp
+        COMBINE_HIDPI_IMAGES: YES
+        LD_RUNPATH_SEARCH_PATHS:
+          - $(inherited)
+          - "@executable_path/../Frameworks"
+          - "@loader_path/../Frameworks"
+    dependencies:
+      - target: AgenticToolkitApp
+      - target: AgenticToolkit/AgenticToolkitCoreUI
+        embed: true
+        codeSign: true
+
+schemes:
+  AgenticToolkitApp:
+    build:
+      targets:
+        AgenticToolkitApp: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitAppTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

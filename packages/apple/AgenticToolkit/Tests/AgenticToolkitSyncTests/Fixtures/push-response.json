@@ -1,0 +1,29 @@
+{
+  "results": [
+    { "opId": "0197a5e0-bbbb-7000-8000-000000000001", "status": "applied", "newVersion": "1056" },
+    {
+      "opId": "0197a5e0-bbbb-7000-8000-000000000002",
+      "status": "conflict",
+      "reason": "stale_base_version",
+      "current": {
+        "id": "0197a5e0-0000-7000-8000-000000000001",
+        "customer_id": "0197a5e0-aaaa-7000-8000-000000000001",
+        "deleted_at": null,
+        "ecosystem_id": "eco-1",
+        "owner_kind": "customer",
+        "owner_id": "",
+        "person_user_id": null,
+        "full_name": "Groceries (edited elsewhere)",
+        "nickname": "",
+        "email": "",
+        "phone": "",
+        "notes": "milk",
+        "created_at": "2026-07-16 12:00:00",
+        "updated_at": "2026-07-16 12:30:00",
+        "sync_version": "1055"
+      }
+    },
+    { "opId": "0197a5e0-bbbb-7000-8000-000000000003", "status": "applied", "newVersion": "1058" }
+  ],
+  "watermark": "1058"
+}

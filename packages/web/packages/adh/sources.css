@@ -1,0 +1,90 @@
+/* Tailwind source self-registration for @agentic-toolkit/adh.
+ *
+ * Tailwind v4 does not scan node_modules, so a consumer app must be told to scan this
+ * package's className-bearing modules. Rather than every host copying @source globs into
+ * its own globals.css — drift-prone, and a missed line renders unstyled with NO error —
+ * the package owns them here and a host adds one line:
+ *
+ *   @import "@agentic-toolkit/adh/sources.css";
+ *
+ * Every stylesheet this package exports imports it already, so importing any one of
+ * them (styles.css, help.css, docs.css, legal.css, debug.css) is enough. Mirrors
+ * @agentic-toolkit/api-explorer/sources.css and @agenticdevelopertoolkit/ui's components.css.
+ *
+ * PACKAGE-WIDE, not per subtree, and deliberately so. Registering subtree by subtree is
+ * how this package came to have a gap: `help` and `debug-env` were registered when they
+ * were ported in, and the other seven subtrees — `header` (62 className literals),
+ * `legal` (7), `footer` (6), `components` (5), `debug` (3), `themes` (1), `docs` — were
+ * not, because nothing forced the question. They survived only because the sites' own
+ * globs scanned `@adh-shared/adh/dist/**` as well as `@adh/chrome/dist/**`, and those
+ * bundles inlined much of this code — an accident of `bundle: true`, and one that expired
+ * the day `@adh-shared` was deleted, which is why the package-wide pair below is now the
+ * only thing registering these subtrees. One glob pair over the whole package cannot
+ * develop that kind of hole, and a new subtree is covered the day it is added.
+ *
+ * The failure this prevents is silent by construction: a dangling @source is not an
+ * error and an unregistered utility is not a build failure — the class is simply never
+ * emitted and the component renders unstyled. It has already happened once here, when
+ * Task 5.2 moved FloatingWindow into this package and `shadow-2xl` / `cursor-move`
+ * stopped being emitted fleet-wide for twelve hours without anything noticing.
+ *
+ * Paths are relative to THIS file (the package root) and therefore travel with the
+ * package: they resolve identically through a dev pnpm `link:` symlink and a
+ * materialized prod copy. `src` covers `next dev` — the `development` export condition
+ * serves src, so HMR must see source edits — while `dist` covers prod builds, where
+ * `files` ships only `dist`, `src/styles` and this file, and the `src` glob simply
+ * matches nothing. Neither is relied on in the environment where it is absent. */
+
+/* …and the packages THIS one drags in, because a host cannot be expected to know what
+ * they are. `@source` registers a package's own files; it says nothing about the
+ * feature packages its components mount. The User Settings overlay made that gap
+ * visible: `dist/layout` -> `dist/settings` -> account/authentication/personas/profile/
+ * resource, none of which any site registered — hub named 19 packages and not `account`,
+ * ~40 sites named none — so the modal mounted with a large fraction of its utilities
+ * never emitted. Measured on production builds: 48 missing panel utilities on `recipes`,
+ * 43 on `admin`, 5 on `hub`, including `grid-cols-[220px_1fr]`, the modal's own
+ * nav/content split. A collapsed two-column modal is not a build failure and not a
+ * warning — the class is simply absent from the stylesheet.
+ *
+ * Chaining here rather than in ~45 sites' globals is what makes the next such package
+ * free: one edge added at the owner, every consumer inherits it. The two backends that
+ * vendor this package inherit it too (they import ./styles.css, which imports this
+ * file), which is what registers the vendored panel `sources.css` files nothing else
+ * imports.
+ *
+ * Only DIRECT dependencies are listed, and deliberately: under pnpm's isolated
+ * node_modules a specifier resolves only if the importing package declares it, so
+ * `@agentic-toolkit/crud` — which `account` and `personas` pull in — cannot be named
+ * from here. It is chained from THEIR sources.css instead, and `teams` from `personas`.
+ * The rule is uniform: each package registers what it itself depends on.
+ *
+ * `@agentic-toolkit/{auth,data,themes,ui}` are absent because they ship no sources.css
+ * (`ui` self-registers through its own components.css, which adh-components.css already
+ * imports). `api-explorer` is absent from THIS file because adh already registers it from
+ * adh-help.css — where it belongs, since that is the surface that mounts it.
+ *
+ * `ecosystem-config` is absent because there is nothing to register. adh imports exactly
+ * one subpath of it, `ecosystem-config/dialog-state`, and the module closure reachable
+ * from that subpath contains ZERO `className` — it is state, not markup, so it emits no
+ * utilities and a registration would add nothing. (The package as a whole ships 107
+ * className occurrences, which is why the honest measure is the REACHABLE closure and not
+ * the dist as a lump; whole-package counting would demand a registration here and drag
+ * the package into both backends' vendor set to keep the @import resolvable, for no CSS
+ * whatsoever.) `tools/tailwind_registration.py` in adh applies exactly that measure. */
+@import "@agentic-toolkit/account/sources.css";
+@import "@agentic-toolkit/authentication/sources.css";
+@import "@agentic-toolkit/personas/sources.css";
+@import "@agentic-toolkit/profile/sources.css";
+@import "@agentic-toolkit/resource/sources.css";
+
+/* adh-ui ships the rdid grammar, the invitation surfaces, admin notes and the
+ * ownership-transfer block that this package mounts. Carved out of `ui` in 2026-08,
+ * it shipped with no sources.css at all — the only dependency-bearing package in the
+ * repo without one — so its utilities were emitted only where some registered package
+ * happened to use the same ones, which is luck rather than coverage. Chained HERE
+ * because under pnpm's isolated node_modules only a declaring package can resolve the
+ * specifier, and this package declares it. */
+@import "@agentic-toolkit/adh-ui/sources.css";
+
+@source "./src/**/*.{ts,tsx}";
+@source "./dist/**/*.js";

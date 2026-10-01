@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true
+  },
+  "//": "Both forms, deliberately. Tests used to live only in src/__tests__, so the first pattern was enough; the reserved-slugs task added src/sites/__tests__ and tsc promptly emitted dist/sites/__tests__/*.d.ts into the published tree (same defect packages/adh hit at its Task 5.8). The second pattern catches any nested __tests__ dir, this one included.",
+  "exclude": ["src/__tests__", "src/**/__tests__"]
+}

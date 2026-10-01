@@ -1,0 +1,28 @@
+/* Tailwind v4 source registration for @agentic-toolkit/games.
+   Both globs are needed: `next dev` resolves this package's `development` export
+   condition to src, a production build resolves it to dist, and a class that only
+   appears in the half Tailwind was not told to scan is simply not emitted. */
+
+/* This package registers what IT mounts: every pane here is a resource
+   MasterDetailLayout / ResourceExplorer / CreateResourceDialog, so a host that
+   registers `games` alone still loses their utilities. Chained HERE because under
+   pnpm's isolated node_modules only a declaring package can resolve the specifier
+   — the same reason features/teams/sources.css chains it, and for the same reason
+   it is chained unconditionally rather than "only when no host already covers it":
+   a rule whose answer depends on composition is how the settings overlay shipped
+   half-styled across the fleet. */
+@import "@agentic-toolkit/resource/sources.css";
+
+/* And `ecosystems`, for the same reason and by the same rule — new as of
+   product-gaming-modes (2026-08-22). GamesFeature no longer draws a rail of its own: it
+   IS EcosystemsFeature in `listFirst` mode with a games topic set, so the entire shell a
+   host sees — the product list, the topic rail, the detail chrome around every pane below
+   — is rendered from the ecosystems tree, and a host that registers `games` alone gets it
+   unstyled. Nothing catches that: tsc, vitest and the openapi conformance run are all
+   blind to which files Tailwind was told to scan, and the page still renders, just wrong.
+   Registered here rather than in the games site's `site.css` so it holds for EVERY host of
+   this package, present and future, instead of for the one host that remembered. */
+@import "@agentic-toolkit/ecosystems/sources.css";
+
+@source "./src/**/*.{ts,tsx}";
+@source "./dist/**/*.js";

@@ -1,0 +1,29 @@
+{
+  "name": "agentictoolkit-web-site",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --port 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@agenticdevelopertoolkit/chat": "file:../../external/agenticdevelopertoolkit/packages/web/packages/chat",
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "@agenticdevelopertoolkit/controls": "file:../../external/agenticdevelopertoolkit/packages/web/packages/controls",
+    "@agenticdevelopertoolkit/model": "file:../../external/agenticdevelopertoolkit/packages/web/packages/model",
+    "@agenticdevelopertoolkit/themes": "file:../../external/agenticdevelopertoolkit/packages/web/packages/themes",
+    "@agenticdevelopertoolkit/ui": "file:../../external/agenticdevelopertoolkit/packages/web/packages/ui"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.8.3"
+  }
+}

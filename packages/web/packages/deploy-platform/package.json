@@ -1,0 +1,38 @@
+{
+  "name": "@agentic-toolkit/deploy-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "development": "./src/index.ts", "import": "./dist/index.js", "default": "./dist/index.js" },
+    "./util": { "types": "./dist/util/index.d.ts", "development": "./src/util/index.ts", "import": "./dist/util/index.js", "default": "./dist/util/index.js" },
+    "./cooldown": { "types": "./dist/cooldown/index.d.ts", "development": "./src/cooldown/index.ts", "import": "./dist/cooldown/index.js", "default": "./dist/cooldown/index.js" },
+    "./schema": { "types": "./dist/schema/index.d.ts", "development": "./src/schema/index.ts", "import": "./dist/schema/index.js", "default": "./dist/schema/index.js" },
+    "./conn": { "types": "./dist/conn/index.d.ts", "development": "./src/conn/index.ts", "import": "./dist/conn/index.js", "default": "./dist/conn/index.js" },
+    "./providers": { "types": "./dist/providers/index.d.ts", "development": "./src/providers/index.ts", "import": "./dist/providers/index.js", "default": "./dist/providers/index.js" },
+    "./canon": { "types": "./dist/canon/index.d.ts", "development": "./src/canon/index.ts", "import": "./dist/canon/index.js", "default": "./dist/canon/index.js" },
+    "./enumerate": { "types": "./dist/enumerate/index.d.ts", "development": "./src/enumerate/index.ts", "import": "./dist/enumerate/index.js", "default": "./dist/enumerate/index.js" },
+    "./engine": { "types": "./dist/engine/index.d.ts", "development": "./src/engine/index.ts", "import": "./dist/engine/index.js", "default": "./dist/engine/index.js" }
+  },
+  "files": ["dist", "src"],
+  "scripts": {
+    "build": "tsup && pnpm run build:types",
+    "build:types": "tsc --emitDeclarationOnly -p tsconfig.build.json",
+    "test": "vitest run"
+  },
+  "comment:peerDependencies": "drizzle-orm is OPTIONAL because only three of the nine entry points reach it — `./schema`, `./conn` and `./enumerate`. The other six, the root barrel included, are ORM-free: src/index.ts re-exports only the drizzle-free surfaces on purpose (its own first line says so), so a consumer that never names those three subpaths never loads a line of the ORM. Left non-optional, pnpm's auto-install-peers (on by default, and recorded as such in both backends' lockfiles) drags the whole ORM into a frontend install regardless. A server consumer declares drizzle-orm itself, so nothing that needs it goes without.",
+  "peerDependencies": {
+    "drizzle-orm": ">=0.36.0"
+  },
+  "peerDependenciesMeta": {
+    "drizzle-orm": { "optional": true }
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.4"
+  }
+}

@@ -1,0 +1,87 @@
+{
+  "name": "@agentic-toolkit/adh-ecosystem-panes",
+  "version": "0.1.0",
+  "description": "An ecosystem's own sub-resources as panes: Applications, Storage Buckets, Users and Messaging — the four surfaces of an ecosystem that are typed against adh's backend API.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "sources.css"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "comment:tier": "VOCABULARY, not mechanism — see scripts/check_boundaries.py. These panes are typed against `@agentic-toolkit/adh-api-types` (adh's generated OpenAPI request/response bodies), which the guard bans from any `@agentic-toolkit/<x>` package whose <x> is not adh/adh-*. That import is the whole reason this is a package of its own rather than four more files in `ecosystem-config`: that package IS mechanism (an org site and a product host both mount it against their own backends), and widening it to name adh's API types would have made it unportable in a way nothing else there is. The `adh-` prefix is what puts this package on the right side of that line, and the directory is `features/` only because the tsup/vitest presets live there.",
+  "comment:exports": "see @agentic-toolkit/adh for the full rationale. The barrel is entirely `use client` panes, and tsup hoists that directive over the whole chunk — so the two things here that are not panes get their own directive-free entries (the same split the tsup preset describes for ./parse and ./tables). ./bucket-types is the bucket type catalogue; its non-UI consumers are the reason: tools/check-bucket-types-drift.py reads the source text to diff it against the backend schema, and the hub's bucket-types Playwright spec derives its expected count by CALLING buildAvailableTypes() in node — through the barrel that import would drag every pane, react-query and next/navigation into a bare node context. ./parse is the Storage group's URL grammar, and its consumer is a host's ROUTE: the hub's storage page is a Server Component that has to parse (and 404) before it renders anything. That Playwright spec is also the only consumer in the fleet that arrives through `require` — the hub package declares no `type`, so Playwright compiles the spec to CJS — which is why ./bucket-types carries a `default` beside its `import` and ./parse does not: conditions are matched in order, so `default` is reached ONLY by a resolver that matched nothing above it, and a subpath offering neither `require` nor `default` fails that resolver with ERR_PACKAGE_PATH_NOT_EXPORTED — Node's wording for `no condition matched` is the same as for a subpath that is genuinely absent, which makes it read as a missing key that is visibly right there.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "development": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./parse": {
+      "types": "./dist/storage/parse-path.d.ts",
+      "development": "./src/storage/parse-path.ts",
+      "import": "./dist/storage/parse-path.js"
+    },
+    "./bucket-types": {
+      "types": "./dist/schemas/available-types.d.ts",
+      "development": "./src/schemas/available-types.ts",
+      "import": "./dist/schemas/available-types.js",
+      "default": "./dist/schemas/available-types.js"
+    },
+    "./sources.css": "./sources.css"
+  },
+  "scripts": {
+    "build": "tsup && pnpm run build:types",
+    "build:types": "tsc --emitDeclarationOnly -p tsconfig.build.json",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@agentic-toolkit/adh": "workspace:*",
+    "@agentic-toolkit/adh-api-types": "workspace:*",
+    "@agentic-toolkit/adh-ui": "workspace:*",
+    "@agentic-toolkit/api-explorer": "workspace:*",
+    "@agentic-toolkit/auth": "workspace:*",
+    "@agentic-toolkit/authentication": "workspace:*",
+    "@agentic-toolkit/crud": "workspace:*",
+    "@agentic-toolkit/data": "workspace:*",
+    "@agentic-toolkit/ecosystem-config": "workspace:*",
+    "@agentic-toolkit/resource": "workspace:*",
+    "@tanstack/react-query": "^5.62.0",
+    "lucide-react": "^1.16.0",
+    "@agenticdevelopertoolkit/ui": "link:../../../../../external/agenticdevelopertoolkit/packages/web/packages/ui"
+  },
+  "peerDependencies": {
+    "next": ">=15",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@base-ui/react": "1.5.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "19.2.16",
+    "@types/react-dom": "19.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "esbuild-plugin-preserve-directives": "^0.0.11",
+    "harper.js": "^2.4.0",
+    "jsdom": "^29.0.2",
+    "next": "^15.1.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tailwind-merge": "^2.6.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.4"
+  }
+}

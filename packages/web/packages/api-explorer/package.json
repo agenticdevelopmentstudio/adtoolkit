@@ -1,0 +1,88 @@
+{
+  "name": "@agentic-toolkit/api-explorer",
+  "version": "0.1.0",
+  "description": "Reusable, authed \"try-it-out\" endpoint panel for agentic-web-toolkit consumers — spec-generated endpoint metadata plus a theme-aware React panel that documents one REST endpoint (URL, params, request/response schemas, errors, CRUD-family siblings) and calls it with the logged-in user's credentials.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist",
+    "src/styles/api-explorer.css",
+    "sources.css"
+  ],
+  "comment:exports": "`development` → src for `next dev` (HMR, no build/restart); prod skips it → dist. Mirrors the @agenticdevelopertoolkit/ui + @agentic-toolkit/auth convention. `./generated/endpoints.generated` is a deliberate subpath export kept OFF the main barrel (see src/index.ts) — it exists only so the monorepo's drift test (websites/shared/api-explorer's src/__tests__/endpoints.test.ts, which stays monorepo-side to read openapi.json) can import the generated maps directly. `./lib/getEndpoint` and `./lib/highlight` are preserved-import subpaths (see the matching `external` entries + comment in tsup.config.ts): both hold module-level cache state and are consumed by the client barrel AND the server entry, which this package deliberately builds as two separate chunk graphs — so each needs importing by package path, not relatively, to keep one shared copy instead of a silent per-graph fork.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "development": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./server": {
+      "types": "./dist/server.d.ts",
+      "development": "./src/server.ts",
+      "import": "./dist/server.js"
+    },
+    "./styles": "./src/styles/api-explorer.css",
+    "./generated/endpoints.generated": {
+      "types": "./dist/generated/endpoints.generated.d.ts",
+      "development": "./src/generated/endpoints.generated.ts",
+      "import": "./dist/generated/endpoints.generated.js"
+    },
+    "./lib/getEndpoint": {
+      "types": "./dist/lib/getEndpoint.d.ts",
+      "development": "./src/lib/getEndpoint.ts",
+      "import": "./dist/lib/getEndpoint.js"
+    },
+    "./lib/highlight": {
+      "types": "./dist/lib/highlight.d.ts",
+      "development": "./src/lib/highlight.ts",
+      "import": "./dist/lib/highlight.js"
+    },
+    "./sources.css": "./sources.css"
+  },
+  "scripts": {
+    "build": "tsup && pnpm run build:types",
+    "build:types": "tsc --emitDeclarationOnly -p tsconfig.build.json",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist .turbo",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@agentic-toolkit/auth": "workspace:*",
+    "lucide-react": "^1.16.0",
+    "shiki": "^1.0.0",
+    "@agenticdevelopertoolkit/ui": "link:../../../../external/agenticdevelopertoolkit/packages/web/packages/ui"
+  },
+  "peerDependencies": {
+    "next": ">=15.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@base-ui/react": "1.5.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "esbuild-plugin-preserve-directives": "^0.0.11",
+    "harper.js": "^2.4.0",
+    "jsdom": "^29.0.2",
+    "next": "^16.2.9",
+    "tailwind-merge": "^2.6.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vite": "^6",
+    "vitest": "^4.1.4"
+  }
+}

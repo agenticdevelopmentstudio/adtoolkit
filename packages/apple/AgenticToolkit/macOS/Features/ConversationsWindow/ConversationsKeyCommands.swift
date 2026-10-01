@@ -1,0 +1,73 @@
+import AppKit
+import KeyboardShortcuts
+
+/// The Conversations window's bindable key commands.
+///
+/// Declared by the window rather than by the settings panel, because the panel
+/// is shared and knows nothing about conversations, and because only the window
+/// can actually perform these.
+///
+/// The registry's one app-wide key monitor performs these; each asks the
+/// controller whether the keystroke is its to take (the Conversations window is
+/// key, the caret is not in a text field), and passes it on when not.
+///
+/// The controller is resolved **when the command runs**, not when the section is
+/// installed, so the host can declare these at launch — before any Conversations
+/// window exists, and whether or not one is ever opened. Binding them to a live
+/// instance instead would mean the Settings panel listed them only for someone
+/// who had already opened that window, which is the wrong way round: the panel
+/// is where you go to find out what the app *can* do.
+@MainActor
+public enum ConversationsKeyCommands {
+
+    public static let moveSelectionUpID = "conversations.moveSelectionUp"
+    public static let moveSelectionDownID = "conversations.moveSelectionDown"
+    public static let toggleShelfID = "conversations.toggleShelf"
+
+    public static let sectionTitle = "Conversations Window"
+
+    /// The two commands that only mean anything in single conversation mode —
+    /// there is no "next conversation" when several are on screen at once — so
+    /// the panel lists them under their mode rather than beside a command that
+    /// works in both.
+    public static let singleModeFeatureTitle = "Single Conversation Mode"
+
+    /// The section. `resolve` answers with the live split controller, or `nil`
+    /// when the window is not up — in which case the commands do nothing, which
+    /// is what they should do.
+    public static func section(
+        resolve: @escaping @MainActor () -> ConversationsSplitViewController?
+    ) -> KeyCommandSection {
+        KeyCommandSection(
+            title: sectionTitle,
+            scope: .app,
+            commands: [
+                KeyCommandDescriptor(
+                    id: toggleShelfID,
+                    title: "Show Conversation List",
+                    defaultShortcut: KeyboardShortcuts.Shortcut(.zero, modifiers: .command),
+                    perform: { resolve()?.performToggleShelfCommand() ?? false }
+                )
+            ],
+            features: [
+                KeyCommandFeature(
+                    title: singleModeFeatureTitle,
+                    commands: [
+                        KeyCommandDescriptor(
+                            id: moveSelectionUpID,
+                            title: "Previous Conversation",
+                            defaultShortcut: KeyboardShortcuts.Shortcut(
+                                .upArrow, modifiers: .command),
+                            perform: { resolve()?.performMoveSelectionCommand(by: -1) ?? false }
+                        ),
+                        KeyCommandDescriptor(
+                            id: moveSelectionDownID,
+                            title: "Next Conversation",
+                            defaultShortcut: KeyboardShortcuts.Shortcut(
+                                .downArrow, modifiers: .command),
+                            perform: { resolve()?.performMoveSelectionCommand(by: 1) ?? false }
+                        )
+                    ])
+            ])
+    }
+}

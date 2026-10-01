@@ -1,0 +1,1291 @@
+import Testing
+import Foundation
+import JavaScriptCore
+@testable import AgenticToolkitCore
+@testable import AgenticToolkitMacOS
+
+/// A panel that records instead of rendering.
+///
+/// A double rather than the real `WebviewPanelViewController` on purpose: what
+/// these tests pin is the JavaScript/Swift boundary — what the adaptor reads
+/// out of a call, what it writes into the panel, what it hands back — and a
+/// real `WKWebView` would put a web content process and a navigation on the
+/// other side of every assertion. `ExtensionWebviewPanel` exists to be this
+/// seam; `WebviewPanelViewController` conforming to it is what makes the
+/// double honest.
+@MainActor
+private final class TestWebviewPanel: ExtensionWebviewPanel {
+    let panelID: String
+    var panelTitle: String
+    var html: String = ""
+    var options = WebviewPanelOptions(
+        enableScripts: nil, enableForms: nil, localResourceRoots: nil)
+    var localResourceRoots: [URL]
+    private(set) var state: String?
+
+    var onDidReceiveMessage: ((Any) -> Void)?
+    var onDidDispose: (() -> Void)?
+
+    private(set) var postedMessages: [Any] = []
+    private(set) var revealCalls: [Bool] = []
+    private(set) var disposeCount = 0
+    private(set) var isDisposed = false
+
+    init(
+        panelID: String = "panel-1", title: String = "", roots: [URL] = [],
+        disposed: Bool = false
+    ) {
+        self.panelID = panelID
+        self.panelTitle = title
+        self.localResourceRoots = roots
+        self.isDisposed = disposed
+    }
+
+    @discardableResult
+    func post(message: Any) -> Bool {
+        postedMessages.append(message)
+        return true
+    }
+
+    func reveal(preserveFocus: Bool) {
+        revealCalls.append(preserveFocus)
+    }
+
+    func dispose() {
+        guard disposeCount == 0 else { return }
+        disposeCount += 1
+        isDisposed = true
+        onDidDispose?()
+    }
+}
+
+/// A presenter that hands back a `TestWebviewPanel` and keeps what it was
+/// asked for — or hands back `nil`, which is the "no window open" state.
+@MainActor
+private final class TestWebviewPresenter: ExtensionWebviewPresenting {
+    private(set) var requests: [ExtensionWebviewPanelRequest] = []
+    private(set) var panels: [TestWebviewPanel] = []
+
+    /// When false, `presentWebviewPanel` answers `nil`.
+    var canPresent = true
+
+    func presentWebviewPanel(
+        _ request: ExtensionWebviewPanelRequest
+    ) -> (any ExtensionWebviewPanel)? {
+        requests.append(request)
+        guard canPresent else { return nil }
+        // **The options come across too, because they do in production.**
+        // `PaneWebviewPresenter` hands `request.options` to the view
+        // controller's initializer, so a panel is never in the field without
+        // the options it was created under — and `webview.options`' getter
+        // reads them back off the panel. A double that dropped them made that
+        // getter answer `undefined` for an extension that had declared roots,
+        // which is a defect of the double and not of the adaptor.
+        let panel = TestWebviewPanel(
+            panelID: "panel-\(panels.count + 1)",
+            title: request.title,
+            roots: request.localResourceRoots)
+        panel.options = request.options
+        panels.append(panel)
+        return panel
+    }
+}
+
+@MainActor
+private final class TestWorkspaceRoots: ExtensionWorkspaceRoots {
+    var workspaceDisplayName: String?
+    var workspaceRootURLs: [URL]
+
+    init(_ roots: [URL]) {
+        self.workspaceRootURLs = roots
+    }
+}
+
+/// `vscode.window.createWebviewPanel` and the two objects it hands back, wired
+/// onto a real `ExtensionHost` with a presenter double standing in for a pane
+/// tree — the arrangement `MainThreadLanguageModelsTests` uses for its own
+/// provider, for the same reason.
+@MainActor
+@Suite
+struct MainThreadWebviewsTests {
+
+    // MARK: - Fixtures
+
+    private func makeTempDirectory() throws -> URL {
+        try ExtensionFixtures.makeTemporaryDirectory("MainThreadWebviewsTests")
+    }
+
+    private func install(_ webviews: MainThreadWebviews, on host: ExtensionHost) throws {
+        try host.defineVSCodeMember(
+            namespacePath: "vscode.window", name: "createWebviewPanel",
+            implementation: webviews.createWebviewPanel)
+        try host.defineVSCodeMember(
+            namespacePath: "vscode.window", name: "registerWebviewPanelSerializer",
+            implementation: webviews.registerWebviewPanelSerializer)
+        try host.defineVSCodeMember(
+            namespacePath: "vscode.window", name: "registerWebviewViewProvider",
+            implementation: webviews.registerWebviewViewProvider)
+    }
+
+    /// The whole arrangement in one call, because every test below needs all
+    /// of it: a temporary extension directory, a presenter, a ledger, the
+    /// adaptor, and a host running `source` with the member installed.
+    ///
+    /// The caller disposes the host; the directory is removed by the returned
+    /// `cleanup`.
+    private func makeFixture(
+        source: String,
+        extensionDirectory: URL,
+        workspaceRoots: (any ExtensionWorkspaceRoots)? = nil
+    ) throws -> (
+        host: ExtensionHost,
+        webviews: MainThreadWebviews,
+        presenter: TestWebviewPresenter,
+        ledger: NotImplementedLedger
+    ) {
+        let presenter = TestWebviewPresenter()
+        let ledger = NotImplementedLedger()
+        let webviews = MainThreadWebviews(
+            presenter: presenter,
+            notImplementedLedger: ledger,
+            extensionIdentifier: "acme.alpha",
+            extensionDirectory: extensionDirectory,
+            workspaceRoots: workspaceRoots)
+        let host = try makeHost(source: source, in: extensionDirectory, ledger: ledger)
+        try install(webviews, on: host)
+        return (host, webviews, presenter, ledger)
+    }
+
+    // MARK: - The call itself
+
+    /// The three values an extension writes into the call reach the presenter
+    /// unaltered. The first thing to break if argument order were read wrong,
+    /// and the cheapest thing to be sure of before anything below.
+    @Test
+    func createWebviewPanelHandsTheViewTypeTitleAndPreserveFocusToThePresenter() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                globalThis.__panel = vscode.window.createWebviewPanel(
+                    'markdown.preview', 'Preview', { preserveFocus: true });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let request = try #require(fixture.presenter.requests.first)
+        #expect(fixture.presenter.requests.count == 1)
+        #expect(request.viewType == "markdown.preview")
+        #expect(request.title == "Preview")
+        #expect(request.preserveFocus)
+        #expect(request.extensionIdentifier == "acme.alpha")
+    }
+
+    /// `showOptions` is far more often a bare `ViewColumn` number than an
+    /// object, and a number has no `preserveFocus` — so the absence has to
+    /// read as `false` rather than as a parse failure that loses the call.
+    @Test
+    func createWebviewPanelWithAViewColumnNumberForShowOptionsStillCreatesThePanel() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                globalThis.__panel = vscode.window.createWebviewPanel('t', 'T', 1);
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let request = try #require(fixture.presenter.requests.first)
+        #expect(request.preserveFocus == false)
+    }
+
+    /// A missing view type is a programming error in the extension, and a
+    /// synchronous member's way of saying so is a throw the extension's own
+    /// `try` can catch (`fail-fast`). Nothing must reach the presenter.
+    @Test
+    func createWebviewPanelWithoutAViewTypeStringThrowsAndPresentsNothing() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                try {
+                    vscode.window.createWebviewPanel(42, 'T', {});
+                    globalThis.__outcome = 'returned';
+                } catch (error) {
+                    globalThis.__outcome = 'threw';
+                }
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__outcome")?.toString() == "threw")
+        #expect(fixture.presenter.requests.isEmpty)
+    }
+
+    /// Same rule, one argument along: a panel with no title would show a pane
+    /// with no name, which is worse than a throw the author sees at once.
+    @Test
+    func createWebviewPanelWithoutATitleStringThrowsAndPresentsNothing() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                try {
+                    vscode.window.createWebviewPanel('t');
+                    globalThis.__outcome = 'returned';
+                } catch (error) {
+                    globalThis.__outcome = 'threw';
+                }
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__outcome")?.toString() == "threw")
+        #expect(fixture.presenter.requests.isEmpty)
+    }
+
+    /// No project window open is a real state, not a malformed call — but it
+    /// still cannot answer with a panel object, because every member on one
+    /// would be a lie. The extension gets an exception naming the reason.
+    @Test
+    func createWebviewPanelWithNowhereToPutThePanelThrows() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let presenter = TestWebviewPresenter()
+        presenter.canPresent = false
+        let webviews = MainThreadWebviews(
+            presenter: presenter,
+            notImplementedLedger: NotImplementedLedger(),
+            extensionIdentifier: "acme.alpha",
+            extensionDirectory: directory,
+            workspaceRoots: nil)
+        let host = try makeHost(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                try {
+                    vscode.window.createWebviewPanel('t', 'T', {});
+                    globalThis.__outcome = 'returned';
+                } catch (error) {
+                    globalThis.__outcome = 'threw';
+                }
+            };
+            """,
+            in: directory)
+        defer { host.dispose() }
+        try install(webviews, on: host)
+        try await host.activate()
+
+        let context = try #require(host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__outcome")?.toString() == "threw")
+        #expect(presenter.requests.count == 1)
+    }
+
+    // MARK: - The resource roots
+
+    /// Nothing declared takes upstream's default: the extension's own
+    /// directory plus every open workspace folder. The presenter must be
+    /// handed the *resolved* list — resolving it needs the extension's
+    /// install path, which nothing downstream of here knows.
+    @Test
+    func createWebviewPanelWithNoDeclaredRootsResolvesToTheExtensionDirectoryAndWorkspace() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let workspace = URL(fileURLWithPath: "/tmp/mtw-workspace", isDirectory: true)
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.createWebviewPanel('t', 'T', {}, { enableScripts: true });
+            };
+            """,
+            extensionDirectory: directory,
+            workspaceRoots: TestWorkspaceRoots([workspace]))
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let request = try #require(fixture.presenter.requests.first)
+        #expect(request.localResourceRoots.contains(directory))
+        #expect(request.localResourceRoots.contains(workspace))
+        #expect(request.options.enableScripts)
+    }
+
+    /// An explicitly empty `localResourceRoots` is a panel renouncing file
+    /// access, and honouring it as written is the difference between a
+    /// sandbox and a suggestion. The empty array must not fall through to the
+    /// default the test above pins.
+    @Test
+    func createWebviewPanelWithAnEmptyLocalResourceRootsArrayGrantsNothing() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let workspace = URL(fileURLWithPath: "/tmp/mtw-workspace", isDirectory: true)
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.createWebviewPanel(
+                    't', 'T', {}, { localResourceRoots: [] });
+            };
+            """,
+            extensionDirectory: directory,
+            workspaceRoots: TestWorkspaceRoots([workspace]))
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let request = try #require(fixture.presenter.requests.first)
+        #expect(request.localResourceRoots.isEmpty)
+    }
+
+    /// A declared list is used as declared — and the `Uri` objects in it have
+    /// to survive the crossing, which is the half a plain array copy would
+    /// silently get wrong.
+    @Test
+    func createWebviewPanelWithDeclaredRootsPassesThemThrough() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.createWebviewPanel('t', 'T', {}, {
+                    localResourceRoots: [vscode.Uri.file('/tmp/mtw-media')]
+                });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let request = try #require(fixture.presenter.requests.first)
+        #expect(request.localResourceRoots.map(\.path) == ["/tmp/mtw-media"])
+    }
+
+    // MARK: - The panel object
+
+    /// `panel.title = …` has to reach the panel — it is what the pane's tab
+    /// shows — and reading it back has to answer the panel, not a copy the
+    /// adaptor kept.
+    @Test
+    func panelTitleIsAnAccessorPairOverThePanel() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                var panel = vscode.window.createWebviewPanel('t', 'First', {});
+                globalThis.__before = panel.title;
+                panel.title = 'Second';
+                globalThis.__after = panel.title;
+                globalThis.__viewType = panel.viewType;
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        let panel = try #require(fixture.presenter.panels.first)
+        #expect(context.evaluateScript("globalThis.__before")?.toString() == "First")
+        #expect(context.evaluateScript("globalThis.__after")?.toString() == "Second")
+        #expect(context.evaluateScript("globalThis.__viewType")?.toString() == "t")
+        #expect(panel.panelTitle == "Second")
+    }
+
+    /// `reveal(viewColumn, preserveFocus)` reads its *second* argument, and a
+    /// caller that omits the column passes `undefined` in its place rather
+    /// than shifting the list. Reading the first would make every reveal
+    /// preserve focus or none of them.
+    @Test
+    func panelRevealPassesItsSecondArgumentAsPreserveFocus() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                var panel = vscode.window.createWebviewPanel('t', 'T', {});
+                panel.reveal(undefined, true);
+                panel.reveal();
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let panel = try #require(fixture.presenter.panels.first)
+        #expect(panel.revealCalls == [true, false])
+    }
+
+    /// `panel.dispose()` runs the panel's own teardown — the same path the
+    /// user closing the pane takes — so there is one way a panel goes away.
+    @Test
+    func panelDisposeDisposesThePanel() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                globalThis.__panel = vscode.window.createWebviewPanel('t', 'T', {});
+                globalThis.__panel.dispose();
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let panel = try #require(fixture.presenter.panels.first)
+        #expect(panel.disposeCount == 1)
+    }
+
+    /// The extension's `onDidDispose` listener has to run when the panel goes
+    /// — including when the *user* closed the pane, which is the case an
+    /// adaptor that only fired from its own `dispose` member would miss.
+    @Test
+    func panelOnDidDisposeFiresWhenThePanelIsClosedFromOutsideJavaScript() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                globalThis.__disposed = 0;
+                var panel = vscode.window.createWebviewPanel('t', 'T', {});
+                panel.onDidDispose(function () { globalThis.__disposed += 1; });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let panel = try #require(fixture.presenter.panels.first)
+        panel.dispose()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__disposed")?.toInt32() == 1)
+    }
+
+    // MARK: - The webview object
+
+    /// The page's own CSP names where its resources come from, and a wrong
+    /// `cspSource` blocks every one of them with a console message that
+    /// blames the page. Scheme and authority, no trailing path.
+    @Test
+    func webviewCspSourceIsTheSchemeAndThePanelIdentifier() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                var panel = vscode.window.createWebviewPanel('t', 'T', {});
+                globalThis.__csp = panel.webview.cspSource;
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        let panel = try #require(fixture.presenter.panels.first)
+        #expect(
+            context.evaluateScript("globalThis.__csp")?.toString()
+                == "\(WebviewResourceURL.scheme)://\(panel.panelID)")
+    }
+
+    /// `panel.webview.html = …` is how every webview extension puts its page
+    /// on screen; it has to reach the panel through the freshly built wrapper
+    /// rather than landing on a JavaScript object nobody reads.
+    @Test
+    func webviewHtmlAssignmentReachesThePanelThroughAFreshWrapper() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                var panel = vscode.window.createWebviewPanel('t', 'T', {});
+                panel.webview.html = '<h1>hi</h1>';
+                globalThis.__readBack = panel.webview.html;
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        let panel = try #require(fixture.presenter.panels.first)
+        #expect(panel.html == "<h1>hi</h1>")
+        // Read back through a *second* wrapper — the getter builds one per
+        // access — which is the point: the state lives on the panel, so two
+        // wrappers answer the same thing.
+        #expect(context.evaluateScript("globalThis.__readBack")?.toString() == "<h1>hi</h1>")
+    }
+
+    /// `asWebviewUri` is what an extension runs every file path through before
+    /// putting it in its HTML. Naming a file is not permission to read it —
+    /// the scheme handler decides that — so this maps unconditionally.
+    @Test
+    func webviewAsWebviewUriRewritesAFileUriIntoTheWebviewScheme() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                var panel = vscode.window.createWebviewPanel('t', 'T', {});
+                globalThis.__uri = panel.webview
+                    .asWebviewUri(vscode.Uri.file('/tmp/mtw-media/app.css')).toString();
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        let panel = try #require(fixture.presenter.panels.first)
+        let expected = WebviewResourceURL.url(
+            forFile: URL(fileURLWithPath: "/tmp/mtw-media/app.css"), panelID: panel.panelID)
+        #expect(context.evaluateScript("globalThis.__uri")?.toString() == expected.absoluteString)
+    }
+
+    /// `postMessage` is the extension half of the request/response every
+    /// webview extension builds on. It delivers to the page and answers a
+    /// promise resolving `true`.
+    @Test
+    func webviewPostMessageDeliversToThePanelAndResolvesTrue() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                var panel = vscode.window.createWebviewPanel('t', 'T', {});
+                panel.webview.postMessage({ kind: 'update' }).then(function (ok) {
+                    globalThis.__posted = ok ? 'true' : 'false';
+                });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let panel = try #require(fixture.presenter.panels.first)
+        #expect(panel.postedMessages.count == 1)
+        let message = try #require(panel.postedMessages.first as? [String: Any])
+        #expect(message["kind"] as? String == "update")
+
+        let context = try #require(fixture.host.javaScriptContext)
+        let posted = try #require(await waitForGlobal(context, "globalThis.__posted"))
+        #expect(posted.toString() == "true")
+    }
+
+    /// Posting to a panel that is gone resolves `false` rather than rejecting
+    /// — upstream's own answer, and the one that does not turn a late reply
+    /// into an unhandled rejection in an extension that never expected one.
+    @Test
+    func webviewPostMessageAfterDisposalResolvesFalse() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                globalThis.__webview = vscode.window
+                    .createWebviewPanel('t', 'T', {}).webview;
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let panel = try #require(fixture.presenter.panels.first)
+        panel.dispose()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        context.evaluateScript("""
+            globalThis.__webview.postMessage({}).then(function (ok) {
+                globalThis.__posted = ok ? 'true' : 'false';
+            });
+            """)
+        let posted = try #require(await waitForGlobal(context, "globalThis.__posted"))
+        #expect(posted.toString() == "false")
+        #expect(panel.postedMessages.isEmpty)
+    }
+
+    /// A message from the page reaches the extension **in the same turn** the
+    /// page sent it. That synchrony is what `postMessage`-based request and
+    /// response between an extension and its page assumes, and it is the whole
+    /// reason `ExtensionEventImmediateWindow` exists rather than the timer
+    /// window every other emitter uses.
+    @Test
+    func webviewOnDidReceiveMessageDeliversSynchronously() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                globalThis.__received = [];
+                var panel = vscode.window.createWebviewPanel('t', 'T', {});
+                panel.webview.onDidReceiveMessage(function (message) {
+                    globalThis.__received.push(message.kind);
+                });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let panel = try #require(fixture.presenter.panels.first)
+        panel.onDidReceiveMessage?(["kind": "ready"])
+
+        // No polling: an `await` here would hide exactly the defect this test
+        // is for.
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__received.join(',')")?.toString() == "ready")
+    }
+
+    /// A listener registered before disposal must not run afterwards — the
+    /// registry entry going away is what makes every block on the panel's
+    /// JavaScript surface inert, and this is the observable consequence.
+    @Test
+    func webviewOnDidReceiveMessageIsSilentAfterDisposal() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                globalThis.__received = 0;
+                var panel = vscode.window.createWebviewPanel('t', 'T', {});
+                panel.webview.onDidReceiveMessage(function () { globalThis.__received += 1; });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let panel = try #require(fixture.presenter.panels.first)
+        let deliver = try #require(panel.onDidReceiveMessage)
+        deliver(["kind": "first"])
+        panel.dispose()
+        deliver(["kind": "second"])
+
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__received")?.toInt32() == 1)
+    }
+
+    // MARK: - Reading the options back
+
+    /// `webview.options` is settable, and the ordinary way to turn one field on
+    /// is to read the whole object, change a field and write it back. So what
+    /// the getter answers is what the setter will be handed — and answering the
+    /// *resolved* roots would turn defaults this host derived into an explicit
+    /// declaration the extension never made. The extension directory and the
+    /// open folders would be frozen in, and a folder opened afterwards would
+    /// stop reaching the page.
+    @Test
+    func readingOptionsBackAndWritingThemDoesNotFreezeTheDefaultRoots() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let workspace = URL(fileURLWithPath: "/tmp/mtw-workspace", isDirectory: true)
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                var panel = vscode.window.createWebviewPanel('t', 'T', {}, {});
+                var o = panel.webview.options;
+                globalThis.__declaredRoots = o.localResourceRoots;
+                o.enableScripts = true;
+                panel.webview.options = o;
+            };
+            """,
+            extensionDirectory: directory,
+            workspaceRoots: TestWorkspaceRoots([workspace]))
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        // Undefined, as upstream's optional field is until an extension sets
+        // it — not a list of roots the extension did not ask for.
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__declaredRoots")?.isUndefined == true)
+
+        // And the round trip left the panel with the defaults it started with.
+        let panel = try #require(fixture.presenter.panels.first)
+        #expect(panel.localResourceRoots.contains(directory))
+        #expect(panel.localResourceRoots.contains(workspace))
+        #expect(panel.options.enableScripts == true)
+    }
+
+    /// The converse: what the extension *did* declare comes back, as `Uri`
+    /// objects, so the read-modify-write above preserves an explicit list
+    /// rather than dropping it.
+    @Test
+    func readingOptionsBackAnswersTheRootsTheExtensionDeclared() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                var panel = vscode.window.createWebviewPanel('t', 'T', {}, {
+                    localResourceRoots: [vscode.Uri.file('/tmp/mtw-media')]
+                });
+                var o = panel.webview.options;
+                globalThis.__paths = o.localResourceRoots.map(function (u) { return u.fsPath; });
+                panel.webview.options = o;
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__paths")?.toArray() as? [String]
+            == ["/tmp/mtw-media"])
+        let panel = try #require(fixture.presenter.panels.first)
+        #expect(panel.localResourceRoots.map(\.path) == ["/tmp/mtw-media"])
+    }
+
+    /// And the renouncing panel, which is the one a "missing means default"
+    /// getter would silently re-grant: an explicitly empty list read back and
+    /// written back stays empty.
+    @Test
+    func readingOptionsBackKeepsAnExplicitlyEmptyRootListEmpty() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                var panel = vscode.window.createWebviewPanel('t', 'T', {}, {
+                    localResourceRoots: []
+                });
+                var o = panel.webview.options;
+                globalThis.__count = o.localResourceRoots.length;
+                panel.webview.options = o;
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__count")?.toInt32() == 0)
+        let panel = try #require(fixture.presenter.panels.first)
+        #expect(panel.localResourceRoots.isEmpty)
+    }
+
+    // MARK: - The ledger
+
+    /// Three shapes this host takes only part of, each recorded so the
+    /// extension report can name what an extension is quietly missing —
+    /// `vscode.StatusBarItem.tooltip: MarkdownString`'s precedent.
+    @Test
+    func optionsAndMembersThisHostDoesNotHonourAreRecordedInTheLedger() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                var panel = vscode.window.createWebviewPanel('t', 'T', {}, {
+                    enableCommandUris: true,
+                    portMapping: [{ webviewPort: 3000, extensionHostPort: 3000 }]
+                });
+                panel.iconPath = vscode.Uri.file('/tmp/mtw-icon.png');
+                panel.onDidChangeViewState(function () {});
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let paths = Set(fixture.ledger.accesses(for: "acme.alpha").map(\.memberPath))
+        #expect(paths.contains("vscode.WebviewOptions.enableCommandUris"))
+        #expect(paths.contains("vscode.WebviewOptions.portMapping"))
+        #expect(paths.contains("vscode.WebviewPanel.iconPath"))
+        #expect(paths.contains("vscode.WebviewPanel.onDidChangeViewState"))
+    }
+
+    /// An option the extension explicitly declined is not a reach for
+    /// something missing. Recording it would tell a user their extension wants
+    /// a capability it went out of its way to turn off.
+    @Test
+    func anExplicitlyFalseEnableCommandUrisRecordsNothing() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.createWebviewPanel('t', 'T', {}, {
+                    enableCommandUris: false, portMapping: []
+                });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        #expect(fixture.ledger.accesses(for: "acme.alpha").isEmpty)
+    }
+
+    // MARK: - Teardown
+
+    /// A webview holds a whole web content process, so an extension's panels
+    /// cannot outlive its host by waiting for the last reference to drop.
+    @Test
+    func disposingTheAdaptorDisposesEveryLivePanel() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.createWebviewPanel('a', 'A', {});
+                vscode.window.createWebviewPanel('b', 'B', {});
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+        #expect(fixture.presenter.panels.count == 2)
+
+        fixture.webviews.dispose()
+
+        #expect(fixture.presenter.panels.allSatisfy { $0.disposeCount == 1 })
+    }
+
+    /// After teardown the member raises rather than presenting a panel into a
+    /// host that is gone — `.raisedException`, because `createWebviewPanel`
+    /// is synchronous and a rejected promise would be a thenable nothing
+    /// awaits.
+    @Test
+    func createWebviewPanelAfterDisposalThrowsAndPresentsNothing() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                globalThis.__create = function () {
+                    try {
+                        vscode.window.createWebviewPanel('t', 'T', {});
+                        return 'returned';
+                    } catch (error) {
+                        return 'threw';
+                    }
+                };
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        fixture.webviews.dispose()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__create()")?.toString() == "threw")
+        #expect(fixture.presenter.requests.isEmpty)
+    }
+
+    // MARK: - registerWebviewPanelSerializer
+
+    @Test
+    func registerWebviewPanelSerializerClaimsItsViewTypeAndOnlyThatOne() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.registerWebviewPanelSerializer('markdown.preview', {
+                    deserializeWebviewPanel: function () {}
+                });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        #expect(fixture.webviews.hasSerializer(for: "markdown.preview"))
+        #expect(!fixture.webviews.hasSerializer(for: "markdown.other"))
+    }
+
+    /// The registration is a `Disposable`, and disposing it has to actually
+    /// give the view type up — an extension that deactivates and comes back
+    /// must not leave a serializer behind that nothing can call.
+    @Test
+    func disposingTheRegistrationGivesTheViewTypeUp() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                globalThis.__registration = vscode.window.registerWebviewPanelSerializer(
+                    'markdown.preview', { deserializeWebviewPanel: function () {} });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+        #expect(fixture.webviews.hasSerializer(for: "markdown.preview"))
+
+        let context = try #require(fixture.host.javaScriptContext)
+        context.evaluateScript("globalThis.__registration.dispose()")
+
+        #expect(!fixture.webviews.hasSerializer(for: "markdown.preview"))
+    }
+
+    /// A serializer that is not an object with a `deserializeWebviewPanel`
+    /// function is an extension bug, and one whose whole symptom is a panel
+    /// that silently never comes back. Raising names it at the call
+    /// (`fail-fast`).
+    @Test(
+        "a registration this host cannot call back is refused at the call",
+        arguments: [
+            "vscode.window.registerWebviewPanelSerializer(1, { deserializeWebviewPanel: function () {} })",
+            "vscode.window.registerWebviewPanelSerializer('t')",
+            "vscode.window.registerWebviewPanelSerializer('t', {})",
+            "vscode.window.registerWebviewPanelSerializer('t', { deserializeWebviewPanel: 7 })"
+        ]
+    )
+    func aMalformedRegistrationIsRefused(_ call: String) async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                globalThis.__register = function (call) {
+                    try {
+                        call();
+                        return 'returned';
+                    } catch (error) {
+                        return 'threw';
+                    }
+                };
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        let outcome = context.evaluateScript("globalThis.__register(function () { \(call); })")
+
+        #expect(outcome?.toString() == "threw")
+        #expect(!fixture.webviews.hasSerializer(for: "t"))
+    }
+
+    // MARK: - restore
+
+    /// The whole point of the registration: a panel rebuilt from pane state is
+    /// handed back to the extension, as a `vscode.WebviewPanel` object with the
+    /// state it saved beside it.
+    @Test
+    func restoreCallsTheSerializerWithAPanelObjectAndTheSavedState() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.registerWebviewPanelSerializer('markdown.preview', {
+                    deserializeWebviewPanel: function (panel, state) {
+                        globalThis.__seenScrollTop = state.scrollTop;
+                        globalThis.__seenViewType = panel.viewType;
+                        panel.webview.html = '<p>restored</p>';
+                    }
+                });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let panel = TestWebviewPanel(panelID: "restored-1", title: "Preview")
+        let restored = fixture.webviews.restore(
+            panel, viewType: "markdown.preview", state: #"{"scrollTop":420}"#)
+
+        #expect(restored)
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__seenScrollTop")?.toInt32() == 420)
+        #expect(context.evaluateScript("globalThis.__seenViewType")?.toString() == "markdown.preview")
+        #expect(panel.html == "<p>restored</p>")
+    }
+
+    /// `getState()` on a page that never called `setState` must read
+    /// `undefined`, which is how an extension tells a first run from a
+    /// restore. A panel restored with no state has to arrive the same way —
+    /// `null` would read as "the extension saved null".
+    @Test
+    func aPanelWithNoSavedStateIsDeserializedWithUndefined() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.registerWebviewPanelSerializer('markdown.preview', {
+                    deserializeWebviewPanel: function (panel, state) {
+                        globalThis.__stateType = (state === undefined) ? 'undefined'
+                            : (state === null) ? 'null' : typeof state;
+                    }
+                });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        _ = fixture.webviews.restore(
+            TestWebviewPanel(panelID: "restored-1"), viewType: "markdown.preview", state: nil)
+
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__stateType")?.toString() == "undefined")
+    }
+
+    /// A restored panel is a live panel: its messages and its disposal have to
+    /// reach the extension exactly as a created one's do, or an extension that
+    /// deserialized a panel finds it inert.
+    @Test
+    func aRestoredPanelIsWiredForMessagesAndDisposal() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.registerWebviewPanelSerializer('markdown.preview', {
+                    deserializeWebviewPanel: function (panel) {
+                        panel.webview.onDidReceiveMessage(function (message) {
+                            globalThis.__received = message.ping;
+                        });
+                        panel.onDidDispose(function () { globalThis.__disposed = true; });
+                    }
+                });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let panel = TestWebviewPanel(panelID: "restored-1")
+        _ = fixture.webviews.restore(panel, viewType: "markdown.preview", state: nil)
+        panel.onDidReceiveMessage?(["ping": "pong"])
+        panel.dispose()
+
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__received")?.toString() == "pong")
+        #expect(context.evaluateScript("globalThis.__disposed")?.toBool() == true)
+    }
+
+    @Test
+    func restoringAViewTypeNobodyRegisteredIsRefused() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {};
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        #expect(!fixture.webviews.restore(
+            TestWebviewPanel(panelID: "restored-1"), viewType: "markdown.preview", state: nil))
+    }
+
+    // MARK: - A pane that closed first
+
+    /// Both hand-overs are asked for *after* waking the extension up, and
+    /// waking it up is slow: it reads its own files, runs its `activate`, and
+    /// only then is there a serializer to call. The user can close the tab in
+    /// that window, and closing it disposes the panel — so what arrives here is
+    /// a dead panel that still looks like a panel.
+    ///
+    /// Adopting it is the leak. `onDidDispose` has already fired, so the
+    /// callback the adoption wires can never fire again: the model, the
+    /// panel, its page and the JavaScript object the extension is holding stay
+    /// alive until the whole extension is unloaded, and the extension goes on
+    /// believing it has a panel to post messages to.
+    @Test
+    func restoringAPanelThatWasAlreadyClosedIsRefused() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.registerWebviewPanelSerializer('markdown.preview', {
+                    deserializeWebviewPanel: function () { globalThis.__deserialized = true; }
+                });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let closed = TestWebviewPanel(panelID: "restored-1", disposed: true)
+        let restored = fixture.webviews.restore(
+            closed, viewType: "markdown.preview", state: nil)
+
+        #expect(!restored)
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__deserialized")?.isUndefined == true)
+        // Not adopted: nothing was wired to a panel that is already gone.
+        #expect(closed.onDidDispose == nil)
+        #expect(closed.onDidReceiveMessage == nil)
+    }
+
+    /// The same race on the other hand-over. A contributed view is resolved
+    /// when its pane first appears, which is also when its extension is woken;
+    /// a user who closes the sidebar in between lands here.
+    @Test
+    func resolvingAContributedViewWhosePaneClosedIsRefused() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.registerWebviewViewProvider('acme.explorer', {
+                    resolveWebviewView: function () { globalThis.__resolved = true; }
+                });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let closed = TestWebviewPanel(panelID: "view-1", disposed: true)
+        let resolved = fixture.webviews.resolveWebviewView(closed, viewID: "acme.explorer")
+
+        #expect(!resolved)
+        let context = try #require(fixture.host.javaScriptContext)
+        #expect(context.evaluateScript("globalThis.__resolved")?.isUndefined == true)
+        #expect(closed.onDidDispose == nil)
+    }
+
+    /// And the converse, which is what keeps the guard from being "refuse
+    /// everything": a live panel is resolved and wired exactly as before.
+    @Test
+    func resolvingAContributedViewHandsOverTheLivePanel() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.registerWebviewViewProvider('acme.explorer', {
+                    resolveWebviewView: function (view) {
+                        view.webview.html = '<p>sidebar</p>';
+                    }
+                });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let panel = TestWebviewPanel(panelID: "view-1")
+        let resolved = fixture.webviews.resolveWebviewView(panel, viewID: "acme.explorer")
+
+        #expect(resolved)
+        #expect(panel.html == "<p>sidebar</p>")
+    }
+
+    /// Disposing the adaptor drops every registration with it — the context
+    /// those serializer objects live in is going away, and a call into it
+    /// afterwards is a call into a torn-down host.
+    @Test
+    func disposingTheAdaptorDropsEverySerializer() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let fixture = try makeFixture(
+            source: """
+            var vscode = require('vscode');
+            exports.activate = function () {
+                vscode.window.registerWebviewPanelSerializer('markdown.preview', {
+                    deserializeWebviewPanel: function () {}
+                });
+            };
+            """,
+            extensionDirectory: directory)
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        fixture.webviews.dispose()
+
+        #expect(!fixture.webviews.hasSerializer(for: "markdown.preview"))
+        #expect(!fixture.webviews.restore(
+            TestWebviewPanel(panelID: "restored-1"), viewType: "markdown.preview", state: nil))
+    }
+
+    /// The roots a restored panel is built with come from here, because only
+    /// this adaptor knows the extension's directory. Declared-empty must stay
+    /// empty: a panel that renounced file access must not get it back by being
+    /// restored.
+    @Test
+    func resourceRootsResolveAgainstTheExtensionDirectoryAndTheWorkspace() async throws {
+        let directory = try makeTempDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let workspace = URL(fileURLWithPath: "/Users/someone/Development/whippet")
+        let fixture = try makeFixture(
+            source: "exports.activate = function () {};",
+            extensionDirectory: directory,
+            workspaceRoots: TestWorkspaceRoots([workspace]))
+        defer { fixture.host.dispose() }
+        try await fixture.host.activate()
+
+        let undeclared = fixture.webviews.resourceRoots(
+            for: WebviewPanelOptions(
+                enableScripts: nil, enableForms: nil, localResourceRoots: nil))
+        let renounced = fixture.webviews.resourceRoots(
+            for: WebviewPanelOptions(
+                enableScripts: nil, enableForms: nil, localResourceRoots: []))
+
+        #expect(undeclared.map(\.path) == [directory.path, workspace.path])
+        #expect(renounced.isEmpty)
+    }
+
+    // MARK: - Helpers
+
+    /// Polls until `expression` is neither `null` nor `undefined`, for the
+    /// promise-settling assertions above — a `.then()` reaction is a
+    /// microtask, never invoked synchronously however settled the promise
+    /// already is. The same helper `MainThreadLanguageModelsTests` carries.
+    private func waitForGlobal(_ context: JSContext, _ expression: String) async throws -> JSValue? {
+        for _ in 0..<200 {
+            if let value = context.evaluateScript(expression), !value.isNull, !value.isUndefined {
+                return value
+            }
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        return nil
+    }
+}

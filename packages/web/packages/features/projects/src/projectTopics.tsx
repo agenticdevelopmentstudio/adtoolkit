@@ -1,0 +1,296 @@
+"use client";
+
+import { type ReactNode } from "react";
+import {
+  Activity,
+  CalendarRange,
+  FileStack,
+  Flag,
+  FolderKanban,
+  Inbox,
+  KeyRound,
+  Layers,
+  ListTodo,
+  Shapes,
+} from "lucide-react";
+import { ItemAccessPanel, workspaceSubjectsDirectory } from "@agentic-toolkit/teams";
+import type { TopicLeaf } from "@agentic-toolkit/resource";
+import { ProjectOverviewPane } from "./ProjectOverviewPane";
+import { WorkItemsSurface } from "./WorkItemsSurface";
+import { TriagePane } from "./TriagePane";
+import { MilestonesPane } from "./MilestonesPane";
+import { IterationsPane } from "./IterationsPane";
+import { ProgramsPane } from "./ProgramsPane";
+import { TemplatesPane } from "./TemplatesPane";
+import { ProjectContentsPane } from "./ProjectContentsPane";
+import { ProjectActivityPane } from "./ProjectActivityPane";
+import { DEFAULT_ITEM_WORDS, type ItemWords } from "./vocabulary";
+
+/**
+ * WHAT A PROJECT IS MADE OF — the one declaration of its topic set.
+ *
+ * Two surfaces publish a project's topics: {@link ProjectsFeature}, where a project is the
+ * selected entity in its own explorer, and {@link SubjectProjectPane}, where a product's or
+ * persona's auto-provisioned project is one member of a bigger stack. They render the SAME
+ * panes in the same order, but through two different rail shapes — `ResourceTopic`, whose
+ * render is handed `(projectId, titleFor, leaf)`, and `GroupTopicItem`, whose render is handed
+ * only a sub-leaf. That shape difference is why the list was written twice, and it is a bad
+ * reason: the duplicated knowledge is not the rail shape, it is WHICH TOPICS A PROJECT HAS.
+ * Split across two files, adding one means editing both, and forgetting the second is invisible
+ * — the surface that missed it just quietly lacks a topic nobody notices until someone
+ * navigates to a project through the other door and sees a tab that isn't there.
+ *
+ * So the topics are declared once, shape-free: each takes one context object carrying
+ * everything either surface can supply, and each surface adapts the list to its own rail. A
+ * new topic is one entry here and appears in both.
+ */
+
+/** Everything a project topic's pane can need, whoever is hosting it. A field is optional
+ *  exactly when one of the two surfaces genuinely cannot supply it (the embedded pane has no
+ *  URL to cede, and no ownership-transfer UI of its own) — never as a convenience. */
+export interface ProjectTopicContext {
+  projectId: string;
+  /** The pane's heading. The explorer builds a breadcrumbed one via `titleFor`; the embedded
+   *  stack uses the plain label, because the stack already shows the project's name above. */
+  title: string;
+  /** The topic's deep-linkable inner selection (Work Items' view switcher). The explorer cedes
+   *  a URL segment; the embedded pane passes a local state pair, so the switcher still works
+   *  where the host's URL grammar has already run out. */
+  leaf: TopicLeaf;
+  /** The owning workspace. Its ABSENCE removes the Access topic (see {@link projectTopics}) —
+   *  a pane that resolves subjects in a workspace cannot render without one. */
+  workspaceSlug?: string;
+  /** The project's own name, for panes that label the item they act on. */
+  projectName?: string;
+  /** Host-injected Transfer Ownership section, forwarded to Overview. The embedded surface
+   *  supplies none: transferring a product's provisioned project is not that pane's business. */
+  renderTransferOwnership?: (project: { id: string; name: string }) => ReactNode;
+}
+
+/** A topic, independent of the rail that will show it. The fields are the intersection of what
+ *  `ResourceTopic` and `GroupTopicItem` each need, so both adapters are a spread plus a render
+ *  wrapper rather than a translation. */
+export interface ProjectTopicDef {
+  id: string;
+  label: string;
+  icon: ReactNode;
+  /** What this topic is for. Carried on the row and rendered NOWHERE by either rail: it fed the
+   *  card grid a level could once opt into for its unselected frontier, and that opt-in is gone
+   *  (docs/ui/fleet-ui-audit.md §1.5 — the unselected frontier is the select nudge and nothing
+   *  else). Neither rail ever set that opt-in anyway. To explain a LIST, set the level's
+   *  `overviewHelp`, which is the copy the nudge renders. */
+  description: string;
+  /** Forwarded verbatim to either rail: `"list"` for a topic whose pane publishes a deeper
+   *  rail, so choosing it is an intermediate select rather than the final one. */
+  leadsTo?: "list" | "detail";
+  render: (ctx: ProjectTopicContext) => ReactNode;
+}
+
+const OVERVIEW: ProjectTopicDef = {
+  id: "overview",
+  label: "Overview",
+  icon: <FolderKanban size={16} aria-hidden />,
+  description:
+    "The project's own record — name, status, color, participants, health, and the plan.",
+  render: (ctx) => (
+    <ProjectOverviewPane
+      projectId={ctx.projectId}
+      title={ctx.title}
+      workspaceSlug={ctx.workspaceSlug}
+      renderTransferOwnership={ctx.renderTransferOwnership}
+    />
+  ),
+};
+
+/**
+ * The two topics that NAME the cards, so both are built from the board's own word rather than
+ * declared flat like their neighbours.
+ *
+ * The rail row is the loudest place that word appears — a board that renamed its items and still
+ * read "Work Items" here would have renamed nothing anyone looks at. The `id` never moves: it is
+ * the URL segment, and a link into a board must not stop resolving because someone changed a
+ * label. The rest of the topics name the project's own parts (Milestones, Programs, Contents),
+ * which the rename does not touch.
+ */
+function workItemsTopic(words: ItemWords): ProjectTopicDef {
+  return {
+    id: "work-items",
+    label: words.manyTitle,
+    icon: <ListTodo size={16} aria-hidden />,
+    description: "The work — list, board, table, timeline, and calendar views.",
+    render: (ctx) => (
+      <WorkItemsSurface
+        projectId={ctx.projectId}
+        title={ctx.title}
+        leaf={ctx.leaf}
+        workspaceSlug={ctx.workspaceSlug}
+      />
+    ),
+  };
+}
+
+function triageTopic(words: ItemWords): ProjectTopicDef {
+  return {
+    id: "triage",
+    label: "Triage",
+    icon: <Inbox size={16} aria-hidden />,
+    description: `The inbox — ${words.many} filed into this project that nobody has accepted onto the board yet.`,
+    // No `leadsTo` — deliberately, and the same as Milestones / Iterations / Programs, every one of
+    // which also publishes a deeper rail level. Declaring `"list"` on this one alone would make
+    // Triage the only topic that HOLDS the previous pane until a card is picked, and a single row
+    // that navigates differently from its four neighbours reads as a bug whichever behaviour is
+    // right. If the run wants the cascading hold, it wants it together.
+    render: (ctx) => (
+      <TriagePane
+        projectId={ctx.projectId}
+        title={ctx.title}
+        leaf={ctx.leaf}
+        workspaceSlug={ctx.workspaceSlug}
+      />
+    ),
+  };
+}
+
+/** Milestones keeps its own LABEL — a point in a plan is not one of the board's cards — but its
+ *  pane names the cards that count toward each point, so it takes the word. */
+function milestonesTopic(words: ItemWords): ProjectTopicDef {
+  return {
+    id: "milestones",
+    label: "Milestones",
+    icon: <Flag size={16} aria-hidden />,
+    description: "The plan — the points this project is aimed at, and what counts toward each.",
+    render: (ctx) => (
+      <MilestonesPane projectId={ctx.projectId} title={ctx.title} leaf={ctx.leaf} words={words} />
+    ),
+  };
+}
+
+const ITERATIONS: ProjectTopicDef = {
+  id: "iterations",
+  label: "Iterations",
+  icon: <CalendarRange size={16} aria-hidden />,
+  description: "The time-boxes the workspace runs its work in — sprints and cycles.",
+  render: (ctx) => (
+    <IterationsPane title={ctx.title} leaf={ctx.leaf} workspaceSlug={ctx.workspaceSlug} />
+  ),
+};
+
+const PROGRAMS: ProjectTopicDef = {
+  id: "programs",
+  label: "Programs",
+  icon: <Layers size={16} aria-hidden />,
+  description: "The roll-ups above the boards — several projects read as one initiative.",
+  render: (ctx) => (
+    <ProgramsPane title={ctx.title} leaf={ctx.leaf} workspaceSlug={ctx.workspaceSlug} />
+  ),
+};
+
+const TEMPLATES: ProjectTopicDef = {
+  id: "templates",
+  label: "Templates",
+  // NOT `FileStack` — that is Contents' icon, and two rail rows sharing a glyph is exactly the
+  // collision the collapsed icon-only strip cannot recover from: with the labels hidden, the two
+  // rows become indistinguishable. A shape is what a template is.
+  icon: <Shapes size={16} aria-hidden />,
+  description:
+    "The shapes this workspace stamps out repeatedly — a card and its checklist, or a whole board.",
+  render: (ctx) => (
+    <TemplatesPane title={ctx.title} leaf={ctx.leaf} workspaceSlug={ctx.workspaceSlug} />
+  ),
+};
+
+const CONTENTS: ProjectTopicDef = {
+  id: "contents",
+  label: "Contents",
+  icon: <FileStack size={16} aria-hidden />,
+  description: "The material — documents and links this project works from and has produced.",
+  render: (ctx) => <ProjectContentsPane projectId={ctx.projectId} title={ctx.title} />,
+};
+
+/** The trail's rows are SENTENCES about the cards ("created a story"), which is why the audit
+ *  topic takes the word even though its own label never does. */
+function activityTopic(words: ItemWords): ProjectTopicDef {
+  return {
+    id: "activity",
+    label: "Activity",
+    icon: <Activity size={16} aria-hidden />,
+    description: "The audit trail — everything that happened in this project.",
+    render: (ctx) => (
+      <ProjectActivityPane projectId={ctx.projectId} title={ctx.title} words={words} />
+    ),
+  };
+}
+
+const ACCESS: ProjectTopicDef = {
+  id: "access",
+  label: "Access",
+  icon: <KeyRound size={16} aria-hidden />,
+  description: "Who can see and change this project.",
+  // The per-item share panel (docs/workspace-roles-permissions.md): restriction mode +
+  // item-scoped role assignments + the effective-permission explainer. `projectTopics` only
+  // includes this topic when a workspace is known, so the guard is belt-and-braces rather than
+  // a real branch — but it keeps the context ONE shape for every topic.
+  render: (ctx) =>
+    ctx.workspaceSlug ? (
+      <ItemAccessPanel
+        workspaceSlug={ctx.workspaceSlug}
+        feature="projects"
+        itemId={ctx.projectId}
+        itemLabel={ctx.projectName}
+        title={ctx.title}
+        subjectsDirectory={workspaceSubjectsDirectory}
+      />
+    ) : null,
+};
+
+/**
+ * The topics a project publishes, in rail order.
+ *
+ * The order is a sentence about the project: what it IS (Overview), what it is DOING (Work
+ * Items), what is WAITING TO BE LET IN (Triage), what that work is AIMED AT (Milestones), WHEN it
+ * is being done (Iterations), what it ROLLS UP INTO (Programs), what SHAPES it reuses (Templates),
+ * what it HOLDS (Contents), what HAPPENED (Activity), and who may look (Access). The middle run is
+ * all lenses on the same cards, which is why those topics sit together directly under Work Items
+ * and above Contents — the material around the work is a different subject.
+ *
+ * Triage sits IMMEDIATELY under Work Items because the two lists partition the board exactly: a
+ * card is in one or the other, never both and never neither. Anything between them would be a
+ * topic wedged into a single set of cards.
+ *
+ * Within that run the split is by SCOPE, and it is worth knowing which way round it goes:
+ * Milestones belong to THIS board, while Iterations, Programs and Templates belong to the
+ * workspace. So the project's own plan comes first, and the three topics that reach past the board
+ * are adjacent.
+ *
+ * Access is present only when the host knows the owning workspace. Omitting the topic — rather
+ * than listing it and rendering an empty pane — is the honest reading of "this surface cannot
+ * show item-scoped roles": a rail row that opens onto nothing is a bug report waiting to be
+ * filed. In practice every current host supplies one, so this is about what the next host sees.
+ *
+ * Iterations, Programs and Templates are listed UNCONDITIONALLY even though all three belong to
+ * the workspace rather than the project. Without a `workspaceSlug` their APIs answer from the
+ * caller's own reach — the same fallback the project list itself uses — so each pane still has
+ * something true to show, which is the test Access fails and these pass.
+ */
+export function projectTopics(opts: {
+  workspaceSlug?: string;
+  /** What THIS board calls its cards, for the four topics that name them. Omitted — or supplied
+   *  before the project record has landed — the rail reads the default noun, which is the right
+   *  way round: a row that renames itself under the reader is worse than one that was never
+   *  renamed, and the row's `id` is stable either way. */
+  words?: ItemWords;
+}): ProjectTopicDef[] {
+  const words = opts.words ?? DEFAULT_ITEM_WORDS;
+  return [
+    OVERVIEW,
+    workItemsTopic(words),
+    triageTopic(words),
+    milestonesTopic(words),
+    ITERATIONS,
+    PROGRAMS,
+    TEMPLATES,
+    CONTENTS,
+    activityTopic(words),
+    ...(opts.workspaceSlug ? [ACCESS] : []),
+  ];
+}

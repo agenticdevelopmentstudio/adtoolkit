@@ -1,0 +1,33 @@
+# dist/ IS COMMITTED FOR THIS PACKAGE — deliberately, and it is the only one.
+#
+# Every sibling package builds its dist and tracks none of it. This one ships
+# prebuilt (`files: ["dist"]`, `exports` -> `./dist/*`) because it has consumers that
+# check the submodule pin out and never run a toolchain: for them a missing file is
+# TS2307, or ERR_MODULE_NOT_FOUND at module evaluation for a .js. That is the whole
+# point of chrome living in the toolkit — a site outside this repo can consume it
+# without adopting our build. See c621b02, which started the practice after a stale
+# Vercel node_modules cache was the only thing making builds pass.
+#
+# The rule below stays, so files land in git only via `git add -f`, and a plain
+# `git add` can never sweep in the ~44 internal .d.ts/.d.ts.map byproducts that no
+# consumer resolves. The cost is that `git add` silently skips NEW dist files — which
+# is exactly how 140 of them went missing in the absorb commit, shipping 15 export
+# subpaths with no build product. The net for that is <adh-tools>/sites/scripts/
+# verify_dist_completeness.py, run from adh's CI: it walks the exports map, fails on any
+# reached-but-untracked file, and names the on-disk path to `git add -f`.
+#
+# So: after rebuilding, run that guard and force-add EXACTLY what it names, one path
+# at a time. Never `git add -f dist` — the `-f` defeats the rule above wholesale, and
+# it sweeps in precisely the internal byproducts the rule exists to keep out. That is
+# how 28 of them got committed, and it is not a harmless surplus: the guard's other
+# direction requires every tracked dist file to be REACHED from the exports map, so
+# each one held that check red until they were untracked again. A dist file no export
+# subpath resolves has no consumer — no `exports` wildcard and no `./dist/*` entry, and
+# every site resolves with `moduleResolution: bundler`, which honours `exports` — so it
+# is not shipped, it is only carried.
+#
+# Do not "fix" this by deleting the rule, and do not untrack a REACHED file to make the
+# diffs smaller.
+dist/
+.turbo/
+*.tsbuildinfo

@@ -1,0 +1,165 @@
+{
+  "name": "@agentic-toolkit/data",
+  "version": "0.1.0",
+  "description": "Unified headless data model: authed HTTP, tenant, resource-list cache, feature domains.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "comment:exports": "`development` → src for `next dev` (HMR); prod skips it → dist.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "development": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./query": {
+      "types": "./dist/query/index.d.ts",
+      "development": "./src/query/index.tsx",
+      "import": "./dist/query/index.js"
+    },
+    "./projects": {
+      "types": "./dist/projects/index.d.ts",
+      "development": "./src/projects/index.ts",
+      "import": "./dist/projects/index.js"
+    },
+    "./reactions": {
+      "types": "./dist/reactions/index.d.ts",
+      "development": "./src/reactions/index.ts",
+      "import": "./dist/reactions/index.js"
+    },
+    "./teams": {
+      "types": "./dist/teams/index.d.ts",
+      "development": "./src/teams/index.ts",
+      "import": "./dist/teams/index.js"
+    },
+    "./ecosystems": {
+      "types": "./dist/ecosystems/index.d.ts",
+      "development": "./src/ecosystems/index.ts",
+      "import": "./dist/ecosystems/index.js"
+    },
+    "./monitored-sites": {
+      "types": "./dist/monitored-sites/index.d.ts",
+      "development": "./src/monitored-sites/index.ts",
+      "import": "./dist/monitored-sites/index.js"
+    },
+    "./ownership": {
+      "types": "./dist/ownership/index.d.ts",
+      "development": "./src/ownership/index.ts",
+      "import": "./dist/ownership/index.js"
+    },
+    "./markdown": {
+      "types": "./dist/markdown/index.d.ts",
+      "development": "./src/markdown/index.ts",
+      "import": "./dist/markdown/index.js"
+    },
+    "./notes": {
+      "types": "./dist/notes/index.d.ts",
+      "development": "./src/notes/index.ts",
+      "import": "./dist/notes/index.js"
+    },
+    "./docs": {
+      "types": "./dist/docs/index.d.ts",
+      "development": "./src/docs/index.ts",
+      "import": "./dist/docs/index.js"
+    },
+    "./personas": {
+      "types": "./dist/personas/index.d.ts",
+      "development": "./src/personas/index.ts",
+      "import": "./dist/personas/index.js"
+    },
+    "./security": {
+      "types": "./dist/security/index.d.ts",
+      "development": "./src/security/index.ts",
+      "import": "./dist/security/index.js"
+    },
+    "./integrations": {
+      "types": "./dist/integrations/index.d.ts",
+      "development": "./src/integrations/index.ts",
+      "import": "./dist/integrations/index.js"
+    },
+    "./gamification": {
+      "types": "./dist/gamification/index.d.ts",
+      "development": "./src/gamification/index.ts",
+      "import": "./dist/gamification/index.js"
+    },
+    "./games": {
+      "types": "./dist/games/index.d.ts",
+      "development": "./src/games/index.ts",
+      "import": "./dist/games/index.js"
+    },
+    "./invitations": {
+      "types": "./dist/invitations/index.d.ts",
+      "development": "./src/invitations/index.ts",
+      "import": "./dist/invitations/index.js"
+    },
+    "./access": {
+      "types": "./dist/access/index.d.ts",
+      "development": "./src/access/index.ts",
+      "import": "./dist/access/index.js"
+    },
+    "./stream": {
+      "types": "./dist/stream/index.d.ts",
+      "development": "./src/stream/index.ts",
+      "import": "./dist/stream/index.js"
+    },
+    "./organizations": {
+      "types": "./dist/organizations/index.d.ts",
+      "development": "./src/organizations/index.ts",
+      "import": "./dist/organizations/index.js"
+    },
+    "./ecosystem-config": {
+      "types": "./dist/ecosystem-config/index.d.ts",
+      "development": "./src/ecosystem-config/index.ts",
+      "import": "./dist/ecosystem-config/index.js"
+    },
+    "./profile": {
+      "types": "./dist/profile/index.d.ts",
+      "development": "./src/profile/index.ts",
+      "import": "./dist/profile/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup && pnpm run build:types",
+    "build:types": "tsc --emitDeclarationOnly -p tsconfig.build.json",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@agentic-toolkit/adh-ui": "workspace:*",
+    "@agentic-toolkit/auth": "workspace:*",
+    "@tanstack/react-query": "^5.62.0",
+    "@agenticdevelopertoolkit/ui": "link:../../../../external/agenticdevelopertoolkit/packages/web/packages/ui"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@base-ui/react": "1.5.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "19.2.16",
+    "@types/react-dom": "19.2.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "esbuild-plugin-preserve-directives": "^0.0.11",
+    "harper.js": "^2.4.0",
+    "jsdom": "^29.0.2",
+    "lucide-react": "^1.16.0",
+    "next": "^15.1.0",
+    "react-dom": "^19.2.7",
+    "tailwind-merge": "^2.6.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.4"
+  }
+}

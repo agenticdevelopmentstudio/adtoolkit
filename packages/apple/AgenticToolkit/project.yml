@@ -1,0 +1,1498 @@
+name: AgenticToolkit
+options:
+  bundleIdPrefix: com.mikefullerton.agentictoolkit
+  developmentLanguage: en
+  deploymentTarget:
+    macOS: "26.0"
+    iOS: "26.0"
+  groupSortPosition: top
+  generateEmptyDirectories: false
+  xcodeVersion: "2640"
+
+settings:
+  base:
+    SWIFT_VERSION: "6.3"
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+    GCC_TREAT_WARNINGS_AS_ERRORS: YES
+    SWIFT_STRICT_CONCURRENCY: complete
+    MACOSX_DEPLOYMENT_TARGET: "26.0"
+    SDKROOT: macosx
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEAD_CODE_STRIPPING: YES
+    ENABLE_TESTABILITY: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    ENABLE_MODULE_VERIFIER: YES
+    GENERATE_INFOPLIST_FILE: YES
+    MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS: "gnu11 gnu++14"
+    STRING_CATALOG_GENERATE_SYMBOLS: YES
+    SWIFT_ENABLE_EXPLICIT_MODULES: NO
+    LM_FILTER_WARNINGS: YES
+    OTHER_LDFLAGS: "$(inherited) -weak_framework AppIntents"
+    CODE_SIGNING_ALLOWED: NO
+    CODE_SIGNING_REQUIRED: NO
+    CODE_SIGN_IDENTITY: ""
+    PRODUCT_NAME: $(TARGET_NAME)
+
+targetTemplates:
+  SwiftLint:
+    preBuildScripts:
+      - name: SwiftLint
+        basedOnDependencyAnalysis: false
+        script: |
+          if [[ "$(uname -m)" == "arm64" ]]; then
+            export PATH="/opt/homebrew/bin:$PATH"
+          fi
+          if which swiftlint >/dev/null; then
+            swiftlint lint --quiet --strict
+          else
+            echo "warning: SwiftLint not installed; brew install swiftlint to enable"
+          fi
+
+projectReferences:
+  # The theme model (RGBAColor, ColorTheme, SemanticPalette, ThemeTypography,
+  # BuiltInThemes, ITermColorsParser) lives in AgenticDeveloperToolkit and is
+  # re-exported by AgenticToolkitCore — see Core/Theme/ThemeReExports.swift.
+  #
+  # This climbs OUT of this repo, to the superproject's sibling checkout of
+  # agenticdevelopertoolkit — deliberately, not for want of a nearer copy.
+  # This repo carries its own `external/agenticdevelopertoolkit` submodule
+  # (a web-surface dependency), and pointing here at that copy is what a
+  # standalone clone would want. It cannot be done: the superproject that
+  # consumes both repos already puts ADT's xcodeproj in its workspace at
+  # `external/agenticdevelopertoolkit/…`, and a second xcodeproj at a
+  # different path builds a second `AgenticDeveloperToolkit-macOS` target
+  # into the same products directory. Xcode fails the whole workspace with
+  # ~16 "Multiple commands produce …/AgenticDeveloperToolkit.framework"
+  # errors. Two paths must resolve to one checkout, and only this one does.
+  #
+  # Consequence, stated plainly: the Apple side of a standalone clone of
+  # this repo does not build. `xcodegen generate` fails naming this path.
+  # A standalone build needs ADT checked out as a sibling of this repo.
+  AgenticDeveloperToolkit:
+    path: ../../../../../external/agenticdevelopertoolkit/packages/apple/AgenticDeveloperToolkit/AgenticDeveloperToolkit.xcodeproj
+
+  # The generated hub API client. Climbs to the superproject's checkout for the
+  # same reason as AgenticDeveloperToolkit above: the superproject's workspace
+  # already contains this xcodeproj at that path, and a second copy would
+  # build a second AgenticDeveloperHubClient into the same products directory.
+  AgenticDeveloperHubClient:
+    path: ../../../../../external/agenticdevelopertoolkit/packages/apple/AgenticDeveloperHubClient/AgenticDeveloperHubClient.xcodeproj
+
+packages:
+  CodeEditLanguages:
+    url: https://github.com/CodeEditApp/CodeEditLanguages.git
+    exactVersion: "0.1.20"
+  CodeEditSourceEditor:
+    url: https://github.com/CodeEditApp/CodeEditSourceEditor.git
+    minVersion: "0.15.2"
+    maxVersion: "1.0.0"
+  SwiftTerm:
+    url: https://github.com/migueldeicaza/SwiftTerm
+    minVersion: "1.2.0"
+    maxVersion: "2.0.0"
+  ModelContextProtocol:
+    url: https://github.com/modelcontextprotocol/swift-sdk
+    minVersion: "0.11.0"
+    maxVersion: "1.0.0"
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    from: "2.0.0"
+  GRDB:
+    url: https://github.com/groue/GRDB.swift
+    from: "7.0.0"
+  JSONRPC:
+    url: https://github.com/ChimeHQ/JSONRPC
+    from: "0.9.2"
+  LanguageServerProtocol:
+    url: https://github.com/ChimeHQ/LanguageServerProtocol
+    from: "0.14.1"
+  LanguageClient:
+    url: https://github.com/ChimeHQ/LanguageClient
+    from: "0.8.2"
+  swift-openapi-runtime:
+    url: https://github.com/apple/swift-openapi-runtime
+    minVersion: "1.12.0"
+    maxVersion: "2.0.0"
+  swift-http-types:
+    url: https://github.com/apple/swift-http-types
+    minVersion: "1.0.0"
+    maxVersion: "2.0.0"
+  swift-openapi-urlsession:
+    url: https://github.com/apple/swift-openapi-urlsession
+    minVersion: "1.3.0"
+    maxVersion: "2.0.0"
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: "2.10.0"
+
+targets:
+  AIPluginKit:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - AIPluginKit
+    dependencies:
+      - target: AgenticToolkitCore
+
+  AgenticToolkitCore:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - path: Core
+      - path: macOS/Features/AIChatWindow/ChatBackend.swift
+        group: Core
+    dependencies:
+      - package: ModelContextProtocol
+        product: MCP
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+
+  AgenticToolkitLanguage:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Language
+    dependencies:
+      - target: AgenticToolkitCore
+      - package: JSONRPC
+        product: JSONRPC
+      - package: LanguageServerProtocol
+        product: LanguageServerProtocol
+      - package: LanguageClient
+        product: LanguageClient
+    # Daemon-safe: text documents and language-server plumbing. Foundation plus
+    # the ChimeHQ LSP stack only; no AppKit. The AppKit face of a TextDocument
+    # is TextDocumentStorage in AgenticToolkitMacOS, mirroring the
+    # SemanticPalette / SemanticPalette+NSColor split.
+
+  AgenticToolkitCoreUI:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - CoreUI
+    dependencies:
+      - target: AgenticToolkitCore
+
+  AgenticToolkitCoreMacOS:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - path: CoreMacOS
+      - path: macOS/UI/Settings/SettingStorage/RGBAColor+NSColor.swift
+        group: CoreMacOS
+    dependencies:
+      - target: AgenticToolkitCore
+      - target: AgenticToolkitCoreUI
+      # The AppKit half of the theme model (`palette.nsColor(_:)`,
+      # `palette.font(_:)`, the Themed* views) lives in
+      # AgenticDeveloperToolkitUI, not in the Foundation-only
+      # AgenticDeveloperToolkit that AgenticToolkitCore re-exports.
+      # SemanticPalette+SwiftUI.swift builds its Font from the NSFont one.
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-macOS
+
+  AgenticToolkitMacOS:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - path: macOS
+        excludes:
+          - "Features/AIChatWindow/ChatBackend.swift"
+          - "Features/SessionWatcher/Old/OldSessionWindowPanelViewController.swift"
+          - "Features/SessionWatcher/Old/OldSessionWindowSettingsPane.swift"
+          # Whole folder, not just the one file it contains (built into
+          # AgenticToolkitCoreMacOS instead, see that target's sources
+          # above): excluding only the file left an empty "UI/Settings"
+          # directory that XcodeGen still generated an orphaned PBXGroup
+          # for despite generateEmptyDirectories: false, causing spurious
+          # TEMP_ UUID churn in project.pbxproj on every regeneration.
+          - "UI/Settings"
+          - "Scripting"
+    dependencies:
+      - target: AgenticToolkitCore
+      - target: AgenticToolkitCoreUI
+      - target: AgenticToolkitCoreMacOS
+      - target: AgenticToolkitPermissions
+      - target: AgenticToolkitPermissionsUI
+      - target: AgenticToolkitDisplays
+      - target: AgenticToolkitScripting
+      - target: AIPluginKit
+      - target: AgenticToolkitLanguage
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-macOS
+      - target: AgenticToolkitMarkdown-macOS
+      - target: AgenticToolkitDatabase
+      - package: SwiftTerm
+      - package: CodeEditSourceEditor
+      - package: CodeEditLanguages
+      - package: KeyboardShortcuts
+      - package: Sparkle
+
+  AgenticToolkitPermissions:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Permissions
+    # Daemon-safe: Foundation + ApplicationServices (AX) + CoreServices (Apple
+    # Events) + UserNotifications, all auto-linked via import. No AppKit.
+
+  AgenticToolkitDisplays:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Displays
+    dependencies:
+      - sdk: ScreenCaptureKit.framework
+      - sdk: ColorSync.framework
+      - sdk: IOKit.framework
+
+  AgenticToolkitPermissionsUI:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - PermissionsUI
+    dependencies:
+      - target: AgenticToolkitPermissions
+      - target: AgenticToolkitCore
+      - target: AgenticToolkitCoreMacOS
+    # AppKit settings panel (toolkit convention: AppKit, not SwiftUI). No
+    # ComposableSettings dependency — hosts wrap PermissionsPanelView themselves.
+
+  AgenticToolkitSystemMonitor:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - SystemMonitor
+    dependencies:
+      - target: AgenticToolkitCore
+    # Daemon-safe: what the machine is doing — disk, memory, CPU, and named
+    # process groups (Docker, Ollama) — read through Foundation, libproc and
+    # Mach. No AppKit; the window that shows it is AgenticToolkitSystemMonitorUI.
+
+  AgenticToolkitSystemMonitorUI:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - SystemMonitorUI
+    dependencies:
+      - target: AgenticToolkitSystemMonitor
+      - target: AgenticToolkitCore
+      - target: AgenticToolkitMacOS
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-macOS
+    # The themed System Status window. AgenticToolkitMacOS for the window
+    # controllers and the settings scroll host it reuses.
+
+  AgenticToolkitScripting:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - macOS/Scripting
+    # AppKit + Foundation only: the NSScriptCommand main-actor base and the
+    # AppleScript runner, so an app can be scriptable without linking the
+    # whole of AgenticToolkitMacOS.
+
+  AgenticToolkitDatabase:
+    type: framework
+    supportedDestinations: [macOS, iOS]
+    templates:
+      - SwiftLint
+    sources:
+      - Database
+    dependencies:
+      - package: GRDB
+        product: GRDB
+      - sdk: libsqlite3.tbd
+    settings:
+      base:
+        SDKROOT: auto
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    # Daemon-safe: a GRDB DatabasePool with deadline-ejection (progress_handler),
+    # read/write reentrancy (read-your-writes), and per-lane stats. Foundation +
+    # GRDB + system SQLite only; no AppKit.
+
+  AgenticToolkitDatabaseTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitDatabaseTests
+    dependencies:
+      - target: AgenticToolkitDatabase
+        embed: true
+        codeSign: true
+      - package: GRDB
+        product: GRDB
+
+  AgenticToolkitLanguageTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitLanguageTests
+    dependencies:
+      - target: AgenticToolkitLanguage
+        embed: true
+        codeSign: true
+      # A test bundle loads its frameworks out of its OWN Frameworks
+      # directory, so everything those frameworks link has to be in there --
+      # the whole transitive closure, not only what the tests `import`. These
+      # bundles pass today because `xcodebuild test` sets
+      # `DYLD_FRAMEWORK_PATH` to the build products directory, where every
+      # framework happens to sit beside every other; run one `.xctest` any
+      # other way -- `xctest` directly, or the bundle copied somewhere else --
+      # and dyld fails naming a framework the tests never mention. `otool -L`
+      # on each built binary, not this file's `dependencies:` lists, is the
+      # authority for what each closure contains.
+      - target: AgenticToolkitCore
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+        embed: true
+        codeSign: true
+
+  AgenticToolkitSync:
+    type: framework
+    supportedDestinations: [macOS, iOS]
+    templates:
+      - SwiftLint
+    sources:
+      - Sync
+    settings:
+      base:
+        SDKROOT: auto
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    # Daemon-safe: the offline-sync engine + protocol seam (SyncStore/
+    # SyncTransport/SyncTriggerSource). Foundation + Network only; no AppKit.
+
+  AgenticToolkitSyncTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      # The plain folder scan above already picks up Fixtures/*.json as
+      # individually-registered resources; an explicit `type: folder`
+      # entry for the same path double-registers it (a folder reference
+      # in Resources AND the three flat file copies). Flat copies only.
+      - Tests/AgenticToolkitSyncTests
+    dependencies:
+      - target: AgenticToolkitSync
+        embed: true
+        codeSign: true
+
+  AgenticToolkitSyncGRDB:
+    type: framework
+    supportedDestinations: [macOS, iOS]
+    templates:
+      - SwiftLint
+    sources:
+      - SyncGRDB
+    dependencies:
+      - target: AgenticToolkitSync
+      - target: AgenticToolkitDatabase
+      - package: GRDB
+        product: GRDB
+      - sdk: libsqlite3.tbd
+    settings:
+      base:
+        SDKROOT: auto
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+    # Daemon-safe: SyncStore implementation on BoundedDatabase (WAL pool).
+
+  AgenticToolkitSyncGRDBTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitSyncGRDBTests
+    dependencies:
+      - target: AgenticToolkitSyncGRDB
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitSync
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitDatabase
+        embed: true
+        codeSign: true
+      - package: GRDB
+        product: GRDB
+
+  # Two targets, not one `supportedDestinations: [macOS, iOS]` target: this
+  # framework depends on AgenticDeveloperToolkit, which exposes only
+  # platform-specific targets, and a multi-destination target cannot depend on
+  # a single-platform one. Both build the same `Markdown` sources under the
+  # same product name, so consumers see one framework.
+  AgenticToolkitMarkdown-macOS:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Markdown
+    dependencies:
+      - target: AgenticToolkitDatabase
+      - target: AgenticToolkitSync
+      - target: AgenticToolkitSyncGRDB
+      - package: GRDB
+        product: GRDB
+      - sdk: libsqlite3.tbd
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+    settings:
+      base:
+        PRODUCT_NAME: AgenticToolkitMarkdown
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+  AgenticToolkitMarkdown-iOS:
+    type: framework
+    platform: iOS
+    templates:
+      - SwiftLint
+    sources:
+      - Markdown
+    dependencies:
+      - target: AgenticToolkitDatabase
+      - target: AgenticToolkitSync
+      - target: AgenticToolkitSyncGRDB
+      - package: GRDB
+        product: GRDB
+      - sdk: libsqlite3.tbd
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-iOS
+    settings:
+      base:
+        SDKROOT: iphoneos
+        PRODUCT_NAME: AgenticToolkitMarkdown
+        IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  AgenticToolkitMarkdownTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitMarkdownTests
+    dependencies:
+      - target: AgenticToolkitMarkdown-macOS
+        embed: true
+        codeSign: true
+      # MarkdownSchemaTests imports GRDB and AgenticToolkitDatabase directly
+      # (to drive BoundedDatabase/Row/StatementArguments), so both must be
+      # linked into the test bundle explicitly — a framework dependency's own
+      # dependencies aren't transitively linked. Mirrors
+      # AgenticToolkitSyncGRDBTests below.
+      - target: AgenticToolkitDatabase
+        embed: true
+        codeSign: true
+      # MarkdownStoreTests imports AgenticToolkitSync directly (LocalMutation,
+      # SyncStoreFailure), same transitive-linking reason as above.
+      # Closure completion -- see the note in AgenticToolkitLanguageTests.
+      - target: AgenticToolkitSyncGRDB
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitSync
+        embed: true
+        codeSign: true
+      - package: GRDB
+        product: GRDB
+
+  AgenticToolkitCoreTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitCoreTests
+    dependencies:
+      - target: AgenticToolkitCore
+        embed: true
+        codeSign: true
+      # Closure completion -- see the note in AgenticToolkitLanguageTests.
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+        embed: true
+        codeSign: true
+
+  AgenticToolkitCoreUITests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitCoreUITests
+    dependencies:
+      - target: AgenticToolkitCoreUI
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCore
+        embed: true
+        codeSign: true
+      # Closure completion -- see the note in AgenticToolkitLanguageTests.
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+        embed: true
+        codeSign: true
+
+  AgenticToolkitCoreMacOSTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitCoreMacOSTests
+    dependencies:
+      - target: AgenticToolkitCoreMacOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCore
+        embed: true
+        codeSign: true
+      # Closure completion -- see the note in AgenticToolkitLanguageTests.
+      - target: AgenticToolkitCoreUI
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+        embed: true
+        codeSign: true
+
+  AIPluginKitTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AIPluginKitTests
+    dependencies:
+      - target: AIPluginKit
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCore
+        embed: true
+        codeSign: true
+      # Closure completion -- see the note in AgenticToolkitLanguageTests.
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+        embed: true
+        codeSign: true
+
+  AgenticToolkitPermissionsTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitPermissionsTests
+    dependencies:
+      - target: AgenticToolkitPermissions
+        embed: true
+        codeSign: true
+
+  AgenticToolkitDisplaysTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - path: Tests/AgenticToolkitDisplaysTests
+        excludes: ["Fixtures/**"]
+      - path: Tests/AgenticToolkitDisplaysTests/Fixtures
+        buildPhase: resources
+    dependencies:
+      - target: AgenticToolkitDisplays
+        embed: true
+        codeSign: true
+
+  AgenticToolkitPermissionsUITests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitPermissionsUITests
+    dependencies:
+      - target: AgenticToolkitPermissionsUI
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitPermissions
+        embed: true
+        codeSign: true
+
+  AgenticToolkitSystemMonitorTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitSystemMonitorTests
+    dependencies:
+      - target: AgenticToolkitSystemMonitor
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCore
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+        embed: true
+        codeSign: true
+
+  AgenticToolkitSystemMonitorUITests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitSystemMonitorUITests
+    dependencies:
+      - target: AgenticToolkitSystemMonitorUI
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitSystemMonitor
+        embed: true
+        codeSign: true
+      # Closure completion -- see the note in AgenticToolkitLanguageTests.
+      - target: AgenticToolkitMacOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitScripting
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCoreMacOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCoreUI
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCore
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitMarkdown-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitPermissions
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitPermissionsUI
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitDisplays
+        embed: true
+        codeSign: true
+      - target: AIPluginKit
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitLanguage
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitDatabase
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitSync
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitSyncGRDB
+        embed: true
+        codeSign: true
+      - package: GRDB
+        product: GRDB
+      # AgenticToolkitMacOS links Sparkle (AppUpdater); the test bundle loads
+      # its frameworks out of its own Frameworks directory, so Sparkle has to
+      # be there too — same "closure completion" reason as GRDB above.
+      - package: Sparkle
+        product: Sparkle
+
+  AgenticToolkitMacOSTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitMacOSTests
+      # The in-memory billing service, shared with the Core billing tests.
+      - path: Tests/AgenticToolkitCoreTests/Billing/FakeBillingClient.swift
+    dependencies:
+      - target: AgenticToolkitMacOS
+        embed: true
+        codeSign: true
+      # The scripting tests import it directly (`@testable`), not through the
+      # AgenticToolkitMacOS re-export, so its internal `reset()` is reachable.
+      - target: AgenticToolkitScripting
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCoreMacOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCoreUI
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCore
+        embed: true
+        codeSign: true
+      # The pane-chrome tests import `AgenticDeveloperToolkitUI` directly —
+      # the gear, the options dialog and its body live a layer down in the
+      # developer toolkit. Embedded and signed like the four above: a test bundle
+      # loads its frameworks out of its own Frameworks directory, and the UI
+      # framework links the base one, so both have to be there or the bundle
+      # fails to load with a dyld error naming a framework the tests never
+      # mention.
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-macOS
+        embed: true
+        codeSign: true
+      # MarkdownNoteStorageTests imports AgenticToolkitMarkdown directly to
+      # drive MarkdownStore/MarkdownText, same transitive-linking reason as
+      # AgenticToolkitMarkdownTests above.
+      - target: AgenticToolkitMarkdown-macOS
+        embed: true
+        codeSign: true
+      # Closure completion -- see the note in AgenticToolkitLanguageTests.
+      # `AgenticToolkitMacOS` links all seven of these directly or through
+      # `AgenticToolkitMarkdown`; `AgenticToolkitDatabase`,
+      # `AgenticToolkitSyncGRDB` and `AgenticToolkitMarkdown` each load the
+      # GRDB package product, which is why the package is named here too --
+      # linking it is what makes Xcode copy it in, exactly as the app target
+      # does.
+      - target: AgenticToolkitPermissions
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitPermissionsUI
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitDisplays
+        embed: true
+        codeSign: true
+      - target: AIPluginKit
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitLanguage
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitDatabase
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitSync
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitSyncGRDB
+        embed: true
+        codeSign: true
+      - package: GRDB
+        product: GRDB
+      # AgenticToolkitMacOS links Sparkle (AppUpdater); the test bundle loads
+      # its frameworks out of its own Frameworks directory, so Sparkle has to
+      # be there too — same "closure completion" reason as GRDB above.
+      - package: Sparkle
+        product: Sparkle
+
+  # A per-platform pair rather than one `supportedDestinations: [macOS, iOS]`
+  # target, for the reason spelled out above AgenticToolkitMarkdown: this
+  # framework depends on AgenticDeveloperToolkitUI, which exposes only
+  # platform-specific targets, and a multi-destination target cannot depend on a
+  # single-platform one. Both halves build the same `HTDV` sources under the same
+  # product name, so consumers still see one framework called AgenticToolkitHTDV.
+  #
+  # The dependency is what makes these views themeable: SemanticPalette,
+  # ThemeRole, Themeable and ThemePaletteObserver all live in
+  # AgenticDeveloperToolkitUI. Before it, HTDV had no dependencies at all and so
+  # had no vocabulary but NSColor's system colors, which is why every view in it
+  # ignored the user's theme.
+  AgenticToolkitHTDV-macOS:
+    type: framework
+    platform: macOS
+    templates: [SwiftLint]
+    sources:
+      - HTDV
+    dependencies:
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-macOS
+    settings:
+      base:
+        PRODUCT_NAME: AgenticToolkitHTDV
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+  AgenticToolkitHTDV-iOS:
+    type: framework
+    platform: iOS
+    templates: [SwiftLint]
+    sources:
+      - HTDV
+    dependencies:
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-iOS
+    settings:
+      base:
+        SDKROOT: iphoneos
+        PRODUCT_NAME: AgenticToolkitHTDV
+        IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  AgenticToolkitHTDVTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [SwiftLint]
+    sources:
+      - Tests/AgenticToolkitHTDVTests
+    dependencies:
+      - target: AgenticToolkitHTDV-macOS
+        embed: true
+        codeSign: true
+
+  # Split for the same reason as HTDV, which it depends on.
+  AgenticToolkitHub-macOS:
+    type: framework
+    platform: macOS
+    templates: [SwiftLint]
+    sources:
+      - Hub
+    dependencies:
+      - target: AgenticToolkitHTDV-macOS
+    settings:
+      base:
+        PRODUCT_NAME: AgenticToolkitHub
+        MACOSX_DEPLOYMENT_TARGET: "14.0"
+
+  AgenticToolkitHub-iOS:
+    type: framework
+    platform: iOS
+    templates: [SwiftLint]
+    sources:
+      - Hub
+    dependencies:
+      - target: AgenticToolkitHTDV-iOS
+    settings:
+      base:
+        SDKROOT: iphoneos
+        PRODUCT_NAME: AgenticToolkitHub
+        IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  AgenticToolkitHubTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [SwiftLint]
+    sources:
+      - Tests/AgenticToolkitHubTests
+    dependencies:
+      - target: AgenticToolkitHub-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitHTDV-macOS
+        embed: true
+        codeSign: true
+
+  # The hub's service layer — session, workspaces, adapters, transport — with
+  # no UI. Split per platform because it depends on AgenticToolkitHub, which is.
+  AgenticToolkitHubService-macOS:
+    type: framework
+    platform: macOS
+    templates: [SwiftLint]
+    sources:
+      - path: HubService
+        excludes: ["iOS"]
+    dependencies:
+      - target: AgenticToolkitHub-macOS
+      - target: AgenticToolkitPermissions
+      - target: AgenticDeveloperHubClient/AgenticDeveloperHubClient
+      - package: swift-openapi-runtime
+        product: OpenAPIRuntime
+      - package: swift-http-types
+        product: HTTPTypes
+      # HubEnvironment.swift calls APITransport.direct() with no transport
+      # argument, which resolves to a default-parameter expression that
+      # constructs URLSessionTransport() — that expression compiles into
+      # THIS target's object code, so this target needs OpenAPIURLSession
+      # directly, not just transitively through AgenticDeveloperHubClient.
+      - package: swift-openapi-urlsession
+        product: OpenAPIURLSession
+    settings:
+      base:
+        PRODUCT_NAME: AgenticToolkitHubService
+        # Not 14.0 (the usual HTDV/Hub split-target floor): this target links
+        # AgenticToolkitPermissions for HubPermissions.swift, and that
+        # framework's own minimum is macOS 26.0 (no per-target override in its
+        # target definition, so it inherits the project's base setting).
+        # Matches the deployment target the app's own HubKit-macOS already
+        # built this same code at before the move.
+        MACOSX_DEPLOYMENT_TARGET: "26.0"
+
+  AgenticToolkitHubService-iOS:
+    type: framework
+    platform: iOS
+    templates: [SwiftLint]
+    sources:
+      - path: HubService
+        excludes: ["macOS"]
+    dependencies:
+      - target: AgenticToolkitHub-iOS
+      - target: AgenticDeveloperHubClient/AgenticDeveloperHubClient
+      - package: swift-openapi-runtime
+        product: OpenAPIRuntime
+      - package: swift-http-types
+        product: HTTPTypes
+      # See the same dependency on AgenticToolkitHubService-macOS above:
+      # HubEnvironment.swift's APITransport.direct() default parameter
+      # constructs URLSessionTransport() directly in this target's code.
+      - package: swift-openapi-urlsession
+        product: OpenAPIURLSession
+    settings:
+      base:
+        SDKROOT: iphoneos
+        PRODUCT_NAME: AgenticToolkitHubService
+        IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  AgenticToolkitHubServiceTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [SwiftLint]
+    sources:
+      - Tests/AgenticToolkitHubServiceTests
+    # Every framework the bundle loads, embedded: a test bundle loads them out
+    # of its own Frameworks directory.
+    dependencies:
+      - target: AgenticToolkitHubService-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitHub-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitHTDV-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitPermissions
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperHubClient/AgenticDeveloperHubClient
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-macOS
+        embed: true
+        codeSign: true
+      - package: swift-openapi-runtime
+        product: OpenAPIRuntime
+      - package: swift-http-types
+        product: HTTPTypes
+      # EmbeddedDaemonTransportSourceTests builds an APITransport with a real
+      # URLSessionTransport, the way Task 1's FakeDaemon test does.
+      - package: swift-openapi-urlsession
+        product: OpenAPIURLSession
+
+  # The hub's UI: the signed-in shell, sign-in, the feature registry, and on
+  # macOS the main window, HubFeature and the hub's script commands.
+  AgenticToolkitHubUI-macOS:
+    type: framework
+    platform: macOS
+    templates: [SwiftLint]
+    sources:
+      - path: HubUI
+        excludes: ["iOS"]
+    dependencies:
+      - target: AgenticToolkitHubService-macOS
+      - target: AgenticToolkitHub-macOS
+      - target: AgenticToolkitHTDV-macOS
+      - target: AgenticToolkitCoreMacOS
+      - target: AgenticToolkitScripting
+      - target: AgenticToolkitPermissions
+      - target: AgenticToolkitPermissionsUI
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-macOS
+      - target: AgenticDeveloperHubClient/AgenticDeveloperHubClient
+      - package: swift-openapi-runtime
+        product: OpenAPIRuntime
+    settings:
+      base:
+        PRODUCT_NAME: AgenticToolkitHubUI
+        MACOSX_DEPLOYMENT_TARGET: "26.0"
+
+  AgenticToolkitHubUI-iOS:
+    type: framework
+    platform: iOS
+    templates: [SwiftLint]
+    sources:
+      - path: HubUI
+        excludes: ["macOS"]
+    dependencies:
+      - target: AgenticToolkitHubService-iOS
+      - target: AgenticToolkitHub-iOS
+      - target: AgenticToolkitHTDV-iOS
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-iOS
+      - target: AgenticDeveloperHubClient/AgenticDeveloperHubClient
+      - package: swift-openapi-runtime
+        product: OpenAPIRuntime
+    settings:
+      base:
+        SDKROOT: iphoneos
+        PRODUCT_NAME: AgenticToolkitHubUI
+        IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  AgenticToolkitHubUITests:
+    type: bundle.unit-test
+    platform: macOS
+    templates: [SwiftLint]
+    sources:
+      - Tests/AgenticToolkitHubUITests
+      # The service tests' stubs (StubClientTransport, TestDefaults, Waiting),
+      # compiled here too rather than copied: the UI tests drive the same
+      # client through the same stubs.
+      - Tests/AgenticToolkitHubServiceTests/Support
+    dependencies:
+      - target: AgenticToolkitHubUI-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitHubService-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitHub-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitHTDV-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCore
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCoreUI
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCoreMacOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitScripting
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitPermissions
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitPermissionsUI
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperHubClient/AgenticDeveloperHubClient
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-macOS
+        embed: true
+        codeSign: true
+      - package: swift-openapi-runtime
+        product: OpenAPIRuntime
+      - package: swift-http-types
+        product: HTTPTypes
+
+aggregateTargets:
+  AgenticToolkitMacOSAll:
+    targets:
+      - AIPluginKit
+      - AgenticToolkitCore
+      - AgenticToolkitCoreUI
+      - AgenticToolkitCoreMacOS
+      - AgenticToolkitPermissions
+      - AgenticToolkitPermissionsUI
+      - AgenticToolkitDisplays
+      - AgenticToolkitScripting
+      - AgenticToolkitMacOS
+      - AgenticToolkitSystemMonitor
+      - AgenticToolkitSystemMonitorUI
+      - AgenticToolkitDatabase
+      - AgenticToolkitLanguage
+      - AgenticToolkitSync
+      - AgenticToolkitSyncGRDB
+      - AgenticToolkitMarkdown-macOS
+      - AgenticToolkitHTDV-macOS
+      - AgenticToolkitHub-macOS
+      - AgenticToolkitHubService-macOS
+      - AgenticToolkitHubUI-macOS
+
+  # The spec files this store under "macOS, iOS", and `AgenticToolkitMarkdown-iOS`
+  # existed but was reachable from no aggregate and no scheme — so nothing ever
+  # compiled it and the iOS half of that claim was untested. This aggregate is
+  # what makes the claim checkable: it builds every target the spec says runs on
+  # iOS. There is no iOS test bundle yet; the tests are macOS-only, and this
+  # target proves the *library* compiles for iOS, which is the part that silently
+  # rotted before.
+  AgenticToolkitiOSAll:
+    targets:
+      - AgenticToolkitDatabase
+      - AgenticToolkitSync
+      - AgenticToolkitSyncGRDB
+      - AgenticToolkitMarkdown-iOS
+      - AgenticToolkitHTDV-iOS
+      - AgenticToolkitHub-iOS
+      - AgenticToolkitHubService-iOS
+      - AgenticToolkitHubUI-iOS
+
+  AgenticToolkitMacOSTestsAll:
+    targets:
+      - AIPluginKit
+      - AgenticToolkitCore
+      - AgenticToolkitCoreMacOS
+      - AgenticToolkitCoreUI
+      - AgenticToolkitPermissions
+      - AgenticToolkitPermissionsUI
+      - AgenticToolkitDisplays
+      - AgenticToolkitScripting
+      - AgenticToolkitMacOS
+      - AIPluginKitTests
+      - AgenticToolkitCoreMacOSTests
+      - AgenticToolkitCoreTests
+      - AgenticToolkitCoreUITests
+      - AgenticToolkitPermissionsTests
+      - AgenticToolkitPermissionsUITests
+      - AgenticToolkitDisplaysTests
+      - AgenticToolkitMacOSTests
+      - AgenticToolkitSystemMonitor
+      - AgenticToolkitSystemMonitorTests
+      - AgenticToolkitSystemMonitorUI
+      - AgenticToolkitSystemMonitorUITests
+      - AgenticToolkitDatabase
+      - AgenticToolkitDatabaseTests
+      - AgenticToolkitLanguage
+      - AgenticToolkitLanguageTests
+      - AgenticToolkitSync
+      - AgenticToolkitSyncTests
+      - AgenticToolkitSyncGRDB
+      - AgenticToolkitSyncGRDBTests
+      - AgenticToolkitMarkdown-macOS
+      - AgenticToolkitMarkdownTests
+      - AgenticToolkitHTDV-macOS
+      - AgenticToolkitHTDVTests
+      - AgenticToolkitHub-macOS
+      - AgenticToolkitHubTests
+      - AgenticToolkitHubService-macOS
+      - AgenticToolkitHubServiceTests
+      - AgenticToolkitHubUI-macOS
+      - AgenticToolkitHubUITests
+
+schemes:
+  AgenticToolkitDatabase:
+    build:
+      targets:
+        AgenticToolkitDatabase: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitDatabaseTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitLanguage:
+    build:
+      targets:
+        AgenticToolkitLanguage: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitLanguageTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitSync:
+    build:
+      targets:
+        AgenticToolkitSync: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitSyncTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitSyncGRDB:
+    build:
+      targets:
+        AgenticToolkitSyncGRDB: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitSyncGRDBTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitMarkdown:
+    build:
+      targets:
+        AgenticToolkitMarkdown-macOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitMarkdownTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitMarkdown-iOS:
+    build:
+      targets:
+        AgenticToolkitMarkdown-iOS: all
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AIPluginKit:
+    build:
+      targets:
+        AIPluginKit: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AIPluginKitTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitPermissions:
+    build:
+      targets:
+        AgenticToolkitPermissions: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitPermissionsTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitDisplays:
+    build:
+      targets:
+        AgenticToolkitDisplays: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitDisplaysTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitPermissionsUI:
+    build:
+      targets:
+        AgenticToolkitPermissionsUI: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitPermissionsUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitSystemMonitor:
+    build:
+      targets:
+        AgenticToolkitSystemMonitor: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitSystemMonitorTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitSystemMonitorUI:
+    build:
+      targets:
+        AgenticToolkitSystemMonitorUI: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitSystemMonitorUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitMacOS:
+    build:
+      targets:
+        AgenticToolkitMacOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitCoreTests
+        - AgenticToolkitCoreUITests
+        - AgenticToolkitCoreMacOSTests
+        - AIPluginKitTests
+        - AgenticToolkitPermissionsTests
+        - AgenticToolkitPermissionsUITests
+        - AgenticToolkitDisplaysTests
+        - AgenticToolkitMacOSTests
+        - AgenticToolkitDatabaseTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitHTDV:
+    build:
+      targets:
+        AgenticToolkitHTDV-macOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitHTDVTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitHub:
+    build:
+      targets:
+        AgenticToolkitHub-macOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitHubTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitHubService:
+    build:
+      targets:
+        AgenticToolkitHubService-macOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitHubServiceTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitHubUI:
+    build:
+      targets:
+        AgenticToolkitHubUI-macOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitHubUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

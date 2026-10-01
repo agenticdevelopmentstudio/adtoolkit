@@ -1,0 +1,941 @@
+import Foundation
+import Testing
+@testable import AgenticToolkitCore
+
+/// Drives real processes (`/bin/cat`, `/bin/echo`, `/bin/sh -c ...`) rather
+/// than a fixture binary, since those exist on every macOS machine. Every
+/// test bounds its wait with `withWallClockBudget` (or a short fixed sleep
+/// before cancelling) so a regression that hangs the channel fails the test
+/// instead of hanging the suite.
+/// `.serialized` because these tests are process-bound, not CPU-bound: each
+/// one spawns real children and several assert on wall-clock behaviour —
+/// a SIGTERM grace period, a fixed-width cooperative pool with one child per
+/// core, a bounded drain. Run in parallel with each other they compete for
+/// exactly the resources they are measuring, and
+/// `terminateDeliversTheChildsFinalStdoutFrame` was observed failing that way
+/// on a loaded machine while passing every time in isolation.
+@Suite("SubprocessChannel", .serialized)
+struct SubprocessChannelTests {
+
+    private static let boundedWaitSeconds: TimeInterval = 5
+
+    /// Blocks the calling thread on `semaphore` for up to `seconds`.
+    ///
+    /// Deliberately **not** `async`: `DispatchSemaphore.wait` is marked
+    /// unavailable from async contexts precisely because blocking a
+    /// cooperative thread is normally a bug. Here it is the point — see
+    /// `idleChannelsDoNotParkTheCooperativePool`, whose watchdog has to
+    /// survive a fully parked pool and therefore cannot be an `await`.
+    /// Calling a synchronous function is the sanctioned way to say so.
+    private static func blockUntilSignalled(
+        _ semaphore: DispatchSemaphore,
+        seconds: TimeInterval
+    ) -> DispatchTimeoutResult {
+        semaphore.wait(timeout: .now() + seconds)
+    }
+
+    /// Collects frames from `stream` until `count` have arrived, bounded by
+    /// `boundedWaitSeconds` so a channel that stops producing fails fast.
+    private func collectFrames(
+        from stream: AsyncThrowingStream<Data, Error>,
+        count: Int
+    ) async throws -> [Data] {
+        try await withWallClockBudget(Self.boundedWaitSeconds) {
+            var frames: [Data] = []
+            for try await frame in stream {
+                frames.append(frame)
+                if frames.count == count { break }
+            }
+            return frames
+        }
+    }
+
+    /// Drains `stream` to EOF (no more frames expected), bounded so a child
+    /// that unexpectedly keeps the stream open fails fast rather than hangs.
+    private func drainToEOF(_ stream: AsyncThrowingStream<Data, Error>) async throws -> [Data] {
+        try await withWallClockBudget(Self.boundedWaitSeconds) {
+            var frames: [Data] = []
+            for try await frame in stream { frames.append(frame) }
+            return frames
+        }
+    }
+
+    /// `standardErrorText()` waits for the drain task under its own bounded
+    /// grace period, so it is deterministic once the child has exited — no
+    /// polling is needed here any more. Bounded again from the outside, so a
+    /// regression that makes it hang fails the test instead of the suite.
+    private func standardErrorText(on channel: SubprocessChannel) async throws -> String {
+        try await withWallClockBudget(Self.boundedWaitSeconds) {
+            await channel.standardErrorText()
+        }
+    }
+
+    /// Launches a channel for `configuration` and runs `body` against it,
+    /// terminating the real child on every exit path. `defer` cannot
+    /// `await`, so this scope function is what makes cleanup reachable from
+    /// a throwing body — several of these tests drive `/bin/cat` with its
+    /// stdin left open, or a `while :; do sleep 0.05; done` loop, neither of
+    /// which exits on its own; without this, a failed assertion mid-body
+    /// leaks that real child for the rest of the test run. `terminate()` is
+    /// idempotent, so calling it again here after a test's own mid-body
+    /// `terminate()` call is harmless.
+    private func withLaunchedChannel<T>(
+        _ configuration: SubprocessChannel.Configuration,
+        _ body: (SubprocessChannel) async throws -> T
+    ) async throws -> T {
+        let channel = SubprocessChannel(configuration: configuration)
+        try await channel.launch()
+        do {
+            let value = try await body(channel)
+            await channel.terminate()
+            return value
+        } catch {
+            await channel.terminate()
+            throw error
+        }
+    }
+
+    // MARK: - Basic I/O
+
+    @Test("echo with arguments produces the expected frame on messages()")
+    func echoWithArgumentsProducesExpectedFrame() async throws {
+        let channel = SubprocessChannel(configuration: .init(
+            executableURL: URL(fileURLWithPath: "/bin/echo"),
+            arguments: ["hello", "world"]
+        ))
+        try await channel.launch()
+        let stream = try await channel.messages()
+
+        let frames = try await collectFrames(from: stream, count: 1)
+        #expect(frames == [Data("hello world\n".utf8)])
+
+        _ = try await channel.waitUntilExit()
+    }
+
+    @Test("cat round-trips three sent messages back in order")
+    func catRoundTripsThreeSentMessages() async throws {
+        try await withLaunchedChannel(.init(executableURL: URL(fileURLWithPath: "/bin/cat"))) { channel in
+            let stream = try await channel.messages()
+
+            try await channel.send(Data("one".utf8))
+            try await channel.send(Data("two".utf8))
+            try await channel.send(Data("three".utf8))
+            await channel.closeInput()
+
+            let frames = try await collectFrames(from: stream, count: 3)
+            #expect(frames == [
+                Data("one\n".utf8),
+                Data("two\n".utf8),
+                Data("three\n".utf8)
+            ])
+        }
+    }
+
+    @Test("sendRaw() writes byte-exactly with no appended newline, unlike send()")
+    func sendRawWritesByteExactlyWithNoAppendedNewline() async throws {
+        try await withLaunchedChannel(.init(executableURL: URL(fileURLWithPath: "/bin/cat"))) { rawChannel in
+            let rawStream = try await rawChannel.messages()
+            try await rawChannel.sendRaw(Data("abc".utf8))
+            await rawChannel.closeInput()
+            let rawFrames = try await collectFrames(from: rawStream, count: 1)
+            #expect(rawFrames == [Data("abc".utf8)])
+        }
+
+        try await withLaunchedChannel(.init(executableURL: URL(fileURLWithPath: "/bin/cat"))) { framedChannel in
+            let framedStream = try await framedChannel.messages()
+            try await framedChannel.send(Data("abc".utf8))
+            await framedChannel.closeInput()
+            let framedFrames = try await collectFrames(from: framedStream, count: 1)
+            #expect(framedFrames == [Data("abc\n".utf8)])
+        }
+    }
+
+    // MARK: - Lifecycle misuse
+
+    @Test("messages() before launch() throws notLaunched")
+    func messagesBeforeLaunchThrowsNotLaunched() async throws {
+        let channel = SubprocessChannel(configuration: .init(
+            executableURL: URL(fileURLWithPath: "/bin/cat")
+        ))
+        do {
+            _ = try await channel.messages()
+            Issue.record("expected messages() to throw before launch()")
+        } catch SubprocessChannel.ChannelError.notLaunched {
+            // expected
+        }
+    }
+
+    @Test("a second launch() throws alreadyLaunched")
+    func secondLaunchThrowsAlreadyLaunched() async throws {
+        try await withLaunchedChannel(.init(executableURL: URL(fileURLWithPath: "/bin/cat"))) { channel in
+            do {
+                try await channel.launch()
+                Issue.record("expected a second launch() to throw")
+            } catch SubprocessChannel.ChannelError.alreadyLaunched {
+                // expected
+            }
+        }
+    }
+
+    @Test("a second call to messages() throws alreadyConsumed — the stream is single-consumer")
+    func secondMessagesCallThrowsAlreadyConsumed() async throws {
+        try await withLaunchedChannel(.init(executableURL: URL(fileURLWithPath: "/bin/cat"))) { channel in
+            _ = try await channel.messages()
+            do {
+                _ = try await channel.messages()
+                Issue.record("expected a second messages() call to throw")
+            } catch SubprocessChannel.ChannelError.alreadyConsumed {
+                // expected
+            }
+        }
+    }
+
+    @Test("terminate() before launch() is a harmless no-op and does not disarm a later terminate()")
+    func terminateBeforeLaunchDoesNotDisarmLaterTermination() async throws {
+        let channel = SubprocessChannel(configuration: .init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "sleep 30"]
+        ))
+        // Calling terminate() before launch() must not leave some
+        // "already terminated" flag set that silently no-ops the real
+        // terminate() below, once the child actually exists.
+        await channel.terminate()
+
+        try await channel.launch()
+        await channel.terminate()
+
+        let exitStatus = try await withWallClockBudget(3) {
+            try await channel.waitUntilExit()
+        }
+        #expect(exitStatus != 0)
+    }
+
+    // MARK: - Exit status and stderr
+
+    @Test("a child writing to stderr and exiting non-zero reports both")
+    func childWritingStderrAndExitingNonZeroReportsBoth() async throws {
+        let channel = SubprocessChannel(configuration: .init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "echo boom >&2; exit 3"]
+        ))
+        try await channel.launch()
+        let stream = try await channel.messages()
+
+        // This script writes nothing to stdout; drain to EOF so the stream
+        // finishes before we check the exit status.
+        _ = try await drainToEOF(stream)
+
+        let status = try await channel.waitUntilExit()
+        #expect(status == 3)
+
+        let stderrText = try await standardErrorText(on: channel)
+        #expect(stderrText.contains("boom"))
+    }
+
+    @Test("a child writing more than 64 KB to stderr is fully captured by the continuous drain")
+    func childWritingMoreThan64KBToStderrIsFullyCaptured() async throws {
+        // 64 KB is the drain's own read-chunk size; a one-shot read (the
+        // regression this guards against) would silently truncate anything
+        // past the first chunk and this test would go red.
+        let lineCount = 6_000
+        let script = "for i in $(seq 1 \(lineCount)); do echo \"errline-$i-0123456789\" >&2; done"
+        let channel = SubprocessChannel(configuration: .init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", script]
+        ))
+        try await channel.launch()
+        let stream = try await channel.messages()
+        _ = try await drainToEOF(stream)
+        _ = try await channel.waitUntilExit()
+
+        let stderrText = await channel.standardErrorText()
+        #expect(stderrText.utf8.count > 64 * 1024)
+        #expect(stderrText.contains("errline-1-0123456789"))
+        #expect(stderrText.contains("errline-\(lineCount)-0123456789"))
+    }
+
+    // MARK: - SIGPIPE
+
+    @Test("writing to a channel whose child has already exited throws rather than killing the test process")
+    func sendAfterChildExitThrowsRatherThanKillingProcess() async throws {
+        let channel = SubprocessChannel(configuration: .init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "exit 0"]
+        ))
+        try await channel.launch()
+        let stream = try await channel.messages()
+        _ = try await drainToEOF(stream)
+        _ = try await channel.waitUntilExit()
+
+        // The child has exited and closed its end of the pipe; a write here
+        // must surface EPIPE as a thrown Swift error (R6), not raise SIGPIPE
+        // and take the whole test process down with it.
+        await #expect(throws: (any Error).self) {
+            try await channel.send(Data("too late".utf8))
+        }
+    }
+
+    // MARK: - Termination
+
+    @Test("terminate() on a long-lived child finishes the message stream and is safe to call twice")
+    func terminateOnLongLivedChildFinishesStreamAndIsIdempotent() async throws {
+        try await withLaunchedChannel(.init(executableURL: URL(fileURLWithPath: "/bin/cat"))) { channel in
+            let stream = try await channel.messages()
+
+            await channel.terminate()
+            await channel.terminate() // must not crash or hang
+
+            let remaining = try await drainToEOF(stream)
+            #expect(remaining.isEmpty)
+        }
+    }
+
+    @Test("cancelling the consuming task terminates the child")
+    func cancellingConsumingTaskTerminatesChild() async throws {
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "sleep 30"]
+        )) { channel in
+            let stream = try await channel.messages()
+
+            let consumingTask = Task {
+                for try await _ in stream {
+                    // This child never writes to stdout; the loop just waits.
+                }
+            }
+            // Give the consumer a moment to actually start iterating before
+            // cancelling it out from under itself.
+            try await Task.sleep(nanoseconds: 200_000_000)
+            consumingTask.cancel()
+
+            // If cancellation terminated the child eagerly, this returns almost
+            // immediately; the 3-second budget (far shorter than the child's
+            // 30-second sleep) is what keeps a regression from hanging the test.
+            let exitStatus = try await withWallClockBudget(3) {
+                try await channel.waitUntilExit()
+            }
+            #expect(exitStatus != 0)
+        }
+    }
+
+    // MARK: - Environment policy
+
+    @Test(".mergeOverParent merges the override over the parent's environment")
+    func mergeOverParentMergesOverrideOverParentEnvironment() async throws {
+        let channel = SubprocessChannel(configuration: .init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "echo \"$WHIPPET_TEST_VAR:$HOME\""],
+            environment: ["WHIPPET_TEST_VAR": "hello"],
+            environmentPolicy: .mergeOverParent
+        ))
+        try await channel.launch()
+        let stream = try await channel.messages()
+
+        let frames = try await collectFrames(from: stream, count: 1)
+        let line = String(data: frames[0], encoding: .utf8) ?? ""
+        #expect(line.hasPrefix("hello:"))
+        let homeValue = line
+            .dropFirst("hello:".count)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        #expect(!homeValue.isEmpty)
+
+        _ = try await channel.waitUntilExit()
+    }
+
+    @Test(".replace isolates the child from the parent's environment")
+    func replaceIsolatesChildFromParentEnvironment() async throws {
+        let channel = SubprocessChannel(configuration: .init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "echo \"$WHIPPET_TEST_VAR:$HOME\""],
+            environment: ["WHIPPET_TEST_VAR": "hello"],
+            environmentPolicy: .replace
+        ))
+        try await channel.launch()
+        let stream = try await channel.messages()
+
+        let frames = try await collectFrames(from: stream, count: 1)
+        let line = String(data: frames[0], encoding: .utf8) ?? ""
+        #expect(line == "hello:\n")
+
+        _ = try await channel.waitUntilExit()
+    }
+
+    @Test("stderr past the 1 MiB cap keeps the TAIL and is marked as truncated")
+    func stderrPastTheCapKeepsTheTailAndIsMarkedTruncated() async throws {
+        // 1.2 MB of filler between two markers, comfortably past the 1 MiB
+        // cap. Reverting `appendStandardError` to a bare `append` — dropping
+        // the front-trim and the marker — has to turn this red; the 132 KB
+        // test above is an eighth of the cap and would stay green.
+        let script = "echo HEADMARKER >&2; head -c 1200000 /dev/zero | tr '\\0' x >&2; echo TAILMARKER >&2"
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", script]
+        )) { channel in
+            let stream = try await channel.messages()
+            _ = try await drainToEOF(stream)
+            _ = try await channel.waitUntilExit()
+
+            let stderrText = try await standardErrorText(on: channel)
+            #expect(stderrText.hasPrefix("[stderr truncated to the last "))
+            // The tail survives; the head is what was cut.
+            #expect(stderrText.contains("TAILMARKER"))
+            #expect(!stderrText.contains("HEADMARKER"))
+        }
+    }
+
+    @Test("standardErrorText() answers with buffered bytes when a grandchild holds the stderr write end")
+    func standardErrorTextDoesNotHangWhenGrandchildHoldsStderr() async throws {
+        // The direct child exits immediately but backgrounds a helper that
+        // inherits — and keeps — the stderr write end, so EOF never arrives.
+        // This is the shape of an `npx` MCP launch. An unbounded await on the
+        // drain task never returns here; the bounded one answers with what it
+        // has.
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "echo early >&2; (sleep 20 &); exit 0"]
+        )) { channel in
+            _ = try await channel.messages()
+
+            let status = try await withWallClockBudget(Self.boundedWaitSeconds) {
+                try await channel.waitUntilExit()
+            }
+            #expect(status == 0)
+
+            // No terminate() first: terminate() force-closes the descriptors and
+            // would release the drain, hiding the very case under test.
+            let stderrText = try await standardErrorText(on: channel)
+            #expect(stderrText.contains("early"))
+        }
+    }
+
+    // MARK: - Cooperative-pool starvation
+
+    @Test("idle channels do not park the Swift cooperative pool")
+    func idleChannelsDoNotParkTheCooperativePool() async throws {
+        // Swift's cooperative pool is fixed-width at `activeProcessorCount`.
+        // A blocking `read(2)` per descriptor on that pool parks two threads
+        // per live channel, so this many idle children starve every other
+        // async task in the process — the unrelated `Task.detached` below
+        // never runs at all. Reading with `DispatchIO` on its own queue parks
+        // none of them.
+        let childCount = max(2, ProcessInfo.processInfo.activeProcessorCount)
+
+        // This test manages `childCount` channels at once rather than one, so
+        // it does not fit `withLaunchedChannel`'s single-channel shape. The
+        // same problem applies though: a launch or `messages()` call throwing
+        // partway through the loop below would otherwise skip the
+        // `withTaskGroup` teardown at the end and leak every channel already
+        // appended to `channels`, plus the one mid-launch when it threw.
+        // `defer` cannot `await`, so the do/catch below is what makes that
+        // teardown reachable from the throwing path too.
+        var channels: [SubprocessChannel] = []
+        // Concurrently, not in a loop: `terminate()` is uncancellable and
+        // costs up to `terminationGraceSeconds` plus the pump drain, so a
+        // sequential teardown of one child per core is that cost multiplied by
+        // the core count — minutes on a big machine, for cleanup.
+        func terminateAll() async {
+            await withTaskGroup(of: Void.self) { group in
+                for channel in channels {
+                    group.addTask { await channel.terminate() }
+                }
+            }
+        }
+
+        do {
+            for _ in 0..<childCount {
+                let channel = SubprocessChannel(configuration: .init(
+                    executableURL: URL(fileURLWithPath: "/bin/sh"),
+                    arguments: ["-c", "sleep 30"]
+                ))
+                try await channel.launch()
+                _ = try await channel.messages()
+                channels.append(channel)
+            }
+
+            // Let every reader settle into its "waiting for a silent child" state
+            // before asking whether anything else can still run.
+            try await Task.sleep(nanoseconds: 300_000_000)
+
+            // The watchdog must not itself live on the cooperative pool. Under
+            // the regression this test exists to catch, every cooperative thread
+            // is parked in a blocking `read(2)` — *including* the thread that
+            // would run a `withWallClockBudget` timeout `Task`, and the one that
+            // would resume this test after an `await`. An async watchdog
+            // therefore cannot fire, the test cannot fail, and the whole scheme
+            // hangs until `xcodebuild` kills it without naming a culprit.
+            //
+            // A `DispatchSemaphore` waited on synchronously does not need the
+            // pool to wake up, so a failure stays a failure. Blocking one
+            // cooperative thread here is deliberate: it is the only wait that
+            // survives the scenario under test.
+            let unrelatedTaskRan = DispatchSemaphore(value: 0)
+            Task.detached { unrelatedTaskRan.signal() }
+            let outcome = Self.blockUntilSignalled(unrelatedTaskRan, seconds: Self.boundedWaitSeconds)
+
+            if outcome == .timedOut {
+                print(
+                    "STARVATION: an unrelated Task.detached did not run within "
+                        + "\(Self.boundedWaitSeconds)s with \(childCount) idle channels open. "
+                        + "The cooperative pool is parked in blocking reads."
+                )
+            }
+            #expect(
+                outcome == .success,
+                "an unrelated Task.detached never ran with \(childCount) idle channels open"
+            )
+        } catch {
+            await terminateAll()
+            throw error
+        }
+
+        await terminateAll()
+    }
+
+    // MARK: - Graceful termination
+
+    @Test("terminate() lets a graceful child run its SIGTERM handler instead of SIGPIPE-ing it")
+    func terminateDoesNotCloseTheChildsReadEndsBeforeSIGTERM() async throws {
+        // The child traps SIGTERM, takes 0.3s to shut down, logs, and exits
+        // with its own code — the shape of every MCP server that writes a
+        // shutdown line, and of any `npx`/`sh -c` wrapper.
+        //
+        // If `terminate()` closes the child's stdout/stderr read ends before
+        // signalling it, the child's next write raises SIGPIPE (the parent's
+        // `F_SETNOSIGPIPE` covers only its own write end of the child's
+        // *stdin*) and it dies with status 13 in about a millisecond — the
+        // handler never reaches its own `exit 7` and the shutdown log is
+        // never written. That nullifies the whole `terminationGraceSeconds`
+        // grace period for precisely the children it exists for.
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: [
+                "-c",
+                "trap 'sleep 0.3; echo BYE >&2; exit 7' TERM; "
+                    + "echo UP >&2; while :; do sleep 0.05; done"
+            ]
+        )) { channel in
+            _ = try await channel.messages()
+            // Let the trap be installed and `UP` be written before signalling.
+            try await Task.sleep(nanoseconds: 500_000_000)
+
+            await channel.terminate()
+
+            let status = try await withWallClockBudget(Self.boundedWaitSeconds) {
+                try await channel.waitUntilExit()
+            }
+            #expect(status == 7, "expected the child's own exit 7; 13 means it was SIGPIPEd")
+
+            let stderrText = try await standardErrorText(on: channel)
+            #expect(stderrText.contains("UP"))
+            #expect(
+                stderrText.contains("BYE"),
+                "the shutdown log written during the grace period was not captured"
+            )
+        }
+    }
+
+    @Test("terminate() delivers the frame a graceful child writes on stdout on its way out")
+    func terminateDeliversTheChildsFinalStdoutFrame() async throws {
+        // The stdout half of the test above, and the more load-bearing half:
+        // on a JSON-RPC channel a shutdown *frame* is a protocol message, not
+        // a log line. The child traps SIGTERM, writes one more complete frame
+        // to stdout a moment later, and exits with its own code. That moment
+        // is deliberately short — 0.05s against a 2s grace period: the delay
+        // only has to be long enough that the write lands after the signal,
+        // and a longer one spends the assertion's margin on a loaded machine
+        // without testing anything extra.
+        //
+        // Winding the pump down at the *start* of `terminate()` — finishing
+        // the message stream, or cancelling the pump into its
+        // `Task.checkCancellation()` — drops that frame even though the
+        // descriptor stays open, exactly as finishing the stderr drain early
+        // dropped the shutdown log. The pump is instead left running for the
+        // whole grace period and waited for afterwards.
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: [
+                "-c",
+                "trap 'sleep 0.05; echo BYE; exit 7' TERM; "
+                    + "echo UP; while :; do sleep 0.05; done"
+            ]
+        )) { channel in
+            let stream = try await channel.messages()
+            // Let the trap be installed and `UP` be written before signalling.
+            try await Task.sleep(nanoseconds: 500_000_000)
+
+            await channel.terminate()
+
+            let frames = try await drainToEOF(stream)
+            let text = frames.compactMap { String(bytes: $0, encoding: .utf8) }.joined()
+            #expect(text.contains("UP"))
+            #expect(
+                text.contains("BYE"),
+                "the shutdown frame written during the grace period never reached messages()"
+            )
+
+            let status = try await withWallClockBudget(Self.boundedWaitSeconds) {
+                try await channel.waitUntilExit()
+            }
+            #expect(status == 7, "expected the child's own exit 7; 13 means it was SIGPIPEd")
+        }
+    }
+
+    @Test("terminate() mid-message finishes a .contentLength stream cleanly rather than throwing")
+    func terminateMidMessageFinishesContentLengthStreamCleanly() async throws {
+        // `MessageFramingDecoder.finish()` is an end-of-stream operation, and
+        // a descriptor `terminate()` tore down is not the end of the child's
+        // output. For `.contentLength` — MCP's framing, and LSP's — flushing
+        // the decoder on a half-received body throws `truncatedMessage`, so
+        // an orderly shutdown would end `messages()` with a transport error.
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: [
+                "-c",
+                "printf 'Content-Length: 8\\r\\n\\r\\n{\"id\":1}"
+                    + "Content-Length: 100\\r\\n\\r\\n{\"partial\":'; "
+                    + "while :; do sleep 0.05; done"
+            ],
+            framing: .contentLength
+        )) { channel in
+            let stream = try await channel.messages()
+            try await Task.sleep(nanoseconds: 300_000_000)
+
+            await channel.terminate()
+
+            let frames = try await drainToEOF(stream)
+            let texts = frames.compactMap { String(bytes: $0, encoding: .utf8) }
+            #expect(texts == ["{\"id\":1}"], "only the complete frame belongs on the stream")
+        }
+    }
+
+    @Test("terminate() does not turn a partial line into a frame on a newline-delimited stream")
+    func terminateDoesNotFabricateAFrameFromAPartialLine() async throws {
+        // The `.newlineDelimited` half of the same defect, and the quieter of
+        // the two: flushing the decoder here yields the unterminated
+        // remainder as if it were a whole message. That desynchronises a
+        // JSON-RPC session exactly as permanently as dropping a frame, and
+        // unlike a dropped frame it announces nothing.
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "printf 'DONE\\nPARTIAL-NO-NEWLINE'; while :; do sleep 0.05; done"]
+        )) { channel in
+            let stream = try await channel.messages()
+            try await Task.sleep(nanoseconds: 300_000_000)
+
+            await channel.terminate()
+
+            let frames = try await drainToEOF(stream)
+            let texts = frames.compactMap { String(bytes: $0, encoding: .utf8) }
+            // Frames keep their delimiter; `DONE\n` is what a complete one
+            // looks like on this framing.
+            #expect(texts == ["DONE\n"], "the partial line is not a frame; only a real EOF makes it one")
+        }
+    }
+
+    @Test("a child that exits on its own still delivers its trailing unterminated line")
+    func naturalEndOfFileStillFlushesTheTrailingRemainder() async throws {
+        // The other side of the two tests above, and what stops the fix from
+        // becoming "never flush the decoder". When the *child* ends its
+        // output, `.newlineDelimited` is defined to hand the trailing
+        // remainder over as a final frame — that is a real message from a
+        // process that has said everything it is going to say. No
+        // `terminate()` here: the stream must reach EOF and finish on its
+        // own.
+        let channel = SubprocessChannel(configuration: .init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "printf 'FIRST\\nTAIL-NO-NEWLINE'"]
+        ))
+        try await channel.launch()
+        let stream = try await channel.messages()
+
+        let frames = try await drainToEOF(stream)
+        let texts = frames.compactMap { String(bytes: $0, encoding: .utf8) }
+        #expect(texts == ["FIRST\n", "TAIL-NO-NEWLINE"])
+    }
+
+    @Test("terminate() after the child has already exited still delivers its last frame")
+    func terminateAfterAGenuineExitStillFlushesTheRemainder() async throws {
+        // The `defer { await channel.terminate() }` shape, which is what an
+        // orderly shutdown actually looks like: the child said everything it
+        // had to say and exited on its own, and only then does cleanup run.
+        // Nothing was torn down — the kill never happened, because there was
+        // nothing left to kill — so the child's own EOF must keep its meaning
+        // and the trailing unterminated line must still arrive.
+        //
+        // This pins the flag to "we are about to signal a live child" rather
+        // than "terminate() was entered". Under the latter reading the same
+        // child yields its tail or drops it depending purely on whether the
+        // detached pump read the flag before the mark landed.
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "printf 'FIRST\\nTAIL-NO-NEWLINE'"]
+        )) { channel in
+            let stream = try await channel.messages()
+
+            let status = try await channel.waitUntilExit()
+            #expect(status == 0)
+            // Let the read handler observe the EOF the child's exit produced, so
+            // this asserts the post-exit `terminate()` and not a race with it.
+            try await Task.sleep(nanoseconds: 300_000_000)
+            await channel.terminate()
+
+            let frames = try await drainToEOF(stream)
+            let texts = frames.compactMap { String(bytes: $0, encoding: .utf8) }
+            #expect(texts == ["FIRST\n", "TAIL-NO-NEWLINE"])
+        }
+    }
+
+    @Test("a concurrent second terminate() waits for the first rather than returning early")
+    func concurrentSecondTerminateWaitsForTheFirst() async throws {
+        // "Idempotent" has to mean every caller gets the finished article,
+        // not just the first one. A flag set before the first suspension
+        // lets a second, concurrent caller return while the child is still
+        // inside its SIGTERM handler — and terminating several channels
+        // concurrently is precisely how a caller with more than one server
+        // shuts down.
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: [
+                "-c",
+                "trap 'sleep 1.0; exit 7' TERM; echo UP; while :; do sleep 0.05; done"
+            ]
+        )) { channel in
+            let stream = try await channel.messages()
+            _ = try await collectFrames(from: stream, count: 1)
+
+            let first = Task { await channel.terminate() }
+            // Long enough for `first` to be parked in its grace-period wait, far
+            // short of the child's 1.0s handler. The handler is deliberately much
+            // longer than the 0.2s budget below: against the defect this test
+            // exists to catch, the second `terminate()` returns at ~0.1s and the
+            // budget expires at ~0.3s, a full 0.7s before the child could exit —
+            // so the negative control stays decisive even on a loaded machine.
+            try await Task.sleep(nanoseconds: 100_000_000)
+
+            await channel.terminate()
+
+            // The second caller has returned. The child's exit must already be
+            // observable — if this call returned early, the child is still
+            // sleeping in its handler and this wait expires instead.
+            let status = try await withWallClockBudget(0.2) {
+                try await channel.waitUntilExit()
+            }
+            #expect(status == 7, "the second terminate() returned before the child was gone")
+            await first.value
+        }
+    }
+
+    @Test("terminate() still escalates to SIGKILL for a child that ignores SIGTERM")
+    func terminateStillEscalatesForAnIgnoringChild() async throws {
+        // The companion to the test above: making SIGTERM survivable must not
+        // make SIGKILL unreachable.
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "trap '' TERM; while :; do sleep 0.05; done"]
+        )) { channel in
+            _ = try await channel.messages()
+            try await Task.sleep(nanoseconds: 200_000_000)
+
+            await channel.terminate()
+
+            let status = try await withWallClockBudget(Self.boundedWaitSeconds) {
+                try await channel.waitUntilExit()
+            }
+            #expect(status == 9, "a child that ignores SIGTERM must still be SIGKILLed")
+        }
+    }
+
+    // MARK: - Non-blocking writes (F07)
+
+    @Test("terminate() completes while a child that never reads stdin is being written to")
+    func terminateCompletesWhileTheChildIgnoresStdin() async throws {
+        // The child never reads its stdin, so the 64 KB pipe buffer fills and
+        // stays full. A blocking `write(2)` made while holding the actor
+        // parks the actor's executor thread there for ever, and `terminate()`
+        // — the only way out — queues behind it. The whole assertion is that
+        // `terminate()` still returns.
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "exec sleep 30"]
+        )) { channel in
+            _ = try await channel.messages()
+
+            // Comfortably past the pipe buffer, so the write cannot complete.
+            let payload = Data(repeating: 0x41, count: 1024 * 1024)
+            let writer = Task { try? await channel.sendRaw(payload) }
+            // Give the write time to reach the descriptor and stall there.
+            try await Task.sleep(nanoseconds: 200_000_000)
+
+            let terminated: Bool? = try? await withWallClockBudget(Self.boundedWaitSeconds) {
+                await channel.terminate()
+                return true
+            }
+            writer.cancel()
+            #expect(
+                terminated == true,
+                "terminate() did not return within \(Self.boundedWaitSeconds)s: the stalled write is holding the actor"
+            )
+        }
+    }
+
+    @Test("a write submitted while the child is alive fails rather than strands when terminate() lands")
+    func aStalledWriteFailsWhenTheChannelIsTornDown() async throws {
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "exec sleep 30"]
+        )) { channel in
+            _ = try await channel.messages()
+
+            let payload = Data(repeating: 0x42, count: 1024 * 1024)
+            let writer = Task { () -> Bool in
+                do {
+                    try await channel.sendRaw(payload)
+                    return false
+                } catch {
+                    return true
+                }
+            }
+            try await Task.sleep(nanoseconds: 200_000_000)
+            await channel.terminate()
+
+            let threw = try await withWallClockBudget(Self.boundedWaitSeconds) {
+                await writer.value
+            }
+            #expect(threw, "the stalled write neither completed nor failed; it is still parked")
+        }
+    }
+
+    @Test("frames written before closeInput() reach a child that only reads after EOF")
+    func writesAreDeliveredInOrderBeforeEOF() async throws {
+        // `sendRaw` submits synchronously and awaits only the completion, so
+        // ordering is still call order even though the calls suspend. `cat`
+        // echoes what it is given, so a reordering would be visible.
+        try await withLaunchedChannel(.init(executableURL: URL(fileURLWithPath: "/bin/cat"))) { channel in
+            let stream = try await channel.messages()
+            for index in 0..<8 {
+                try await channel.sendRaw(Data("line-\(index)\n".utf8))
+            }
+            await channel.closeInput()
+
+            let frames = try await drainToEOF(stream)
+            let lines = frames.compactMap { String(data: $0, encoding: .utf8) }
+            #expect(lines == (0..<8).map { "line-\($0)\n" })
+            _ = try await channel.waitUntilExit()
+        }
+    }
+
+    // MARK: - waitUntilExit is honest about having no status (F25/F08)
+
+    @Test("waitUntilExit() on a channel that was never launched throws instead of reporting 0")
+    func waitUntilExitOnAnUnlaunchedChannelThrows() async throws {
+        let channel = SubprocessChannel(configuration: .init(
+            executableURL: URL(fileURLWithPath: "/bin/echo"),
+            arguments: ["hi"]
+        ))
+        await #expect(throws: SubprocessChannel.ChannelError.self) {
+            _ = try await channel.waitUntilExit()
+        }
+    }
+
+    @Test("a cancelled waitUntilExit() unparks and throws, leaving other waiters alone")
+    func cancellingOneWaitUntilExitLeavesTheOthersParked() async throws {
+        // The leak F08 describes: a wall-clock budget cancels the racer that
+        // is waiting on the child, but an uncancellable wait never unwinds,
+        // so the `terminate()` on the next line is never reached. The wait
+        // has to actually return.
+        try await withLaunchedChannel(.init(
+            executableURL: URL(fileURLWithPath: "/bin/sh"),
+            arguments: ["-c", "exec sleep 30"]
+        )) { channel in
+            _ = try await channel.messages()
+
+            let survivor = Task { try? await channel.waitUntilExit() }
+            let cancelled = Task { () -> Bool in
+                do {
+                    _ = try await channel.waitUntilExit()
+                    return false
+                } catch is CancellationError {
+                    return true
+                } catch {
+                    return false
+                }
+            }
+            try await Task.sleep(nanoseconds: 200_000_000)
+            cancelled.cancel()
+
+            let unwound = try await withWallClockBudget(Self.boundedWaitSeconds) {
+                await cancelled.value
+            }
+            #expect(unwound, "the cancelled wait never unwound")
+
+            // The other waiter must still be waiting on the real child, not have
+            // been resumed by someone else's cancellation.
+            await channel.terminate()
+            let status = try await withWallClockBudget(Self.boundedWaitSeconds) {
+                await survivor.value
+            }
+            #expect(status != nil && status != 0, "the surviving waiter lost its status")
+        }
+    }
+
+    // MARK: - A real EOF survives a teardown that arrives later (F24)
+
+    @Test("markTornDown() after a genuine EOF leaves the stream natural")
+    func markTornDownAfterEndOfFileDoesNotEraseIt() async throws {
+        // Driven over a bare `Pipe` rather than a child, because the ordering
+        // *is* the assertion: EOF first, teardown second. Through a live
+        // child those two race on the DispatchIO queue.
+        let pipe = Pipe()
+        let reader = SubprocessChannel.DescriptorReader(
+            handle: pipe.fileHandleForReading,
+            label: "test.markTornDown.eof-first"
+        )
+        try pipe.fileHandleForWriting.write(contentsOf: Data("FIRST\nTAIL".utf8))
+        try pipe.fileHandleForWriting.close()
+
+        // Draining to the end of the stream is what makes the EOF observed
+        // rather than merely sent.
+        let chunks = try await withWallClockBudget(Self.boundedWaitSeconds) {
+            var collected = Data()
+            for try await chunk in reader.chunks { collected.append(chunk) }
+            return collected
+        }
+        #expect(chunks == Data("FIRST\nTAIL".utf8))
+        #expect(reader.reachedEndOfStreamNaturally)
+
+        // `terminate()` sends this to both readers before its SIGTERM, and
+        // reaches a child that closed stdout and stayed alive with an EOF
+        // already recorded. A teardown cannot be retroactive.
+        reader.markTornDown()
+        #expect(
+            reader.reachedEndOfStreamNaturally,
+            "a teardown that arrived after the child's own EOF erased it, and the trailing unterminated frame with it"
+        )
+    }
+
+    @Test("markTornDown() before EOF still classifies the stream as torn down")
+    func markTornDownBeforeEndOfFileStillCounts() async throws {
+        // The companion: the guard must not make `markTornDown()` a no-op on
+        // the path it exists for — a live descriptor whose EOF is about to be
+        // produced by our own kill.
+        let pipe = Pipe()
+        let reader = SubprocessChannel.DescriptorReader(
+            handle: pipe.fileHandleForReading,
+            label: "test.markTornDown.mark-first"
+        )
+        try pipe.fileHandleForWriting.write(contentsOf: Data("FIRST\nTAIL".utf8))
+
+        reader.markTornDown()
+        try pipe.fileHandleForWriting.close()
+
+        _ = try await withWallClockBudget(Self.boundedWaitSeconds) {
+            var collected = Data()
+            for try await chunk in reader.chunks { collected.append(chunk) }
+            return collected
+        }
+        #expect(
+            !reader.reachedEndOfStreamNaturally,
+            "the EOF our own teardown produced was read as the child ending its output"
+        )
+    }
+}

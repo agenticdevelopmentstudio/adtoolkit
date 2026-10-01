@@ -1,0 +1,410 @@
+/* Shared login card. Themed via CSS custom properties; defaults match the
+ * gold-on-dark palette both ADH sites use today. Consumers override any
+ * --auth-* variable (e.g. --auth-heading-font) in their globals.
+ *
+ * DELIBERATELY self-enclosed (standing exception, incl. the raw-hex palette):
+ * the card's buttons/inputs are skinned HERE, not built on @agenticdevelopertoolkit/ui
+ * primitives, because the --auth-* variables are a per-site theming contract —
+ * sites override them in their globals — and utility-styled primitives would
+ * fight these rules on specificity and answer to a different token system.
+ * Keep the card's whole skin in this one file. */
+.auth-card {
+  --auth-card-bg: #14141a;
+  --auth-card-border: #2a2a36;
+  --auth-text: #e8e6e3;
+  --auth-text-muted: #8a8a9a;
+  --auth-text-dim: #5a5a6a;
+  --auth-accent: #c4a35a;
+  --auth-accent-contrast: #0c0c0f;
+  --auth-input-bg: #1c1c24;
+  --auth-input-border: #2a2a36;
+  --auth-error: #d45454;
+  --auth-radius: 1rem;
+  --auth-heading-font: inherit;
+
+  width: 100%;
+  max-width: 28rem;
+  padding: 2rem;
+  border-radius: var(--auth-radius);
+  background: var(--auth-card-bg);
+  border: 1px solid var(--auth-card-border);
+  color: var(--auth-text);
+  box-sizing: border-box;
+}
+
+.auth-card__heading {
+  margin: 0 0 0.5rem;
+  text-align: center;
+  font-family: var(--auth-heading-font);
+  font-size: 1.75rem;
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--auth-text);
+}
+
+.auth-card__subhead {
+  margin: 0 0 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--auth-text-muted);
+}
+
+/* Stands in for the whole methods body while the host is still resolving which
+   sign-in methods exist. Sized to roughly the space they will occupy, so the card
+   does not jump when they arrive. */
+.auth-card__pending {
+  margin: 0;
+  padding: 2rem 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--auth-text-dim);
+}
+
+.auth-card__providers {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-card__provider-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  background: var(--auth-accent);
+  color: var(--auth-accent-contrast);
+  transition: opacity 0.15s ease;
+}
+.auth-card__provider-btn:hover { opacity: 0.9; }
+
+.auth-card__divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+.auth-card__divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--auth-card-border);
+}
+.auth-card__divider-text {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--auth-text-dim);
+}
+
+.auth-card__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.auth-card__error {
+  padding: 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  background: rgba(212, 84, 84, 0.1);
+  border: 1px solid rgba(212, 84, 84, 0.3);
+  color: var(--auth-error);
+}
+
+.auth-card__field { display: flex; flex-direction: column; gap: 0.25rem; }
+
+.auth-card__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--auth-text-muted);
+}
+
+.auth-card__input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  outline: none;
+  background: var(--auth-input-bg);
+  border: 1px solid var(--auth-input-border);
+  color: var(--auth-text);
+  box-sizing: border-box;
+}
+.auth-card__input:focus { border-color: var(--auth-accent); }
+
+/* Helper text under the identifier field (accepted login forms). */
+.auth-card__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--auth-text-dim);
+}
+
+.auth-card__submit {
+  width: 100%;
+  padding: 0.625rem 0;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  background: transparent;
+  color: var(--auth-accent);
+  border: 1px solid var(--auth-accent);
+  transition: opacity 0.15s ease;
+}
+.auth-card__submit:hover { opacity: 0.9; }
+.auth-card__submit:disabled { opacity: 0.5; cursor: default; }
+
+.auth-card__signup {
+  margin: 1.5rem 0 0;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--auth-text-dim);
+}
+.auth-card__signup-link { color: var(--auth-accent); text-decoration: none; }
+.auth-card__signup-link:hover { opacity: 0.8; }
+
+/* --- Two-factor (MFA) step ------------------------------------------------ */
+.auth-card__mfa { display: flex; flex-direction: column; }
+
+.auth-card__mfa-hint {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--auth-text-muted);
+}
+
+.auth-card__mfa-methods {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--auth-card-border);
+}
+.auth-card__mfa-methods-label {
+  font-size: 0.8125rem;
+  color: var(--auth-text-dim);
+}
+
+.auth-card__mfa-link {
+  padding: 0;
+  margin-top: 1rem;
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  color: var(--auth-accent);
+  text-decoration: none;
+}
+.auth-card__mfa-methods .auth-card__mfa-link { margin-top: 0; }
+.auth-card__mfa-link:hover { opacity: 0.8; }
+.auth-card__mfa-link:disabled { opacity: 0.5; cursor: default; }
+
+/* OIDC server-rendered OTP step: method radios + resend form */
+.auth-card__mfa-radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--auth-text);
+}
+.auth-card__mfa-resend {
+  margin-top: 0.75rem;
+}
+
+.auth-card__passkey-link {
+  align-self: center;
+  margin-top: 0.75rem;
+}
+
+/* RequireAuth's default loading fallback (RequireAuthSkeleton). A content-area
+ * skeleton — the host's app shell has already painted the header + footer around it,
+ * so this fills only the main region. Theme-adaptive via the host's shared --color-*
+ * tokens (with literal fallbacks, so it degrades to the dark palette if the host ships
+ * no theme layer); the accent-tinted sheen sweeps left-to-right, staggered per block by
+ * an inline --i index (so the card count isn't baked into the CSS); honors
+ * prefers-reduced-motion.
+ *
+ * These rules lived in the adh monorepo's chrome stylesheet until Task 6.4, because
+ * every gated site there imports that sheet while only two import this one. They now
+ * sit with the component they style. A host whose gated pages do NOT import this file
+ * directly must re-import it from a sheet they DO import — adh's chrome sheet does
+ * exactly that, which is what keeps its ~28 HomeGate-rendering marketing sites covered. */
+.adh-auth-skeleton {
+  --adh-skel-block: var(--color-surface-raised, #1c1c24);
+  --adh-skel-border: var(--color-border, #2a2a36);
+  --adh-skel-sheen: color-mix(in srgb, var(--color-accent, #c4a35a) 16%, transparent);
+  --adh-skel-radius: 0.75rem;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+  box-sizing: border-box;
+}
+
+/* Screen-reader-only text naming the role="status" region. */
+.adh-auth-skeleton__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.adh-auth-skeleton__title,
+.adh-auth-skeleton__subtitle,
+.adh-auth-skeleton__card {
+  position: relative;
+  overflow: hidden;
+  background: var(--adh-skel-block);
+  border-radius: var(--adh-skel-radius);
+}
+
+.adh-auth-skeleton__title {
+  width: 38%;
+  min-width: 12rem;
+  height: 2rem;
+  margin-bottom: 1rem;
+}
+
+.adh-auth-skeleton__subtitle {
+  width: 60%;
+  min-width: 16rem;
+  height: 1rem;
+  margin-bottom: 2.5rem;
+}
+
+.adh-auth-skeleton__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: 1.25rem;
+}
+
+.adh-auth-skeleton__card {
+  height: 9.5rem;
+  border: 1px solid color-mix(in srgb, var(--adh-skel-border) 60%, transparent);
+}
+
+.adh-auth-skeleton__title::after,
+.adh-auth-skeleton__subtitle::after,
+.adh-auth-skeleton__card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, var(--adh-skel-sheen), transparent);
+  animation: adh-auth-skeleton-sweep 1.5s ease-in-out infinite;
+  animation-delay: calc(var(--i, 0) * 0.08s);
+}
+
+@keyframes adh-auth-skeleton-sweep {
+  to { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adh-auth-skeleton__title::after,
+  .adh-auth-skeleton__subtitle::after,
+  .adh-auth-skeleton__card::after {
+    animation: none;
+  }
+}
+
+/* ---- AuthCallback ----
+ *
+ * AuthCallback.tsx has emitted `.adh-auth-callback` since it was written, and
+ * until now NOTHING in this package — or any consumer's sheet — defined it. The
+ * failed-exchange branch was therefore a bare unstyled div with a browser-default
+ * `<button>`: the one screen a visitor reaches when sign-in breaks was the one
+ * screen with no design. Styled HERE, with the component that emits it, for the
+ * same reason the skeleton's rules moved here in Task 6.4 — a consumer cannot be
+ * expected to skin class names it does not own.
+ *
+ * Same token vocabulary and the same WITH-FALLBACK discipline as
+ * `.adh-auth-skeleton` above: a host that loads this sheet without a themes
+ * palette still gets the gold-on-dark defaults rather than transparent text.
+ * Deliberately NOT built on the `--auth-*` card variables — those are the login
+ * CARD's per-site theming contract, and this is not a card. */
+.adh-auth-callback {
+  --adh-cb-fg: var(--color-on-surface, #e8e6e3);
+  --adh-cb-muted: var(--color-on-surface-variant, #8a8a9a);
+  --adh-cb-raised: var(--color-surface-raised, #1c1c24);
+  --adh-cb-border: var(--color-border, #2a2a36);
+  --adh-cb-accent: var(--color-accent, #c4a35a);
+  --adh-cb-on-accent: var(--color-on-primary, #0c0c0f);
+  --adh-cb-error: var(--color-error, #d45454);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  min-height: 60vh;
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+  text-align: center;
+  color: var(--adh-cb-muted);
+}
+
+/* The waiting line. One `<p>`, so it is addressed as the element rather than
+ * given a class the component would also have to start emitting. */
+.adh-auth-callback > p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.adh-auth-callback__error {
+  width: 100%;
+  max-width: 28rem;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: var(--adh-cb-raised);
+  /* The error colour carries the meaning, so it is on the border and the text
+   * both — a red rule alone is easy to miss on a dark surface, and red text
+   * alone reads as ordinary prose to anyone who cannot separate the two. */
+  border: 1px solid color-mix(in srgb, var(--adh-cb-error) 55%, var(--adh-cb-border));
+  box-sizing: border-box;
+}
+
+.adh-auth-callback__error > p {
+  margin: 0 0 1.25rem;
+  color: var(--adh-cb-error);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* The retry control restarts SSO at the authorization server, so it is the
+ * primary (and only) action on the screen — styled as one rather than left as a
+ * platform button that reads as debug chrome. */
+.adh-auth-callback__error > button {
+  appearance: none;
+  border: 0;
+  border-radius: 0.5rem;
+  padding: 0.7rem 1.25rem;
+  background: var(--adh-cb-accent);
+  color: var(--adh-cb-on-accent);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.adh-auth-callback__error > button:hover {
+  opacity: 0.9;
+}
+
+.adh-auth-callback__error > button:focus-visible {
+  outline: 2px solid var(--adh-cb-accent);
+  outline-offset: 2px;
+}

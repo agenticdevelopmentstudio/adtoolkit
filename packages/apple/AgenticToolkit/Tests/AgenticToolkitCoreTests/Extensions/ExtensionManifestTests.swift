@@ -1,0 +1,435 @@
+import Testing
+import Foundation
+@testable import AgenticToolkitCore
+
+@Suite
+struct ExtensionManifestTests {
+
+    private static let fullManifestJSON = """
+    {
+        "name": "kitchen-sink",
+        "publisher": "acme",
+        "version": "1.2.3",
+        "displayName": "Kitchen Sink",
+        "description": "Exercises every contributes key.",
+        "engines": { "vscode": "^1.74.0" },
+        "activationEvents": ["onStartupFinished"],
+        "main": "./out/extension.js",
+        "browser": "./out/extension-browser.js",
+        "extensionKind": ["workspace"],
+        "capabilities": {
+            "untrustedWorkspaces": { "supported": "limited", "description": "partial" }
+        },
+        "contributes": {
+            "themes": [
+                { "label": "Acme Dark", "uiTheme": "vs-dark", "path": "./themes/dark.json" }
+            ],
+            "snippets": [
+                { "language": "swift", "path": "./snippets/swift.json" }
+            ],
+            "languages": [
+                { "id": "acme-lang", "aliases": ["Acme"], "extensions": [".acme"] }
+            ],
+            "commands": [
+                { "command": "acme.doThing", "title": "Do Thing" }
+            ],
+            "keybindings": [
+                { "command": "acme.doThing", "key": "ctrl+shift+d", "mac": "cmd+shift+d" }
+            ],
+            "menus": {
+                "commandPalette": [
+                    { "command": "acme.doThing", "when": "editorTextFocus" }
+                ]
+            },
+            "configuration": [
+                {
+                    "title": "Acme",
+                    "properties": {
+                        "acme.enabled": { "type": "boolean", "default": true }
+                    }
+                }
+            ],
+            "views": {
+                "explorer": [
+                    { "id": "acmeView", "name": "Acme View" }
+                ]
+            },
+            "viewsContainers": {
+                "activitybar": [
+                    { "id": "acmeContainer", "title": "Acme", "icon": "./icon.svg" }
+                ]
+            },
+            "languageModelTools": [
+                { "name": "acme.tool", "displayName": "Acme Tool" }
+            ]
+        }
+    }
+    """
+
+    private static let minimalManifestJSON = """
+    { "name": "bare", "version": "0.0.1", "engines": { "vscode": "^1.74.0" } }
+    """
+
+    @Test("decodes a full manifest exercising every contributes key")
+    func decodesFullManifest() throws {
+        let manifest = try JSONDecoder().decode(
+            ExtensionManifest.self,
+            from: Data(Self.fullManifestJSON.utf8)
+        )
+
+        #expect(manifest.identifier == "acme.kitchen-sink")
+        #expect(manifest.engines.vscode == "^1.74.0")
+        #expect(manifest.activationEvents == ["onStartupFinished"])
+
+        let contributes = try #require(manifest.contributes)
+        #expect(contributes.themes.count == 1)
+        #expect(contributes.snippets.count == 1)
+        #expect(contributes.languages.count == 1)
+        #expect(contributes.commands.count == 1)
+        #expect(contributes.keybindings.count == 1)
+        #expect(contributes.menus["commandPalette"]?.count == 1)
+        #expect(contributes.configuration.count == 1)
+        #expect(contributes.configuration.first?.properties["acme.enabled"]?.effectiveType == "boolean")
+        #expect(contributes.views["explorer"]?.count == 1)
+        #expect(contributes.viewsContainers["activitybar"]?.count == 1)
+        #expect(contributes.languageModelTools.count == 1)
+        #expect(contributes.decodingFailures.isEmpty)
+    }
+
+    @Test("a minimal manifest defaults every contributes array to empty, not nil")
+    func decodesMinimalManifest() throws {
+        let manifest = try JSONDecoder().decode(
+            ExtensionManifest.self,
+            from: Data(Self.minimalManifestJSON.utf8)
+        )
+
+        // No publisher, so `identifier` falls back to the bare name — the
+        // identity every setting, uninstall and withdrawal keys on.
+        #expect(manifest.identifier == "bare")
+        #expect(manifest.contributes == nil)
+        #expect(manifest.activationEvents.isEmpty)
+        #expect(manifest.capabilities == nil)
+
+        // The `Contributions` type itself defaults every array/dictionary to
+        // empty when its key is absent, independent of the manifest omitting
+        // `contributes` entirely.
+        let emptyContributes = try JSONDecoder().decode(
+            ExtensionManifest.Contributions.self,
+            from: Data("{}".utf8)
+        )
+        #expect(emptyContributes.themes.isEmpty)
+        #expect(emptyContributes.snippets.isEmpty)
+        #expect(emptyContributes.languages.isEmpty)
+        #expect(emptyContributes.commands.isEmpty)
+        #expect(emptyContributes.keybindings.isEmpty)
+        #expect(emptyContributes.menus.isEmpty)
+        #expect(emptyContributes.configuration.isEmpty)
+        #expect(emptyContributes.views.isEmpty)
+        #expect(emptyContributes.viewsContainers.isEmpty)
+        #expect(emptyContributes.languageModelTools.isEmpty)
+        #expect(emptyContributes.decodingFailures.isEmpty)
+    }
+
+    @Test("a missing name fails to decode")
+    func missingNameFails() {
+        let json = """
+        { "version": "0.0.1", "engines": { "vscode": "^1.74.0" } }
+        """
+        #expect(throws: (any Error).self) {
+            _ = try JSONDecoder().decode(ExtensionManifest.self, from: Data(json.utf8))
+        }
+    }
+
+    @Test("all three untrustedWorkspaces.supported forms decode and re-encode")
+    func untrustedWorkspacesRoundTrips() throws {
+        for (raw, expected) in [
+            ("true", ExtensionManifest.Capabilities.UntrustedWorkspaces.Support.supported),
+            ("false", .unsupported),
+            ("\"limited\"", .limited)
+        ] {
+            let json = """
+            { "supported": \(raw) }
+            """
+            let decoded = try JSONDecoder().decode(
+                ExtensionManifest.Capabilities.UntrustedWorkspaces.self,
+                from: Data(json.utf8)
+            )
+            #expect(decoded.supported == expected)
+
+            let reencoded = try JSONEncoder().encode(decoded)
+            let roundTripped = try JSONDecoder().decode(
+                ExtensionManifest.Capabilities.UntrustedWorkspaces.self,
+                from: reencoded
+            )
+            #expect(roundTripped.supported == expected)
+        }
+    }
+
+    /// `View.unreadableKeys` is what this decoder could not read, not something
+    /// a manifest declares, and it stays out of the JSON only because it has no
+    /// `CodingKeys` case — a fact a comment can ask a future reader to respect
+    /// but cannot enforce. Add `case unreadableKeys` to that enum and this
+    /// fails immediately, which is the point of it.
+    @Test("what the decoder could not read is decoder output, not manifest content")
+    func unreadableKeysAreNotEncoded() throws {
+        let view = try JSONDecoder().decode(
+            ExtensionManifest.View.self,
+            from: Data(#"{ "id": "a.b", "name": "B", "initialSize": "2" }"#.utf8))
+        try #require(view.unreadableKeys == ["initialSize"])
+
+        let json = try #require(String(data: try JSONEncoder().encode(view), encoding: .utf8))
+        #expect(!json.contains("unreadableKeys"))
+        // And the round trip still lands on manifest content: a re-decoded
+        // `View` has nothing unreadable, because nothing unreadable was written.
+        let roundTripped = try JSONDecoder().decode(
+            ExtensionManifest.View.self, from: Data(json.utf8))
+        #expect(roundTripped.unreadableKeys.isEmpty)
+        #expect(roundTripped.id == "a.b")
+    }
+
+    @Test("a malformed theme leaves the other themes intact and records one decodingFailure")
+    func malformedThemeIsIsolated() throws {
+        let json = """
+        {
+            "themes": [
+                { "label": "Good", "uiTheme": "vs-dark", "path": "./good.json" },
+                { "label": "Bad", "uiTheme": 42, "path": "./bad.json" }
+            ]
+        }
+        """
+        let contributes = try JSONDecoder().decode(
+            ExtensionManifest.Contributions.self,
+            from: Data(json.utf8)
+        )
+
+        #expect(contributes.themes.count == 1)
+        #expect(contributes.themes.first?.label == "Good")
+        #expect(contributes.decodingFailures.count == 1)
+        let failure = try #require(contributes.decodingFailures.first)
+        #expect(failure.key == "contributes.themes")
+        #expect(failure.index == 1)
+        // `reason` is rendered verbatim at the extension author in the settings
+        // panel, so it is prose naming the offending key — never
+        // `String(describing:)` over the `DecodingError`, which would put
+        // `typeMismatch(Swift.String, Swift.DecodingError.Context(codingPath:…`
+        // on screen.
+        //
+        // `text`, not `String`: the author wrote JSON and is being told what to
+        // write instead, so the noun is JSON's (Ruling GU). Interpolating the
+        // Swift type leaks the same compiler vocabulary one word later.
+        #expect(failure.reason == "“uiTheme” is not text")
+    }
+
+    @Test("a themes entry that is not an object at all names itself, not an empty key")
+    func aThemesEntryThatIsNotAnObjectNamesItself() throws {
+        // A bare string *inside* the array, not instead of it: `"themes":
+        // "night.json"` trips the `expected an array` guard and never reaches
+        // the element loop, so it would not exercise this at all.
+        let json = #"{ "themes": ["night.json"] }"#
+        let contributes = try JSONDecoder().decode(
+            ExtensionManifest.Contributions.self,
+            from: Data(json.utf8)
+        )
+
+        #expect(contributes.themes.isEmpty)
+        #expect(contributes.decodingFailures.count == 1)
+        let failure = try #require(contributes.decodingFailures.first)
+        #expect(failure.key == "contributes.themes")
+        #expect(failure.index == 0)
+        // Two claims, and they are one sentence.
+        //
+        // "this entry": every element is decoded on its own, so an element that
+        // is itself the wrong shape throws with an *empty* coding path. Naming
+        // the path anyway renders `“” is not …` — a sentence naming nothing, in
+        // front of an extension author.
+        //
+        // "an object": the type in the error is `Dictionary<String, Any>`, and
+        // this branch — not the near-miss `String` above — is where a Swift
+        // type name reads as a raw compiler artefact.
+        #expect(failure.reason == "this entry is not an object")
+    }
+
+    @Test("an object-form command icon drops the icon, not the command")
+    func objectFormCommandIconKeepsTheCommand() throws {
+        let json = """
+        {
+            "commands": [
+                {
+                    "command": "acme.doThing",
+                    "title": "Do Thing",
+                    "category": "Acme",
+                    "enablement": "editorTextFocus",
+                    "icon": { "light": "./light.svg", "dark": "./dark.svg" }
+                },
+                { "command": "acme.other", "title": "Other", "icon": "./plain.svg" }
+            ]
+        }
+        """
+        let contributes = try JSONDecoder().decode(
+            ExtensionManifest.Contributions.self,
+            from: Data(json.utf8)
+        )
+
+        #expect(contributes.commands.count == 2)
+        let themed = try #require(contributes.commands.first)
+        #expect(themed.command == "acme.doThing")
+        #expect(themed.title == "Do Thing")
+        #expect(themed.category == "Acme")
+        #expect(themed.enablement == "editorTextFocus")
+        #expect(themed.icon == nil)
+
+        // The sibling with a string icon is untouched.
+        #expect(contributes.commands.last?.icon == "./plain.svg")
+        #expect(contributes.decodingFailures.isEmpty)
+    }
+
+    @Test("the single-object form of contributes.configuration decodes as one element")
+    func singleObjectConfigurationDecodes() throws {
+        let json = """
+        {
+            "configuration": {
+                "title": "Acme",
+                "properties": {
+                    "acme.enabled": { "type": "boolean", "default": true }
+                }
+            }
+        }
+        """
+        let contributes = try JSONDecoder().decode(
+            ExtensionManifest.Contributions.self,
+            from: Data(json.utf8)
+        )
+
+        #expect(contributes.configuration.count == 1)
+        #expect(contributes.configuration.first?.title == "Acme")
+        #expect(contributes.configuration.first?.properties["acme.enabled"]?.effectiveType == "boolean")
+        #expect(contributes.decodingFailures.isEmpty)
+    }
+
+    @Test("a keyed location whose value is not an array is one failure naming that location")
+    func keyedLocationThatIsNotAnArrayIsIsolated() throws {
+        let json = """
+        { "menus": { "editor/context": 42 } }
+        """
+        let contributes = try JSONDecoder().decode(
+            ExtensionManifest.Contributions.self,
+            from: Data(json.utf8)
+        )
+
+        #expect(contributes.menus.isEmpty)
+        #expect(contributes.decodingFailures.count == 1)
+        let failure = try #require(contributes.decodingFailures.first)
+        #expect(failure.key == "contributes.menus.editor/context")
+        #expect(failure.index == nil)
+    }
+
+    @Test("a malformed element inside a keyed location costs only itself")
+    func malformedElementInsideAKeyedLocationIsIsolated() throws {
+        let json = """
+        {
+            "menus": {
+                "commandPalette": [
+                    { "command": "acme.doThing", "when": "editorTextFocus" },
+                    { "when": "editorTextFocus" }
+                ]
+            }
+        }
+        """
+        let contributes = try JSONDecoder().decode(
+            ExtensionManifest.Contributions.self,
+            from: Data(json.utf8)
+        )
+
+        #expect(contributes.menus["commandPalette"]?.count == 1)
+        #expect(contributes.menus["commandPalette"]?.first?.command == "acme.doThing")
+        #expect(contributes.decodingFailures.count == 1)
+        let failure = try #require(contributes.decodingFailures.first)
+        #expect(failure.key == "contributes.menus.commandPalette")
+        #expect(failure.index == 1)
+        // The keyed-container path has its own `catch`, so it needs its own
+        // assertion: routing only the array one through `describe` would leave
+        // this line rendering a compiler dump and nothing would say so.
+        #expect(failure.reason == "no “command”")
+    }
+
+    // MARK: - F09 — a tolerated top-level field must not sink the manifest
+
+    @Test("a capabilities block this host cannot read costs the manifest its capabilities, not its identity")
+    func unreadableCapabilitiesDoesNotSinkTheManifest() throws {
+        let json = """
+        {
+            "name": "foo",
+            "publisher": "acme",
+            "version": "1.0.0",
+            "engines": { "vscode": "^1.74.0" },
+            "capabilities": { "untrustedWorkspaces": { "supported": "partial" } },
+            "contributes": { "commands": [ { "command": "acme.foo.run", "title": "Run" } ] }
+        }
+        """
+        let manifest = try JSONDecoder().decode(ExtensionManifest.self, from: Data(json.utf8))
+
+        #expect(manifest.identifier == "acme.foo")
+        #expect(manifest.capabilities == nil)
+        #expect(manifest.contributes?.commands.count == 1)
+    }
+
+    @Test("an extensionKind that is not a list of strings is dropped, not fatal")
+    func unreadableExtensionKindDoesNotSinkTheManifest() throws {
+        let json = """
+        {
+            "name": "foo",
+            "publisher": "acme",
+            "version": "1.0.0",
+            "engines": { "vscode": "^1.74.0" },
+            "extensionKind": "workspace"
+        }
+        """
+        let manifest = try JSONDecoder().decode(ExtensionManifest.self, from: Data(json.utf8))
+
+        #expect(manifest.identifier == "acme.foo")
+        #expect(manifest.extensionKind == nil)
+    }
+
+    @Test("an activationEvents that is not a list of strings is dropped, not fatal")
+    func unreadableActivationEventsDoesNotSinkTheManifest() throws {
+        let json = """
+        {
+            "name": "foo",
+            "publisher": "acme",
+            "version": "1.0.0",
+            "engines": { "vscode": "^1.74.0" },
+            "activationEvents": { "onStartupFinished": true }
+        }
+        """
+        let manifest = try JSONDecoder().decode(ExtensionManifest.self, from: Data(json.utf8))
+
+        #expect(manifest.identifier == "acme.foo")
+        #expect(manifest.activationEvents.isEmpty)
+    }
+
+    // MARK: - F39 — identity is case-insensitive, the way VS Code reads it
+
+    @Test("identifier folds case so two spellings of one extension are one identity")
+    func identifierFoldsCase() throws {
+        func manifest(publisher: String, name: String) throws -> ExtensionManifest {
+            let json = """
+            {
+                "name": "\(name)",
+                "publisher": "\(publisher)",
+                "version": "1.0.0",
+                "engines": { "vscode": "^1.74.0" }
+            }
+            """
+            return try JSONDecoder().decode(ExtensionManifest.self, from: Data(json.utf8))
+        }
+
+        let shouty = try manifest(publisher: "MS-vscode", name: "Foo")
+        let quiet = try manifest(publisher: "ms-vscode", name: "foo")
+
+        #expect(shouty.identifier == "ms-vscode.foo")
+        #expect(shouty.identifier == quiet.identifier)
+        // The declared spelling is still available for anything that shows it.
+        #expect(shouty.displayIdentifier == "MS-vscode.Foo")
+        #expect(quiet.displayIdentifier == "ms-vscode.foo")
+    }
+}

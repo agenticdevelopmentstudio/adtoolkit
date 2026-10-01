@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <FileRef
+      location = "group:AgenticToolkitApp/AgenticToolkitApp.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:AgenticToolkit/AgenticToolkit.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:AIPlugins/AIPlugins.xcodeproj">
+   </FileRef>
+</Workspace>

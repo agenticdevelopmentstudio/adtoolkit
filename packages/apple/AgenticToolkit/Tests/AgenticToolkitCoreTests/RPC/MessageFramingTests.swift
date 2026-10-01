@@ -1,0 +1,375 @@
+import Foundation
+import Testing
+@testable import AgenticToolkitCore
+
+@Suite("MessageFraming")
+struct MessageFramingTests {
+
+    // MARK: - Newline-delimited decoding
+
+    @Test("a chunk holding three complete lines yields three frames, each ending in \\n")
+    func newlineThreeCompleteLinesYieldThreeFrames() throws {
+        var decoder = MessageFramingDecoder(framing: .newlineDelimited)
+        let frames = try decoder.consume(Data("alpha\nbeta\ngamma\n".utf8))
+        #expect(frames == [
+            Data("alpha\n".utf8),
+            Data("beta\n".utf8),
+            Data("gamma\n".utf8)
+        ])
+    }
+
+    @Test("a message split across three chunks mid-word yields exactly one frame once the newline arrives")
+    func newlineMessageSplitAcrossThreeChunks() throws {
+        var decoder = MessageFramingDecoder(framing: .newlineDelimited)
+        var frames: [Data] = []
+        frames += try decoder.consume(Data("hel".utf8))
+        frames += try decoder.consume(Data("lo wor".utf8))
+        #expect(frames.isEmpty)
+        frames += try decoder.consume(Data("ld\n".utf8))
+        #expect(frames == [Data("hello world\n".utf8)])
+    }
+
+    @Test("a lone newline yields one one-byte frame (the SSE blank-line case)")
+    func newlineLoneNewlineYieldsOneByteFrame() throws {
+        var decoder = MessageFramingDecoder(framing: .newlineDelimited)
+        let frames = try decoder.consume(Data([0x0A]))
+        #expect(frames == [Data([0x0A])])
+    }
+
+    @Test("finish() emits the unterminated remainder; a second finish() emits nothing")
+    func newlineFinishEmitsRemainderOnce() throws {
+        var decoder = MessageFramingDecoder(framing: .newlineDelimited)
+        _ = try decoder.consume(Data("no newline yet".utf8))
+        let firstFinish = try decoder.finish()
+        #expect(firstFinish == [Data("no newline yet".utf8)])
+        let secondFinish = try decoder.finish()
+        #expect(secondFinish.isEmpty)
+    }
+
+    @Test("CRLF content survives byte-exactly — the frame ends \\r\\n, and the \\r is not stripped")
+    func newlineCRLFContentSurvivesByteExactly() throws {
+        var decoder = MessageFramingDecoder(framing: .newlineDelimited)
+        let frames = try decoder.consume(Data("hello\r\n".utf8))
+        #expect(frames == [Data("hello\r\n".utf8)])
+    }
+
+    @Test("multi-byte UTF-8 split across a chunk boundary mid-scalar reassembles intact")
+    func newlineMultiByteUTF8SplitMidScalarReassemblesIntact() throws {
+        var decoder = MessageFramingDecoder(framing: .newlineDelimited)
+        let full = Data("celebration \u{1F389}\n".utf8)
+        // Split inside the 4-byte UTF-8 encoding of the emoji scalar, not on a
+        // scalar boundary — frame boundaries are bytes, not characters.
+        let splitPoint = full.count - 2
+        let firstChunk = full[full.startIndex..<full.index(full.startIndex, offsetBy: splitPoint)]
+        let secondChunk = full[full.index(full.startIndex, offsetBy: splitPoint)...]
+
+        var frames = try decoder.consume(Data(firstChunk))
+        #expect(frames.isEmpty)
+        frames += try decoder.consume(Data(secondChunk))
+        #expect(frames == [full])
+    }
+
+    // MARK: - Content-Length decoding
+
+    @Test("a well-formed message decodes to the body with no header bytes")
+    func contentLengthWellFormedMessageDecodesToBodyOnly() throws {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        let body = Data("hello".utf8)
+        let framed = Data("Content-Length: 5\r\n\r\n".utf8) + body
+        let frames = try decoder.consume(framed)
+        #expect(frames == [body])
+    }
+
+    @Test("two messages in one chunk yield two frames")
+    func contentLengthTwoMessagesInOneChunkYieldTwoFrames() throws {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        let firstBody = Data("abc".utf8)
+        let secondBody = Data("de".utf8)
+        let framed = Data("Content-Length: 3\r\n\r\n".utf8) + firstBody
+            + Data("Content-Length: 2\r\n\r\n".utf8) + secondBody
+        let frames = try decoder.consume(framed)
+        #expect(frames == [firstBody, secondBody])
+    }
+
+    @Test("a body split across chunks yields one frame when complete")
+    func contentLengthBodySplitAcrossChunksYieldsOneFrameWhenComplete() throws {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        let header = Data("Content-Length: 5\r\n\r\n".utf8)
+        var frames = try decoder.consume(header + Data("he".utf8))
+        #expect(frames.isEmpty)
+        frames += try decoder.consume(Data("llo".utf8))
+        #expect(frames == [Data("hello".utf8)])
+    }
+
+    @Test("extra headers in either order still parse", arguments: [
+        "Content-Type: application/json\r\nContent-Length: 2\r\n\r\nhi",
+        "Content-Length: 2\r\nContent-Type: application/json\r\n\r\nhi"
+    ])
+    func contentLengthExtraHeadersInEitherOrderStillParse(rawMessage: String) throws {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        let frames = try decoder.consume(Data(rawMessage.utf8))
+        #expect(frames == [Data("hi".utf8)])
+    }
+
+    @Test("Content-Length counts bytes, not characters")
+    func contentLengthCountsBytesNotCharacters() throws {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        let body = Data("héllo 🎉".utf8)
+        #expect(body.count > "héllo 🎉".count)
+        let framed = Data("Content-Length: \(body.count)\r\n\r\n".utf8) + body
+        let frames = try decoder.consume(framed)
+        #expect(frames == [body])
+    }
+
+    @Test("finish() with a partial body throws truncatedMessage(expected:received:)")
+    func contentLengthFinishWithPartialBodyThrowsTruncatedMessage() throws {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        _ = try decoder.consume(Data("Content-Length: 5\r\n\r\nhe".utf8))
+        #expect(throws: MessageFramingError.truncatedMessage(expected: 5, received: 2)) {
+            try decoder.finish()
+        }
+    }
+
+    @Test("a header with no Content-Length throws missingContentLength")
+    func contentLengthHeaderWithNoContentLengthThrowsMissingContentLength() throws {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        #expect(throws: MessageFramingError.missingContentLength) {
+            try decoder.consume(Data("Content-Type: application/json\r\n\r\nhi".utf8))
+        }
+    }
+
+    // MARK: - Encoding and round trips
+
+    @Test("frame(_:) output fed back through the decoder round-trips to the original message plus its newline")
+    func newlineFrameRoundTripsWithNewline() throws {
+        let message = Data("round trip".utf8)
+        var decoder = MessageFramingDecoder(framing: .newlineDelimited)
+        let frames = try decoder.consume(MessageFraming.newlineDelimited.frame(message))
+        #expect(frames == [message + Data([0x0A])])
+    }
+
+    @Test("frame(_:) output fed back through the decoder round-trips to the original message")
+    func contentLengthFrameRoundTrips() throws {
+        let message = Data("round trip".utf8)
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        let frames = try decoder.consume(MessageFraming.contentLength.frame(message))
+        #expect(frames == [message])
+    }
+
+    @Test("frame(_:) on a message already ending in \\n appends nothing")
+    func newlineFrameOnMessageAlreadyEndingInNewlineAppendsNothing() {
+        let message = Data("already terminated\n".utf8)
+        #expect(MessageFraming.newlineDelimited.frame(message) == message)
+    }
+
+    // MARK: - Unframed
+
+    @Test("each chunk arrives as its own frame, byte-exactly and in order")
+    func unframedChunksPassStraightThrough() throws {
+        var decoder = MessageFramingDecoder(framing: .unframed)
+        var frames: [Data] = []
+        frames += try decoder.consume(Data("hel".utf8))
+        frames += try decoder.consume(Data("lo wor".utf8))
+        frames += try decoder.consume(Data("ld".utf8))
+        #expect(frames == [Data("hel".utf8), Data("lo wor".utf8), Data("ld".utf8)])
+        #expect(frames.reduce(Data(), +) == Data("hello world".utf8))
+    }
+
+    @Test("an empty chunk yields no frame")
+    func unframedEmptyChunkYieldsNoFrame() throws {
+        var decoder = MessageFramingDecoder(framing: .unframed)
+        #expect(try decoder.consume(Data()).isEmpty)
+    }
+
+    /// The defect this framing exists for: `git status --porcelain -z` on a
+    /// large repository is megabytes of NUL-separated records containing no
+    /// `0x0A` at all. Decoded as `.newlineDelimited` that is one frame past
+    /// the cap — the whole capture is thrown away and a correct answer is
+    /// reported as a framing error. With no delimiter to wait for there is
+    /// nothing to cap, and it simply decodes.
+    @Test("bytes far past maximumFrameBytes with no delimiter in them decode rather than throw")
+    func unframedDelimiterlessOutputPastTheCapDecodes() throws {
+        var decoder = MessageFramingDecoder(framing: .unframed)
+        let oversized = Data(repeating: 0x00, count: MessageFramingDecoder.maximumFrameBytes + 1)
+        let frames = try decoder.consume(oversized)
+        #expect(frames == [oversized])
+        #expect(try decoder.finish().isEmpty, "nothing was held back, so nothing is owed at the end")
+    }
+
+    @Test("frame(_:) adds no envelope")
+    func unframedFrameAddsNoEnvelope() {
+        let message = Data("no delimiter, no header\u{0}".utf8)
+        #expect(MessageFraming.unframed.frame(message) == message)
+    }
+
+    // MARK: - Unbounded-buffer guard
+
+    @Test("exceeding maximumFrameBytes throws the specific frameSizeExceeded(limit:) case, for newline framing")
+    func newlineExceedingMaximumFrameBytesThrows() {
+        var decoder = MessageFramingDecoder(framing: .newlineDelimited)
+        let oversized = Data(repeating: 0x41, count: MessageFramingDecoder.maximumFrameBytes + 1)
+        #expect(throws: MessageFramingError.frameSizeExceeded(limit: MessageFramingDecoder.maximumFrameBytes)) {
+            try decoder.consume(oversized)
+        }
+    }
+
+    @Test("a declared Content-Length above the cap throws frameSizeExceeded(limit:) before any body is buffered")
+    func contentLengthExceedingMaximumFrameBytesThrows() {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        let oversizedHeader = Data(
+            "Content-Length: \(MessageFramingDecoder.maximumFrameBytes + 1)\r\n\r\n".utf8
+        )
+        #expect(throws: MessageFramingError.frameSizeExceeded(limit: MessageFramingDecoder.maximumFrameBytes)) {
+            try decoder.consume(oversizedHeader)
+        }
+    }
+
+    @Test("a chunk with a complete frame then an oversized one returns the complete frame, then throws next call")
+    func newlineOversizedTrailerDoesNotSwallowPriorCompleteFrames() throws {
+        var decoder = MessageFramingDecoder(framing: .newlineDelimited)
+        let goodFrame = Data("hello\n".utf8)
+        let oversizedTrailer = Data(repeating: 0x42, count: MessageFramingDecoder.maximumFrameBytes + 1)
+        let frames = try decoder.consume(goodFrame + oversizedTrailer)
+        #expect(frames == [goodFrame])
+        #expect(throws: MessageFramingError.frameSizeExceeded(limit: MessageFramingDecoder.maximumFrameBytes)) {
+            try decoder.consume(Data())
+        }
+    }
+
+    // MARK: - Malformed headers
+
+    @Test("a Content-Length header line with no ':' separator throws malformedHeader")
+    func contentLengthHeaderLineWithNoColonThrowsMalformedHeader() throws {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        do {
+            _ = try decoder.consume(Data("Not-A-Header-Line\r\n\r\nhi".utf8))
+            Issue.record("expected malformedHeader to be thrown")
+        } catch let error as MessageFramingError {
+            guard case .malformedHeader = error else {
+                Issue.record("expected .malformedHeader, got \(error)")
+                return
+            }
+        }
+    }
+
+    @Test("a non-integer Content-Length value throws malformedHeader")
+    func contentLengthNonIntegerValueThrowsMalformedHeader() throws {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        do {
+            _ = try decoder.consume(Data("Content-Length: abc\r\n\r\nhi".utf8))
+            Issue.record("expected malformedHeader to be thrown")
+        } catch let error as MessageFramingError {
+            guard case .malformedHeader = error else {
+                Issue.record("expected .malformedHeader, got \(error)")
+                return
+            }
+        }
+    }
+
+    // MARK: - finish() deviation: incomplete header vs. truncated body
+
+    @Test("finish() before the Content-Length header is complete throws malformedHeader, not truncatedMessage")
+    func contentLengthFinishBeforeHeaderCompleteThrowsMalformedHeaderNotTruncatedMessage() throws {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        // No "\r\n\r\n" terminator has arrived yet, so the header itself is
+        // still incomplete when the stream ends — there is no declared
+        // length yet to measure a shortfall against.
+        _ = try decoder.consume(Data("Content-Length: 5\r\n".utf8))
+        #expect(throws: MessageFramingError.malformedHeader("stream ended before the header was complete")) {
+            try decoder.finish()
+        }
+    }
+
+    // MARK: - A rejected frame's bytes never become protocol (F11)
+
+    @Test("an over-cap Content-Length body is discarded, so a header inside it never frames anything")
+    func contentLengthOverCapBodyIsDiscardedNotReframed() throws {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        let bodyLength = MessageFramingDecoder.maximumFrameBytes + 1
+
+        // The header is consumed unconditionally, so from here on the body is
+        // peer-controlled bytes sitting in the decoder's buffer.
+        #expect(throws: MessageFramingError.frameSizeExceeded(limit: MessageFramingDecoder.maximumFrameBytes)) {
+            try decoder.consume(Data("Content-Length: \(bodyLength)\r\n\r\n".utf8))
+        }
+
+        // The body *is* a well-formed frame. If it is scanned as protocol
+        // rather than skipped, the decoder resynchronises on the boundary the
+        // peer chose and hands "EVIL!" back as a message.
+        let smuggled = Data("Content-Length: 5\r\n\r\nEVIL!".utf8)
+        var frames: [Data] = []
+        frames += try decoder.consume(smuggled)
+
+        // The rest of the declared body, in realistic chunks.
+        var remaining = bodyLength - smuggled.count
+        let filler = Data(repeating: 0x2E, count: 64 * 1024)
+        while remaining > 0 {
+            let take = min(remaining, filler.count)
+            frames += try decoder.consume(filler.prefix(take))
+            remaining -= take
+        }
+        #expect(frames.isEmpty, "the rejected body was reframed into \(frames.count) message(s)")
+
+        // The next genuine frame, which must be the first thing returned.
+        frames += try decoder.consume(Data("Content-Length: 2\r\n\r\nok".utf8))
+        #expect(frames == [Data("ok".utf8)])
+    }
+
+    @Test("the chunk that carries a deferred cap violation is kept, not dropped with the throw")
+    func contentLengthDeferredViolationDoesNotDropItsChunk() throws {
+        var decoder = MessageFramingDecoder(framing: .contentLength)
+        let bodyLength = MessageFramingDecoder.maximumFrameBytes + 1
+
+        // One chunk: a good frame, then the header of an over-cap one. The
+        // good frame comes back now and the violation is deferred.
+        let first = Data("Content-Length: 4\r\n\r\ngood".utf8)
+            + Data("Content-Length: \(bodyLength)\r\n\r\n".utf8)
+        #expect(try decoder.consume(first) == [Data("good".utf8)])
+
+        // The deferred violation surfaces on this call — and the 100 body
+        // bytes handed over with it must still be counted against the
+        // discard. Dropping them makes the skip finish 100 bytes early and
+        // eat the front of the next frame.
+        let bodyPrefix = Data(repeating: 0x2E, count: 100)
+        #expect(throws: MessageFramingError.frameSizeExceeded(limit: MessageFramingDecoder.maximumFrameBytes)) {
+            try decoder.consume(bodyPrefix)
+        }
+
+        var frames: [Data] = []
+        var remaining = bodyLength - bodyPrefix.count
+        let filler = Data(repeating: 0x2E, count: 64 * 1024)
+        while remaining > 0 {
+            let take = min(remaining, filler.count)
+            frames += try decoder.consume(filler.prefix(take))
+            remaining -= take
+        }
+        #expect(frames.isEmpty)
+        frames += try decoder.consume(Data("Content-Length: 5\r\n\r\nafter".utf8))
+        #expect(frames == [Data("after".utf8)], "the discard ran off the end of the rejected frame")
+    }
+
+    @Test("an over-cap newline line is skipped up to its delimiter, and the next line decodes")
+    func newlineOverCapLineIsSkippedToItsDelimiter() throws {
+        var decoder = MessageFramingDecoder(framing: .newlineDelimited)
+        let oversized = Data(repeating: 0x41, count: MessageFramingDecoder.maximumFrameBytes + 1)
+        #expect(throws: MessageFramingError.frameSizeExceeded(limit: MessageFramingDecoder.maximumFrameBytes)) {
+            try decoder.consume(oversized)
+        }
+
+        // "TAIL\n" completes the rejected line, so it goes with it; "next\n"
+        // is the first line that is really a line.
+        let frames = try decoder.consume(Data("TAIL\nnext\n".utf8))
+        #expect(frames == [Data("next\n".utf8)])
+    }
+
+    @Test("finish() during a skip returns nothing rather than half of a rejected frame")
+    func finishDuringASkipYieldsNothing() throws {
+        var decoder = MessageFramingDecoder(framing: .newlineDelimited)
+        let oversized = Data(repeating: 0x41, count: MessageFramingDecoder.maximumFrameBytes + 1)
+        #expect(throws: MessageFramingError.frameSizeExceeded(limit: MessageFramingDecoder.maximumFrameBytes)) {
+            try decoder.consume(oversized)
+        }
+        _ = try decoder.consume(Data("still the same line".utf8))
+        #expect(try decoder.finish() == [])
+    }
+}

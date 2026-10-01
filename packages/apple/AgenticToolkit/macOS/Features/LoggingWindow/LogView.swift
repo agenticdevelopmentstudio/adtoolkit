@@ -1,0 +1,213 @@
+import AppKit
+import AgenticToolkitCore
+import AgenticToolkitCoreMacOS
+
+/// Scrolling table-view of ``LogLine``s driven by a ``LogProvider``.
+///
+/// Renders columns from the provider, observes mutations via the
+/// provider's delegate slot, and dispatches row clicks through the
+/// hooks on the clicked column. Deliberately does not ship a toolbar,
+/// filter UI, or status indicator — those are caller concerns; compose
+/// them around the view and pass the result into ``LogWindowController``
+/// (or embed elsewhere).
+@MainActor
+public final class LogView: NSView, NSTableViewDataSource, NSTableViewDelegate, LogProviderDelegate {
+    public let provider: any LogProvider
+
+    /// When true, newly-appended rows scroll into view if the user is
+    /// already pinned to the bottom. Toggling this off is how a caller
+    /// builds a "pause auto-scroll" control.
+    public var followTail: Bool = true
+
+    // Themed rather than stock: a plain `NSTableView` fills itself with the
+    // system `controlBackgroundColor` and bands its rows from a system color
+    // pair, both of which paint straight over the theme — which is why this
+    // window stayed system-grey while every other window in the app followed
+    // the palette. `windowBackground` (not `surface`) so the log reads as the
+    // window itself — it is the full content of its own window or pane rather
+    // than a sidebar, so it blends into the backdrop instead of reading as its
+    // own plane, matching the timeline's table.
+    private let tableView = ThemedTableView(role: .windowBackground)
+    private let scrollView = ThemedScrollView(frame: .zero)
+    private var columnIDByIndex: [Int: String] = [:]
+
+    public init(provider: any LogProvider) {
+        self.provider = provider
+        super.init(frame: .zero)
+        configureScrollView()
+        configureTable()
+        provider.delegate = self
+        tableView.reloadData()
+    }
+
+    @available(*, unavailable)
+    public required init?(coder: NSCoder) { fatalError("init(coder:) unavailable — use init(provider:)") }
+
+    /// Exposed so tests (and callers doing programmatic scrolling)
+    /// can re-assert tail-follow after a filter change.
+    public func scrollToEnd() {
+        let last = tableView.numberOfRows - 1
+        guard last >= 0 else { return }
+        tableView.scrollRowToVisible(last)
+    }
+
+    /// Exposed for tests; also useful if a caller wants to force a
+    /// redraw (e.g. after mutating column metadata).
+    public func reload() {
+        tableView.reloadData()
+    }
+
+    // MARK: - Setup
+
+    private func configureScrollView() {
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.hasVerticalScroller = true
+        scrollView.hasHorizontalScroller = false
+        scrollView.autohidesScrollers = true
+        scrollView.documentView = tableView
+        addSubview(scrollView)
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: bottomAnchor)
+        ])
+    }
+
+    private func configureTable() {
+        tableView.dataSource = self
+        tableView.delegate = self
+        // Banding is off (`ThemedTableView` turns it off too): the stripe comes
+        // from a system color pair the palette has no say in. What separates
+        // *unselected* rows is a horizontal rule in the palette's divider colour
+        // — `ThemedTableRowView` only paints the selected row, so without this
+        // the log was an unbroken block of text with no row boundaries at all.
+        tableView.gridStyleMask = [.solidHorizontalGridLineMask]
+        tableView.allowsColumnResizing = true
+        tableView.columnAutoresizingStyle = .uniformColumnAutoresizingStyle
+        tableView.rowSizeStyle = .default
+        tableView.target = self
+        tableView.action = #selector(tableClicked)
+        tableView.doubleAction = #selector(tableDoubleClicked)
+
+        for (index, column) in provider.columns.enumerated() {
+            let tableColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(column.id))
+            tableColumn.title = column.title
+            tableColumn.width = column.defaultWidth
+            tableColumn.minWidth = column.minWidth
+            tableColumn.maxWidth = column.maxWidth
+            tableView.addTableColumn(tableColumn)
+            columnIDByIndex[index] = column.id
+        }
+    }
+
+    // MARK: - Click dispatch
+
+    /// The kind of click routed through ``dispatchClick(columnIndex:row:kind:)``.
+    /// Public so tests can drive the same entry point AppKit uses.
+    public enum ClickKind { case single, double }
+
+    @objc private func tableClicked(_ sender: NSTableView) {
+        dispatchClick(columnIndex: sender.clickedColumn, row: sender.clickedRow, kind: .single)
+    }
+
+    @objc private func tableDoubleClicked(_ sender: NSTableView) {
+        dispatchClick(columnIndex: sender.clickedColumn, row: sender.clickedRow, kind: .double)
+    }
+
+    /// Dispatch a click to the hook on the matching column. Exposed
+    /// for tests — production callers reach this via the selector
+    /// actions above.
+    public func dispatchClick(columnIndex: Int, row: Int, kind: ClickKind) {
+        guard columnIndex >= 0,
+              row >= 0,
+              row < provider.lines.count else { return }
+        guard let columnID = columnIDByIndex[columnIndex] else { return }
+        guard let column = provider.columns.first(where: { $0.id == columnID }) else { return }
+        let line = provider.lines[row]
+        switch kind {
+        case .single: column.onClick?(line)
+        case .double: column.onDoubleClick?(line)
+        }
+    }
+
+    // MARK: - LogProviderDelegate
+
+    public func logProvider(_ provider: any LogProvider, didChange change: LogChange) {
+        let shouldFollow: Bool
+        switch change {
+        case .appended:
+            shouldFollow = followTail && isScrolledToBottom()
+        case .replaced:
+            shouldFollow = followTail
+        case .cleared:
+            shouldFollow = false
+        }
+        tableView.reloadData()
+        if shouldFollow { scrollToEnd() }
+    }
+
+    private func isScrolledToBottom() -> Bool {
+        guard tableView.numberOfRows > 0 else { return true }
+        let visible = scrollView.documentVisibleRect
+        let docHeight = scrollView.documentView?.bounds.height ?? 0
+        return visible.maxY >= docHeight - 2
+    }
+
+    // MARK: - NSTableViewDataSource
+
+    public func numberOfRows(in tableView: NSTableView) -> Int {
+        provider.lines.count
+    }
+
+    // MARK: - NSTableViewDelegate
+
+    /// Themed rows so selection is drawn from the palette's `selection` role
+    /// rather than the system's highlight blue.
+    public func tableView(_ tableView: NSTableView, rowViewForRow row: Int) -> NSTableRowView? {
+        // AppKit pools row views, so the row has to own a palette observer of
+        // its own — a selection fill baked in at creation draws stale after a
+        // theme swap.
+        ThemedTableRowView()
+    }
+
+    public func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
+        guard let tableColumn else { return nil }
+        guard row < provider.lines.count else { return nil }
+        let columnID = tableColumn.identifier.rawValue
+        let cell = makeCell(tableView: tableView, columnID: columnID)
+        let line = provider.lines[row]
+
+        if let value = line.values[columnID] {
+            switch value {
+            case .plain(let plain):
+                cell.stringValue = plain
+            case .attributed(let attributed):
+                cell.attributedStringValue = attributed
+            }
+        } else {
+            cell.stringValue = ""
+        }
+
+        if let column = provider.columns.first(where: { $0.id == columnID }) {
+            cell.alignment = column.alignment
+        }
+        cell.lineBreakMode = .byTruncatingTail
+        cell.toolTip = cell.stringValue
+        return cell
+    }
+
+    private func makeCell(tableView: NSTableView, columnID: String) -> NSTextField {
+        let identifier = NSUserInterfaceItemIdentifier("cell.\(columnID)")
+        if let existing = tableView.makeView(withIdentifier: identifier, owner: nil) as? NSTextField {
+            return existing
+        }
+        // A `ThemedLabel`, so cell text tracks the palette's primary-text role
+        // and body font. A provider handing back an `.attributed` value still
+        // wins — its own attributes are applied over this.
+        let field = ThemedLabel()
+        field.identifier = identifier
+        field.isSelectable = false
+        return field
+    }
+}

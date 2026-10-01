@@ -1,0 +1,63 @@
+{
+  "name": "@agentic-toolkit/bitbag",
+  "version": "0.1.0",
+  "description": "bitbag — his persona, voice, avatar rig, and chat surface. Mounts on any site that links @agenticdevelopertoolkit.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "development": "./src/index.ts",
+      "import": "./dist/index.js"
+    },
+    "./css/bitbag-dock.css": {
+      "development": "./src/styles/bitbag-dock.css",
+      "default": "./dist/css/bitbag-dock.css"
+    }
+  },
+  "scripts": {
+    "build": "tsup && pnpm run build:types && pnpm run build:css",
+    "build:types": "tsc --emitDeclarationOnly -p tsconfig.build.json",
+    "build:css": "mkdir -p dist/css && cp src/styles/*.css dist/css/",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@agenticdevelopertoolkit/avatar": "*",
+    "@agenticdevelopertoolkit/chat": "*",
+    "@agenticdevelopertoolkit/themes": "*",
+    "@agenticdevelopertoolkit/viewport": "*",
+    "gsap": "^3.13.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "//devDependencies": "The four @agenticdevelopertoolkit/* entries are peer deps above — consumers supply them; these `link:`s exist only so this package can build and test itself. They target THIS repo's own submodule at external/agenticdevelopertoolkit, so a `git clone --recursive` builds with no sibling checkout anywhere on disk. They used to climb six levels OUT of the repo to a sibling clone, which resolved inside adh (both toolkits sit side by side under frontend/src/external/) and nowhere else by guarantee. `link:` rather than workspace:* because that toolkit is a SEPARATE pnpm workspace and pnpm cannot nest workspaces. bitbag is the one package that owns this crossing on purpose: everything else in this repo reaches persona vocabulary through bitbag's re-exports, which is what keeps the persona toolkit out of every other consumer's shipped graph.",
+  "devDependencies": {
+    "@agenticdevelopertoolkit/avatar": "link:../../../../../external/agenticdevelopertoolkit/packages/web/packages/avatar",
+    "@agenticdevelopertoolkit/chat": "link:../../../../../external/agenticdevelopertoolkit/packages/web/packages/chat",
+    "@agenticdevelopertoolkit/themes": "link:../../../../../external/agenticdevelopertoolkit/packages/web/packages/themes",
+    "@agenticdevelopertoolkit/viewport": "link:../../../../../external/agenticdevelopertoolkit/packages/web/packages/viewport",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "19.2.16",
+    "@types/react-dom": "19.2.3",
+    "esbuild-plugin-preserve-directives": "^0.0.11",
+    "gsap": "^3.13.0",
+    "jsdom": "^29.0.2",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.4"
+  }
+}

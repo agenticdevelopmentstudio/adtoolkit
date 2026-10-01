@@ -1,0 +1,34 @@
+/* Tailwind source self-registration for @agentic-toolkit/shipr.
+ *
+ * Tailwind does not scan node_modules, so a consumer app must tell it to scan this
+ * package's className-bearing components. Rather than every host copying @source globs
+ * into its own globals.css (drift-prone, and a missed line renders unstyled with no
+ * error), the package OWNS them here and a host adds one line:
+ *
+ *   @import "@agentic-toolkit/shipr/sources.css";
+ *
+ * The paths are relative to THIS file (the package root) and therefore travel with the
+ * package — they resolve identically through a dev pnpm link: symlink and a materialized
+ * prod copy. `src` covers `next dev` (the whole package is symlinked, so HMR sees source
+ * edits); `dist` covers prod builds, where `files` ships only `dist` + this file and the
+ * `src` glob simply matches nothing. Mirrors @agenticdevelopertoolkit/ui's components.css
+ * self-registration. */
+
+/* This package registers what IT mounts: the console reaches @agenticdevelopertoolkit/ui's HTDV
+ * and split primitives, so a host that registers `shipr` alone still loses their
+ * utilities. Chained HERE because under pnpm's isolated node_modules only a declaring
+ * package can resolve the specifier. */
+@import "@agenticdevelopertoolkit/ui/styles/components.css";
+
+/* Same rule, two more deps — both reached from the configure dialogs. ConfigureDialog and
+ * ConnectionsDialog both mount `resource`'s <StandaloneRailHost> (and ConfigureDialog its
+ * <StackLevels>), and ConnectionsDialog's body IS `integrations`' <IntegrationsPane>. So a
+ * host that registers `shipr` alone opens either dialog to unstyled markup — silently,
+ * because an unregistered utility is never written and nothing errors. Both are already
+ * `dependencies` here, which is what lets these specifiers resolve under pnpm's isolated
+ * node_modules. */
+@import "@agentic-toolkit/resource/sources.css";
+@import "@agentic-toolkit/integrations/sources.css";
+
+@source "./src/**/*.{ts,tsx}";
+@source "./dist/**/*.js";
