@@ -134,10 +134,10 @@ cd websites/site && npm install && npm run dev
 
 How this repo is laid out, how it's consumed, and the recipe for building
 sibling toolkit repos the same way:
-[`docs/repo-pattern.md`](docs/repo-pattern.md).
+[`docs/project/repo-pattern.md`](docs/project/repo-pattern.md).
 
 Consumer setup walkthrough (git submodule path, web and Apple):
-[`docs/consuming-as-submodule.md`](docs/consuming-as-submodule.md).
+[`docs/web/consuming-as-submodule.md`](docs/web/consuming-as-submodule.md).
 
 Web-platform docs (adoption, migration, Next.js consumer wiring):
 [`docs/web/`](docs/web/).

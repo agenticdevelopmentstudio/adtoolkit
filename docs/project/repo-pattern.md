@@ -114,7 +114,7 @@ Published consumers get a prebuilt tarball with no source-or-bundler coupling.
 
 ## Consumer wiring — first-party submodule path
 
-See [`consuming-as-submodule.md`](consuming-as-submodule.md) for the full
+See [`consuming-as-submodule.md`](../web/consuming-as-submodule.md) for the full
 walkthrough. In short:
 
 1. `git submodule add <toolkit-url> vendor/<name>`
@@ -197,8 +197,8 @@ consume the packages exactly the way external consumers will.
 - [ ] `install.sh` bootstraps the workspace for developers. Consumers run
       their own package manager's install command; no consumer-side wrapper
       script is needed.
-- [ ] `docs/consuming-as-submodule.md` documents the consumer flow.
-- [ ] `docs/repo-pattern.md` (this file) documents the design so the next
+- [ ] `docs/web/consuming-as-submodule.md` documents the consumer flow.
+- [ ] `docs/project/repo-pattern.md` (this file) documents the design so the next
       sibling repo can copy it.
 - [ ] `AGENTS.md` orients agents and humans landing in the repo.
 - [ ] `.claude/CLAUDE.md` captures layout and conventions for AI agents.

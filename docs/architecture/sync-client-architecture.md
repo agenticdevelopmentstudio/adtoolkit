@@ -551,6 +551,6 @@ applied pull batch. See the recipe's conformance vectors (`cursor-is-opaque`,
   (registry, pull, §3 Push, §4 Resync).
 - adh `backend/src/adh/src/sync/wire.ts` — the authoritative wire shapes
   `SyncWire.swift` mirrors.
-- [`repo-pattern.md`](../repo-pattern.md) /
-  [`consuming-as-submodule.md`](../consuming-as-submodule.md) — how the toolkit is
+- [`repo-pattern.md`](../project/repo-pattern.md) /
+  [`consuming-as-submodule.md`](../web/consuming-as-submodule.md) — how the toolkit is
   laid out and embedded by a first-party consumer.

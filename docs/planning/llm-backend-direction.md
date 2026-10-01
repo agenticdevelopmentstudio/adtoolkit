@@ -4,7 +4,7 @@ What we intend to take from Apple's Foundation Models provider architecture into
 apt's `Backend` contract, and what we intend to leave behind.
 
 **This is a direction, not a spec.** It does not resolve the paused A1/A2
-orchestration decision in [`planning/planning.md`](planning/planning.md), it is
+orchestration decision in [`planning.md`](planning.md), it is
 not M1 scope, and it does not redesign the chat package's fixed HTTP contract
 (POST `{ message, history }` → `{ reply }` or a stream of `ChatStreamEvent`).
 It records what we decided while the reasoning is fresh, so the work is cheap
@@ -261,7 +261,7 @@ decision and does not pre-empt it.
 
 ## See also
 
-- [`planning/planning.md`](planning/planning.md) — milestones and the paused
+- [`planning.md`](planning.md) — milestones and the paused
   A1/A2 decision.
 - `~/Development/projects/applellmprovider/docs/conformance.md` — the sixteen
   scenarios and, more usefully, the section on what a harness deliberately does

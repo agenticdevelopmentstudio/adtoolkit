@@ -29,7 +29,7 @@ ingredients:
   - agenticdevelopertoolkit://ingredients/chat/persona-chat-coordinator
 depends-on: []
 related:
-  - agenticdevelopertoolkit://docs/llm-backend-direction
+  - agenticdevelopertoolkit://docs/planning/llm-backend-direction
 references:
   - "docs/planning/planning.md — M1"
 ---

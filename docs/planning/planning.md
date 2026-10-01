@@ -127,7 +127,7 @@ storage.
 
 ## See also
 
-[`../llm-backend-direction.md`](../llm-backend-direction.md) — what we intend to
+[`llm-backend-direction.md`](llm-backend-direction.md) — what we intend to
 take from Apple's Foundation Models provider architecture into the `Backend`
 contract (usage reporting, classified failures, reasoning as its own channel,
 capabilities, a conformance catalogue). Written ahead of its milestone because

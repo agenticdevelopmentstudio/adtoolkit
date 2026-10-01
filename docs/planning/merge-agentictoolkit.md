@@ -1,10 +1,47 @@
 # Plan: fold agentictoolkit into agenticdevelopertoolkit
 
-Status: draft, 2026-10-01. Branch `merge-agentictoolkit`.
+Status: Phases 1–2 landed on `main` 2026-10-01 (`86fb39a7..301356ca`);
+Phases 3–4 not started.
 
 Goal: everything in `agenticdevelopmentstudio/agentictoolkit` (ATK) lives in
 this repo (ADT) with its full history. Shared code is combined. Then every
 project that consumes ATK, ADT or both consumes only ADT.
+
+## Where it stands
+
+**Landed.** The history merge (`06f3d038`) and the combining work: one
+Apple workspace (`packages/apple/agenticdevelopertoolkit.xcworkspace`), one
+web workflow running ATK's guards and lint, one tier map, one README /
+AGENTS.md / CLAUDE.md, and every doc link and cookbook citation repointed
+(`agentictoolkit://` → `agenticdevelopertoolkit://`, adh-era paths →
+`packages/web/packages/…`). Version-history rows, `archive/` and
+`docs/sessions/` keep the old names on purpose — they record what was true
+then. So does the `com.agentictoolkit` keychain service: renaming it would
+orphan stored secrets.
+
+**How it landed — read this before the next history-preserving merge.**
+`main` carries a `linear-history` ruleset (id 19176257, no bypass actors),
+and an unrelated-histories merge needs a merge commit, so it cannot pass.
+`proj wt merge --no-squash` cannot land it either: it always runs
+`cc-rebase-main` (a plain `git rebase`, which flattens merges and replayed
+all 2,204 ATK commits from ATK's root), and `cc-merge-pr` always squashes.
+The landing was done by hand, on the user's instruction: disable the
+ruleset, `git push origin merge-agentictoolkit:main` (a fast-forward —
+`main` had not moved), re-enable the ruleset. The SHAs and all 12 merge
+commits survive.
+
+**Open.**
+
+- Three repo guards still fail, each waiting on a decision below:
+  `check_license_fields` (45 of 63 manifests declare no licence — D1),
+  `check_no_private_scope` (`tools/rewrite_toolkit_scope_test.py:297` —
+  D2) and `check_recipe_scope --root docs` (old `@agentic-toolkit/*`
+  names in `docs/web/monorepo-conversion.md` — D2).
+- Test failures carried over from ATK, not caused by the merge:
+  integrations `OAuthCallback` (2 tests, 500 vs 409), adh `hostCascade`
+  (expects 2 bitbag selectors, finds 4) and adh `productionBundleGates`
+  (2 tests; the AppearancePanel gates are gone).
+- Phase 3 (consumers) and Phase 4 (retire ATK).
 
 ## What the survey found
 

@@ -92,9 +92,9 @@ use.
 - Cookbook recipes referenced by the project → [`recipes/`](recipes/)
 - The cookbook spec corpus that came with `agentictoolkit` →
   [`cookbook/`](cookbook/)
-- Repo layout pattern (this design) → [`docs/repo-pattern.md`](docs/repo-pattern.md)
+- Repo layout pattern (this design) → [`docs/project/repo-pattern.md`](docs/project/repo-pattern.md)
 - Consumer flow (git submodule path, web and Apple) →
-  [`docs/consuming-as-submodule.md`](docs/consuming-as-submodule.md)
+  [`docs/web/consuming-as-submodule.md`](docs/web/consuming-as-submodule.md)
 - Apple toolkit code review checklist →
   [`docs/project/toolkit-checklist.md`](docs/project/toolkit-checklist.md)
 - Web platform docs (adoption, migration, Next.js consumer) → [`docs/web/`](docs/web/)

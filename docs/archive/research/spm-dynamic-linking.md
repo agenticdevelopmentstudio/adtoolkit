@@ -1,3 +1,8 @@
+> [!WARNING]
+> **ARCHIVED — HISTORICAL RECORD, NOT CURRENT.** Captured 2026-10-01. This document reflects a
+> past state or decision and may no longer describe how things work. Do not treat it as live
+> documentation.
+
 # SPM dynamic linking for host + NSBundle plugins
 
 Reference note on why `packages/apple/AgenticToolkit/Package.swift` ships an

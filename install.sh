@@ -49,6 +49,6 @@ Demo sites:
     cd websites/site && npm install && npm run dev
     cd websites/demo && npm install && npm run dev
 
-Consumers read the packages from source; see docs/consuming-as-submodule.md
+Consumers read the packages from source; see docs/web/consuming-as-submodule.md
 for the one-time wiring.
 EOF
