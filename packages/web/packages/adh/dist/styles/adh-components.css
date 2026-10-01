@@ -584,7 +584,7 @@
   }
 }
 
-/* ── The workspace chooser ───────────────────────────────────────────────────────
+/* -- The workspace chooser -------------------------------------------------------
    ONE mount at every width: a full-width bar under the header carrying the picker and
    nothing else — no visible label, since the trigger reads as the workspace's name. No
    breakpoint, no portal and no `mounted` gate, so nothing here depends on hydration order

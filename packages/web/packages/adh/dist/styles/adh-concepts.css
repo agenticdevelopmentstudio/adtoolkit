@@ -8,7 +8,7 @@
  * Both exported sheets carry it so importing either one is enough. */
 @import "../../sources.css";
 
-/* ── shared tokens (local aliases, fallback-guarded) ──────────────────────── */
+/* -- shared tokens (local aliases, fallback-guarded) ------------------------ */
 .adh-graph,
 .adh-details,
 .adh-story {
@@ -26,7 +26,7 @@
   --cg-mono: var(--font-mono, ui-monospace, monospace);
 }
 
-/* ── header: the prominent Details link ───────────────────────────────────── */
+/* -- header: the prominent Details link ------------------------------------- */
 .adh-header__nav-link--details {
   color: var(--color-accent, #c4a35a);
   border: 1px solid var(--color-accent-dim, rgba(196, 163, 90, 0.14));
@@ -406,7 +406,7 @@
   outline-offset: 3px;
 }
 
-/* ── shape = node KIND ──────────────────────────────────────────────────────
+/* -- shape = node KIND ------------------------------------------------------
    root + category = circle (the base bubble); site = rounded-rect "card";
    feature = flat pill. Width stays role-driven (the focus-size channel); the
    aspect-ratio sets the silhouette, so the THREE kinds read distinctly at any
@@ -431,7 +431,7 @@
   border-radius: 0.8rem;
 }
 
-/* ── CATEGORY EMBLEMS ──────────────────────────────────────────────────────────
+/* -- CATEGORY EMBLEMS ----------------------------------------------------------
    Each of the 7 root categories is a DISTINCT geometric shape (clip-path, keyed per
    node id via --shape) carrying its icon AND name PAIRED inside, framed by a bright
    family-hue OUTLINE + soft glow. Shape is a colour-blind-safe signature REDUNDANT
@@ -707,7 +707,7 @@
 }
 /* hint shown in the undisclosed state, directly UNDER the focus orb (absolute
    within the chart). Disappears once the diagram is disclosed. */
-/* ── BACK TRAIL ─────────────────────────────────────────────────────────────────
+/* -- BACK TRAIL -----------------------------------------------------------------
    A horizontal breadcrumb of small colourised shapes (hub … parent) to the LEFT of the
    focus, oldest on the left, dashes between them. Right-anchored just left of the focus
    orb so it expands LEFT as you drill deeper. Each shape drills back to that ancestor. */
@@ -784,7 +784,7 @@
   transform: translate(1px, -50%) rotate(45deg);
 }
 
-/* ── HOVER FLYOUT ───────────────────────────────────────────────────────────────
+/* -- HOVER FLYOUT ---------------------------------------------------------------
    A description card that flies out PAST a hovered child orb, along the continuation of
    that child's spoke. A thin connector line bridges the orb's edge to the card; an
    invisible "corridor" over the gap keeps it open while the pointer travels orb → card.

@@ -38,7 +38,7 @@ export type MarketingRootHtmlProps = {
      * `false` (<adh-tools>/sites/scripts/verify-site-uniformity.py fails one that starts).
      *
      * Set it only for a surface that must not navigate on load for a reason the preflight does not
-     * cover, and say what that reason is. See docs/platform/cross-site-auth.md.
+     * cover, and say what that reason is. See adh/docs/platform/cross-site-auth.md.
      */
     silentSso?: boolean;
     /**
@@ -95,7 +95,7 @@ export type MarketingRootHtmlProps = {
  *    origins, so a theme that changes fonts changes them too. Nothing else belongs here;
  *    per-site `<head>` content is `metadata` in the site's own layout.
  *  • an `<AuthProvider clientId="adh" silentSso={silentSso}>` — a feature site
- *    (docs/platform/feature-sites-redesign.md) leaves the probe ON (default): the header is
+ *    (adh/docs/platform/feature-sites-redesign.md) leaves the probe ON (default): the header is
  *    session-aware and `/home` is the signed-in feature surface. It fires once per tab, on
  *    EVERY route including the landing deck, gated by `shouldSilentRestore` (a readable hint
  *    cookie, or cross-apex where the cookie cannot be read) — and it is safe to fire there
@@ -103,7 +103,7 @@ export type MarketingRootHtmlProps = {
  *    navigates, so an origin the allow-list is missing costs the avatar rather than stranding
  *    the visitor on the central login page. That guarantee is what retired the two client-side
  *    guesses this comment used to describe (a landing-route exemption and a local-hostname
- *    veto); see docs/platform/cross-site-auth.md. `silentSso={false}` opts a site out of
+ *    veto); see adh/docs/platform/cross-site-auth.md. `silentSso={false}` opts a site out of
  *    recognition entirely — no site in the family does, and
  *    <adh-tools>/sites/scripts/verify-site-uniformity.py fails one that starts, so the escape hatch cannot
  *    be taken quietly. See the prop doc above.

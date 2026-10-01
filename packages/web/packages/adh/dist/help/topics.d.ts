@@ -27,7 +27,7 @@ export interface HelpTopic {
     /** One/two-sentence blurb. It renders as the `EmptyState` body when this topic is SELECTED and has
      *  no content of its own (`HelpSurface.tsx:47`, `HelpWindow.tsx:26`). It used to also land an
      *  UNSELECTED level as a grid of one card per sibling; that opt-in is gone
-     *  (docs/ui/fleet-ui-audit.md §1.5 — an unselected frontier is the select nudge and nothing else),
+     *  (adh/docs/ui/fleet-ui-audit.md §1.5 — an unselected frontier is the select nudge and nothing else),
      *  so a blurb on a topic nobody has picked yet is now carried but not shown. */
     description?: string;
     /** Child topics. Presence opens the children as the next hierarchical level when this node is
@@ -38,7 +38,7 @@ export interface HelpTopic {
     /** For a section (a node with `children`): the child that stands in as its landing. Selecting the
      *  section — arriving on its slug, or clicking its row in either rail — auto-selects that child,
      *  so the section shows real content instead of the children level's select nudge. Opt-in per
-     *  section: a section without it keeps the nudge (docs/ui/fleet-ui-audit.md §1.5). Must name a
+     *  section: a section without it keeps the nudge (adh/docs/ui/fleet-ui-audit.md §1.5). Must name a
      *  direct child; `helpTopics.test.ts` fails on an id that isn't one. */
     landingChildId?: HelpTopicId;
     /** Key into `HELP_CONTENT_HTML` (content.generated.ts) — the detail pane renders that pre-rendered

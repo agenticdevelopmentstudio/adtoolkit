@@ -20,7 +20,7 @@ export type MarketingSiteHeaderProps = {
  * bound to the shared smart source (`makeSmartHeaderAuth`, the personaregistry
  * pattern): the avatar shows when signed in, Login/Sign up run the central SSO
  * flow with the shared home-or-root returnTo, and site switches ride the
- * silent-SSO bounce. See docs/platform/feature-sites-redesign.md.
+ * silent-SSO bounce. See adh/docs/platform/feature-sites-redesign.md.
  *
  * Exists as its own client component because {@link MarketingRootHtml} is a
  * server component: a hook prop (`useAuthSource`) can't cross the server→client

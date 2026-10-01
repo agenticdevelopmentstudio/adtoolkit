@@ -25,7 +25,7 @@ export interface HeaderAuthSourceOptions {
      * The site the header is rendered for — SiteHeader forwards its own `siteId`. A
      * session-aware source needs it to resolve the site's post-login landing
      * (`siteHomePath`), which is the Login/Sign-up return target the contract
-     * prescribes from a site's root (docs/platform/login-and-return.md §2).
+     * prescribes from a site's root (adh/docs/platform/login-and-return.md §2).
      */
     siteId?: SiteId;
     /** Called after a successful logout — e.g. to navigate away from a gated page. */
@@ -81,7 +81,7 @@ export declare function ssoSwitchResolver(signedIn: boolean): ((defaultHref: str
  * It never reads the session: the bar is a fixed logged-out state (Login +
  * Sign up). The marketing/feature-site family no longer uses it — those sites
  * are session-aware via {@link makeSmartHeaderAuth} (see MarketingSiteHeader
- * and docs/platform/feature-sites-redesign.md).
+ * and adh/docs/platform/feature-sites-redesign.md).
  *
  * It supplies neither `onLogin`/`onSignup` nor `loginHref`/`signupHref`, so
  * AdhHeader falls back to the hub's `/login` and `/signup` ({@link resolveHubHref}).
@@ -90,7 +90,7 @@ export declare function ssoSwitchResolver(signedIn: boolean): ((defaultHref: str
  * in, else the hub login/signup page. Auth lives entirely on the hub.
  *
  * A "smart" site that wants session-aware login/returnTo passes its own source to
- * SiteHeader instead — see docs/platform/auth-realms-and-header-modes.md.
+ * SiteHeader instead — see adh/docs/platform/auth-realms-and-header-modes.md.
  *
  * A plain hook (no inner hook calls) so a site with no adh AuthProvider can mount
  * the shared header without one.
@@ -102,7 +102,7 @@ export interface SmartHeaderAuthConfig {
      * OAuth client id for the SSO login / logout / switch (default `'adh'`, the
      * central developer realm). This is the realm seam: a **vended** ecosystem's
      * sites pass their own client here, and — once the AS honours the client's
-     * ecosystem (see docs/platform/auth-realms-and-header-modes.md) — the very same source
+     * ecosystem (see adh/docs/platform/auth-realms-and-header-modes.md) — the very same source
      * authenticates that ecosystem's pool with no other change.
      */
     clientId?: string;
@@ -110,7 +110,7 @@ export interface SmartHeaderAuthConfig {
      * Where login / sign up return to after the SSO round-trip. A FUNCTION, read at
      * click time so it reflects the page the user is actually on — not wherever the
      * source was built. An explicit return always wins
-     * (docs/platform/login-and-return.md §2); omit it to get {@link defaultReturnTo}.
+     * (adh/docs/platform/login-and-return.md §2); omit it to get {@link defaultReturnTo}.
      */
     returnTo?: () => string;
     /** Avatar-name fallback when the user has neither a name nor email (default 'User'). */
@@ -122,7 +122,7 @@ export interface SmartHeaderAuthConfig {
  *
  * From the site's ROOT it is that site's own post-login landing (`/home` when the
  * site declares one, else `/`): the home-or-root return target of
- * docs/platform/login-and-return.md §2, and the fix for the classic "signed in from
+ * adh/docs/platform/login-and-return.md §2, and the fix for the classic "signed in from
  * the landing, stranded back on the anonymous landing" walk. From ANY OTHER page it
  * is the page the visitor is standing on, so a profile-driven funnel keeps its place
  * ("sign in, come back to *this* persona") — the bespoke case the same section
@@ -158,7 +158,7 @@ export declare function defaultReturnTo(siteId?: SiteId): string;
  * the central SSO session + re-arms the cold-load check).
  *
  * This is the reusable shape a **vended** ecosystem's sites reuse — same source,
- * a different `clientId` (see docs/platform/auth-realms-and-header-modes.md). Call it ONCE
+ * a different `clientId` (see adh/docs/platform/auth-realms-and-header-modes.md). Call it ONCE
  * at module scope and pass the returned hook to `<SiteHeader useAuthSource>`; the
  * result is a hook (it calls `useAuth`), so it must be a stable reference across
  * renders — never rebuild it inline per render.
