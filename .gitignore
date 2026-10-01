@@ -38,3 +38,19 @@ packages/apple/**/build/
 
 # Python bytecode from tools/
 __pycache__/
+
+# From agentictoolkit's ignore list. Its `packages/web/packages/themes/` entry is
+# deliberately not here: it hid a package that had left ATK for this repo, and
+# `themes` lives here again. Its blanket `Package.resolved` / xcworkspace
+# xcshareddata ignores are not here either: this repo commits the workspace's
+# resolved SwiftPM pins so every checkout builds the same dependency graph.
+.worktrees/
+.turbo/
+.next/
+next-env.d.ts
+.pnpm-store/
+**/.build/
+DerivedData/
+*.pyc
+graphify-out/
+.claude/scheduled_tasks.lock

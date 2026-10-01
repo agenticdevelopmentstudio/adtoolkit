@@ -18,9 +18,12 @@ on:
     # the install/build/test steps below all run inside packages/web, so the demo
     # site's own manifest and imports are checked by that guard and nothing else.
     # `tools/**` is here because a change to a guard must re-run that guard.
+    # `cookbook/**` is ATK's spec corpus, which `check_doc_links.py` scans with
+    # the rest of the repo.
     paths:
       - "packages/web/**"
       - "recipes/**"
+      - "cookbook/**"
       - "docs/**"
       - "websites/**"
       - "tools/**"
@@ -35,6 +38,7 @@ on:
     paths:
       - "packages/web/**"
       - "recipes/**"
+      - "cookbook/**"
       - "docs/**"
       - "websites/**"
       - "tools/**"
@@ -65,6 +69,18 @@ jobs:
           python3 tools/check_doc_subpaths.py
           python3 tools/check_site_deps_test.py
           python3 tools/check_site_deps.py
+          python3 tools/rewrite_toolkit_scope_test.py
+          python3 packages/web/tools/copy_css_orphan_test.py
+
+      # adh's persona-chat keeps a COPY of chat's contract types rather than a dep
+      # (the layering in packages/web/packages/adh keeps the persona toolkit out of
+      # adh's shipped graph), so nothing but this check notices the two drifting.
+      # Run from packages/web because the verifier resolves both files from there.
+      - name: chat contract copy is in sync
+        working-directory: packages/web
+        run: |
+          python3 tools/verify_chat_types_copy_test.py
+          python3 tools/verify_chat_types_copy.py
 
       # Eight packages are arriving here from a PRIVATE repo, each carrying the
       # prose its old home wrote about it. The per-package arrival checks scan
@@ -100,24 +116,30 @@ jobs:
       - run: pnpm build
         working-directory: packages/web
 
-      # Both, because neither alone covers the workspace. The root `pnpm test` is
-      # one vitest run configured with `dir: './packages'`, so it DISCOVERS every
-      # package's tests including the ones that declare no test script of their
-      # own — today that is seven of nine, among them `chat`. It is also the
-      # command CONTRIBUTING.md tells contributors to run, and a public repo
-      # whose documented test command is not the one CI runs is telling two
-      # different stories about what passing means.
-      #
-      # The recursive run covers the opposite gap: a package that declares a
-      # test script runs under ITS OWN config, which is the config its consumers
-      # build against, and which can differ from the root's (extra setup files,
-      # a different environment). That only holds because every such package
-      # carries a vitest.config.ts — vitest walks up to the root config but keeps
-      # cwd as its root, so the root's `dir: './packages'` would resolve to
-      # <package>/packages and silently match nothing. A package that declares
-      # `test` without its own config runs zero tests and exits 0.
-      - run: pnpm test
+      # The boundary checks (self-test first) and every package's `tsc`. ATK's CI
+      # skipped this because per-package tsc resolves sibling DIST types that a
+      # fresh checkout had not built; the `pnpm build` step above is what makes
+      # it runnable here.
+      - run: pnpm lint
         working-directory: packages/web
 
-      - run: pnpm -r --if-present run test
+      # One command, both halves, because neither alone covers the workspace. The
+      # root `vitest run` is configured with `dir: './packages'`, so it DISCOVERS
+      # every package's tests including the ones that declare no test script of
+      # their own, `chat` among them. `pnpm -r --if-present run test` covers the
+      # opposite gap: a package that declares a test script runs under ITS OWN
+      # config, which is the config its consumers build against, and which can
+      # differ from the root's (extra setup files, a different environment). That
+      # only holds because every such package carries a vitest.config.ts — vitest
+      # walks up to the root config but keeps cwd as its root, so the root's
+      # `dir: './packages'` would resolve to <package>/packages and silently match
+      # nothing. A package that declares `test` without its own config runs zero
+      # tests and exits 0.
+      #
+      # The root `test` script chains the two, and it is the command
+      # CONTRIBUTING.md tells contributors to run — a public repo whose documented
+      # test command is not the one CI runs is telling two different stories about
+      # what passing means. CI used to run the recursive half again as its own
+      # step; that ran every package-level suite twice.
+      - run: pnpm test
         working-directory: packages/web
