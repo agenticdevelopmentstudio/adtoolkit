@@ -114,7 +114,7 @@ describe('buildSiteHref', () => {
   })
   it('carries /home to marketing feature sites — the fleet is hasHome now', () => {
     // Every marketing satellite exposes the gated /home feature surface
-    // (docs/platform/feature-sites-redesign.md), so the switcher carries /home across.
+    // (adh/docs/platform/feature-sites-redesign.md), so the switcher carries /home across.
     const academy = getSite('academy')!
     expect(buildSiteHref(academy, 'agenticdeveloperhub.com', '/home')).toBe(
       'https://agenticdeveloperacademy.com/home',

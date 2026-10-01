@@ -4,7 +4,7 @@ How the Swift offline-sync client stack is built: the two library targets,
 the three protocol seams, the engine actor that drives them, the enrollment
 reconciliation loop, the adh resource catalog, and how a host wires it all
 together. This is the client counterpart of the adh backend's server-side
-`docs/architecture/sync.md`.
+`adhbackend/src/adh/docs/architecture/sync.md`.
 
 **Read this for the _how_.** For the _what_ — the platform-neutral behavioral
 contract every sync client must satisfy (17 requirements + conformance test
@@ -320,14 +320,12 @@ the registration list are client knowledge precisely because encoding them on
 the pull manifest would bloat every response with data the server already
 enforces authoritatively (it answers a mis-push with `rejected/route_only`).
 
-**Regeneration** — from an adh checkout, run the codegen target named in the
-file's own doc comment. It re-emits `ADHSyncCatalog.swift` **and** runs a
-backend-CI-gated semantic-drift check that fails if the checked-in catalog no
-longer matches `SYNC_REGISTRY`:
-
-```bash
-python3 tools/codegen/generate.py sync-catalog
-```
+**Regeneration** — from an adh checkout, run the `sync-catalog` codegen target
+named in the file's own doc comment (that comment is the authority for the
+command; this doc does not restate it, because the generator's path is adh's to
+move). It re-emits `ADHSyncCatalog.swift` **and** runs a backend-CI-gated
+semantic-drift check that fails if the checked-in catalog no longer matches
+`SYNC_REGISTRY`.
 
 Keep the catalog's `Generated … against adh main <sha>` provenance line in sync
 with the checkout you regenerate from.
@@ -553,6 +551,6 @@ applied pull batch. See the recipe's conformance vectors (`cursor-is-opaque`,
   (registry, pull, §3 Push, §4 Resync).
 - adh `backend/src/adh/src/sync/wire.ts` — the authoritative wire shapes
   `SyncWire.swift` mirrors.
-- [`repo-pattern.md`](repo-pattern.md) /
-  [`consuming-as-submodule.md`](../project/consuming-as-submodule.md) — how the toolkit is
+- [`repo-pattern.md`](../repo-pattern.md) /
+  [`consuming-as-submodule.md`](../consuming-as-submodule.md) — how the toolkit is
   laid out and embedded by a first-party consumer.

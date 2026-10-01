@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { SITES } from '../sites/registry'
 import { SITE_STORIES, type FunnelStage } from '../sites/story'
 
-// Governance for the brand-story layer (docs/planning/brand-story-plan.md §7):
+// Governance for the brand-story layer (adh/docs/planning/brand-story-plan.md §7):
 // the compiler already forces a story per SiteId; these pin the semantic
 // invariants a type can't express.
 

@@ -444,7 +444,7 @@ confirmed by inspection of every given source file in this domain.
 - **Cross-platform (backend contract, applies to every port)**: `canDemoChat`, `parseChatStatus`
   /`resolveChatStatus`, and `demoPreviewApi` are deliberately duplicated logic that must agree
   with the backend's authoritative implementation (`backend/src/adh/src/llm/canned/config.ts`,
-  `backend/src/adh/src/db/schema/persona.ts`, `docs/planning/demo-chat-ink-engine.md §10`); any
+  `backend/src/adh/src/db/schema/persona.ts`, `adh/docs/planning/demo-chat-ink-engine.md §10`); any
   port MUST keep its copy in lockstep with the backend rather than treating this recipe's
   TypeScript as the source of truth — "when they disagree, the backend wins," per `wire.ts`'s own
   comment.

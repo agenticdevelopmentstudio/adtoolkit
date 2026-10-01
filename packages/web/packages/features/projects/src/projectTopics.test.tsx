@@ -205,7 +205,7 @@ describe("projectTopics", () => {
   // REMOVED: "gives every topic a description, which is what earns both rails their overview cards".
   // The premise was never true — neither ResourceExplorer nor StackGroupDetail ever set the level
   // `overview` opt-in, so a missing description downgraded nothing — and the card grid it named is
-  // gone outright (docs/ui/fleet-ui-audit.md §1.5). `description` is now carried and rendered
+  // gone outright (adh/docs/ui/fleet-ui-audit.md §1.5). `description` is now carried and rendered
   // nowhere, so asserting its presence enforced a string no user could read.
 
   it("hands each pane the context's title, project, and leaf", () => {

@@ -1,6 +1,6 @@
 import type { FunnelStage, StoryPillar } from '@agentic-toolkit/adh-registry'
 
-// The message house (docs/planning/brand-story-plan.md §3) — the one promise and
+// The message house (adh/docs/planning/brand-story-plan.md §3) — the one promise and
 // the three pillar statements every logged-out landing renders. English-only
 // constants for now (Locale is 'en'-only today); when a second locale lands this
 // copy moves behind the same locale seam as the concept content catalog.

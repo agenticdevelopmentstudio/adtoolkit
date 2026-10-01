@@ -11,7 +11,7 @@ import { parseDashboardsPath } from "@agentic-toolkit/dashboards/parse";
 
 /**
  * The Dashboards (Site Monitoring) feature — this site's gated product surface
- * (docs/platform/feature-platform-phase2.md). Same URL grammar as the hub's /<slug>/dashboards
+ * (adh/docs/platform/feature-platform-phase2.md). Same URL grammar as the hub's /<slug>/dashboards
  * routes, now rooted at the workspace rather than at /home:
  *   /<ws>                      → nothing open (pick Groups or Sites)
  *   /<ws>/<section>            → that section's list (groups | sites), no row open

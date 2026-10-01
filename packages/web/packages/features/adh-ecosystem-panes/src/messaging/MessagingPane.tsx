@@ -18,7 +18,7 @@ import {
  * Everything a reader sees is `MessagingSurface`, which the platform-wide admin Messaging
  * tool renders too — this file is the ecosystem-scoped HALF: which endpoints the hooks
  * call, which words name the scope, and the settings-dirty registration. The two used to
- * be forked copies of one screen (docs/ui/fleet-ui-audit.md, Tier 6).
+ * be forked copies of one screen (adh/docs/ui/fleet-ui-audit.md, Tier 6).
  */
 export function MessagingPane({
   ecosystemId,

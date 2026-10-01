@@ -25,7 +25,7 @@ const KB_TABLES = personaMemoryTables();
 
 /**
  * The Personas feature — this site's gated product surface
- * (docs/platform/feature-platform-phase2.md): the persona table + editor, the SAME
+ * (adh/docs/platform/feature-platform-phase2.md): the persona table + editor, the SAME
  * @agentic-toolkit/personas surface the hub's /<slug>/personas group renders.
  *
  * URL grammar (parsePersonasPath), now rooted at the workspace rather than at /home:

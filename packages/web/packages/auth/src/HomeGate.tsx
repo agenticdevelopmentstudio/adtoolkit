@@ -32,7 +32,7 @@ export type HomeGateProps = {
  *
  * Deliberately mounts NO AuthProvider of its own: a nested provider would
  * capture the same `window.location.hash` as the root one and exchange a
- * bounced single-use SSO `#code` twice (see docs/cross-site-auth.md). Sites
+ * bounced single-use SSO `#code` twice (see adh/docs/platform/cross-site-auth.md). Sites
  * without a root provider use {@link HomeAuthGate}, which wraps this in one.
  *
  * A gated site's `app/home/layout.tsx` is just:

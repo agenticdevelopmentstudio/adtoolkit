@@ -10,7 +10,7 @@
  *  Maps 1:1 onto ProjectsFeature's props (the host supplies `basePath`). */
 export interface ProjectsPathSelection {
   /** The explicit unselected state (`…/all`) — the rail plus the frame's select nudge, no
-   *  landing (docs/ui/fleet-ui-audit.md §1.5). Omitted for a bare path — a bare path lets
+   *  landing (adh/docs/ui/fleet-ui-audit.md §1.5). Omitted for a bare path — a bare path lets
    *  ResourceExplorer resume last-selected or fall back to this. */
   all?: boolean;
   activeProjectId?: string;

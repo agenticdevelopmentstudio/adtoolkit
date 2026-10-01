@@ -1290,7 +1290,7 @@ export function siteProdUrl(id: SiteId, path: string): string {
  *  (`hasHome`), else the site root `/`. This is the default "come back here"
  *  target the header's Login / Sign up buttons pass to the hub as `?return=`, so a
  *  visitor lands back on the site they started from rather than the hub's own
- *  /home. See docs/platform/login-and-return.md. */
+ *  /home. See adh/docs/platform/login-and-return.md. */
 export function siteHomePath(id: SiteId): string {
   return getSite(id)?.hasHome ? '/home' : '/'
 }

@@ -26,7 +26,7 @@ export interface GroupTopicItem {
   icon: ReactNode;
   /** What this member is for. Carried on the row, rendered nowhere — it never did become a card
    *  grid here (that took the level-level `overview` opt-in, which this component never set), and
-   *  the opt-in itself is now gone (docs/ui/fleet-ui-audit.md §1.5). The no-selection leaf is the
+   *  the opt-in itself is now gone (adh/docs/ui/fleet-ui-audit.md §1.5). The no-selection leaf is the
    *  select nudge; to explain the LIST, set the level's `overviewHelp`. */
   description?: string;
   /** Declare `"list"` for a member whose pane publishes deeper rails (a schema browser, an entity

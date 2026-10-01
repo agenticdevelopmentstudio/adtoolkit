@@ -35,7 +35,7 @@ packages:
 ```
 
 The `**` glob is necessary because some toolkit packages live one
-level deeper (`packages/features/personas`,
+level deeper (`packages/web/packages/features/personas`,
 …). pnpm filters by `package.json` presence so this is safe.
 
 ### 3. Declare per-package deps in the app

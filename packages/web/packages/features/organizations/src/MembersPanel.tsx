@@ -20,7 +20,7 @@ import { useReportBusy } from "@agentic-toolkit/resource";
  * for `organization` workspaces, and this panel renders an explainer (not data) when
  * the route is opened directly on a non-org workspace.
  *
- * The role column is LIVE for org admins (docs/platform/workspace-roles-permissions.md): each
+ * The role column is LIVE for org admins (adh/docs/platform/workspace-roles-permissions.md): each
  * non-admin member shows a workspace-role selector — their explicit workspace-scope
  * assignment, or the member-kind default when none — writing through the /access
  * surface. Non-admin viewers (the assignments read is admin-gated) and org admins

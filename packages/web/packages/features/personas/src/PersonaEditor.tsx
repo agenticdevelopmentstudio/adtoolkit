@@ -639,7 +639,7 @@ export function PersonaEditor({
         ),
     },
     // WHO may reach this persona — the per-item share panel (restriction mode + item-scoped
-    // role assignments + the effective-permission explainer; docs/workspace-roles-permissions.md).
+    // role assignments + the effective-permission explainer; adh/docs/platform/workspace-roles-permissions.md).
     // Distinct from Permissions above, which is what the persona itself may DO.
     //
     // Item access is a WORKSPACE concept, so the topic is absent entirely outside one (the

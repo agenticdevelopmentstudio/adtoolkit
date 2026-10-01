@@ -29,7 +29,7 @@ import {
 import { RailStandIn } from "@agentic-toolkit/resource/testing";
 
 // ResourceExplorer uses next/navigation's useRouter internally. `push` is a shared spy, not a
-// throwaway: with the "All" card landing gone (docs/ui/fleet-ui-audit.md §1.5) the rail row IS
+// throwaway: with the "All" card landing gone (adh/docs/ui/fleet-ui-audit.md §1.5) the rail row IS
 // the only way into a project, so the route it builds is what has to be asserted. `vi.hoisted`
 // because the factory runs before the module body's consts initialize.
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));

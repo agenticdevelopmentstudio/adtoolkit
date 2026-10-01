@@ -305,7 +305,7 @@ purpose, so a new event forces a decision at this call site.
 - **Appearance ⇒ full resync (single cursor stream, no version touch on enable).**
   The server keeps *one* cursor stream per cohort and does **not** bump row
   versions or re-serve rows when a resource is enrolled-enabled
-  (`docs/architecture/sync.md`). So a resource that enters the effective set on a
+  (`adhbackend/src/adh/docs/architecture/sync.md`). So a resource that enters the effective set on a
   non-fresh cursor has rows that changed while it was outside the set sitting
   permanently behind the cursor — an incremental pull would never see them. The
   only correct recovery is to reset the mirror + cursor and re-pull from scratch.

@@ -1,5 +1,5 @@
 // Workspace roles & permissions API client — the gated /access surface
-// (docs/workspace-roles-permissions.md). Every call names the workspace by slug
+// (adh/docs/platform/workspace-roles-permissions.md). Every call names the workspace by slug
 // (`?workspace=`): a personal workspace's customer slug or an org slug. Reads answer
 // 404 to non-members; role definition is admin-only; assignments/restriction need the
 // M verb at the target scope (the server enforces no-escalation).

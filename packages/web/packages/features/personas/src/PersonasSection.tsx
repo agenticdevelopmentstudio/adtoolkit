@@ -174,7 +174,7 @@ export function PersonasSection({
       newLabel: "New Persona",
       newActive: newOpen,
       search: { placeholder: "Search personas" },
-      // The unselected pane is the frame's select hint and nothing else (docs/ui/fleet-ui-audit.md
+      // The unselected pane is the frame's select hint and nothing else (adh/docs/ui/fleet-ui-audit.md
       // §1.5) — the rail beside it already lists every persona.
       itemNoun: "persona",
       // The load failure has to ride INSIDE the hint. The frontier overview hides the pane's

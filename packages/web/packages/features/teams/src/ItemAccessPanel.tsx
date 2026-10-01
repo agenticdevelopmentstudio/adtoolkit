@@ -87,7 +87,7 @@ function describeProvenance(p: Provenance | undefined): string {
 }
 
 /**
- * The per-item SHARE PANEL (docs/workspace-roles-permissions.md §UI) — the
+ * The per-item SHARE PANEL (adh/docs/platform/workspace-roles-permissions.md §UI) — the
  * Drive/Notion-style access panel mounted on ONE top-level item (a project or a
  * persona) as an HTD "Access" topic. Top to bottom: the Inherited⇄Restricted mode
  * row (restrict/restore), the item's assignment list (per-row role select + remove),

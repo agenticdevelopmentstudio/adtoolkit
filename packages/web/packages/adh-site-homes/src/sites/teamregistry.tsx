@@ -7,7 +7,7 @@ import { TeamsFeature } from "@agentic-toolkit/teams";
 import { parseTeamsPath } from "@agentic-toolkit/teams/parse";
 
 /**
- * The Teams feature — this site's gated product surface (docs/platform/feature-platform-phase2.md).
+ * The Teams feature — this site's gated product surface (adh/docs/platform/feature-platform-phase2.md).
  * Same URL grammar as the hub's /<slug>/teams routes, now rooted at the workspace rather than
  * at /home:
  *   /<ws> | /<ws>/all | /<ws>/<id> | /<ws>/<id>/<topic> | /<ws>/<id>/<topic>/<leaf>

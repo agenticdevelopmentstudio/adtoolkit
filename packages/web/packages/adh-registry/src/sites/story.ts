@@ -1,7 +1,7 @@
 import type { SiteId } from './registry'
 
 // The brand-story layer — one structural story record per site, the data spine
-// behind every logged-out landing (see docs/planning/brand-story-plan.md).
+// behind every logged-out landing (see adh/docs/planning/brand-story-plan.md).
 // PURE DATA + TYPES (no React), like the registry it sits beside. Copy (labels,
 // blurbs, hero prose) stays in the locale content catalog (websites/site-config);
 // this module holds only what is identical across translations: where each site

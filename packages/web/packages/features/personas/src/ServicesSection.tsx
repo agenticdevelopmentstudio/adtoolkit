@@ -786,7 +786,7 @@ export function ServicesSection({
       // "New Service" is a right-justified `+` in the list header; it opens the create modal.
       onNew: () => setNewOpen(true),
       newLabel: "New Service",
-      // The unselected pane is the frame's select hint and nothing else (docs/ui/fleet-ui-audit.md
+      // The unselected pane is the frame's select hint and nothing else (adh/docs/ui/fleet-ui-audit.md
       // §1.5) — the rail beside it already lists every service (mirrors PersonasSection).
       itemNoun: "service",
       // The failure rides INSIDE the hint: the frontier overview hides the pane's children with

@@ -38,7 +38,7 @@ export interface ResourceTopic {
   label: string;
   icon: ReactNode;
   /** What this topic is for. Carried on the row, rendered nowhere: the card grid it used to feed at
-   *  an unselected frontier is gone (docs/ui/fleet-ui-audit.md §1.5). See `TopicDetailItem`. */
+   *  an unselected frontier is gone (adh/docs/ui/fleet-ui-audit.md §1.5). See `TopicDetailItem`. */
   description?: string;
   /** The row's small dim second line (`TopicDetailItem.sublabel`) — a status the row's label
    *  alone cannot say, e.g. an ecosystem feature still "Provisioning…". Omit for a plain row. */
@@ -62,7 +62,7 @@ export interface ResourceTopic {
 
 /** The resource RAIL's naming — its header, its empty label, and the blurb the frame
  *  prints under the select nudge while nothing is selected. There is no card landing:
- *  an HTDV's unselected pane is the select hint and nothing else (docs/ui/fleet-ui-audit.md
+ *  an HTDV's unselected pane is the select hint and nothing else (adh/docs/ui/fleet-ui-audit.md
  *  §1.5), so the rail beside it is the only place the entities are listed. */
 export interface ResourceRailConfig<T> {
   title: string;
@@ -254,7 +254,7 @@ export function ResourceExplorer<T>({
   );
   const [newOpen, setNewOpen] = useState(false);
   // The resource rail's filter. The removed card landing carried the only search over this
-  // list (docs/ui/fleet-ui-audit.md §1.5 took the landing, not the FUNCTION), so the field moved
+  // list (adh/docs/ui/fleet-ui-audit.md §1.5 took the landing, not the FUNCTION), so the field moved
   // to the rail's `headerSlot`, then to the page-wide home bar — and, once that strip was judged
   // clunky (Mike, 2026-09-24), back onto the rail as its toolbar's pop-over search. The rows are
   // matched as the rail would match them itself (`filterTopicItems`, below), but the query is held
@@ -422,7 +422,7 @@ export function ResourceExplorer<T>({
     items: entityItems,
     // The unselected pane is the frame's select hint and nothing else — the rail beside it
     // already lists every entity, so a card landing would only be a second copy of it in a
-    // wider format (docs/ui/fleet-ui-audit.md §1.5). The host's blurb rides under that nudge,
+    // wider format (adh/docs/ui/fleet-ui-audit.md §1.5). The host's blurb rides under that nudge,
     // but only while there is something to pick: `overviewHelp` also FORCES the hint onto an
     // EMPTY list, and "Select a team" beside a rail reading "No teams yet." is a dead end.
     //

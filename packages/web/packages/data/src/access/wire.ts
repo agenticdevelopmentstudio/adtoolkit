@@ -1,5 +1,5 @@
 // Wire shapes of the backend /access surface (websites/backend/src/routes/access.ts —
-// docs/workspace-roles-permissions.md). Field names match the JSON exactly.
+// adh/docs/platform/workspace-roles-permissions.md). Field names match the JSON exactly.
 
 /**
  * One feature area the BACKEND enforces, as `GET /access/features` reports it: the key grants

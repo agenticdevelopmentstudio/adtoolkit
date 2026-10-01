@@ -105,12 +105,12 @@ Each step below is its own commit on this branch.
      react across two workspaces. Callers fall back to normal workspace
      resolution.
    - Regenerate `pnpm-lock.yaml`.
-2. **Repoint every ADT dependency.** A Python script,
-   `tools/repoint_adt_links.py`, rewrites every
+2. **Repoint every ADT dependency.** A one-off Python script rewrites every
    `link:…/external/agenticdevelopertoolkit/packages/web/packages/<x>` to
    `workspace:*`. That includes bitbag's peer and dev pairs. The script also
-   deletes the `//devDependencies` prose that explains the `link:`. It is
-   idempotent, with a test.
+   deletes the `//devDependencies` prose that explains the `link:`. It ran
+   once, in the workspace-unification commit, and is not kept: nothing in
+   the merged repo still has a `link:` for it to rewrite.
 3. **One Apple workspace.**
    - In `AgenticToolkit/project.yml`, `AgenticDeveloperToolkit` and
      `AgenticDeveloperHubClient` point at `../AgenticDeveloperToolkit/…` and
@@ -169,7 +169,8 @@ mechanical prefix swap:
 - The `agentictoolkit` submodule is removed, ADT is bumped to the merged
   `main`, and old `agentic-cookbook/…` URLs are corrected.
 
-All of this goes into one Python tool, `tools/migrate_consumer.py`, with
+All of this goes into one Python tool, a new `migrate_consumer.py` under
+`tools/`, with
 `--dry-run`. It covers `.gitmodules`, `package.json`, `project.yml`,
 `next.config.*`, `tsconfig.json` `paths`, `pnpm-workspace.yaml`,
 `.github/**` and `*.py` helpers. Each consumer gets a peer worktree
@@ -183,7 +184,7 @@ children):
    - `temporal/whatsnowtoolkit` (it also globs ADT avatar packages into its
      own workspace)
    - `adh/adh-daemon`
-   - `adh/websites` (the shared `websites/external` used by the 14 adh sites
+   - `adh/websites` (its shared `external/` tree, used by the 14 adh sites
      and `myagenticteams`/`bitbag`)
 2. **Apple apps:**
    - stenographer, monitr, whippet, `adh/agenticdeveloperhubapp`,
@@ -202,7 +203,7 @@ children):
    - `mikefullerton/mikefullerton.com`
    - `temporal/{olylowebsite,whatsnowwebsite}`
 4. **Vendored copies:** `adh/websites/{statussite,buildersite}`. Point
-   `tools/shared_vendor.py` at the one ADT checkout, re-vendor, and get
+   their `shared_vendor.py` at the one ADT checkout, re-vendor, and get
    `vendor-freshness.yml` green.
 5. **Tooling that names both repos:** `adh/adh-tools` (`build-site.py`,
    `vercel-isolate-deps.py`, `verify_toolkit_boundary.py`,

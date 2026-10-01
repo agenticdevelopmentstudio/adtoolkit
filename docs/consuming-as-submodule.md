@@ -2,7 +2,9 @@
 
 For first-party consumers (e.g. `learntruefacts`), the toolkit is consumed
 directly from source via a git submodule. No `pnpm build` or `dist/` step is
-required — Next.js transpiles the package source on demand.
+required — Next.js transpiles the package source on demand. Apple consumers
+reference the in-tree Xcode projects and rebuild them from source; see
+[Apple consumers](#apple-consumers) below.
 
 ## One-time setup in the consumer
 
@@ -70,6 +72,7 @@ Enable submodule checkout in your deploy platform:
 - **Vercel:** Settings → Git → Include submodules.
 - **Cloudflare Pages:** Settings → Builds & deployments → Include submodules.
 - **GitHub Actions:** `actions/checkout@v4` with `submodules: recursive`.
+- **Xcode Cloud:** check "Include submodules" in the workflow source settings.
 
 The build container then runs the consumer's normal install + build (e.g.
 `pnpm install && next build`) — Next handles the source-to-bundle step via
@@ -90,3 +93,50 @@ To publish, from inside the toolkit repo:
 cd packages/web && pnpm build         # populates dist/
 pnpm --filter @agenticdevelopertoolkit/chat publish
 ```
+
+## Apple consumers
+
+The same submodule serves Apple apps. After adding it, generate the Xcode
+projects once so `project.yml` and the committed `.xcodeproj` files are
+confirmed in sync:
+
+```bash
+./vendor/adt/install.sh
+```
+
+In Xcode, add the toolkit workspace (or one of its projects) to your own
+workspace:
+
+- **File → Add Files to "<YourWorkspace>"…**
+- Pick `vendor/adt/packages/apple/agenticdevelopertoolkit.xcworkspace` for the
+  full workspace, or one of:
+  - `packages/apple/AgenticDeveloperToolkit/AgenticDeveloperToolkit.xcodeproj`
+  - `packages/apple/AgenticDeveloperHubClient/AgenticDeveloperHubClient.xcodeproj`
+  - `packages/apple/AgenticToolkit/AgenticToolkit.xcodeproj`
+  - `packages/apple/AIPlugins/AIPlugins.xcodeproj`
+  - `packages/apple/AgenticToolkitApp/AgenticToolkitApp.xcodeproj`
+
+Add each project once. `AgenticToolkit.xcodeproj` already references
+`AgenticDeveloperToolkit` and `AgenticDeveloperHubClient` by their in-repo
+paths, and a second reference to either from another path makes Xcode fail with
+"Multiple commands produce".
+
+Then, in your app target's **Frameworks, Libraries, and Embedded Content**
+section, add the toolkit framework(s) you link against (e.g.
+`AgenticToolkitMacOS.framework`).
+
+Day to day:
+
+- **Edit toolkit source live.** Edit any `.swift` file under
+  `vendor/adt/packages/apple/`; your next Xcode build picks it up.
+- **After a pull or a `project.yml` edit**, re-run `./vendor/adt/install.sh`
+  so the `.xcodeproj` files match `project.yml`.
+- **CI** runs the consumer's normal `xcodebuild` against its own workspace,
+  which builds the toolkit projects from source. No prebuilt toolkit artifact
+  is required. Unattended `xcodebuild` runs need
+  `-skipPackagePluginValidation -skipMacroValidation`, because the toolkit's
+  package dependencies ship build plugins and macros.
+
+External consumers will eventually take a tagged release instead — a Swift
+Package (`.package(url: ..., from: "x.y.z")`) or a distributed XCFramework.
+The source layout does not change; only the consumer's package reference does.

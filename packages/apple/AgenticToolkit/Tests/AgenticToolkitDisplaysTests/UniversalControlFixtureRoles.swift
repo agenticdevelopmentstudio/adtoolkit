@@ -1,7 +1,7 @@
 import Foundation
 
 /// UUIDs from the Universal Control spike's Fixture map
-/// (docs/superpowers/spikes/2026-09-29-universal-control.md), shared by
+/// (displayr/docs/superpowers/spikes/2026-09-29-universal-control.md), shared by
 /// `UniversalControlLogTests` and `UniversalControlPlacementTests` so
 /// neither test file reaches into the other for fixture data.
 enum UniversalControlFixtureRoles {

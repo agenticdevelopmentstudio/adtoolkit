@@ -616,7 +616,7 @@ public final class LanguageConfigurationStore {
 ///
 /// **Ruling 8: this member validates, translates, stores and hands back. It
 /// applies nothing to any editor.** A read-only consumer survey (recorded in
-/// `docs/planning/vsc-extensions-stage5-ledger.md`) found nothing in this
+/// `whippet/docs/planning/vsc-extensions-stage5-ledger.md`) found nothing in this
 /// framework that can receive a language configuration today — no
 /// `CodeLanguage` initialiser takes one, `BracketPairs` is a fixed internal
 /// enum, and word patterns, indentation rules, on-Enter rules and

@@ -184,4 +184,19 @@ with tempfile.TemporaryDirectory() as tmp:
     (root / "logo.png").write_bytes(b"\x89PNG\r\n")
     check("a tree of nothing but skipped files exits 2", run(root).returncode, 2)
 
-print("check_doc_links_test: 14 passed")
+    # (15) An archived doc is a point-in-time record: its own dangling coordinates are
+    #      not checked, but a live doc citing a missing archived doc still fails.
+    root = Path(tmp) / "archive"
+    (root / "docs" / "archive" / "plans").mkdir(parents=True)
+    (root / "packages").mkdir()
+    (root / "docs" / "archive" / "plans" / "old.md").write_text(
+        "Delete: `packages/apple/Gone.swift`, see docs/gone.md\n"
+    )
+    (root / "docs" / "guide.md").write_text("see docs/archive/plans/old.md\n")
+    check("an archived doc's own citations are skipped", run(root).returncode, 0)
+    (root / "docs" / "guide.md").write_text("see docs/archive/plans/moved.md\n")
+    bad = run(root)
+    check("a live citation of a missing archived doc fails", bad.returncode, 1)
+    check("names the archived target", "docs/archive/plans/moved.md" in bad.stderr, True)
+
+print("check_doc_links_test: 15 passed")

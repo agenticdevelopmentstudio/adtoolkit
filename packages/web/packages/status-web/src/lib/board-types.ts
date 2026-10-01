@@ -71,7 +71,7 @@ export interface ActivityRow {
    * that was renamed from a row that was withdrawn and replaced. Deploy rows carry no
    * target and no timestamp precisely because `deployments.created_at`, `project_name` and
    * `branch` are all corrected after the row first renders — see `deriveActivity`'s
-   * `deployRowId`, and `docs/status-site/status-activity-row-ids-must-not-move.md`.
+   * `deployRowId`, and `statussite/docs/status-site/status-activity-row-ids-must-not-move.md`.
    */
   id: string;
   kind: ActivityKind;

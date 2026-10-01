@@ -101,7 +101,7 @@ function inkCanSpeak(raw: unknown): boolean | null {
  * line to say, in EITHER engine. Mirrors the backend's `canDemoChat` — "we advertise a demo"
  * and "we will serve a demo" have to be the same question, asked once.
  *
- * Two engines sit behind the one flag (docs/planning/demo-chat-ink-engine.md §10): an ink
+ * Two engines sit behind the one flag (adh/docs/planning/demo-chat-ink-engine.md §10): an ink
  * script when the config carries one, else the legacy keyword script. A malformed slice of
  * EITHER sinks the whole config, exactly as `parseCannedChat` does — a row nothing can read
  * must not demo off the half that happens to parse.

@@ -17,7 +17,7 @@ const TABLES = personaMemoryTables();
 
 /**
  * The Knowledge Bases feature — this site's gated product surface
- * (docs/platform/feature-platform-phase2.md): CRUD data views over the persona-memory tables,
+ * (adh/docs/platform/feature-platform-phase2.md): CRUD data views over the persona-memory tables,
  * the SAME @agentic-toolkit/knowledgebases surface the hub's /<slug>/knowledgebases route and
  * persona editor render, now rooted at the workspace rather than at /home. Selection is local,
  * so the optional catch-all segment is accepted (parseKnowledgeBasesPath) but not URL-driven.

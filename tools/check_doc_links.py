@@ -68,6 +68,12 @@ PROSE_DIRS = ("docs", "recipes")
 # Trailing sentence punctuation the regex happily swallows.
 _TRAILING = "/.,;:)]}\"'`"
 SKIP_DIRS = {"node_modules", "dist", ".turbo", ".git", "coverage", ".next"}
+# A file under any `archive/` directory is a record of how the code looked when it was
+# written — an executed plan's `git rm` list, a research note's "files modified" log.
+# Repointing its coordinates would falsify the record, and the files it names are gone
+# by design. It is skipped as a citing site only: a live doc citing an archived one is
+# still checked, so moving a doc into an archive cannot strand the links to it.
+ARCHIVE_DIR = "archive"
 SKIP_SUFFIXES = {".png", ".jpg", ".jpeg", ".svg", ".woff2", ".map", ".lock"}
 SKIP_NAMES = {"pnpm-lock.yaml", "package-lock.json"}
 # The resolve-check's own self-test writes synthetic doc citations into temp
@@ -133,7 +139,7 @@ def main() -> None:
         if not path.is_file() or path.suffix.lower() in SKIP_SUFFIXES:
             continue
         rel = path.relative_to(root)
-        if SKIP_DIRS & set(rel.parts) or path.name in SKIP_NAMES:
+        if SKIP_DIRS & set(rel.parts) or path.name in SKIP_NAMES or ARCHIVE_DIR in rel.parts[:-1]:
             continue
         try:
             lines = path.read_text(encoding="utf-8").splitlines()

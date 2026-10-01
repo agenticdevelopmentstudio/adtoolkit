@@ -6,7 +6,7 @@ import { parseTokensPath, TokensFeature } from "@agentic-toolkit/authentication"
 
 /**
  * The Authentication feature — this site's gated product surface
- * (docs/platform/feature-platform-phase2.md): the two token families as one hierarchical
+ * (adh/docs/platform/feature-platform-phase2.md): the two token families as one hierarchical
  * topic/detail view, `Tokens ▸ API tokens ▸ <token>` and `Tokens ▸ Storage tokens ▸ <token>`.
  *
  * They are two topics rather than one list because they are two PRINCIPALS. A `tmp_` API token

@@ -64,7 +64,7 @@ export interface EcosystemsTopicConfig {
   label: string;
   icon: ReactNode;
   /** What this topic is for. Carried on the row, rendered nowhere: the card grid it used to feed at
-   *  an unselected frontier is gone (docs/ui/fleet-ui-audit.md §1.5). See `TopicDetailItem`. */
+   *  an unselected frontier is gone (adh/docs/ui/fleet-ui-audit.md §1.5). See `TopicDetailItem`. */
   description?: string;
   dividerAfter?: boolean;
   /** The catalog feature keys behind this row. When set, the row is drawn only while the scoped

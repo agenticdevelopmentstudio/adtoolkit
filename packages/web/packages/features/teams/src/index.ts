@@ -14,7 +14,7 @@ export { TeamsFeature } from "./TeamsFeature";
 // re-exported here: this barrel's dist is a "use client" module, so an RSC page that
 // imported the parse helper from it would throw in prod (render-only client refs).
 
-// The per-item SHARE PANEL (docs/workspace-roles-permissions.md §UI): the
+// The per-item SHARE PANEL (adh/docs/platform/workspace-roles-permissions.md §UI): the
 // Inherited⇄Restricted mode row, the item's assignment list with per-row role
 // selects, a subject picker, and the effective-permission explainer. Mounted as an
 // HTD "Access" topic on a project (projects site) or persona (hub); the member

@@ -22,7 +22,7 @@ import { Pagination } from "@agenticdevelopertoolkit/ui/components/pagination";
  * `MessagingTemplate`), so the only thing that differed between the two screens was which
  * URL the hooks called. That difference stays with each host; everything a reader sees
  * lives here. The two used to be forked copies, and had already drifted apart in four ways
- * (docs/ui/fleet-ui-audit.md, Tier 6).
+ * (adh/docs/ui/fleet-ui-audit.md, Tier 6).
  *
  * The data arrives as plain props rather than as hooks this module calls, because the query
  * keys, the enabled-conditions and the invalidation are the host's — and because a hook prop

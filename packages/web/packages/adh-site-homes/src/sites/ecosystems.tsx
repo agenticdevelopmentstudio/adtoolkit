@@ -9,7 +9,7 @@ import { parseEcosystemsPath } from "@agentic-toolkit/ecosystems/parse";
 
 /**
  * The Ecosystems feature — this site's gated product surface
- * (docs/platform/feature-platform-phase2.md): the SAME @agentic-toolkit/ecosystems explorer the
+ * (adh/docs/platform/feature-platform-phase2.md): the SAME @agentic-toolkit/ecosystems explorer the
  * hub's /<slug>/ecosystems route renders, host-composed with this site's (deliberately smaller)
  * topic set, now rooted at the workspace rather than at /home.
  *

@@ -9,7 +9,7 @@ import Foundation
 ///
 /// This is a port of VS Code's own `extensionValidator.ts` — `isValidVersionStr`,
 /// `parseVersion`, `normalizeVersion` and `isValidVersion` — pinned at the commit
-/// recorded in `docs/planning/vsc-extensions-upstream-pin-manifest.md`. It is
+/// recorded in `whippet/docs/planning/vsc-extensions-upstream-pin-manifest.md`. It is
 /// deliberately a port rather than an interpretation: `engines.vscode` *looks*
 /// like an npm semver range and is not one, and the difference is not academic.
 /// Against the 198 web extensions among the 600 most-downloaded on Open VSX

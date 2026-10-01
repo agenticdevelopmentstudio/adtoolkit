@@ -1,7 +1,7 @@
 "use client";
 
 // CLIENT AUTH for one ecosystem and for one application: how the ecosystem's customers sign in
-// to the developer's own apps (docs/designs/client-auth.md in adhbackend). There is one policy
+// to the developer's own apps (adhbackend/docs/designs/client-auth.md). There is one policy
 // per ecosystem (Users ▸ Authentication), and it governs every sign-in. An application may have
 // a login registration of its own, shaped by its platform (web or native).
 //

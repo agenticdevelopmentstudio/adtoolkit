@@ -45,7 +45,7 @@ packages:
 
 Adjust the first entries to match your repo's app layout. The `**` glob
 is necessary because some toolkit packages live one level deeper
-(`packages/features/personas`, …). pnpm filters
+(`packages/web/packages/features/personas`, …). pnpm filters
 by `package.json` presence so this is safe.
 
 ### 3. Swap the dep in the consumer's `package.json`
@@ -179,4 +179,4 @@ needs to change.
 
 ## See also
 
-- `docs/next-js-consumer.md` — full integration guide for new consumers.
+- `docs/web/next-js-consumer.md` — full integration guide for new consumers.

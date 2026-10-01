@@ -2,7 +2,7 @@
 import { describe, expect, it, afterEach } from 'vitest'
 import { defaultReturnTo, toAvatarUser } from '../header-auth'
 
-// The SHARED half of the Login/Sign-up contract (docs/platform/login-and-return.md §2):
+// The SHARED half of the Login/Sign-up contract (adh/docs/platform/login-and-return.md §2):
 // where a satellite's header Login / Sign up comes back to. Read at CLICK time, so it
 // is a function of the page the visitor is standing on — never of where the source was
 // built. Every session-aware satellite gets this, so no site has to patch it locally.

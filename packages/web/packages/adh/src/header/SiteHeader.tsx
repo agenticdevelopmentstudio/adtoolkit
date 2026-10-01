@@ -266,7 +266,7 @@ export function SiteHeader({
   // NOT the AS's internal `?return=` central-relay callback — hub /login treats
   // those differently (a `return=` relay means no central session yet, so it shows
   // the card; a `return_to` link means "bounce me back once recognized"). See
-  // docs/platform/login-and-return.md. Deterministic prod host on SSR/first render
+  // adh/docs/platform/login-and-return.md. Deterministic prod host on SSR/first render
   // (mirrors the hub hrefs above), env-aware once mounted. Skipped when the site
   // drives auth itself (onLogin/onSignup handler) or overrides the href.
   const selfReturn = hostname

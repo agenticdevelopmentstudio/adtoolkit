@@ -118,7 +118,7 @@ describe("TeamsFeature host-scoping states", () => {
     expect(listMock).not.toHaveBeenCalled();
     expect(idForSlugMock).not.toHaveBeenCalled();
     // Nothing decorates a card grid any more, so nothing reads the cross-team member counts —
-    // the landing that needed them is gone (docs/ui/fleet-ui-audit.md §1.5).
+    // the landing that needed them is gone (adh/docs/ui/fleet-ui-audit.md §1.5).
     expect(countsMock).not.toHaveBeenCalled();
   });
 

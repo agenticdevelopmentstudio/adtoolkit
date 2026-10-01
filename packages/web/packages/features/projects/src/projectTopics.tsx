@@ -76,7 +76,7 @@ export interface ProjectTopicDef {
   icon: ReactNode;
   /** What this topic is for. Carried on the row and rendered NOWHERE by either rail: it fed the
    *  card grid a level could once opt into for its unselected frontier, and that opt-in is gone
-   *  (docs/ui/fleet-ui-audit.md §1.5 — the unselected frontier is the select nudge and nothing
+   *  (adh/docs/ui/fleet-ui-audit.md §1.5 — the unselected frontier is the select nudge and nothing
    *  else). Neither rail ever set that opt-in anyway. To explain a LIST, set the level's
    *  `overviewHelp`, which is the copy the nudge renders. */
   description: string;
@@ -226,7 +226,7 @@ const ACCESS: ProjectTopicDef = {
   label: "Access",
   icon: <KeyRound size={16} aria-hidden />,
   description: "Who can see and change this project.",
-  // The per-item share panel (docs/workspace-roles-permissions.md): restriction mode +
+  // The per-item share panel (adh/docs/platform/workspace-roles-permissions.md): restriction mode +
   // item-scoped role assignments + the effective-permission explainer. `projectTopics` only
   // includes this topic when a workspace is known, so the guard is belt-and-braces rather than
   // a real branch — but it keeps the context ONE shape for every topic.

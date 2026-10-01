@@ -54,7 +54,7 @@ export function HelpMasterDetail({
           selectedId: l.selectedId,
           // Every help level is a topic browser, and its unselected frontier is the platform nudge
           // like everywhere else — a card grid repeating the rows the rail is already showing is the
-          // second-surface-beside-the-rail that docs/ui/fleet-ui-audit.md §1.5 forbids. `itemNoun` +
+          // second-surface-beside-the-rail that adh/docs/ui/fleet-ui-audit.md §1.5 forbids. `itemNoun` +
           // `overviewHelp` are what make the nudge read for a docs site: without the blurb the shared
           // headline offers to "view or edit" the topic, which is not what this surface does.
           itemNoun: 'topic',

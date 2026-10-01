@@ -171,7 +171,7 @@ const isAdminRole = (role: AccessRoleRow | null): boolean =>
 
 /**
  * The Teams "Permissions" topic: the workspace ROLES editor
- * (docs/workspace-roles-permissions.md). Roles are admin-defined verb bundles per
+ * (adh/docs/platform/workspace-roles-permissions.md). Roles are admin-defined verb bundles per
  * feature area — and WHICH areas exist is the backend's answer (`GET /access/features`), not a
  * constant here, so a custom role can grant and withhold every area the server enforces rather
  * than the subset this package happened to be built with. Built on the shared

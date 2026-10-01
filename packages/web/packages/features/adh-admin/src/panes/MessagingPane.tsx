@@ -20,7 +20,7 @@ import {
  * renders too — this file is the admin-scoped HALF: the `/messaging/{status,log,send}`
  * endpoints (gated by isAdmin()) instead of the per-ecosystem ones, and the words that
  * name that scope. The two used to be forked copies of one screen, and had drifted
- * (docs/ui/fleet-ui-audit.md, Tier 6).
+ * (adh/docs/ui/fleet-ui-audit.md, Tier 6).
  */
 export function MessagingPane({ help }: { help?: ReactNode } = {}) {
   const [page, setPage] = useState(1);

@@ -10,7 +10,7 @@ import { parseProjectsPath } from "@agentic-toolkit/projects/parse";
 import { ProfileProjects } from "./ProfileProjects";
 
 /**
- * The Projects feature — this site's gated product surface (docs/platform/feature-platform.md).
+ * The Projects feature — this site's gated product surface (adh/docs/platform/feature-platform.md).
  *
  * This file DECLARES the site's workspace route; it does not assemble it. SiteHomeRoute owns the
  * assembly for every site: it reads the `[workspace]` param and the path below it, and mounts what

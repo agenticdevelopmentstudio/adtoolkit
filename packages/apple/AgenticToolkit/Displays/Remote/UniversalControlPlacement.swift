@@ -5,7 +5,7 @@ import IOKit
 /// ByHost UC arrangement. Nothing else in the framework knows UC exists.
 @MainActor
 public final class UniversalControlPlacement: RemoteScreenPlacement {
-    /// Set from the spike verdict (docs/superpowers/spikes/2026-09-29-universal-control.md).
+    /// Set from the spike verdict (displayr/docs/superpowers/spikes/2026-09-29-universal-control.md).
     /// The verdict is `pending write test`; the controller changes this once verified.
     public static let verifiedWriteSupport: RemoteSupport = .unsupported("pending verification")
 

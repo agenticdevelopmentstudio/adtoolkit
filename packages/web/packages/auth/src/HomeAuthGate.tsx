@@ -31,7 +31,7 @@ export type HomeAuthGateProps = {
  * Sites whose root layout already mounts an AuthProvider — the marketing
  * family via `MarketingRootHtml` — must use {@link HomeGate} directly instead:
  * a second provider here would exchange a bounced single-use SSO `#code`
- * twice (see docs/cross-site-auth.md). Sites that need different auth wiring
+ * twice (see adh/docs/platform/cross-site-auth.md). Sites that need different auth wiring
  * (e.g. hub/admin with their own context) keep their own layout.
  */
 export function HomeAuthGate({

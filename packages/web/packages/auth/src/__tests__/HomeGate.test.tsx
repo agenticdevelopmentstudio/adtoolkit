@@ -144,7 +144,7 @@ describe('HomeGate', () => {
 
   it('mounts NO AuthProvider of its own — it relies on the site root provider', () => {
     // A nested provider would exchange a bounced single-use SSO #code twice
-    // (docs/cross-site-auth.md); this pins the provider-less contract.
+    // (adh/docs/platform/cross-site-auth.md); this pins the provider-less contract.
     mocks.auth = { isAuthenticated: true, isLoading: false }
     const { queryByTestId } = render(
       <HomeGate>

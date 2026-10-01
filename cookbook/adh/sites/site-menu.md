@@ -248,7 +248,7 @@ LOGGED OUT (marketing)               LOGGED IN (/home + workspace)
 - **Settle-based Recents, not per-view instrumentation.** Recording after the
   selection stack settles (~1.5s) coalesces drill-through into the final
   destination with one observer and no per-page hooks — see
-  `docs/ui/deep-linking-foundation.md`. Records "the eventual destination, not each
+  `adh/docs/ui/deep-linking-foundation.md`. Records "the eventual destination, not each
   click."
 - **localStorage, not a backend.** Recents is inherently ephemeral and per-device;
   the `ftd-storage` pattern already exists for exactly this. No table, no migration

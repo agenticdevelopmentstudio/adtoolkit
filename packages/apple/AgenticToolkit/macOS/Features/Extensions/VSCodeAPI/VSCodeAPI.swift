@@ -23,7 +23,7 @@ import AgenticToolkitCore
 ///
 /// **Where the `Ruling N` citations throughout this directory resolve:** a
 /// `Ledger Ruling N` is a heading in the `whippet` superproject's
-/// `docs/planning/vsc-extensions-stage5-ledger.md`, while a `task N's
+/// `whippet/docs/planning/vsc-extensions-stage5-ledger.md`, while a `task N's
 /// Ruling M` is that task's own brief, which is not tracked in any of these
 /// repositories and may not be present at all.
 ///

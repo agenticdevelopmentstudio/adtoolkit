@@ -4,7 +4,7 @@
  * The three list topics here want grouping — definitions and mappings by `kind`, effects
  * by `trigger` — but `TopicLevel.items` is a flat `TopicDetailItem[]` with no group-header
  * vocabulary, and drawing a second grouped list beside the rail is exactly the duplicated
- * surface docs/ui/fleet-ui-audit.md §1.5 removed. So grouping is expressed in the ordering:
+ * surface adh/docs/ui/fleet-ui-audit.md §1.5 removed. So grouping is expressed in the ordering:
  * same-group rows are adjacent, and each row's `sublabel` names its group. Nothing shared
  * has to change, and the rail keeps behaving like every other rail in the fleet.
  *

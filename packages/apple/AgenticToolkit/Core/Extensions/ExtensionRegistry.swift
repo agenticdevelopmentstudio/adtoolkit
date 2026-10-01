@@ -32,7 +32,7 @@ public final class ExtensionRegistry {
     ///
     /// 1.138.0 is derived, not chosen. The `vscode.d.ts` every adaptor in
     /// `VSCodeAPI/` was written against is the one at the upstream commit
-    /// pinned in `docs/planning/vsc-extensions-upstream-pin-manifest.md`,
+    /// pinned in `whippet/docs/planning/vsc-extensions-upstream-pin-manifest.md`,
     /// which is `main` at 1.139.0 — i.e. past the 1.138.0 tag cut, and so
     /// containing the whole of 1.138.0's stable API and none of 1.139.0's
     /// guarantees. Declaring the last version whose surface we have actually

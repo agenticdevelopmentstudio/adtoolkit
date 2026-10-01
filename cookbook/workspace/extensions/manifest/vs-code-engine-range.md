@@ -46,7 +46,7 @@ Code extension manifest's `engines.vscode` field. Per its own doc comment it
 is a deliberate port — not an interpretation — of VS Code's own
 `extensionValidator.ts` (`isValidVersionStr`, `parseVersion`,
 `normalizeVersion`, `isValidVersion`), pinned at the commit recorded in
-`docs/planning/vsc-extensions-upstream-pin-manifest.md`, because
+`whippet/docs/planning/vsc-extensions-upstream-pin-manifest.md`, because
 `engines.vscode` *looks* like an npm semver range and is not one: an npm
 reading rejects 48 of the 198 web extensions among the 600 most-downloaded on
 Open VSX (per `Scripts/openvsx_engine_survey.py`) that VS Code itself runs.

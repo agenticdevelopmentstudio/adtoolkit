@@ -85,7 +85,7 @@ function legacyHomeRedirects(): SiteRedirect[] {
  * The one config every ADH site exports. Takes no arguments by design: the site
  * identifies itself by its directory, and everything that varies per site is
  * data in the fleet registry. See
- * docs/superpowers/specs/2026-08-14-next-config-packages-design.md.
+ * adh/docs/superpowers/specs/2026-08-14-next-config-packages-design.md.
  */
 export function adhNextConfig(options: AdhNextConfigOptions = {}): NextConfig {
   const siteDir = process.cwd();

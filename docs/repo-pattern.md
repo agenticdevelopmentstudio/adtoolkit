@@ -10,11 +10,13 @@ and external consumers.
 Shipping reusable packages from a single repo to two audiences:
 
 - **First-party consumers** — apps inside your org that want live edits.
-  They embed the repo as a git submodule, edit library source directly, and
-  pick up changes through HMR with no build step.
+  They embed the repo as a git submodule and edit library source directly. A
+  web consumer picks changes up through HMR with no build step; an Apple
+  consumer references the in-tree Xcode projects and its next build compiles
+  them from source.
 - **External consumers** — future third-party users who `npm install @org/pkg`
-  once the packages are published. Same code; a dormant publish config flips
-  on at publish time.
+  (or pick up a tagged Swift release) once the packages are published. Same
+  code; a dormant publish config flips on at publish time.
 
 No build step is needed for the first-party path. No code changes are needed
 to flip on the external path.
@@ -29,7 +31,8 @@ platform's native build system (its conventional manifest lives there).
 <repo>/
 ├── README.md
 ├── AGENTS.md
-├── install.sh                       # bootstrap the workspace (for toolkit devs)
+├── install.sh                       # bootstrap: regenerate Xcode projects, install + build web
+├── .claude/CLAUDE.md                # agent-facing repo conventions
 ├── docs/
 ├── packages/
 │   ├── web/                         # pnpm workspace root (package.json, lockfile)
@@ -37,17 +40,46 @@ platform's native build system (its conventional manifest lives there).
 │   │   └── packages/
 │   │       ├── chat/
 │   │       ├── themes/
-│   │       └── viewport/
-│   ├── apple/                       # Package.swift + project.yml
+│   │       ├── features/            # feature packages, one level deeper
+│   │       └── …
+│   ├── apple/                       # agenticdevelopertoolkit.xcworkspace + one project.yml per project
 │   ├── terminal/                    # pyproject.toml
 │   ├── android/                     # (TBD)
 │   └── windows/                     # (TBD)
 └── websites/
-    └── demo/                        # local demo / QA app (served at app root)
+    ├── demo/                        # local demo / QA app (served at app root)
+    └── site/                        # the toolkit's reference site
 ```
 
 Libraries may only depend on other `packages/<platform>/packages/*` — never on
 ad-hoc paths outside their workspace.
+
+## The Apple platform shape
+
+`packages/apple/` is the Apple platform root. Each subdirectory is an
+XcodeGen-backed Xcode project, and `agenticdevelopertoolkit.xcworkspace`
+wires the ones a developer builds together:
+
+- `AgenticDeveloperToolkit/` — the multi-platform core and UI frameworks
+  (`AgenticDeveloperToolkit`, `AgenticDeveloperToolkitUI`).
+- `AgenticDeveloperHubClient/` — the hub client framework.
+- `AgenticToolkit/` — the macOS-first product frameworks
+  (`AgenticToolkitCore`, `AgenticToolkitMacOS`, `AIPluginKit`, the Hub, HTDV,
+  Markdown, Sync and Database frameworks, and the rest) with their test
+  bundles. It references the two projects above by their in-repo paths.
+- `AgenticToolkitApp/` — host app that embeds the toolkit frameworks.
+- `AIPlugins/` — `.aiplugin` bundles that link (without embedding) the toolkit
+  frameworks, so they share the host's loaded image at `dlopen` time.
+- `AvatarAnimationEngine/` and `SampleApp/` — standalone projects outside the
+  workspace.
+
+Each framework is reached through exactly one project path. Two references to
+the same framework from different paths make Xcode fail with "Multiple
+commands produce".
+
+**`project.yml` is the source of truth.** Edits to a generated
+`project.pbxproj` are lost on the next regeneration. The repo-root
+`install.sh` regenerates every project in one shot.
 
 ## The source-by-default manifest (the key trick)
 
@@ -96,6 +128,11 @@ walkthrough. In short:
 Live edits in `vendor/<name>/packages/<platform>/packages/<pkg>/src/` flow
 through to the consumer's dev server via HMR.
 
+An Apple consumer adds `packages/apple/agenticdevelopertoolkit.xcworkspace`
+(or one of its projects) to its own Xcode workspace instead, and runs
+`./vendor/<name>/install.sh` after pulling a revision that changed a
+`project.yml`.
+
 ## Consumer wiring — future npm path
 
 Once the packages are published, external consumers just
@@ -105,12 +142,15 @@ submodule flow continues to work in parallel — same source, different shipping
 
 ## The install script at the repo root
 
-`install.sh` bootstraps the workspace for toolkit developers
-(`cd packages/web && pnpm install`) and prints pointers to test / build
-commands. Consumers don't run it — they run their own project's install
-command (`npm install` / `pnpm install` / `yarn`) from the consumer app dir
-after pulling a new submodule SHA. Their package manager picks up the `file:`
-refs and re-links them.
+`install.sh` bootstraps the workspace for toolkit developers: it regenerates
+every Apple Xcode project from its `project.yml`, runs
+`pnpm install && pnpm build` in `packages/web`, and prints pointers to test /
+build commands. Web consumers don't run it — they run their own project's
+install command (`npm install` / `pnpm install` / `yarn`) from the consumer app
+dir after pulling a new submodule SHA, and their package manager picks up the
+`file:` refs and re-links them. Apple consumers run it through the submodule
+path after a pull, so the generated `.xcodeproj` files match the pulled
+`project.yml`.
 
 ## Deployment
 
@@ -119,6 +159,7 @@ Enable submodule checkout in your deploy platform:
 - **Vercel:** Settings → Git → Include submodules.
 - **Cloudflare Pages:** Settings → Builds & deployments → Include submodules.
 - **GitHub Actions:** `actions/checkout@v4` with `submodules: recursive`.
+- **Xcode Cloud:** check "Include submodules" in the workflow source settings.
 
 The build container runs the consumer's normal install + build. The consuming
 framework (Next.js, etc.) handles source-to-bundle for the toolkit packages.
@@ -135,7 +176,7 @@ publish-time manifest override:
 | Python | `pyproject.toml` with editable installs (`pip install -e ./packages/foo`) | Standard `pip install` from a published wheel |
 | Go | `replace github.com/org/pkg => ./packages/pkg` in the consumer's `go.mod` | Tagged release; consumer drops the `replace` |
 | Rust | `path = "../../packages/pkg"` in the consumer's `Cargo.toml` | Tagged crate publish; consumer switches to `version = "..."` |
-| Swift | Local `Package.swift` package ref | Tagged release with `from:` |
+| Swift | XcodeGen workspace + in-tree project references | Tagged release with `from:` (SPM) or framework distribution |
 
 **The principle is the same in every ecosystem:** package metadata points at
 source by default; a publish-time mechanism flips it to a prebuilt artifact

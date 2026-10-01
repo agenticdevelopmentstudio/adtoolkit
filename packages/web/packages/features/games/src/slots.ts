@@ -6,7 +6,7 @@
 // untouched.
 //
 // Why it earns the exception: a `kind = 'form'` definition's slots decide which values
-// a player may TYPE. Per §6.5 of docs/features/game-schema.md, only free-text slot
+// a player may TYPE. Per §6.5 of adh/docs/features/game-schema.md, only free-text slot
 // values are screened before an artifact is published or a term is minted, and that
 // screening call is the ONLY thing standing between a player-supplied string and the
 // game's shared vocabulary. So the choice must be explicit per slot — never a default,
