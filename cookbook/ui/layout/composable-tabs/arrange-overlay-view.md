@@ -1,7 +1,7 @@
 ---
 id: bfc2dcde-d905-4923-bff2-577c85f17d5f
 title: Composable Tabs Arrange Overlay
-domain: agentictoolkit://cookbook/ui/layout/composable-tabs/arrange-overlay-view
+domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/arrange-overlay-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,7 +23,7 @@ tags:
 - toolbar
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
 references: []
 approved-by: ''
 approved-date: ''

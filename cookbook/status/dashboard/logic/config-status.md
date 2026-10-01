@@ -1,7 +1,7 @@
 ---
 id: 728521cd-aaaa-48bb-92b3-273c8467cee8
 title: Configuration Status
-domain: agentictoolkit://cookbook/status/dashboard/logic/config-status
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/config-status
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,8 +19,8 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/logic/auto-configure
-- agentictoolkit://cookbook/status/dashboard/state/config-status
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/auto-configure
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/config-status
 references: []
 approved-by: ''
 approved-date: ''

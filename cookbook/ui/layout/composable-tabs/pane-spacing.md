@@ -1,7 +1,7 @@
 ---
 id: 4c528e38-b70a-4ed3-bedc-9009292ad908
 title: Pane Spacing
-domain: agentictoolkit://cookbook/ui/layout/composable-tabs/pane-spacing
+domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/pane-spacing
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,9 +23,9 @@ tags:
 - settings
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/layout/composable-tabs
-- agentictoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
-- agentictoolkit://cookbook/ui/layout/composable-tabs/settings-view
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/settings-view
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
 approved-by: ''

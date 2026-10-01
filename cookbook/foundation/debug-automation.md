@@ -1,7 +1,7 @@
 ---
 id: a14c4ed2-f380-486b-90da-84a68cbfafc2
 title: Debug Automation
-domain: agentictoolkit://cookbook/foundation/debug-automation
+domain: agenticdevelopertoolkit://cookbook/foundation/debug-automation
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,16 +24,16 @@ tags:
 - test-host-detection
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/windows/single-window-controller
-- agentictoolkit://cookbook/ui/containers/floating-chooser-panel
-- agentictoolkit://cookbook/ui/settings/settings-window
+- agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller
+- agenticdevelopertoolkit://cookbook/ui/containers/floating-chooser-panel
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-window
 references:
-- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/DebugLaunchSwitch.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/NSApplication+QuietActivation.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/NSWindow+TestHostVisibility.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/QuietWindowPresentation.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/CoreUI/DebugLaunchSwitchTests.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/CoreUI/QuietWindowPresentationTests.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/DebugLaunchSwitch.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/NSApplication+QuietActivation.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/NSWindow+TestHostVisibility.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/QuietWindowPresentation.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/CoreUI/DebugLaunchSwitchTests.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/CoreUI/QuietWindowPresentationTests.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

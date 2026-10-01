@@ -1,7 +1,7 @@
 ---
 id: 8da824cf-e518-4cee-b897-3a8e17f9c32a
 title: Inbox State
-domain: agentictoolkit://cookbook/adh/hub/messaging/inbox-state
+domain: agenticdevelopertoolkit://cookbook/adh/hub/messaging/inbox-state
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,12 +25,12 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/messaging/src/hooks/use-dms.ts (agentictoolkit)
-- packages/web/packages/messaging/src/hooks/use-notifications.ts (agentictoolkit)
-- packages/web/packages/data/src/stream/index.ts (agentictoolkit)
-- packages/web/packages/auth/src/client.ts (agentictoolkit)
-- packages/web/packages/auth/src/tokens.ts (agentictoolkit)
-- packages/web/packages/auth/src/context.tsx (agentictoolkit)
+- packages/web/packages/messaging/src/hooks/use-dms.ts (agenticdevelopertoolkit)
+- packages/web/packages/messaging/src/hooks/use-notifications.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/stream/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/context.tsx (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

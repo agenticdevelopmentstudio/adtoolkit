@@ -1,7 +1,7 @@
 ---
 id: 07388a5c-901d-4cf3-b818-bf52c180be08
 title: Permissions Panel View
-domain: agentictoolkit://cookbook/system/permissions/permissions-panel-view
+domain: agenticdevelopertoolkit://cookbook/system/permissions/permissions-panel-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -20,7 +20,7 @@ tags:
 - permissions
 - settings
 depends-on:
-- agentictoolkit://cookbook/system/permissions/permission-row-view
+- agenticdevelopertoolkit://cookbook/system/permissions/permission-row-view
 related:
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []

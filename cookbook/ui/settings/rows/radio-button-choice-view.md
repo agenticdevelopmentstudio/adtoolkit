@@ -1,7 +1,7 @@
 ---
 id: 7774cbd3-4883-43f0-aef0-f49a29389b98
 title: Radio Button Choice View
-domain: agentictoolkit://cookbook/ui/settings/rows/radio-button-choice-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/radio-button-choice-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - choice
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/choice-slider-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/choice-slider-view
 references: []
 approved-by: ''
 approved-date: ''

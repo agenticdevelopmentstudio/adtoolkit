@@ -1,7 +1,7 @@
 ---
 id: c7b38706-a6bc-4ad6-852c-425a4ed11a27
 title: Status Server Monitor Fetch Vercel
-domain: agentictoolkit://cookbook/status/service/monitor/fetch-vercel
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-vercel
 type: ingredient
 version: 1.0.2
 status: review
@@ -28,17 +28,17 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
 - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 related:
-- agentictoolkit://cookbook/status/service/monitor/alerts
-- agentictoolkit://cookbook/status/service/monitor/deploy-status
+- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
+- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
 references:
-- packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/format.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agentictoolkit)
-- packages/web/packages/status-server/test/vercel-deploys-pagination.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/provider-cooldown.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/format.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/vercel-deploys-pagination.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/provider-cooldown.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

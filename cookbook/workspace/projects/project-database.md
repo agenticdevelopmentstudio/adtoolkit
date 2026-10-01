@@ -1,7 +1,7 @@
 ---
 id: c212ea39-10e7-4146-89dd-36edb3b3455a
 title: Project Database
-domain: agentictoolkit://cookbook/workspace/projects/project-database
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-database
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,13 +25,13 @@ tags:
 - migrations
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/projects/git-repo
+- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Database/AppStorageLocation.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Database/AppStorageLocation.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectDatabaseTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

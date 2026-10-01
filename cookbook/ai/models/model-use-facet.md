@@ -1,7 +1,7 @@
 ---
 id: f628f7f9-9c7b-4820-a4bf-231312a74839
 title: Model Use Facet
-domain: agentictoolkit://cookbook/ai/models/model-use-facet
+domain: agenticdevelopertoolkit://cookbook/ai/models/model-use-facet
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,18 +23,18 @@ tags:
 - engine
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/models/model-catalog
+- agenticdevelopertoolkit://cookbook/ai/models/model-catalog
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/ModelUseFacet.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelUseFacetTests.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/ModelUseFacet.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelUseFacetTests.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ModelChooserViewController.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ModelChooserContent.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ProviderPickerViewController.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: 46b9d1b8-8a6e-4b61-98ec-5201be24302f
 title: Pointing Hand Button
-domain: agentictoolkit://cookbook/ui/controls/pointing-hand-button
+domain: agenticdevelopertoolkit://cookbook/ui/controls/pointing-hand-button
 type: ingredient
 version: 1.2.0
 status: review

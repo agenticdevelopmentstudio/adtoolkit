@@ -1,7 +1,7 @@
 ---
 id: a602608c-c061-44b6-a7ab-829e798d6b0c
 title: AI Plugin Language Model Provider
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,30 +24,30 @@ tags:
   - language-model
   - streaming
 depends-on:
-  - agentictoolkit://cookbook/ai/providers/provider-configuration
-  - agentictoolkit://cookbook/ai/plugins/plugin-manager
-  - agentictoolkit://cookbook/ai/plugins/plugin-descriptor
-  - agentictoolkit://cookbook/ai/chat/chat-context
-  - agentictoolkit://cookbook/ai/models/model-catalog
-  - agentictoolkit://cookbook/ai/plugins/plugin-transport
-  - agentictoolkit://cookbook/ai/plugins/stream-event
-  - agentictoolkit://cookbook/ai/plugins/ai-plugin
+  - agenticdevelopertoolkit://cookbook/ai/providers/provider-configuration
+  - agenticdevelopertoolkit://cookbook/ai/plugins/plugin-manager
+  - agenticdevelopertoolkit://cookbook/ai/plugins/plugin-descriptor
+  - agenticdevelopertoolkit://cookbook/ai/chat/chat-context
+  - agenticdevelopertoolkit://cookbook/ai/models/model-catalog
+  - agenticdevelopertoolkit://cookbook/ai/plugins/plugin-transport
+  - agenticdevelopertoolkit://cookbook/ai/plugins/stream-event
+  - agenticdevelopertoolkit://cookbook/ai/plugins/ai-plugin
 related: []
 references:
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/AIPluginLanguageModelProvider.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguageModels.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/AIPluginLanguageModelProviderTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderResolver.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderConfiguration.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/AIPluginKit/AIPluginManager.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/AIPluginKit/AIPluginDescriptor.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/AIPluginKit/AIChatContext.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/AIPluginKit/AIStreamEvent.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/AIPluginKit/PluginTransport.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/AIPluginLanguageModelProvider.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguageModels.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/AIPluginLanguageModelProviderTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderResolver.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderConfiguration.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIPluginManager.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIPluginDescriptor.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIChatContext.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIStreamEvent.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/PluginTransport.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ""
 approved-date: ""
 ---

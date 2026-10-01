@@ -1,7 +1,7 @@
 ---
 id: 1727e605-6f83-42d7-960f-45fbdf714d94
 title: File Preview
-domain: agentictoolkit://cookbook/workspace/files/file-preview
+domain: agenticdevelopertoolkit://cookbook/workspace/files/file-preview
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,7 +21,7 @@ tags:
 - file-browser
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/files/file-editor-view
+- agenticdevelopertoolkit://cookbook/workspace/files/file-editor-view
 references: []
 approved-by: ''
 approved-date: ''

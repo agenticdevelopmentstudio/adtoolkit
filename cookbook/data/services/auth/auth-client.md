@@ -1,7 +1,7 @@
 ---
 id: 3ea9329e-5acc-4c43-b5ce-bb8c50570104
 title: Authentication Client
-domain: agentictoolkit://cookbook/data/services/auth/auth-client
+domain: agenticdevelopertoolkit://cookbook/data/services/auth/auth-client
 type: ingredient
 version: 1.1.0
 status: review
@@ -28,25 +28,25 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/auth/src/account-security.ts (agentictoolkit)
-- packages/web/packages/auth/src/asBase.ts (agentictoolkit)
-- packages/web/packages/auth/src/client.ts (agentictoolkit)
-- packages/web/packages/auth/src/config.ts (agentictoolkit)
-- packages/web/packages/auth/src/labels.ts (agentictoolkit)
-- packages/web/packages/auth/src/mfa.ts (agentictoolkit)
-- packages/web/packages/auth/src/refresh.ts (agentictoolkit)
-- packages/web/packages/auth/src/report.ts (agentictoolkit)
-- packages/web/packages/auth/src/sso.ts (agentictoolkit)
-- packages/web/packages/auth/src/tokens.ts (agentictoolkit)
-- packages/web/packages/auth/src/types.ts (agentictoolkit)
-- packages/web/packages/auth/src/__tests__/client.test.ts (agentictoolkit)
-- packages/web/packages/auth/src/__tests__/refresh.test.ts (agentictoolkit)
-- packages/web/packages/auth/src/__tests__/report.test.ts (agentictoolkit)
-- packages/web/packages/auth/src/__tests__/tokens.test.ts (agentictoolkit)
-- packages/web/packages/auth/src/__tests__/link.test.ts (agentictoolkit)
-- packages/web/packages/auth/src/__tests__/types.test.ts (agentictoolkit)
-- packages/web/packages/auth/src/__tests__/sso.test.ts (agentictoolkit)
-- packages/web/packages/auth/src/__tests__/silent-restore.test.ts (agentictoolkit)
+- packages/web/packages/auth/src/account-security.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/asBase.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/config.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/labels.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/mfa.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/refresh.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/report.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/sso.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/types.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/__tests__/client.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/__tests__/refresh.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/__tests__/report.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/__tests__/tokens.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/__tests__/link.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/__tests__/types.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/__tests__/sso.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/__tests__/silent-restore.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

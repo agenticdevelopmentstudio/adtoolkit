@@ -1,7 +1,7 @@
 ---
 id: b1fa768d-a088-4507-92f6-6296f93bee2c
 title: Hub Domain Markdown Client
-domain: agentictoolkit://cookbook/adh/hub/content/markdown-client
+domain: agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-client
 type: ingredient
 version: 1.0.2
 status: review
@@ -24,17 +24,17 @@ tags:
 - web
 depends-on: []
 related:
-- agentictoolkit://cookbook/adh/hub/content/docs-client
-- agentictoolkit://cookbook/adh/hub/buckets
+- agenticdevelopertoolkit://cookbook/adh/hub/content/docs-client
+- agenticdevelopertoolkit://cookbook/adh/hub/buckets
 references:
-- packages/web/packages/data/src/markdown/markdown.ts (agentictoolkit)
-- packages/web/packages/data/src/markdown/schemas.ts (agentictoolkit)
-- packages/web/packages/data/src/markdown/taxonomy.ts (agentictoolkit)
-- packages/web/packages/data/src/markdown/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/markdown/index.ts (agentictoolkit)
-- packages/web/packages/data/src/markdown/__tests__/markdown.test.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
+- packages/web/packages/data/src/markdown/markdown.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/markdown/schemas.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/markdown/taxonomy.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/markdown/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/markdown/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/markdown/__tests__/markdown.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

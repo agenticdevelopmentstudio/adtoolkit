@@ -1,7 +1,7 @@
 ---
 id: 35dd47a6-23f3-4306-9c81-e3823b79a7a3
 title: VSIXInstaller
-domain: agentictoolkit://cookbook/workspace/extensions/registry/vsix-installer
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/vsix-installer
 type: ingredient
 version: 1.0.3
 status: review
@@ -25,31 +25,31 @@ tags:
 - filesystem
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-manifest
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization
-- agentictoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range
-- agentictoolkit://cookbook/workspace/extensions/registry/vsix-archive
-- agentictoolkit://cookbook/workspace/extensions/registry/open-vsx-catalog
-- agentictoolkit://cookbook/workspace/extensions/registry/open-vsx-client
-- agentictoolkit://cookbook/workspace/extensions/registry/extension-registry
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range
+- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/vsix-archive
+- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/open-vsx-catalog
+- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/open-vsx-client
+- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-registry
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSIXArchive.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionIdentityComponent.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionResourcePath.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifestLocalization.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionRegistry.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Concurrency/BlockingWork.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXInstallerTests.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXInstallerFileSystemFailureTests.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXRegistryInstallTests.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/VSIXArchive.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ExtensionIdentityComponent.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ExtensionResourcePath.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifestLocalization.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ExtensionRegistry.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Concurrency/BlockingWork.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXInstallerTests.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXInstallerFileSystemFailureTests.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXRegistryInstallTests.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

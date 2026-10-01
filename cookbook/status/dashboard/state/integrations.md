@@ -1,7 +1,7 @@
 ---
 id: e6326b0e-cba1-44ee-bf1d-7b033e25e39a
 title: Integration Self-Check
-domain: agentictoolkit://cookbook/status/dashboard/state/integrations
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/integrations
 type: ingredient
 version: 1.1.0
 status: review
@@ -18,10 +18,10 @@ platforms:
 - web
 tags: []
 depends-on:
-- agentictoolkit://cookbook/status/dashboard/api
+- agenticdevelopertoolkit://cookbook/status/dashboard/api
 related:
-- agentictoolkit://cookbook/status/dashboard/state/history
-- agentictoolkit://cookbook/status/dashboard/state/config-status
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/history
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/config-status
 references: []
 approved-by: ''
 approved-date: ''
@@ -31,7 +31,7 @@ approved-date: ''
 
 ## Overview
 
-Integrations is state in the status dashboard that loads the monitor's integration self-check snapshot: one entry per provider integration, saying whether it is configured, reachable and healthy. It wraps one cached read under the fixed key `["integrations"]`. It requests `/integrations` through the dashboard's status API client (see [status-web-api](agentictoolkit://cookbook/status/dashboard/api)) and returns the query result typed as `IntegrationsResponse`. Integrations turns on refresh-on-returning-focus. It takes no arguments and is always enabled.
+Integrations is state in the status dashboard that loads the monitor's integration self-check snapshot: one entry per provider integration, saying whether it is configured, reachable and healthy. It wraps one cached read under the fixed key `["integrations"]`. It requests `/integrations` through the dashboard's status API client (see [status-web-api](agenticdevelopertoolkit://cookbook/status/dashboard/api)) and returns the query result typed as `IntegrationsResponse`. Integrations turns on refresh-on-returning-focus. It takes no arguments and is always enabled.
 
 It has two callers. The Overview passes `data` to the self-check banner, so a failed or degraded self-check shows on the default wallboard. The dashboard passes `data` to the self-check computation for the header self-check pill. Both callers read only `data`.
 

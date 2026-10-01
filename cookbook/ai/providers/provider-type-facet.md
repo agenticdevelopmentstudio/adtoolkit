@@ -1,7 +1,7 @@
 ---
 id: 80df89b9-a1d3-4fb5-b9e3-08bafd2720fb
 title: Provider Type Facet
-domain: agentictoolkit://cookbook/ai/providers/provider-type-facet
+domain: agenticdevelopertoolkit://cookbook/ai/providers/provider-type-facet
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - provider-config
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/plugins/plugin-descriptor
+- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-descriptor
 references: []
 approved-by: ''
 approved-date: ''

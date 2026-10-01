@@ -1,7 +1,7 @@
 ---
 id: 4b1a3eb0-0a8a-4059-b2ac-824013072bd5
 title: Panel View
-domain: agentictoolkit://cookbook/ui/settings/layout/panel-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -20,8 +20,8 @@ tags:
 - settings
 - layout
 depends-on:
-- agentictoolkit://cookbook/ui/settings/layout/group-view
-- agentictoolkit://cookbook/ui/settings/layout/panel-heading-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-heading-view
 related:
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []

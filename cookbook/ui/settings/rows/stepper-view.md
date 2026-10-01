@@ -1,7 +1,7 @@
 ---
 id: b02bf1ad-408a-4ebc-9e62-2ad5ae5220d2
 title: Stepper View
-domain: agentictoolkit://cookbook/ui/settings/rows/stepper-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/stepper-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,9 +23,9 @@ tags:
 - numeric
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/checkbox-view
-- agentictoolkit://cookbook/ui/settings/rows/integer-field-view
-- agentictoolkit://cookbook/ui/settings/rows/number-field-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/integer-field-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view
 references: []
 approved-by: ''
 approved-date: ''

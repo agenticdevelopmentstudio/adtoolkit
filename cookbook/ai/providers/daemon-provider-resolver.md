@@ -1,7 +1,7 @@
 ---
 id: ef2a5ca9-04a4-46ab-8fef-3fdc6db2041d
 title: Daemon Provider Resolver
-domain: agentictoolkit://cookbook/ai/providers/daemon-provider-resolver
+domain: agenticdevelopertoolkit://cookbook/ai/providers/daemon-provider-resolver
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,18 +23,18 @@ tags:
 - configuration
 - provider-resolver
 depends-on:
-- agentictoolkit://cookbook/ai/providers/provider-config-keys
+- agenticdevelopertoolkit://cookbook/ai/providers/provider-config-keys
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigSync.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigSync.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderResolver.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

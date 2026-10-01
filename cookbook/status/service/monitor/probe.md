@@ -1,7 +1,7 @@
 ---
 id: 1094926a-e89e-416d-aa62-8bfd42afa1b4
 title: Status Server Monitor Probe
-domain: agentictoolkit://cookbook/status/service/monitor/probe
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/probe
 type: ingredient
 version: 1.0.2
 status: review
@@ -27,15 +27,15 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
 - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
 related:
-- agentictoolkit://cookbook/status/service/monitor/health
-- agentictoolkit://cookbook/status/service/monitor/endpoint-kinds
+- agenticdevelopertoolkit://cookbook/status/service/monitor/health
+- agenticdevelopertoolkit://cookbook/status/service/monitor/endpoint-kinds
 references:
-- packages/web/packages/status-server/src/monitor/probe.ts (agentictoolkit)
-- packages/web/packages/status-server/test/probe.test.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/health.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/endpoint-kinds.ts (agentictoolkit)
-- packages/web/packages/status-server/src/storage/ports.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/util/map-limit.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/probe.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/probe.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/endpoint-kinds.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/util/map-limit.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: 5e7bafd6-fb7e-45fc-a1de-31e34edf5431
 title: 'Hub Domain: Reactions'
-domain: agentictoolkit://cookbook/adh/hub/reactions
+domain: agenticdevelopertoolkit://cookbook/adh/hub/reactions
 type: ingredient
 version: 1.0.2
 status: review
@@ -26,13 +26,13 @@ depends-on: []
 related:
 - agenticdevelopertoolkit://recipes/reaction-bar
 references:
-- packages/web/packages/data/src/reactions/reactions.ts (agentictoolkit)
-- packages/web/packages/data/src/reactions/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/reactions/__tests__/reactions.test.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
-- packages/web/packages/auth/src/client.ts (agentictoolkit)
-- packages/web/packages/auth/src/tokens.ts (agentictoolkit)
+- packages/web/packages/data/src/reactions/reactions.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/reactions/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/reactions/__tests__/reactions.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

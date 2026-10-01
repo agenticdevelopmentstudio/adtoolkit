@@ -1,7 +1,7 @@
 ---
 id: ba8d9517-2528-4ae9-bc52-16046d68b126
 title: Settings Panel Split
-domain: agentictoolkit://cookbook/ui/settings/settings-panel-split
+domain: agenticdevelopertoolkit://cookbook/ui/settings/settings-panel-split
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,10 +22,10 @@ tags:
 - view-controller
 - nesting
 depends-on:
-- agentictoolkit://cookbook/ui/settings/settings-split-view
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-split-view
 related:
-- agentictoolkit://cookbook/ui/settings/settings-panel
-- agentictoolkit://cookbook/ui/settings/settings-panel-list
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel-list
 references: []
 approved-by: ''
 approved-date: ''

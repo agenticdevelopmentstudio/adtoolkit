@@ -1,7 +1,7 @@
 ---
 id: f305da79-fa03-493e-9c08-7186530943c6
 title: Chat Stream Types
-domain: agentictoolkit://cookbook/ai/chat/chat-stream-types
+domain: agenticdevelopertoolkit://cookbook/ai/chat/chat-stream-types
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,8 +25,8 @@ tags:
 - value-type
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/plugins/stream-event
-- agentictoolkit://cookbook/ai/chat/chat-context
+- agenticdevelopertoolkit://cookbook/ai/plugins/stream-event
+- agenticdevelopertoolkit://cookbook/ai/chat/chat-context
 references: []
 approved-by: ''
 approved-date: ''

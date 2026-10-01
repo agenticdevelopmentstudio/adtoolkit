@@ -1,7 +1,7 @@
 ---
 id: 9ff57831-bdf9-47ad-b009-bcc1de59d5f4
 title: Telemetry State
-domain: agentictoolkit://cookbook/status/dashboard/state/telemetry
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/telemetry
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,7 +19,7 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/telemetry
+- agenticdevelopertoolkit://cookbook/status/service/telemetry
 references: []
 approved-by: ''
 approved-date: ''
@@ -66,7 +66,7 @@ This is the source variant currently wired in the composition root; an alternati
 
 - **live-request**: The live source's read MUST issue one request to `/telemetry` with no request options (a `GET` to `<basePath>/telemetry`).
 - **live-http-error**: A non-2xx response MUST make the live source's read reject with an error whose message is `telemetry <status>` (for example `telemetry 502`).
-- **live-body-cast**: A 2xx response body MUST be parsed as JSON and returned as a snapshot object by cast, with no shape validation; a body that is not JSON rejects the read with the JSON parse error. The response shape is owned by the backend `/telemetry` route (see [Status Server Telemetry](agentictoolkit://cookbook/status/service/telemetry)).
+- **live-body-cast**: A 2xx response body MUST be parsed as JSON and returned as a snapshot object by cast, with no shape validation; a body that is not JSON rejects the read with the JSON parse error. The response shape is owned by the backend `/telemetry` route (see [Status Server Telemetry](agenticdevelopertoolkit://cookbook/status/service/telemetry)).
 
 ### Cache hydration
 

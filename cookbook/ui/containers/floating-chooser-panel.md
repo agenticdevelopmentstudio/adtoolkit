@@ -1,7 +1,7 @@
 ---
 id: ba1406b3-bcf8-4580-9d65-daed2311cccf
 title: Floating Chooser Panel
-domain: agentictoolkit://cookbook/ui/containers/floating-chooser-panel
+domain: agenticdevelopertoolkit://cookbook/ui/containers/floating-chooser-panel
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,8 +22,8 @@ tags:
 - window-controller
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
 references: []
 approved-by: ''
 approved-date: ''

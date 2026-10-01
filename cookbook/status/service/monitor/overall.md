@@ -1,7 +1,7 @@
 ---
 id: da69d02d-a3a9-4018-a90a-becee268624a
 title: Monitor Overall Status
-domain: agentictoolkit://cookbook/status/service/monitor/overall
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/overall
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,13 +23,13 @@ tags:
 - server
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/monitor/health
+- agenticdevelopertoolkit://cookbook/status/service/monitor/health
 references:
-- packages/web/packages/status-server/src/monitor/overall.ts (agentictoolkit)
-- packages/web/packages/status-server/test/overall.test.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/health.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agentictoolkit)
-- packages/web/packages/status-server/src/app.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/overall.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/overall.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/app.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

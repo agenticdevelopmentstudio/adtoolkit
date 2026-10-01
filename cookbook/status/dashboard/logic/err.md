@@ -1,7 +1,7 @@
 ---
 id: 724f6428-7dc6-4dab-bb25-834edf488f44
 title: Error Message
-domain: agentictoolkit://cookbook/status/dashboard/logic/err
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/err
 type: ingredient
 version: 1.1.0
 status: review

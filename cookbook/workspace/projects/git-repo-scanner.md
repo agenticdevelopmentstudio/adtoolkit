@@ -1,7 +1,7 @@
 ---
 id: 3bec9b27-a9e3-4716-b516-688cc7f5a1c5
 title: Git Repository Scanner
-domain: agentictoolkit://cookbook/workspace/projects/git-repo-scanner
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/git-repo-scanner
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,12 +23,12 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepoScanner.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepoScanner.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Projects/UserSettings+Projects.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/GitRepoScannerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

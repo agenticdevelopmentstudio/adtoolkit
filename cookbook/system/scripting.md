@@ -1,7 +1,7 @@
 ---
 id: d5812249-f235-43df-9cd7-504220da1a7d
 title: Scripting Support
-domain: agentictoolkit://cookbook/system/scripting
+domain: agenticdevelopertoolkit://cookbook/system/scripting
 type: ingredient
 version: 1.1.0
 status: review
@@ -27,13 +27,13 @@ depends-on:
 - agenticdevelopercookbook://principles/fail-fast
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Scripting/AppleScriptRunner.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Scripting/MainActorScriptCommand.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/SystemIntegration/ScriptingReExports.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Scripting/AppleScriptRunner.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Scripting/MainActorScriptCommand.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/SystemIntegration/ScriptingReExports.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Scripting/AppleScriptRunnerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Scripting/MainActorScriptCommandTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

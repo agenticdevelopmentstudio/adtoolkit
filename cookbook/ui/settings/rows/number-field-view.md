@@ -1,7 +1,7 @@
 ---
 id: acd561ca-90a4-4303-a411-cfe23410b42a
 title: Number Field View
-domain: agentictoolkit://cookbook/ui/settings/rows/number-field-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,7 +23,7 @@ tags:
 - numeric
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/integer-field-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/integer-field-view
 references: []
 approved-by: ''
 approved-date: ''
@@ -44,7 +44,7 @@ text box. The concept also defines the number value contract itself — the
 interface a number type implements so a field can display it, read it back,
 and compare it — with two built-in conformances, integer and floating-point,
 each supplying its own locale-aware parsing and canonical text form. The
-Integer Field View (`agentictoolkit://cookbook/ui/settings/rows/integer-field-view`)
+Integer Field View (`agenticdevelopertoolkit://cookbook/ui/settings/rows/integer-field-view`)
 is a thin, forwarding wrapper around this component specialized for
 integers; this recipe documents the field itself, including the parsing
 contract that wrapper delegates to.

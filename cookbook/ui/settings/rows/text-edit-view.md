@@ -1,7 +1,7 @@
 ---
 id: c1787e74-2485-4d7b-a219-feb4c07cf97c
 title: Text Edit View
-domain: agentictoolkit://cookbook/ui/settings/rows/text-edit-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - text-input
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/secure-text-edit-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/secure-text-edit-view
 references: []
 approved-by: ''
 approved-date: ''
@@ -38,7 +38,7 @@ field through an overridable construction point so a variant can substitute
 a different control type while inheriting everything else — the row layout,
 the theme-driven font/color styling, the edit-completion commit path, and
 the view-model sync. The Secure Text Edit View (documented separately at
-`agentictoolkit://cookbook/ui/settings/rows/secure-text-edit-view`) is the
+`agenticdevelopertoolkit://cookbook/ui/settings/rows/secure-text-edit-view`) is the
 one variant that exists today, overriding only that construction point to
 return a secure text-entry control. This recipe documents the Text Edit View
 itself: the behavior every row built from it — plain or secure — inherits.

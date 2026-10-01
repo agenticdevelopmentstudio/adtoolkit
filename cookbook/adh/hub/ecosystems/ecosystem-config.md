@@ -1,7 +1,7 @@
 ---
 id: 87ca0139-6cd0-46dd-a9fb-40ad3406f175
 title: Ecosystem Config
-domain: agentictoolkit://cookbook/adh/hub/ecosystems/ecosystem-config
+domain: agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystem-config
 type: ingredient
 version: 1.1.0
 status: review
@@ -30,47 +30,47 @@ tags:
 - storage-tokens
 depends-on: []
 related:
-- agentictoolkit://cookbook/adh/hub/security/authentication-client
-- agentictoolkit://cookbook/adh/hub/ecosystems/ecosystems
+- agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client
+- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
 references:
 - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/AuthSettingsTopic.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/EcosystemConfigModels.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/FeatureFlagsTopic.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/ServerBagsTopic.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/SigninAppsTopic.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/StorageTokensRail.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/StorageTokensTopic.swift
-  (agentictoolkit)
-- packages/web/packages/data/src/ecosystem-config/feature-flags.ts (agentictoolkit)
-- packages/web/packages/data/src/ecosystem-config/server-bags.ts (agentictoolkit)
-- packages/web/packages/data/src/ecosystem-config/signin-apps.ts (agentictoolkit)
-- packages/web/packages/data/src/ecosystem-config/storage-tokens.ts (agentictoolkit)
-- packages/web/packages/data/src/ecosystem-config/wire.ts (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystem-config/feature-flags.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystem-config/server-bags.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystem-config/client-auth.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystem-config/storage-tokens.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystem-config/wire.ts (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/EcosystemConfigTopicsTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/HubError.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemTopic.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsModels.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubDates.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/HubError.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemTopic.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsModels.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/HubDates.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Hub/Features/Applications/ApplicationsTopic.swift
-  (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 - packages/web/packages/features/ecosystem-config/src/dialog-state/bag-dialog-state.ts
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/web/packages/features/ecosystem-config/src/dialog-state/flag-dialog-state.ts
-  (agentictoolkit)
-- packages/web/packages/features/ecosystem-config/src/SigninAppDetail.tsx (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/web/packages/features/ecosystem-config/src/ApplicationClientAuthSection.tsx (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -609,13 +609,14 @@ kind.
   The test suite (`EcosystemConfigTopicsTests.swift`) exercises every Apple topic
   against fakes with concrete assertions for each requirement above.
 - **React / Web**: this is the other source platform. `feature-flags.ts`,
-  `server-bags.ts`, `signin-apps.ts`, `storage-tokens.ts`, and `wire.ts` under
+  `server-bags.ts`, `client-auth.ts`, `storage-tokens.ts`, and `wire.ts` under
   `packages/web/packages/data/src/ecosystem-config/` (plus shared helpers in
   `http.ts` and `client-helpers.ts`) are plain `fetch`-based clients with no JSX.
-  `signinAppsApi.create`'s conflict handling calls a shared `rethrowConflict`
-  helper; `ecosystemFeatureFlagsApi.update`/`delete` embed `key` in the URL path via
-  `enc()` (`encodeURIComponent`), as do the equivalent path segments in
-  `server-bags.ts` and `signin-apps.ts`. `tokenPrincipalsApi.list`/`mint`/`revoke`
+  `clientAuthApi` reads and `PUT`s the ecosystem's and each application's
+  client-auth settings, sending a `compact`ed body that drops undefined keys but
+  keeps an explicit `registration: null`; `ecosystemFeatureFlagsApi.update`/`delete`
+  embed `key` in the URL path via `enc()` (`encodeURIComponent`), as do the
+  equivalent path segments in `server-bags.ts` and `client-auth.ts`. `tokenPrincipalsApi.list`/`mint`/`revoke`
   accept a `TokenScope` (`ecosystemId`/`workspace`, serialized by `scopeQuery`)
   independently of `MintTokenPrincipalBody.ecosystemId`, a separate body field;
   `TokenPrincipalCreated` (the 201-only body carrying `token`) is a distinct type
@@ -623,7 +624,7 @@ kind.
   `EcosystemServerBag.value`/`EcosystemServerBagCreate.value`/
   `EcosystemServerBagUpdate.value` are typed `unknown` in `server-bags.ts`. The UI
   panes and dialog-state modules that call these clients (`FeatureFlagsPane.tsx`,
-  `bag-dialog-state.ts`, `flag-dialog-state.ts`, `SigninAppDetail.tsx`) are not
+  `bag-dialog-state.ts`, `flag-dialog-state.ts`, `ApplicationClientAuthSection.tsx`) are not
   among this recipe's given sources, but see Design Decisions for the
   validation-layering split observed there.
 - **Compose**: model each Apple protocol as a Kotlin `interface` with `suspend
@@ -666,7 +667,7 @@ kind.
 
 **Decision**: the storage-tokens detail sources its post-reveal notice text from a constant declared in a sibling Applications module (Applications' own token-reveal notice), rather than declaring its own copy.
 **Platform**: Swift implementation — this is a cross-module source-file coupling specific to that codebase's module layout.
-**Rationale**: the source's own comment states this directly — the reveal-once behavior exists specifically because that sibling constant's promise ("you won't be able to see it again") must actually hold; the same lifecycle and constant are documented as canonical in the sibling recipe `agentictoolkit://cookbook/adh/hub/security/authentication-client`, which this recipe treats as the complete reference for that shared behavior rather than re-deriving it here. The coupling means a future rename of that constant would need to be tracked across both modules with no compiler-enforced link beyond the direct reference.
+**Rationale**: the source's own comment states this directly — the reveal-once behavior exists specifically because that sibling constant's promise ("you won't be able to see it again") must actually hold; the same lifecycle and constant are documented as canonical in the sibling recipe `agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client`, which this recipe treats as the complete reference for that shared behavior rather than re-deriving it here. The coupling means a future rename of that constant would need to be tracked across both modules with no compiler-enforced link beyond the direct reference.
 **Approved**: pending
 
 **Decision**: JSON-shape validation for a server bag's value lives inside the value-parsing step on the Swift implementation, combining transport-adjacent orchestration with domain validation in one type; on the web implementation, the equivalent validation is not in the given data client at all — it lives in a sibling `features/ecosystem-config` package's dialog-state module.

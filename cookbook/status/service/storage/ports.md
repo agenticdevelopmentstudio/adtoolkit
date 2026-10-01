@@ -1,7 +1,7 @@
 ---
 id: 1c240b7a-21b3-4a89-b24f-a5bf5cf5f37b
 title: Status Server Storage Boundary
-domain: agentictoolkit://cookbook/status/service/storage/ports
+domain: agenticdevelopertoolkit://cookbook/status/service/storage/ports
 type: ingredient
 version: 1.0.2
 status: review

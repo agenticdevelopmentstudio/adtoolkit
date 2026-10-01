@@ -1,7 +1,7 @@
 ---
 id: 1ea53189-24d5-4ba3-9d83-507ed2d44cfb
 title: Project Key
-domain: agentictoolkit://cookbook/status/dashboard/logic/project-key
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/project-key
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,8 +19,8 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/logic/auto-configure
-- agentictoolkit://cookbook/status/dashboard/state/deploy-projects
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/auto-configure
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/deploy-projects
 references: []
 approved-by: ''
 approved-date: ''

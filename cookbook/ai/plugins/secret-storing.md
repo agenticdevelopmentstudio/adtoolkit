@@ -1,7 +1,7 @@
 ---
 id: d274abfa-3696-4fd0-b3e8-cff6fdffb825
 title: Secret Storing
-domain: agentictoolkit://cookbook/ai/plugins/secret-storing
+domain: agenticdevelopertoolkit://cookbook/ai/plugins/secret-storing
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,18 +25,18 @@ tags:
 - protocol
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/chat/daemon-ai-chat
-- agentictoolkit://cookbook/ai/providers/provider-config-keys
+- agenticdevelopertoolkit://cookbook/ai/chat/daemon-ai-chat
+- agenticdevelopertoolkit://cookbook/ai/providers/provider-config-keys
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/SecretStoring.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/KeychainHelper.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/SecretStoring.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/KeychainHelper.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/KeychainHelperTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIPluginKitTestSupport.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

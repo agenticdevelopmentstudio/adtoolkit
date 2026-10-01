@@ -1,7 +1,7 @@
 ---
 id: 635cbbe4-a8e1-4ae1-a8a5-437f5bba27a6
 title: Status Server Live
-domain: agentictoolkit://cookbook/status/service/live-events
+domain: agenticdevelopertoolkit://cookbook/status/service/live-events
 type: ingredient
 version: 1.0.2
 status: review
@@ -26,14 +26,14 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/caching
 related: []
 references:
-- packages/web/packages/status-server/src/live/live-events.ts (agentictoolkit)
-- packages/web/packages/status-server/test/live-events.test.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/live-types.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/stream.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/hooks.ts (agentictoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agentictoolkit)
-- packages/web/packages/status-server/src/storage/ports.ts (agentictoolkit)
+- packages/web/packages/status-server/src/live/live-events.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/live-events.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/live-types.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/stream.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/hooks.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

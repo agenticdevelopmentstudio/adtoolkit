@@ -1,7 +1,7 @@
 ---
 id: da441eaa-795d-4447-99b1-356186855921
 title: Transfer Ownership Section
-domain: agentictoolkit://cookbook/adh/hub/admin/transfer-ownership-section
+domain: agenticdevelopertoolkit://cookbook/adh/hub/admin/transfer-ownership-section
 type: ingredient
 version: 1.2.0
 status: review
@@ -27,7 +27,7 @@ depends-on:
 - agenticdevelopertoolkit://recipes/button
 - agenticdevelopertoolkit://recipes/dialog
 related:
-- agentictoolkit://cookbook/adh/hub/admin/delete-entity-section
+- agenticdevelopertoolkit://cookbook/adh/hub/admin/delete-entity-section
 references: []
 approved-by: ''
 approved-date: ''

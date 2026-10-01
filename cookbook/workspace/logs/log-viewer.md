@@ -1,7 +1,7 @@
 ---
 id: 29b3f716-ad00-4aff-9dd4-fc7c2e5cf17d
 title: Log Viewer
-domain: agentictoolkit://cookbook/workspace/logs/log-viewer
+domain: agenticdevelopertoolkit://cookbook/workspace/logs/log-viewer
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - status-indicator
 - streaming
 depends-on:
-- agentictoolkit://cookbook/workspace/logs/log-view
+- agenticdevelopertoolkit://cookbook/workspace/logs/log-view
 related:
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []

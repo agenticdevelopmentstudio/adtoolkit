@@ -1,7 +1,7 @@
 ---
 id: 071e67a8-54a7-4f8b-b747-e6384713efde
 title: RDID Editor
-domain: agentictoolkit://cookbook/adh/hub/identifiers/rdid-editor
+domain: agenticdevelopertoolkit://cookbook/adh/hub/identifiers/rdid-editor
 type: ingredient
 version: 1.2.0
 status: review

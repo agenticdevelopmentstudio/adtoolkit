@@ -1,7 +1,7 @@
 ---
 id: 85301350-d3d3-4b0d-a2f7-b13936d9ddf6
 title: Self-Check View Model
-domain: agentictoolkit://cookbook/status/dashboard/logic/self-check
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/self-check
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,8 +19,8 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/state/integrations
-- agentictoolkit://cookbook/status/service/monitor/integrations
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/integrations
+- agenticdevelopertoolkit://cookbook/status/service/monitor/integrations
 references: []
 approved-by: ''
 approved-date: ''
@@ -37,7 +37,7 @@ This logic turns the status server's `/integrations` report into the self-check 
 
 The doc comment says the function is "kept separate from the component so the (slightly fiddly) filtering rules are unit-tested without a DOM". Two consumers call it: the self-check banner view, which renders the bar, and the dashboard view, which counts issues the same way the banner does, so the pill and the bar never disagree.
 
-The report carries `generatedAt` (string), `overall` (a check state) and `checks` (a list of checks); each check carries `id`, `label`, `configured`, `ok`, `state` (one of `"ok"`, `"warn"`, `"error"`), `detail`, and the optional `missingEnv` (a list of strings), `unreachable` (boolean) and `correlated` (boolean). The report itself is produced by the status server (see [Status Server Monitor Integrations](agentictoolkit://cookbook/status/service/monitor/integrations)) and fetched by [the integrations state](agentictoolkit://cookbook/status/dashboard/state/integrations).
+The report carries `generatedAt` (string), `overall` (a check state) and `checks` (a list of checks); each check carries `id`, `label`, `configured`, `ok`, `state` (one of `"ok"`, `"warn"`, `"error"`), `detail`, and the optional `missingEnv` (a list of strings), `unreachable` (boolean) and `correlated` (boolean). The report itself is produced by the status server (see [Status Server Monitor Integrations](agenticdevelopertoolkit://cookbook/status/service/monitor/integrations)) and fetched by [the integrations state](agenticdevelopertoolkit://cookbook/status/dashboard/state/integrations).
 
 ## Behavioral Requirements
 
@@ -130,7 +130,7 @@ Vectors 001 to 007 are the assertions of the implementation's test suite (see Pl
 - **Errored cron or correlated check alone**: MUST produce `null` and MUST NOT turn the bar red (vector 010).
 - **`missingEnvError` implies non-null**: `missingEnvError` can only be `true` when `missingEnv` is non-empty, so a returned view with `missingEnvError: true` MUST have at least one name.
 - **Malformed report**: a defined report without a `checks` list, or a `missingEnv` that is not a list, violates the typed precondition; the function performs no runtime check and a missing `checks` would raise a runtime error to the caller (see Platform Notes). This is a documented precondition (no-validation), not a handled path.
-- **Network failure, timeout, offline**: not applicable to this function; it does no I/O. Fetch failures belong to [the integrations state](agentictoolkit://cookbook/status/dashboard/state/integrations), which passes an absent report or the last good report.
+- **Network failure, timeout, offline**: not applicable to this function; it does no I/O. Fetch failures belong to [the integrations state](agenticdevelopertoolkit://cookbook/status/dashboard/state/integrations), which passes an absent report or the last good report.
 - **Concurrent calls**: not applicable; the function is pure and synchronous, so concurrent callers (the banner and the dashboard pill) always get the same result for the same report.
 
 ## Configuration

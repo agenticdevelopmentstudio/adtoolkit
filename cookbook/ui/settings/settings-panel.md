@@ -1,7 +1,7 @@
 ---
 id: 432e8d4b-43c3-49fd-b481-036a759e7c55
 title: Settings Panel
-domain: agentictoolkit://cookbook/ui/settings/settings-panel
+domain: agenticdevelopertoolkit://cookbook/ui/settings/settings-panel
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,9 +22,9 @@ tags:
 - panel-controller
 - view-controller
 depends-on:
-- agentictoolkit://cookbook/ui/settings/layout/panel-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-view
 related:
-- agentictoolkit://cookbook/ui/settings/layout/group-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
 approved-by: ''
@@ -95,11 +95,11 @@ in.
 - **Corner radius**: Not set by this component; it draws nothing of its
   own. Any corner radius on screen belongs to whatever group view cards a
   subclass adds (10pt corner radius by default; see
-  `agentictoolkit://cookbook/ui/settings/layout/group-view`).
+  `agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view`).
 - **Padding**: Not set by this component. The panel inset and inter-group
   spacing (20pt each, by default) belong to its own content view, hosted
   unchanged; see
-  `agentictoolkit://cookbook/ui/settings/layout/panel-view`.
+  `agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-view`.
 - **Font**: Not applicable — this component sets no font of its own; any
   text rendered comes from the group views a subclass composes, or from
   content hosted through the hosting helper, whose fonts are the
@@ -107,7 +107,7 @@ in.
 - **Background**: Not set by this component. Its content view paints the
   theme's window-background role behind the group stack, reactively,
   through its own theme-change subscription; see
-  `agentictoolkit://cookbook/ui/settings/layout/panel-view`.
+  `agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-view`.
 - **Foreground/Text**: Not applicable — this component renders no text of
   its own.
 - **Border**: Not applicable — no border is set anywhere in this
@@ -136,7 +136,7 @@ in.
   a transparent container whose view is its own content view, with no
   label, icon, or control of its own to expose. Each group view a
   subclass adds manages its own accessibility per its own recipe
-  (`agentictoolkit://cookbook/ui/settings/layout/group-view`).
+  (`agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view`).
 - **Label requirements**: Not applicable — this component sets no
   accessibility label on its own view. The descriptor's title becomes the
   sidebar row's accessible name only through the sidebar list component,

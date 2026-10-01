@@ -1,7 +1,7 @@
 ---
 id: 60b5767d-3cf5-4373-b2fc-074aa6b62fec
 title: Webview Panel
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - webview
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-view
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-view
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
 approved-by: ''

@@ -1,7 +1,7 @@
 ---
 id: 8d05d4b2-06a8-44db-816a-ce839836fd71
 title: Deployment Environment
-domain: agentictoolkit://cookbook/adh/sites/deployment-env
+domain: agenticdevelopertoolkit://cookbook/adh/sites/deployment-env
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,10 +23,10 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/adh-registry/src/deployment-env.ts (agentictoolkit)
-- packages/web/packages/adh-registry/src/__tests__/deploymentEnv.test.ts (agentictoolkit)
-- packages/web/packages/adh-registry/src/seo/metadata.ts (agentictoolkit)
-- packages/web/packages/adh/src/__tests__/productionBundleGates.test.ts (agentictoolkit)
+- packages/web/packages/adh-registry/src/deployment-env.ts (agenticdevelopertoolkit)
+- packages/web/packages/adh-registry/src/__tests__/deploymentEnv.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/adh-registry/src/seo/metadata.ts (agenticdevelopertoolkit)
+- packages/web/packages/adh/src/__tests__/productionBundleGates.test.ts (agenticdevelopertoolkit)
 - adhbackend/src/adh/test/themeSurfaceEnv.test.ts (adhbackend)
 approved-by: ''
 approved-date: ''

@@ -1,7 +1,7 @@
 ---
 id: 8aee173a-25e4-443e-a9ab-d629b58817e1
 title: Window Explorer View
-domain: agentictoolkit://cookbook/system/system-windows/window-explorer-view
+domain: agenticdevelopertoolkit://cookbook/system/system-windows/window-explorer-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - window-selection
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/controls/badge
+- agenticdevelopertoolkit://cookbook/ui/controls/badge
 references: []
 approved-by: ''
 approved-date: ''

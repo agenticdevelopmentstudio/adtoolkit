@@ -1,7 +1,7 @@
 ---
 id: f5f0f19f-065e-4484-8c81-e591eee6db3c
 title: Response History
-domain: agentictoolkit://cookbook/status/dashboard/state/response-history
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/response-history
 type: ingredient
 version: 1.1.0
 status: review
@@ -17,9 +17,9 @@ platforms:
 - web
 tags: []
 depends-on:
-- agentictoolkit://cookbook/status/dashboard/api
+- agenticdevelopertoolkit://cookbook/status/dashboard/api
 related:
-- agentictoolkit://cookbook/status/dashboard/state/history
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/history
 references: []
 approved-by: ''
 approved-date: ''
@@ -29,7 +29,7 @@ approved-date: ''
 
 ## Overview
 
-Response History is state in the status dashboard that loads the portfolio-wide response-time history over the last `hours` hours, for the overview graph. It wraps one shared-cache read keyed by the window length. It requests `/response-history?hours=<hours>` through the dashboard's status API client (see [status-web-api](agentictoolkit://cookbook/status/dashboard/api)), polls every 60 seconds, and returns the read result typed as `ResponseHistory`. Its one caller in the package is the overview stats view, which passes the selected span's `hours` (24, 168, 720 or 2160) and draws `data.points` as the "avg response" sparkline, falling back to an empty array while no data is loaded. It is the portfolio-level sibling of [status-web-hooks-use-history](agentictoolkit://cookbook/status/dashboard/state/history), which loads one service's checks.
+Response History is state in the status dashboard that loads the portfolio-wide response-time history over the last `hours` hours, for the overview graph. It wraps one shared-cache read keyed by the window length. It requests `/response-history?hours=<hours>` through the dashboard's status API client (see [status-web-api](agenticdevelopertoolkit://cookbook/status/dashboard/api)), polls every 60 seconds, and returns the read result typed as `ResponseHistory`. Its one caller in the package is the overview stats view, which passes the selected span's `hours` (24, 168, 720 or 2160) and draws `data.points` as the "avg response" sparkline, falling back to an empty array while no data is loaded. It is the portfolio-level sibling of [status-web-hooks-use-history](agenticdevelopertoolkit://cookbook/status/dashboard/state/history), which loads one service's checks.
 
 ## Behavioral Requirements
 

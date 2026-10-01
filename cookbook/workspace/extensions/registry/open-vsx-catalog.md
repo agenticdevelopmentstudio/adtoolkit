@@ -1,7 +1,7 @@
 ---
 id: 1bbc9593-4064-4e79-8bce-08b3cf00c13d
 title: Open VSX Catalog
-domain: agentictoolkit://cookbook/workspace/extensions/registry/open-vsx-catalog
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/open-vsx-catalog
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,11 +25,11 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/OpenVSXCatalogTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

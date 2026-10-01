@@ -1,7 +1,7 @@
 ---
 id: c4375e0e-091f-4627-b3c9-e7d36221802f
 title: Contributed Settings
-domain: agentictoolkit://cookbook/workspace/extensions/manifest/contributed-settings
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/contributed-settings
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,13 +26,13 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/ContributedSettings.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ContributionPoint.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ContributedSettings.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ContributionPoint.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ContributedSettingsBuilderTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/ConfigurationContributionPoint.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: 87d66a8a-5742-4ae0-91c4-8bb1fd09f9e4
 title: Refresh All
-domain: agentictoolkit://cookbook/status/dashboard/state/refresh-all
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/refresh-all
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,8 +19,8 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/state/config-status
-- agentictoolkit://cookbook/status/dashboard/state/live-snapshot
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/config-status
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/live-snapshot
 references: []
 approved-by: ''
 approved-date: ''

@@ -1,7 +1,7 @@
 ---
 id: 68d182dc-3fc0-489c-ab04-ff4da25fc4df
 title: Extension Manifest
-domain: agentictoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,9 +25,9 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionManifestTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

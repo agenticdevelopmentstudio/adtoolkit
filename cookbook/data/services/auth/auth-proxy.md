@@ -1,7 +1,7 @@
 ---
 id: 4a345333-b18d-48f1-806d-453c15155dfa
 title: Authentication Proxy
-domain: agentictoolkit://cookbook/data/services/auth/auth-proxy
+domain: agenticdevelopertoolkit://cookbook/data/services/auth/auth-proxy
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,9 +24,9 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/auth/src/server/proxy.ts (agentictoolkit)
-- packages/web/packages/auth/src/server/index.ts (agentictoolkit)
-- packages/web/packages/auth/src/__tests__/proxy.test.ts (agentictoolkit)
+- packages/web/packages/auth/src/server/proxy.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/server/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/__tests__/proxy.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

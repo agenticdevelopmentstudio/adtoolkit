@@ -1,7 +1,7 @@
 ---
 id: ba5855cd-bd4c-49be-b7d3-4c3f7f35434e
 title: Overview Projections
-domain: agentictoolkit://cookbook/status/dashboard/logic/overview
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/overview
 type: ingredient
 version: 1.1.0
 status: review
@@ -18,10 +18,10 @@ platforms:
 - web
 tags: []
 depends-on:
-- agentictoolkit://cookbook/status/dashboard/logic/board-types
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/board-types
 related:
-- agentictoolkit://cookbook/status/dashboard/logic/deploy-view
-- agentictoolkit://cookbook/status/dashboard/state/portfolio-indicator
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/deploy-view
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/portfolio-indicator
 references: []
 approved-by: ''
 approved-date: ''

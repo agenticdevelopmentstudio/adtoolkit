@@ -1,7 +1,7 @@
 ---
 id: 4205c688-865a-4d74-890d-f803ee66fdcb
 title: Document Editor
-domain: agentictoolkit://cookbook/workspace/documents/document-editor-view
+domain: agenticdevelopertoolkit://cookbook/workspace/documents/document-editor-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,11 +21,11 @@ tags:
 - editor
 - pane
 depends-on:
-- agentictoolkit://cookbook/workspace/documents/breadcrumb-view
-- agentictoolkit://cookbook/workspace/files/file-editor-view
+- agenticdevelopertoolkit://cookbook/workspace/documents/breadcrumb-view
+- agenticdevelopertoolkit://cookbook/workspace/files/file-editor-view
 related:
-- agentictoolkit://cookbook/workspace/documents/breadcrumb-view
-- agentictoolkit://cookbook/workspace/files/file-editor-view
+- agenticdevelopertoolkit://cookbook/workspace/documents/breadcrumb-view
+- agenticdevelopertoolkit://cookbook/workspace/files/file-editor-view
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
 approved-by: ''

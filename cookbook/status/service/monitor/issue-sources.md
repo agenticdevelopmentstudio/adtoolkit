@@ -1,7 +1,7 @@
 ---
 id: 86e7936a-c295-4e1f-8f7a-7278b4849008
 title: Status Server Monitor Issue Sources
-domain: agentictoolkit://cookbook/status/service/monitor/issue-sources
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/issue-sources
 type: ingredient
 version: 1.0.2
 status: review
@@ -26,19 +26,19 @@ tags:
 - server
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/monitor/deploy-status
+- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
 references:
-- packages/web/packages/status-server/src/monitor/issue-sources.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/overview.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/canon/index.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/ownership.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/derive-problems.ts (agentictoolkit)
-- packages/web/packages/status-server/src/libsql/stores/observation-store.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-deploy.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-monitoring.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-ownership.test.ts (agentictoolkit)
-- packages/web/packages/status-web/src/lib/issue-sources.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/issue-sources.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/overview.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/canon/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/ownership.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/libsql/stores/observation-store.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-deploy.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-monitoring.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-ownership.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-web/src/lib/issue-sources.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: a29c23d4-a086-4413-9843-6b319e340646
 title: Activation Event Matcher
-domain: agentictoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,14 +24,14 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/ActivationEventMatcher.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ActivationEventMatcher.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ActivationEventMatcherTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHostInstaller.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

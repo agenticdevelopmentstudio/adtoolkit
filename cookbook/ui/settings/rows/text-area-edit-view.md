@@ -1,7 +1,7 @@
 ---
 id: 8d944856-8dbe-4af8-8141-e44381500dc7
 title: Text Area Edit View
-domain: agentictoolkit://cookbook/ui/settings/rows/text-area-edit-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/text-area-edit-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,8 +23,8 @@ tags:
 - scroll-view
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/text-edit-view
-- agentictoolkit://cookbook/ui/settings/rows/secure-text-edit-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/secure-text-edit-view
 references:
 - https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html
 approved-by: ''

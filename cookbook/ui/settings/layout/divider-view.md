@@ -1,7 +1,7 @@
 ---
 id: 18ad68ea-187b-463d-9f5c-b855b9bc36a9
 title: Divider View
-domain: agentictoolkit://cookbook/ui/settings/layout/divider-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/divider-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - settings
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/button-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/button-view
 references: []
 approved-by: ''
 approved-date: ''

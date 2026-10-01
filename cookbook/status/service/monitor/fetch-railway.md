@@ -1,7 +1,7 @@
 ---
 id: 6a84b15a-5e4e-4b1c-9d73-0ae8a8b602af
 title: Status Server Monitor Fetch Railway
-domain: agentictoolkit://cookbook/status/service/monitor/fetch-railway
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-railway
 type: ingredient
 version: 1.0.2
 status: review
@@ -28,15 +28,15 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
 - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 related:
-- agentictoolkit://cookbook/status/service/monitor/fetch-cloudflare
-- agentictoolkit://cookbook/status/service/monitor/deploy-status
-- agentictoolkit://cookbook/status/service/monitor/alerts
-- agentictoolkit://cookbook/status/service/monitor/enrich-deploy-errors
+- agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-cloudflare
+- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
+- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
+- agenticdevelopertoolkit://cookbook/status/service/monitor/enrich-deploy-errors
 references:
-- packages/web/packages/status-server/src/monitor/fetch-railway.ts (agentictoolkit)
-- packages/web/packages/status-server/test/railway-deployments.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/provider-cooldown.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/fetch-railway.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/railway-deployments.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/provider-cooldown.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: eb7e9eeb-86f3-4053-827a-ea259833c6ad
 title: Dashboard API
-domain: agentictoolkit://cookbook/status/dashboard/api
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/api
 type: ingredient
 version: 1.1.0
 status: review
@@ -28,15 +28,15 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
 - agenticdevelopercookbook://guidelines/implementing/security/token-handling
 related:
-- agentictoolkit://cookbook/status/service/routes
-- agentictoolkit://cookbook/status/service/peers
-- agentictoolkit://cookbook/status/service/monitor/endpoint-kinds
+- agenticdevelopertoolkit://cookbook/status/service/routes
+- agenticdevelopertoolkit://cookbook/status/service/peers
+- agenticdevelopertoolkit://cookbook/status/service/monitor/endpoint-kinds
 references:
-- packages/web/packages/status-web/src/api/client.ts (agentictoolkit)
-- packages/web/packages/status-web/src/api/monitored-sites.ts (agentictoolkit)
-- packages/web/packages/status-web/src/api/monitored-sites.test.ts (agentictoolkit)
-- packages/web/packages/status-web/src/api/peers.ts (agentictoolkit)
-- packages/web/packages/status-web/src/lib/endpoint-kinds.ts (agentictoolkit)
+- packages/web/packages/status-web/src/api/client.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-web/src/api/monitored-sites.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-web/src/api/monitored-sites.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-web/src/api/peers.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-web/src/lib/endpoint-kinds.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

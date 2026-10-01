@@ -1,7 +1,7 @@
 ---
 id: 613d7a36-d0cd-4415-97be-d983b3d6c644
 title: Chat Context
-domain: agentictoolkit://cookbook/ai/chat/chat-context
+domain: agenticdevelopertoolkit://cookbook/ai/chat/chat-context
 type: ingredient
 version: 1.1.0
 status: review

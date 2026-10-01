@@ -1,7 +1,7 @@
 ---
 id: 65fbb2b1-ca41-499f-ac03-7ecc0e206dcc
 title: Authentication Client
-domain: agentictoolkit://cookbook/adh/hub/security/authentication-client
+domain: agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client
 type: ingredient
 version: 1.1.0
 status: review

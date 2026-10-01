@@ -1,7 +1,7 @@
 ---
 id: ce223be3-818a-4310-b136-9e1e84e9af54
 title: Topic List
-domain: agentictoolkit://cookbook/ui/navigation/topic-list
+domain: agenticdevelopertoolkit://cookbook/ui/navigation/topic-list
 type: ingredient
 version: 1.2.0
 status: review
@@ -24,7 +24,7 @@ tags:
 - view-controller
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/settings-panel-list
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel-list
 references:
 - https://developer.apple.com/design/human-interface-guidelines/lists-and-tables
 approved-by: ''

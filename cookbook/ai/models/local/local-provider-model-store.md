@@ -1,7 +1,7 @@
 ---
 id: 8bdba644-d7ad-45e4-a2f5-0156bfd40e15
 title: Local Provider Model Store
-domain: agentictoolkit://cookbook/ai/models/local/local-provider-model-store
+domain: agenticdevelopertoolkit://cookbook/ai/models/local/local-provider-model-store
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,19 +22,19 @@ tags:
 - ollama
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/models/local/local-model-catalog
-- agentictoolkit://cookbook/ai/models/local/local-inference-guard
+- agenticdevelopertoolkit://cookbook/ai/models/local/local-model-catalog
+- agenticdevelopertoolkit://cookbook/ai/models/local/local-inference-guard
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/LocalProviderModelStore.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalModelServer.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/StorableSetting.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStore.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/AI/ModelCatalogStore.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/AI/ArtificialAnalysisStore.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/AI/OllamaModelPageStore.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/AI/OllamaModelMetadata.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/LocalProviderModelStore.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/LocalModelServer.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/StorableSetting.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStore.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/AI/ModelCatalogStore.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/AI/ArtificialAnalysisStore.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/AI/OllamaModelPageStore.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/AI/OllamaModelMetadata.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

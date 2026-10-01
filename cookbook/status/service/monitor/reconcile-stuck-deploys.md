@@ -1,7 +1,7 @@
 ---
 id: da18e58b-c2d9-4798-8143-2dd30b5976fc
 title: Status Server Monitor Reconcile Stuck Deploys
-domain: agentictoolkit://cookbook/status/service/monitor/reconcile-stuck-deploys
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/reconcile-stuck-deploys
 type: ingredient
 version: 1.0.2
 status: review
@@ -28,21 +28,21 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
 - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 related:
-- agentictoolkit://cookbook/status/service/monitor/enrich-deploy-errors
-- agentictoolkit://cookbook/status/service/monitor/deploy-status
-- agentictoolkit://cookbook/status/service/monitor/provider-conn
+- agenticdevelopertoolkit://cookbook/status/service/monitor/enrich-deploy-errors
+- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
+- agenticdevelopertoolkit://cookbook/status/service/monitor/provider-conn
 references:
-- packages/web/packages/status-server/src/monitor/reconcile-stuck-deploys.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/sync.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agentictoolkit)
-- packages/web/packages/status-server/src/storage/ports.ts (agentictoolkit)
-- packages/web/packages/status-server/src/libsql/stores/deploy-store.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/conn/index.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/util/map-limit.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/providers/railway.ts (agentictoolkit)
-- packages/web/packages/status-server/test/reconcile-stuck-deploys.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/reconcile-stuck-deploys.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/libsql/stores/deploy-store.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/conn/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/util/map-limit.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/providers/railway.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/reconcile-stuck-deploys.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -51,7 +51,7 @@ approved-date: ''
 
 ## Overview
 
-`reconcile-stuck-deploys.ts` (`packages/web/packages/status-server/src/monitor/reconcile-stuck-deploys.ts`) is the status backend's by-id healer for Vercel/Railway deploy rows that the recent-deploys poll can no longer terminalize. Its own header comment states the problem: the poll reads only a provider's newest ~100 deployments, so a deployment that leaves that window while still in flight would otherwise freeze at `building` forever — observed in production, where a 45-project rebuild left rows reading `building` roughly 15 minutes after every build was green. The module exports two independent operations, both invoked from `sync.ts`'s `runCycle`: `reconcileVanishedDeploys(storage, conn)`, which re-fetches a bounded, cooldown-aware, per-row-backed-off batch of stale in-flight candidates by id and persists their real phases (or terminalizes them as `canceled` when the provider reports the deployment gone), and `expireUnconfirmedDeploys(storage)`, a terminal backstop that collapses any in-flight lifecycle unconfirmed for `EXPIRE_UNCONFIRMED_MS` (6 hours) to `unknown`. Both delegate the actual phase-mapping and in-flight vocabulary to `deploy-status.ts` (see `agentictoolkit://cookbook/status/service/monitor/deploy-status`) and their provider connection resolution to `deploy-platform/conn` (see `agentictoolkit://cookbook/status/service/monitor/provider-conn`); this file owns only the candidate selection, per-row dispatch, backoff bookkeeping, and persistence around those two operations.
+`reconcile-stuck-deploys.ts` (`packages/web/packages/status-server/src/monitor/reconcile-stuck-deploys.ts`) is the status backend's by-id healer for Vercel/Railway deploy rows that the recent-deploys poll can no longer terminalize. Its own header comment states the problem: the poll reads only a provider's newest ~100 deployments, so a deployment that leaves that window while still in flight would otherwise freeze at `building` forever — observed in production, where a 45-project rebuild left rows reading `building` roughly 15 minutes after every build was green. The module exports two independent operations, both invoked from `sync.ts`'s `runCycle`: `reconcileVanishedDeploys(storage, conn)`, which re-fetches a bounded, cooldown-aware, per-row-backed-off batch of stale in-flight candidates by id and persists their real phases (or terminalizes them as `canceled` when the provider reports the deployment gone), and `expireUnconfirmedDeploys(storage)`, a terminal backstop that collapses any in-flight lifecycle unconfirmed for `EXPIRE_UNCONFIRMED_MS` (6 hours) to `unknown`. Both delegate the actual phase-mapping and in-flight vocabulary to `deploy-status.ts` (see `agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status`) and their provider connection resolution to `deploy-platform/conn` (see `agenticdevelopertoolkit://cookbook/status/service/monitor/provider-conn`); this file owns only the candidate selection, per-row dispatch, backoff bookkeeping, and persistence around those two operations.
 
 ## Behavioral Requirements
 
@@ -85,7 +85,7 @@ approved-date: ''
 - **vercel-429-suppressed**: when `noteIfRateLimited("vercel", res)` returns true (a 429 response, already recorded into the shared cooldown by that call), `fetchVercelPhasesById` MUST return `null` without any further processing of the response.
 - **vercel-non-ok-logged-null**: for any other non-ok response, `fetchVercelPhasesById` MUST log `` `[reconcile] Vercel deployment ${uid} detail ${res.status}` `` via `console.error` and return `null`.
 - **vercel-missing-ready-state-null**: when the parsed JSON body has no `readyState`, `fetchVercelPhasesById` MUST return `null`.
-- **vercel-phases-delegated**: on a body with a `readyState`, `fetchVercelPhasesById` MUST return `vercelPhases(d.readyState, d.readySubstate, d.target)` unchanged — the phase-mapping contract owned by `agentictoolkit://cookbook/status/service/monitor/deploy-status`, not reimplemented here.
+- **vercel-phases-delegated**: on a body with a `readyState`, `fetchVercelPhasesById` MUST return `vercelPhases(d.readyState, d.readySubstate, d.target)` unchanged — the phase-mapping contract owned by `agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status`, not reimplemented here.
 - **railway-detail-request**: `fetchRailwayPhasesById` MUST call `gqlPost(token, "query($id: String!) { deployment(id: $id) { status } }", signal, { id })`, passing the deployment id as a GraphQL variable rather than interpolating it into the query string.
 - **railway-429-suppressed**: when the response status is 429, `fetchRailwayPhasesById` MUST return `null` without logging — `gqlPost` has already recorded the cooldown for that response.
 - **railway-non-ok-logged-null**: for any other non-ok response, `fetchRailwayPhasesById` MUST log `` `[reconcile] Railway deployment ${id} detail ${res.status}` `` via `console.error` and return `null`.

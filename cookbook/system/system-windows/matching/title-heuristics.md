@@ -1,7 +1,7 @@
 ---
 id: 77dbd38e-9acd-4053-ba54-738b45101f6b
 title: Window Matching Heuristics
-domain: agentictoolkit://cookbook/system/system-windows/matching/title-heuristics
+domain: agenticdevelopertoolkit://cookbook/system/system-windows/matching/title-heuristics
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,21 +24,21 @@ depends-on: []
 related: []
 references:
 - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/XcodeHeuristic.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/WarpHeuristic.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/BraveHeuristic.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/VSCodeHeuristic.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/TerminalHeuristic.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SystemWindows/Matching/AppHeuristic.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SystemWindows/MatchStrategy.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SystemWindows/Matching/AppHeuristic.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SystemWindows/MatchStrategy.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/HeuristicRegistry.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/SystemWindows/HeuristicTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

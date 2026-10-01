@@ -1,7 +1,7 @@
 ---
 id: 19839612-1fd1-44c5-8659-674c264240be
 title: Security Client
-domain: agentictoolkit://cookbook/adh/hub/security/security-client
+domain: agenticdevelopertoolkit://cookbook/adh/hub/security/security-client
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,17 +25,17 @@ tags:
 - buckets
 depends-on: []
 related:
-- agentictoolkit://cookbook/adh/hub/security/authentication-client
-- agentictoolkit://cookbook/adh/hub/access
+- agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client
+- agenticdevelopertoolkit://cookbook/adh/hub/access
 references:
-- packages/web/packages/data/src/security/tokens.ts (agentictoolkit)
-- packages/web/packages/data/src/security/bucket-access.ts (agentictoolkit)
-- packages/web/packages/data/src/security/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/security/index.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
-- packages/web/packages/auth/src/client.ts (agentictoolkit)
-- packages/web/packages/adh-api-types/src/schema.ts (agentictoolkit)
+- packages/web/packages/data/src/security/tokens.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/security/bucket-access.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/security/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/security/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+- packages/web/packages/adh-api-types/src/schema.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

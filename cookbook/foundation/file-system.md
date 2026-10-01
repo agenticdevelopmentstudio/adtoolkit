@@ -1,7 +1,7 @@
 ---
 id: 016f5ba0-f4ee-4b39-b1a2-83629768acdd
 title: File System
-domain: agentictoolkit://cookbook/foundation/file-system
+domain: agenticdevelopertoolkit://cookbook/foundation/file-system
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,16 +22,16 @@ tags:
 - concurrency
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/host/extension-host
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/workspace/main-thread-workspace
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-host
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/workspace/main-thread-workspace
 references:
-- packages/apple/AgenticToolkit/Core/FileSystem/FileSystemService.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/FileSystem/FileSystemServicing.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/FileSystem/FileSignature.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/FileSystem/FileSystemService.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/FileSystem/FileSystemServicing.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/FileSystem/FileSignature.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/FileSystem/FileSystemServiceTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/FileSystem/FileSignatureTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

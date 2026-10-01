@@ -1,7 +1,7 @@
 ---
 id: 3b602118-9299-483b-bf4d-62c9d525833d
 title: Window Frame Manager
-domain: agentictoolkit://cookbook/ui/windows/window-frame-manager
+domain: agenticdevelopertoolkit://cookbook/ui/windows/window-frame-manager
 type: ingredient
 version: 1.1.0
 status: review
@@ -21,9 +21,9 @@ tags:
 - screens
 - persistence
 depends-on:
-- agentictoolkit://cookbook/ui/windows/screen-manager
+- agenticdevelopertoolkit://cookbook/ui/windows/screen-manager
 related:
-- agentictoolkit://cookbook/ui/windows/single-window-controller
+- agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller
 references: []
 approved-by: ''
 approved-date: ''

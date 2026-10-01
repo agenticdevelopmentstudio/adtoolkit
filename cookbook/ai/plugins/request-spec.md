@@ -1,7 +1,7 @@
 ---
 id: 72829b3b-ce4a-4730-877f-da7b48e7b3dd
 title: Request Specification
-domain: agentictoolkit://cookbook/ai/plugins/request-spec
+domain: agenticdevelopertoolkit://cookbook/ai/plugins/request-spec
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,7 +23,7 @@ tags:
 - transport
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/plugins/ai-plugin
+- agenticdevelopertoolkit://cookbook/ai/plugins/ai-plugin
 references: []
 approved-by: ''
 approved-date: ''

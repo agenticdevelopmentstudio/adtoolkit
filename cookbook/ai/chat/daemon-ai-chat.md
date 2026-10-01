@@ -1,7 +1,7 @@
 ---
 id: 4d7ed9a3-c6d8-491b-911a-cf257fde1c38
 title: Daemon AI Chat
-domain: agentictoolkit://cookbook/ai/chat/daemon-ai-chat
+domain: agenticdevelopertoolkit://cookbook/ai/chat/daemon-ai-chat
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,17 +26,17 @@ tags:
 - inference-guard
 - cli-fallback
 depends-on:
-- agentictoolkit://cookbook/ai/plugins/ai-plugin
-- agentictoolkit://cookbook/ai/plugins/plugin-descriptor
-- agentictoolkit://cookbook/ai/chat/chat-context
-- agentictoolkit://cookbook/ai/plugins/request-spec
-- agentictoolkit://cookbook/ai/plugins/stream-event
-- agentictoolkit://cookbook/ai/providers/provider-configuration
-- agentictoolkit://cookbook/ai/providers/provider-config-keys
-- agentictoolkit://cookbook/ai/providers/daemon-provider-resolver
-- agentictoolkit://cookbook/ai/models/local/local-inference-guard
+- agenticdevelopertoolkit://cookbook/ai/plugins/ai-plugin
+- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-descriptor
+- agenticdevelopertoolkit://cookbook/ai/chat/chat-context
+- agenticdevelopertoolkit://cookbook/ai/plugins/request-spec
+- agenticdevelopertoolkit://cookbook/ai/plugins/stream-event
+- agenticdevelopertoolkit://cookbook/ai/providers/provider-configuration
+- agenticdevelopertoolkit://cookbook/ai/providers/provider-config-keys
+- agenticdevelopertoolkit://cookbook/ai/providers/daemon-provider-resolver
+- agenticdevelopertoolkit://cookbook/ai/models/local/local-inference-guard
 related:
-- agentictoolkit://cookbook/ai/plugins/plugin-manager
+- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-manager
 references: []
 approved-by: ''
 approved-date: ''

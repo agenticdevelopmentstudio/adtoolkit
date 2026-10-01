@@ -1,7 +1,7 @@
 ---
 id: 8e0d1a9d-27a1-4b5b-9a7d-5b9f9a5f7f2e
 title: Extension Event
-domain: agentictoolkit://cookbook/workspace/extensions/host/extension-event
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,13 +25,13 @@ tags:
 depends-on: []
 related: []
 references:
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionEvent.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/ExtensionEventTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/ExtensionTestSupport.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionEvent.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/ExtensionEventTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/ExtensionTestSupport.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ""
 approved-date: ""
 ---

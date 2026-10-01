@@ -1,7 +1,7 @@
 ---
 id: fea35fb1-9eeb-4647-b185-902c1d1cb988
 title: VSCodeEngineRange
-domain: agentictoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range
 type: ingredient
 version: 1.0.2
 status: review
@@ -23,16 +23,16 @@ tags:
 - version-range
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSCodeEngineRangeTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ActivationEventMatcher.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionRegistry.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ActivationEventMatcher.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ExtensionRegistry.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

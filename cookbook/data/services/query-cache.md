@@ -1,7 +1,7 @@
 ---
 id: 0fcd16c1-a8da-4184-b63f-97b68ed6378d
 title: Query Cache
-domain: agentictoolkit://cookbook/data/services/query-cache
+domain: agenticdevelopertoolkit://cookbook/data/services/query-cache
 type: ingredient
 version: 1.1.0
 status: review
@@ -21,15 +21,15 @@ tags:
 - cache
 - session
 depends-on:
-- agentictoolkit://cookbook/data/services/auth/auth-client
+- agenticdevelopertoolkit://cookbook/data/services/auth/auth-client
 related:
-- agentictoolkit://cookbook/data/services/resource-data
-- agentictoolkit://cookbook/adh/hub/ecosystems/ecosystems
+- agenticdevelopertoolkit://cookbook/data/services/resource-data
+- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
 references:
-- packages/web/packages/data/src/query/index.tsx (agentictoolkit)
-- packages/web/packages/data/src/query/__tests__/toolkit-query-provider.test.tsx (agentictoolkit)
-- packages/web/packages/data/src/__tests__/query-client.test.tsx (agentictoolkit)
-- packages/web/packages/auth/src/tokens.ts (agentictoolkit)
+- packages/web/packages/data/src/query/index.tsx (agenticdevelopertoolkit)
+- packages/web/packages/data/src/query/__tests__/toolkit-query-provider.test.tsx (agenticdevelopertoolkit)
+- packages/web/packages/data/src/__tests__/query-client.test.tsx (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

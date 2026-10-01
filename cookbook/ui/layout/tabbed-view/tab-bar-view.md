@@ -1,7 +1,7 @@
 ---
 id: 5c0cc9f5-bc89-4e06-8d24-3db6424ff075
 title: Tab Bar View
-domain: agentictoolkit://cookbook/ui/layout/tabbed-view/tab-bar-view
+domain: agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view/tab-bar-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,7 +21,7 @@ tags:
 - tab-bar
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/layout/tabbed-view
+- agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view
 references: []
 approved-by: ''
 approved-date: ''

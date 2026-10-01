@@ -1,7 +1,7 @@
 ---
 id: bea6525c-171f-4547-bbb3-7c709543552e
 title: MCP Chips Bar View
-domain: agentictoolkit://cookbook/ai/chat/chat-window/mcp-chips-bar-view
+domain: agenticdevelopertoolkit://cookbook/ai/chat/chat-window/mcp-chips-bar-view
 type: ingredient
 version: 1.2.0
 status: review

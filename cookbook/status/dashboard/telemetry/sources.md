@@ -1,7 +1,7 @@
 ---
 id: 77a6910a-090c-464a-b3f2-4a7af36aa212
 title: Telemetry Sources
-domain: agentictoolkit://cookbook/status/dashboard/telemetry/sources
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/telemetry/sources
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,10 +19,10 @@ platforms:
 - web
 tags: []
 depends-on:
-- agentictoolkit://cookbook/status/dashboard/api
+- agenticdevelopertoolkit://cookbook/status/dashboard/api
 related:
-- agentictoolkit://cookbook/status/dashboard/state/telemetry
-- agentictoolkit://cookbook/status/service/telemetry
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/telemetry
+- agenticdevelopertoolkit://cookbook/status/service/telemetry
 references: []
 approved-by: ''
 approved-date: ''

@@ -1,7 +1,7 @@
 ---
 id: b976c0d2-084c-4a47-928a-14e33983077f
 title: Messaging Client
-domain: agentictoolkit://cookbook/adh/hub/messaging/messaging-client
+domain: agenticdevelopertoolkit://cookbook/adh/hub/messaging/messaging-client
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,7 +26,7 @@ tags:
 - templates
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/navigation/htdv
+- agenticdevelopertoolkit://cookbook/ui/navigation/htdv
 references:
 - packages/apple/AgenticToolkit/Hub/Features/Messaging/MessagingModels.swift (apple)
 - packages/apple/AgenticToolkit/Hub/Features/Messaging/MessagingTopic.swift (apple)

@@ -1,7 +1,7 @@
 ---
 id: b1622d2b-587f-4207-89ed-2130f8309f8c
 title: Status Server Peers
-domain: agentictoolkit://cookbook/status/service/peers
+domain: agenticdevelopertoolkit://cookbook/status/service/peers
 type: ingredient
 version: 1.0.2
 status: review
@@ -28,15 +28,15 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/security/token-handling
 - agenticdevelopercookbook://guidelines/implementing/security/input-validation
 related:
-- agentictoolkit://cookbook/status/service/config
-- agentictoolkit://cookbook/status/service/mcp
-- agentictoolkit://cookbook/status/service/monitor/cycle-runner
+- agenticdevelopertoolkit://cookbook/status/service/config
+- agenticdevelopertoolkit://cookbook/status/service/mcp
+- agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner
 references:
-- packages/web/packages/status-server/src/peers/base-url.ts (agentictoolkit)
-- packages/web/packages/status-server/src/peers/fetch.ts (agentictoolkit)
-- packages/web/packages/status-server/src/peers/fleet.ts (agentictoolkit)
-- packages/web/packages/status-server/test/peer-base-url.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/peers-fetch.int.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/peers/base-url.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/peers/fetch.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/peers/fleet.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/peer-base-url.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/peers-fetch.int.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

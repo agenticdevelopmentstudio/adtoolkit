@@ -1,7 +1,7 @@
 ---
 id: 9b95bde8-c47e-40a4-a21c-4a84c23ddbf1
 title: Status Server Monitor Deploy View
-domain: agentictoolkit://cookbook/status/service/monitor/deploy-view
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-view
 type: ingredient
 version: 1.0.2
 status: review
@@ -24,12 +24,12 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/deploy-view.ts (agentictoolkit)
-- packages/web/packages/status-server/test/deploy-env.test.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/types.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/url.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/canon/index.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/deploy-view.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/deploy-env.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/url.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/canon/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: 48ddd102-b78c-4198-b71d-25801082a5b2
 title: Docs Client
-domain: agentictoolkit://cookbook/adh/hub/content/docs-client
+domain: agenticdevelopertoolkit://cookbook/adh/hub/content/docs-client
 type: ingredient
 version: 1.0.2
 status: review
@@ -25,15 +25,15 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/data/src/docs/docs.ts (agentictoolkit)
-- packages/web/packages/data/src/docs/index.ts (agentictoolkit)
-- packages/web/packages/data/src/markdown/markdown.ts (agentictoolkit)
-- packages/web/packages/data/src/markdown/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/markdown/taxonomy.ts (agentictoolkit)
-- packages/web/packages/data/src/notes/notes.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
-- packages/web/packages/data/src/markdown/__tests__/markdown.test.ts (agentictoolkit)
+- packages/web/packages/data/src/docs/docs.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/docs/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/markdown/markdown.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/markdown/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/markdown/taxonomy.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/notes/notes.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/markdown/__tests__/markdown.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

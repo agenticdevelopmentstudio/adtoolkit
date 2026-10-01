@@ -1,7 +1,7 @@
 ---
 id: d1257c76-fb28-47a5-bc2b-d4fb1ef87b53
 title: Multi-Edge Tabbed View
-domain: agentictoolkit://cookbook/ui/layout/tabbed-view
+domain: agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view
 type: ingredient
 version: 1.2.0
 status: review

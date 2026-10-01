@@ -1,7 +1,7 @@
 ---
 id: 691f84ba-242a-40bc-a164-c95e535bb387
 title: Deploy Display
-domain: agentictoolkit://cookbook/status/dashboard/logic/deploy-display
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/deploy-display
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,7 +19,7 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/monitor/deploy-status
+- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
 references: []
 approved-by: ''
 approved-date: ''
@@ -51,7 +51,7 @@ status vocabulary and its color-role map from two sibling modules. The
 callers are dashboard components and views that render deploy or platform
 badges; they render the returned strings and never branch on them. The
 server-side status vocabulary is specified in [Monitor Deploy
-Status](agentictoolkit://cookbook/status/service/monitor/deploy-status).
+Status](agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status).
 
 ## Behavioral Requirements
 

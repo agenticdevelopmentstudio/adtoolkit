@@ -1,7 +1,7 @@
 ---
 id: 990362d5-9c3a-4263-828f-a174b2dd2134
 title: Monitor Endpoint Kinds
-domain: agentictoolkit://cookbook/status/service/monitor/endpoint-kinds
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/endpoint-kinds
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,9 +25,9 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/endpoint-kinds.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/engine/classify.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/engine/classify.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/endpoint-kinds.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/engine/classify.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/engine/classify.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: 6fa79a51-8e62-4a99-8979-c93a4269dac8
 title: Diagnostic Types
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/languages/diagnostic-types
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/diagnostic-types
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,16 +25,16 @@ depends-on: []
 related: []
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/DiagnosticTypes.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/DiagnosticTypesTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/TextGeometry.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/Uri.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/Uri.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

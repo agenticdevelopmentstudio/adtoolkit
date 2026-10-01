@@ -1,7 +1,7 @@
 ---
 id: c0e95399-ddab-4445-a22a-566d07339f9b
 title: Color Picker View
-domain: agentictoolkit://cookbook/ui/settings/rows/color-picker-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/color-picker-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,10 +22,10 @@ tags:
 - color
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/captioned-slider-view
-- agentictoolkit://cookbook/ui/settings/rows/checkbox-view
-- agentictoolkit://cookbook/ui/settings/rows/number-field-view
-- agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
 references: []
 approved-by: ''
 approved-date: ''

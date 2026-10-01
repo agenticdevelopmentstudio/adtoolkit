@@ -1,7 +1,7 @@
 ---
 id: b1a34260-3966-4309-ac58-6249752c95fb
 title: Webview Panel State
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-state
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-state
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,16 +23,16 @@ tags:
 - persistence
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelState.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelState.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/WebviewPanelStateTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewPanelViewController.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewPanelSerializer.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

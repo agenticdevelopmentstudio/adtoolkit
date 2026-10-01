@@ -1,7 +1,7 @@
 ---
 id: 63f8a602-58f8-4fdc-9461-b959be427a4d
 title: Status Web Colors
-domain: agentictoolkit://cookbook/status/dashboard/logic/colors
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/colors
 type: ingredient
 version: 1.0.2
 status: review
@@ -19,7 +19,7 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/session-client
+- agenticdevelopertoolkit://cookbook/status/dashboard/session-client
 references: []
 approved-by: ''
 approved-date: ''

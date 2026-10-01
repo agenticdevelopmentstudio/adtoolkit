@@ -1,7 +1,7 @@
 ---
 id: 4b6f3e1a-9c2d-4e7a-8b3f-1d5a6c9e2f70
 title: Extension Registry
-domain: agentictoolkit://cookbook/workspace/extensions/registry/extension-registry
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-registry
 type: ingredient
 version: 1.0.2
 status: review
@@ -23,15 +23,15 @@ tags:
 - mainactor
 - contribution-point
 depends-on:
-- agentictoolkit://cookbook/workspace/extensions/manifest/contribution-point
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/contribution-point
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
 related:
-- agentictoolkit://cookbook/workspace/extensions/manifest/contribution-point
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-manifest
-- agentictoolkit://cookbook/workspace/extensions/manifest/contributed-views
-- agentictoolkit://cookbook/workspace/extensions/manifest/contributed-settings
-- agentictoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
-- agentictoolkit://cookbook/ai/plugins/plugin-manager
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/contribution-point
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/contributed-views
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/contributed-settings
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
+- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-manager
 references: []
 approved-by: ''
 approved-date: ''

@@ -1,7 +1,7 @@
 ---
 id: 5bfadad5-c93b-432a-807e-04be57ff16b4
 title: Project Management
-domain: agentictoolkit://cookbook/workspace/projects/project-controller
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-controller
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,30 +25,30 @@ tags:
 - command-palette
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/projects/branch-controller
-- agentictoolkit://cookbook/ui/layout/composable-tabs/tabs-window
-- agentictoolkit://cookbook/ui/layout/tabbed-view/tab-pane
-- agentictoolkit://cookbook/workspace/files/git-status-provider
+- agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+- agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view/tab-pane
+- agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWorkspace.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWorkspace.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTabReconciler.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/BranchController.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/BranchController.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsTabItemDataSource.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabItem.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/LayoutNode.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectControllerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -430,7 +430,7 @@ project controller's own name.
   interface requiring thread-affinity of its own — mirror `@MainActor`
   confinement by only ever touching this object from the UI thread
   (`DispatcherQueue`), the same discipline `BranchController`'s WinUI port
-  already assumes (see `agentictoolkit://cookbook/workspace/projects/branch-controller`).
+  already assumes (see `agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller`).
   Reproduce **reconcile-calls-chain-in-order** with a stored `Task`
   (previous reconcile) that the next call `await`s before starting its own
   work — the same continuation-chaining pattern, not a `SemaphoreSlim`, so
@@ -441,7 +441,7 @@ project controller's own name.
   rather than .NET's multicast-delegate convention). Read worktrees with
   `System.Diagnostics.Process` running `git worktree list --porcelain`
   through the same single-door `GitClient` WinUI port
-  `agentictoolkit://cookbook/workspace/projects/branch-controller` describes,
+  `agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller` describes,
   and reproduce the main-first-then-git-order partition
   (**checkouts-ordered-main-first-then-git-order**) with `Where`/`Concat`
   rather than `OrderBy`, since LINQ's `OrderBy` is stable but a hand-rolled

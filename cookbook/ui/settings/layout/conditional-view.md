@@ -1,7 +1,7 @@
 ---
 id: 537cf2a7-6be6-4a09-9a6c-8f8ecc6012da
 title: Conditional View
-domain: agentictoolkit://cookbook/ui/settings/layout/conditional-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/conditional-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,7 +21,7 @@ tags:
 - layout
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/layout/group-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view
 references: []
 approved-by: ''
 approved-date: ''

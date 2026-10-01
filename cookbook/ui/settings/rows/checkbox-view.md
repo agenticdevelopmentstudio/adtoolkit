@@ -1,7 +1,7 @@
 ---
 id: e9c10ff7-4e13-4007-a963-d2a9e4006745
 title: Checkbox View
-domain: agentictoolkit://cookbook/ui/settings/rows/checkbox-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,8 +21,8 @@ tags:
 - toggle
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
-- agentictoolkit://cookbook/ui/settings/rows/stepper-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/stepper-view
 references: []
 approved-by: ''
 approved-date: ''

@@ -1,7 +1,7 @@
 ---
 id: 4d04037c-098f-4ea5-8313-7e0374700a96
 title: Language Model Message Vocabulary
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/language-models/language-model-message-vocabulary
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/language-model-message-vocabulary
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,19 +22,19 @@ tags:
 - language-model
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/host/extension-host
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-host
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/LanguageModelMessageVocabulary.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/LanguageModelMessageVocabularyTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

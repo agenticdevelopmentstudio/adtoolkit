@@ -1,7 +1,7 @@
 ---
 id: 45b6d470-4e58-4035-b1c7-e65dbe7716b9
 title: Panel Scroll View
-domain: agentictoolkit://cookbook/ui/settings/layout/panel-scroll-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-scroll-view
 type: ingredient
 version: 1.2.0
 status: review

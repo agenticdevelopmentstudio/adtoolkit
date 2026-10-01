@@ -1,7 +1,7 @@
 ---
 id: c7201487-b696-43b9-a4f9-d1a9e6141f7c
 title: Path View
-domain: agentictoolkit://cookbook/ui/settings/rows/path-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/path-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - static-text
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/layout/explanation-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view
 references:
 - https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html
 approved-by: ''
@@ -37,7 +37,7 @@ The Path View is a settings row: a single label showing one filesystem
 path "as a path rather than as prose." It conforms to the settings row
 interface every settings row implements, with no requirements of its own.
 The design rationale: the sibling row
-[Explanation View](agentictoolkit://cookbook/ui/settings/layout/explanation-view)
+[Explanation View](agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view)
 word-wraps, which is right for a sentence and wrong for a path — a real
 path wrapped inside a settings panel's ~134pt content column broke across
 nine hyphenated lines, long enough to push the group heading off the bottom

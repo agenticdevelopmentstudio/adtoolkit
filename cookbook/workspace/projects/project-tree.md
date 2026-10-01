@@ -1,7 +1,7 @@
 ---
 id: 8f0a3e2b-4d61-4a2f-9e4d-6c1a7b3f0d92
 title: Project Tree
-domain: agentictoolkit://cookbook/workspace/projects/project-tree
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-tree
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,13 +22,13 @@ tags:
 - value-type
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/projects/git-repo
-- agentictoolkit://cookbook/workspace/projects/project-filter
+- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-filter
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTree.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectBrowserViewController.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectTreeTests.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTree.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectBrowserViewController.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectTreeTests.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

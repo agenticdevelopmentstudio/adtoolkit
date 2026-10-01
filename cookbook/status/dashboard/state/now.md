@@ -1,7 +1,7 @@
 ---
 id: 0b171409-02f8-4ad2-97d3-8f4b1adfa340
 title: Coarse Clock
-domain: agentictoolkit://cookbook/status/dashboard/state/now
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/now
 type: ingredient
 version: 1.1.0
 status: review

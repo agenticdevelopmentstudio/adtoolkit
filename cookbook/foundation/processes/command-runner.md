@@ -1,7 +1,7 @@
 ---
 id: 705082e9-8fad-4c20-95a3-4cf843cc6b97
 title: Command Runner
-domain: agentictoolkit://cookbook/foundation/processes/command-runner
+domain: agenticdevelopertoolkit://cookbook/foundation/processes/command-runner
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,11 +24,11 @@ tags:
 - watchdog
 depends-on: []
 related:
-- agentictoolkit://cookbook/foundation/concurrency
+- agenticdevelopertoolkit://cookbook/foundation/concurrency
 references:
-- packages/apple/AgenticToolkit/Core/Process/CommandRunner.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Process/CommandRunner.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Process/CommandRunnerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

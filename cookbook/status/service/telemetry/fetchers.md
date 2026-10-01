@@ -1,7 +1,7 @@
 ---
 id: 8648272e-2da3-46fc-b9e8-5148dacdbcff
 title: Status Server Fetchers
-domain: agentictoolkit://cookbook/status/service/telemetry/fetchers
+domain: agenticdevelopertoolkit://cookbook/status/service/telemetry/fetchers
 type: ingredient
 version: 1.0.2
 status: review
@@ -26,9 +26,9 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/telemetry/fetchers/glitchtip.ts (agentictoolkit)
-- packages/web/packages/status-server/src/telemetry/fetchers/posthog.ts (agentictoolkit)
-- packages/web/packages/status-server/test/telemetry-glitchtip-fetcher.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/telemetry/fetchers/glitchtip.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/telemetry/fetchers/posthog.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/telemetry-glitchtip-fetcher.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

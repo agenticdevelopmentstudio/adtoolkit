@@ -1,7 +1,7 @@
 ---
 id: d5aba939-471d-48cd-9a9c-888ac92adf38
 title: Disclosure Card View
-domain: agentictoolkit://cookbook/ui/containers/disclosure-card-view
+domain: agenticdevelopertoolkit://cookbook/ui/containers/disclosure-card-view
 type: ingredient
 version: 1.3.0
 status: review

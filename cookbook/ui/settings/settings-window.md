@@ -1,7 +1,7 @@
 ---
 id: 7cac2263-94fe-47ec-ab1d-6cf5a12baf14
 title: Settings Window
-domain: agentictoolkit://cookbook/ui/settings/settings-window
+domain: agenticdevelopertoolkit://cookbook/ui/settings/settings-window
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,11 +21,11 @@ tags:
 - settings
 - split-view
 depends-on:
-- agentictoolkit://cookbook/ui/settings/settings-split-view
-- agentictoolkit://cookbook/ui/windows/single-window-controller
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-split-view
+- agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller
 related:
-- agentictoolkit://cookbook/ui/settings/settings-panel
-- agentictoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
 references: []
 approved-by: ''
 approved-date: ''
@@ -512,7 +512,7 @@ Not applicable: no logging call appears anywhere in this file.
   window's trailing edge as the WinUI substitute for the AppKit help
   drawer — WinUI has no drawer primitive of its own, so `SplitView` is the
   standard stand-in, matching the pattern
-  `agentictoolkit://cookbook/ui/layout/composable-tabs/tabs-window` already uses
+  `agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window` already uses
   for its own drawer translation.
 
 ## Reference Implementations

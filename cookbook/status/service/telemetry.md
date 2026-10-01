@@ -1,7 +1,7 @@
 ---
 id: a7c2b9e1-5d4f-4a2c-9e6f-8b3a1c5d7e2f
 title: Status Server Telemetry
-domain: agentictoolkit://cookbook/status/service/telemetry
+domain: agenticdevelopertoolkit://cookbook/status/service/telemetry
 type: ingredient
 version: 1.0.2
 status: review

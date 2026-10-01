@@ -1,7 +1,7 @@
 ---
 id: 969b7f76-3fff-4a13-9b85-a61df25c70ee
 title: Key Command Capture Field
-domain: agentictoolkit://cookbook/ui/controls/key-command-capture-field
+domain: agenticdevelopertoolkit://cookbook/ui/controls/key-command-capture-field
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - focus
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/key-command-row-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/key-command-row-view
 references:
 - https://github.com/sindresorhus/KeyboardShortcuts
 approved-by: ''
@@ -193,7 +193,7 @@ that either way.
 
 - **Role/trait**: Not implemented in source. No accessibility role, label,
   or title-element link — unlike the Key Command Row View
-  (`agentictoolkit://cookbook/ui/settings/rows/key-command-row-view`),
+  (`agenticdevelopertoolkit://cookbook/ui/settings/rows/key-command-row-view`),
   whose sibling toggle control links to its label — appears anywhere in
   this component's own source; the view relies entirely on the platform's
   default accessibility exposure. The view is an interactive,

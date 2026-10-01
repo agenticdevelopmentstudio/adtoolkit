@@ -1,7 +1,7 @@
 ---
 id: 28fc5136-e1bf-4672-b783-ed2f3a8983f5
 title: Extension Tree View
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view
 type: ingredient
 version: 1.2.0
 status: review

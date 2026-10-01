@@ -1,7 +1,7 @@
 ---
 id: 519d4419-8f80-478d-aa08-912b66bbe5cf
 title: Hub Domain Applications
-domain: agentictoolkit://cookbook/adh/hub/applications
+domain: agenticdevelopertoolkit://cookbook/adh/hub/applications
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,7 +26,7 @@ tags:
 - api-tokens
 depends-on: []
 related:
-- agentictoolkit://cookbook/adh/hub/security/authentication-client
+- agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client
 references:
 - packages/apple/AgenticToolkit/Hub/Features/Applications/ApplicationsDataSource.swift
   (apple)
@@ -56,7 +56,7 @@ to label and enumerate the buckets/tables a grant can target. Every thrown error
 normalized to the shared error type before it reaches a caller, and every token
 secret this component ever holds is a transient, reveal-once-then-drop entry in an
 in-memory dictionary — the same pattern the sibling Authentication feature
-(`agentictoolkit://cookbook/adh/hub/security/authentication-client`) uses for its own
+(`agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client`) uses for its own
 API and storage tokens.
 
 ## Behavioral Requirements

@@ -1,7 +1,7 @@
 ---
 id: 4ed891c0-4e4f-4955-8314-d143c45490ec
 title: Health Classification (status-web)
-domain: agentictoolkit://cookbook/status/dashboard/logic/health
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/health
 type: ingredient
 version: 1.0.2
 status: review
@@ -19,8 +19,8 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/monitor/health
-- agentictoolkit://cookbook/status/service/monitor/probe
+- agenticdevelopertoolkit://cookbook/status/service/monitor/health
+- agenticdevelopertoolkit://cookbook/status/service/monitor/probe
 references: []
 approved-by: ''
 approved-date: ''
@@ -37,7 +37,7 @@ approved-date: ''
 - `ClassifyInput`, the facts one HTTP probe observed.
 - `classify(input)`, a pure function that maps a `ClassifyInput` to a `HealthStatus`.
 
-The file is a byte-identical copy of `packages/web/packages/status-server/src/monitor/health.ts` ([status-server health](agentictoolkit://cookbook/status/service/monitor/health)). There the probe ([status-server probe](agentictoolkit://cookbook/status/service/monitor/probe)) calls `classify` with every endpoint result. Inside status-web only the `HealthStatus` type is imported: by `src/types.ts` (which re-exports it and uses it for endpoint `status` fields), `src/lib/uptime.ts` (`dayStatus`) and `src/lib/overall.ts` (`computeOverall`). No status-web runtime code calls `classify` or reads either constant. They are exercised only by `health.test.ts`. The module has no state, no I/O and no side effects.
+The file is a byte-identical copy of `packages/web/packages/status-server/src/monitor/health.ts` ([status-server health](agenticdevelopertoolkit://cookbook/status/service/monitor/health)). There the probe ([status-server probe](agenticdevelopertoolkit://cookbook/status/service/monitor/probe)) calls `classify` with every endpoint result. Inside status-web only the `HealthStatus` type is imported: by `src/types.ts` (which re-exports it and uses it for endpoint `status` fields), `src/lib/uptime.ts` (`dayStatus`) and `src/lib/overall.ts` (`computeOverall`). No status-web runtime code calls `classify` or reads either constant. They are exercised only by `health.test.ts`. The module has no state, no I/O and no side effects.
 
 ## Behavioral Requirements
 

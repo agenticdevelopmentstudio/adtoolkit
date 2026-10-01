@@ -1,7 +1,7 @@
 ---
 id: b2cf12e3-71de-4d87-9216-d5e8d604169c
 title: Extension Host
-domain: agentictoolkit://cookbook/workspace/extensions/host/extension-host
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-host
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,15 +23,15 @@ tags:
 - extension-host
 - not-implemented-ledger
 depends-on:
-- agentictoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-manifest
-- agentictoolkit://cookbook/workspace/extensions/registry/extension-registry
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-registry
 related:
-- agentictoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-manifest
-- agentictoolkit://cookbook/workspace/extensions/registry/extension-registry
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-registry
 references: []
 approved-by: ''
 approved-date: ''

@@ -1,7 +1,7 @@
 ---
 id: eb7ece7f-746f-456f-ac0d-0a985dc9a94e
 title: Language Server Protocol Client
-domain: agentictoolkit://cookbook/workspace/language/lsp
+domain: agenticdevelopertoolkit://cookbook/workspace/language/lsp
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,28 +25,28 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Language/LSP/DiagnosticStore.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Language/LSP/DocumentSyncPipeline.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Language/LSP/LanguageServerChannel.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Language/LSP/LanguageServerConfiguration.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Language/LSP/LanguageServerDocumentSync.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Language/LSP/LanguageServerRegistry.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Language/LSP/LanguageServerSession.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Language/LSP/LanguageServerSettings.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Language/LSP/DiagnosticStore.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Language/LSP/DocumentSyncPipeline.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Language/LSP/LanguageServerChannel.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Language/LSP/LanguageServerConfiguration.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Language/LSP/LanguageServerDocumentSync.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Language/LSP/LanguageServerRegistry.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Language/LSP/LanguageServerSession.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Language/LSP/LanguageServerSettings.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/DiagnosticStoreTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/LanguageServerDocumentSyncScopeTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/LanguageServerSessionRaceTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/FakeLanguageServerSessionFidelityTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/LanguageServerRegistryTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/LanguageServerSessionTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/LanguageServerDocumentSyncTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

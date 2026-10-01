@@ -1,7 +1,7 @@
 ---
 id: ec6e6ca5-8780-4ce2-8b3a-087adc50ed35
 title: Resource Data
-domain: agentictoolkit://cookbook/data/services/resource-data
+domain: agenticdevelopertoolkit://cookbook/data/services/resource-data
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,25 +25,25 @@ tags:
 - workspace
 - http
 depends-on:
-- agentictoolkit://cookbook/data/services/auth/auth-client
+- agenticdevelopertoolkit://cookbook/data/services/auth/auth-client
 related: []
 references:
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
-- packages/web/packages/data/src/config.ts (agentictoolkit)
-- packages/web/packages/data/src/ftd-storage.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/tenant.ts (agentictoolkit)
-- packages/web/packages/data/src/use-resource-item.ts (agentictoolkit)
-- packages/web/packages/data/src/use-resource-list.ts (agentictoolkit)
-- packages/web/packages/data/src/workspace-prefs.ts (agentictoolkit)
-- packages/web/packages/data/src/workspaces.ts (agentictoolkit)
-- packages/web/packages/data/src/__tests__/ftd-storage.test.ts (agentictoolkit)
-- packages/web/packages/data/src/__tests__/http.test.ts (agentictoolkit)
-- packages/web/packages/data/src/__tests__/tenant.test.ts (agentictoolkit)
-- packages/web/packages/data/src/__tests__/workspace-prefs.test.ts (agentictoolkit)
-- packages/web/packages/data/src/__tests__/workspaces-changed.test.ts (agentictoolkit)
-- packages/web/packages/data/src/__tests__/use-resource-item.test.tsx (agentictoolkit)
-- packages/web/packages/data/src/__tests__/use-resource-list.test.tsx (agentictoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/config.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ftd-storage.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/tenant.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/use-resource-item.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/use-resource-list.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/workspace-prefs.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/workspaces.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/__tests__/ftd-storage.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/__tests__/http.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/__tests__/tenant.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/__tests__/workspace-prefs.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/__tests__/workspaces-changed.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/__tests__/use-resource-item.test.tsx (agenticdevelopertoolkit)
+- packages/web/packages/data/src/__tests__/use-resource-list.test.tsx (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

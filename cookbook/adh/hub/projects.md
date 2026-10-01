@@ -1,7 +1,7 @@
 ---
 id: 6263d5af-d0c7-456b-903a-762581ae5dbb
 title: Projects
-domain: agentictoolkit://cookbook/adh/hub/projects
+domain: agenticdevelopertoolkit://cookbook/adh/hub/projects
 type: ingredient
 version: 1.1.0
 status: review
@@ -30,31 +30,31 @@ tags:
 - sse
 depends-on: []
 related:
-- agentictoolkit://cookbook/adh/hub/ecosystems/ecosystems
+- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
 references:
-- packages/web/packages/data/src/projects/activity.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/artifacts.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/comments.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/index.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/iterations.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/live.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/milestones.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/programs.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/projects.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/search.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/status-updates.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/templates.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/triage.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/work-items.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
-- packages/web/packages/data/src/stream/index.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/__tests__/projects.test.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/__tests__/search.test.ts (agentictoolkit)
-- packages/web/packages/data/src/projects/__tests__/live.test.ts (agentictoolkit)
+- packages/web/packages/data/src/projects/activity.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/artifacts.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/comments.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/iterations.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/live.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/milestones.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/programs.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/projects.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/search.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/status-updates.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/templates.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/triage.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/work-items.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/stream/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/__tests__/projects.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/__tests__/search.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/projects/__tests__/live.test.ts (agenticdevelopertoolkit)
 - packages/web/packages/data/src/projects/__tests__/programs-milestones-health.test.ts
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

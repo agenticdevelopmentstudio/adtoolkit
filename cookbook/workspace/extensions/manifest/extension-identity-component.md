@@ -1,7 +1,7 @@
 ---
 id: 5b0fea72-dbb8-4299-a54f-dc16486df1ae
 title: Extension Identity Component
-domain: agentictoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
 type: ingredient
 version: 1.1.0
 status: review

@@ -1,7 +1,7 @@
 ---
 id: 4e32bf7a-b87a-44f6-aa16-f57a533e3b77
 title: Status Server Monitor Self-Check Stability
-domain: agentictoolkit://cookbook/status/service/monitor/self-check-stability
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/self-check-stability
 type: ingredient
 version: 1.0.2
 status: review
@@ -24,13 +24,13 @@ tags:
 - server
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/monitor/integrations
-- agentictoolkit://cookbook/status/service/monitor/issue-sources
+- agenticdevelopertoolkit://cookbook/status/service/monitor/integrations
+- agenticdevelopertoolkit://cookbook/status/service/monitor/issue-sources
 references:
-- packages/web/packages/status-server/src/monitor/self-check-stability.ts (agentictoolkit)
-- packages/web/packages/status-server/test/self-check-stability.test.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/types.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/integrations.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/self-check-stability.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/self-check-stability.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

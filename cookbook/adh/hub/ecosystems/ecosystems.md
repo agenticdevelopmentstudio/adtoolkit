@@ -1,7 +1,7 @@
 ---
 id: 201572ee-2e0f-4839-94f5-252f8044c4bf
 title: Ecosystems
-domain: agentictoolkit://cookbook/adh/hub/ecosystems/ecosystems
+domain: agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
 type: ingredient
 version: 1.2.0
 status: review
@@ -31,30 +31,30 @@ tags:
 - features
 depends-on: []
 related:
-- agentictoolkit://cookbook/data/services/auth/auth-client
+- agenticdevelopertoolkit://cookbook/data/services/auth/auth-client
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsDataSource.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsModels.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsModule.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemTopic.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemSettingsTopic.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/HubError.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubError+Wrap.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/EcosystemsModuleTests.swift (agentictoolkit)
-- packages/web/packages/data/src/ecosystems/ecosystems.ts (agentictoolkit)
-- packages/web/packages/data/src/ecosystems/identifiers.ts (agentictoolkit)
-- packages/web/packages/data/src/ecosystems/use-workspace-default-ecosystem.ts (agentictoolkit)
-- packages/web/packages/data/src/ecosystems/ecosystem-invitations.ts (agentictoolkit)
-- packages/web/packages/data/src/ecosystems/ecosystem-features.ts (agentictoolkit)
-- packages/web/packages/data/src/ecosystems/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
-- packages/web/packages/data/src/ecosystems/__tests__/ecosystems.test.ts (agentictoolkit)
-- packages/web/packages/data/src/ecosystems/__tests__/use-workspace-default-ecosystem.test.tsx (agentictoolkit)
-- packages/web/packages/data/src/ecosystems/__tests__/ecosystem-features.test.tsx (agentictoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsDataSource.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsModels.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsModule.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemTopic.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemSettingsTopic.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/HubError.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/HubError+Wrap.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/EcosystemsModuleTests.swift (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystems/ecosystems.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystems/identifiers.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystems/use-workspace-default-ecosystem.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystems/ecosystem-invitations.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystems/ecosystem-features.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystems/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystems/__tests__/ecosystems.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystems/__tests__/use-workspace-default-ecosystem.test.tsx (agenticdevelopertoolkit)
+- packages/web/packages/data/src/ecosystems/__tests__/ecosystem-features.test.tsx (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -983,7 +983,7 @@ not invent new semantics.
 recipe.
 **Rationale**: Those mappers are shared with the platform-admin
 invitations hooks referenced in this file's own header comment
-(`websites/main/admin/src/api/invitations.ts`) — they belong to the
+(`packages/web/packages/features/adh-admin/src/api/invitations.ts`) — they belong to the
 Invitations feature's own contract, not to Ecosystems. This recipe
 documents what the Ecosystems-owned hooks in `ecosystem-invitations.ts`
 do with their query keys, endpoints, and cache invalidation, and treats

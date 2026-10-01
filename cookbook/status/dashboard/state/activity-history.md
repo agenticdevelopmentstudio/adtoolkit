@@ -1,7 +1,7 @@
 ---
 id: b7397142-dfab-4ea4-983e-3f0fdcc17fac
 title: Activity History
-domain: agentictoolkit://cookbook/status/dashboard/state/activity-history
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/activity-history
 type: ingredient
 version: 1.1.0
 status: review

@@ -1,7 +1,7 @@
 ---
 id: 03a30e6b-8c8c-40d3-8135-078d4fd351ce
 title: Project Settings
-domain: agentictoolkit://cookbook/workspace/projects/project-settings
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-settings
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,23 +23,23 @@ tags:
 - storage-keys
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/projects/git-repo-scanner
+- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo-scanner
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Projects/UserSettings+Projects.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/StorableSetting.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStore.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/StorableSetting.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStore.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStorageProviders/UserDefaultsSettingsStorageProvider.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepoScanner.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepoScanner.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsActivePane.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/SettingsStore/UserDefaultsSettingsStoreTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -63,7 +63,7 @@ own; a shared settings-storage layer supplies that behavior, and a shared
 storage provider supplies the persistence mechanics. This recipe covers
 those collaborators only for the contract they give these three settings —
 their own general contract belongs to a collaborator's own recipe (the
-[Git Repo Scanner](agentictoolkit://cookbook/workspace/projects/git-repo-scanner)
+[Git Repo Scanner](agenticdevelopertoolkit://cookbook/workspace/projects/git-repo-scanner)
 recipe already covers the scanner that consumes the skip-patterns
 setting). The code that reads the skip-patterns setting and constructs a
 scanner from it, the settings panel that edits all three, and the

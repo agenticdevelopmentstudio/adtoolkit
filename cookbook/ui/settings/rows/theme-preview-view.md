@@ -1,7 +1,7 @@
 ---
 id: 15e66a2e-9ee1-4f5f-aeb0-c804078b4f78
 title: Theme Preview View
-domain: agentictoolkit://cookbook/ui/settings/rows/theme-preview-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/theme-preview-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,9 +22,9 @@ tags:
 - theme
 - preview
 depends-on:
-- agentictoolkit://cookbook/ui/settings/rows/swatch-grid-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/swatch-grid-view
 related:
-- agentictoolkit://cookbook/ui/controls/badge
+- agenticdevelopertoolkit://cookbook/ui/controls/badge
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
 approved-by: ''
@@ -251,7 +251,7 @@ Decisions).
   composition with no interactive element anywhere in source (see
   States/Pressed), so there is no touch target to size. The embedded
   swatch grid's own accessibility posture is documented in its own recipe
-  (`agentictoolkit://cookbook/ui/settings/rows/swatch-grid-view`), not
+  (`agenticdevelopertoolkit://cookbook/ui/settings/rows/swatch-grid-view`), not
   repeated here.
 
 ## Conformance Test Vectors

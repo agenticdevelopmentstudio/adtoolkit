@@ -1,7 +1,7 @@
 ---
 id: 5161980d-20b6-4779-867f-16ed45278a33
 title: Extension Input Box Presenting
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-presenting
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-presenting
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,10 +23,10 @@ tags:
 - validation
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionInputBoxPresenting.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

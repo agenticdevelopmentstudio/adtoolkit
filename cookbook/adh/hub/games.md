@@ -1,7 +1,7 @@
 ---
 id: 5d44b127-7701-4d3f-8d34-fe50084e52b7
 title: 'Hub Domain: Games'
-domain: agentictoolkit://cookbook/adh/hub/games
+domain: agenticdevelopertoolkit://cookbook/adh/hub/games
 type: ingredient
 version: 1.0.2
 status: review
@@ -23,16 +23,16 @@ tags:
 - jsonb
 - web
 depends-on:
-- agentictoolkit://cookbook/data/services/auth/auth-client
+- agenticdevelopertoolkit://cookbook/data/services/auth/auth-client
 related:
-- agentictoolkit://cookbook/adh/hub/ecosystems/ecosystems
+- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
 references:
-- packages/web/packages/data/src/games/games.ts (agentictoolkit)
-- packages/web/packages/data/src/games/index.ts (agentictoolkit)
-- packages/web/packages/data/src/games/__tests__/games.test.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
-- packages/web/packages/auth/src/client.ts (agentictoolkit)
+- packages/web/packages/data/src/games/games.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/games/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/games/__tests__/games.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

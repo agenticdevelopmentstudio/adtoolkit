@@ -1,7 +1,7 @@
 ---
 id: da6524ff-4def-461c-a885-d385a118e596
 title: Deploy Engine
-domain: agentictoolkit://cookbook/status/deploy-engine
+domain: agenticdevelopertoolkit://cookbook/status/deploy-engine
 type: ingredient
 version: 1.0.3
 status: review

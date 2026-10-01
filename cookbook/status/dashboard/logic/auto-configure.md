@@ -1,7 +1,7 @@
 ---
 id: cd71721b-e80e-4525-a7a1-fc1ac2158267
 title: Auto Configure
-domain: agentictoolkit://cookbook/status/dashboard/logic/auto-configure
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/auto-configure
 type: ingredient
 version: 1.1.0
 status: review
@@ -20,8 +20,8 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/api
-- agentictoolkit://cookbook/status/dashboard/state/config-status
+- agenticdevelopertoolkit://cookbook/status/dashboard/api
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/config-status
 references: []
 approved-by: ''
 approved-date: ''

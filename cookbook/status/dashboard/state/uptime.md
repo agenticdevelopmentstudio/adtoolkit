@@ -1,7 +1,7 @@
 ---
 id: e322fd0c-1552-4bd9-b129-3c809af3a972
 title: Uptime State
-domain: agentictoolkit://cookbook/status/dashboard/state/uptime
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/uptime
 type: ingredient
 version: 1.1.0
 status: review
@@ -18,10 +18,10 @@ platforms:
 - web
 tags: []
 depends-on:
-- agentictoolkit://cookbook/status/dashboard/api
+- agenticdevelopertoolkit://cookbook/status/dashboard/api
 related:
-- agentictoolkit://cookbook/status/dashboard/state/response-history
-- agentictoolkit://cookbook/status/service/monitor/uptime
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/response-history
+- agenticdevelopertoolkit://cookbook/status/service/monitor/uptime
 references: []
 approved-by: ''
 approved-date: ''
@@ -31,7 +31,7 @@ approved-date: ''
 
 ## Overview
 
-The uptime state loads per-service daily uptime over the last `days` days. It wraps one shared read keyed by the window length, requests `/uptime?days=<days>` through the dashboard's injected API client (see [status-web-api](agentictoolkit://cookbook/status/dashboard/api)), and returns the read result typed as the uptime response. Unlike its sibling [status-web-hooks-use-response-history](agentictoolkit://cookbook/status/dashboard/state/response-history), it sets no polling interval, so it does not poll. It has two consumers in the dashboard, both passing `90`: the dashboard view, which builds a per-service map from `data.services` and picks the selected service's entry, and the overview tab, which reduces `data.services` to one portfolio percentage. The numbers themselves are computed by the backend `/uptime` route in the status service (see [status-server-monitor-uptime](agentictoolkit://cookbook/status/service/monitor/uptime)).
+The uptime state loads per-service daily uptime over the last `days` days. It wraps one shared read keyed by the window length, requests `/uptime?days=<days>` through the dashboard's injected API client (see [status-web-api](agenticdevelopertoolkit://cookbook/status/dashboard/api)), and returns the read result typed as the uptime response. Unlike its sibling [status-web-hooks-use-response-history](agenticdevelopertoolkit://cookbook/status/dashboard/state/response-history), it sets no polling interval, so it does not poll. It has two consumers in the dashboard, both passing `90`: the dashboard view, which builds a per-service map from `data.services` and picks the selected service's entry, and the overview tab, which reduces `data.services` to one portfolio percentage. The numbers themselves are computed by the backend `/uptime` route in the status service (see [status-server-monitor-uptime](agenticdevelopertoolkit://cookbook/status/service/monitor/uptime)).
 
 ## Behavioral Requirements
 

@@ -1,7 +1,7 @@
 ---
 id: 355a8f54-aee5-45cd-a28d-12c3b7a3085c
 title: Sync Engine
-domain: agentictoolkit://cookbook/data/sync/sync-engine
+domain: agenticdevelopertoolkit://cookbook/data/sync/sync-engine
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,7 +24,7 @@ tags:
 - engine
 depends-on: []
 related:
-- agentictoolkit://cookbook/data/sync/offline-sync-client
+- agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client
 references:
 - packages/apple/AgenticToolkit/Sync/SyncEngine.swift
 - packages/apple/AgenticToolkit/Sync/SyncEvents.swift
@@ -57,7 +57,7 @@ push op, a push request, a push result, a push response), a schema-flexible
 JSON payload type, a UUIDv7 id generator, and a generated resource catalog.
 The product-specific enrollment and backend rules the engine serves are
 specified in
-[Offline Sync Client](agentictoolkit://cookbook/data/sync/offline-sync-client).
+[Offline Sync Client](agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client).
 
 Use it when a host (an app or a daemon) keeps a local mirror of server rows,
 lets the user edit offline, and needs those edits pushed later without ever

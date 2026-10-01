@@ -1,7 +1,7 @@
 ---
 id: 21cbbc1c-38a0-4e7a-8ca0-06e2f29429f5
 title: Site Wordmark
-domain: agentictoolkit://cookbook/adh/sites/site-wordmark
+domain: agenticdevelopertoolkit://cookbook/adh/sites/site-wordmark
 type: ingredient
 version: 1.3.0
 status: review

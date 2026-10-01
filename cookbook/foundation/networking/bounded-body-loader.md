@@ -1,7 +1,7 @@
 ---
 id: 14abf162-be65-4a58-9ffd-31f2145a50d3
 title: Bounded Body Loader
-domain: agentictoolkit://cookbook/foundation/networking/bounded-body-loader
+domain: agenticdevelopertoolkit://cookbook/foundation/networking/bounded-body-loader
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,10 +26,10 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Networking/BoundedBodyLoader.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Networking/BoundedBodyLoader.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/OpenVSXClientLimitsTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

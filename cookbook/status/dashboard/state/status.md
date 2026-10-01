@@ -1,7 +1,7 @@
 ---
 id: acf8decd-8427-4547-a9ec-49c0a35b0b3a
 title: Status State
-domain: agentictoolkit://cookbook/status/dashboard/state/status
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/status
 type: ingredient
 version: 1.1.0
 status: review
@@ -18,10 +18,10 @@ platforms:
 - web
 tags: []
 depends-on:
-- agentictoolkit://cookbook/status/dashboard/api
+- agenticdevelopertoolkit://cookbook/status/dashboard/api
 related:
-- agentictoolkit://cookbook/status/dashboard/state/refresh-all
-- agentictoolkit://cookbook/status/dashboard/state/config-status
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/refresh-all
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/config-status
 references: []
 approved-by: ''
 approved-date: ''

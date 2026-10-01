@@ -1,7 +1,7 @@
 ---
 id: 1cacbe17-bca6-458c-bf1f-df9efa3652be
 title: VS Code Workspace Bridge
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/workspace/main-thread-workspace
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/workspace/main-thread-workspace
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,23 +24,23 @@ tags:
 - filesystem
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/host/extension-host
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-host
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWorkspace.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/JSValueBridge.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/FileSystem/FileSystemService.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/FileSystem/FileSystemServicing.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/FileSystem/FileSystemService.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/FileSystem/FileSystemServicing.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWorkspaceTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

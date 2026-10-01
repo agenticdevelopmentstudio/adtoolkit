@@ -1,7 +1,7 @@
 ---
 id: f97631a6-531f-45c9-98a9-c5a292a2e6ea
 title: Activity TTL
-domain: agentictoolkit://cookbook/status/dashboard/state/activity-ttl
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/activity-ttl
 type: ingredient
 version: 1.1.0
 status: review

@@ -1,7 +1,7 @@
 ---
 id: aebda2fe-b953-4b3c-a65a-93d92c059fe1
 title: Choice Slider View
-domain: agentictoolkit://cookbook/ui/settings/rows/choice-slider-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/choice-slider-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,8 +22,8 @@ tags:
 - choice
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/captioned-slider-view
-- agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
 references: []
 approved-by: ''
 approved-date: ''

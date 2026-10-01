@@ -1,7 +1,7 @@
 ---
 id: 2871e97f-f971-46fe-a4d2-de57ad5c94c5
 title: Status Server Monitor Health
-domain: agentictoolkit://cookbook/status/service/monitor/health
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/health
 type: ingredient
 version: 1.0.2
 status: review
@@ -25,9 +25,9 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/health.ts (agentictoolkit)
-- packages/web/packages/status-server/test/health.test.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/probe.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/health.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/probe.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

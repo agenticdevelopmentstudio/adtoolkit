@@ -1,7 +1,7 @@
 ---
 id: f4740433-221c-4c89-b888-ee8da7aa4b3c
 title: Swatch Grid View
-domain: agentictoolkit://cookbook/ui/settings/rows/swatch-grid-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/swatch-grid-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - grid
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/color-picker-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/color-picker-view
 references: []
 approved-by: ''
 approved-date: ''
@@ -38,7 +38,7 @@ colors as a grid of fixed-size color swatches, wrapped into rows of a
 fixed column count. Per its doc comment, it generalizes the ad-hoc
 swatch/ANSI grid the terminal profiles view used to build inline. Unlike
 sibling rows such as the color picker row
-(agentictoolkit://cookbook/ui/settings/rows/color-picker-view), it is
+(agenticdevelopertoolkit://cookbook/ui/settings/rows/color-picker-view), it is
 purely a display component: it exposes one mutator, a color-replacement
 operation, and contains no interactive-control code of any kind.
 

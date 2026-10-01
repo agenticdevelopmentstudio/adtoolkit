@@ -1,7 +1,7 @@
 ---
 id: 4af83bb1-0178-462a-b0fc-ae009b63133f
 title: Personas
-domain: agentictoolkit://cookbook/adh/hub/personas
+domain: agenticdevelopertoolkit://cookbook/adh/hub/personas
 type: ingredient
 version: 1.1.0
 status: review
@@ -29,34 +29,34 @@ tags:
 - access-control
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/navigation/htdv
+- agenticdevelopertoolkit://cookbook/ui/navigation/htdv
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Personas/PersonasDataSource.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Personas/PersonasModels.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Personas/PersonasModule.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/HubError.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/PersonasModuleTests.swift (agentictoolkit)
-- packages/web/packages/data/src/personas/personas.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/fields.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/canned.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/chat-status.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/demo-preview.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/special-interests.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/interest-documents.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/persona-abilities.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/persona-user-tools.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/__tests__/canned.test.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/__tests__/chat-status.test.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/__tests__/demo-preview.test.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/__tests__/fields.test.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/__tests__/personas.test.ts (agentictoolkit)
-- packages/web/packages/data/src/personas/__tests__/special-interests.test.ts (agentictoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Personas/PersonasDataSource.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Personas/PersonasModels.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Personas/PersonasModule.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/HubError.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/PersonasModuleTests.swift (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/personas.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/fields.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/canned.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/chat-status.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/demo-preview.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/special-interests.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/interest-documents.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/persona-abilities.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/persona-user-tools.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/__tests__/canned.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/__tests__/chat-status.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/__tests__/demo-preview.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/__tests__/fields.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/__tests__/personas.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/personas/__tests__/special-interests.test.ts (agenticdevelopertoolkit)
 - agenticdevelopercookbook://guidelines/behavioral-requirements
 - agenticdevelopercookbook://guidelines/completeness
 - agenticdevelopercookbook://guidelines/cookbook-compliance
@@ -413,7 +413,7 @@ confirmed by inspection of every given source file in this domain.
   final class` conforming to `HTDVDataSource` — the navigation data source contract described
   neutrally above resolves here to `rootLevel()`/`child(for:)` returning `.level`/`.detail`/
   `.empty` cases, driving `FormSpec`/`FormSheet`/`FormViewController` from `AgenticToolkitHTDV`
-  (see `agentictoolkit://cookbook/ui/navigation/htdv`); shared Hub support types (`HubError`,
+  (see `agenticdevelopertoolkit://cookbook/ui/navigation/htdv`); shared Hub support types (`HubError`,
   `HubText`, `RailPath`, `Slug`, `JSONValue`, `FormDetails`) are reused rather than reimplemented
   per feature. `PersonasDataSource` is `Sendable` and exposes `list()`, `get(id:)`, `create(_:)`,
   `update(id:_:)`, `delete(id:)`, and `listServices()`, all `async throws`; the app repo

@@ -1,7 +1,7 @@
 ---
 id: 6bf27f64-59d0-4b2a-8715-92dba2856814
 title: SQL Storage Layer
-domain: agentictoolkit://cookbook/status/service/storage/libsql
+domain: agenticdevelopertoolkit://cookbook/status/service/storage/libsql
 type: ingredient
 version: 1.1.0
 status: review
@@ -30,14 +30,14 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/data/schema-evolution
 - agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
 related:
-- agentictoolkit://cookbook/status/service/auth
+- agenticdevelopertoolkit://cookbook/status/service/auth
 references:
-- packages/web/packages/status-server/src/libsql/client.ts (agentictoolkit)
-- packages/web/packages/status-server/src/libsql/schema.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/schema/index.ts (agentictoolkit)
-- packages/web/packages/status-server/test/migrate-idempotent.int.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/migrations-immutable.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/libsql/client.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/libsql/schema.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/schema/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/migrate-idempotent.int.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/migrations-immutable.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: a41760b2-4ffd-413b-970f-c0373c9bd3b6
 title: Settings Panel List
-domain: agentictoolkit://cookbook/ui/settings/settings-panel-list
+domain: agenticdevelopertoolkit://cookbook/ui/settings/settings-panel-list
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,10 +23,10 @@ tags:
 - search
 - split-view
 depends-on:
-- agentictoolkit://cookbook/ui/navigation/topic-list
-- agentictoolkit://cookbook/ui/settings/settings-panel
+- agenticdevelopertoolkit://cookbook/ui/navigation/topic-list
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel
 related:
-- agentictoolkit://cookbook/ui/layout/composable-tabs/settings-view
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/settings-view
 references:
 - https://developer.apple.com/design/human-interface-guidelines/lists-and-tables
 approved-by: ''
@@ -115,18 +115,18 @@ panels by index no matter what the search field currently hides.
   cell factories, and this component overrides none of that layout.
 - **Padding**: Not set by this component; inherited unmodified from the
   ancestor's own layout metrics — see
-  `agentictoolkit://cookbook/ui/navigation/topic-list#appearance`
+  `agenticdevelopertoolkit://cookbook/ui/navigation/topic-list#appearance`
   for the insets this component renders with.
 - **Font**: Not set by this component; inherited unmodified from the same
   layout metrics — see
-  `agentictoolkit://cookbook/ui/navigation/topic-list#appearance`.
+  `agenticdevelopertoolkit://cookbook/ui/navigation/topic-list#appearance`.
 - **Background**: Not set by this component; inherited unmodified — the
   ancestor's theme-application step paints the view, content stack,
   header, footer, and list/scroll background. See
-  `agentictoolkit://cookbook/ui/navigation/topic-list#appearance`.
+  `agenticdevelopertoolkit://cookbook/ui/navigation/topic-list#appearance`.
 - **Foreground/Text**: Not set by this component; inherited unmodified
   from the ancestor's row-rendering step. See
-  `agentictoolkit://cookbook/ui/navigation/topic-list#appearance`
+  `agenticdevelopertoolkit://cookbook/ui/navigation/topic-list#appearance`
   for the exact color/state mapping this component's rows use.
 - **Border**: Not set by this component. The ancestor draws a 1pt hairline
   divider above every row in a card except the first, but a plain sidebar

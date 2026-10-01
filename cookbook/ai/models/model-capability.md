@@ -1,7 +1,7 @@
 ---
 id: 4ebd01d4-1326-42fa-83ba-58b0aebb31c7
 title: Model Capability
-domain: agentictoolkit://cookbook/ai/models/model-capability
+domain: agenticdevelopertoolkit://cookbook/ai/models/model-capability
 type: ingredient
 version: 1.1.0
 status: review
@@ -20,14 +20,14 @@ tags:
 - ai-plugin
 - capability
 depends-on:
-- agentictoolkit://cookbook/ai/models/model-catalog
+- agenticdevelopertoolkit://cookbook/ai/models/model-catalog
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/ModelUseFacet.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelCapabilityTests.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelUseFacetTests.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/ModelUseFacet.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelCapabilityTests.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelUseFacetTests.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

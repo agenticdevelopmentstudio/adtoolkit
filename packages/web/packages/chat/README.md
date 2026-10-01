@@ -2,7 +2,7 @@
 
 A React chat-widget library. This README explains how consumers compose the four orthogonal axes — **layout**, **behavior**, **theme**, and **transport** — to configure a chat for their site.
 
-The toolkit is consumed via git-submodule + `file:` dependency (see the root [`.claude/CLAUDE.md`](../../.claude/CLAUDE.md)). The `exports` map in [`/package.json`](../../package.json) is the public API surface.
+The toolkit is consumed via git-submodule + `file:` dependency (see the root [`.claude/CLAUDE.md`](../../../../.claude/CLAUDE.md)). The `exports` map in [`package.json`](./package.json) is the public API surface.
 
 ---
 
@@ -80,9 +80,9 @@ The chat components have **no positioning of their own**. Where on the page the 
 
 The toolkit ships positioning helpers as opt-in CSS classes:
 
-- `.pc-inline` — fixed bottom-center floating widget (`position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); width: 360px; height: 50vh; max-height: 600px`). Defined in [`css/modes/inline.css`](./css/modes/inline.css).
-- `.pc-mobile-overlay` — full-screen slide-in for `<MobileChat>`. Defined in [`css/modes/mobile.css`](./css/modes/mobile.css).
-- `.pc-three-pane-frame` — three-column layout for `<ThreePaneChat>`. Defined in [`css/modes/three-pane.css`](./css/modes/three-pane.css).
+- `.pc-inline` — fixed bottom-center floating widget (`position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); width: 360px; height: 50vh; max-height: 600px`). Defined in [`css/modes/inline.css`](./src/css/modes/inline.css).
+- `.pc-mobile-overlay` — full-screen slide-in for `<MobileChat>`. Defined in [`css/modes/mobile.css`](./src/css/modes/mobile.css).
+- `.pc-three-pane-frame` — three-column layout for `<ThreePaneChat>`. Defined in [`css/modes/three-pane.css`](./src/css/modes/three-pane.css).
 
 Consumers opt in by wrapping (or by composing into their own layout):
 
@@ -125,7 +125,7 @@ A `<ResponsiveChat>` wrapper that bundles this is on the roadmap.
 
 ## Axis 6 — Transport (LLM hookup)
 
-The chat is **transport-agnostic**. It does not call OpenAI/Anthropic/etc. directly. All comms flow through the `ChatBackend` interface ([`backends/types.ts`](./backends/types.ts)):
+The chat is **transport-agnostic**. It does not call OpenAI/Anthropic/etc. directly. All comms flow through the `ChatBackend` interface ([`backends/types.ts`](./src/backends/types.ts)):
 
 ```ts
 interface ChatBackend {
@@ -164,10 +164,10 @@ API keys never live in the browser. Your server owns the system prompt, persona,
 
 ### Tool calls
 
-The types support tool-call events (`tool_call_started` / `tool_call_completed`, see `ChatStreamEvent` in [`types.ts`](./types.ts)) and `MessageBubble` renders `ToolCallInfo` if your stream emits them. None of the shipped backends produce these events; they're for consumers building richer streaming integrations.
+The types support tool-call events (`tool_call_started` / `tool_call_completed`, see `ChatStreamEvent` in [`types.ts`](./src/types.ts)) and `MessageBubble` renders `ToolCallInfo` if your stream emits them. None of the shipped backends produce these events; they're for consumers building richer streaming integrations.
 
 ---
 
 ## A complete example
 
-See [`examples/chat`](../../examples/chat) for a runnable demo with all axes wired into a single page (mode toggles, sizing toggles, theme picker, dark/light appearance). Run it with `./examples/chat/run.sh`.
+See the demo site's [chat example](../../../../websites/demo/app/_examples/chat.tsx) for a runnable demo with all axes wired into a single page (mode toggles, sizing toggles, theme picker, dark/light appearance). Run it with `pnpm dev` in `websites/demo/` and open `http://localhost:6006/chat`.

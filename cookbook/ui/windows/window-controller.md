@@ -1,7 +1,7 @@
 ---
 id: 8ed694b4-e238-48c5-9589-81ce6aaebb32
 title: Typed Window Content
-domain: agentictoolkit://cookbook/ui/windows/window-controller
+domain: agenticdevelopertoolkit://cookbook/ui/windows/window-controller
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,7 +21,7 @@ tags:
 - window-controller
 - view-controller
 depends-on:
-- agentictoolkit://cookbook/ui/windows/single-window-controller
+- agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller
 related: []
 references: []
 approved-by: ''
@@ -37,7 +37,7 @@ window's content instead of the untyped content controller that the
 single-instance window base's content accessor returns.
 
 The window controller is an open subclass of the single-instance window base
-(see `agentictoolkit://cookbook/ui/windows/single-window-controller`, which
+(see `agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller`, which
 this recipe depends on and does not restate) that adds exactly one member: a
 computed typed accessor that downcasts the base's content to a
 caller-supplied content-controller type. It overrides nothing else and
@@ -58,7 +58,7 @@ directly, bypassing nib/resource loading entirely.
 - **inherits-single-window-controller-lifecycle**: The window controller
   MUST inherit all window build, frame-persistence, visibility-persistence,
   and HUD behavior unchanged from the single-instance window base (see
-  `agentictoolkit://cookbook/ui/windows/single-window-controller`), since it
+  `agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller`), since it
   overrides no member of the base.
 - **exposes-typed-view-controller-accessor**: The window controller MUST
   expose a computed typed accessor equal to the base's content, downcast to
@@ -122,7 +122,7 @@ directly, bypassing nib/resource loading entirely.
 - Role/trait: Not applicable — the component sets no accessibility role,
   trait, or identifier of its own. The window's accessibility identifier is
   already the single-instance window base's concern (see
-  `agentictoolkit://cookbook/ui/windows/single-window-controller`); any
+  `agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller`); any
   content-level role belongs to whatever content-controller or view type the
   caller supplies — a child component with its own recipe, not this one.
 - Label requirements: Not applicable — the component sets no label, for the
@@ -203,7 +203,7 @@ Not applicable: the component reads no feature-flag system of its own.
 Not applicable: the component emits no analytics events of its own.
 Window-interaction tracking is the single-instance window base's concern
 (already documented as delegated to the window manager's interaction hook in
-`agentictoolkit://cookbook/ui/windows/single-window-controller`).
+`agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller`).
 
 ## Privacy
 
@@ -211,7 +211,7 @@ Window-interaction tracking is the single-instance window base's concern
 - **Storage**: None — the component persists nothing of its own; whatever
   frame/visibility persistence occurs on a window-controller instance is the
   single-instance window base's behavior, already documented in
-  `agentictoolkit://cookbook/ui/windows/single-window-controller`.
+  `agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller`.
 - **Transmission**: Not applicable — the component contains no network code.
 - **Retention**: Not applicable — the component retains no data.
 
@@ -279,7 +279,7 @@ all window lifecycle, frame-persistence, visibility-persistence, and HUD
 behavior as inherited unchanged from `SingleWindowController`, cited through
 `depends-on` rather than restated.
 **Rationale**: `SingleWindowController` already has its own canonical recipe
-(`agentictoolkit://cookbook/ui/windows/single-window-controller`); restating its
+(`agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller`); restating its
 requirements here would duplicate content that has its own source of truth
 and risks drift when that recipe changes, and would misrepresent this file's
 actual (much smaller) scope.

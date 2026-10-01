@@ -1,7 +1,7 @@
 ---
 id: e36ff99d-0ebd-42ca-87f0-2881a8bfedea
 title: Hierarchical Category Browser
-domain: agentictoolkit://cookbook/ui/navigation/hierarchical-category-browser
+domain: agenticdevelopertoolkit://cookbook/ui/navigation/hierarchical-category-browser
 type: recipe
 version: 1.3.2
 status: review

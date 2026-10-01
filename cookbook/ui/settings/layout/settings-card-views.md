@@ -1,7 +1,7 @@
 ---
 id: afa90dd0-0ee6-435b-8cac-f5c6065e7496
 title: Settings Card Views
-domain: agentictoolkit://cookbook/ui/settings/layout/settings-card-views
+domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/settings-card-views
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,7 +23,7 @@ tags:
 - group
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/layout/header-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/header-view
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
 approved-by: ''

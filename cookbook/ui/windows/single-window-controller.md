@@ -1,7 +1,7 @@
 ---
 id: 3f6268b8-410d-4d3c-979c-2a9f9f1534f3
 title: Single-Instance Window
-domain: agentictoolkit://cookbook/ui/windows/single-window-controller
+domain: agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller
 type: ingredient
 version: 1.2.0
 status: review
@@ -25,8 +25,8 @@ tags:
 depends-on: []
 related:
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
-- agentictoolkit://cookbook/ui/windows/window-controller
-- agentictoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+- agenticdevelopertoolkit://cookbook/ui/windows/window-controller
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
 references: []
 approved-by: ''
 approved-date: ''

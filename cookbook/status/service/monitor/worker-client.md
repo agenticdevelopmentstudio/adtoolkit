@@ -1,7 +1,7 @@
 ---
 id: bd58dfa4-13f8-4e92-adbe-45f8a020168d
 title: Monitor Worker Client
-domain: agentictoolkit://cookbook/status/service/monitor/worker-client
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/worker-client
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,18 +25,18 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
 - agenticdevelopercookbook://guidelines/implementing/code-quality/dependency-injection
 related:
-- agentictoolkit://cookbook/status/service/config
-- agentictoolkit://cookbook/status/service/monitor/cycle-runner
+- agenticdevelopertoolkit://cookbook/status/service/config
+- agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner
 references:
-- packages/web/packages/status-server/src/monitor/worker-client.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/worker.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agentictoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/index.ts (agentictoolkit)
-- packages/web/packages/status-server/package.json (agentictoolkit)
-- packages/web/packages/status-server/test/worker-boot.int.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/helpers/worker-boot-driver.mjs (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/worker-client.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/worker.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/cooldown/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/package.json (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/worker-boot.int.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/helpers/worker-boot-driver.mjs (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

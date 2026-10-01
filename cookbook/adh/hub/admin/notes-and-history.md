@@ -1,7 +1,7 @@
 ---
 id: b2c3bfad-cfd1-4a0f-bfbf-89f5d3712700
 title: Notes and History
-domain: agentictoolkit://cookbook/adh/hub/admin/notes-and-history
+domain: agenticdevelopertoolkit://cookbook/adh/hub/admin/notes-and-history
 type: ingredient
 version: 1.2.0
 status: review

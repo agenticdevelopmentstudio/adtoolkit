@@ -1,7 +1,7 @@
 ---
 id: f064de5a-b117-4147-96a9-c1ed11d5c976
 title: Spacing Control
-domain: agentictoolkit://cookbook/ui/controls/spacing-control
+domain: agenticdevelopertoolkit://cookbook/ui/controls/spacing-control
 type: ingredient
 version: 1.2.0
 status: review
@@ -24,10 +24,10 @@ tags:
 - range
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/layout/composable-tabs/pane-spacing
-- agentictoolkit://cookbook/ui/layout/composable-tabs/settings-view
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/pane-spacing
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/settings-view
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
-- agentictoolkit://cookbook/ui/settings/rows/captioned-slider-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view
 references: []
 approved-by: ''
 approved-date: ''
@@ -230,7 +230,7 @@ began, per `drags-gutter-two-to-one-outward`).
   space"), which the screen reader reads as the button's label. This
   mirrors the same control-to-title linkage gap already noted on the
   sibling ingredient
-  (`agentictoolkit://cookbook/ui/settings/rows/captioned-slider-view#accessibility`).
+  (`agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view#accessibility`).
 - **Announce state changes (e.g., loading, disabled)**: Not applicable — the
   component has no loading or disabled state (see States) for a change to
   announce.

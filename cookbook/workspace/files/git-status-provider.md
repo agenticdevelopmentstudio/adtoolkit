@@ -1,7 +1,7 @@
 ---
 id: 9a4aa2a8-c01b-4cec-b789-6c89c100d8d3
 title: Git Status Provider
-domain: agentictoolkit://cookbook/workspace/files/git-status-provider
+domain: agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,19 +23,19 @@ tags:
 - color
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/files/file-browser-view
-- agentictoolkit://cookbook/workspace/files/file-tree-view
+- agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view
+- agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view
 references:
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Git/GitFileStatus+Color.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Git/GitStatusProvider.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitFileStatus.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClientError.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitStatus.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitFileStatus.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitClientError.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitStatus.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/GitStatusProviderRefreshTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

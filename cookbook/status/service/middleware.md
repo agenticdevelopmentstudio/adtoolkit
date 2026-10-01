@@ -1,7 +1,7 @@
 ---
 id: d1098650-e0d0-4d4b-9bbc-3ceeac8635fe
 title: Status Server Middleware
-domain: agentictoolkit://cookbook/status/service/middleware
+domain: agenticdevelopertoolkit://cookbook/status/service/middleware
 type: ingredient
 version: 1.0.2
 status: review
@@ -27,15 +27,15 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 - agenticdevelopercookbook://guidelines/implementing/networking/error-responses
 related:
-- agentictoolkit://cookbook/status/service/auth
+- agenticdevelopertoolkit://cookbook/status/service/auth
 references:
-- packages/web/packages/status-server/src/middleware/auth.ts (agentictoolkit)
-- packages/web/packages/status-server/src/middleware/rate-limit.ts (agentictoolkit)
-- packages/web/packages/status-server/src/auth/port.ts (agentictoolkit)
-- packages/web/packages/status-server/test/auth-gate.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/rate-limit.int.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/auth.int.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/api-tokens.int.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/middleware/auth.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/middleware/rate-limit.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/auth/port.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/auth-gate.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/rate-limit.int.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/auth.int.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/api-tokens.int.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

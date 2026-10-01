@@ -1,7 +1,7 @@
 ---
 id: aea5e7b2-00d2-4f23-bfc5-8dc64e8d0d2a
 title: Composable Tabs Add Pane Sheet
-domain: agentictoolkit://cookbook/ui/layout/composable-tabs/add-pane-view
+domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/add-pane-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,7 +21,7 @@ tags:
 - sheet
 - form-control
 depends-on:
-- agentictoolkit://cookbook/ui/layout/composable-tabs
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs
 related: []
 references: []
 approved-by: ''

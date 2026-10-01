@@ -1,7 +1,7 @@
 ---
 id: 91bd3986-da9d-418e-a969-c878efa88d50
 title: Mock Chat Session
-domain: agentictoolkit://cookbook/ai/chat/mock-chat-session
+domain: agenticdevelopertoolkit://cookbook/ai/chat/mock-chat-session
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - streaming
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/chat/chat-window/chat-view
+- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-view
 references: []
 approved-by: ''
 approved-date: ''

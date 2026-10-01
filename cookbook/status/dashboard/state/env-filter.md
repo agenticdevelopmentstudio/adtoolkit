@@ -1,7 +1,7 @@
 ---
 id: dcfe8ed6-2129-44ea-a084-eb30b640c0e3
 title: Environment Filter
-domain: agentictoolkit://cookbook/status/dashboard/state/env-filter
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/env-filter
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,7 +19,7 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/state/activity-ttl
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/activity-ttl
 references: []
 approved-by: ''
 approved-date: ''

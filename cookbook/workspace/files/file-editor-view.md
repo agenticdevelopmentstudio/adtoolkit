@@ -1,7 +1,7 @@
 ---
 id: 9b1b54d5-e514-479f-b9f9-0a03cf4ebbc9
 title: File Editor View
-domain: agentictoolkit://cookbook/workspace/files/file-editor-view
+domain: agenticdevelopertoolkit://cookbook/workspace/files/file-editor-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - autosave
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/documents/document-editor-view
+- agenticdevelopertoolkit://cookbook/workspace/documents/document-editor-view
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
 approved-by: ''

@@ -1,7 +1,7 @@
 ---
 id: dbe4b3b6-ac5b-4d45-ba2a-84aad1a8582e
 title: VSIX Archive
-domain: agentictoolkit://cookbook/workspace/extensions/registry/vsix-archive
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/vsix-archive
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,12 +24,12 @@ tags:
 - code-signing
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/registry/open-vsx-client
+- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/open-vsx-client
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/VSIXArchive.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Process/CommandRunner.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/VSIXArchive.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Process/CommandRunner.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

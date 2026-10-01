@@ -1,7 +1,7 @@
 ---
 id: 28581588-68f5-465d-8e8e-3aaaaef00560
 title: Teams
-domain: agentictoolkit://cookbook/adh/hub/teams
+domain: agenticdevelopertoolkit://cookbook/adh/hub/teams
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,15 +25,15 @@ tags:
 - slug
 depends-on: []
 related:
-- agentictoolkit://cookbook/adh/hub/ecosystems/ecosystems
+- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
 references:
-- packages/web/packages/data/src/teams/team-members.ts (agentictoolkit)
-- packages/web/packages/data/src/teams/teams.ts (agentictoolkit)
-- packages/web/packages/data/src/teams/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/teams/index.ts (agentictoolkit)
-- packages/web/packages/data/src/teams/__tests__/teams.test.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
+- packages/web/packages/data/src/teams/team-members.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/teams/teams.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/teams/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/teams/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/teams/__tests__/teams.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

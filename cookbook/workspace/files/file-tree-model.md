@@ -1,7 +1,7 @@
 ---
 id: 1b64553a-ab58-4154-b9d5-30f34eb33caf
 title: File Tree Model
-domain: agentictoolkit://cookbook/workspace/files/file-tree-model
+domain: agenticdevelopertoolkit://cookbook/workspace/files/file-tree-model
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,21 +24,21 @@ tags:
 depends-on:
 - agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
 related:
-- agentictoolkit://cookbook/workspace/files/file-tree-view
-- agentictoolkit://cookbook/workspace/files/file-browser-view
+- agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view
+- agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view
 references:
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileSystem/DirectoryWatchCoordinator.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileSystem/FileSystemWatcher.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileSystem/FileTreeConfig.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileSystem/FileTreeNode.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/DirectoryWatchCoordinatorTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/FileTreeNodeTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -70,9 +70,9 @@ reference to) alive across a re-sync rather than being silently replaced by
 structurally-equal-but-distinct objects. The direct consumer of this model
 is a file tree manager (out of scope for this recipe), which in turn feeds
 the file tree view — see
-[File Tree View](agentictoolkit://cookbook/workspace/files/file-tree-view)
+[File Tree View](agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view)
 and
-[File Browser](agentictoolkit://cookbook/workspace/files/file-browser-view)
+[File Browser](agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view)
 for how this model's `nil`-vs-empty-array `children` distinction and its
 swallowed directory-read failures are consumed one layer up.
 
@@ -570,7 +570,7 @@ type's own name.
   to `rootNode`'s `children`, calling `loadChildrenIfNeeded()` from
   `.onAppear` or the row's disclosure action, in place of the AppKit
   `NSOutlineView` consumer described in
-  [File Tree View](agentictoolkit://cookbook/workspace/files/file-tree-view).
+  [File Tree View](agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view).
 - **Compose**: Model `@Published var children`/`isSyncing` as
   `mutableStateOf`/`StateFlow` fields observed from a `ViewModel`; run
   `fullSync()`/`handleChanges`'s background reads on
@@ -594,7 +594,7 @@ type's own name.
   for `FSEvents`, which has no iOS counterpart, and lives under a
   `macOS`-specific source directory with no `#if os(iOS)` branch. The direct
   AppKit consumer is `FileTreeOutlineViewController`
-  (see [File Tree View](agentictoolkit://cookbook/workspace/files/file-tree-view)).
+  (see [File Tree View](agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view)).
   An iOS port needs a different watch mechanism entirely — a
   `DispatchSource` file-descriptor watch or a polling timer — since
   `FSEventStreamCreate` is unavailable there.

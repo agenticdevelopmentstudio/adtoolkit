@@ -1,7 +1,7 @@
 ---
 id: 2e71f72e-88d7-417e-9969-a414e1ab1a10
 title: JSONC Preprocessor
-domain: agentictoolkit://cookbook/foundation/formats/jsonc-preprocessor
+domain: agenticdevelopertoolkit://cookbook/foundation/formats/jsonc-preprocessor
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,9 +23,9 @@ tags:
 - encoding-detection
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization
-- agentictoolkit://cookbook/workspace/extensions/registry/extension-registry
-- agentictoolkit://cookbook/workspace/extensions/registry/vsix-installer
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization
+- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-registry
+- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/vsix-installer
 references: []
 approved-by: ''
 approved-date: ''

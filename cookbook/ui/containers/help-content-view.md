@@ -1,7 +1,7 @@
 ---
 id: 93f50554-5ae3-4a43-b8db-539d4d804890
 title: Help Content View
-domain: agentictoolkit://cookbook/ui/containers/help-content-view
+domain: agenticdevelopertoolkit://cookbook/ui/containers/help-content-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -20,10 +20,10 @@ tags:
 - settings
 - help
 depends-on:
-- agentictoolkit://cookbook/ui/settings/layout/explanation-view
-- agentictoolkit://cookbook/ui/settings/layout/group-view
-- agentictoolkit://cookbook/ui/settings/layout/panel-scroll-view
-- agentictoolkit://cookbook/ui/settings/layout/panel-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-scroll-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-view
 related: []
 references: []
 approved-by: ''
@@ -147,7 +147,7 @@ feeds it the active panel's help content.
   the literal string `"Help"` (**fixed-help-heading**). Per-topic labeling
   is a Group View's and an Explanation View's responsibility, not this
   file's; the Explanation View's own recipe
-  (`agentictoolkit://cookbook/ui/settings/layout/explanation-view`) covers
+  (`agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view`) covers
   its label behavior.
 - **Announce state changes (e.g., loading, disabled)**: The content-setting
   operation tears down and rebuilds the entire scrolled panel with no

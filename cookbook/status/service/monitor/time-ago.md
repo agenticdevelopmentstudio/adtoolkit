@@ -1,7 +1,7 @@
 ---
 id: 839f5416-d1e3-43fb-91a0-4829abdff427
 title: Status Server Monitor Time Ago
-domain: agentictoolkit://cookbook/status/service/monitor/time-ago
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/time-ago
 type: ingredient
 version: 1.0.2
 status: review
@@ -24,9 +24,9 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/time-ago.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/integrations.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/time-ago.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

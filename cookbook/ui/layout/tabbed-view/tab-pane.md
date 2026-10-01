@@ -1,7 +1,7 @@
 ---
 id: a30725ca-fa2f-4a04-8cb0-8beddf264a0a
 title: Tab Pane
-domain: agentictoolkit://cookbook/ui/layout/tabbed-view/tab-pane
+domain: agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view/tab-pane
 type: ingredient
 version: 1.2.0
 status: review
@@ -24,7 +24,7 @@ tags:
 - card
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/layout/tabbed-view
+- agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references:
 - https://developer.apple.com/design/human-interface-guidelines
@@ -38,7 +38,7 @@ approved-date: ''
 ## Overview
 
 The component represents one session as a tab-bar item inside
-[the tabbed view](agentictoolkit://cookbook/ui/layout/tabbed-view). It
+[the tabbed view](agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view). It
 conforms to a stacked-item interface, so the hosting bar can tell it apart
 from a plain title string: it carries selection (highlighted state) and how
 far it stands from the selected tab (stack depth), and it draws itself as a

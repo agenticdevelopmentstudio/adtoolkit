@@ -1,7 +1,7 @@
 ---
 id: 66b7f642-d41d-4d84-aea7-624a5f47eef3
 title: Status Web Time Ago
-domain: agentictoolkit://cookbook/status/dashboard/logic/time-ago
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/time-ago
 type: ingredient
 version: 1.0.2
 status: review
@@ -21,12 +21,12 @@ tags:
 - pure-function
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/monitor/time-ago
-- agentictoolkit://cookbook/status/dashboard/state/now
-- agentictoolkit://cookbook/status/dashboard/session-client
+- agenticdevelopertoolkit://cookbook/status/service/monitor/time-ago
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/now
+- agenticdevelopertoolkit://cookbook/status/dashboard/session-client
 references:
-- packages/web/packages/status-web/src/lib/time-ago.ts (agentictoolkit)
-- packages/web/packages/status-web/src/lib/time-ago.test.ts (agentictoolkit)
+- packages/web/packages/status-web/src/lib/time-ago.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-web/src/lib/time-ago.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -44,7 +44,7 @@ in for testability." Its callers are dashboard components (`DeployList`, `Dashbo
 `configure/ProjectBrowser`); most take `nowMs` from the `useNow` hook, and
 `SnapshotStaleBanner` passes `Date.parse(snapshot.generatedAt)` instead. The function body
 is byte-for-byte identical to the status server's
-[Status Server Monitor Time Ago](agentictoolkit://cookbook/status/service/monitor/time-ago);
+[Status Server Monitor Time Ago](agenticdevelopertoolkit://cookbook/status/service/monitor/time-ago);
 the two copies share one contract and differ only in their callers and in the web copy
 having a test file (`time-ago.test.ts`).
 

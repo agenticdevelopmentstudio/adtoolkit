@@ -1,7 +1,7 @@
 ---
 id: 1463e7a2-e290-4b8c-8643-df9462a758e6
 title: Git Repository Record
-domain: agentictoolkit://cookbook/workspace/projects/git-repo
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/git-repo
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,11 +23,11 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/GitRepoScannerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectReconcilerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

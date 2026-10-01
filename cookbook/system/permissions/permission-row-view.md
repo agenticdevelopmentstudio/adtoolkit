@@ -1,7 +1,7 @@
 ---
 id: c3269cfa-a8ec-4ba9-bc68-9cdf98e7e1fc
 title: Permission Row View
-domain: agentictoolkit://cookbook/system/permissions/permission-row-view
+domain: agenticdevelopertoolkit://cookbook/system/permissions/permission-row-view
 type: ingredient
 version: 1.2.0
 status: review

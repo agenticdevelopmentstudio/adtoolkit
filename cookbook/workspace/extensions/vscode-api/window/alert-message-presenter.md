@@ -1,7 +1,7 @@
 ---
 id: 77fe79f8-7d45-4e51-aee0-d6de78b459e1
 title: Alert Message Presenter
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/window/alert-message-presenter
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/alert-message-presenter
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,16 +22,16 @@ tags:
 - vscode-api
 - message-presenting
 depends-on:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
 related: []
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/NSAlertMessagePresenter.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionMessagePresenting.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -41,7 +41,7 @@ approved-date: ''
 ## Overview
 
 This component is the one production implementation of the message-presenting
-role documented in [Extension Message Presenting](agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting)
+role documented in [Extension Message Presenting](agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting)
 given among the sources: it turns a `vscode.window.show*Message` request into
 a native alert attached to a window. Where the protocol recipe documents the
 contract every implementation must satisfy, this recipe documents this
@@ -247,7 +247,7 @@ Not applicable — this is a message-presentation implementation that hands the 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `window` | window-lookup function | none (required; construction takes no default) | Queried fresh on every presentation call to decide which window an alert attaches to; an absent result falls back to selecting any visible window before the message is dropped. |
-| `request` | message request | none (required, supplied per presentation call) | The per-call payload — severity, message, detail, modal flag, item titles, close-affordance indices; its own field shapes, defaults, and invariants are documented in [Extension Message Presenting](agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting) rather than restated here. |
+| `request` | message request | none (required, supplied per presentation call) | The per-call payload — severity, message, detail, modal flag, item titles, close-affordance indices; its own field shapes, defaults, and invariants are documented in [Extension Message Presenting](agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting) rather than restated here. |
 
 ## Deep Linking
 
@@ -338,7 +338,7 @@ Subsystem: the app's own identifier (or a fixed fallback literal when unset) | C
 **Approved**: pending
 
 **Decision**: `closeAffordanceIndices`'s last-wins tie-break in the cancel slot is applied here, not re-derived here.
-**Rationale**: the rule itself — the *last* flagged item's index wins the single cancel slot — is documented in full, with its upstream justification, in [ExtensionMessagePresenting](agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting)'s Design Decisions; **button-plan-cancel-slot** in this recipe applies that same rule to this conformer's concrete AppKit button layout rather than restating the rationale.
+**Rationale**: the rule itself — the *last* flagged item's index wins the single cancel slot — is documented in full, with its upstream justification, in [ExtensionMessagePresenting](agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting)'s Design Decisions; **button-plan-cancel-slot** in this recipe applies that same rule to this conformer's concrete AppKit button layout rather than restating the rationale.
 **Approved**: pending
 
 **Decision**: `presentedResponse(for:)` bridges `beginSheetModal(for:completionHandler:)` into `async` with `withCheckedContinuation`, unlike every other `beginSheetModal` site in this tier.

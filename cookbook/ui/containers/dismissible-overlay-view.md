@@ -1,7 +1,7 @@
 ---
 id: 0bc93127-4078-4bc6-a250-04dde181788b
 title: Dismissible Overlay View
-domain: agentictoolkit://cookbook/ui/containers/dismissible-overlay-view
+domain: agenticdevelopertoolkit://cookbook/ui/containers/dismissible-overlay-view
 type: ingredient
 version: 1.2.0
 status: review

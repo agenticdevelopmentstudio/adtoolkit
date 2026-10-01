@@ -1,7 +1,7 @@
 ---
 id: 94dc5dad-be14-4520-8afe-e944e59a0117
 title: VS Code API Bridge
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,23 +23,23 @@ tags:
 - bridge
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-diagnostics
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/language-models/main-thread-language-models
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-languages
-- agentictoolkit://cookbook/workspace/extensions/host/js-value-bridge
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-diagnostics
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/main-thread-language-models
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-languages
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/js-value-bridge
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/VSCodeAPISettlementTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/VSCodeAPIDisposableTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/VSCodeAPISubNamespaceTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadCommands.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

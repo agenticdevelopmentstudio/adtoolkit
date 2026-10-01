@@ -1,7 +1,7 @@
 ---
 id: d7171e41-4638-4243-9821-7a46cecf15c2
 title: Project Tab Reconciler
-domain: agentictoolkit://cookbook/workspace/projects/project-tab-reconciler
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-tab-reconciler
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,22 +24,22 @@ tags:
 - pure-function
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/projects/project-controller
-- agentictoolkit://cookbook/workspace/projects/project-checkout
-- agentictoolkit://cookbook/workspace/projects/project-database-layout
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-controller
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-checkout
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-database-layout
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTabReconciler.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectTabReconcilerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/LayoutNode.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase+Layout.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

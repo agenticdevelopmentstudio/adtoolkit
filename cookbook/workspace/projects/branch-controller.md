@@ -1,7 +1,7 @@
 ---
 id: 92f11498-2cb2-4b04-92b9-560d9f2de6ee
 title: Branch Management
-domain: agentictoolkit://cookbook/workspace/projects/branch-controller
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,25 +25,25 @@ tags:
 - command-palette
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/files/git-status-provider
-- agentictoolkit://cookbook/ui/layout/tabbed-view/tab-pane
+- agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider
+- agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view/tab-pane
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/BranchController.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/BranchController.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabPane/TabPaneDataSource.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabPane/TabPaneDelegate.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabPane/TabPaneStatusSymbol.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/ClosureMenuItemTarget.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/UI/AppShell/ClosureMenuItemTarget.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/BranchControllerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -240,7 +240,7 @@ system, neither of which this component renders itself.
   Notes), so no interleaving can observe a torn write. Refresh itself has
   no coalescing, generation counter, or in-flight guard of any kind —
   unlike its sibling git status provider (see
-  `agentictoolkit://cookbook/workspace/files/git-status-provider`), which
+  `agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider`), which
   explicitly coalesces overlapping calls into at most one queued follow-up
   and discards a stale response with a generation check. Two overlapping
   refresh calls (for example, two rapid Refresh Status invocations) each
@@ -265,7 +265,7 @@ system, neither of which this component renders itself.
   branch read specifically failed, as distinct from succeeding with an
   unchanged value; the failure's only record is the git command log kept
   by the injected git client (a collaborator, not this component — see
-  `agentictoolkit://cookbook/workspace/files/git-status-provider`'s sibling
+  `agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider`'s sibling
   git client entry).
 - **Offline or disconnected state**: Not applicable in the network sense —
   reading the current branch runs a local git command against the local
@@ -353,7 +353,7 @@ reads, stores, or transmits no credential, token, or personal data.
 This component makes no logging call of its own. The one error it
 swallows (refresh's failure path) is recorded by a different component,
 the git command log kept by the injected git client's unconditional
-recording (see `agentictoolkit://cookbook/workspace/files/git-status-provider`'s
+recording (see `agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider`'s
 sibling git client entry), not logged a second time here.
 
 | Event | Level | Message |
@@ -407,7 +407,7 @@ sibling git client entry), not logged a second time here.
   thread-affinity of its own — mirror the main-thread confinement by only
   ever touching this object from the UI thread (`DispatcherQueue`), the
   same discipline the git status provider's WinUI port already assumes
-  (see `agentictoolkit://cookbook/workspace/files/git-status-provider`).
+  (see `agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider`).
   Replace `NSHashTable<TabPaneViewController>.weakObjects()` with a
   `List<WeakReference<TabPaneViewController>>` (or a
   `ConditionalWeakTable`), pruning dead entries on each scan since .NET has

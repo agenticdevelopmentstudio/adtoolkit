@@ -1,7 +1,7 @@
 ---
 id: 3e548aa3-1103-4b3f-96ff-d2e7ff564810
 title: Font Chooser Button
-domain: agentictoolkit://cookbook/ui/settings/rows/font-chooser-button
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,8 +22,8 @@ tags:
 - picker
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/color-picker-view
-- agentictoolkit://cookbook/ui/settings/rows/button-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/color-picker-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/button-view
 references: []
 approved-by: ''
 approved-date: ''

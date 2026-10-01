@@ -1,7 +1,7 @@
 ---
 id: 0a729d47-fc2d-427c-b474-26072dc8b336
 title: Plugin Manager
-domain: agentictoolkit://cookbook/ai/plugins/plugin-manager
+domain: agenticdevelopertoolkit://cookbook/ai/plugins/plugin-manager
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,7 +24,7 @@ tags:
 - bundle-loading
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/chat/chat-context
+- agenticdevelopertoolkit://cookbook/ai/chat/chat-context
 references: []
 approved-by: ''
 approved-date: ''

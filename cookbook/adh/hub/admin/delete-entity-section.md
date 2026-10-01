@@ -1,7 +1,7 @@
 ---
 id: 96bc198e-c726-476a-bc4a-ddc1d5c0c2f8
 title: Delete Entity Section
-domain: agentictoolkit://cookbook/adh/hub/admin/delete-entity-section
+domain: agenticdevelopertoolkit://cookbook/adh/hub/admin/delete-entity-section
 type: recipe
 version: 1.4.0
 status: review
@@ -28,7 +28,7 @@ ingredients:
 depends-on: []
 related:
 - agenticdevelopertoolkit://recipes/field-group
-- agentictoolkit://cookbook/ui/navigation/focused-topic-detail
+- agenticdevelopertoolkit://cookbook/ui/navigation/focused-topic-detail
 references: []
 approved-by: ""
 approved-date: ""
@@ -305,7 +305,7 @@ Dialog · phase "warn"                    Dialog · phase "confirm"
   `delete-entity-section` (regenerate `sources.generated.ts` via
   `gen-sources.py` after source changes); verify responsively via Playwright at
   375 / 768 / 1440. Shared across every focused-topic-detail settings route
-  (`agentictoolkit://cookbook/ui/navigation/focused-topic-detail`), usually as the final
+  (`agenticdevelopertoolkit://cookbook/ui/navigation/focused-topic-detail`), usually as the final
   group in a settings pane below the `FieldGroup`s.
 - **AppKit/UIKit**: On macOS, build the disclosure from an `NSButton` with
   `bezelStyle = .disclosure` (there is no `NSDisclosureButton` class) toggling a

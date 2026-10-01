@@ -1,7 +1,7 @@
 ---
 id: 24199c9b-53ce-41a7-9cce-3b914f0a424a
 title: Chat Bubble View
-domain: agentictoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
+domain: agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,8 +22,8 @@ tags:
 - ui-component
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/chat/chat-window/chat-day-banner-view
-- agentictoolkit://cookbook/ai/chat/chat-window/chat-transcript-row-view
+- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-day-banner-view
+- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-transcript-row-view
 - agenticdevelopertoolkit://recipes/message-bubble
 references: []
 approved-by: ''

@@ -1,7 +1,7 @@
 ---
 id: 2e0bf51e-905d-476d-9c0c-48465174ba59
 title: Secure Text Edit View
-domain: agentictoolkit://cookbook/ui/settings/rows/secure-text-edit-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/secure-text-edit-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,9 +22,9 @@ tags:
 - text-input
 - secure-input
 depends-on:
-- agentictoolkit://cookbook/ui/settings/rows/text-edit-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view
 related:
-- agentictoolkit://cookbook/ui/settings/rows/checkbox-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
 references: []
 approved-by: ''
 approved-date: ''
@@ -41,14 +41,14 @@ secure storage enabled and is therefore stored through a keychain-backed
 storage provider.
 
 It specializes the text edit row
-(agentictoolkit://cookbook/ui/settings/rows/text-edit-view), overriding
+(agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view), overriding
 exactly one thing — it constructs a masking (dot-obscured) secure field in
 place of the plain field its base row would otherwise construct — so the
 entry is dot-masked. The text edit row's own row layout, theme-driven
 font/color styling, commit path, and view-model sync are out of this
 recipe's scope; only the delta this specialization adds — the masked field
 type and the ban on further specialization — is documented here. See
-agentictoolkit://cookbook/ui/settings/rows/text-edit-view for everything a
+agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view for everything a
 caller instantiating this component also gets.
 
 ## Behavioral Requirements
@@ -64,7 +64,7 @@ model, theme styling, restyling an existing placeholder, exposing the
 label and the field, the designated-initializer-only construction rule,
 and UI-thread confinement — is inherited unmodified from the text edit
 row; see
-agentictoolkit://cookbook/ui/settings/rows/text-edit-view#behavioral-requirements
+agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view#behavioral-requirements
 (arranges-row-layout, expands-text-field-to-fill-row,
 wires-text-field-action, initializes-from-view-model,
 commits-value-on-change, skips-redundant-commits, syncs-on-external-change,
@@ -80,7 +80,7 @@ normative requirement here (see Platform Notes).
 Inherited unmodified from the text edit row — corner radius, padding,
 font, background, foreground/text, border, shadow, and min/max size are
 all as documented at
-agentictoolkit://cookbook/ui/settings/rows/text-edit-view#appearance; this
+agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view#appearance; this
 component sets no font, color, or layout property of its own. The one
 appearance difference this specialization introduces is that the field's
 typed characters render as the platform's built-in dot-mask glyphs rather
@@ -92,7 +92,7 @@ row under States below.
 | State | Appearance change |
 |-------|------------------|
 | Default | Label shows the view model's title; the field's underlying value equals the view model's value, rendered as one dot-mask glyph per character — the platform's own built-in masked rendering, per the source's doc comment ("so the entry is dot-masked") — see **masks-entry-with-secure-field**. |
-| All other states | Editing, Committed, Placeholder shown, Disabled, Pressed, and Loading are inherited unmodified from the text edit row; see `agentictoolkit://cookbook/ui/settings/rows/text-edit-view#states`. |
+| All other states | Editing, Committed, Placeholder shown, Disabled, Pressed, and Loading are inherited unmodified from the text edit row; see `agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view#states`. |
 
 ## Accessibility
 
@@ -103,7 +103,7 @@ row under States below.
 - **Label requirements**: Neither the text edit row's construction (which
   this component inherits unmodified) nor this component's own source
   links the field's accessible name to the label — unlike the sibling
-  checkbox row (agentictoolkit://cookbook/ui/settings/rows/checkbox-view),
+  checkbox row (agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view),
   which links its switch to its label for exactly this reason (the
   platform gives a bare switch no name). Without that link, a screen
   reader announces the field as an unnamed secure text field rather than
@@ -120,7 +120,7 @@ row under States below.
   and the field's typed-text color both resolve to the theme's
   `primaryText` role, and placeholder text resolves to `placeholderText`,
   which is guaranteed only a 1.6:1 contrast floor against the background
-  (see `agentictoolkit://cookbook/ui/settings/rows/text-edit-view#design-decisions`
+  (see `agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view#design-decisions`
   and **contrast-ratio** in Compliance below). Whether an active theme's
   actual resolved colors clear WCAG 2.1 SC 1.4.3's 4.5:1 threshold for
   body text is a property of the chosen theme, not of this component.
@@ -135,7 +135,7 @@ All other conformance test vectors — row layout, content-hugging, action
 wiring, view-model sync, theme styling, placeholder restyling,
 constituent-view exposure, the initializer traps, and UI-thread
 confinement — are inherited unmodified from the text edit row; see
-`agentictoolkit://cookbook/ui/settings/rows/text-edit-view#conformance-test-vectors`.
+`agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view#conformance-test-vectors`.
 
 ## Edge Cases
 
@@ -146,7 +146,7 @@ networking, and the change-notification-callback overwrite when a second
 observer is constructed against the same view model — is inherited
 unmodified from the text edit row, whose initializer this component
 reuses without change; see
-`agentictoolkit://cookbook/ui/settings/rows/text-edit-view#edge-cases`.
+`agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view#edge-cases`.
 This component's own source contributes no code beyond constructing its
 field as a secure field, so it introduces no edge case of its own.
 
@@ -155,7 +155,7 @@ field as a secure field, so it introduces no edge case of its own.
 Inherited unmodified from the text edit row — this component accepts no
 configuration option of its own beyond the view-model parameter
 documented at
-`agentictoolkit://cookbook/ui/settings/rows/text-edit-view#configuration`.
+`agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view#configuration`.
 The only thing this specialization changes about that shared
 configuration is what the value is typically used for: per the source's
 own doc comment, a secret such as an API key or password.
@@ -199,7 +199,7 @@ behavior it inherits contains an analytics or telemetry call.
   platform's secure field masks on screen as it is typed. The component
   does not otherwise classify or redact this value; it holds it in the
   view model's value and passes it through unchanged (see
-  `agentictoolkit://cookbook/ui/settings/rows/text-edit-view#privacy` for
+  `agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view#privacy` for
   the storage, transmission, and retention behavior this shares with the
   text edit row, which applies to whatever string value either component
   holds).
@@ -216,7 +216,7 @@ behavior it inherits contains an analytics or telemetry call.
 - **Retention**: Inherited unmodified from the text edit row — the value
   lives only in the field and the view model's value for as long as the
   row is on screen and its view model is retained; see
-  `agentictoolkit://cookbook/ui/settings/rows/text-edit-view#privacy`.
+  `agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view#privacy`.
 - **Security-violation handling**: Not applicable — this component has no
   detection surface of its own (no validation, rate-limiting, or
   authentication logic); it only masks on-screen glyphs. Any
@@ -277,7 +277,7 @@ reference anywhere in source).
   `static`) because it overrides `TextEditView`'s `open class func
   makeTextField`, which trips SwiftLint's `static_over_final_class` rule
   (see Design Decisions). `TextEditView.swift`
-  (`agentictoolkit://cookbook/ui/settings/rows/text-edit-view`) supplies everything else — row
+  (`agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view`) supplies everything else — row
   layout, content-hugging, the `textFieldChanged(_:)` target/action commit
   path, `observeTheme` styling, and `viewModel.onChange` sync — and is out of
   this recipe's scope. There is no UIKit code path in source; a UIKit port
@@ -321,7 +321,7 @@ Decisions governing the text edit row's inherited behavior — the
 content-hugging priority, the factory-method pattern, theme-observation
 placement, placeholder-restyle timing, and the placeholder contrast floor
 — are recorded at
-`agentictoolkit://cookbook/ui/settings/rows/text-edit-view#design-decisions`
+`agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view#design-decisions`
 and are not repeated here.
 
 - **Decision**: Implement this component as a specialization of the text
@@ -382,7 +382,7 @@ linking it to `label`'s title text — see Label requirements in
 Accessibility above; `contrast-ratio` is
 `partial` because the inherited placeholder-text color clears only a 1.6:1
 floor against WCAG's 4.5:1 threshold (see
-`agentictoolkit://cookbook/ui/settings/rows/text-edit-view#design-decisions`).
+`agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view#design-decisions`).
 
 ## Change History
 

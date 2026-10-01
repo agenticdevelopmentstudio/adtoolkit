@@ -1,7 +1,7 @@
 ---
 id: 8f3c2a6e-9d41-4b8a-9c2e-7a1d5f6b3e90
 title: Language Services Editor
-domain: agentictoolkit://cookbook/workspace/language/language-services-editor
+domain: agenticdevelopertoolkit://cookbook/workspace/language/language-services-editor
 type: ingredient
 version: 1.1.0
 status: review
@@ -27,29 +27,29 @@ tags:
 depends-on: []
 related: []
 references:
-  - packages/apple/AgenticToolkit/macOS/Features/Editor/LSPCompletionDelegate.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Editor/LSPCompletionEntry.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Editor/LSPEditorAnnotationCoordinator.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Editor/LSPHoverController.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Editor/LSPJumpToDefinitionDelegate.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Editor/LanguageServerStatusModel.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Editor/OpenDocumentReloader.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Editor/ProjectLanguageServices.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Editor/SemanticTokenCaptureMapping.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Editor/SemanticTokenHighlightProvider.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Editor/TextDocumentCoordinator.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Editor/TextDocumentStorage.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/LSPCompletionDelegateTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/LSPCompletionEntryTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/LSPCompletionSnippetTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/LSPEditorAnnotationTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/LSPJumpToDefinitionDelegateTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/LanguageServerStatusModelTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/OpenDocumentReloaderTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/ProjectLanguageServicesTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/SemanticTokenCaptureMappingTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/SemanticTokenHighlightProviderTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/TextDocumentStorageTests.swift (agentictoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/LSPCompletionDelegate.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/LSPCompletionEntry.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/LSPEditorAnnotationCoordinator.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/LSPHoverController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/LSPJumpToDefinitionDelegate.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/LanguageServerStatusModel.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/OpenDocumentReloader.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/ProjectLanguageServices.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/SemanticTokenCaptureMapping.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/SemanticTokenHighlightProvider.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/TextDocumentCoordinator.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/TextDocumentStorage.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/LSPCompletionDelegateTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/LSPCompletionEntryTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/LSPCompletionSnippetTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/LSPEditorAnnotationTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/LSPJumpToDefinitionDelegateTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/LanguageServerStatusModelTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/OpenDocumentReloaderTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/ProjectLanguageServicesTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/SemanticTokenCaptureMappingTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/SemanticTokenHighlightProviderTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/TextDocumentStorageTests.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

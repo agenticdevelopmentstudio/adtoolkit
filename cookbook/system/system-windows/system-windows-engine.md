@@ -1,7 +1,7 @@
 ---
 id: fcd4bf3d-445d-4f01-99a2-ba6f71ce087b
 title: System Windows Engine
-domain: agentictoolkit://cookbook/system/system-windows/system-windows-engine
+domain: agenticdevelopertoolkit://cookbook/system/system-windows/system-windows-engine
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - accessibility-api
 depends-on: []
 related:
-- agentictoolkit://cookbook/system/system-windows/window-explorer-view
+- agenticdevelopertoolkit://cookbook/system/system-windows/window-explorer-view
 references: []
 approved-by: ''
 approved-date: ''

@@ -1,7 +1,7 @@
 ---
 id: bc4c4fe9-aa33-47a7-94d2-fb688e70caec
 title: OpenVSXClient
-domain: agentictoolkit://cookbook/workspace/extensions/registry/open-vsx-client
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/open-vsx-client
 type: ingredient
 version: 1.0.3
 status: review
@@ -23,13 +23,13 @@ tags:
 - registry-client
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Networking/BoundedBodyLoader.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionIdentityComponent.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Networking/BoundedBodyLoader.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ExtensionIdentityComponent.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

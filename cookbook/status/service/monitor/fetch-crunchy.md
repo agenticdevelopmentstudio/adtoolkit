@@ -1,7 +1,7 @@
 ---
 id: f236e0ab-2623-4543-a3d9-9ffb4ba3f147
 title: Status Server Monitor Fetch Crunchy
-domain: agentictoolkit://cookbook/status/service/monitor/fetch-crunchy
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-crunchy
 type: ingredient
 version: 1.0.2
 status: review
@@ -26,11 +26,11 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/fetch-crunchy.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agentictoolkit)
-- packages/web/packages/status-server/test/crunchy-deployments.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/fetch-crunchy.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/crunchy-deployments.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

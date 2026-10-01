@@ -1,7 +1,7 @@
 ---
 id: 1918570c-bf2e-4cd5-99a4-2df3d7038428
 title: Status Server Monitor URL
-domain: agentictoolkit://cookbook/status/service/monitor/url
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/url
 type: ingredient
 version: 1.0.2
 status: review
@@ -25,10 +25,10 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/url.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-view.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/sync.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/url.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/deploy-view.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

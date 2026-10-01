@@ -1,7 +1,7 @@
 ---
 id: 14ca2162-b5ec-48bb-95a0-90577e7c9810
 title: SQL Sync Store
-domain: agentictoolkit://cookbook/data/sync/sql-sync-store
+domain: agenticdevelopertoolkit://cookbook/data/sync/sql-sync-store
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,10 +23,10 @@ tags:
 - persistence
 - sqlite
 depends-on:
-- agentictoolkit://cookbook/data/sync/sync-engine
+- agenticdevelopertoolkit://cookbook/data/sync/sync-engine
 related:
-- agentictoolkit://cookbook/data/sync/sync-engine
-- agentictoolkit://cookbook/data/sync/offline-sync-client
+- agenticdevelopertoolkit://cookbook/data/sync/sync-engine
+- agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client
 references:
 - packages/apple/AgenticToolkit/SyncGRDB/GRDBSyncStore.swift
 - packages/apple/AgenticToolkit/SyncGRDB/SyncMirrorProjection.swift
@@ -41,7 +41,7 @@ approved-date: ''
 ## Overview
 
 This store is a SQLite-backed implementation of the store contract driven by
-the sync engine (see [Sync Engine](agentictoolkit://cookbook/data/sync/sync-engine)).
+the sync engine (see [Sync Engine](agenticdevelopertoolkit://cookbook/data/sync/sync-engine)).
 It sits on a bounded, deadline-guarded write-ahead-logged connection pool and
 keeps four bookkeeping tables plus one mirror table per registered resource:
 

@@ -1,7 +1,7 @@
 ---
 id: 633ab7e7-828e-4e7d-b2dc-9ba189536b6e
 title: "Send Invitation Modal"
-domain: agentictoolkit://cookbook/adh/hub/invitations/send-invitation-modal
+domain: agenticdevelopertoolkit://cookbook/adh/hub/invitations/send-invitation-modal
 type: recipe
 version: 1.3.0
 status: review

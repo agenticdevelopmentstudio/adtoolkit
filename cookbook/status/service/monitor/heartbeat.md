@@ -1,7 +1,7 @@
 ---
 id: dddf0162-9d32-45a4-86a8-7e2d1b313d41
 title: Status Server Monitor Heartbeat
-domain: agentictoolkit://cookbook/status/service/monitor/heartbeat
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/heartbeat
 type: ingredient
 version: 1.0.2
 status: review
@@ -24,14 +24,14 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
 - agenticdevelopercookbook://guidelines/implementing/observability/logging
 related:
-- agentictoolkit://cookbook/status/service/monitor/cycle-runner
-- agentictoolkit://cookbook/status/service/monitor/alerts
+- agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner
+- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
 references:
-- packages/web/packages/status-server/src/monitor/heartbeat.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agentictoolkit)
-- packages/web/packages/status-server/src/config/env.ts (agentictoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agentictoolkit)
-- packages/web/packages/status-server/test/heartbeat.int.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/heartbeat.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/config/env.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/heartbeat.int.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

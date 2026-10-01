@@ -1,7 +1,7 @@
 ---
 id: c68fd42e-52e5-4129-9a13-2574d13a7a0e
 title: Theme Picker View
-domain: agentictoolkit://cookbook/ui/settings/rows/theme-picker-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/theme-picker-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,10 +21,10 @@ tags:
 - form-control
 - theme
 depends-on:
-- agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
-- agentictoolkit://cookbook/ui/settings/rows/theme-preview-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/theme-preview-view
 related:
-- agentictoolkit://cookbook/ui/settings/rows/font-picker-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/font-picker-view
 references: []
 approved-by: ''
 approved-date: ''
@@ -153,11 +153,11 @@ notification or the view's own theme scope changes.
 - **Role/trait**: Not applicable — the component sets no accessibility
   role of its own; it is a plain container. The interactive control's own
   role is owned by the choice control, which has its own recipe
-  (`agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`).
+  (`agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`).
 - **Label requirements**: Not applicable to this component — linking the
   control's accessible name to its own label happens inside the choice
   control's own concept, out of this component's scope; see
-  `agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`.
+  `agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`.
 - **Announce state changes (e.g., loading, disabled)**: Not applicable —
   no loading state exists here. For disabling, see the open question under
   States.
@@ -191,7 +191,7 @@ notification or the view's own theme scope changes.
   themes were empty, the theme-choice view model's choices would be empty
   and the composed choice control would construct with zero items and no
   selection (its own documented empty-choices behavior, per
-  `agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`) —
+  `agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`) —
   this component adds no additional guard of its own around that case.
 - **Boundary values**: Not applicable — the component owns no numeric or
   length-bounded input of its own.
@@ -298,7 +298,7 @@ and is out of scope for this recipe.
 
 - **SwiftUI**: Compose a `VStack(alignment: .leading, spacing: 10)` with a
   `Picker("Theme", selection: $activeThemeID)` built from `store.allThemes`
-  (mirroring `agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`'s own SwiftUI
+  (mirroring `agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`'s own SwiftUI
   note) above a theme-preview view driven by the same `SemanticPalette`
   environment value or `@Observable` theme manager the rest of the app uses.
   Do not wire the picker's `Binding` directly to the preview's input;
@@ -309,7 +309,7 @@ and is out of scope for this recipe.
   **decouples-preview-refresh-from-selection-commit**.
 - **Compose**: A `Column` with an `ExposedDropdownMenuBox`/`DropdownMenu`
   listing available themes (the Compose analog described in
-  `agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`) followed by a preview
+  `agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`) followed by a preview
   `Composable` that reads the current theme from a shared
   `CompositionLocal`/`ViewModel` `StateFlow` rather than being called
   directly from the dropdown's `onItemSelected` — collect the flow with
@@ -318,7 +318,7 @@ and is out of scope for this recipe.
   **decouples-preview-refresh-from-selection-commit**.
 - **React/Web**: A flex column (`display: flex; flex-direction: column; gap:
   10px`) with a `<select>` of theme options (per
-  `agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`'s web note) above a
+  `agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`'s web note) above a
   preview component. Commit the selected value to global theme state (a
   context provider, a store dispatch) on `onChange`, and have the preview
   subscribe to that same global state independently (a context consumer, a
@@ -348,7 +348,7 @@ and is out of scope for this recipe.
   non-macOS platforms) identically to `NSView`.
 - **WinUI 3**: Build the row as a vertical
   `StackPanel` with `Spacing="10"`: a themed `ComboBox`/`Grid` row at the top
-  matching `agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`'s own WinUI 3
+  matching `agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`'s own WinUI 3
   note (bound to the available themes, writing the picked theme id through a
   settings service), and a preview `UserControl` beneath it. Do not update
   the preview `UserControl` directly from the `ComboBox`'s
@@ -419,7 +419,7 @@ own native-control choices rather than introducing new UI of its own.
 adds no keyboard or screen-reader behavior of its own, inheriting the
 popup's own inherited `NSPopUpButton` navigation and its already-linked
 accessible name from `PopupMenuChoiceView.swift` (see
-`agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`), but the popup's visible
+`agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`), but the popup's visible
 title is the unlocalized `"Theme"` default this file cannot override (see
 Localization) and the row itself offers no disable path (see States,
 Disabled), so this file's own compliance can't be called a full pass.

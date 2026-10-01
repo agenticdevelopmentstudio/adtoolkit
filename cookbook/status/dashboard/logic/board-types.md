@@ -1,7 +1,7 @@
 ---
 id: 15c61cfc-543c-493d-b686-c605b773be83
 title: Board Wire Types
-domain: agentictoolkit://cookbook/status/dashboard/logic/board-types
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/board-types
 type: ingredient
 version: 1.0.2
 status: review
@@ -19,9 +19,9 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/state/board
-- agentictoolkit://cookbook/status/dashboard/state/activity-history
-- agentictoolkit://cookbook/status/dashboard/api
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/board
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/activity-history
+- agenticdevelopertoolkit://cookbook/status/dashboard/api
 references: []
 approved-by: ''
 approved-date: ''
@@ -140,7 +140,7 @@ Not applicable — this is a type-only wire contract, not a visual component.
 - **Corrected deploy metadata**: When `deployments.created_at`, `project_name` or `branch` is corrected after first render, the row `id` MUST NOT change. MUST.
 - **Exhausted history**: `nextCursor: null` MUST mean no older page exists. MUST.
 - **Drift under test runs**: `pnpm test` transpiles without typechecking, so drift is caught only by `pnpm typecheck` in this package and by the dashboard host's `web` typecheck, which names the parity test under `files`. SHOULD run both in CI; a test-only run cannot detect drift.
-- **Malformed payload**: A response that does not match `Board` is not detected by this module; behavior is owned by the consumer that parses it (see [useBoard](agentictoolkit://cookbook/status/dashboard/state/board)). MUST (fact of the contract).
+- **Malformed payload**: A response that does not match `Board` is not detected by this module; behavior is owned by the consumer that parses it (see [useBoard](agenticdevelopertoolkit://cookbook/status/dashboard/state/board)). MUST (fact of the contract).
 - **Concurrency, network, offline, cancellation, timeouts**: Not applicable; the module has no runtime behavior.
 
 ## Configuration

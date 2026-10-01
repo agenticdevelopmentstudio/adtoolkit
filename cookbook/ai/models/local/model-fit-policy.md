@@ -1,7 +1,7 @@
 ---
 id: 5069f11f-e0c6-40c3-92ca-6152b8df3bc2
 title: Model Fit Policy
-domain: agentictoolkit://cookbook/ai/models/local/model-fit-policy
+domain: agenticdevelopertoolkit://cookbook/ai/models/local/model-fit-policy
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,13 +25,13 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/ModelFitPolicy.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelFitPolicyTests.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/ModelFitPolicy.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelFitPolicyTests.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ModelChooserContent.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ModelChooserViewController.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

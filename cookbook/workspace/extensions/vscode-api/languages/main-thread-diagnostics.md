@@ -1,7 +1,7 @@
 ---
 id: f5432726-5b0f-47c5-b0f6-c0b19a9db5bb
 title: VS Code Diagnostics Bridge
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-diagnostics
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-diagnostics
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,25 +23,25 @@ tags:
 - diagnostics
 - event-emitter
 depends-on:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/languages/diagnostic-types
-- agentictoolkit://cookbook/workspace/extensions/host/extension-event
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/diagnostic-types
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
 related: []
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadDiagnosticsTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/DiagnosticTypes.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/HostDiagnosticSink.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionEvent.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

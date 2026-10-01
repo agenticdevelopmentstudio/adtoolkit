@@ -1,7 +1,7 @@
 ---
 id: 18ea2506-0cbc-4c6a-880b-e94abcdc55b2
 title: 'Hub Domain: Buckets'
-domain: agentictoolkit://cookbook/adh/hub/buckets
+domain: agenticdevelopertoolkit://cookbook/adh/hub/buckets
 type: ingredient
 version: 1.0.2
 status: review
@@ -26,13 +26,13 @@ tags:
 - crud
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/navigation/htdv
+- agenticdevelopertoolkit://cookbook/ui/navigation/htdv
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Buckets/BucketsDataSource.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Buckets/BucketsModels.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Buckets/BucketsTopic.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Buckets/BucketsDataSource.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Buckets/BucketsModels.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Buckets/BucketsTopic.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/BucketsTopicTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

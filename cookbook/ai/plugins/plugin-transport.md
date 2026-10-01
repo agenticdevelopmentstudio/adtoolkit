@@ -1,7 +1,7 @@
 ---
 id: 7d5c5a1f-30df-460e-b6c4-7cfe9ab42784
 title: Plugin Transport
-domain: agentictoolkit://cookbook/ai/plugins/plugin-transport
+domain: agenticdevelopertoolkit://cookbook/ai/plugins/plugin-transport
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,11 +24,11 @@ tags:
 - subprocess
 - concurrency
 depends-on:
-- agentictoolkit://cookbook/ai/plugins/ai-plugin
-- agentictoolkit://cookbook/ai/plugins/request-spec
-- agentictoolkit://cookbook/ai/plugins/stream-event
+- agenticdevelopertoolkit://cookbook/ai/plugins/ai-plugin
+- agenticdevelopertoolkit://cookbook/ai/plugins/request-spec
+- agenticdevelopertoolkit://cookbook/ai/plugins/stream-event
 related:
-- agentictoolkit://cookbook/ai/chat/daemon-ai-chat
+- agenticdevelopertoolkit://cookbook/ai/chat/daemon-ai-chat
 references: []
 approved-by: ''
 approved-date: ''

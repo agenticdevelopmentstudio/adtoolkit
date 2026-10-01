@@ -1,7 +1,7 @@
 ---
 id: 6363b5ff-f511-4e21-9ba7-6850787dba62
 title: Settings Storage
-domain: agentictoolkit://cookbook/foundation/settings-storage
+domain: agenticdevelopertoolkit://cookbook/foundation/settings-storage
 type: ingredient
 version: 1.1.0
 status: review

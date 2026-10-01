@@ -1,7 +1,7 @@
 ---
 id: 589babce-b66e-447f-8049-f81af380bbef
 title: Admin Notes Modal
-domain: agentictoolkit://cookbook/adh/hub/admin/admin-notes-modal
+domain: agenticdevelopertoolkit://cookbook/adh/hub/admin/admin-notes-modal
 type: ingredient
 version: 1.2.0
 status: review

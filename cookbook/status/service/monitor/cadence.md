@@ -1,7 +1,7 @@
 ---
 id: 0f423d74-6916-41cb-9f3c-bdb29c416a96
 title: Status Server Monitor Cadence
-domain: agentictoolkit://cookbook/status/service/monitor/cadence
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/cadence
 type: ingredient
 version: 1.0.2
 status: review
@@ -23,15 +23,15 @@ tags:
 - server
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/monitor/alerts
-- agentictoolkit://cookbook/status/service/config
+- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
+- agenticdevelopertoolkit://cookbook/status/service/config
 references:
-- packages/web/packages/status-server/src/monitor/cadence.ts (agentictoolkit)
-- packages/web/packages/status-server/test/cadence.test.ts (agentictoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agentictoolkit)
-- packages/web/packages/status-server/test/config-cadence.test.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agentictoolkit)
-- packages/web/packages/status-server/src/scheduler.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/cadence.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/cadence.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/config-cadence.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/scheduler.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: cb25bd84-9a11-4070-8b3c-f178cff76068
 title: JavaScript Value Bridge
-domain: agentictoolkit://cookbook/workspace/extensions/host/js-value-bridge
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/host/js-value-bridge
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,34 +22,34 @@ tags:
 - bridge
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/host/extension-event
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-presenting
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-status-bar-presenting
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-presenting
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-presenting
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-status-bar-presenting
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-presenting
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/JSValueBridge.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/JSValueBridgeTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWorkspace.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguageModels.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWebviews.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadTreeViews.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

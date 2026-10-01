@@ -1,7 +1,7 @@
 ---
 id: 96009fcc-e32e-4a40-9b3c-8b4f83f1cfec
 title: Monitor Deploy Status
-domain: agentictoolkit://cookbook/status/service/monitor/deploy-status
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,13 +26,13 @@ tags:
 depends-on:
 - agenticdevelopercookbook://principles/idempotency
 related:
-- agentictoolkit://cookbook/status/service/board
-- agentictoolkit://cookbook/status/service/storage/libsql
+- agenticdevelopertoolkit://cookbook/status/service/board
+- agenticdevelopertoolkit://cookbook/status/service/storage/libsql
 references:
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agentictoolkit)
-- packages/web/packages/status-server/test/deploy-status.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/reconcile-stuck-deploys.test.ts (agentictoolkit)
-- packages/web/packages/status-web/src/lib/deploy-status-parity.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/deploy-status.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/reconcile-stuck-deploys.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-web/src/lib/deploy-status-parity.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

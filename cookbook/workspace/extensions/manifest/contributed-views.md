@@ -1,7 +1,7 @@
 ---
 id: 236659d0-ee7d-45c9-8986-181f027a4058
 title: Contributed Views
-domain: agentictoolkit://cookbook/workspace/extensions/manifest/contributed-views
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/contributed-views
 type: ingredient
 version: 1.1.0
 status: review

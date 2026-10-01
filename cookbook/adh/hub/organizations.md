@@ -1,7 +1,7 @@
 ---
 id: 98d7c94e-4db9-42c9-b36e-1a2a59409fda
 title: Organizations
-domain: agentictoolkit://cookbook/adh/hub/organizations
+domain: agenticdevelopertoolkit://cookbook/adh/hub/organizations
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,15 +24,15 @@ tags:
 - api
 depends-on: []
 related:
-- agentictoolkit://cookbook/data/services/auth/auth-client
+- agenticdevelopertoolkit://cookbook/data/services/auth/auth-client
 references:
-- packages/web/packages/data/src/organizations/organizations.ts (agentictoolkit)
-- packages/web/packages/data/src/organizations/members.ts (agentictoolkit)
-- packages/web/packages/data/src/organizations/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/organizations/index.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
-- packages/web/packages/auth/src/client.ts (agentictoolkit)
+- packages/web/packages/data/src/organizations/organizations.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/organizations/members.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/organizations/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/organizations/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

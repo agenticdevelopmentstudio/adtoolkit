@@ -1,7 +1,7 @@
 ---
 id: c5a74f9a-d38f-4724-ad1d-f6460ebc2bb0
 title: Log View
-domain: agentictoolkit://cookbook/workspace/logs/log-view
+domain: agenticdevelopertoolkit://cookbook/workspace/logs/log-view
 type: ingredient
 version: 1.2.0
 status: review

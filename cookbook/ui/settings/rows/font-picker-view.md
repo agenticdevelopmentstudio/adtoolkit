@@ -1,7 +1,7 @@
 ---
 id: 67a314b9-d324-4d0c-b9c1-86e27c01537d
 title: Font Picker View
-domain: agentictoolkit://cookbook/ui/settings/rows/font-picker-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/font-picker-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,12 +22,12 @@ tags:
 - form-control
 - font
 depends-on:
-- agentictoolkit://cookbook/ui/settings/rows/font-chooser-button
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button
 related:
-- agentictoolkit://cookbook/ui/settings/rows/color-picker-view
-- agentictoolkit://cookbook/ui/settings/rows/checkbox-view
-- agentictoolkit://cookbook/ui/settings/rows/number-field-view
-- agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/color-picker-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
 references: []
 approved-by: ''
 approved-date: ''
@@ -119,7 +119,7 @@ of that button cannot drift apart.
 - **Corner radius**: Not applicable - the component adds no custom layer or
   drawing code of its own; it only composes a label and a font chooser
   button into a row (see
-  `agentictoolkit://cookbook/ui/settings/rows/font-chooser-button` for the button's own
+  `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button` for the button's own
   corner treatment).
 - **Padding**: The row inserts a flexible spacer between the label and the
   button and sets the row's spacing to the button role's default row
@@ -134,7 +134,7 @@ of that button cannot drift apart.
   active theme's size scale and repainting on a theme change. The button's
   own font is dynamic and drawn at a fixed 12pt sample size regardless of
   the stored font's real size - see the sample-size requirement in
-  `agentictoolkit://cookbook/ui/settings/rows/font-chooser-button`.
+  `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`.
 - **Background**: None (transparent) for the label, and neither the
   component nor its row sets a background color of its own. The button's
   chrome is the font chooser button's own concern, not set here.
@@ -151,7 +151,7 @@ of that button cannot drift apart.
   constraint is set in source; sizing is governed entirely by the label
   and button's own intrinsic sizes inside the row (the button's own
   compression/hugging behavior when built without a fixed width is
-  documented in `agentictoolkit://cookbook/ui/settings/rows/font-chooser-button`).
+  documented in `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`).
 
 ## States
 
@@ -168,7 +168,7 @@ of that button cannot drift apart.
 - **Role/trait**: Not observable beyond the platform's defaults - no
   custom accessibility role or element grouping call appears in source.
   The button carries its platform's native button role (see
-  `agentictoolkit://cookbook/ui/settings/rows/font-chooser-button`); the label is a plain
+  `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`); the label is a plain
   static-text control.
 - **Label requirements**: The label and the button are laid out as sibling
   views in the same row, but source sets no accessibility linkage between
@@ -337,7 +337,7 @@ Not applicable: the source contains no logging call.
 
 - **SwiftUI**: Compose an `HStack` with `Text(viewModel.title)` and a
   trailing font-sample button (an `NSViewRepresentable` wrapping
-  `FontChooserButton`, per `agentictoolkit://cookbook/ui/settings/rows/font-chooser-button`'s
+  `FontChooserButton`, per `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`'s
   own SwiftUI note, or an equivalent custom `Button` that opens a font
   picker) bound to a `Binding` that reads and writes through the same
   view-model font, mirroring **commits-picked-font-through-view-model** and
@@ -349,7 +349,7 @@ Not applicable: the source contains no logging call.
   `FontFamily` at a fixed sample size, opening a custom
   `AlertDialog`/`ModalBottomSheet` listing available font families and
   sizes on click (there is no Android system font panel to defer to, per
-  `agentictoolkit://cookbook/ui/settings/rows/font-chooser-button`'s Compose note); commit the
+  `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`'s Compose note); commit the
   picked family/size back to the view model unconditionally on selection,
   and gate both children's `enabled`/alpha from one boolean, mirroring
   **dims-and-disables-the-row**.
@@ -377,14 +377,14 @@ Not applicable: the source contains no logging call.
   behind **requires-view-model-at-construction**), leaving the designated
   `init(viewModel:)` as the only surviving construction path. There is no
   UIKit code path in source; a UIKit port has no `NSFontPanel` equivalent to defer to
-  (see `agentictoolkit://cookbook/ui/settings/rows/font-chooser-button`'s own AppKit/UIKit
+  (see `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`'s own AppKit/UIKit
   note for the button's side of that gap) and would need its own
   `isEnabled`-driven dimming, since UIKit has no direct `alphaValue`
   analogue on `UILabel` beyond its inherited `UIView.alpha`.
 - **WinUI 3** (the reason this recipe exists): Build the row as a `Grid`
   with column definitions `Auto,*`: a `TextBlock` bound to `viewModel.title`
   in column 0, and in column 1 the font-sample `Button` described in
-  `agentictoolkit://cookbook/ui/settings/rows/font-chooser-button`'s own WinUI 3 note (its
+  `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`'s own WinUI 3 note (its
   `Content` `TextBlock` bound to the selected font's family/size at a fixed
   sample `FontSize`, opening a `ContentDialog`/`Flyout` for selection since
   WinUI ships no system font panel). Wire that dialog's confirm/selection
@@ -416,7 +416,7 @@ Not applicable: the source contains no logging call.
 **Decision**: `viewModel.onChange` is overwritten unconditionally in `init`,
 replacing any handler already registered on that `FontViewModel` instance.
 **Rationale**: Mirrors the same closure-property-assignment pattern
-documented at `agentictoolkit://cookbook/ui/settings/rows/color-picker-view#requirements/owns-on-change`;
+documented at `agenticdevelopertoolkit://cookbook/ui/settings/rows/color-picker-view#requirements/owns-on-change`;
 the view provides no way to compose with an existing observer.
 **Approved**: pending
 

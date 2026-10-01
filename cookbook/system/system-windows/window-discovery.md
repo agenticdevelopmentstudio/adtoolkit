@@ -1,7 +1,7 @@
 ---
 id: 0ab38622-b4a9-424c-89e2-5d27073680c7
 title: Window Discovery
-domain: agentictoolkit://cookbook/system/system-windows/window-discovery
+domain: agenticdevelopertoolkit://cookbook/system/system-windows/window-discovery
 type: ingredient
 version: 1.1.0
 status: review
@@ -21,7 +21,7 @@ tags:
 - window-matching
 depends-on: []
 related:
-- agentictoolkit://cookbook/system/system-windows/window-explorer-view
+- agenticdevelopertoolkit://cookbook/system/system-windows/window-explorer-view
 references: []
 approved-by: ''
 approved-date: ''

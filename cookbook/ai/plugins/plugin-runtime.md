@@ -1,7 +1,7 @@
 ---
 id: e886e448-6aa5-4359-979d-49fba713ab2a
 title: Plugin Runtime
-domain: agentictoolkit://cookbook/ai/plugins/plugin-runtime
+domain: agenticdevelopertoolkit://cookbook/ai/plugins/plugin-runtime
 type: ingredient
 version: 1.1.0
 status: review

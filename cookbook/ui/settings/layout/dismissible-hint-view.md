@@ -1,7 +1,7 @@
 ---
 id: f3d7adbb-ece4-4b00-97af-f7e3db9d5999
 title: Dismissible Hint View
-domain: agentictoolkit://cookbook/ui/settings/layout/dismissible-hint-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/dismissible-hint-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,7 +21,7 @@ tags:
 - onboarding
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/layout/conditional-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/conditional-view
 references:
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 approved-by: ''
@@ -40,7 +40,7 @@ session." It self-reports visibility changes so a hosting group view can
 collapse the padding and hairline around a card row whose content has
 hidden itself, rather than leaving an empty band behind — the same
 mechanism the sibling conditional view recipe
-(`agentictoolkit://cookbook/ui/settings/layout/conditional-view`) uses for
+(`agenticdevelopertoolkit://cookbook/ui/settings/layout/conditional-view`) uses for
 the same reason.
 
 ## Behavioral Requirements
@@ -225,7 +225,7 @@ a runtime behavior assertion.
   following turn. This is a MUST-level consequence of the mechanism this
   component observes through — the same underlying mechanism the sibling
   conditional view recipe
-  (`agentictoolkit://cookbook/ui/settings/layout/conditional-view`)
+  (`agenticdevelopertoolkit://cookbook/ui/settings/layout/conditional-view`)
   documents for its own observed setting.
 - Repeated taps on the dismiss button: each tap unconditionally sets the
   setting's value to `true` again, with no read-back of the setting's
@@ -257,7 +257,7 @@ applies.
 `buttonTitle`'s default value, the English literal `"Got It"`, carries no
 localization key or lookup — `text` and any explicit `buttonTitle`
 argument are the caller's responsibility to localize (the same treatment
-as the sibling Badge recipe (`agentictoolkit://cookbook/ui/controls/badge`)
+as the sibling Badge recipe (`agenticdevelopertoolkit://cookbook/ui/controls/badge`)
 gives fully caller-supplied text), but this one default value ships baked
 directly into the component itself; a call site that never overrides
 `buttonTitle` ships this English literal regardless of the app's locale.
@@ -415,7 +415,7 @@ Not applicable: the component performs no logging of its own.
   asynchronously-delivered change notification arrives, and avoids firing
   `onVisibilityChange` for a hosting `GroupView` before that view has even
   finished adding this row — the same reasoning the sibling `ConditionalView`
-  recipe (`agentictoolkit://cookbook/ui/settings/layout/conditional-view`) documents for its own
+  recipe (`agenticdevelopertoolkit://cookbook/ui/settings/layout/conditional-view`) documents for its own
   initial-visibility evaluation.
   **Approved**: pending
 - **Decision**: Guard the `onChange` handler with `dismissed != self.isHidden`

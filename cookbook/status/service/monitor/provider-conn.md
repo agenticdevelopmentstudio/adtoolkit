@@ -1,7 +1,7 @@
 ---
 id: 4aad9d0a-4984-4021-ad1f-d8aa6a15b066
 title: Status Server Monitor Provider Connection
-domain: agentictoolkit://cookbook/status/service/monitor/provider-conn
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/provider-conn
 type: ingredient
 version: 1.0.2
 status: review
@@ -26,19 +26,19 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
 - agenticdevelopercookbook://guidelines/implementing/security/secure-storage
 related:
-- agentictoolkit://cookbook/status/service/config
-- agentictoolkit://cookbook/status/service/monitor/enrich-deploy-errors
-- agentictoolkit://cookbook/status/service/monitor/fetch-vercel-projects
+- agenticdevelopertoolkit://cookbook/status/service/config
+- agenticdevelopertoolkit://cookbook/status/service/monitor/enrich-deploy-errors
+- agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-vercel-projects
 references:
-- packages/web/packages/status-server/src/monitor/provider-conn.ts (agentictoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agentictoolkit)
-- packages/web/packages/status-server/src/storage/ports.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/conn/index.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/enumerate/index.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/sync.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/refresh-project-meta.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/deploy-logs.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/provider-conn.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/conn/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/enumerate/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/refresh-project-meta.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/deploy-logs.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

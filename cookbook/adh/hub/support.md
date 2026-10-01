@@ -1,7 +1,7 @@
 ---
 id: 9bec9953-29fb-4184-8bf6-a6c27187c99d
 title: Support
-domain: agentictoolkit://cookbook/adh/hub/support
+domain: agenticdevelopertoolkit://cookbook/adh/hub/support
 type: ingredient
 version: 1.1.0
 status: review
@@ -28,16 +28,16 @@ tags:
 - error-handling
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/navigation/htdv
+- agenticdevelopertoolkit://cookbook/ui/navigation/htdv
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubDates.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubError+Wrap.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/SupportTests.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/HubDates.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/HubError+Wrap.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/SupportTests.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

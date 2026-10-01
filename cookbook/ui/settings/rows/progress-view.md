@@ -1,7 +1,7 @@
 ---
 id: ea2dae31-1020-4930-aa12-15f7d04967a5
 title: Progress View
-domain: agentictoolkit://cookbook/ui/settings/rows/progress-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/progress-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,9 +23,9 @@ tags:
 - progress
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/checkbox-view
-- agentictoolkit://cookbook/ui/settings/rows/button-view
-- agentictoolkit://cookbook/ui/settings/layout/explanation-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/button-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view
 references:
 - https://developer.apple.com/documentation/appkit/nsprogressindicator
 - https://developer.apple.com/documentation/uikit/uiprogressview

@@ -1,7 +1,7 @@
 ---
 id: 2067e249-4f97-4575-b8ed-8f55f6dc96df
 title: Stream Event
-domain: agentictoolkit://cookbook/ai/plugins/stream-event
+domain: agenticdevelopertoolkit://cookbook/ai/plugins/stream-event
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,7 +23,7 @@ tags:
 - decoder
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/plugins/ai-plugin
+- agenticdevelopertoolkit://cookbook/ai/plugins/ai-plugin
 references: []
 approved-by: ''
 approved-date: ''

@@ -1,7 +1,7 @@
 ---
 id: 3f2ae6c1-bc07-40ab-b15c-bb4b8c77986b
 title: Source Filter
-domain: agentictoolkit://cookbook/status/dashboard/state/source-filter
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/source-filter
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,7 +19,7 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/state/env-filter
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/env-filter
 references: []
 approved-by: ''
 approved-date: ''

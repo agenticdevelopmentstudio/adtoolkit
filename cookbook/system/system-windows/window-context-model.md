@@ -1,7 +1,7 @@
 ---
 id: d4b4359e-e9c8-439c-abcf-309fcc419348
 title: Window Context Model
-domain: agentictoolkit://cookbook/system/system-windows/window-context-model
+domain: agenticdevelopertoolkit://cookbook/system/system-windows/window-context-model
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,7 +25,7 @@ tags:
 - window-contexts
 depends-on: []
 related:
-- agentictoolkit://cookbook/system/system-windows/window-explorer-view
+- agenticdevelopertoolkit://cookbook/system/system-windows/window-explorer-view
 references:
 - https://developer.apple.com/documentation/coregraphics/1455137-cgwindowlistcopywindowinfo
 approved-by: ''

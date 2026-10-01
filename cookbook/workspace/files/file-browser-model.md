@@ -1,7 +1,7 @@
 ---
 id: fa6a7094-40c2-4302-8cf3-742a072f5bb3
 title: File System File Browser
-domain: agentictoolkit://cookbook/workspace/files/file-browser-model
+domain: agenticdevelopertoolkit://cookbook/workspace/files/file-browser-model
 type: ingredient
 version: 1.1.0
 status: review
@@ -21,8 +21,8 @@ tags:
 - restoration
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/files/file-browser-view
-- agentictoolkit://cookbook/workspace/files/file-tree-view
+- agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view
+- agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view
 references:
 - https://developer.apple.com/documentation/combine/observableobject
 - https://developer.apple.com/documentation/foundation/url/resolvingsymlinksinpath()

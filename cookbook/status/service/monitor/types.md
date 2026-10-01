@@ -1,7 +1,7 @@
 ---
 id: 5edf4567-65dd-40d7-814e-8604ee70f131
 title: Monitor Types
-domain: agentictoolkit://cookbook/status/service/monitor/types
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/types
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,28 +25,28 @@ tags:
 - server
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/monitor/health
-- agentictoolkit://cookbook/status/service/monitor/overall
-- agentictoolkit://cookbook/status/service/monitor/deploy-status
-- agentictoolkit://cookbook/status/service/monitor/provider-deploy
-- agentictoolkit://cookbook/status/service/monitor/integrations
-- agentictoolkit://cookbook/status/service/monitor/live-types
+- agenticdevelopertoolkit://cookbook/status/service/monitor/health
+- agenticdevelopertoolkit://cookbook/status/service/monitor/overall
+- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
+- agenticdevelopertoolkit://cookbook/status/service/monitor/provider-deploy
+- agenticdevelopertoolkit://cookbook/status/service/monitor/integrations
+- agenticdevelopertoolkit://cookbook/status/service/monitor/live-types
 references:
-- packages/web/packages/status-server/src/monitor/types.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/health.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/overall.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/integrations.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/self-check-stability.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/uptime.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/reads.ts (agentictoolkit)
-- packages/web/packages/status-server/test/reads.int.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/self-check-stability.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/timestamp-validation.test.ts (agentictoolkit)
-- packages/web/packages/status-web/src/types.ts (agentictoolkit)
-- packages/web/packages/status-web/src/lib/deploy-status-parity.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/overall.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/self-check-stability.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/uptime.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/reads.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/reads.int.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/self-check-stability.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/timestamp-validation.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-web/src/types.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-web/src/lib/deploy-status-parity.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

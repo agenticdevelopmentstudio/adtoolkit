@@ -1,7 +1,7 @@
 ---
 id: 5141968f-3922-47f2-a31f-ba953b92a048
 title: VS Code Commands Bridge
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,17 +25,17 @@ tags:
 - disposable
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/host/extension-event
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadCommands.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadCommandsTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

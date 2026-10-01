@@ -1,7 +1,7 @@
 ---
 id: d906afe1-a621-42f1-87c5-c71ec9d43c1e
 title: Tab Pane View
-domain: agentictoolkit://cookbook/ui/layout/tabbed-view/tab-card-view
+domain: agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view/tab-card-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,7 +23,7 @@ tags:
 - layout
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/layout/tabbed-view
+- agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references:
 - https://developer.apple.com/design/human-interface-guidelines/
@@ -36,7 +36,7 @@ approved-date: ''
 ## Overview
 
 The component is a card drawn as one tab in an edge bar of
-[the tabbed view](agentictoolkit://cookbook/ui/layout/tabbed-view): a stacked
+[the tabbed view](agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view): a stacked
 block, the same arrangement on all four edges, showing a session's
 agent/model name, status symbols, session name, working directory, branch,
 and an optional summary. It is hosted by a controller that drives its stack

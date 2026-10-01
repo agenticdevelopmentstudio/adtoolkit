@@ -1,7 +1,7 @@
 ---
 id: cef42b4b-e10e-4816-b1f8-0156699bec21
 title: Gamification
-domain: agentictoolkit://cookbook/adh/hub/gamification
+domain: agenticdevelopertoolkit://cookbook/adh/hub/gamification
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,13 +26,13 @@ tags:
 - event-types
 depends-on: []
 related:
-- agentictoolkit://cookbook/adh/hub/ecosystems/ecosystem-config
+- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystem-config
 references:
-- packages/web/packages/data/src/gamification/gamification.ts (agentictoolkit)
-- packages/web/packages/data/src/gamification/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
-- packages/web/packages/auth/src/client.ts (agentictoolkit)
+- packages/web/packages/data/src/gamification/gamification.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/gamification/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -488,8 +488,8 @@ documented 400/404/409 response into a friendlier, entity-named message
 (`error-propagation-unmodified`).
 **Rationale**: the source does not explain why. This is a notable
 divergence from the sibling component
-[Hub Domain: Ecosystem Config](agentictoolkit://cookbook/adh/hub/ecosystems/ecosystem-config),
-whose `signin-apps.ts` and `feature-flags.ts` call `rethrowConflict` to
+[Ecosystems](agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems),
+whose `ecosystems.ts` and `identifiers.ts` call `rethrowConflict` to
 turn a backend 409 into a friendly, entity-named message before it
 reaches a caller. This recipe records the observed divergence rather
 than inventing a motive the source does not state.

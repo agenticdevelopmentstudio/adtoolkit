@@ -1,7 +1,7 @@
 ---
 id: 39a7192e-7e1e-4e93-b615-312a5ddf69b0
 title: Hub Domain Access Client
-domain: agentictoolkit://cookbook/adh/hub/access
+domain: agenticdevelopertoolkit://cookbook/adh/hub/access
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,13 +26,13 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/data/src/access/access.ts (agentictoolkit)
-- packages/web/packages/data/src/access/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/access/index.ts (agentictoolkit)
-- packages/web/packages/data/src/access/__tests__/access.test.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
-- packages/web/packages/auth/src/client.ts (agentictoolkit)
+- packages/web/packages/data/src/access/access.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/access/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/access/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/access/__tests__/access.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

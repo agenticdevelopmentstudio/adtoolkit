@@ -1,7 +1,7 @@
 ---
 id: 5c2d7315-314e-4343-93fd-f3aa1a0c803e
 title: Extension Quick Pick
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
 type: ingredient
 version: 1.2.0
 status: review

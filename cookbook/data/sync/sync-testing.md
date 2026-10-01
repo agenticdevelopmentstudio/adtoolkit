@@ -1,7 +1,7 @@
 ---
 id: fbb19775-20c8-4857-9945-53947a2078df
 title: Sync Engine Testing
-domain: agentictoolkit://cookbook/data/sync/sync-testing
+domain: agenticdevelopertoolkit://cookbook/data/sync/sync-testing
 type: ingredient
 version: 1.0.2
 status: review
@@ -22,10 +22,10 @@ tags:
 - offline
 - testing
 depends-on:
-- agentictoolkit://cookbook/data/sync/sync-engine
+- agenticdevelopertoolkit://cookbook/data/sync/sync-engine
 related:
-- agentictoolkit://cookbook/data/sync/sync-engine
-- agentictoolkit://cookbook/data/sync/offline-sync-client
+- agenticdevelopertoolkit://cookbook/data/sync/sync-engine
+- agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client
 references:
 - packages/apple/AgenticToolkit/Sync/Testing/InMemorySyncStore.swift
 - packages/apple/AgenticToolkit/Sync/Testing/ScriptedSyncTransport.swift
@@ -59,7 +59,7 @@ Sync Engine Testing is the pair of reference fakes that ship inside the
 - `SyncStoreFailure` — the error enum both stores throw
   (`unknownResource`, `invalidChange`, `pullOnlyResource`).
 
-Use them to drive [SyncEngine](agentictoolkit://cookbook/data/sync/sync-engine) in unit
+Use them to drive [SyncEngine](agenticdevelopertoolkit://cookbook/data/sync/sync-engine) in unit
 tests and previews without SQLite or a network, and as the executable
 specification a port's own store and transport fakes are checked against.
 

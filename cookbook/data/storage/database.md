@@ -1,7 +1,7 @@
 ---
 id: ea580796-8b16-4832-b11d-ad3cae991ecd
 title: Database
-domain: agentictoolkit://cookbook/data/storage/database
+domain: agenticdevelopertoolkit://cookbook/data/storage/database
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,10 +23,10 @@ tags:
 - persistence
 depends-on: []
 related:
-- agentictoolkit://cookbook/data/sync/sync-engine
-- agentictoolkit://cookbook/data/sync/offline-sync-client
-- agentictoolkit://cookbook/adh/hub/content/markdown-store
-- agentictoolkit://cookbook/workspace/projects/project-database
+- agenticdevelopertoolkit://cookbook/data/sync/sync-engine
+- agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client
+- agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-database
 references:
 - packages/apple/AgenticToolkit/Database/BoundedDatabase.swift
 - packages/apple/AgenticToolkit/Database/AppStorageLocation.swift
@@ -59,10 +59,10 @@ sit on. It has two parts:
   reduced to characters a path can hold.
 
 Consumers include the sync store (see
-[Offline Sync Client](agentictoolkit://cookbook/data/sync/offline-sync-client)),
-the markdown store (see [Markdown Core](agentictoolkit://cookbook/adh/hub/content/markdown-store)),
+[Offline Sync Client](agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client)),
+the markdown store (see [Markdown Core](agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store)),
 and the project database (see
-[Project Database](agentictoolkit://cookbook/workspace/projects/project-database)),
+[Project Database](agenticdevelopertoolkit://cookbook/workspace/projects/project-database)),
 which names its file inside the storage-location helper's directory.
 
 ## Behavioral Requirements

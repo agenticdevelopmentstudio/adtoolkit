@@ -1,7 +1,7 @@
 ---
 id: 7f122a27-5b49-4f03-9439-1152249bc08f
 title: "Focused Topic Detail (FTD) View"
-domain: agentictoolkit://cookbook/ui/navigation/focused-topic-detail
+domain: agenticdevelopertoolkit://cookbook/ui/navigation/focused-topic-detail
 type: recipe
 version: 1.2.2
 status: accepted

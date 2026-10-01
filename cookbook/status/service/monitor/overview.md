@@ -1,7 +1,7 @@
 ---
 id: add8a34c-a40d-417e-9ee8-aec108e73474
 title: Status Server Monitor Overview
-domain: agentictoolkit://cookbook/status/service/monitor/overview
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/overview
 type: ingredient
 version: 1.0.2
 status: review
@@ -23,25 +23,25 @@ tags:
 - server
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/monitor/issue-sources
-- agentictoolkit://cookbook/status/service/monitor/deploy-status
-- agentictoolkit://cookbook/status/service/monitor/deploy-view
-- agentictoolkit://cookbook/status/service/board
+- agenticdevelopertoolkit://cookbook/status/service/monitor/issue-sources
+- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
+- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-view
+- agenticdevelopertoolkit://cookbook/status/service/board
 references:
-- packages/web/packages/status-server/src/monitor/overview.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/types.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/canon/index.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/canon/canon.test.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/target-key.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/ownership.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/derive-problems.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/issue-sources.ts (agentictoolkit)
-- packages/web/packages/status-server/src/lib/links.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/auto-configure.ts (agentictoolkit)
-- packages/web/packages/status-web/src/lib/deploy-view.ts (agentictoolkit)
-- packages/web/packages/status-web/src/lib/deploy-view.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/overview.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/canon/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/canon/canon.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/target-key.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/ownership.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/issue-sources.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/lib/links.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/auto-configure.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-web/src/lib/deploy-view.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-web/src/lib/deploy-view.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

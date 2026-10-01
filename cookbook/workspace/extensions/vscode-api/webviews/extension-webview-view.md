@@ -1,7 +1,7 @@
 ---
 id: 7152ec0d-01a9-433d-b1fd-1ac708400f40
 title: Extension Webview View
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-view
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,10 +22,10 @@ tags:
 - webview
 - placeholder
 depends-on:
-- agentictoolkit://cookbook/ui/layout/pane-view
-- agentictoolkit://cookbook/ui/layout/composable-tabs/view-registry
+- agenticdevelopertoolkit://cookbook/ui/layout/pane-view
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/view-registry
 related:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
 approved-by: ''
@@ -191,7 +191,7 @@ Not applicable: no `Logger`, `os_log`, or other logging call appears anywhere in
 **Approved**: pending
 
 **Decision** (AppKit/UIKit): The resolver this component depends on is a closure typealias (`ContributedWebviewResolving`) rather than a protocol.
-**Rationale**: It is one verb with one production implementation, so a protocol would exist for a single conformer; taking it as a closure parameter also lets it be supplied to this component after construction, without needing a stateful lookup type. See `agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view` for the panel this closure returns.
+**Rationale**: It is one verb with one production implementation, so a protocol would exist for a single conformer; taking it as a closure parameter also lets it be supplied to this component after construction, without needing a stateful lookup type. See `agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view` for the panel this closure returns.
 **Approved**: pending
 
 **Decision**: This component wraps the panel rather than being the webview surface itself.

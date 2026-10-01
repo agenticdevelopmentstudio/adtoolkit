@@ -1,7 +1,7 @@
 ---
 id: d4be0c36-834c-41aa-af89-478eaf660e0f
 title: Extension Update Check
-domain: agentictoolkit://cookbook/workspace/extensions/registry/extension-update-check
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-update-check
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,7 +23,7 @@ tags:
 - semantic-versioning
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
 references:
 - packages/apple/AgenticToolkit/Core/Extensions/ExtensionUpdateCheck.swift (apple)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionUpdateCheckTests.swift

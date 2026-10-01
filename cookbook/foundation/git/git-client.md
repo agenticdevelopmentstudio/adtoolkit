@@ -1,7 +1,7 @@
 ---
 id: 779ac6ea-9ef5-4fb0-8ed9-dc6b9d617344
 title: Git Client
-domain: agentictoolkit://cookbook/foundation/git/git-client
+domain: agenticdevelopertoolkit://cookbook/foundation/git/git-client
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,31 +26,31 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Git/GitBranch.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitCaller.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClientConfiguration.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClientError.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitCommandLog.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitConfigEntry.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitFileStatus.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitStatus.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitWorktree.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings+Git.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitBranch.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitCaller.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitClientConfiguration.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitClientError.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitCommandLog.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitConfigEntry.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitFileStatus.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitStatus.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitWorktree.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings+Git.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitClientTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitCommandLogTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitStatusParserTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitBranchParserTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitWorktreeParserTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitConfigEntryParserTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitClientConfigurationTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

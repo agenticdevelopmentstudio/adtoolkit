@@ -1,7 +1,7 @@
 ---
 id: 39de0dff-2b26-4d3d-97a3-ebdbdb38846a
 title: Plugin Descriptor
-domain: agentictoolkit://cookbook/ai/plugins/plugin-descriptor
+domain: agenticdevelopertoolkit://cookbook/ai/plugins/plugin-descriptor
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - provider-config
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/chat/chat-context
+- agenticdevelopertoolkit://cookbook/ai/chat/chat-context
 references: []
 approved-by: ''
 approved-date: ''

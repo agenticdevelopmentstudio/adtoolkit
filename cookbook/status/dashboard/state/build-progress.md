@@ -1,7 +1,7 @@
 ---
 id: a076f315-885d-45df-998d-68703a319ec8
 title: Build Progress
-domain: agentictoolkit://cookbook/status/dashboard/state/build-progress
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/build-progress
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,7 +19,7 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/state/activity-ttl
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/activity-ttl
 references: []
 approved-by: ''
 approved-date: ''

@@ -1,7 +1,7 @@
 ---
 id: 6a7598bd-afe0-4ae9-af93-237908b767f8
 title: Host Diagnostic Sink
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/languages/host-diagnostic-sink
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/host-diagnostic-sink
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,20 +22,20 @@ tags:
 - diagnostics
 - event-emitter
 depends-on:
-- agentictoolkit://cookbook/workspace/extensions/host/extension-event
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
 related: []
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/HostDiagnosticSink.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionEvent.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHostInstaller.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadDiagnosticsTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

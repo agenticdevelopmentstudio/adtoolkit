@@ -1,7 +1,7 @@
 ---
 id: 0cb9069f-57c6-4ac2-a952-6b331c4b6889
 title: Webview Resource URL
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-resource-url
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-resource-url
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,13 +24,13 @@ tags:
 - containment
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewResourceURL.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/WebviewResourceURL.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/WebviewResourceURLTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewSchemeHandler.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

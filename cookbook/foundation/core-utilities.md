@@ -1,7 +1,7 @@
 ---
 id: cf3a3dc9-6fed-47ba-a699-71ff806dcedd
 title: Core Utilities
-domain: agentictoolkit://cookbook/foundation/core-utilities
+domain: agenticdevelopertoolkit://cookbook/foundation/core-utilities
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,23 +26,23 @@ tags:
 - value-types
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/plugins/secret-storing
-- agentictoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range
+- agenticdevelopertoolkit://cookbook/ai/plugins/secret-storing
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range
 references:
-- packages/apple/AgenticToolkit/Core/CodableIgnored.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/KeychainHelper.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/MathUtils.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/TextFolding.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/CodableIgnored.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/KeychainHelper.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/MathUtils.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/TextFolding.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/KeychainHelperTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/SemanticVersionTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/TextFoldingTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/CGFloatClampedTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

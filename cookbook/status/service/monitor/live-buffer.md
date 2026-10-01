@@ -1,7 +1,7 @@
 ---
 id: fdfdaf38-95de-4475-98f4-e09fb998bb57
 title: Status Server Monitor Live Buffer
-domain: agentictoolkit://cookbook/status/service/monitor/live-buffer
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/live-buffer
 type: ingredient
 version: 1.0.2
 status: review
@@ -23,15 +23,15 @@ tags:
 - server
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/monitor/provider-deploy
+- agenticdevelopertoolkit://cookbook/status/service/monitor/provider-deploy
 references:
-- packages/web/packages/status-server/src/monitor/live-buffer.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/hooks.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agentictoolkit)
-- packages/web/packages/status-server/test/hooks.int.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/hooks-alerting.int.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/live-deploy-targets.int.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/live-buffer.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/hooks.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/hooks.int.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/hooks-alerting.int.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/live-deploy-targets.int.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

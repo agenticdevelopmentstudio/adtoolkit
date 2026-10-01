@@ -1,7 +1,7 @@
 ---
 id: 4d75a371-181e-4d80-a16b-022d37dc0d48
 title: Composable Tabs Leaf Pane
-domain: agentictoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,10 +23,10 @@ tags:
 - view-controller
 - accessibility
 depends-on:
-- agentictoolkit://cookbook/ui/layout/pane-view
+- agenticdevelopertoolkit://cookbook/ui/layout/pane-view
 related:
-- agentictoolkit://cookbook/ui/layout/composable-tabs/arrange-overlay-view
-- agentictoolkit://cookbook/ui/layout/composable-tabs/active-pane
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/arrange-overlay-view
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/active-pane
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
 approved-by: ''

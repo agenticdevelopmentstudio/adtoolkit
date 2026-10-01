@@ -1,7 +1,7 @@
 ---
 id: 52e34f70-c3d8-4ec6-a753-d9d3cea11789
 title: Composable Tabs View Registry
-domain: agentictoolkit://cookbook/ui/layout/composable-tabs/view-registry
+domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/view-registry
 type: ingredient
 version: 1.2.0
 status: review

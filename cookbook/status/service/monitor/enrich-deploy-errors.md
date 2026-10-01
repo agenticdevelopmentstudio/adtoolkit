@@ -1,7 +1,7 @@
 ---
 id: e029def6-7d5d-4e52-b565-e2a6612179bb
 title: Status Server Monitor Enrich Deploy Errors
-domain: agentictoolkit://cookbook/status/service/monitor/enrich-deploy-errors
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/enrich-deploy-errors
 type: ingredient
 version: 1.0.2
 status: review
@@ -29,15 +29,15 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/enrich-deploy-errors.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-railway.ts (agentictoolkit)
-- packages/web/packages/status-server/src/storage/ports.ts (agentictoolkit)
-- packages/web/packages/status-server/src/libsql/stores/deploy-store.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/conn/index.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/util/map-limit.ts (agentictoolkit)
-- packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/enrich-deploy-errors.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/fetch-railway.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/libsql/stores/deploy-store.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/conn/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/util/map-limit.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

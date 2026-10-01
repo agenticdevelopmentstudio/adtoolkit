@@ -1,7 +1,7 @@
 ---
 id: 7ba98112-0f6d-4236-ab6b-aa18b72d76bd
 title: Status Server Monitor Provider Deploy
-domain: agentictoolkit://cookbook/status/service/monitor/provider-deploy
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/provider-deploy
 type: ingredient
 version: 1.0.2
 status: review
@@ -23,16 +23,16 @@ tags:
 - server
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/monitor/deploy-status
-- agentictoolkit://cookbook/status/service/monitor/deploy-view
+- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
+- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-view
 references:
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agentictoolkit)
-- packages/web/packages/status-server/test/timestamp-validation.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/deploy-env.test.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-view.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/types.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/timestamp-validation.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/deploy-env.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/deploy-view.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -41,7 +41,7 @@ approved-date: ''
 
 ## Overview
 
-`provider-deploy.ts` (`packages/web/packages/status-server/src/monitor/provider-deploy.ts`) is a pure, synchronous logic module in the status backend. It exports the `ProviderDeploy` interface — a deployment exactly as a provider fetcher or webhook mapper reports it, described by the file's own header comment as "structurally the old deployments-table row minus the storage-only columns" (a `liveHost` is stamped from config at serve time; a `fetchedAt` was a storage artifact) — the trust-boundary timestamp parser `toValidDate`, and `providerDeployToDTO`, which shapes a `ProviderDeploy` plus a resolved `liveHost` into the wire `DeploymentDTO` (`types.ts`) that the client renders. `providerDeployToDTO` composes two other pure modules external to this file: `combinedStatus` from `deploy-status.ts` (agentictoolkit://cookbook/status/service/monitor/deploy-status) derives the single `status` field, and `deployEnv` plus `isRealEnvDeployRow` from `deploy-view.ts` (agentictoolkit://cookbook/status/service/monitor/deploy-view) derive the `tier` field. Every provider fetcher (`fetch-vercel.ts`, `fetch-railway.ts`, `fetch-cloudflare.ts`, `fetch-vercel-projects.ts`) and the webhook mapper (`webhook-events.ts`) import `toValidDate` and the `ProviderDeploy` type to construct rows at the trust boundary; `routes/reads.ts` is `providerDeployToDTO`'s only caller, once for a persisted row (via its own `rowToProviderDeploy`, which stamps `confirmedAt` from the row's `fetched_at`) and once for a live-buffer overlay row (whose `confirmedAt` is stamped from the webhook's own receipt time). This file performs no network call, no database read or write, and holds no state between calls; its one side effect is a single `console.error` call inside the module-private `isoOf` helper, reached only when a legacy row's `createdAt` is already an Invalid Date.
+`provider-deploy.ts` (`packages/web/packages/status-server/src/monitor/provider-deploy.ts`) is a pure, synchronous logic module in the status backend. It exports the `ProviderDeploy` interface — a deployment exactly as a provider fetcher or webhook mapper reports it, described by the file's own header comment as "structurally the old deployments-table row minus the storage-only columns" (a `liveHost` is stamped from config at serve time; a `fetchedAt` was a storage artifact) — the trust-boundary timestamp parser `toValidDate`, and `providerDeployToDTO`, which shapes a `ProviderDeploy` plus a resolved `liveHost` into the wire `DeploymentDTO` (`types.ts`) that the client renders. `providerDeployToDTO` composes two other pure modules external to this file: `combinedStatus` from `deploy-status.ts` (agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status) derives the single `status` field, and `deployEnv` plus `isRealEnvDeployRow` from `deploy-view.ts` (agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-view) derive the `tier` field. Every provider fetcher (`fetch-vercel.ts`, `fetch-railway.ts`, `fetch-cloudflare.ts`, `fetch-vercel-projects.ts`) and the webhook mapper (`webhook-events.ts`) import `toValidDate` and the `ProviderDeploy` type to construct rows at the trust boundary; `routes/reads.ts` is `providerDeployToDTO`'s only caller, once for a persisted row (via its own `rowToProviderDeploy`, which stamps `confirmedAt` from the row's `fetched_at`) and once for a live-buffer overlay row (whose `confirmedAt` is stamped from the webhook's own receipt time). This file performs no network call, no database read or write, and holds no state between calls; its one side effect is a single `console.error` call inside the module-private `isoOf` helper, reached only when a legacy row's `createdAt` is already an Invalid Date.
 
 ## Behavioral Requirements
 
@@ -64,8 +64,8 @@ approved-date: ''
 - **dto-passthrough-fields**: `providerDeployToDTO(d, liveHost)` MUST copy `id`, `platform`, `projectName`, `buildPhase`, `deployPhase`, `environment`, `commitHash`, `commitMessage`, `branch`, `commitRepo`, and `url` from `d` to the returned `DeploymentDTO` unchanged.
 - **dto-provider-project-id-coalesce**: `providerDeployToDTO` MUST set the result's `providerProjectId` to `d.providerProjectId ?? null`; per the mapper's own comment, this converts an absent field to an explicit wire `null` (rather than an absent JSON key) so a consumer can distinguish "this row has no provider-issued id" from "this DTO predates the field."
 - **dto-error-text-coalesce**: `providerDeployToDTO` MUST set the result's `errorText` to `d.errorText ?? null`.
-- **dto-status-derivation**: `providerDeployToDTO` MUST set the result's `status` to `combinedStatus({ buildPhase: d.buildPhase, deployPhase: d.deployPhase })` (agentictoolkit://cookbook/status/service/monitor/deploy-status, external to this file).
-- **dto-tier-gate**: `providerDeployToDTO` MUST set the result's `tier` to `null` when `isRealEnvDeployRow(d.platform, d.environment)` returns `false`, and MUST otherwise set `tier` to `deployEnv(d.platform, d.projectName, d.environment, d.branch ?? null)` (both agentictoolkit://cookbook/status/service/monitor/deploy-view, external to this file). Per the mapper's own comment, this gate MUST be evaluated and applied before `deployEnv` is called, because `deployEnv` itself has no "not a deployment of any tier" answer to give — a Vercel preview reports no `environment` yet its `branch` names a feature ref and its `projectName` is the production project's, so both of `deployEnv`'s own fallback signals would otherwise badge it with a tier it does not have.
+- **dto-status-derivation**: `providerDeployToDTO` MUST set the result's `status` to `combinedStatus({ buildPhase: d.buildPhase, deployPhase: d.deployPhase })` (agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status, external to this file).
+- **dto-tier-gate**: `providerDeployToDTO` MUST set the result's `tier` to `null` when `isRealEnvDeployRow(d.platform, d.environment)` returns `false`, and MUST otherwise set `tier` to `deployEnv(d.platform, d.projectName, d.environment, d.branch ?? null)` (both agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-view, external to this file). Per the mapper's own comment, this gate MUST be evaluated and applied before `deployEnv` is called, because `deployEnv` itself has no "not a deployment of any tier" answer to give — a Vercel preview reports no `environment` yet its `branch` names a feature ref and its `projectName` is the production project's, so both of `deployEnv`'s own fallback signals would otherwise badge it with a tier it does not have.
 - **dto-live-host-passthrough**: `providerDeployToDTO` MUST set the result's `liveHost` to its own `liveHost` parameter unchanged; it MUST NOT derive `liveHost` from any field of `d`.
 - **iso-serialize-valid-date**: The module-private `isoOf(id, d)` helper MUST return `d.toISOString()` when `Number.isFinite(d.getTime())` is `true`.
 - **iso-serialize-invalid-date-fail-soft**: `isoOf(id, d)` MUST NOT throw when `d` is an Invalid Date; it MUST instead log an error identifying `id` and the fact that the value being serialized is an invalid `createdAt` (via `console.error`), and MUST return `new Date(0).toISOString()` — the Unix epoch, ISO-encoded.

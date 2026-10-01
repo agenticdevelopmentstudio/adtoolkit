@@ -1,7 +1,7 @@
 ---
 id: 0f65ea61-3b0f-4a9b-842e-912555b7af62
 title: Provider Configuration Keys
-domain: agentictoolkit://cookbook/ai/providers/provider-config-keys
+domain: agenticdevelopertoolkit://cookbook/ai/providers/provider-config-keys
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,21 +24,21 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIProviderConfigKeysTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderConfigStore.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigSync.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigSync.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatGuardTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/AIChatWindow/AIModelChatConfig.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

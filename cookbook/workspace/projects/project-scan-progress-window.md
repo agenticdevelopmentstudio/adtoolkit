@@ -1,7 +1,7 @@
 ---
 id: 46e79f87-0dbb-4bd5-b11c-bd65ae0087a9
 title: Project Scan Progress Window
-domain: agentictoolkit://cookbook/workspace/projects/project-scan-progress-window
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-scan-progress-window
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,10 +23,10 @@ tags:
 - progress
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/projects/git-repo-scanner
+- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo-scanner
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectScanProgressWindow.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectScanProgressWindow.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

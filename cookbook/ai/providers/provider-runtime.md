@@ -1,6 +1,6 @@
 ---
 id: 3b310d80-e18d-4f45-9041-10a278f775c1
-domain: agentictoolkit://cookbook/ai/providers/provider-runtime
+domain: agenticdevelopertoolkit://cookbook/ai/providers/provider-runtime
 type: ingredient
 title: Provider Runtime
 version: 1.1.0
@@ -31,24 +31,24 @@ license: MIT
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/AI/AIProvider.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/AI/AIRequestBuilder.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/AI/ArtificialAnalysisStore.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/AI/ClaudeCLI.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/AI/ModelCatalogStore.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/AI/OllamaModelMetadata.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/AI/OllamaModelPageStore.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/AI/OpenAIModelCatalog.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/AI/AIProvider.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/AI/AIRequestBuilder.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/AI/ArtificialAnalysisStore.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/AI/ClaudeCLI.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/AI/ModelCatalogStore.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/AI/OllamaModelMetadata.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/AI/OllamaModelPageStore.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/AI/OpenAIModelCatalog.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/ModelCatalogStoreTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/ArtificialAnalysisStoreTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/OllamaModelPageStoreTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/OllamaModelMetadataTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/OpenAIModelCatalogTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 ---
 
 # Provider Runtime

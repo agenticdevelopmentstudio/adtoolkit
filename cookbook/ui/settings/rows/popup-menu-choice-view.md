@@ -1,7 +1,7 @@
 ---
 id: 3a3e4da0-e900-4281-a19c-e29cbd34cbab
 title: Popup Menu Choice View
-domain: agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,8 +22,8 @@ tags:
 - choice
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/choice-slider-view
-- agentictoolkit://cookbook/ui/settings/rows/checkbox-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/choice-slider-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
 references: []
 approved-by: ''
 approved-date: ''

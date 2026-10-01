@@ -1,7 +1,7 @@
 ---
 id: 33086772-2d36-49f5-8e1d-725163d7ce8f
 title: Project Workspace
-domain: agentictoolkit://cookbook/workspace/projects/project-workspace
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-workspace
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,42 +25,42 @@ tags:
 - caching
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/projects/project-database
-- agentictoolkit://cookbook/workspace/projects/project-database-layout
-- agentictoolkit://cookbook/workspace/projects/git-repo
-- agentictoolkit://cookbook/workspace/projects/project-checkout
-- agentictoolkit://cookbook/workspace/projects/branch-controller
-- agentictoolkit://cookbook/workspace/projects/project-controller
-- agentictoolkit://cookbook/ui/layout/composable-tabs/tabs-window
-- agentictoolkit://cookbook/foundation/git/git-client
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-database
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-database-layout
+- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-checkout
+- agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-controller
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+- agenticdevelopertoolkit://cookbook/foundation/git/git-client
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWorkspace.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWorkspace.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectWorkspaceTabsTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase+Layout.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTabReconciler.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsLayout.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabLayoutSpec.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/LayoutNode.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileBrowserDirectories.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Git/GitStatusProvider.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Editor/ProjectLanguageServices.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWorkspace.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -307,7 +307,7 @@ renders itself.
   project directories from one instance are not serialized against
   calls from another — but ordering that race, when it matters, is the
   project controller's job (see
-  `agentictoolkit://cookbook/workspace/projects/project-controller`),
+  `agenticdevelopertoolkit://cookbook/workspace/projects/project-controller`),
   not this file's; the workspace itself makes no ordering claim across
   instances.
 - **Error states**: Every database-backed operation except reading
@@ -325,7 +325,7 @@ renders itself.
   git-status-provider lookup hands out an object built on the project's
   git client, but the git subprocess calls that object goes on to make
   are that object's own concern, not this file's (see
-  `agentictoolkit://cookbook/foundation/git/git-client`).
+  `agenticdevelopertoolkit://cookbook/foundation/git/git-client`).
 - **Cancellation and timeouts**: No operation on the workspace is
   asynchronous; every operation here is a synchronous database call, a
   synchronous cache lookup, or a pure computation, so there is no
@@ -400,8 +400,8 @@ Not applicable: this file makes no analytics or event-tracking call.
 - **Storage**: Everything persisted here (tabs, pane state, project
   settings, extra directories) is written to the one database this
   project was constructed with, scoped by the repository's id; see
-  `agentictoolkit://cookbook/workspace/projects/project-database` and
-  `agentictoolkit://cookbook/workspace/projects/project-database-layout`
+  `agenticdevelopertoolkit://cookbook/workspace/projects/project-database` and
+  `agenticdevelopertoolkit://cookbook/workspace/projects/project-database-layout`
   for that store's own durability guarantees. The cache directory names,
   but does not itself populate, a filesystem location beside the
   database.
@@ -463,7 +463,7 @@ stored-tabs-load-failure-signal.
   scope this object to on the web; a browser-hosted project workspace would
   keep `repo`/tabs/pane-state/settings as component state populated from and
   persisted through a server-side API standing in for `ProjectDatabase` (see
-  `agentictoolkit://cookbook/workspace/projects/project-database`), and would
+  `agenticdevelopertoolkit://cookbook/workspace/projects/project-database`), and would
   reproduce the two weak, directory-keyed caches with a JavaScript `WeakMap`
   (optionally paired with `FinalizationRegistry` to detect eviction) keyed by
   a normalized directory identifier, since JavaScript has no
@@ -474,13 +474,13 @@ stored-tabs-load-failure-signal.
   and directory-cache logic unchanged; it would still need its own
   `FileBrowserDirectories`/`GitStatusProvider`-equivalent collaborators, and,
   per the multi-checkout note in
-  `agentictoolkit://cookbook/workspace/projects/project-controller`, iOS
+  `agenticdevelopertoolkit://cookbook/workspace/projects/project-controller`, iOS
   sandboxing makes exposing more than one linked worktree under one project
   an unusual arrangement to design a browser for.
 - **WinUI 3**: Port `ProjectWorkspace` as a plain C# class with no interface
   requiring thread-affinity of its own, touched only from the UI thread
   (`DispatcherQueue`) by convention — the same discipline
-  `agentictoolkit://cookbook/workspace/projects/branch-controller`'s WinUI
+  `agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller`'s WinUI
   port assumes for `@MainActor`. Reproduce the two `WeakCache`s with a
   `Dictionary<string, WeakReference<T>>` (or `ConditionalWeakTable`) keyed by
   a normalized, reparse-point-resolved path (`Path.GetFullPath`/
@@ -493,8 +493,8 @@ stored-tabs-load-failure-signal.
   `JSONEncoder`/`JSONDecoder`. Route every persisted accessor
   (`storedTabs`/`saveTabs`, `paneState`/`setPaneState`, `setting`/
   `setSetting`, `loadProjectDirectories`/`saveProjectDirectories`) through
-  the same SQLite-backed port `agentictoolkit://cookbook/workspace/projects/project-database`
-  and `agentictoolkit://cookbook/workspace/projects/project-database-layout`
+  the same SQLite-backed port `agenticdevelopertoolkit://cookbook/workspace/projects/project-database`
+  and `agenticdevelopertoolkit://cookbook/workspace/projects/project-database-layout`
   describe, keeping this file's swallow-and-log convention on every path
   except the one flagged as an open question above.
 

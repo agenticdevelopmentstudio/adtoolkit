@@ -1,7 +1,7 @@
 ---
 id: ff1089d7-170c-4658-91c6-e3946710b29f
 title: Local Model Server
-domain: agentictoolkit://cookbook/ai/models/local/local-model-server
+domain: agenticdevelopertoolkit://cookbook/ai/models/local/local-model-server
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,12 +22,12 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/LocalModelServer.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/LocalModelServer.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/LocalModelServerTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalModelCatalog.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalProviderModelStore.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/LocalModelCatalog.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/LocalProviderModelStore.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

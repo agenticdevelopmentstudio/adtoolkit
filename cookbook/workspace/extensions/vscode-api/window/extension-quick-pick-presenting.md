@@ -1,7 +1,7 @@
 ---
 id: 720cc52e-9567-4643-9639-014403ef0ea7
 title: Extension Quick Pick Presenting
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-presenting
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-presenting
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,18 +22,18 @@ tags:
   - presenting
 depends-on: []
 related:
-  - agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
-  - agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
+  - agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
+  - agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
 references:
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionQuickPickPresenting.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionMessagePresenting.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionInputBoxPresenting.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/UI/ExtensionPickerPresenter.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/UI/ExtensionQuickPickModel.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowQuickPickTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/ExtensionPickerPresenterTests.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionQuickPickPresenting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionMessagePresenting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionInputBoxPresenting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/UI/ExtensionPickerPresenter.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/UI/ExtensionQuickPickModel.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowQuickPickTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/ExtensionPickerPresenterTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ""
 approved-date: ""
 ---

@@ -1,7 +1,7 @@
 ---
 id: c79094d2-1f4b-4c3f-8005-8fb095fb1b40
 title: Breadcrumb Popover
-domain: agentictoolkit://cookbook/workspace/documents/breadcrumb-popover-view
+domain: agenticdevelopertoolkit://cookbook/workspace/documents/breadcrumb-popover-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - popover
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/documents/breadcrumb-view
+- agenticdevelopertoolkit://cookbook/workspace/documents/breadcrumb-view
 references: []
 approved-by: ''
 approved-date: ''

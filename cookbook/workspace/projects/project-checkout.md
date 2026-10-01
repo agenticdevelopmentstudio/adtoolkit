@@ -1,7 +1,7 @@
 ---
 id: 7ae3de90-35f2-415c-93c7-cf579689e438
 title: Project Checkout
-domain: agentictoolkit://cookbook/workspace/projects/project-checkout
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-checkout
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,12 +24,12 @@ tags:
 - value-type
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/projects/branch-controller
+- agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectCheckoutTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitWorktree.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Git/GitWorktree.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

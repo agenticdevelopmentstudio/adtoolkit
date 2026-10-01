@@ -1,7 +1,7 @@
 ---
 id: 77587f0b-5a27-44d9-a507-46bb90c9046a
 title: Status Server Routes
-domain: agentictoolkit://cookbook/status/service/routes
+domain: agenticdevelopertoolkit://cookbook/status/service/routes
 type: ingredient
 version: 1.0.2
 status: review
@@ -37,7 +37,7 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/security/token-handling
 - agenticdevelopercookbook://guidelines/implementing/testing/testing
 related:
-- agentictoolkit://cookbook/status/service/board
+- agenticdevelopertoolkit://cookbook/status/service/board
 approved-by: ''
 approved-date: ''
 references: []

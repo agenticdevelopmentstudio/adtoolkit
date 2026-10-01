@@ -1,7 +1,7 @@
 ---
 id: 2cfe57f0-cdd4-4723-a6e0-2ce4f136ce7f
 title: Badge
-domain: agentictoolkit://cookbook/ui/controls/badge
+domain: agenticdevelopertoolkit://cookbook/ui/controls/badge
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - status-indicator
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/controls/badge
+- agenticdevelopertoolkit://cookbook/ui/controls/badge
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references:
 - https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html
@@ -316,7 +316,7 @@ Not applicable: the source contains no logging calls.
   `padding: 2px 6px`, background/border/color driven by the equivalent style
   prop, and a `getContrastingTextColor` helper reimplementing the same
   0.299/0.587/0.114 luminance weights and 0.6 threshold. The sibling web
-  Badge recipe (`agentictoolkit://cookbook/ui/controls/badge`) already implements
+  Badge recipe (`agenticdevelopertoolkit://cookbook/ui/controls/badge`) already implements
   this on the web; reuse its formula so filled-style contrast decisions agree
   across platforms rather than re-deriving a possibly different threshold.
 - **AppKit / UIKit** (source platform): Source at

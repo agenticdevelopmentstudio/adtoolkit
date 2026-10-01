@@ -1,7 +1,7 @@
 ---
 id: 82065ef6-9f0a-424f-aa32-3814d9cb843f
 title: Language Services
-domain: agentictoolkit://cookbook/workspace/language/language-services
+domain: agenticdevelopertoolkit://cookbook/workspace/language/language-services
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,17 +25,17 @@ tags:
 - utf-16
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/files/file-editor-view
-- agentictoolkit://cookbook/workspace/documents/document-editor-view
+- agenticdevelopertoolkit://cookbook/workspace/files/file-editor-view
+- agenticdevelopertoolkit://cookbook/workspace/documents/document-editor-view
 references:
-- packages/apple/AgenticToolkit/Language/TextDocument.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Language/TextDocumentSaveScheduler.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Language/TextDocumentStore.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Language/URL+DocumentUri.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Concurrency/KeyedDebouncer.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/TextDocumentTests.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/TextDocumentSaveSchedulerTests.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/TextDocumentStoreTests.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Language/TextDocument.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Language/TextDocumentSaveScheduler.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Language/TextDocumentStore.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Language/URL+DocumentUri.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Concurrency/KeyedDebouncer.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/TextDocumentTests.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/TextDocumentSaveSchedulerTests.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/TextDocumentStoreTests.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

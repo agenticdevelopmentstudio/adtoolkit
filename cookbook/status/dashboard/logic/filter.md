@@ -1,7 +1,7 @@
 ---
 id: 773a1876-24d8-4134-8815-41fbc8c53096
 title: Activity Query Filter
-domain: agentictoolkit://cookbook/status/dashboard/logic/filter
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/filter
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,7 +19,7 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/state/source-filter
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/source-filter
 references: []
 approved-by: ''
 approved-date: ''
@@ -31,7 +31,7 @@ approved-date: ''
 
 This module exports one pure operation, the query-match operation, taking a haystack and a query. Its doc comment states the contract: "Case-insensitive, token-AND substring match. Every whitespace-separated token in the query must appear somewhere in the haystack. An empty query matches all."
 
-Its one call site is the activity panel. The panel keeps a row when it passes the source filter ([Source Filter](agentictoolkit://cookbook/status/dashboard/state/source-filter)) AND the query-match operation on the row's search text and the current query is true. The current query is the raw text of the panel's search box. The row's search text joins the row's name, environment, status word, detail and commit body with single spaces. The module holds no state and does no I/O.
+Its one call site is the activity panel. The panel keeps a row when it passes the source filter ([Source Filter](agenticdevelopertoolkit://cookbook/status/dashboard/state/source-filter)) AND the query-match operation on the row's search text and the current query is true. The current query is the raw text of the panel's search box. The row's search text joins the row's name, environment, status word, detail and commit body with single spaces. The module holds no state and does no I/O.
 
 ## Behavioral Requirements
 

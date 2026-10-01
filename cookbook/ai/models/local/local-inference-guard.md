@@ -1,7 +1,7 @@
 ---
 id: 8d827e9d-3638-4eaf-b04b-223b29b53389
 title: Local Inference Guard
-domain: agentictoolkit://cookbook/ai/models/local/local-inference-guard
+domain: agenticdevelopertoolkit://cookbook/ai/models/local/local-inference-guard
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,14 +24,14 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/ModelFitPolicy.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalModelCatalog.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/SystemMemoryMonitor.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/ModelFitPolicy.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/LocalModelCatalog.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/SystemMemoryMonitor.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/LocalInferenceGuardTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

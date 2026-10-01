@@ -1,7 +1,7 @@
 ---
 id: 7add8e4b-922e-4518-aa45-79bf56cdf8bc
 title: API Toolkit
-domain: agentictoolkit://cookbook/data/services/api-toolkit
+domain: agenticdevelopertoolkit://cookbook/data/services/api-toolkit
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,8 +22,8 @@ tags:
 - headless
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/crud/crud-table
-- agentictoolkit://cookbook/ui/crud/crud-record-form
+- agenticdevelopertoolkit://cookbook/ui/crud/crud-table
+- agenticdevelopertoolkit://cookbook/ui/crud/crud-record-form
 references: []
 ---
 

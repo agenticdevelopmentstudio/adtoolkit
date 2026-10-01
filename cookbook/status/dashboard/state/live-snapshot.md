@@ -1,7 +1,7 @@
 ---
 id: ca7205d2-31c0-424a-95a2-a356bed30187
 title: Live Snapshot
-domain: agentictoolkit://cookbook/status/dashboard/state/live-snapshot
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/live-snapshot
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,8 +19,8 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/api
-- agentictoolkit://cookbook/status/dashboard/state/board
+- agenticdevelopertoolkit://cookbook/status/dashboard/api
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/board
 references: []
 approved-by: ''
 approved-date: ''

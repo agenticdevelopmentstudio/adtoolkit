@@ -1,7 +1,7 @@
 ---
 id: 9ab21212-c31d-4a4a-b563-2a2666eec03d
 title: Status Web URL Host
-domain: agentictoolkit://cookbook/status/dashboard/logic/url
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/url
 type: ingredient
 version: 1.0.2
 status: review
@@ -19,9 +19,9 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/session-client
-- agentictoolkit://cookbook/status/dashboard/logic/row-detail
-- agentictoolkit://cookbook/status/dashboard/logic/stale-monitors
+- agenticdevelopertoolkit://cookbook/status/dashboard/session-client
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/row-detail
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/stale-monitors
 references:
 - https://url.spec.whatwg.org/#dom-url-host
 approved-by: ''

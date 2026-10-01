@@ -1,7 +1,7 @@
 ---
 id: d908b337-53ba-4a29-8288-4601b12a4bb7
 title: Header View
-domain: agentictoolkit://cookbook/ui/settings/layout/header-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/header-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - settings
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/layout/group-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view
 references: []
 approved-by: ''
 approved-date: ''

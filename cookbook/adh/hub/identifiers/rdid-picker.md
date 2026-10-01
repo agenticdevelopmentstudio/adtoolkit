@@ -1,7 +1,7 @@
 ---
 id: bd0d7595-f186-4aaf-bb45-5c733cfdb03d
 title: RDID Picker
-domain: agentictoolkit://cookbook/adh/hub/identifiers/rdid-picker
+domain: agenticdevelopertoolkit://cookbook/adh/hub/identifiers/rdid-picker
 type: ingredient
 version: 1.2.0
 status: review

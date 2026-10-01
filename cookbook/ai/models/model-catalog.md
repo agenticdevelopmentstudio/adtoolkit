@@ -1,7 +1,7 @@
 ---
 id: c8438764-89c9-4286-9b58-10c9cd175a97
 title: Model Catalog
-domain: agentictoolkit://cookbook/ai/models/model-catalog
+domain: agenticdevelopertoolkit://cookbook/ai/models/model-catalog
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,13 +24,13 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIPluginDescriptor.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIPluginManager.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/model-catalog.json (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIModelCatalogTests.swift (agentictoolkit)
-- packages/apple/AIPlugins/tools/generate_model_catalog.py (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIPluginDescriptor.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIPluginManager.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/model-catalog.json (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIModelCatalogTests.swift (agenticdevelopertoolkit)
+- packages/apple/AIPlugins/tools/generate_model_catalog.py (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: 47eb19ef-2c42-4a52-a60b-54b6f01c8791
 title: AI Plugin
-domain: agentictoolkit://cookbook/ai/plugins/ai-plugin
+domain: agenticdevelopertoolkit://cookbook/ai/plugins/ai-plugin
 type: ingredient
 version: 1.1.0
 status: review
@@ -20,13 +20,13 @@ tags:
 - ai-plugin-runtime
 - protocol
 depends-on:
-- agentictoolkit://cookbook/ai/chat/chat-context
-- agentictoolkit://cookbook/ai/plugins/request-spec
-- agentictoolkit://cookbook/ai/plugins/stream-event
+- agenticdevelopertoolkit://cookbook/ai/chat/chat-context
+- agenticdevelopertoolkit://cookbook/ai/plugins/request-spec
+- agenticdevelopertoolkit://cookbook/ai/plugins/stream-event
 related:
-- agentictoolkit://cookbook/ai/plugins/plugin-manager
-- agentictoolkit://cookbook/ai/plugins/plugin-transport
-- agentictoolkit://cookbook/ai/plugins/plugin-descriptor
+- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-manager
+- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-transport
+- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-descriptor
 references: []
 approved-by: ''
 approved-date: ''

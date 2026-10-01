@@ -1,7 +1,7 @@
 ---
 id: d766c910-c7ec-4163-94a6-599cf103e85a
 title: System Memory Monitor
-domain: agentictoolkit://cookbook/ai/models/local/system-memory-monitor
+domain: agenticdevelopertoolkit://cookbook/ai/models/local/system-memory-monitor
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,13 +23,13 @@ tags:
   - singleton
 depends-on: []
 related:
-  - agentictoolkit://cookbook/ai/models/local/local-inference-guard
-  - agentictoolkit://cookbook/ai/models/local/model-fit-policy
+  - agenticdevelopertoolkit://cookbook/ai/models/local/local-inference-guard
+  - agenticdevelopertoolkit://cookbook/ai/models/local/model-fit-policy
 references:
-  - packages/apple/AgenticToolkit/AIPluginKit/SystemMemoryMonitor.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/AIPluginKit/ModelFitPolicy.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/SystemMemoryMonitorTests.swift (agentictoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/SystemMemoryMonitor.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/ModelFitPolicy.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/SystemMemoryMonitorTests.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: 31fe479f-e95e-4f03-b957-faa2314a03be
 title: Status Server Config
-domain: agentictoolkit://cookbook/status/service/config
+domain: agenticdevelopertoolkit://cookbook/status/service/config
 type: ingredient
 version: 1.0.2
 status: review
@@ -26,17 +26,17 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/security/secure-storage
 - agenticdevelopercookbook://guidelines/implementing/security/cors
 related:
-- agentictoolkit://cookbook/status/service/auth
+- agenticdevelopertoolkit://cookbook/status/service/auth
 references:
-- packages/web/packages/status-server/src/config/env.ts (agentictoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agentictoolkit)
-- packages/web/packages/status-server/src/config/seed.ts (agentictoolkit)
-- packages/web/packages/status-server/src/config/index.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/config.ts (agentictoolkit)
-- packages/web/packages/status-server/test/config-env.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/config-cadence.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/config-clone.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/config.int.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/config/env.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/config/seed.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/config/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/config.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/config-env.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/config-cadence.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/config-clone.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/config.int.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -591,7 +591,7 @@ Not applicable: none of `env.ts`, `port.ts`, or `seed.ts` contains a logging cal
   rather than bundling twenty getters into one compound statement.
   **Approved**: pending
 - **Decision**: this recipe's `related` field links to
-  `agentictoolkit://cookbook/status/service/auth` one-directionally; the
+  `agenticdevelopertoolkit://cookbook/status/service/auth` one-directionally; the
   reverse link on `status-server-auth.md` was not added.
   **Rationale**: this recipe was authored under an explicit constraint to
   write only `cookbook/status/service/config.md` and touch no other file;

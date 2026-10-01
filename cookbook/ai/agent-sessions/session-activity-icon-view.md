@@ -1,7 +1,7 @@
 ---
 id: 1cecd319-1cc2-40a5-8ef0-56267eb78b89
 title: Session Activity Icon View
-domain: agentictoolkit://cookbook/ai/agent-sessions/session-activity-icon-view
+domain: agenticdevelopertoolkit://cookbook/ai/agent-sessions/session-activity-icon-view
 type: ingredient
 version: 1.2.0
 status: review

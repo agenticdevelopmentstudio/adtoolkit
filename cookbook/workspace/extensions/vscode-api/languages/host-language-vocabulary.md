@@ -1,7 +1,7 @@
 ---
 id: e711e689-78e6-403f-8f3c-ed9f29053e8e
 title: Host Language Vocabulary
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/languages/host-language-vocabulary
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/host-language-vocabulary
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,13 +23,13 @@ depends-on: []
 related: []
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/HostLanguageVocabulary.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguages.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/LanguageContributionPoint.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadLanguagesVocabularyTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

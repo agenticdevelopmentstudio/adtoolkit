@@ -1,7 +1,7 @@
 ---
 id: faa2c3f3-1ff7-45fb-b6da-efed3cc1d451
 title: Hierarchical Topic Detail View
-domain: agentictoolkit://cookbook/ui/navigation/htdv
+domain: agenticdevelopertoolkit://cookbook/ui/navigation/htdv
 type: ingredient
 version: 1.1.0
 status: review
@@ -27,28 +27,28 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/HTDV/Controller/HTDVController.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/HTDV/Model/HTDVModel.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/HTDV/Model/HTDVCellContent.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/HTDV/Layout/HTDVLayoutEngine.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/HTDV/Forms/FormSpec.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/HTDV/Forms/FormValue.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/HTDV/Forms/FormState.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/HTDV/Forms/FormValidator.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/HTDV/Markdown/MarkdownEditing.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/HTDV/Controller/HTDVController.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/HTDV/Model/HTDVModel.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/HTDV/Model/HTDVCellContent.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/HTDV/Layout/HTDVLayoutEngine.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/HTDV/Forms/FormSpec.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/HTDV/Forms/FormValue.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/HTDV/Forms/FormState.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/HTDV/Forms/FormValidator.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/HTDV/Markdown/MarkdownEditing.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/HTDVControllerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/HTDVLayoutEngineTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/HTDVModelTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/FormStateTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/FormValidatorTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/PlainTextMarkdownEditingTests.swift
-  (agentictoolkit)
-- docs/architecture/htdv.md (agentictoolkit)
+  (agenticdevelopertoolkit)
+- docs/architecture/htdv.md (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

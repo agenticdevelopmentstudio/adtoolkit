@@ -1,7 +1,7 @@
 ---
 id: ae9a73de-80c8-4deb-82ab-89c7c5854c54
 title: Status Server Monitor Format
-domain: agentictoolkit://cookbook/status/service/monitor/format
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/format
 type: ingredient
 version: 1.0.2
 status: review
@@ -25,15 +25,15 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/format.ts (agentictoolkit)
-- packages/web/packages/status-server/test/format.test.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/webhook-events.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-railway.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-cloudflare.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/derive-activity.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/derive-problems.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/format.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/format.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/webhook-events.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/fetch-railway.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/fetch-cloudflare.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/derive-activity.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

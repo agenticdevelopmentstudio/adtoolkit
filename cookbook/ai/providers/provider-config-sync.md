@@ -1,7 +1,7 @@
 ---
 id: 1d7812e7-28cb-4874-897f-43aab62fe009
 title: Provider Configuration Synchronization
-domain: agentictoolkit://cookbook/ai/providers/provider-config-sync
+domain: agenticdevelopertoolkit://cookbook/ai/providers/provider-config-sync
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,19 +24,19 @@ tags:
 - wire-contract
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/providers/provider-config-keys
+- agenticdevelopertoolkit://cookbook/ai/providers/provider-config-keys
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigSync.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigSync.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIProviderConfigSyncTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderConfigStore.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

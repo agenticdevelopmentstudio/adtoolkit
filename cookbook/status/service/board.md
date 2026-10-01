@@ -1,7 +1,7 @@
 ---
 id: 7984f592-a12d-49da-806c-ff39d9557998
 title: Status Server Board
-domain: agentictoolkit://cookbook/status/service/board
+domain: agenticdevelopertoolkit://cookbook/status/service/board
 type: ingredient
 version: 1.0.2
 status: review
@@ -31,26 +31,26 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/idempotency-keys
 - agenticdevelopercookbook://guidelines/implementing/testing/testing
 related:
-- agentictoolkit://cookbook/status/service/auth
+- agenticdevelopertoolkit://cookbook/status/service/auth
 references:
-- packages/web/packages/status-server/src/board/target-key.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/ownership.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/derive-problems.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/derive-activity.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/derive.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/facts.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/reconcile.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/types.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-target-key.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-ownership.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-deploy.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-endpoint.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-errors.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-monitoring.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-regressions.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-activity.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-activity-page.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/board-facts.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/board/target-key.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/ownership.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/derive-activity.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/derive.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/facts.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/reconcile.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/types.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-target-key.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-ownership.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-deploy.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-endpoint.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-errors.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-monitoring.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-regressions.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-activity.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-activity-page.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/board-facts.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

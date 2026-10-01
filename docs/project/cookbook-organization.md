@@ -2,7 +2,7 @@
 
 `cookbook/` holds one behavioral spec per component, window, service or model
 this repo implements (387 specs at 2026-10-01). Each spec is addressed as
-`agentictoolkit://cookbook/<group>/.../<name>` and lists the code that
+`agenticdevelopertoolkit://cookbook/<group>/.../<name>` and lists the code that
 implements it in its **Reference Implementations** table. `cookbook/cookbook.json`
 is the manifest: it declares the concept groups and maps each code root
 (`code.roots`) onto the group its specs belong in.

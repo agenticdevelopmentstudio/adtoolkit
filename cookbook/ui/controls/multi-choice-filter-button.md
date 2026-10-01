@@ -1,7 +1,7 @@
 ---
 id: bc43002d-faf6-4ffa-bc12-95f1a07f27e8
 title: Multi-Choice Filter Button
-domain: agentictoolkit://cookbook/ui/controls/multi-choice-filter-button
+domain: agenticdevelopertoolkit://cookbook/ui/controls/multi-choice-filter-button
 type: ingredient
 version: 1.2.0
 status: review

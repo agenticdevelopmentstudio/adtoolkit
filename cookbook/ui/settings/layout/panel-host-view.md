@@ -1,7 +1,7 @@
 ---
 id: faf4ec69-7b5c-44c2-a8c2-d7e81dc94ea8
 title: Panel Host View
-domain: agentictoolkit://cookbook/ui/settings/layout/panel-host-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-host-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,8 +21,8 @@ tags:
 - help
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/settings-split-view
-- agentictoolkit://cookbook/ui/settings/settings-window
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-split-view
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-window
 references: []
 approved-by: ''
 approved-date: ''

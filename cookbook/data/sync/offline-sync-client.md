@@ -1,7 +1,7 @@
 ---
 id: d3a0b65f-92c0-43c1-b04c-77638eb72044
 title: Offline Sync Client
-domain: agentictoolkit://cookbook/data/sync/offline-sync-client
+domain: agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client
 type: ingredient
 category: engine
 version: 1.2.0
@@ -28,8 +28,8 @@ references:
   - src/adh/src/sync/wire.ts (adhbackend)
   - src/adh/src/sync/registry.ts (adhbackend)
   - src/adh/docs/architecture/sync.md (adhbackend)
-  - packages/apple/AgenticToolkit/Sync (agentictoolkit)
-  - packages/apple/AgenticToolkit/SyncGRDB (agentictoolkit)
+  - packages/apple/AgenticToolkit/Sync (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/SyncGRDB (agenticdevelopertoolkit)
 ---
 
 # Offline Sync Client

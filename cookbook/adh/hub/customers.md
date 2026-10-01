@@ -1,7 +1,7 @@
 ---
 id: f81157d7-766f-42c9-a98a-44df19698bea
 title: 'Hub Domain: Customers'
-domain: agentictoolkit://cookbook/adh/hub/customers
+domain: agenticdevelopertoolkit://cookbook/adh/hub/customers
 type: ingredient
 version: 1.0.2
 status: review
@@ -26,13 +26,13 @@ tags:
 - crud
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/navigation/htdv
+- agenticdevelopertoolkit://cookbook/ui/navigation/htdv
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Customers/CustomersDataSource.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Customers/CustomersModels.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Customers/CustomersTopic.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Customers/CustomersDataSource.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Customers/CustomersModels.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Hub/Features/Customers/CustomersTopic.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/CustomersTopicTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

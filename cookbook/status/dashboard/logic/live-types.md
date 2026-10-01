@@ -1,7 +1,7 @@
 ---
 id: 41f840c1-ea34-489d-9b9f-a61dec2a9402
 title: Live Snapshot Wire Types
-domain: agentictoolkit://cookbook/status/dashboard/logic/live-types
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/live-types
 type: ingredient
 version: 1.0.2
 status: review
@@ -19,9 +19,9 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/state/live-snapshot
-- agentictoolkit://cookbook/status/dashboard/logic/board-types
-- agentictoolkit://cookbook/status/dashboard/api
+- agenticdevelopertoolkit://cookbook/status/dashboard/state/live-snapshot
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/board-types
+- agenticdevelopertoolkit://cookbook/status/dashboard/api
 references: []
 approved-by: ''
 approved-date: ''

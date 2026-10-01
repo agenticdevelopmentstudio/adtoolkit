@@ -1,7 +1,7 @@
 ---
 id: fcff7387-19aa-49ab-b75d-f0c7bfcdf27c
 title: Project Reconciler
-domain: agentictoolkit://cookbook/workspace/projects/project-reconciler
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-reconciler
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,10 +24,10 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectReconciler.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectReconciler.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectReconcilerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: cfe08d5c-029c-4e19-82ab-daf8329c5972
 title: Status Slug
-domain: agentictoolkit://cookbook/status/dashboard/logic/slug
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/slug
 type: ingredient
 version: 1.1.0
 status: review
@@ -21,7 +21,7 @@ tags:
 - validation
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/logic/peer-url
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/peer-url
 references: []
 approved-by: ''
 approved-date: ''

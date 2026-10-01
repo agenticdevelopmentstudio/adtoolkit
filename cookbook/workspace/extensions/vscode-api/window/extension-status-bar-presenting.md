@@ -1,7 +1,7 @@
 ---
 id: 84292002-9039-4f8b-9bfb-69f9b4832e4f
 title: Extension Status Bar Presenting
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-status-bar-presenting
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-status-bar-presenting
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,14 +25,14 @@ depends-on: []
 related: []
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionStatusBarPresenting.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/UI/WindowFooterStatusBarPresenter.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowStatusBarTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

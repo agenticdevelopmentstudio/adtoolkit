@@ -1,7 +1,7 @@
 ---
 id: 7f1b8bef-e78e-4cac-be55-c948fe9062e5
 title: Project Window Manager
-domain: agentictoolkit://cookbook/workspace/projects/project-window-manager
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-window-manager
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,27 +22,27 @@ tags:
 - window-controller
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/projects/project-controller
-- agentictoolkit://cookbook/ui/layout/composable-tabs/tabs-window
-- agentictoolkit://cookbook/workspace/projects/git-repo
-- agentictoolkit://cookbook/workspace/projects/project-database
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-controller
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-database
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWindowManager.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWorkspace.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWorkspace.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/SystemIntegration/WindowManager/WindowManager.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Concurrency/PendingTeardowns.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Concurrency/PendingTeardowns.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsWindowController.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectWindowManagerControllerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -340,14 +340,14 @@ of which this file renders itself.
   — every operation this file performs is local: the database, the
   filesystem check the restore plan's exists-on-disk predicate performs,
   and git through the project controller (documented in
-  `agentictoolkit://cookbook/workspace/projects/project-controller`).
+  `agenticdevelopertoolkit://cookbook/workspace/projects/project-controller`).
   None of it reaches a remote host.
 - **Cancellation and timeouts**: Opening a project's own opening work is
   not cancelled by a subsequent close of that project; the in-flight work
   keeps running to completion, and it is the project controller's own
   closed-state guard — not anything in this file — that stops it from
   persisting stale data or reloading a dead window (see
-  `agentictoolkit://cookbook/workspace/projects/project-controller`'s
+  `agenticdevelopertoolkit://cookbook/workspace/projects/project-controller`'s
   reconcile-aborts-after-a-late-close requirement, and vector -007
   above). Shutting down all language services waits for its group of
   concurrent operations and then for the pending-teardowns registry to
@@ -488,7 +488,7 @@ bundle identifier; category is this component's name.
   thread-affinity of its own — mirror `@MainActor` confinement by only ever
   touching this object from the UI thread (`DispatcherQueue`), the same
   discipline `ProjectController`'s WinUI port already assumes (see
-  `agentictoolkit://cookbook/workspace/projects/project-controller`). Reproduce
+  `agenticdevelopertoolkit://cookbook/workspace/projects/project-controller`). Reproduce
   `NSWindow.willCloseNotification`'s `queue: nil` synchronous delivery
   (**close-observer-uses-nil-queue**) with `Window.Closed`, handled inline on
   the UI thread rather than through a dispatcher post, so a scan that closes a
@@ -499,7 +499,7 @@ bundle identifier; category is this component's name.
   own async shutdown drains in a loop — rather than firing a bare
   `Task.Run(async () => ...)` that a process exit can orphan. Read and write
   the persisted "window open" flag through the same `System.Data.Sqlite`-backed
-  settings store `agentictoolkit://cookbook/workspace/projects/project-database`
+  settings store `agenticdevelopertoolkit://cookbook/workspace/projects/project-database`
   describes, using `HttpClient`/`System.Text.Json`/`Task`/`async` and
   `Windows.Storage` only where a networked or file-based collaborator this
   manager delegates to (git, language servers) needs them — this type itself

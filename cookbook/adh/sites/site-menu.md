@@ -1,7 +1,7 @@
 ---
 id: f2d56415-ac36-4a27-bee5-b447c4186513
 title: SiteMenu
-domain: agentictoolkit://cookbook/adh/sites/site-menu
+domain: agenticdevelopertoolkit://cookbook/adh/sites/site-menu
 type: recipe
 version: 1.0.3
 status: draft
@@ -59,7 +59,7 @@ the user actually landed on and deep-links back to each.
 | Name | Domain | Role | Required | Configuration |
 |---|---|---|---|---|
 | NavigationPopover | `@agentic-toolkit/adh/header` | Popover surface, search box, keyboard navigation, row rendering, flyout submenus | yes | Consumes `PopoverEntry[]` with icon + inline-subitem support |
-| SiteWordmark | agentictoolkit://cookbook/adh/sites/site-wordmark | The header trigger that opens the menu | yes | Unchanged |
+| SiteWordmark | agenticdevelopertoolkit://cookbook/adh/sites/site-wordmark | The header trigger that opens the menu | yes | Unchanged |
 | menu-icons map | `@agentic-toolkit/adh/header` `menu-icons.ts` (ADH vocabulary — it is keyed by `SiteId`) | Single source of truth for every row's icon — keyed by SiteId, in-hub route path, or chrome key | yes | `MENU_ICONS` record + `menuIcon(key)` resolver |
 | lucide-react icons | (library) | The icon glyphs | yes | Only icons already used elsewhere on the platform are reused where one exists |
 | `useWorkspaces` | `@/api/workspaces` (hub) | Supplies the Workspaces flyout entries | yes (logged-in) | react-query; `{ slug, name, type }[]` |
@@ -204,15 +204,15 @@ LOGGED OUT (marketing)               LOGGED IN (/home + workspace)
 
 ## Platform Notes
 
-- Files: menu config `websites/shared/adh/src/header/MarketingSiteMenu.tsx` +
+- Files: menu config `packages/web/packages/adh/src/header/MarketingSiteMenu.tsx` +
   `WorkspaceSiteMenu.tsx` (both compose the shared `hubCoreGroups.ts`); types +
   rendering `SiteMenu.tsx` (auth top section + compose) + `NavigationPopover.tsx`
   (icon slot + inline sub-item indent); icon SSoT
-  `websites/shared/adh/src/header/menu-icons.ts`; Recents store + hook
-  `websites/shared/adh/src/header/recents.ts`; Workspaces context
-  `websites/shared/adh/src/header/workspaces-menu.tsx` (hub filler +
+  `packages/web/packages/adh/src/header/menu-icons.ts`; Recents store + hook
+  `packages/web/packages/adh/src/header/recents.ts`; Workspaces context
+  `packages/web/packages/adh/src/header/workspaces-menu.tsx` (hub filler +
   `hub-workspaces-menu-provider.tsx`); recorder
-  `websites/main/hub/src/components/workspace/recents-recorder.tsx`.
+  `websites/main/hub/src/components/workspace/recents-recorder.tsx` (in the adh repo).
 - The recorder observes `WorkspaceChromeProvider.mergedLevels`
   (`frontend/src/sites/hub/src/components/workspace/workspace-chrome.tsx`) — the one
   place holding the full current selection path (with labels) for both nav models.

@@ -1,7 +1,7 @@
 ---
 id: b4cfbb31-cacc-4532-97c3-03e53852e8d3
 title: System Permissions
-domain: agentictoolkit://cookbook/system/permissions/system-permissions
+domain: agenticdevelopertoolkit://cookbook/system/permissions/system-permissions
 type: ingredient
 version: 1.1.0
 status: review
@@ -21,8 +21,8 @@ tags:
 - async
 depends-on: []
 related:
-- agentictoolkit://cookbook/system/permissions/permission-row-view
-- agentictoolkit://cookbook/system/permissions/permissions-panel-view
+- agenticdevelopertoolkit://cookbook/system/permissions/permission-row-view
+- agenticdevelopertoolkit://cookbook/system/permissions/permissions-panel-view
 references:
 - https://developer.apple.com/documentation/coreservices/1446026-aedeterminepermissiontoautomatetarget
 approved-by: ''
@@ -56,9 +56,9 @@ consists of:
 
 Use it wherever an app or daemon has to show or obtain a privacy grant;
 the UI that renders it lives in
-[Permission Row View](agentictoolkit://cookbook/system/permissions/permission-row-view)
+[Permission Row View](agenticdevelopertoolkit://cookbook/system/permissions/permission-row-view)
 and
-[Permissions Panel View](agentictoolkit://cookbook/system/permissions/permissions-panel-view).
+[Permissions Panel View](agenticdevelopertoolkit://cookbook/system/permissions/permissions-panel-view).
 
 ## Behavioral Requirements
 

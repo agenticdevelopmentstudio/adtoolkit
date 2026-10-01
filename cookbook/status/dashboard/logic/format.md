@@ -1,7 +1,7 @@
 ---
 id: 564c6102-e100-41ad-9c92-14606a33c394
 title: Display Format
-domain: agentictoolkit://cookbook/status/dashboard/logic/format
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/format
 type: ingredient
 version: 1.1.0
 status: review

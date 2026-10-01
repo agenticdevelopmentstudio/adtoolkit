@@ -1,7 +1,7 @@
 ---
 id: c2417a5c-953b-458e-856b-2c4f7e3a6fde
 title: Breadcrumb View
-domain: agentictoolkit://cookbook/workspace/documents/breadcrumb-view
+domain: agenticdevelopertoolkit://cookbook/workspace/documents/breadcrumb-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,7 +22,7 @@ tags:
 - breadcrumb
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/documents/breadcrumb-popover-view
+- agenticdevelopertoolkit://cookbook/workspace/documents/breadcrumb-popover-view
 references: []
 approved-by: ''
 approved-date: ''

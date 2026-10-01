@@ -1,7 +1,7 @@
 ---
 id: 6b796310-ff12-4d38-a1a9-1d3af3f1e87f
 title: Media Query
-domain: agentictoolkit://cookbook/status/dashboard/state/media-query
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/media-query
 type: ingredient
 version: 1.1.0
 status: review

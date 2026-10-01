@@ -1,7 +1,7 @@
 ---
 id: b0e815fd-22cc-4d58-a0c6-001c21bad468
 title: VS Code URI
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/uri
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/uri
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,20 +22,20 @@ tags:
 - uri
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/host/js-value-bridge
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-diagnostics
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/language-models/language-model-message-vocabulary
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/js-value-bridge
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-diagnostics
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/language-model-message-vocabulary
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/Uri.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/Uri.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/UriTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

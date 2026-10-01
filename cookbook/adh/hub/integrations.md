@@ -1,7 +1,7 @@
 ---
 id: 45c318d7-dd3e-491c-8811-eb2a3d79bca9
 title: Integrations
-domain: agentictoolkit://cookbook/adh/hub/integrations
+domain: agenticdevelopertoolkit://cookbook/adh/hub/integrations
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,16 +25,16 @@ tags:
 - webhooks
 depends-on: []
 related:
-- agentictoolkit://cookbook/adh/hub/access
-- agentictoolkit://cookbook/adh/hub/ecosystems/ecosystem-config
+- agenticdevelopertoolkit://cookbook/adh/hub/access
+- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystem-config
 references:
-- packages/web/packages/data/src/integrations/integrations.ts (agentictoolkit)
-- packages/web/packages/data/src/integrations/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/integrations/index.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agentictoolkit)
-- packages/web/packages/auth/src/client.ts (agentictoolkit)
-- packages/web/packages/auth/src/tokens.ts (agentictoolkit)
+- packages/web/packages/data/src/integrations/integrations.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/integrations/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/integrations/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

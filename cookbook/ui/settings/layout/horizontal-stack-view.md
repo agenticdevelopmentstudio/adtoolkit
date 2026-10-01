@@ -1,7 +1,7 @@
 ---
 id: 5e9843b1-cc8d-4048-97e7-21991bf5830c
 title: Horizontal Stack View
-domain: agentictoolkit://cookbook/ui/settings/layout/horizontal-stack-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/horizontal-stack-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,8 +23,8 @@ tags:
 - settings
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/layout/vertical-stack-view
-- agentictoolkit://cookbook/ui/settings/layout/divider-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/vertical-stack-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/divider-view
 references: []
 approved-by: ''
 approved-date: ''

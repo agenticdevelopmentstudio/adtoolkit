@@ -1,6 +1,6 @@
 ---
 id: 7fc91996-6f04-415c-9119-fc6f9fccccd4
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/window/main-thread-window
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/main-thread-window
 title: MainThreadWindow
 summary: The vscode.window adaptor for show*Message, showQuickPick, showInputBox and
   createStatusBarItem, dispatching each to an injected presenter and recording unimplemented
@@ -21,27 +21,27 @@ tags:
 - javascriptcore
 - mainactor
 related:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-presenting
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-presenting
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-status-bar-presenting
-- agentictoolkit://cookbook/workspace/extensions/host/js-value-bridge
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-presenting
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-presenting
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-status-bar-presenting
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/js-value-bridge
 references:
-- MainThreadWindow.swift (agentictoolkit)
-- ExtensionMessagePresenting.swift (agentictoolkit)
-- ExtensionQuickPickPresenting.swift (agentictoolkit)
-- ExtensionInputBoxPresenting.swift (agentictoolkit)
-- ExtensionStatusBarPresenting.swift (agentictoolkit)
-- NotImplementedLedger.swift (agentictoolkit)
-- VSCodeAPI.swift (agentictoolkit)
-- JSValueBridge.swift (agentictoolkit)
-- Loggable.swift (agentictoolkit)
-- MainThreadWindowTests.swift (agentictoolkit)
-- MainThreadWindowQuickPickTests.swift (agentictoolkit)
-- MainThreadWindowInputBoxTests.swift (agentictoolkit)
-- MainThreadWindowStatusBarTests.swift (agentictoolkit)
-- project.yml (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionMessagePresenting.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionQuickPickPresenting.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionInputBoxPresenting.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionStatusBarPresenting.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/JSValueBridge.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowTests.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowQuickPickTests.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowInputBoxTests.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowStatusBarTests.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 created: '2026-09-24'
 modified: '2026-09-27'
 author: Mike Fullerton

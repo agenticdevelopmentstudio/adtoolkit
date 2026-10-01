@@ -1,7 +1,7 @@
 ---
 id: 2469d716-84aa-4984-9e71-4cfe49d05854
 title: Projects Coordinator
-domain: agentictoolkit://cookbook/workspace/projects/projects-coordinator
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/projects-coordinator
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,35 +25,35 @@ tags:
 - command-palette
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/projects/git-repo
-- agentictoolkit://cookbook/workspace/projects/project-database
-- agentictoolkit://cookbook/workspace/projects/project-reconciler
-- agentictoolkit://cookbook/workspace/projects/git-repo-scanner
-- agentictoolkit://cookbook/workspace/projects/project-chooser-window
-- agentictoolkit://cookbook/workspace/projects/project-scan-progress-window
-- agentictoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-database
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-reconciler
+- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo-scanner
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-chooser-window
+- agenticdevelopertoolkit://cookbook/workspace/projects/project-scan-progress-window
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectReconciler.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepoScanner.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectReconciler.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepoScanner.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectChooserWindow.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectScanProgressWindow.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWindowManager.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Projects/UserSettings+Projects.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppFeature.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/MenuContribution.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppFeature.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/UI/AppShell/MenuContribution.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/SystemIntegration/WindowManager/WindowManager.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsWindowController.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -450,7 +450,7 @@ stopping's failed checkpoint, make no log call at all — see
   layout (`Ctrl+Alt+P` for Open Project, mirroring the macOS
   `[.command, .option]` combination). Back `database` with the same
   SQLite file through `Microsoft.Data.Sqlite` (see
-  `agentictoolkit://cookbook/workspace/projects/project-database`'s WinUI
+  `agenticdevelopertoolkit://cookbook/workspace/projects/project-database`'s WinUI
   bullet for the schema/migration port) and call its `Checkpoint()`
   equivalent from `Stop()`, logging any exception there explicitly to
   close **stop-checkpoint-failure-unsignaled** rather than reproducing the

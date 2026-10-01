@@ -1,7 +1,7 @@
 ---
 id: 7610ef55-32c9-43b6-8a70-aaa247cc4899
 title: Board State
-domain: agentictoolkit://cookbook/status/dashboard/state/board
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/board
 type: ingredient
 version: 1.1.0
 status: review
@@ -19,7 +19,7 @@ platforms:
 tags: []
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/dashboard/api
+- agenticdevelopertoolkit://cookbook/status/dashboard/api
 references: []
 approved-by: ''
 approved-date: ''

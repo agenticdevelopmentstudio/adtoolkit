@@ -1,7 +1,7 @@
 ---
 id: 24e1710c-a805-4f6e-b720-fbd869472ca9
 title: Extension Manifest Localization
-domain: agentictoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,12 +25,12 @@ tags:
 - jsonc
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
 references:
 - packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifestLocalization.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionManifestLocalizationTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

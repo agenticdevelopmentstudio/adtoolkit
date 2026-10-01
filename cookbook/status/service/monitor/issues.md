@@ -1,7 +1,7 @@
 ---
 id: 130fb0f2-e3a0-452a-bf7d-e49dbb56843e
 title: Monitor Issues
-domain: agentictoolkit://cookbook/status/service/monitor/issues
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/issues
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,14 +25,14 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/data/constraints-and-validation
 - agenticdevelopercookbook://guidelines/implementing/observability/logging
 related:
-- agentictoolkit://cookbook/status/service/monitor/alerts
-- agentictoolkit://cookbook/status/service/monitor/issue-sources
-- agentictoolkit://cookbook/status/service/board
-- agentictoolkit://cookbook/status/service/monitor/cycle-runner
-- agentictoolkit://cookbook/status/service/storage/libsql
+- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
+- agenticdevelopertoolkit://cookbook/status/service/monitor/issue-sources
+- agenticdevelopertoolkit://cookbook/status/service/board
+- agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner
+- agenticdevelopertoolkit://cookbook/status/service/storage/libsql
 references:
-- packages/web/packages/status-server/src/monitor/issues.ts (agentictoolkit)
-- packages/web/packages/status-server/test/issues.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/issues.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/issues.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

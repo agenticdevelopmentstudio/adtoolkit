@@ -1,7 +1,7 @@
 ---
 id: 2dd6133a-1d6c-4ee5-9e37-308a11966433
 title: RPC
-domain: agentictoolkit://cookbook/foundation/networking/rpc
+domain: agenticdevelopertoolkit://cookbook/foundation/networking/rpc
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,7 +24,7 @@ tags:
 - networking
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/plugins/plugin-transport
+- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-transport
 references: []
 approved-by: ''
 approved-date: ''

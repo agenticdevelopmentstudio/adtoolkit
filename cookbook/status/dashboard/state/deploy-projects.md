@@ -1,7 +1,7 @@
 ---
 id: b14c03d8-1b93-41e0-9f92-76a81171cee9
 title: Deploy Projects State
-domain: agentictoolkit://cookbook/status/dashboard/state/deploy-projects
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/deploy-projects
 type: ingredient
 version: 1.1.0
 status: review
@@ -18,9 +18,9 @@ platforms:
 - web
 tags: []
 depends-on:
-- agentictoolkit://cookbook/status/dashboard/api
+- agenticdevelopertoolkit://cookbook/status/dashboard/api
 related:
-- agentictoolkit://cookbook/status/dashboard/api
+- agenticdevelopertoolkit://cookbook/status/dashboard/api
 references: []
 approved-by: ''
 approved-date: ''
@@ -37,7 +37,7 @@ Deploy Projects is the status dashboard's client for the backend's deploy-projec
 - a shared fresh-fetch latch and its arming operation;
 - the cached state itself, which caches the snapshot under the cache key `["deploy-projects"]`.
 
-All requests go through the injected status API client (see [status-web-api](agentictoolkit://cookbook/status/dashboard/api)), so paths are relative to the host's API base.
+All requests go through the injected status API client (see [status-web-api](agenticdevelopertoolkit://cookbook/status/dashboard/api)), so paths are relative to the host's API base.
 
 ## Behavioral Requirements
 

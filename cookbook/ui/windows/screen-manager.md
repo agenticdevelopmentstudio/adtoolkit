@@ -1,7 +1,7 @@
 ---
 id: 1e58add7-d85d-4e62-b857-c5e3203795be
 title: Screen Manager
-domain: agentictoolkit://cookbook/ui/windows/screen-manager
+domain: agenticdevelopertoolkit://cookbook/ui/windows/screen-manager
 type: ingredient
 version: 1.1.0
 status: review
@@ -21,7 +21,7 @@ tags:
 - screens
 - persistence
 depends-on:
-- agentictoolkit://cookbook/foundation/settings-storage
+- agenticdevelopertoolkit://cookbook/foundation/settings-storage
 related: []
 references: []
 approved-by: ''

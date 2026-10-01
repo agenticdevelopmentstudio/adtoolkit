@@ -1,7 +1,7 @@
 ---
 id: 2b4d0f95-dbdf-48a9-8579-a3e5b7d488fe
 title: Pane View
-domain: agentictoolkit://cookbook/ui/layout/pane-view
+domain: agenticdevelopertoolkit://cookbook/ui/layout/pane-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -26,7 +26,7 @@ depends-on:
 - agenticdevelopertoolkit://recipes/pane-minimized-strip-view
 - agenticdevelopertoolkit://recipes/options-dialog-view-controller
 related:
-- agentictoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
 - agenticdevelopertoolkit://recipes/window-options-dialog
 - agenticdevelopertoolkit://recipes/pane-control-cluster
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages

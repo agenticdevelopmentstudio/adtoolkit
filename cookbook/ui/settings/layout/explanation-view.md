@@ -1,7 +1,7 @@
 ---
 id: 25046f90-559d-4e32-8516-b5dae5f09c43
 title: Explanation View
-domain: agentictoolkit://cookbook/ui/settings/layout/explanation-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -20,7 +20,7 @@ tags:
 - static-text
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/layout/panel-heading-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-heading-view
 references:
 - https://www.w3.org/TR/WCAG21/#contrast-minimum
 approved-by: ''

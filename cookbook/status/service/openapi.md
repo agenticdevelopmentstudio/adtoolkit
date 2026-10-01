@@ -1,7 +1,7 @@
 ---
 id: 0679e232-f536-4d02-b3f0-592d52d44582
 title: Status Server OpenAPI
-domain: agentictoolkit://cookbook/status/service/openapi
+domain: agenticdevelopertoolkit://cookbook/status/service/openapi
 type: ingredient
 version: 1.0.2
 status: review
@@ -25,15 +25,15 @@ tags:
 depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/api-design
 related:
-- agentictoolkit://cookbook/status/service/auth
-- agentictoolkit://cookbook/status/service/telemetry/fetchers
+- agenticdevelopertoolkit://cookbook/status/service/auth
+- agenticdevelopertoolkit://cookbook/status/service/telemetry/fetchers
 references:
-- packages/web/packages/status-server/src/openapi/build.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/route-key.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/shared.ts (agentictoolkit)
-- packages/web/packages/status-server/test/openapi.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/openapi-exclusions.ts (agentictoolkit)
-- packages/web/packages/status-server/tools/dump-openapi.ts (agentictoolkit)
+- packages/web/packages/status-server/src/openapi/build.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/route-key.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/shared.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/openapi.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/openapi-exclusions.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/tools/dump-openapi.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

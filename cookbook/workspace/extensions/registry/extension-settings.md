@@ -1,7 +1,7 @@
 ---
 id: b360162a-7acb-4354-af85-0f131c84c601
 title: Extension Settings
-domain: agentictoolkit://cookbook/workspace/extensions/registry/extension-settings
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-settings
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,19 +22,19 @@ tags:
 - storage-keys
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/manifest/contributed-settings
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/contributed-settings
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionSettings.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/StorableSetting.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStore.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/ExtensionSettings.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/StorableSetting.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStore.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStorageProviders/UserDefaultsSettingsStorageProvider.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings+Theme.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings+Theme.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionSettingsTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/SettingsStore/UserDefaultsSettingsStoreTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

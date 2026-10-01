@@ -1,7 +1,7 @@
 ---
 id: 775f1761-f757-41d0-b51b-354a410a11f4
 title: Group View
-domain: agentictoolkit://cookbook/ui/settings/layout/group-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,8 +22,8 @@ tags:
 - layout
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/layout/conditional-view
-- agentictoolkit://cookbook/ui/settings/layout/dismissible-hint-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/conditional-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/dismissible-hint-view
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references:
 - https://developer.apple.com/design/human-interface-guidelines/lists-and-tables

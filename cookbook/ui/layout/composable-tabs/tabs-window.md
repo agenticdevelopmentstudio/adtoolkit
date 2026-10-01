@@ -1,7 +1,7 @@
 ---
 id: 55a394e6-9934-404b-941d-25bebbf71378
 title: Composable Tabs Window
-domain: agentictoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,8 +21,8 @@ tags:
 - window-controller
 - multi-tab
 depends-on:
-- agentictoolkit://cookbook/ui/layout/tabbed-view
-- agentictoolkit://cookbook/ui/layout/composable-tabs
+- agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs
 related: []
 references: []
 approved-by: ''

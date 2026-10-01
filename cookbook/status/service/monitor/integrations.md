@@ -1,7 +1,7 @@
 ---
 id: da0c6c07-d0f4-4c6c-a1ef-51b696910c72
 title: Status Server Monitor Integrations
-domain: agentictoolkit://cookbook/status/service/monitor/integrations
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/integrations
 type: ingredient
 version: 1.0.2
 status: review
@@ -30,17 +30,17 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 - agenticdevelopercookbook://guidelines/implementing/observability/logging
 related:
-- agentictoolkit://cookbook/status/service/monitor/fetch-cloudflare
-- agentictoolkit://cookbook/status/service/config
-- agentictoolkit://cookbook/status/service/auth
+- agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-cloudflare
+- agenticdevelopertoolkit://cookbook/status/service/config
+- agenticdevelopertoolkit://cookbook/status/service/auth
 references:
-- packages/web/packages/status-server/src/monitor/integrations.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/self-check-stability.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/types.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/time-ago.ts (agentictoolkit)
-- packages/web/packages/status-server/test/integrations-retry.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/integrations-missing-env.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/integrations-telemetry.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/self-check-stability.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/time-ago.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/integrations-retry.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/integrations-missing-env.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/integrations-telemetry.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

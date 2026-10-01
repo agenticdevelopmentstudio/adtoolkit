@@ -1,7 +1,7 @@
 ---
 id: 2beaca09-67b4-4e19-b4a4-f66f048687b8
 title: VS Code Language Models Bridge
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/language-models/main-thread-language-models
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/main-thread-language-models
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,27 +23,27 @@ tags:
 - streaming
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
-- agentictoolkit://cookbook/workspace/extensions/host/extension-event
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguageModels.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadLanguageModelsTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/JSValueBridge.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

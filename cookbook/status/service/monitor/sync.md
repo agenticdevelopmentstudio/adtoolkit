@@ -1,7 +1,7 @@
 ---
 id: 21455a0c-b7b3-4121-8726-c6918d7af5a8
 title: Status Server Monitor Sync
-domain: agentictoolkit://cookbook/status/service/monitor/sync
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/sync
 type: ingredient
 version: 1.0.2
 status: review
@@ -27,33 +27,33 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/observability/logging
 - agenticdevelopercookbook://guidelines/implementing/code-quality/dependency-injection
 related:
-- agentictoolkit://cookbook/status/service/monitor/cycle-runner
-- agentictoolkit://cookbook/status/service/monitor/alerts
-- agentictoolkit://cookbook/status/service/monitor/provider-conn
-- agentictoolkit://cookbook/status/service/monitor/enrich-deploy-errors
-- agentictoolkit://cookbook/status/service/monitor/reconcile-stuck-deploys
-- agentictoolkit://cookbook/status/service/board
-- agentictoolkit://cookbook/status/service/monitor/issues
+- agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner
+- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
+- agenticdevelopertoolkit://cookbook/status/service/monitor/provider-conn
+- agenticdevelopertoolkit://cookbook/status/service/monitor/enrich-deploy-errors
+- agenticdevelopertoolkit://cookbook/status/service/monitor/reconcile-stuck-deploys
+- agenticdevelopertoolkit://cookbook/status/service/board
+- agenticdevelopertoolkit://cookbook/status/service/monitor/issues
 references:
-- packages/web/packages/status-server/src/monitor/sync.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/probe.ts (agentictoolkit)
-- packages/web/packages/status-server/src/storage/ports.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/ownership.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/reconcile.ts (agentictoolkit)
-- packages/web/packages/status-server/src/board/types.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/provider-conn.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/url.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/alerts.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/refresh-project-meta.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/reconcile-stuck-deploys.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/enrich-deploy-errors.ts (agentictoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agentictoolkit)
-- packages/web/packages/status-server/src/deploy-platform/src/engine/run.ts (agentictoolkit)
-- packages/web/packages/status-server/src/deploy-platform/src/canon/index.ts (agentictoolkit)
-- packages/web/packages/status-server/src/deploy-platform/src/cooldown/provider-cooldown.ts (agentictoolkit)
-- packages/web/packages/status-server/test/sync.int.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/sync-guard.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/retire-unclaimed-monitors.int.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/probe.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/ownership.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/reconcile.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/board/types.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/provider-conn.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/url.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/alerts.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/refresh-project-meta.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/reconcile-stuck-deploys.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/enrich-deploy-errors.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/engine/run.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/canon/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/sync.int.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/sync-guard.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/retire-unclaimed-monitors.int.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -145,7 +145,7 @@ Not applicable — this is a server-side background sync function, not a visual 
 
 - **Null and empty input**: `opts` omitted entirely is equivalent to `opts?.skipDeploys` being falsy — the full cycle runs (MUST). An empty active-endpoint list (`listActiveEndpoints()` resolves `[]`) skips the whole probe/record/rollup block (probe-skipped-on-empty) and resolves `undefined` with zero `health_checks` rows written — MUST (`sync.int.test.ts` › "completes with no configured endpoints"). When no provider has a configured token, `has.*Token` is `false` for all four providers, so `runCycle` never calls `guard` at all for them — the fallback shapes (`EMPTY_DEPLOYS`/`EMPTY_PROJECTS`) are produced directly via `Promise.resolve`/ternary, bypassing even the rate-limit check inside `guard` — MUST (provider-poll-token-gated).
 - **Boundary values**: `PROVIDER_POLL_TIMEOUT_MS` is a fixed `20_000`, not read from `config` or an environment variable — every poll gets exactly the same cap regardless of provider or cycle — MUST. `pruneOlderThanDays(90)` is likewise a literal in this file, not a `StatusConfig` field — MUST. The healthy-probe veto (`healthy-probe-vetoes-removal`) is applied strictly AFTER `endpointsClaimedByNothing` has already decided the `doomed` set — it is a second, narrower filter this caller alone applies, never a change to the underlying rule's own preconditions — MUST NOT be read as the rule itself having a "still serving" clause.
-- **Concurrent access**: `runCycle` installs no lock or reentrancy guard of its own against a second concurrent call against the same `storage` — nothing in this file prevents two cycles from interleaving their reads and writes; serialization is delegated entirely to the caller (the cycle-runner/scheduler composition, external to this file — see the [Status Server Monitor Cycle Runner](agentictoolkit://cookbook/status/service/monitor/cycle-runner) recipe) — MUST NOT be read as a promise of its own concurrency safety. Within one call, the four deploy-provider polls run concurrently via `Promise.all` (provider-polls-run-concurrently), and each `guard` call's own `setTimeout` is independent and cleared in its own `finally`, so concurrent polls never share or leak each other's timers — MUST.
+- **Concurrent access**: `runCycle` installs no lock or reentrancy guard of its own against a second concurrent call against the same `storage` — nothing in this file prevents two cycles from interleaving their reads and writes; serialization is delegated entirely to the caller (the cycle-runner/scheduler composition, external to this file — see the [Status Server Monitor Cycle Runner](agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner) recipe) — MUST NOT be read as a promise of its own concurrency safety. Within one call, the four deploy-provider polls run concurrently via `Promise.all` (provider-polls-run-concurrently), and each `guard` call's own `setTimeout` is independent and cleared in its own `finally`, so concurrent polls never share or leak each other's timers — MUST.
 - **Error states**: Steps that carry no `try`/`catch` of their own — `reconcileOrphanedEndpoints`, `resolveUnmonitoredTargets`, `listActiveEndpoints`, `probeEndpoints`, `recordChecks`, `rollupMetrics`, `upsertDeployments`, `learnProjectIds`, `readRoster`, `stampLiveHosts`, `recordVercelProdStates`, `recordObservations`, `reconcileBoardLedger` — reject the whole `runCycle` promise on failure, with no fallback of their own; this bare propagation is what lets the cycle-runner composition's own failure handling (documented in its recipe) apply — MUST. The specifically fail-soft pieces are limited to: each provider poll (via `guard`), `enrichDeployErrors`, `reconcileVanishedDeploys`, `expireUnconfirmedDeploys` (each documented never-throws by its own module), and the `enumerateDeployProjects` call in step 8 (caught locally via `.catch`, `enumerate-failure-yields-empty-inventory`) — MUST.
 - **Offline / disconnected state**: A provider whose network is entirely unreachable is absorbed by `guard`'s throw-catch (poll-throw-degrades) into the same `{ ok: false }` shape a documented API failure produces — the cycle records `reachable: false` for that source (platform-observations-always-recorded) rather than aborting — MUST. Two consecutive unreachable polls of the same provider are what the platform-health issue in the ledger (written downstream by `reconcileBoardLedger`, via `PLATFORM_UNREACHABLE_POLLS` in `issue-sources.ts`, external to this file) eventually pages on — this file only supplies the per-cycle `reachable` fact, never the debounce threshold itself — MUST NOT be read as this file owning that threshold.
 
@@ -167,7 +167,7 @@ Not applicable: this file defines no application URL scheme or HTTP route of its
 
 ## Localization
 
-This file's only literal strings are hardcoded English `console.log`/`console.error` messages (operator-facing, container stdout) and the two alert `detail` strings assembled in `retire-unclaimed-monitors`' `why` callback (`its <platform> project "<name>" no longer exists`, `no deploy project serves <host> any more`) — all routed through no localization mechanism, all consumed by an operator or by `notifyIssueAlert`'s own Slack/Discord-rendering (external, documented in the [Status Server Monitor Alerts](agentictoolkit://cookbook/status/service/monitor/alerts) recipe), never by an end user.
+This file's only literal strings are hardcoded English `console.log`/`console.error` messages (operator-facing, container stdout) and the two alert `detail` strings assembled in `retire-unclaimed-monitors`' `why` callback (`its <platform> project "<name>" no longer exists`, `no deploy project serves <host> any more`) — all routed through no localization mechanism, all consumed by an operator or by `notifyIssueAlert`'s own Slack/Discord-rendering (external, documented in the [Status Server Monitor Alerts](agenticdevelopertoolkit://cookbook/status/service/monitor/alerts) recipe), never by an end user.
 
 | String Key | Default (en) | Context |
 |-----------|-------------|---------|

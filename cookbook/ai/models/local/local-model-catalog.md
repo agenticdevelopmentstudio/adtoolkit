@@ -1,7 +1,7 @@
 ---
 id: 79c8f46f-e934-46d1-8d0e-4bbee625e163
 title: Local Model Catalog
-domain: agentictoolkit://cookbook/ai/models/local/local-model-catalog
+domain: agenticdevelopertoolkit://cookbook/ai/models/local/local-model-catalog
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,13 +24,13 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/LocalModelCatalog.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalModelServer.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/LocalModelCatalog.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/LocalModelServer.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/LocalModelCatalogTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/LocalModelServerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

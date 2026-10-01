@@ -1,7 +1,7 @@
 ---
 id: 639bf7b5-011e-4dc0-9c4e-bc704957cf97
 title: Extension Runtime Diagnostics
-domain: agentictoolkit://cookbook/workspace/extensions/host/runtime-diagnostics
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/host/runtime-diagnostics
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,16 +26,16 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/observability/logging
 - agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
 related:
-- agentictoolkit://cookbook/workspace/extensions/host/extension-host
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-host
 references:
-- packages/apple/AgenticToolkit/Core/Diagnostics/JITAvailability.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Diagnostics/UpstreamDivergence.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Diagnostics/UpstreamDivergenceLedger.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Diagnostics/JITAvailability.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Diagnostics/UpstreamDivergence.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Diagnostics/UpstreamDivergenceLedger.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Diagnostics/JITAvailabilityTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Diagnostics/UpstreamDivergenceLedgerTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: 2c8b4572-3851-4111-97d6-a42792fb7150
 title: Status Server Monitor Live Types
-domain: agentictoolkit://cookbook/status/service/monitor/live-types
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/live-types
 type: ingredient
 version: 1.0.2
 status: review
@@ -23,14 +23,14 @@ tags:
 - server
 depends-on: []
 related:
-- agentictoolkit://cookbook/status/service/live-events
+- agenticdevelopertoolkit://cookbook/status/service/live-events
 references:
-- packages/web/packages/status-server/src/monitor/live-types.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/types.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agentictoolkit)
-- packages/web/packages/status-server/test/reads.int.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/helpers/snapshot.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/reads.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/live-types.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/reads.int.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/helpers/snapshot.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/reads.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

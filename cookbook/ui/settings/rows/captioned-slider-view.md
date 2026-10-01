@@ -1,7 +1,7 @@
 ---
 id: 64825f85-8b4d-4406-befc-aa08ce55cc8b
 title: Captioned Slider View
-domain: agentictoolkit://cookbook/ui/settings/rows/captioned-slider-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -22,10 +22,10 @@ tags:
 - range
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/settings/rows/slider-view
-- agentictoolkit://cookbook/ui/settings/rows/checkbox-view
-- agentictoolkit://cookbook/ui/settings/rows/number-field-view
-- agentictoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/slider-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
 references: []
 approved-by: ''
 approved-date: ''

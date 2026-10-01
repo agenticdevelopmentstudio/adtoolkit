@@ -1,7 +1,7 @@
 ---
 id: e71918a5-9874-48eb-927a-cea5e9b51cdc
 title: Window Management Recents
-domain: agentictoolkit://cookbook/ui/windows/window-recents
+domain: agenticdevelopertoolkit://cookbook/ui/windows/window-recents
 type: ingredient
 version: 1.1.0
 status: review

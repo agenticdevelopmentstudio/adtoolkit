@@ -1,7 +1,7 @@
 ---
 id: ae0932d6-572f-4173-ba49-df68f4039ba4
 title: Project Chooser Window
-domain: agentictoolkit://cookbook/workspace/projects/project-chooser-window
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-chooser-window
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,13 +23,13 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectChooserWindow.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectChooserWindow.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectBrowserViewController.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/NSApplication+QuietActivation.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

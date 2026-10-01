@@ -1,7 +1,7 @@
 ---
 id: 08bfb299-851b-4b01-a84a-6a2a13e07c12
 title: Composable Tabs Active Pane
-domain: agentictoolkit://cookbook/ui/layout/composable-tabs/active-pane
+domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/active-pane
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,9 +21,9 @@ tags:
 - active-pane
 - focus
 depends-on:
-- agentictoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
 related:
-- agentictoolkit://cookbook/ui/layout/composable-tabs/arrange-overlay-view
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/arrange-overlay-view
 references:
 - https://developer.apple.com/documentation/appkit/nsevent/addlocalmonitorforevents(matching:handler:)
 - https://developer.apple.com/documentation/appkit/nswindow/makefirstresponder(_:)

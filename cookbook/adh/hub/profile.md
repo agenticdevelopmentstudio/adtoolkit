@@ -1,7 +1,7 @@
 ---
 id: 70f5dcb1-9d00-445b-a691-0dc1e7dd7a67
 title: Profile
-domain: agentictoolkit://cookbook/adh/hub/profile
+domain: agenticdevelopertoolkit://cookbook/adh/hub/profile
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,14 +26,14 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/web/packages/data/src/profile/profile.ts (agentictoolkit)
-- packages/web/packages/data/src/profile/usage.ts (agentictoolkit)
-- packages/web/packages/data/src/profile/wire.ts (agentictoolkit)
-- packages/web/packages/data/src/profile/index.ts (agentictoolkit)
-- packages/web/packages/data/src/profile/__tests__/profile.test.ts (agentictoolkit)
-- packages/web/packages/data/src/http.ts (agentictoolkit)
-- packages/web/packages/auth/src/client.ts (agentictoolkit)
-- packages/web/packages/adh-api-types/src/data-profile-wire.test-d.ts (agentictoolkit)
+- packages/web/packages/data/src/profile/profile.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/profile/usage.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/profile/wire.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/profile/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/profile/__tests__/profile.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+- packages/web/packages/adh-api-types/src/data-profile-wire.test-d.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

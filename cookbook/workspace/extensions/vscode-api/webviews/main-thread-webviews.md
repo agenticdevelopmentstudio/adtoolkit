@@ -1,7 +1,7 @@
 ---
 id: aa828b9b-925a-4f73-9073-12aab359aba6
 title: VS Code Webviews Bridge
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/main-thread-webviews
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/main-thread-webviews
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,28 +25,28 @@ tags:
 - disposable
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
-- agentictoolkit://cookbook/workspace/extensions/host/extension-event
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-options
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-resource-url
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-options
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-resource-url
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWebviews.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionWebviewPresenting.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewResourceURL.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/WebviewResourceURL.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionEvent.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWebviewsTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

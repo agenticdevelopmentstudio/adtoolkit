@@ -1,7 +1,7 @@
 ---
 id: c4f76978-5aef-430c-a7e1-a20326da6709
 title: Extension Webview Presenting
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,19 +25,19 @@ tags:
 depends-on:
 - agenticdevelopercookbook://principles/fail-fast
 related:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-options
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-options
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionWebviewPresenting.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/PaneWebviewPresenter.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWebviews.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/PaneWebviewPresenterTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWebviewsTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

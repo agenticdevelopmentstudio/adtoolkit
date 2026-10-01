@@ -1,7 +1,7 @@
 ---
 id: 214977ad-b330-4e32-97cf-9383ad9d4e8c
 title: Text Geometry
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/languages/text-geometry
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/text-geometry
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,21 +24,21 @@ tags:
 - bridge
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/host/extension-host
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/languages/diagnostic-types
+- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-host
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/diagnostic-types
 references:
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/TextGeometry.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/TextGeometryTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/Uri.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/DiagnosticTypes.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

@@ -1,7 +1,7 @@
 ---
 id: 4e06a00e-653a-4d29-81d8-ac6dccfedb6a
 title: Concurrency
-domain: agentictoolkit://cookbook/foundation/concurrency
+domain: agenticdevelopertoolkit://cookbook/foundation/concurrency
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,8 +24,8 @@ tags:
 - teardown
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/registry/extension-registry
-- agentictoolkit://cookbook/workspace/extensions/registry/vsix-installer
+- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-registry
+- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/vsix-installer
 references: []
 approved-by: ''
 approved-date: ''

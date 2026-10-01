@@ -1,7 +1,7 @@
 ---
 id: a0ae2ae1-7d51-4639-8f3b-062dcf750b66
 title: Status Row Model
-domain: agentictoolkit://cookbook/status/dashboard/logic/row-model
+domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/row-model
 type: ingredient
 version: 1.1.0
 status: review
@@ -18,11 +18,11 @@ platforms:
 - web
 tags: []
 depends-on:
-- agentictoolkit://cookbook/status/dashboard/logic/board-types
-- agentictoolkit://cookbook/status/dashboard/logic/format
-- agentictoolkit://cookbook/status/dashboard/logic/deploy-status
-- agentictoolkit://cookbook/status/dashboard/logic/colors
-- agentictoolkit://cookbook/status/dashboard/logic/issue-sources
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/board-types
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/format
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/deploy-status
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/colors
+- agenticdevelopertoolkit://cookbook/status/dashboard/logic/issue-sources
 related: []
 references: []
 approved-by: ''

@@ -1,7 +1,7 @@
 ---
 id: 3dc693ab-28e4-4624-9b2d-8dc81f81e037
 title: CRUD Record Form
-domain: agentictoolkit://cookbook/ui/crud/crud-record-form
+domain: agenticdevelopertoolkit://cookbook/ui/crud/crud-record-form
 type: recipe
 version: 1.3.0
 status: review
@@ -24,7 +24,7 @@ ingredients:
 - agenticdevelopertoolkit://recipes/field
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/crud/crud-table
+- agenticdevelopertoolkit://cookbook/ui/crud/crud-table
 references: []
 ---
 

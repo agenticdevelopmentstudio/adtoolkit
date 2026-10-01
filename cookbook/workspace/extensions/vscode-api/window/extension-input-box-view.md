@@ -1,7 +1,7 @@
 ---
 id: b85dc186-31e9-472b-99ea-2c097fc926c8
 title: Extension Input Box
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,7 +23,7 @@ tags:
 - validation
 depends-on: []
 related:
-- agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
+- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
 references: []
 approved-by: ''
 approved-date: ''

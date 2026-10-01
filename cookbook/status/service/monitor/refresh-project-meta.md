@@ -1,7 +1,7 @@
 ---
 id: 1c3d8661-12f2-4a84-bef4-7ccd4e3841e7
 title: Status Server Monitor Refresh Project Meta
-domain: agentictoolkit://cookbook/status/service/monitor/refresh-project-meta
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/refresh-project-meta
 type: ingredient
 version: 1.0.2
 status: review
@@ -27,20 +27,20 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/data/constraints-and-validation
 - agenticdevelopercookbook://guidelines/implementing/data/transactions-and-concurrency
 related:
-- agentictoolkit://cookbook/status/service/monitor/fetch-vercel-projects
-- agentictoolkit://cookbook/status/service/monitor/provider-conn
-- agentictoolkit://cookbook/status/service/config
-- agentictoolkit://cookbook/status/service/storage/libsql
+- agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-vercel-projects
+- agenticdevelopertoolkit://cookbook/status/service/monitor/provider-conn
+- agenticdevelopertoolkit://cookbook/status/service/config
+- agenticdevelopertoolkit://cookbook/status/service/storage/libsql
 references:
-- packages/web/packages/status-server/src/monitor/refresh-project-meta.ts (agentictoolkit)
-- packages/web/packages/status-server/test/refresh-project-meta.int.test.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/provider-conn.ts (agentictoolkit)
-- packages/web/packages/status-server/src/storage/ports.ts (agentictoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agentictoolkit)
-- packages/web/packages/status-server/src/libsql/stores/deploy-store.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/sync.ts (agentictoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/refresh-project-meta.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/refresh-project-meta.int.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/provider-conn.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/libsql/stores/deploy-store.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

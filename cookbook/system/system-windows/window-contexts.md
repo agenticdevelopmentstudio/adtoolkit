@@ -1,7 +1,7 @@
 ---
 id: aaf56f9b-896b-4f74-9e18-1ef4116270a9
 title: Window Contexts
-domain: agentictoolkit://cookbook/system/system-windows/window-contexts
+domain: agenticdevelopertoolkit://cookbook/system/system-windows/window-contexts
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,9 +24,9 @@ tags:
 - persistence
 depends-on: []
 related:
-- agentictoolkit://cookbook/system/system-windows/window-context-model
-- agentictoolkit://cookbook/system/system-windows/system-windows-engine
-- agentictoolkit://cookbook/system/system-windows/matching/title-heuristics
+- agenticdevelopertoolkit://cookbook/system/system-windows/window-context-model
+- agenticdevelopertoolkit://cookbook/system/system-windows/system-windows-engine
+- agenticdevelopertoolkit://cookbook/system/system-windows/matching/title-heuristics
 references:
 - https://developer.apple.com/documentation/coregraphics/cgwindowid
 - https://man7.org/linux/man-pages/man2/flock.2.html

@@ -1,7 +1,7 @@
 ---
 id: 61c7b509-78d1-4407-9a4e-25b155f06fbb
 title: Window Manager
-domain: agentictoolkit://cookbook/ui/windows/window-manager
+domain: agenticdevelopertoolkit://cookbook/ui/windows/window-manager
 type: ingredient
 version: 1.1.0
 status: review
@@ -21,11 +21,11 @@ tags:
 - persistence
 - recents
 depends-on:
-- agentictoolkit://cookbook/foundation/settings-storage
-- agentictoolkit://cookbook/ui/windows/screen-manager
-- agentictoolkit://cookbook/ui/windows/single-window-controller
+- agenticdevelopertoolkit://cookbook/foundation/settings-storage
+- agenticdevelopertoolkit://cookbook/ui/windows/screen-manager
+- agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller
 related:
-- agentictoolkit://cookbook/ui/windows/window-recents
+- agenticdevelopertoolkit://cookbook/ui/windows/window-recents
 references: []
 approved-by: ''
 approved-date: ''
@@ -40,10 +40,10 @@ infrastructure. It owns:
 
 - a frame manager that persists window frames and visibility and reacts to
   screen changes (specified by the frame-manager and
-  [the screen manager](agentictoolkit://cookbook/ui/windows/screen-manager)
+  [the screen manager](agenticdevelopertoolkit://cookbook/ui/windows/screen-manager)
   recipes);
 - a window registry that looks up live instances of
-  [the single-instance window base](agentictoolkit://cookbook/ui/windows/single-window-controller)
+  [the single-instance window base](agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller)
   by window id through weak references;
 - the launch-restore pass (registering a restorable id and factory, running
   the launch-restore pass, reopening recents on launch);

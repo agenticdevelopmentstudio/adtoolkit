@@ -1,7 +1,7 @@
 ---
 id: 0640ca96-95c5-4234-925e-386425cc4435
 title: Composable Tabs
-domain: agentictoolkit://cookbook/ui/layout/composable-tabs
+domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,8 +23,8 @@ tags:
 - tabs
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
-- agentictoolkit://cookbook/ui/layout/composable-tabs/pane-spacing
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/pane-spacing
 references: []
 approved-by: ''
 approved-date: ''

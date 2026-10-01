@@ -1,7 +1,7 @@
 ---
 id: 52650804-a096-4b71-b4eb-da3afa95ac56
 title: MCP Plumbing
-domain: agentictoolkit://cookbook/ai/mcp/mcp-plumbing
+domain: agenticdevelopertoolkit://cookbook/ai/mcp/mcp-plumbing
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,7 +24,7 @@ tags:
 - settings
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/chat/chat-window/mcp-chips-bar-view
+- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/mcp-chips-bar-view
 references: []
 approved-by: ''
 approved-date: ''

@@ -1,7 +1,7 @@
 ---
 id: 5cb60b95-0a8b-43c8-a747-cb5ca7353f09
 title: Status Server Monitor Worker
-domain: agentictoolkit://cookbook/status/service/monitor/worker
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/worker
 type: ingredient
 version: 1.0.2
 status: review
@@ -29,19 +29,19 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/observability/logging
 - agenticdevelopercookbook://guidelines/implementing/code-quality/dependency-injection
 related:
-- agentictoolkit://cookbook/status/service/monitor/cycle-runner
-- agentictoolkit://cookbook/status/service/storage/libsql
+- agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner
+- agenticdevelopertoolkit://cookbook/status/service/storage/libsql
 references:
-- packages/web/packages/status-server/src/monitor/worker.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/worker-client.ts (agentictoolkit)
-- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agentictoolkit)
-- packages/web/packages/status-server/src/libsql/client.ts (agentictoolkit)
-- packages/web/packages/status-server/src/libsql/index.ts (agentictoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agentictoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agentictoolkit)
-- packages/web/packages/status-server/test/worker-boot.int.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/helpers/worker-boot-driver.mjs (agentictoolkit)
-- packages/web/packages/status-server/test/provider-cooldown-shared.int.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/worker.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/worker-client.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/libsql/client.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/libsql/index.ts (agenticdevelopertoolkit)
+- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/worker-boot.int.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/helpers/worker-boot-driver.mjs (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/provider-cooldown-shared.int.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

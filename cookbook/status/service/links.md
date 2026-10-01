@@ -1,7 +1,7 @@
 ---
 id: 1c017caa-0dcc-4278-9b82-af4fa935a3d9
 title: status-server-src-lib
-domain: agentictoolkit://cookbook/status/service/links
+domain: agenticdevelopertoolkit://cookbook/status/service/links
 type: ingredient
 version: 1.0.3
 status: review

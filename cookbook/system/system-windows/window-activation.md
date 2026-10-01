@@ -1,7 +1,7 @@
 ---
 id: 54413e61-d82d-4526-b496-5daf917ce877
 title: Window Activation
-domain: agentictoolkit://cookbook/system/system-windows/window-activation
+domain: agenticdevelopertoolkit://cookbook/system/system-windows/window-activation
 type: ingredient
 version: 1.1.0
 status: review
@@ -21,9 +21,9 @@ tags:
 - terminals
 - diagnostics
 depends-on:
-- agentictoolkit://cookbook/system/scripting
+- agenticdevelopertoolkit://cookbook/system/scripting
 related:
-- agentictoolkit://cookbook/ui/windows/screen-manager
+- agenticdevelopertoolkit://cookbook/ui/windows/screen-manager
 references: []
 approved-by: ''
 approved-date: ''

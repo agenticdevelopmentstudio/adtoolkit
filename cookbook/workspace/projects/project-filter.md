@@ -1,7 +1,7 @@
 ---
 id: 0396e49d-f933-4454-bacc-5cf97beda7de
 title: Project Filter
-domain: agentictoolkit://cookbook/workspace/projects/project-filter
+domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-filter
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,11 +23,11 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectFilter.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectBrowserViewController.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/DocumentPane/BreadcrumbPopoverViewController.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectFilterTests.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectFilter.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectBrowserViewController.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/DocumentPane/BreadcrumbPopoverViewController.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectFilterTests.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

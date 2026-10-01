@@ -1,7 +1,7 @@
 ---
 id: 9e21151e-dc58-49a2-be1e-4984529f4396
 title: Panel Heading View
-domain: agentictoolkit://cookbook/ui/settings/layout/panel-heading-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-heading-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -20,10 +20,10 @@ tags:
 - settings
 - heading
 depends-on:
-- agentictoolkit://cookbook/ui/settings/layout/explanation-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view
 related:
-- agentictoolkit://cookbook/ui/settings/layout/explanation-view
-- agentictoolkit://cookbook/ui/settings/layout/header-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/header-view
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
 approved-by: ''
@@ -218,7 +218,7 @@ the static or trap check it is.
   component itself defines. This mirrors the pattern the Explanation View
   recipe's own `updates-text-via-label-property` requirement documents
   for that view (see
-  `agentictoolkit://cookbook/ui/settings/layout/explanation-view#exposes-label-property`;
+  `agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view#exposes-label-property`;
   also Design Decisions).
 - **Constructed with no caption and later needing one**: The caption view
   is constructed once at construction time and never reassigned; the

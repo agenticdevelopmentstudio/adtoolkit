@@ -1,7 +1,7 @@
 ---
 id: d46b3e1c-9cd9-41b6-bdd2-524ece5e294b
 title: Notes Model
-domain: agentictoolkit://cookbook/workspace/notes/notes-model
+domain: agenticdevelopertoolkit://cookbook/workspace/notes/notes-model
 type: ingredient
 version: 1.1.0
 status: review
@@ -26,18 +26,18 @@ tags:
 - concurrency
 - taxonomy
 depends-on:
-- agentictoolkit://cookbook/adh/hub/content/markdown-store
+- agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store
 - agenticdevelopertoolkit://recipes/markdown-core
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/Note.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NoteFolder.swift (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NoteStorage.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/Note.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NoteFolder.swift (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NoteStorage.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NoteTaxonomyProviding.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/NotesWindow/MarkdownNoteStorage.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NotesManager.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NotesManager.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---
@@ -63,7 +63,7 @@ strict issue order, runs a per-note debounced autosave, and surfaces a
 failed read or write as a single failure record.
 
 This is a different, unrelated contract from the web-side notes client
-documented in `agentictoolkit://cookbook/adh/hub/content/notes-client` —
+documented in `agenticdevelopertoolkit://cookbook/adh/hub/content/notes-client` —
 that recipe's own text says as much: its notes are a backend content
 resource reached over a REST API, these are a local, on-device store
 reached through the storage contract described here, and the shared name
@@ -353,7 +353,7 @@ no visual surface, not a visual component.
   an unparented root.
 - Deleting a note by an id with no corresponding document does not fail:
   the store's delete operation treats a missing id as success by design
-  (see `agentictoolkit://cookbook/adh/hub/content/markdown-store`'s
+  (see `agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store`'s
   delete-is-idempotent requirement), so calling delete twice for the same
   note is safe.
 - Toggling a pin while a debounced content save for the same note is
@@ -428,14 +428,14 @@ Logging below.
 - **Storage**: Persisted locally by whatever storage implementation the
   host injects. The markdown-backed conformer persists a note as a row in
   a local document store (a local database, per
-  `agentictoolkit://cookbook/adh/hub/content/markdown-store`), keyed by
+  `agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store`), keyed by
   the note's id lowercased to a string; none of the six sources given
   here adds encryption, secure-credential storage, or any protection
   beyond what that document store itself already applies.
 - **Transmission**: None of these six sources calls out to a network
   directly. The markdown-backed conformer's insert operation does enqueue
   a create operation onto the document store's own remote outbox (per
-  `agentictoolkit://cookbook/adh/hub/content/markdown-store`), so a
+  `agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store`), so a
   note's content and metadata eventually leave the device through that
   separate, already-documented sync path, on a schedule this layer does
   not control.

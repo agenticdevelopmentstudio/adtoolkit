@@ -1,7 +1,7 @@
 ---
 id: a8054368-9885-4b83-90cf-5029728ab397
 title: Provider Configuration
-domain: agentictoolkit://cookbook/ai/providers/provider-configuration
+domain: agenticdevelopertoolkit://cookbook/ai/providers/provider-configuration
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,20 +23,20 @@ tags:
 - provider-config
 depends-on: []
 related:
-- agentictoolkit://cookbook/ai/providers/provider-config-keys
-- agentictoolkit://cookbook/ai/plugins/plugin-descriptor
+- agenticdevelopertoolkit://cookbook/ai/providers/provider-config-keys
+- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-descriptor
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/AIPlugins/AIProviderConfigurationTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIProviderConfigKeysTests.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderConfigStore.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/LLMProvidersListViewModel.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/project.yml (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

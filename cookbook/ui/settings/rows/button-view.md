@@ -1,7 +1,7 @@
 ---
 id: f8e734aa-f401-4218-9f1e-56ed98c28d3d
 title: Button View
-domain: agentictoolkit://cookbook/ui/settings/rows/button-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/button-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -274,7 +274,7 @@ Not applicable: the source contains no logging calls.
 **Approved**: pending
 
 **Decision**: This recipe calls the component's container a "row" throughout, even though the source's own comments use both "row" (in the `Placement` doc comment: "where the button sits in the row it is given") and "card" (in the `.fill` and `.leading` case comments: "stretched across the whole card"; "the row is as wide as the card").
-**Rationale**: The two words refer to the same concept in this file; "row" is kept as the single term for consistency with how a settings-row view's container is described elsewhere in the cookbook — `agentictoolkit://cookbook/ui/settings/layout/header-view` and `agentictoolkit://cookbook/ui/settings/layout/horizontal-stack-view` both describe the settings-row-view contract as "the marker protocol every settings-row view in this system adopts" — and the source's own inconsistency is recorded here rather than silently smoothed over.
+**Rationale**: The two words refer to the same concept in this file; "row" is kept as the single term for consistency with how a settings-row view's container is described elsewhere in the cookbook — `agenticdevelopertoolkit://cookbook/ui/settings/layout/header-view` and `agenticdevelopertoolkit://cookbook/ui/settings/layout/horizontal-stack-view` both describe the settings-row-view contract as "the marker protocol every settings-row view in this system adopts" — and the source's own inconsistency is recorded here rather than silently smoothed over.
 **Approved**: pending
 
 **Decision** (AppKit): This recipe describes `Self.pinToEdges(button, of: self)` (used in **fills-view-in-fill-placement**) as pinning all four edges of the button to the corresponding edges of the component.

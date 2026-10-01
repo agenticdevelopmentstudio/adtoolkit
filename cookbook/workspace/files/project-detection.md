@@ -1,7 +1,7 @@
 ---
 id: ef4d83d7-ce2c-4868-9763-62a4513ad7c6
 title: File System Detection
-domain: agentictoolkit://cookbook/workspace/files/project-detection
+domain: agenticdevelopertoolkit://cookbook/workspace/files/project-detection
 type: ingredient
 version: 1.1.0
 status: review
@@ -23,17 +23,17 @@ depends-on: []
 related: []
 references:
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Detection/IDEDetector.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Detection/LanguageDetection.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/LanguageDetectionTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Views/FileTypesSettingsView.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileTreeManager.swift
-  (agentictoolkit)
-- packages/apple/AgenticToolkit/Language/LSP/LanguageServerConfiguration.swift (agentictoolkit)
+  (agenticdevelopertoolkit)
+- packages/apple/AgenticToolkit/Language/LSP/LanguageServerConfiguration.swift (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

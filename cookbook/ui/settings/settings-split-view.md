@@ -1,7 +1,7 @@
 ---
 id: a11f34ff-116c-47d6-bffa-edd0799cbcb2
 title: Settings Split View
-domain: agentictoolkit://cookbook/ui/settings/settings-split-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/settings-split-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -23,12 +23,12 @@ tags:
 - navigation
 - search
 depends-on:
-- agentictoolkit://cookbook/ui/settings/settings-panel-list
-- agentictoolkit://cookbook/ui/settings/layout/panel-host-view
-- agentictoolkit://cookbook/ui/settings/layout/panel-scroll-view
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel-list
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-host-view
+- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-scroll-view
 related:
-- agentictoolkit://cookbook/ui/settings/settings-panel-split
-- agentictoolkit://cookbook/ui/settings/settings-window
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel-split
+- agenticdevelopertoolkit://cookbook/ui/settings/settings-window
 - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references:
 - https://developer.apple.com/design/human-interface-guidelines/split-views

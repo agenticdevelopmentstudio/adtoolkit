@@ -1,7 +1,7 @@
 ---
 id: 1d2f69b6-1156-4dfa-a390-a240925ba1bd
 title: Key Command Row View
-domain: agentictoolkit://cookbook/ui/settings/rows/key-command-row-view
+domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/key-command-row-view
 type: ingredient
 version: 1.2.0
 status: review
@@ -21,7 +21,7 @@ tags:
 - keyboard-shortcuts
 depends-on: []
 related:
-- agentictoolkit://cookbook/ui/controls/key-command-capture-field
+- agenticdevelopertoolkit://cookbook/ui/controls/key-command-capture-field
 references: []
 approved-by: ''
 approved-date: ''
@@ -234,7 +234,7 @@ live in the view that loses focus — it lives in the row.
 - **Role/trait**: This component sets no accessibility role on itself.
   The toggle keeps the platform's native switch role via
   **links-toggle-accessibility-title**. The capture field's own role belongs
-  to its component; see `agentictoolkit://cookbook/ui/controls/key-command-capture-field`,
+  to its component; see `agenticdevelopertoolkit://cookbook/ui/controls/key-command-capture-field`,
   which records the open question.
 - **Label requirements**: The toggle's accessible name comes from the title
   label via **links-toggle-accessibility-title**. The capture field is given

@@ -1,7 +1,7 @@
 ---
 id: a380ec4a-df3f-42ee-8b07-3a8838d753e9
 title: Webview Host Document
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-host-document
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-host-document
 type: ingredient
 version: 1.1.0
 status: review
@@ -24,9 +24,9 @@ tags:
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewHostDocument.swift (agentictoolkit)
+- packages/apple/AgenticToolkit/Core/Extensions/WebviewHostDocument.swift (agenticdevelopertoolkit)
 - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/WebviewHostDocumentTests.swift
-  (agentictoolkit)
+  (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

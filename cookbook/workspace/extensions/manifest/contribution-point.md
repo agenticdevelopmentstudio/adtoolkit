@@ -1,7 +1,7 @@
 ---
 id: 088ed758-8c79-443d-999f-425c69df4d4d
 title: Contribution Point
-domain: agentictoolkit://cookbook/workspace/extensions/manifest/contribution-point
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/contribution-point
 type: ingredient
 version: 1.0.2
 status: review

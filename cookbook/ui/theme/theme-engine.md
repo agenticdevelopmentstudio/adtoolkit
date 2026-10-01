@@ -1,7 +1,7 @@
 ---
 id: 0e35ddf2-3e87-4a5a-9fd9-24bafc7325b6
 title: Theme Engine
-domain: agentictoolkit://cookbook/ui/theme/theme-engine
+domain: agenticdevelopertoolkit://cookbook/ui/theme/theme-engine
 type: ingredient
 version: 1.1.0
 status: review
@@ -25,12 +25,12 @@ tags:
 - logic
 depends-on:
 - agenticdevelopertoolkit://recipes/theme-engine
-- agentictoolkit://cookbook/foundation/settings-storage
-- agentictoolkit://cookbook/foundation/formats/jsonc-preprocessor
-- agentictoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
+- agenticdevelopertoolkit://cookbook/foundation/settings-storage
+- agenticdevelopertoolkit://cookbook/foundation/formats/jsonc-preprocessor
+- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
 related:
-- agentictoolkit://cookbook/ui/settings/rows/theme-picker-view
-- agentictoolkit://cookbook/ui/settings/rows/theme-preview-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/theme-picker-view
+- agenticdevelopertoolkit://cookbook/ui/settings/rows/theme-preview-view
 references:
 - https://code.visualstudio.com/api/extension-guides/color-theme
 approved-by: ''
@@ -106,11 +106,11 @@ has no visual surface of its own.
 
 - **import-bytes-entry**: Parsing from raw bytes MUST produce a theme or fail with an error.
 - **import-jsonc**: Both parsing entry points MUST accept JSONC — `//` and block comments and trailing commas — and MUST produce the same theme a strict-JSON spelling of the same document produces.
-- **import-encodings**: Both parsing entry points MUST accept UTF-8, UTF-8 with a byte-order mark, and UTF-16 payloads (including UTF-16 JSONC), producing the same theme as the UTF-8 spelling, decoded through the shared JSONC preprocessor (see [JSONC Preprocessor](agentictoolkit://cookbook/foundation/formats/jsonc-preprocessor)).
+- **import-encodings**: Both parsing entry points MUST accept UTF-8, UTF-8 with a byte-order mark, and UTF-16 payloads (including UTF-16 JSONC), producing the same theme as the UTF-8 spelling, decoded through the shared JSONC preprocessor (see [JSONC Preprocessor](agenticdevelopertoolkit://cookbook/foundation/formats/jsonc-preprocessor)).
 - **import-bytes-ignores-include**: Parsing from raw bytes MUST NOT resolve an `include` key and MUST NOT reject a document for carrying one; the result MUST equal the result for the same document without the key.
 - **import-file-entry**: Parsing from a file location MUST read the file, resolve its `include` chain, and parse the merged document.
 - **import-file-default-root**: When no containment root is given, the containment root MUST be the theme file's own directory.
-- **import-file-url-precondition**: The top-level file location is a caller precondition: the importer MUST NOT containment-check it — only `include` targets are checked. The shipping caller resolves the manifest's declared path against the extension's resource-path rules before calling (see [Extension Resource Path](agentictoolkit://cookbook/workspace/extensions/manifest/extension-resource-path)).
+- **import-file-url-precondition**: The top-level file location is a caller precondition: the importer MUST NOT containment-check it — only `include` targets are checked. The shipping caller resolves the manifest's declared path against the extension's resource-path rules before calling (see [Extension Resource Path](agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path)).
 - **import-name-from-label**: The imported theme's name MUST be the given label; the theme file's own `name` and `type` keys MUST be ignored.
 - **import-lock-flags**: Parsing MUST return a theme that is neither built-in nor already marked imported, carrying a freshly generated identifier.
 
@@ -165,7 +165,7 @@ has no visual surface of its own.
 ### VS Code import: include chains
 
 - **include-detect**: A document MUST be treated as including another only when its `include` value is a non-empty string; any other value MUST be treated as no include.
-- **include-resolve**: An include path MUST be resolved relative to the including file's directory and MUST stay inside the containment root (see [Extension Resource Path](agentictoolkit://cookbook/workspace/extensions/manifest/extension-resource-path)).
+- **include-resolve**: An include path MUST be resolved relative to the including file's directory and MUST stay inside the containment root (see [Extension Resource Path](agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path)).
 - **include-containment**: An include that resolves outside the containment root MUST fail with an escapes-containment-root error.
 - **include-depth-bound**: The importer MUST follow at most 8 include hops; a document at depth 8 that still names an include MUST fail with an include-chain-too-deep error (limit 8).
 - **include-cycle**: A cycle (`a.json` including `b.json` including `a.json`) MUST be stopped by the depth bound and fail with the same include-chain-too-deep error (limit 8); there is no visited-set.
@@ -190,7 +190,7 @@ has no visual surface of its own.
 
 ### UserSettings-backed storage
 
-- **storage-custom-themes-key**: The custom-themes storage property MUST read and write the settings store's custom-themes setting — key `theme.custom_themes`, a JSON-encoded list of themes, default an empty list — in whichever provider the settings store holds (see [Settings Storage](agentictoolkit://cookbook/foundation/settings-storage)).
+- **storage-custom-themes-key**: The custom-themes storage property MUST read and write the settings store's custom-themes setting — key `theme.custom_themes`, a JSON-encoded list of themes, default an empty list — in whichever provider the settings store holds (see [Settings Storage](agenticdevelopertoolkit://cookbook/foundation/settings-storage)).
 - **storage-active-key**: The active-theme-id storage property MUST read and write the settings store's active-theme-id setting — key `theme.active_theme_id`, a plain string, default the built-in catalog's default theme id.
 - **storage-legacy-compatible**: The keys and encodings MUST NOT change; a value written by an earlier build under either key MUST read back unchanged, and a write MUST land under the historical key as a plain string for the active id.
 - **storage-nil-write**: Clearing the active-theme-id property MUST store the built-in catalog's default theme id, never leave it empty.
@@ -315,7 +315,7 @@ means a document with `editor.foreground` `#D8DEE9`, `editor.background`
 - **Concurrent access**: the importer has no shared state, so concurrent parses on different threads MUST NOT interfere (MUST). The theme store and its settings-backed storage are confined to a single designated thread, so their calls are serialised and cannot interleave (MUST).
 - **Write followed by callback**: a write through the settings-backed storage MUST produce an external-change callback on a later main-queue turn; a consumer that also reacts synchronously sees two notifications unless it de-duplicates, as the theme manager's reload does (MUST).
 - **Storage never hooked**: a theme store used without a theme manager MUST allocate no observers (MUST).
-- **Corrupt stored themes**: what the custom-themes setting returns when the stored JSON does not decode is owned by the active settings-storage provider (see [Settings Storage](agentictoolkit://cookbook/foundation/settings-storage)); this storage returns whatever the setting holds without further validation (MUST).
+- **Corrupt stored themes**: what the custom-themes setting returns when the stored JSON does not decode is owned by the active settings-storage provider (see [Settings Storage](agenticdevelopertoolkit://cookbook/foundation/settings-storage)); this storage returns whatever the setting holds without further validation (MUST).
 - **Large theme file**: the importer MUST read the whole file into memory with no size cap and no timeout (MUST); when importing into the theme store, this blocks that store's designated thread for the read.
 - **Cancellation**: no parse can be cancelled once started (MUST).
 - **Error states**: every failure MUST surface to the caller as an error — an import error, a resource-path error, a file-read error, or the underlying JSON-parsing error — and nothing is stored (MUST).

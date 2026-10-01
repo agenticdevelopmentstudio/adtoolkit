@@ -1,7 +1,7 @@
 ---
 id: b3e2495c-5478-411c-80d7-9eefc2f2e297
 title: Status Server Monitor Fetch Cloudflare
-domain: agentictoolkit://cookbook/status/service/monitor/fetch-cloudflare
+domain: agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-cloudflare
 type: ingredient
 version: 1.0.2
 status: review
@@ -28,11 +28,11 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
 - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 related:
-- agentictoolkit://cookbook/status/service/monitor/alerts
+- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
 references:
-- packages/web/packages/status-server/src/monitor/fetch-cloudflare.ts (agentictoolkit)
-- packages/web/packages/status-server/test/cloudflare-deployments.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/provider-cooldown.test.ts (agentictoolkit)
+- packages/web/packages/status-server/src/monitor/fetch-cloudflare.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/cloudflare-deployments.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/provider-cooldown.test.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

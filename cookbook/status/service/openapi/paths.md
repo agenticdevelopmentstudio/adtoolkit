@@ -1,7 +1,7 @@
 ---
 id: ab36ce5f-4624-4097-bb66-a339dfecc4c9
 title: Status Server Paths
-domain: agentictoolkit://cookbook/status/service/openapi/paths
+domain: agenticdevelopertoolkit://cookbook/status/service/openapi/paths
 type: ingredient
 version: 1.0.2
 status: review
@@ -26,35 +26,35 @@ depends-on:
 - agenticdevelopercookbook://guidelines/implementing/security/token-handling
 - agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
 related:
-- agentictoolkit://cookbook/status/service/auth
-- agentictoolkit://cookbook/status/service/board
-- agentictoolkit://cookbook/status/service/config
-- agentictoolkit://cookbook/status/service/middleware
-- agentictoolkit://cookbook/status/service/monitor/types
-- agentictoolkit://cookbook/status/service/monitor/live-types
-- agentictoolkit://cookbook/status/service/monitor/uptime
-- agentictoolkit://cookbook/status/service/telemetry/fetchers
+- agenticdevelopertoolkit://cookbook/status/service/auth
+- agenticdevelopertoolkit://cookbook/status/service/board
+- agenticdevelopertoolkit://cookbook/status/service/config
+- agenticdevelopertoolkit://cookbook/status/service/middleware
+- agenticdevelopertoolkit://cookbook/status/service/monitor/types
+- agenticdevelopertoolkit://cookbook/status/service/monitor/live-types
+- agenticdevelopertoolkit://cookbook/status/service/monitor/uptime
+- agenticdevelopertoolkit://cookbook/status/service/telemetry/fetchers
 references:
-- packages/web/packages/status-server/src/openapi/shared.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/build.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/route-key.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/activity.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/auth.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/autoConfigure.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/badge.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/board.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/config.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/device.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/fleet.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/hooks.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/reads.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/stream.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/telemetry.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/tokens.ts (agentictoolkit)
-- packages/web/packages/status-server/src/openapi/paths/users.ts (agentictoolkit)
-- packages/web/packages/status-server/test/openapi.test.ts (agentictoolkit)
-- packages/web/packages/status-server/test/openapi-exclusions.ts (agentictoolkit)
-- packages/web/packages/status-server/tools/dump-openapi.ts (agentictoolkit)
+- packages/web/packages/status-server/src/openapi/shared.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/build.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/route-key.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/activity.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/auth.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/autoConfigure.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/badge.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/board.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/config.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/device.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/fleet.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/hooks.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/reads.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/stream.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/telemetry.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/tokens.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/src/openapi/paths/users.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/openapi.test.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/test/openapi-exclusions.ts (agenticdevelopertoolkit)
+- packages/web/packages/status-server/tools/dump-openapi.ts (agenticdevelopertoolkit)
 approved-by: ''
 approved-date: ''
 ---

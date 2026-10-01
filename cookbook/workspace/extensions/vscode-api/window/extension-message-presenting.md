@@ -1,7 +1,7 @@
 ---
 id: 0aa82a1f-42ed-4585-9f65-bb20aa110712
 title: Extension Message Presenting
-domain: agentictoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
+domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
 type: ingredient
 version: 1.1.0
 status: review
@@ -22,10 +22,10 @@ tags:
 depends-on: []
 related: []
 references:
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionMessagePresenting.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/NSAlertMessagePresenter.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift (agentictoolkit)
-  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowTests.swift (agentictoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionMessagePresenting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/NSAlertMessagePresenter.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowTests.swift (agenticdevelopertoolkit)
 approved-by: ""
 approved-date: ""
 ---
