@@ -270,9 +270,10 @@
   font-family: ui-monospace, monospace;
 }
 
-/* `wrap`: long code lines wrap at the pane's edge instead of scrolling sideways. */
-.adh-mv-prose--wrap pre.shiki,
-.adh-mv-prose--wrap pre.shiki code {
+/* `wrap`: long code lines wrap at the pane's edge instead of scrolling sideways.
+ * Every <pre>, not `pre.shiki`: the rendered <pre> carries no shiki class. */
+.adh-mv-prose--wrap pre,
+.adh-mv-prose--wrap pre code {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
