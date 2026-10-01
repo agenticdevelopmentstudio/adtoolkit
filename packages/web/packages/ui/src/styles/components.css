@@ -178,7 +178,7 @@
   background: var(--color-border);
 }
 
-/* ── The colour-mode toggle (auto → dark → light) ──────────────────────────────────
+/* -- The colour-mode toggle (auto → dark → light) ----------------------------------
  *
  * Both faces ship and CSS picks one, from the `dark` class the appearance pre-paint
  * script sets before anything paints — so the glyph is right in the FIRST frame. A JS
@@ -240,7 +240,7 @@ html[data-color-mode="auto"] .adh-color-mode-toggle > .adh-color-mode-toggle__ba
   display: block;
 }
 
-/* ── Touch rows ──────────────────────────────────────────────────────────────
+/* -- Touch rows --------------------------------------------------------------
  * On a touch screen every tappable row is 30% taller than its pointer height, so a
  * fingertip lands on the row it aims at (Mike, 2026-09: rows were hard to hit on the
  * iPhone). `pointer: coarse` rather than a width breakpoint: a narrow desktop window

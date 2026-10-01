@@ -24,7 +24,7 @@
 @source "../components/**/*.tsx";
 @source "../../dist/**/*.js";
 
-/* ── Content root (the themed reading surface) ─────────────────────────────── */
+/* -- Content root (the themed reading surface) ------------------------------- */
 
 .adh-mv-content {
   background-color: var(--mdv-bg);
@@ -40,7 +40,7 @@
   }
 }
 
-/* ── State panes (loading / empty / error) ─────────────────────────────────── */
+/* -- State panes (loading / empty / error) ----------------------------------- */
 
 .adh-mv-state {
   display: flex;
@@ -81,7 +81,7 @@
   color: var(--mdv-danger);
 }
 
-/* ── Prose typography ──────────────────────────────────────────────────────── */
+/* -- Prose typography -------------------------------------------------------- */
 
 .adh-mv-prose {
   max-width: 72ch;
@@ -297,7 +297,7 @@
   border: 1px solid var(--mdv-border);
 }
 
-/* ── Alerts / callouts (remark-adh-alerts) ─────────────────────────────────────
+/* -- Alerts / callouts (remark-adh-alerts) -------------------------------------
  * `> [!WARNING] …` blockquotes become these. The per-type accent is a LOCAL var that
  * points at a palette `--mdv-*` value — so this stays within the "colors are var(--mdv-*)"
  * rule (concrete values live only in palettes.ts). Differentiated by accent + title word,
