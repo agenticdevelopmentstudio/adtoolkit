@@ -25,9 +25,9 @@ describe("saveTextFile", () => {
     // The whole point of the picker is that it replaces the silent download, so a run that does
     // both has handed the operator two copies and asked about one of them.
     expect(click).not.toHaveBeenCalled()
-    expect(picker.mock.calls[0][0].suggestedName).toBe("integrations.json")
+    expect(picker.mock.calls[0]![0].suggestedName).toBe("integrations.json")
     // The extension comes off the suggested name, so the dialog's type filter agrees with it.
-    expect(picker.mock.calls[0][0].types[0].accept).toEqual({ "application/json": [".json"] })
+    expect(picker.mock.calls[0]![0].types[0].accept).toEqual({ "application/json": [".json"] })
   })
 
   it("saves NOTHING when the operator dismisses the picker", async () => {

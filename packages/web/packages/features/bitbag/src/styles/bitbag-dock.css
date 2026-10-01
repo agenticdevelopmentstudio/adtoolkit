@@ -33,9 +33,9 @@
  * requires of `@import` anyway) leaves the theme on top where it belongs.
  *
  * `build:css` is a plain `cp`, so these specifiers survive verbatim into
- * `dist/css/bitbag-dock.css` and resolve from THIS package's realpath — the toolkit's own
- * `external/agenticdevelopertoolkit` submodule — for every consumer, which is the same
- * one-copy guarantee `@agentic-toolkit/persona` gives the JS side. */
+ * `dist/css/bitbag-dock.css` and resolve from THIS package's realpath — its workspace
+ * sibling `packages/chat` — for every consumer, which is the same one-copy guarantee
+ * `@agentic-toolkit/persona` gives the JS side. */
 @import "@agenticdevelopertoolkit/chat/css/base.css";
 @import "@agenticdevelopertoolkit/chat/css/modes/inline.css";
 

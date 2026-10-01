@@ -1,5 +1,5 @@
 {
-  "$schema": "../../packages/web/external/agenticdevelopertoolkit/packages/web/packages/avatar-engine/src/config/schema.json",
+  "$schema": "../../config/schema.json",
   "schemaVersion": 1,
   "id": "olylo",
   "canvas": { "w": 400, "h": 400 },

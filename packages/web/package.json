@@ -1,7 +1,7 @@
 {
   "name": "agenticdevelopertoolkit",
   "version": "0.1.0",
-  "description": "Toolkit for wiring AI persona chats into apps using the official agentic registry and my-agentic-storage — pnpm monorepo.",
+  "description": "Agentic developer toolkit — shared React + TypeScript packages for persona chat, the ADH client, and the Agentic Cookbook family sites. pnpm monorepo.",
   "license": "Apache-2.0",
   "type": "module",
   "packageManager": "pnpm@9.15.9",
@@ -17,8 +17,8 @@
     "build": "pnpm -r --workspace-concurrency=1 run build",
     "build:types": "pnpm -r --if-present --workspace-concurrency=1 run build:types",
     "dev": "pnpm -r --parallel --if-present run dev",
-    "test": "vitest run",
-    "lint": "pnpm -r --if-present run lint",
+    "test": "vitest run && pnpm -r --if-present run test",
+    "lint": "python3 ../../tools/check_boundaries_test.py && python3 ../../tools/check_boundaries.py && pnpm -r --if-present run lint",
     "clean": "pnpm -r --if-present run clean && rm -rf node_modules"
   },
   "devDependencies": {

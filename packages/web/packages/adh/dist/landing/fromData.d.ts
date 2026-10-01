@@ -1,7 +1,7 @@
 import { type ComponentType, type ReactNode } from 'react';
 import type { LandingContent } from './content';
 /**
- * One node of a rich text value, as buildr writes it into a site's `landing.json`.
+ * One node of a rich text value, as content-buildr writes it into a site's `landing.json`.
  *
  * A string is text. An element is `{ t, c }` — its tag and its children — and a link carries
  * its `href` besides. `link` is a route of the host app and `a` is anywhere else; which

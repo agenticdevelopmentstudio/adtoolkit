@@ -22,9 +22,9 @@ const rect = (left: number, top: number, width: number, height: number): DOMRect
   DOMRect.fromRect({ x: left, y: top, width, height });
 
 type Frame = { transform: string; offset: number };
-const framesOf = (animate: ReturnType<typeof vi.fn>, call = 0): Frame[] => animate.mock.calls[call][0] as Frame[];
+const framesOf = (animate: ReturnType<typeof vi.fn>, call = 0): Frame[] => animate.mock.calls[call]![0] as Frame[];
 const timingOf = (animate: ReturnType<typeof vi.fn>, call = 0): KeyframeAnimationOptions =>
-  animate.mock.calls[call][1] as KeyframeAnimationOptions;
+  animate.mock.calls[call]![1] as KeyframeAnimationOptions;
 
 describe("travelFrom", () => {
   afterEach(() => {
@@ -37,7 +37,7 @@ describe("travelFrom", () => {
     travelFrom(el, rect(0, 0, 50, 25), { duration: 300 });
     const frames = framesOf(animate);
     // Half the width about a top-left origin at (100, 200): the top-left must go back 100, 200.
-    expect(frames[0].transform).toBe("translate(-100px, -200px) scale(0.5)");
+    expect(frames[0]!.transform).toBe("translate(-100px, -200px) scale(0.5)");
     expect(frames.at(-1)!.transform).toBe("none");
     expect(timingOf(animate).duration).toBe(300);
   });
@@ -47,7 +47,7 @@ describe("travelFrom", () => {
     el.style.transform = "translateX(10px)";
     travelFrom(el, rect(0, 0, 100, 50), { duration: 300 });
     const frames = framesOf(animate);
-    expect(frames[0].transform).toBe("translateX(10px) translate(-100px, -200px) scale(1)");
+    expect(frames[0]!.transform).toBe("translateX(10px) translate(-100px, -200px) scale(1)");
     expect(frames.at(-1)!.transform).toBe("translateX(10px)");
   });
 

@@ -97,24 +97,10 @@ function importedNextSubpaths(): Map<string, string[]> {
  * a scrape would keep "finding" a subpath whose alias line had been deleted — a guard that
  * passes on the exact edit it exists to catch.
  *
- * The config uses vitest's ARRAY alias form, not the object form, and it has to: the
- * `@agenticdevelopertoolkit/*` pins that `adtAlias()` contributes carry a `customResolver`
- * that RE-RESOLVES the specifier from this package instead of rewriting its prefix (an
- * object entry matches by prefix and would mangle exports-mapped subpaths like
- * `@shikijs/rehype/core`). Only an array entry can carry that resolver. Both spellings of
- * `find` therefore appear in one list: a literal string for the hand-written `next/*`
- * entries, a `RegExp` for the ones `adtAlias` derives.
- *
- * `covers()` below asks each entry the way VITE asks it — `find`, and only `find`. The
- * `name` field is bookkeeping that vitest never reads (vitest.adt.ts says so on the field
- * itself), so an assertion driven off `name` reports "pinned" for an entry whose pattern
- * has stopped matching anything of the sort, and every test in this file stays green while
- * the `^…$` anchors come off and prefix matching returns.
+ * `covers()` below asks each entry the way VITE asks it: a string `find` matches the name
+ * exactly or as a `/`-delimited subpath prefix, a RegExp `find` when it tests true.
  */
 interface AliasEntry {
-  /** Set by adtAlias() on the entries it derives; absent on hand-written ones. Not read
-   *  by vitest, and deliberately not read by any assertion here — only by messages. */
-  name?: string;
   find: string | RegExp;
   replacement: string;
 }
@@ -143,29 +129,12 @@ beforeAll(async () => {
 
 describe("vitest.config.ts next/* aliases", () => {
   // `alias` is read through optional chaining off a runtime import, so a config restructure
-  // (aliases moved back to the object form, or behind a function) would silently yield [] and
-  // make every assertion below trivially true. The react pin is a different invariant that
-  // lives in the same list: if it is not visible from here, this file is reading the wrong
-  // thing.
+  // (aliases moved behind a function, say) would silently yield [] and make every assertion
+  // below trivially true. If the pin these tests exist for is not visible from here, this
+  // file is reading the wrong thing.
   it("can see the alias list at all", () => {
     expect(alias.length).toBeGreaterThan(0);
-    expect(covers("react")).toBe(true);
-  });
-
-  /**
-   * A pin must match the WHOLE specifier and its `/` subpaths, never a name that merely
-   * contains it. Coverage assertions cannot see the difference — "is react pinned?" is
-   * answered yes whether or not `find` still carries its `^…$` anchors — so ask the
-   * inverse question here. Remove an anchor from `adtAlias`'s pattern and this goes red;
-   * nothing else in this file would.
-   */
-  it("matches whole specifiers, not names that merely contain one", () => {
-    for (const spec of ["react", "react-dom", "next/link"]) {
-      expect(covers(spec), `${spec} must be pinned`).toBe(true);
-      expect(covers(`${spec}/sub/path`), `${spec} subpaths must be pinned`).toBe(true);
-      expect(covers(`zz-${spec}`), `zz-${spec} must not be pinned`).toBe(false);
-      expect(covers(`${spec}-zz`), `${spec}-zz must not be pinned`).toBe(false);
-    }
+    expect(covers("next/navigation")).toBe(true);
   });
 
   // Without this, every assertion below is vacuous the moment the scan stops finding

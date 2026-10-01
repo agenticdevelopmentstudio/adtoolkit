@@ -1,22 +1,17 @@
-# agentic-web-toolkit
+# Web workspace
 
-Shared React + TypeScript component library for Agentic Cookbook family
-sites. Ships as a pnpm monorepo of pre-built ESM packages under the
-`@agentic-toolkit/*` scope.
+The pnpm workspace for every web package in this repo: the persona chat
+toolkit and shared UI vocabulary under `@agenticdevelopertoolkit/*`, and the
+application platform, family-site chrome and feature packages under
+`@agentic-toolkit/*`. Both scopes are workspace siblings and depend on each
+other by `workspace:*`. Ships pre-built ESM packages.
 
 ## Packages
 
-Foundation — everything else builds on these. **These are not in this
-workspace.** They moved to the public
-[agenticdevelopertoolkit](https://github.com/agenticdevelopmentstudio/agenticdevelopertoolkit)
-in 2026-08 and are named `@agenticdevelopertoolkit/*`. This repo reaches them
-through its `external/agenticdevelopertoolkit` submodule — a separate repo and
-a separate pnpm workspace, so manifests here depend on them by `link:` rather
-than `workspace:*` (pnpm cannot nest workspaces). Sources are on disk after a
-`git clone --recursive`, under
-`external/agenticdevelopertoolkit/packages/web/packages/<name>/`, and that
-repo's [`README.md`](../../external/agenticdevelopertoolkit/README.md) is the
-authority on what each contains.
+Foundation — everything else builds on these. Persona-chat packages
+(`avatar`, `avatar-engine`, `chat`, `chrome`, `popover`, `textlens`,
+`viewport`, `registry-profile`, `registry-types`) sit alongside them and are
+covered by the repo-root [`README.md`](../../README.md).
 
 | Package | Description | Depends on |
 |---|---|---|
@@ -29,9 +24,9 @@ authority on what each contains.
 | `@agenticdevelopertoolkit/editing` | The editing container — one owner of the draft, the Save button and the unsaved-changes guard for every editable surface | `ui` |
 | `@agenticdevelopertoolkit/landing` | Scroll-snapping landing deck (`Deck`, `Screen`, `NavChrome`) plus ~20 presentational blocks. Names no colour, font or copy — every visual value reads a `--lp-*` custom property, every block takes its content as props | — |
 
-Everything below **is** in this workspace. Where a `Depends on` cell names a
-bare `ui`, `themes`, `model`, `markdown`, `search`, `controls`, `editing` or
-`landing`, it means the `@agenticdevelopertoolkit/*` package of that name.
+Where a `Depends on` cell below names a bare `ui`, `themes`, `model`,
+`markdown`, `search`, `controls`, `editing` or `landing`, it means the
+`@agenticdevelopertoolkit/*` package of that name.
 
 Application platform — auth, data access, and the generated-CRUD stack:
 
@@ -71,8 +66,8 @@ need `transpilePackages` in Next.js.
 Two patterns, both Next.js 15 + React 19 + TypeScript + Tailwind v4:
 
 - **Submodule + pnpm workspace federation** — preferred, used by Mike's own
-  consumer repos. The toolkit is checked out as a submodule; the consumer
-  becomes a pnpm workspace and federates `external/agentic-web-toolkit/packages/*`.
+  consumer repos. This repo is checked out as a submodule; the consumer
+  becomes a pnpm workspace and federates its `packages/web/packages/*`.
   See [`docs/web/next-js-consumer.md`](../../docs/web/next-js-consumer.md).
 - **Published packages from GitHub Packages** — fallback for external
   consumers without the submodule. Same wiring on the app side; only
@@ -95,17 +90,16 @@ packages/web/            # workspace root — pnpm/build config lives here
   vitest.config.ts
   vitest.setup.ts
   copy-css.mjs           # only build helper, called from each package's build:css
-  vitest.adt.ts          # cross-workspace aliases for tests that reach into the submodule
   packages/              # libraries — zero loose files
+    ui/ themes/ model/ markdown/ search/ controls/ editing/ landing/
+                         # the shared UI vocabulary (@agenticdevelopertoolkit/*)
+    avatar/ chat/ viewport/ ...                   # persona chat toolkit
     auth/ data/ resource/ crud/ api-explorer/     # application platform
     adh/                 # family site chrome (header, footer, legal, themes, debug)
     adh-ui/              # the adh vocabulary the shared UI must not know about
     messaging/ persona/  # DMs + presence; the persona crossing
     deploy-platform/     # deployment/tier helpers
     features/            # one package per product area — chat, bitbag, personas, teams, ...
-external/agenticdevelopertoolkit/   # submodule — the shared UI vocabulary
-  packages/web/packages/            # ui, themes, model, markdown, search,
-                                    # controls, editing, landing, and more
 websites/site/           # Next.js 15 App Router examples site
   app/                   # layout, page, [exampleId]/page
   examples/              # one self-contained example dir per control/feature
@@ -120,12 +114,9 @@ live in any directory. Putting them in `packages/web/` keeps the repo root
 clean and leaves room for the other platforms alongside.
 
 `websites/site/` is **outside** the workspace and depends on the packages
-through `file:` refs, so its wiring mirrors what an external consumer does
-rather than what a workspace member gets for free. Since the 2026-08
-extraction **every one of those refs points into
-`external/agenticdevelopertoolkit/packages/web/packages/<name>`**: the site's
-five dependencies are `chat`, `controls`, `model`, `themes` and `ui`, and it
-names no `packages/web/packages/<name>` target at all.
+through `file:../../packages/web/packages/<name>` refs, so its wiring mirrors
+what an external consumer does rather than what a workspace member gets for
+free. Its five dependencies are `chat`, `controls`, `model`, `themes` and `ui`.
 
 ## Local development
 
@@ -153,17 +144,10 @@ the built `dist/` into its `node_modules` at install time. After rebuilding a
 package, re-run `npm install` in `websites/site/` or the site keeps serving
 the previous bytes.
 
-**This pairing no longer works from here**, and the paragraph that used to
-show it (`pnpm --filter '@agentic-toolkit/personas...' run dev` in one shell,
-`npm run dev` in `websites/site/` in the other) was misleading after the
-extraction: all five of the site's dependencies are
-`@agenticdevelopertoolkit/*`, so nothing `pnpm --filter` can build in this
-workspace reaches the demo site. Iterate on a package **and** the site together
-from the submodule instead:
+Iterate on a package **and** the site together:
 
 ```bash
-# In one shell — package(s) in watch mode, from
-# external/agenticdevelopertoolkit/packages/web/
+# In one shell — package(s) in watch mode, from packages/web/
 pnpm --filter '@agenticdevelopertoolkit/ui...' run dev
 # In another shell — site dev server, from websites/site/
 npm run dev
@@ -171,10 +155,6 @@ npm run dev
 
 `file:` refs are hard-copied (see above), so the site still needs an
 `npm install` after each rebuild to pick the new `dist/` up.
-
-Watch mode on a package in THIS workspace is still `pnpm --filter '<name>...'
-run dev` from `packages/web/` — it just has a consumer other than
-`websites/site/`.
 
 ## Tech stack
 
@@ -199,8 +179,11 @@ cd packages/web
 pnpm test
 ```
 
-A single vitest config at `packages/web/vitest.config.ts` discovers tests
-across `packages/**`.
+Two lanes, so every test runs exactly once under the config its author chose.
+A package that owns a `vitest.config.ts` runs under it through its own `test`
+script; every other package is discovered by the root
+`packages/web/vitest.config.ts`, which derives its exclusion list from the
+packages that own a config. `pnpm test` runs both lanes.
 
 ## Docs
 

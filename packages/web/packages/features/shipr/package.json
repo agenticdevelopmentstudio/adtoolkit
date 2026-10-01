@@ -45,7 +45,7 @@
     "@agentic-toolkit/data": "workspace:*",
     "@agentic-toolkit/integrations": "workspace:*",
     "@agentic-toolkit/resource": "workspace:*",
-    "@agenticdevelopertoolkit/ui": "link:../../../../../external/agenticdevelopertoolkit/packages/web/packages/ui",
+    "@agenticdevelopertoolkit/ui": "workspace:*",
     "lucide-react": "^1.16.0"
   },
   "peerDependencies": {

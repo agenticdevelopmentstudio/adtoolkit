@@ -22,10 +22,8 @@ const CSS = readFileSync(join(__dirname, '../styles/adh-landing-bridge.css'), 'u
  * between the edit and the failing test.
  *
  * Reached through this package's own `node_modules` link rather than by counting
- * `..` hops: landing is no longer a sibling in this workspace — it lives in the
- * `external/agenticdevelopertoolkit` submodule, which is a different depth and a
- * different repo. The link is the same one the import statements use, so it cannot
- * point somewhere the code does not.
+ * `..` hops: the link is the same one the import statements use, so it cannot
+ * point somewhere the code does not, wherever the package itself moves.
  */
 const LANDING_CSS = join(
   __dirname,

@@ -319,9 +319,9 @@ describe('BitbagDock', () => {
         drawnAt(face, 11)
         fireEvent.click(face)
         expect(travels.calls).toHaveLength(1)
-        expect(travels.calls[0].from.left).toBe(11)
-        expect(travels.calls[0].options).toMatchObject({ duration: 420 })
-        expect(travels.calls[0].options.bounce).toBeGreaterThan(0)
+        expect(travels.calls[0]!.from.left).toBe(11)
+        expect(travels.calls[0]!.options).toMatchObject({ duration: 420 })
+        expect(travels.calls[0]!.options.bounce).toBeGreaterThan(0)
         // The same clock as the panel's slide, which reads it from the dock.
         expect((container.firstElementChild as HTMLElement).style.getPropertyValue('--bb-dock-slide-in')).toBe('420ms')
       })
@@ -335,9 +335,9 @@ describe('BitbagDock', () => {
         drawnAt(face, 22)
         fireEvent.pointerDown(document.body)
         expect(travels.calls).toHaveLength(2)
-        expect(travels.calls[1].from.left).toBe(22)
-        expect(travels.calls[1].options).toMatchObject({ duration: 320 })
-        expect(travels.calls[1].options.bounce).toBeFalsy()
+        expect(travels.calls[1]!.from.left).toBe(22)
+        expect(travels.calls[1]!.options).toMatchObject({ duration: 320 })
+        expect(travels.calls[1]!.options.bounce).toBeFalsy()
         // And not again when the panel is finally hidden: he is already home.
         fireEvent.animationEnd(panelOf(container))
         expect(travels.calls).toHaveLength(2)
@@ -353,8 +353,8 @@ describe('BitbagDock', () => {
         drawnAt(face, 33)
         fireEvent.click(face)
         expect(travels.calls).toHaveLength(3)
-        expect(travels.calls[2].from.left).toBe(33)
-        expect(travels.calls[2].options.bounce).toBeGreaterThan(0)
+        expect(travels.calls[2]!.from.left).toBe(33)
+        expect(travels.calls[2]!.options.bounce).toBeGreaterThan(0)
       })
 
       it('never travels in the dock that rests on its entry line', () => {

@@ -1,5 +1,6 @@
 packages:
   - './packages/*'
+  - './packages/features/*'
 
 # Security floors for transitive/auto-installed peers (vite + esbuild arrive as
 # peers of vitest). Mirrored in package.json's "pnpm.overrides" because pnpm 9

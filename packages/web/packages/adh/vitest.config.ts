@@ -1,36 +1,16 @@
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
-import { adtAlias, adtInline } from '../../vitest.adt'
 
 // Self-contained config so `pnpm --filter @agentic-toolkit/adh run test`
-// (cwd = this package) discovers src/__tests__/*. The workspace-root config's
-// `dir: '../packages'` resolves outside the web workspace, so it finds nothing.
+// (cwd = this package) discovers src/__tests__/*. The workspace-root
+// config excludes every package that owns a config, so this is the only one that runs
+// these tests.
 // We reuse the root setup file for its deterministic localStorage shim (Node 24's
 // built-in localStorage otherwise interferes with jsdom).
 export default defineConfig({
   resolve: {
-    // ONE React in the test process. Every `@agentic-toolkit/*` this package renders is a
-    // workspace sibling here, so pnpm already hands them the same react from the same store
-    // — nothing to pin. `@agenticdevelopertoolkit/*` is the exception: that toolkit is a
-    // separate pnpm workspace reached by `link:`, with its own react in its own store, and
-    // module resolution starts from the symlink's REAL path. `footerDock.test.tsx` renders
-    // its <ThemeStyle> as a CSS oracle; that component happens to be hook-free, so today a
-    // second copy is merely wasteful — but the package next door (`ColorModeProvider`, and
-    // the chat package's hooks) would fail with `useState of null`, and the failure names
-    // React rather than the boundary that caused it. Pin it while the reason is still visible.
-    //
-    // An alias, not `resolve.dedupe`: dedupe doesn't reach files rooted outside the project,
-    // and the persona toolkit lives several directories up and across.
-    // Array form, because adtAlias returns entries that re-resolve rather than
-    // rewrite (see ../../vitest.adt.ts) and an object cannot carry those.
     alias: [
-      // react/react-dom AND every dependency of the linked @agenticdevelopertoolkit/*
-      // packages, derived from their own manifests so this cannot drift when that
-      // toolkit adds one. Pinning react by hand was enough while `@base-ui/react`
-      // still came from a shared store; it does not survive the toolkit moving to a
-      // repo with a store of its own.
-      ...adtAlias(fileURLToPath(new URL('.', import.meta.url))),
-      // ONE `next` in the test process, same reasoning as react/react-dom above, forced by
+      // ONE `next` in the test process, forced by
       // Task 7 (the User Settings overlay): its render tree now crosses into
       // @agentic-toolkit/account and @agentic-toolkit/resource, both pinned to next ^15.1.0,
       // while this package's own devDependency is next ^16.2.9 — two genuinely different
@@ -84,15 +64,5 @@ export default defineConfig({
     // cannot reach it.
     setupFiles: ['../../vitest.setup.ts', '../data/vitest-setup.ts'],
     dir: 'src',
-    server: {
-      deps: {
-        // The alias above only applies to modules vite processes. Deps resolved out of
-        // another workspace's store are externalized by default and Node-resolve their own
-        // react, so the alias never sees them. Inline the persona toolkit to close that
-        // path. Scoped to it alone — inlining the sibling `@agentic-toolkit/*` packages
-        // would buy nothing and cost transform time on every run.
-        inline: adtInline,
-      },
-    },
   },
 })
