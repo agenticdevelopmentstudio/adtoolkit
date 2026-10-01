@@ -26,6 +26,6 @@ export { ServerBagsPane, BagDialog } from "./ServerBagsPane";
 export { StorageTokensPanel } from "./StorageTokensPanel";
 
 // No help-text export. The sentences these panes show live in adh's site-config content package —
-// the product's VOCABULARY tier, which a portable package may not import (scripts/check_boundaries.py).
+// the product's VOCABULARY tier, which a portable package may not import (tools/check_boundaries.py).
 // The host passes its own lookup in as `ConfigurationGroup`'s `helpFor`, and each pane already
 // takes its blurb as a `help` prop.

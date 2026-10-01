@@ -5,7 +5,7 @@
 // `adh-api-types/src/data-profile-wire.test-d.ts` is what CHECKS the transcription — it measures
 // every shape below against the generated types and fails `tsc` on a rename, a removal or a
 // retype. The gate lives in THAT package, not next to this file, because the dependency it needs
-// runs the wrong way for a portable one: `scripts/check_boundaries.py` refuses any import of the
+// runs the wrong way for a portable one: `tools/check_boundaries.py` refuses any import of the
 // adh vocabulary tier from here, so the side that may depend on the other holds the file. Read
 // the two together: without the gate, a backend column rename leaves every consumer compiling and
 // the field reading `undefined` in the Profile editor and the public UserCard.

@@ -1,7 +1,7 @@
 // @agentic-toolkit/account — the portable half of a user's settings surface.
 //
 // MECHANISM tier: this package must never import @agentic-toolkit/adh* (see
-// scripts/check_boundaries.py and the tier comment in package.json). Populated by
+// tools/check_boundaries.py and the tier comment in package.json). Populated by
 // the following tasks.
 export { SettingsLayout, type Topic } from "./layout/SettingsLayout";
 export { SettingsPanel } from "./layout/SettingsPanel";

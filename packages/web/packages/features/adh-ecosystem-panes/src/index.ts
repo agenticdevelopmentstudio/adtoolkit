@@ -8,7 +8,7 @@
 // Why not `@agentic-toolkit/ecosystem-config`, where Auth / Feature flags / Server bags /
 // Sign-in apps / Tokens / Billing already sit: these four are typed against
 // `@agentic-toolkit/adh-api-types`, adh's generated OpenAPI bodies. That is the VOCABULARY
-// tier, and a mechanism package may not import it (scripts/check_boundaries.py) — see this
+// tier, and a mechanism package may not import it (tools/check_boundaries.py) — see this
 // package's `comment:tier`. The split is the boundary the guard draws, not a taxonomy of
 // what "configuration" means.
 //

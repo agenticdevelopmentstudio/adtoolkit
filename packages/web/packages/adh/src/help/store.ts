@@ -16,7 +16,7 @@ const help = helpContent as Record<string, string>
  * detail pane. Returns undefined when there is no entry.
  *
  * It lives HERE, in the adh package, because the sentences are adh's product vocabulary: a
- * portable feature package may not import them (scripts/check_boundaries.py), so every host that
+ * portable feature package may not import them (tools/check_boundaries.py), so every host that
  * mounts such a package passes this function down as a seam — see ConfigurationGroup's `helpFor`.
  */
 export function helpFor(key: string | undefined): string | undefined {

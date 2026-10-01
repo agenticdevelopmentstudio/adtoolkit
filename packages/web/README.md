@@ -111,7 +111,7 @@ websites/site/           # Next.js 15 App Router examples site
   examples/              # one self-contained example dir per control/feature
   src/manifest.ts        # registry consumed by app/page.tsx and [exampleId]/page.tsx
 docs/web/                # guides, including consumer integration + migration
-scripts/check_boundaries.py   # boundary guard, run by `pnpm lint`
+tools/check_boundaries.py   # boundary guard, run by `pnpm lint`
 ```
 
 The pinned pnpm files (`package.json`, `pnpm-workspace.yaml`, `pnpm-lock.yaml`)
@@ -183,7 +183,7 @@ run dev` from `packages/web/` — it just has a consumer other than
   preserved via `esbuild-plugin-preserve-directives`.
 - **Workspace**: pnpm 9 with the workspace root at `packages/web/`. Strict
   cross-package boundaries enforced by pnpm's resolver — undeclared
-  workspace imports fail to build — plus `scripts/check_boundaries.py`,
+  workspace imports fail to build — plus `tools/check_boundaries.py`,
   which bans consumer aliases (`@/…`) from every package source and stops the
   generic tier importing the adh vocabulary tier. It derives that tier from the
   packages' own `package.json` names rather than a hardcoded scope string, so a

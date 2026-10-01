@@ -13,7 +13,7 @@
   "sideEffects": [
     "**/*.css"
   ],
-  "comment:tier": "VOCABULARY, not mechanism — see scripts/check_boundaries.py, which classifies on the `@agentic-toolkit/adh` name boundary alone. Note what this package does NOT do: it imports no vocabulary package, only mechanism ones (auth, data), so the guard would equally permit the mechanism name `@agentic-toolkit/billing`. The `adh-` prefix is a deliberate claim about the CONTENT — every shape in src/api/billing.ts is a column of adh's billing schema, and the panel's copy names adh's own setup steps — so a non-adh host mounting this would be mounting adh's model of selling, not a general one. Naming it vocabulary now also keeps the door open: the day this panel wants @agentic-toolkit/adh's help store, a mechanism-tier name would have to be renamed across every host, and a vocabulary one just adds the import.",
+  "comment:tier": "VOCABULARY, not mechanism — see tools/check_boundaries.py, which classifies on the `@agentic-toolkit/adh` name boundary alone. Note what this package does NOT do: it imports no vocabulary package, only mechanism ones (auth, data), so the guard would equally permit the mechanism name `@agentic-toolkit/billing`. The `adh-` prefix is a deliberate claim about the CONTENT — every shape in src/api/billing.ts is a column of adh's billing schema, and the panel's copy names adh's own setup steps — so a non-adh host mounting this would be mounting adh's model of selling, not a general one. Naming it vocabulary now also keeps the door open: the day this panel wants @agentic-toolkit/adh's help store, a mechanism-tier name would have to be renamed across every host, and a vocabulary one just adds the import.",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

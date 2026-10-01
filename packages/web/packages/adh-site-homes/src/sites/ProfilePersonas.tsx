@@ -13,7 +13,7 @@ import { useClientHost } from '@agentic-toolkit/adh/header'
  * Lives here, in the site, rather than in `@agentic-toolkit/personas`: it imports the adh
  * vocabulary tier (`@agentic-toolkit/adh/profile`, `@agentic-toolkit/adh-registry`,
  * `@agentic-toolkit/adh/header`) directly, which a portable feature package may not do
- * (`scripts/check_boundaries.py`) — a site is a consumer of that vocabulary, not a package other
+ * (`tools/check_boundaries.py`) — a site is a consumer of that vocabulary, not a package other
  * products reuse, and this component's whole job is rendering one site's `profileSection`.
  *
  * `ProfileView` (`packages/web/packages/adh/src/profile/ProfileView.tsx`) renders `UserCard`

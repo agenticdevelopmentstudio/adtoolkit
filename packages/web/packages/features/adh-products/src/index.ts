@@ -12,7 +12,7 @@
 // genuinely its own — where it is mounted, and the seams it can answer.
 //
 // Why the `adh-` prefix: it composes @agentic-toolkit/adh-ecosystem-panes and adh's help store,
-// both VOCABULARY, which mechanism may not import (scripts/check_boundaries.py). See
+// both VOCABULARY, which mechanism may not import (tools/check_boundaries.py). See
 // `comment:tier` in package.json.
 
 export { ProductsFeature, PRODUCT_TOPIC_CONFIGS, type ProductsFeatureProps } from "./ProductsFeature";

@@ -6,7 +6,7 @@
 // any site.
 //
 // IT LIVES HERE, NOT THERE, and that is the whole reason this file moved. `data` is a PORTABLE
-// package, and `scripts/check_boundaries.py` (adh runs it as verify_toolkit_boundary.py) refuses
+// package, and `tools/check_boundaries.py` (adh runs it as verify_toolkit_boundary.py) refuses
 // any import of the adh vocabulary tier from one — the direction is one-way by design, because
 // such an import resolves fine inside adh's workspace and fails only in a consumer. A gate is
 // not a reason to open a hole in that: this package IS the adh tier, it already devDepends on

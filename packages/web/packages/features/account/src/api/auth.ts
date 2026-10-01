@@ -6,7 +6,7 @@
 // Request/response shapes below are TRANSCRIBED from the backend rather than
 // imported from `@agentic-toolkit/adh-api-types`, unlike hub's original (which typed
 // them as `SuccessBody<'/auth/me', 'get'>` etc). That package's name starts with
-// `@agentic-toolkit/adh`, which `scripts/check_boundaries.py`'s `_is_vocabulary`
+// `@agentic-toolkit/adh`, which `tools/check_boundaries.py`'s `_is_vocabulary`
 // check classifies as the adh VOCABULARY tier (name === '@agentic-toolkit/adh' or
 // name.startswith('@agentic-toolkit/adh-')) — confirmed by running the guard with
 // this package importing it, which failed naming `adh-api-types`. This package is

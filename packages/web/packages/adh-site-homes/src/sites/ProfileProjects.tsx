@@ -8,7 +8,7 @@ import type { ProfilePrincipal } from '@agentic-toolkit/adh/profile'
  *
  * Lives here, in the site, rather than in `@agentic-toolkit/projects`: it imports the adh
  * vocabulary tier (`@agentic-toolkit/adh/profile`) directly, which a portable feature package may
- * not do (`scripts/check_boundaries.py`) — a site is a consumer of that vocabulary, not a package
+ * not do (`tools/check_boundaries.py`) — a site is a consumer of that vocabulary, not a package
  * other products reuse, and this component's whole job is rendering one site's `profileSection`.
  *
  * Renders the empty state ONLY, and that is a correct, current statement rather than an

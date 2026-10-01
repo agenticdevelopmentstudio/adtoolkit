@@ -18,7 +18,7 @@ import { toneTextClass } from "@agenticdevelopertoolkit/ui/lib/tone";
 import { PUBLIC_ROUTE_RE } from "./research-model";
 
 // Deliberately hard-coded, not per-environment, and not a defect: `features/research` is a
-// MECHANISM-tier package (see `scripts/check_boundaries.py` at the submodule root, which both
+// MECHANISM-tier package (see `tools/check_boundaries.py` at the submodule root, which both
 // defines and enforces the mechanism/vocabulary tier rule), and the per-environment origin
 // that would replace this literal — `adh-registry`'s `research` site entry, resolved through
 // its `siteUrl`/`localOrigin` seam — lives in `@agentic-toolkit/adh-registry`, a

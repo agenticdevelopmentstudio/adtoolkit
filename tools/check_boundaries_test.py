@@ -9,7 +9,7 @@ output. Case 1 is the fix: plant a violation, assert it is reported. Every other
 case exists to keep the ban from over-reaching once it can actually bite.
 
 Plain asserts, no framework.
-Run: python3 scripts/check_boundaries_test.py   (exit 0 = pass)."""
+Run: python3 tools/check_boundaries_test.py   (exit 0 = pass)."""
 from __future__ import annotations
 
 import importlib.util

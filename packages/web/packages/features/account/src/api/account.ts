@@ -7,7 +7,7 @@
 // Request/response shapes below are TRANSCRIBED from the backend rather than
 // imported from `@agentic-toolkit/adh-api-types`, unlike hub's original (which typed
 // them as `SuccessBody<'/notifications/preferences', 'get'>` etc). That package's
-// name starts with `@agentic-toolkit/adh`, which `scripts/check_boundaries.py`'s
+// name starts with `@agentic-toolkit/adh`, which `tools/check_boundaries.py`'s
 // `_is_vocabulary` check classifies as the adh VOCABULARY tier — this package is
 // MECHANISM tier (see package.json's `comment:tier`) and may never import it. See
 // `./auth.ts`'s header for the fuller rationale and the guard evidence.
