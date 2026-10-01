@@ -25,10 +25,11 @@ public final class WindowManager {
     /// Live `SingleWindowController` lookup by `windowID`.
     public let registry = WindowRegistry()
 
-    /// Factories for the host's restorable windows, keyed by `windowID`. The host
-    /// registers these at launch via `registerRestorable(id:make:)`; `restoreOnLaunch()`
-    /// builds them (so they self-register) and re-shows the ones that were visible.
-    private var restorableFactories: [String: @MainActor () -> Void] = [:]
+    /// Factories for the host's windows, keyed by `windowID`. The host registers
+    /// every window it has via `register(id:make:)`; `restoreOnLaunch()` builds
+    /// them (so they self-register) and re-shows the ones whose own `WindowSpec`
+    /// persists visibility and that were visible last session.
+    private var windowFactories: [String: @MainActor () -> Void] = [:]
 
     private static let logger = Logger(
         subsystem: "com.agentic-cookbook.agentictoolkit",
@@ -132,18 +133,28 @@ public final class WindowManager {
     /// Re-invoke on reactivation (e.g. a second-launch
     /// `DistributedNotification`) so persisted-visible windows reappear
     /// when an LSUIElement app is re-frontmost.
-    /// Registers a restorable window: `make` constructs its controller (which
-    /// self-registers with `registry`) **without** showing it. The host calls this
-    /// once per restorable window before `restoreOnLaunch()`, instead of hand-
-    /// constructing each controller — so a window can't silently miss restore.
+    /// Tells the manager how to build the window `id`: `make` constructs its
+    /// controller (which self-registers with `registry`) **without** showing it.
+    /// The host registers every window it has, once, before `restoreOnLaunch()`.
+    ///
+    /// The host does not decide, and does not need to know, whether a window
+    /// comes back at launch. That is the window's own `WindowSpec.behavior`,
+    /// chosen where the window is built — `.persistsVisibility` is on by
+    /// default, and a window that should not reopen turns it off there.
+    public func register(id: String, make: @escaping @MainActor () -> Void) {
+        windowFactories[id] = make
+    }
+
+    @available(*, deprecated, renamed: "register(id:make:)",
+               message: "Register every window; whether it reopens is its WindowSpec's call.")
     public func registerRestorable(id: String, make: @escaping @MainActor () -> Void) {
-        restorableFactories[id] = make
+        register(id: id, make: make)
     }
 
     public func restoreOnLaunch() {
-        // Build every registered restorable window (cheap — the NSWindow is created
+        // Build every registered window (cheap — the NSWindow is created
         // lazily on first show) so it's in the registry for the restore pass below.
-        for make in restorableFactories.values { make() }
+        for make in windowFactories.values { make() }
 
         for id in registry.registeredIDs {
             registry.controller(forID: id)?.restoreVisibilityIfNeeded()
@@ -153,7 +164,7 @@ public final class WindowManager {
         // live can't be restored — surface the host wiring gap loudly rather than
         // silently leaving the window closed.
         for id in frames.visibleWindowIDs()
-        where restorableFactories[id] == nil && registry.controller(forID: id) == nil {
+        where windowFactories[id] == nil && registry.controller(forID: id) == nil {
             Self.logger.error(
                 "restoreOnLaunch: visible window '\(id, privacy: .public)' has no registered factory"
             )

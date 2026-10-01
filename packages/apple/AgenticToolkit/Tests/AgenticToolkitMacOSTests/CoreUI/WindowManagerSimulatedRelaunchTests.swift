@@ -454,7 +454,7 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
 
     // MARK: - Restore registration
 
-    func testRestoreOnLaunchBuildsEveryRegisteredRestorable() {
+    func testRestoreOnLaunchBuildsEveryRegisteredWindow() {
         let provider = MockScreenProvider(screens: [Self.builtin()])
         let windowManager = WindowManager(
             screenProvider: provider,
@@ -463,8 +463,8 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
         )
 
         var built: Set<String> = []
-        windowManager.registerRestorable(id: "alpha") { built.insert("alpha") }
-        windowManager.registerRestorable(id: "beta") { built.insert("beta") }
+        windowManager.register(id: "alpha") { built.insert("alpha") }
+        windowManager.register(id: "beta") { built.insert("beta") }
 
         windowManager.restoreOnLaunch()
 
