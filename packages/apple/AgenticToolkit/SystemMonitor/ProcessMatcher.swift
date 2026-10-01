@@ -66,4 +66,7 @@ extension ProcessMatcher {
         .pathContains("/Ollama.app/"),
         .namePrefix("ollama")
     ])
+
+    /// The Universal Control agent, which runs whenever the feature is on.
+    public static let universalControl = ProcessMatcher([.pathContains("/UniversalControl.app/")])
 }
