@@ -1,12 +1,11 @@
 'use client'
 
 import { useCallback, useSyncExternalStore } from 'react'
-// Via bitbag, not `@agenticdevelopertoolkit/themes` directly: that package lives in
-// a SIBLING SUBMODULE this one must not reach into (a `link:` across submodules only
-// resolves in a checkout that has both, and this toolkit is consumed by repos that
-// have neither). bitbag owns the `theme` prop these values feed, already peer-depends
-// on the vocabulary, and re-exports it for exactly this. Same reason `persona-chat/
-// chat-types.ts` keeps a local copy of that submodule's chat types.
+// Via bitbag, not `@agenticdevelopertoolkit/themes` directly: that package is part of
+// the persona toolkit, which this package keeps out of its shipped graph (see the
+// `//devDependencies` note in package.json). bitbag owns the `theme` prop these values
+// feed, already peer-depends on the vocabulary, and re-exports it for exactly this.
+// Same reason `persona-chat/chat-types.ts` keeps a local copy of the chat types.
 import { themeIds, type ThemeKey } from '@agentic-toolkit/bitbag'
 import { DEV_BUILD } from '@agentic-toolkit/adh-registry/deployment-env'
 

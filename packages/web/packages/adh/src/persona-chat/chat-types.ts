@@ -1,22 +1,21 @@
 // The chat contract types this package's chat backends speak, copied VERBATIM from
 // `packages/web/packages/chat/src/types.ts` (and its
-// `src/backends/types.ts` for `ChatBackend`) — this repo's OWN submodule, so the paths
-// resolve in any recursive clone, with or without adh.
+// `src/backends/types.ts` for `ChatBackend`).
 //
-// WHY A COPY RATHER THAN A DEPENDENCY. `@agenticdevelopertoolkit/chat` lives in a
-// DIFFERENT submodule. A `link:` from here to a sibling submodule only resolves in a
-// checkout that has both — and this toolkit is consumed by repos that have neither adh
-// nor that submodule (see <adh-tools>/sites/scripts/verify_toolkit_boundary.py's docstring). Both
-// uses here (`persona-chat/index.ts`, `visitor-chat/sse.ts`) are TYPE-ONLY, so they
-// erase at build time and a structural copy is exact: any real chat backend passed in
-// by a consumer satisfies these shapes.
+// WHY A COPY RATHER THAN A DEPENDENCY. `@agenticdevelopertoolkit/chat` is a workspace
+// sibling, so a dependency would resolve — but it would put the persona toolkit into
+// this package's shipped graph, and keeping it out is the layering (see the
+// `//devDependencies` note in package.json). Even a type-only import would not stay
+// private: the emitted `.d.ts` re-imports it, so every consumer's type check would need
+// chat installed. Both uses here (`persona-chat/index.ts`, `visitor-chat/sse.ts`) are
+// TYPE-ONLY, so they erase at build time and a structural copy is exact: any real chat
+// backend passed in by a consumer satisfies these shapes.
 //
 // If the source file changes shape, this copy must follow. It is duplication with a
 // named source, not an independent definition — and `packages/web/tools/
-// verify_chat_types_copy.py` (run in web-tests CI, which triggers on the submodule
-// gitlink for exactly this reason) fails the build when the two disagree. Nothing else
-// would notice: a stale copy still compiles, and a consumer's real backend just
-// satisfies a shape this repo believes is current.
+// verify_chat_types_copy.py` (run in web-tests CI) fails the build when the two
+// disagree. Nothing else would notice: a stale copy still compiles, and a consumer's
+// real backend just satisfies a shape this repo believes is current.
 
 export interface ChatParticipant {
   name: string

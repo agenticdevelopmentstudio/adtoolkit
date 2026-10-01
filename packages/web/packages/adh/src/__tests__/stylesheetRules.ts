@@ -130,10 +130,8 @@ export function bitbagStylesheet(name: string): string {
 
 /** One of ui's stylesheets, by its export name (`components.css`), resolved the way
  *  adh-components.css's own `@import "@agenticdevelopertoolkit/ui/styles/…"` is: from that
- *  file, through this package's dependency link and ui's `exports` map. The link leads into
- *  the ADT submodule of THIS package's repo, not the sibling copy a site checkout also holds
- *  (see agentictoolkit's CLAUDE.md), so the rules read are the ones this package builds
- *  against. */
+ *  file, through this package's workspace link and ui's `exports` map, so the rules read
+ *  are the ones this package builds against — not a copy a site checkout may also hold. */
 export function uiStylesheet(name: string): string {
   return createRequire(adhStylesheet('adh-components.css')).resolve(`@agenticdevelopertoolkit/ui/styles/${name}`)
 }

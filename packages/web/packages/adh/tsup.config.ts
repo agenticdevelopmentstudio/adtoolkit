@@ -150,7 +150,7 @@ export default defineConfig({
     // The shared persona-chat backend (SSE parser + status/retry state machine +
     // PersonaChatBackend class). Pure TS, no React. The auth-aware fetchers are
     // INJECTED by the consumer; the chat contract types are a traceable local copy
-    // (src/persona-chat/chat-types.ts) rather than a cross-submodule dependency.
+    // (src/persona-chat/chat-types.ts) rather than a dependency on the persona toolkit.
     'persona-chat/index': 'src/persona-chat/index.ts',
     // The VISITOR chat backend (anonymous, token-minting) — same shape, no auth.
     'visitor-chat/index': 'src/visitor-chat/index.ts',

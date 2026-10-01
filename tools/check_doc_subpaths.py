@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """A documented subpath must be one the package's `exports` map actually exports.
 
-Task 9's review found three `controls` READMEs instructing the reader to
-`import '@agenticdevelopertoolkit/controls/filtered-list/styles/filtered-list.css'`.
+Task 9's review found three `controls` READMEs instructing the reader to import
+`@agenticdevelopertoolkit/controls/filtered-list/styles/filtered-list.css`.
 That is the path the `exports` map points AT (`dist/filtered-list/styles/filtered-list.css`),
 not the subpath it EXPORTS (`./filtered-list/styles.css`) — following the README's
 version raises `ERR_PACKAGE_PATH_NOT_EXPORTED`. No compiler reads a README, and the

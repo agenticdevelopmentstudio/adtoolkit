@@ -16,8 +16,8 @@ export { DEFAULT_THEME, TERMINAL_THEME } from './voice'
 // The theme vocabulary of the `theme` prop above, re-exported from its owner.
 // A consumer that stores a user's dock theme has to validate it against the SAME
 // allowlist bitbag types the prop with — and `@agenticdevelopertoolkit/themes`
-// lives in a DIFFERENT submodule, which packages here (e.g. @agentic-toolkit/adh)
-// deliberately don't reach into. bitbag already declares it as a peerDependency
+// belongs to the persona toolkit, which packages like @agentic-toolkit/adh
+// deliberately keep out of their shipped graph. bitbag already declares it as a peerDependency
 // because it renders that vocabulary, so it is the honest place to publish it.
 // Do NOT substitute `@agenticdevelopertoolkit/themes`: the two id sets are disjoint
 // (`old-school-terminal` — TERMINAL_THEME above — exists only here), so swapping

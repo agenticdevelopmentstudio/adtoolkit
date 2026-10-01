@@ -8,8 +8,8 @@ import { useFooterRestOffset } from './useFooterRestOffset'
 // stylesheet), so pages that never open the chat don't pay for it. ONE sheet, not
 // three: `bitbag-dock.css` `@import`s the underlying persona-chat base + inline sheets
 // itself, because bitbag is what renders `InlineChatView` and this package must not
-// name `@agenticdevelopertoolkit/*` — reaching into a sibling submodule for a
-// dependency that was never its own is exactly the crossing the persona boundary bans.
+// name the persona toolkit — reaching into it for a dependency that was never its own
+// is exactly the crossing the persona boundary bans.
 import '@agentic-toolkit/bitbag/css/bitbag-dock.css'
 
 /**

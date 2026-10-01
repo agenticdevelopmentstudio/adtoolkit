@@ -3,9 +3,9 @@
 
 `packages/adh/src/persona-chat/chat-types.ts` is a VERBATIM copy of type declarations
 that live in `@agenticdevelopertoolkit/chat`. Its own header explains why it is a copy
-rather than a dependency: that package is in a different submodule, and this toolkit is
-consumed by repos that have neither adh nor that submodule, so a `link:` would resolve
-only in a checkout that happens to hold both. Both uses (`persona-chat/index.ts`,
+rather than a dependency: chat belongs to the persona toolkit, which adh keeps out of its
+shipped graph, and even a type-only import would resurface in adh's emitted `.d.ts`.
+Both uses (`persona-chat/index.ts`,
 `visitor-chat/sse.ts`) are TYPE-ONLY, so the declarations erase at build time and a
 structural copy is exact.
 

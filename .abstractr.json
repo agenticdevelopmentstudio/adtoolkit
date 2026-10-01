@@ -1,20 +1,64 @@
 {
   "version": 1,
-  "shared_packages": [
-    {
-      "name": "agenticdevelopertoolkit",
-      "path": "external/agenticdevelopertoolkit"
-    }
-  ],
   "tiers": [
+    {
+      "name": "apple-adt",
+      "paths": [
+        "packages/apple/AgenticDeveloperToolkit/"
+      ],
+      "depends_on": [],
+      "shared": true,
+      "holds": "AgenticDeveloperToolkit (Foundation-only, Sources/) and AgenticDeveloperToolkitUI (SourcesUI/), for macOS, iOS, watchOS, tvOS and visionOS. The bottom of the Apple stack: AgenticToolkitCore re-exports the Foundation framework, and the UI-bearing ATK frameworks link the UI one.",
+      "imported_as": [
+        "AgenticDeveloperToolkit",
+        "AgenticDeveloperToolkitUI"
+      ]
+    },
+    {
+      "name": "apple-hubclient",
+      "paths": [
+        "packages/apple/AgenticDeveloperHubClient/"
+      ],
+      "depends_on": [],
+      "shared": true,
+      "holds": "AgenticDeveloperHubClient. The generated OpenAPI client for the hub API plus EmbeddedDaemon, over swift-openapi-runtime/urlsession.",
+      "imported_as": [
+        "AgenticDeveloperHubClient"
+      ]
+    },
+    {
+      "name": "apple-avatar-engine",
+      "paths": [
+        "packages/apple/AvatarAnimationEngine/"
+      ],
+      "depends_on": [],
+      "shared": true,
+      "holds": "AvatarAnimationEngine. The native avatar engine — scene, path, render, anim and runtime.",
+      "imported_as": [
+        "AvatarAnimationEngine"
+      ]
+    },
+    {
+      "name": "apple-sample-app",
+      "paths": [
+        "packages/apple/SampleApp/"
+      ],
+      "depends_on": [
+        "apple-adt"
+      ],
+      "shared": false,
+      "holds": "AgenticDeveloperToolkitSampleApp. A demo app per Apple platform. Wiring only."
+    },
     {
       "name": "apple-core",
       "paths": [
         "packages/apple/AgenticToolkit/Core/"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "apple-adt"
+      ],
       "shared": true,
-      "holds": "AgenticToolkitCore. Foundation only \u2014 no UI, no platform APIs."
+      "holds": "AgenticToolkitCore. Foundation only — no UI, no platform APIs."
     },
     {
       "name": "apple-language",
@@ -25,7 +69,7 @@
         "apple-core"
       ],
       "shared": true,
-      "holds": "AgenticToolkitLanguage. The text-document model and the LSP client \u2014 Foundation, AgenticToolkitCore and the ChimeHQ JSONRPC/LanguageServerProtocol/LanguageClient stack. No AppKit, so it is daemon-safe; the AppKit face of a TextDocument is TextDocumentStorage one tier up in apple-macos. LanguageServerProtocol's Position/Range/TextEdit/Diagnostic vocabulary is the document model's vocabulary, which is why the two live in one framework rather than two."
+      "holds": "AgenticToolkitLanguage. The text-document model and the LSP client — Foundation, AgenticToolkitCore and the ChimeHQ JSONRPC/LanguageServerProtocol/LanguageClient stack. No AppKit, so it is daemon-safe; the AppKit face of a TextDocument is TextDocumentStorage one tier up in apple-macos. LanguageServerProtocol's Position/Range/TextEdit/Diagnostic vocabulary is the document model's vocabulary, which is why the two live in one framework rather than two."
     },
     {
       "name": "apple-pluginkit",
@@ -131,10 +175,11 @@
       "depends_on": [
         "apple-database",
         "apple-sync",
-        "apple-syncgrdb"
+        "apple-syncgrdb",
+        "apple-adt"
       ],
       "shared": true,
-      "holds": "AgenticToolkitMarkdown. The GRDB-backed markdown note store, built for macOS and iOS, re-exporting AgenticDeveloperToolkit. Storage and sync only \u2014 no UI."
+      "holds": "AgenticToolkitMarkdown. The GRDB-backed markdown note store, built for macOS and iOS, re-exporting AgenticDeveloperToolkit. Storage and sync only — no UI."
     },
     {
       "name": "apple-macos",
@@ -161,7 +206,9 @@
       "paths": [
         "packages/apple/AgenticToolkit/HTDV/"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "apple-adt"
+      ],
       "shared": true,
       "holds": "AgenticToolkitHTDV. Native Hierarchical Topic Detail View: HTDVDataSource/HTDVController/HTDVLayoutEngine, form spec + FormState + FormViewController, MarkdownEditing protocol. Foundation + AppKit/UIKit only."
     },
@@ -184,7 +231,8 @@
       "depends_on": [
         "apple-hub",
         "apple-htdv",
-        "apple-permissions"
+        "apple-permissions",
+        "apple-hubclient"
       ],
       "shared": true,
       "holds": "AgenticToolkitHubService. The hub's session, workspaces, API adapters and transport — no UI. Sees an embedded daemon only as AgenticDeveloperHubClient's EmbeddedDaemon."
@@ -258,7 +306,9 @@
         "apple-hubui",
         "apple-displays",
         "apple-systemmonitor",
-        "apple-systemmonitorui"
+        "apple-systemmonitorui",
+        "apple-adt",
+        "apple-hubclient"
       ],
       "shared": false,
       "holds": "Test bundles. Nothing depends on these."
@@ -298,18 +348,16 @@
     {
       "name": "web-toolchain",
       "paths": [
-        "packages/web/vitest.adt",
         "packages/web/vitest.setup",
         "packages/web/vitest.config",
         "packages/web/tsconfig.base",
         "packages/web/copy-css",
-        "packages/web/vitest.preset",
         "packages/web/packages/features/tsup.preset",
         "packages/web/packages/features/vitest.preset"
       ],
       "depends_on": [],
       "shared": false,
-      "holds": "The build and test toolchain every package's own `vitest.config.ts` and `tsup.config.ts` extends: the workspace-root presets, plus the two that happen to sit inside `features/` \u2014 a shared preset is toolchain wherever it physically lives, and longest-prefix matching is what lets those two files say so without moving. This is the one thing packages legitimately reach up to, so it is its own foundation tier rather than part of the `web-workspace` catch-all; otherwise every package in the repo reads as importing upward. Paths are spelled without extensions because a relative import resolves that way. Not shared: config to extend, not components to build on."
+      "holds": "The build and test toolchain every package's own `vitest.config.ts` and `tsup.config.ts` extends: the workspace-root presets, plus the two that happen to sit inside `features/` — a shared preset is toolchain wherever it physically lives, and longest-prefix matching is what lets those two files say so without moving. This is the one thing packages legitimately reach up to, so it is its own foundation tier rather than part of the `web-workspace` catch-all; otherwise every package in the repo reads as importing upward. Paths are spelled without extensions because a relative import resolves that way. Not shared: config to extend, not components to build on."
     },
     {
       "name": "web-adh",
@@ -323,12 +371,16 @@
         "web-api-explorer",
         "web-auth",
         "web-data",
+        "web-landing",
+        "web-markdown",
         "web-messaging",
         "web-resource",
-        "web-toolchain"
+        "web-themes",
+        "web-toolchain",
+        "web-ui"
       ],
       "shared": true,
-      "holds": "@agentic-toolkit/adh. Family site chrome \u2014 header, footer, legal, themes, debug."
+      "holds": "@agentic-toolkit/adh. Family site chrome — header, footer, legal, themes, debug."
     },
     {
       "name": "web-adh-api-types",
@@ -354,10 +406,11 @@
         "web-next-env",
         "web-next-headers",
         "web-next-preflight",
+        "web-themes",
         "web-toolchain"
       ],
       "shared": true,
-      "holds": "The `@agentic-toolkit/adh-next-config` package \u2014 a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
+      "holds": "The `@agentic-toolkit/adh-next-config` package — a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
     },
     {
       "name": "web-adh-registry",
@@ -395,7 +448,7 @@
         "web-toolchain"
       ],
       "shared": true,
-      "holds": "The `@agentic-toolkit/adh-site-homes` package \u2014 a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
+      "holds": "The `@agentic-toolkit/adh-site-homes` package — a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
     },
     {
       "name": "web-adh-ui",
@@ -403,10 +456,11 @@
         "packages/web/packages/adh-ui/"
       ],
       "depends_on": [
-        "web-toolchain"
+        "web-toolchain",
+        "web-ui"
       ],
       "shared": true,
-      "holds": "The `@agentic-toolkit/adh-ui` package \u2014 a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
+      "holds": "The `@agentic-toolkit/adh-ui` package — a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
     },
     {
       "name": "web-api-explorer",
@@ -415,7 +469,8 @@
       ],
       "depends_on": [
         "web-auth",
-        "web-toolchain"
+        "web-toolchain",
+        "web-ui"
       ],
       "shared": true,
       "holds": "@agentic-toolkit/api-explorer."
@@ -426,21 +481,11 @@
         "packages/web/packages/auth/"
       ],
       "depends_on": [
-        "web-toolchain"
+        "web-toolchain",
+        "web-ui"
       ],
       "shared": true,
       "holds": "@agentic-toolkit/auth. Session, sign-in surfaces, auth context."
-    },
-    {
-      "name": "web-content",
-      "paths": [
-        "packages/web/packages/content/"
-      ],
-      "depends_on": [
-        "web-toolchain"
-      ],
-      "shared": true,
-      "holds": "The `@agentic-toolkit/content` package \u2014 a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
     },
     {
       "name": "web-controls",
@@ -448,10 +493,11 @@
         "packages/web/packages/controls/"
       ],
       "depends_on": [
+        "web-model",
         "web-toolchain"
       ],
       "shared": true,
-      "holds": "@agentic-toolkit/controls. filtered-list, panels, toggles, orb-row."
+      "holds": "@agenticdevelopertoolkit/controls. filtered-list, panels, toggles, orb-row."
     },
     {
       "name": "web-crud",
@@ -462,7 +508,8 @@
         "web-api-explorer",
         "web-auth",
         "web-resource",
-        "web-toolchain"
+        "web-toolchain",
+        "web-ui"
       ],
       "shared": true,
       "holds": "@agentic-toolkit/crud. Generated CRUD surfaces."
@@ -475,7 +522,8 @@
       "depends_on": [
         "web-adh-ui",
         "web-auth",
-        "web-toolchain"
+        "web-toolchain",
+        "web-ui"
       ],
       "shared": true,
       "holds": "@agentic-toolkit/data. Typed access over the backend API."
@@ -503,25 +551,22 @@
         "web-adh-ui",
         "web-api-explorer",
         "web-auth",
+        "web-avatar",
+        "web-chat",
         "web-crud",
         "web-data",
+        "web-markdown",
         "web-persona",
+        "web-registry-profile",
+        "web-registry-types",
         "web-resource",
-        "web-toolchain"
+        "web-themes",
+        "web-toolchain",
+        "web-ui",
+        "web-viewport"
       ],
       "shared": true,
-      "holds": "One package per product area. New feature code is expected here \u2014 but a piece that two features would both want belongs one tier down."
-    },
-    {
-      "name": "web-layout",
-      "paths": [
-        "packages/web/packages/layout/"
-      ],
-      "depends_on": [
-        "web-toolchain"
-      ],
-      "shared": true,
-      "holds": "The `@agentic-toolkit/layout` package \u2014 a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
+      "holds": "One package per product area. New feature code is expected here — but a piece that two features would both want belongs one tier down."
     },
     {
       "name": "web-markdown",
@@ -533,7 +578,7 @@
         "web-ui"
       ],
       "shared": true,
-      "holds": "@agentic-toolkit/markdown."
+      "holds": "@agenticdevelopertoolkit/markdown."
     },
     {
       "name": "web-messaging",
@@ -543,7 +588,8 @@
       "depends_on": [
         "web-auth",
         "web-data",
-        "web-toolchain"
+        "web-toolchain",
+        "web-ui"
       ],
       "shared": true,
       "holds": "@agentic-toolkit/messaging."
@@ -557,7 +603,7 @@
         "web-toolchain"
       ],
       "shared": true,
-      "holds": "@agentic-toolkit/model. Providers, hooks, search/breadcrumb/nav lib."
+      "holds": "@agenticdevelopertoolkit/model. Providers, hooks, search/breadcrumb/nav lib."
     },
     {
       "name": "web-next-env",
@@ -568,7 +614,7 @@
         "web-toolchain"
       ],
       "shared": true,
-      "holds": "The `@agentic-toolkit/next-env` package \u2014 a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
+      "holds": "The `@agentic-toolkit/next-env` package — a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
     },
     {
       "name": "web-next-headers",
@@ -579,7 +625,7 @@
         "web-toolchain"
       ],
       "shared": true,
-      "holds": "The `@agentic-toolkit/next-headers` package \u2014 a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
+      "holds": "The `@agentic-toolkit/next-headers` package — a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
     },
     {
       "name": "web-next-preflight",
@@ -590,18 +636,7 @@
         "web-toolchain"
       ],
       "shared": true,
-      "holds": "The `@agentic-toolkit/next-preflight` package \u2014 a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
-    },
-    {
-      "name": "web-olylo",
-      "paths": [
-        "packages/web/packages/olylo/"
-      ],
-      "depends_on": [
-        "web-toolchain"
-      ],
-      "shared": true,
-      "holds": "The `@agentic-toolkit/olylo` package \u2014 a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
+      "holds": "The `@agentic-toolkit/next-preflight` package — a published sibling library other packages and every site build on. New code here is a change to the shared surface, so it stops for a decision."
     },
     {
       "name": "web-persona",
@@ -609,7 +644,11 @@
         "packages/web/packages/persona/"
       ],
       "depends_on": [
-        "web-toolchain"
+        "web-avatar",
+        "web-chat",
+        "web-themes",
+        "web-toolchain",
+        "web-viewport"
       ],
       "shared": true,
       "holds": "@agentic-toolkit/persona."
@@ -622,7 +661,8 @@
       "depends_on": [
         "web-auth",
         "web-data",
-        "web-toolchain"
+        "web-toolchain",
+        "web-ui"
       ],
       "shared": true,
       "holds": "@agentic-toolkit/resource. List/detail scaffolding."
@@ -638,7 +678,7 @@
         "web-ui"
       ],
       "shared": true,
-      "holds": "@agentic-toolkit/search."
+      "holds": "@agenticdevelopertoolkit/search."
     },
     {
       "name": "web-themes",
@@ -646,11 +686,10 @@
         "packages/web/packages/themes/"
       ],
       "depends_on": [
-        "web-toolchain",
-        "web-ui"
+        "web-toolchain"
       ],
       "shared": true,
-      "holds": "@agentic-toolkit/themes. ColorModeProvider, ThemeStyle, theme manifest."
+      "holds": "@agenticdevelopertoolkit/themes. ColorModeProvider, ThemeStyle, theme manifest."
     },
     {
       "name": "web-ui",
@@ -661,7 +700,156 @@
         "web-toolchain"
       ],
       "shared": true,
-      "holds": "@agentic-toolkit/ui. shadcn slot, cn, blocks, globals.css. The bottom of the web stack."
+      "holds": "@agenticdevelopertoolkit/ui. shadcn slot, cn, blocks, globals.css. The bottom of the web stack."
+    },
+    {
+      "name": "web-avatar",
+      "paths": [
+        "packages/web/packages/avatar/"
+      ],
+      "depends_on": [
+        "web-toolchain"
+      ],
+      "shared": true,
+      "holds": "@agenticdevelopertoolkit/avatar. Headless avatar behavior + animation engine. A persona-agnostic `useAvatarEngine` hook that gives any SVG face reflexes (blink, idle ladder, gaze, speech) and an expression-driven pose engine over optional channels (eyes, brows, antennae, mouth, body). Driven by an `expression` prop."
+    },
+    {
+      "name": "web-avatar-engine",
+      "paths": [
+        "packages/web/packages/avatar-engine/"
+      ],
+      "depends_on": [
+        "web-toolchain"
+      ],
+      "shared": true,
+      "holds": "@agenticdevelopertoolkit/avatar-engine."
+    },
+    {
+      "name": "web-chat",
+      "paths": [
+        "packages/web/packages/chat/"
+      ],
+      "depends_on": [
+        "web-toolchain"
+      ],
+      "shared": true,
+      "holds": "@agenticdevelopertoolkit/chat. React chat component library — InlineChat, ThreePaneChat, MobileChat, PersonaChat with pluggable backends."
+    },
+    {
+      "name": "web-chrome",
+      "paths": [
+        "packages/web/packages/chrome/"
+      ],
+      "depends_on": [
+        "web-toolchain"
+      ],
+      "shared": true,
+      "holds": "@agenticdevelopertoolkit/chrome. Site-chrome primitives — the menu button and the close glyph derived from it, with the bar geometry in one place so every site rasterises them the same way."
+    },
+    {
+      "name": "web-editing",
+      "paths": [
+        "packages/web/packages/editing/"
+      ],
+      "depends_on": [
+        "web-toolchain",
+        "web-ui"
+      ],
+      "shared": true,
+      "holds": "@agenticdevelopertoolkit/editing. The editing container: one owner of the draft, the Save button and the unsaved-changes guard for every editable surface."
+    },
+    {
+      "name": "web-landing",
+      "paths": [
+        "packages/web/packages/landing/"
+      ],
+      "depends_on": [
+        "web-toolchain"
+      ],
+      "shared": true,
+      "holds": "@agenticdevelopertoolkit/landing. Snap-scrolling long-form landing page kit — Deck, Screen, NavChrome and a block vocabulary, themed by CSS custom properties."
+    },
+    {
+      "name": "web-popover",
+      "paths": [
+        "packages/web/packages/popover/"
+      ],
+      "depends_on": [
+        "web-toolchain"
+      ],
+      "shared": true,
+      "holds": "@agenticdevelopertoolkit/popover. Hover popover with a pointing arrow — an anchored panel, the tail that points back at its trigger, the invisible bridge that lets the pointer cross the gap, and the one-open-at-a-time hover-intent state a row of them needs."
+    },
+    {
+      "name": "web-registry-profile",
+      "paths": [
+        "packages/web/packages/registry-profile/"
+      ],
+      "depends_on": [
+        "web-registry-types",
+        "web-toolchain"
+      ],
+      "shared": true,
+      "holds": "@agenticdevelopertoolkit/registry-profile. The public registry-entry profile renderer. Takes a serialized entry and renders it — no fetching, no auth, no adh imports, so it drops into anyone's site."
+    },
+    {
+      "name": "web-registry-types",
+      "paths": [
+        "packages/web/packages/registry-types/"
+      ],
+      "depends_on": [
+        "web-toolchain"
+      ],
+      "shared": true,
+      "holds": "@agenticdevelopertoolkit/registry-types. Framework-free registry field-type catalog: type ids, config shapes, validators and value coercion. No React, no runtime dependencies — the backend vendors this file so both sides validate owner-defined values against the same rules."
+    },
+    {
+      "name": "web-status-server",
+      "paths": [
+        "packages/web/packages/status-server/"
+      ],
+      "depends_on": [
+        "web-deploy-platform",
+        "web-toolchain"
+      ],
+      "shared": true,
+      "holds": "@agentic-toolkit/status-server. A status monitor's server: Hono app factory, monitor cycle, board, routes, OpenAPI, MCP, peers, telemetry, storage and the libSQL implementation. No React, no Next, no DOM — a backend host depends on this package alone."
+    },
+    {
+      "name": "web-status-web",
+      "paths": [
+        "packages/web/packages/status-web/"
+      ],
+      "depends_on": [
+        "web-deploy-platform",
+        "web-themes",
+        "web-toolchain",
+        "web-ui"
+      ],
+      "shared": true,
+      "holds": "@agentic-toolkit/status-web. A status monitor's operator dashboard: React panels, hooks and the browser-side API client. A Next host mounts these in its own pages, providers and proxy."
+    },
+    {
+      "name": "web-textlens",
+      "paths": [
+        "packages/web/packages/textlens/"
+      ],
+      "depends_on": [
+        "web-toolchain"
+      ],
+      "shared": true,
+      "holds": "@agenticdevelopertoolkit/textlens. A travelling lens that sweeps along a line of text, magnifying, softening and tinting each glyph as it passes. Per-character DOM animation with the colour ramp read from CSS custom properties."
+    },
+    {
+      "name": "web-viewport",
+      "paths": [
+        "packages/web/packages/viewport/"
+      ],
+      "depends_on": [
+        "web-toolchain"
+      ],
+      "shared": true,
+      "holds": "@agenticdevelopertoolkit/viewport. Page-shell primitives for iOS-correct viewport + keyboard handling — ViewportShell, ViewportSpacer, ViewportComposer, useKeyboardInset, usePageScrollLock."
     },
     {
       "name": "web-site",
@@ -669,16 +857,14 @@
         "websites/"
       ],
       "depends_on": [
-        "web-adh",
-        "web-features",
+        "web-chat",
         "web-controls",
-        "web-search",
-        "web-themes",
         "web-model",
+        "web-themes",
         "web-ui"
       ],
       "shared": false,
-      "holds": "The in-repo demo site. Outside the pnpm workspace."
+      "holds": "The in-repo demo sites — websites/demo/, websites/site/ — and websites/run.sh. Outside the pnpm workspace; they consume the packages through file: refs, the way an external consumer would."
     },
     {
       "name": "apple-project",
@@ -687,7 +873,16 @@
       ],
       "depends_on": [],
       "shared": false,
-      "holds": "The Xcode/SwiftPM scaffolding around the frameworks: the workspace and xcodeproj, their shared schemes, project.yml, the Makefile, .swiftlint.yml and .swiftpm mirrors. Longest-prefix match sends every framework directory \u2014 including Language/ and Markdown/, which landed here for want of a tier until they got one \u2014 to its own tier, so only the build scaffolding lands here."
+      "holds": "The Xcode/SwiftPM scaffolding around the frameworks: the workspace and xcodeproj, their shared schemes, project.yml, the Makefile, .swiftlint.yml and .swiftpm mirrors. Longest-prefix match sends every framework directory — including Language/ and Markdown/, which landed here for want of a tier until they got one — to its own tier, so only the build scaffolding lands here."
+    },
+    {
+      "name": "terminal-toolkit",
+      "paths": [
+        "packages/terminal/"
+      ],
+      "depends_on": [],
+      "shared": true,
+      "holds": "apt, the Python CLI for the Agentic Developer backend (pyproject.toml), built on a generated openapi-python-client client. Named terminal-toolkit, not terminal, to keep the tier name off any import specifier."
     },
     {
       "name": "platform-stubs",
@@ -697,7 +892,7 @@
       ],
       "depends_on": [],
       "shared": false,
-      "holds": "Placeholders for targets that do not exist yet \u2014 a .gitkeep under packages/android/ and packages/windows/ and nothing else. Named platform-stubs rather than android or windows because a tier name is matched against import specifiers."
+      "holds": "Placeholders for targets that do not exist yet — a .gitkeep under packages/android/ and packages/windows/ and nothing else. Named platform-stubs rather than android or windows because a tier name is matched against import specifiers."
     },
     {
       "name": "web-workspace",
@@ -715,16 +910,7 @@
       ],
       "depends_on": [],
       "shared": false,
-      "holds": "Python maintenance scripts run against the workspace by hand \u2014 content extraction and validation, and the chat-types copy verifier. They read the tree; nothing in the tree imports them."
-    },
-    {
-      "name": "vendor",
-      "paths": [
-        "external/"
-      ],
-      "depends_on": [],
-      "shared": false,
-      "holds": "Submodule checkouts of sibling repos consumed as shared packages, declared in shared_packages above. Their contents belong to their own repo and their own map \u2014 never edit them here. Named vendor, not external, because a tier name is matched against import specifiers."
+      "holds": "Python maintenance scripts run against the workspace by hand — content extraction and validation, and the chat-types copy verifier. They read the tree; nothing in the tree imports them."
     },
     {
       "name": "repo-docs",
@@ -741,15 +927,16 @@
         ".claude/",
         ".github/",
         ".gitignore",
-        ".gitmodules",
         "AGENTS.md",
         "README.md",
         "install.sh",
-        ".abstractr.json"
+        ".abstractr.json",
+        "CONTRIBUTING.md",
+        "LICENSE"
       ],
       "depends_on": [],
       "shared": false,
-      "holds": "How this repo is worked on rather than what it ships: the agent instructions, CI workflows, git's own files, the top-level README, the submodule install script and this tier map."
+      "holds": "How this repo is worked on rather than what it ships: the agent instructions, CI workflows, .gitignore, the top-level README, CONTRIBUTING and LICENSE, the install script and this tier map."
     },
     {
       "name": "component-recipes",
@@ -758,16 +945,16 @@
       ],
       "depends_on": [],
       "shared": false,
-      "holds": "The library cookbook \u2014 cookbook/cookbook.json plus one dated, versioned markdown spec per shared component (button, dialog, data-table, crud-table\u2026), grouped by concept from general to specific and described without a platform in mind, each listing its code in a Reference Implementations table and its platform specifics in Platform Notes. Prose, and the human-readable index of what web-ui and its siblings already export: read it before proposing a new component."
+      "holds": "The library cookbook — cookbook/cookbook.json plus one dated, versioned markdown spec per shared component (button, dialog, data-table, crud-table…), grouped by concept from general to specific and described without a platform in mind, each listing its code in a Reference Implementations table and its platform specifics in Platform Notes. Prose, and the human-readable index of what web-ui and its siblings already export: read it before proposing a new component."
     },
     {
-      "name": "repo-scripts",
+      "name": "component-specs",
       "paths": [
-        "scripts/"
+        "recipes/"
       ],
       "depends_on": [],
       "shared": false,
-      "holds": "Repo-level guards run by hand and in CI, not imported by anything. check_boundaries.py enforces this repo's OTHER layering rule, orthogonal to the tiers here: packages named @agentic-toolkit/adh* are the adh VOCABULARY tier and portable MECHANISM packages may never import them. Its banned set is discovered from package.json names, never listed."
+      "holds": "One markdown spec per shared component and avatar-engine subsystem (accordion, avatar-engine-path, button…), describing behaviour the web and Apple implementations must agree on. Prose; read it before changing a component it covers."
     },
     {
       "name": "repo-tools",
@@ -776,7 +963,7 @@
       ],
       "depends_on": [],
       "shared": false,
-      "holds": "One-off maintenance scripts run by hand against the repo itself \u2014 currently the recipe classifier that sorts the specs under `cookbook/` by component tier. Nothing imports these; they are invoked, not built on."
+      "holds": "Repo-level guards and maintenance scripts, run by hand and in CI; nothing imports them. check_boundaries.py enforces this repo's OTHER layering rule, orthogonal to the tiers here: packages named @agentic-toolkit/adh* are the adh VOCABULARY tier and portable MECHANISM packages may never import them, with the banned set discovered from package.json names, never listed. Alongside it: the doc-link, doc-subpath, private-scope, recipe-scope and site-deps checks, the recipe classifier, and apple/ (release and framework-embedding helpers)."
     }
   ],
   "rules": {

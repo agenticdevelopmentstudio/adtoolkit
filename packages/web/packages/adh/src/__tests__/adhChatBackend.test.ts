@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { beforeEach, describe, expect, it } from 'vitest'
 import { AdhChatBackend, type KeyValueStore } from '../visitor-chat'
-// The chat contract types are a traceable local copy here, not a cross-submodule
-// dependency — see ../persona-chat/chat-types.ts.
+// The chat contract types are a traceable local copy here, not a dependency on
+// @agenticdevelopertoolkit/chat — see ../persona-chat/chat-types.ts.
 import type { ChatStreamEvent } from '../persona-chat/chat-types'
 
 const SLUG = 'bitbag'

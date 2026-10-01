@@ -1,6 +1,6 @@
-// The local traceable copy, NOT `@agenticdevelopertoolkit/chat` — that package is in
-// a sibling submodule this one must not depend on (see the header of chat-types.ts
-// for why). These are type-only, so nothing crosses at runtime; the structural shape
+// The local traceable copy, NOT `@agenticdevelopertoolkit/chat` — that package is
+// part of the persona toolkit this one keeps out of its shipped graph (see the header
+// of chat-types.ts for why). These are type-only, so nothing crosses at runtime; the structural shape
 // is what a consumer's real chat package has to satisfy.
 import type {
   ChatBackend,
