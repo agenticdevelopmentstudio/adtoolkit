@@ -4128,7 +4128,7 @@ export interface paths {
         put?: never;
         /**
          * Mark a claimed job succeeded
-         * @description Stores the result jsonb and transitions the job to succeeded. Returns 404 when the lease guard fails (wrong token, wrong ecosystem, or already finished).
+         * @description Stores the result jsonb and transitions the job to succeeded. Returns 404 when the lease guard fails (wrong token, wrong ecosystem, or already finished). The optional `usage` array reports the LLM usage the worker ran up, one entry per provider attempt; each is recorded as a cost line against the job's ecosystem, priced from the model catalog (unpriced when the catalog has no price or the host is self-hosted), always paid by the platform. Recorded once per successful completion, after the transaction commits — a repeated call is the 404.
          */
         post: {
             parameters: {
@@ -4146,6 +4146,8 @@ export interface paths {
                         leaseToken: string;
                         /** @description Arbitrary result jsonb */
                         result: unknown;
+                        /** @description LLM usage per provider attempt, token counts normalized: inputTokens is NON-cached input; outputTokens includes reasoning; reasoningTokens is its subset. */
+                        usage?: components["schemas"]["AiProcessingWorkerUsage"][];
                     };
                 };
             };
@@ -4210,7 +4212,7 @@ export interface paths {
         put?: never;
         /**
          * Record a job failure
-         * @description Records an error and either re-queues the job with exponential backoff (when retry:true and attempts remain) or moves it to dead. Returns 404 when the lease guard fails.
+         * @description Records an error and either re-queues the job with exponential backoff (when retry:true and attempts remain) or moves it to dead. Returns 404 when the lease guard fails. The optional `usage` array is recorded exactly as on /complete — once per admitted failure, after the transaction commits.
          */
         post: {
             parameters: {
@@ -4230,6 +4232,8 @@ export interface paths {
                         error: string;
                         /** @description Re-queue if attempts remain (default true) */
                         retry?: boolean;
+                        /** @description LLM usage per provider attempt, token counts normalized: inputTokens is NON-cached input; outputTokens includes reasoning; reasoningTokens is its subset. */
+                        usage?: components["schemas"]["AiProcessingWorkerUsage"][];
                     };
                 };
             };
@@ -12885,7 +12889,7 @@ export interface paths {
         put?: never;
         /**
          * Send a DM
-         * @description Send a message into a DM chat. Supplying `clientMessageId` makes the send idempotent: a replay returns 200 with the already-stored message instead of 201.
+         * @description Send a message into a DM chat. Supplying `clientMessageId` makes the send idempotent: a replay returns 200 with the already-stored message instead of 201. The id is scoped to the sender: one the OTHER participant already used in this chat is a 409.
          */
         post: {
             parameters: {
@@ -12949,6 +12953,15 @@ export interface paths {
                 };
                 /** @description Error */
                 404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                409: {
                     headers: {
                         [name: string]: unknown;
                     };
@@ -13118,6 +13131,919 @@ export interface paths {
         };
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stream live events across all of the caller's chats (SSE)
+         * @description Server-Sent Events (`text/event-stream`), multiplexed over every chat the caller has joined — group chats, and DMs while the ecosystem's `messaging` flag is on. Each chat event is sent as `event: <kind>` with `data: {chatId, ...}`:
+         *
+         *     - `message` / `message_updated` `{chatId, seq}` — a message landed / was edited.
+         *     - `typing` `{chatId, participantId, state: start|stop, expiresAt}` — drop the indicator at `expiresAt` if no newer event arrives.
+         *     - `chat_updated` `{chatId}` — the chat itself changed.
+         *     - `participants_changed` `{chatId, added, removed}` — participant ids.
+         *     - `resync` `{chatId}` — events may have been missed; refetch that chat.
+         *
+         *     Stream-level events: `ready` `{chatIds}` once the subscription is live (refetch after it — earlier changes were not streamed), and `chats_changed` `{added, removed}` when the caller joins or leaves a chat.
+         *
+         *     If the backend was started without a notification hub, the stream emits `ready` and closes immediately — poll instead. Otherwise it stays open for at most 5 minutes, with keep-alive comments, and closes with no terminal event; reconnect.
+         *
+         *     Because a browser `EventSource` cannot set headers, the bearer token may be passed as an `access_token` query parameter. Requires the `chat` feature.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description The bearer token, for clients that cannot send an Authorization header. */
+                    access_token?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description SSE stream of chat events */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/event-stream": components["schemas"]["ChatLiveEvent"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/definitions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the chat definitions a new chat can be made from
+         * @description The ecosystem's active definitions, plus the built-in `direct` definition (which DMs follow; a chat is never created from it here — open a DM through `/chat/dms`). Archived definitions are not listed: they accept no new chats.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Active definitions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatDefinitionList"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/chats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the caller's chats, newest activity first
+         * @description Group chats, and DMs only while the ecosystem's `messaging` flag is on — every chat listed is one the caller can open.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    page?: number;
+                    /** @description Clamped server-side to at most 200. */
+                    pageSize?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Paged chats */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatList"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Create a chat from a definition
+         * @description Seats the caller as owner, the definition's own personas, and the named users and personas. A definition persona that has since been deleted is skipped rather than refused — its id comes back in `skippedPersonaIds`. Refused: the `direct` definition (400 — use `/chat/dms`), an unknown or deleted definition, an unknown user, or an added persona the caller cannot use (404), an archived definition (409), a user blocked either way with the caller or another invited user (403), a `name` on a definition that is not user-configurable (403), more participants than the definition allows (400).
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ChatCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description The created chat */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatCreateResult"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/chats/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The chat id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /** Get a chat and the definition it follows */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The chat id */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The chat */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatDetail"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a chat's name or photo
+         * @description Only on a definition that is user-configurable (403 otherwise). A change is published to the chat’s streams as `chat_updated`.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The chat id */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ChatUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description The chat */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatEnvelope"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/chat/chats/{id}/participants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The chat id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Invite users and personas into a chat
+         * @description Governed by the definition's `allowInvites`, `invitePolicy` and `allowAddedPersonas` (403), and its participant ceiling (409). Someone already seated is not added twice. A user blocked either way with anyone already in the chat, or with another invitee, is refused (403); an added persona the caller cannot use is 404. A definition persona that was deleted is skipped — its id comes back in `skippedPersonaIds`, as at create. Published as `participants_changed`, and `chats_changed` to each added user.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The chat id */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ChatParticipantsAddRequest"];
+                };
+            };
+            responses: {
+                /** @description The chat and the rows added */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatParticipantsAddResult"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/chats/{id}/participants/{participantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The chat id */
+                id: string;
+                /** @description The participant ROW id (`ChatParticipant.id`) */
+                participantId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a participant from a chat, or leave it
+         * @description Removing yourself is leaving; removing someone else is governed by the chat’s rules (403). When the owner leaves, the longest-standing user becomes owner (`newOwner`). A DM cannot be left (403). Published as `participants_changed`, and `chats_changed` to a removed user.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The chat id */
+                    id: string;
+                    /** @description The participant ROW id (`ChatParticipant.id`) */
+                    participantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The chat after removal */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatParticipantRemoveResult"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/chats/{id}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The chat id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * List messages in a chat, ascending by seq
+         * @description With `after`, the oldest `limit` messages whose `seq` is greater — the catch-up read a live client runs on a `message` event. Without it, the newest `limit` messages. Only user and assistant text is listed: a persona’s tool traffic is stored but never shown, previewed or counted unread.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Last `seq` already seen. */
+                    after?: number;
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    /** @description The chat id */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Messages */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ChatMessageList"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Send a message; the chat’s personas may reply (SSE)
+         * @description WHO REPLIES follows the definition's `personaReplyPolicy`: `every_message` — every persona seated in the chat; `when_mentioned` — only the personas the body mentions. A MENTION is `@<persona slug>`, case-insensitive, standing as its own word (`ann@scout.dev` and `@scouting` do not mention `scout`; `(@scout)` and `@scout,` do). Mentions are recorded under either policy.
+         *
+         *     With nobody to reply (every DM, and a message no persona answers) this is a plain JSON send: 201 with the message, 200 for a `clientMessageId` replay (a replay never re-runs replies).
+         *
+         *     With personas to reply it answers `text/event-stream`: `open` `{message}` (the sent message, committed), then per persona in the order they joined: `persona_start` `{participantId, personaId}`; the turn’s own events (`token`, `tool_call_started`, `tool_call_completed`, `status`, `award`, `done`, `ended`), each with the persona’s `participantId` added; at most one `error` `{participantId, message}` if that persona could not reply; and `message` `{participantId, message}` for each visible row of its reply, once committed. The persona’s `typing` (kept alive for the whole turn, and stopped however it ends) and its messages are also published to the chat’s streams.
+         *
+         *     Each persona’s turn is metered. The FIRST persona’s budget refusal (402) or unavailable metering (503) is returned before the message is stored; a later persona’s is its `error` event, and the personas after it still reply. The replies belong to the chat: they finish even if the sender disconnects.
+         *
+         *     A persona sees the chat as a transcript: its own messages as its turns, everyone else’s as `Name: text` — including the replies of the personas before it.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The chat id */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DmSendMessage"];
+                };
+            };
+            responses: {
+                /** @description The message a previous send with this clientMessageId stored (JSON), or the persona-reply stream (SSE) */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DmMessage"];
+                        "text/event-stream": components["schemas"]["ChatPersonaReplyEvent"];
+                    };
+                };
+                /** @description The stored message; no persona replies */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DmMessage"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                402: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/chats/{id}/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The chat id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark a chat read up to a message
+         * @description Marks the chat read through `messageId`. Omit it — or name a message that is not this chat's — to mark the latest message read.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The chat id */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DmReadRequest"];
+                };
+            };
+            responses: {
+                /** @description The recomputed unread count */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["DmReadResult"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/chat/chats/{id}/typing": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The chat id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report that the caller started or stopped typing
+         * @description Published to the chat’s streams as `typing`, throttled server-side. An indicator lapses on its own at the event’s `expiresAt`. In a DM, 403 unless `messaging` is on and the sender may contact the peer.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The chat id */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ChatTypingRequest"];
+                };
+            };
+            responses: {
+                /** @description Reported */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         delete?: never;
         options?: never;
         head?: never;
@@ -18418,6 +19344,310 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/ecosystem/chat-definitions/{ecosystemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ecosystemId: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * An ecosystem's chat definitions
+         * @description The built-in `direct` definition first, then every definition that is not deleted — archived ones included.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    ecosystemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The definitions */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            definitions: components["schemas"]["ChatDefinition"][];
+                        };
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Define a chat
+         * @description 400 when maxParticipants is below 2 or above the system maximum, the slug is invalid or `direct`, or a persona is not usable. 409 when a live definition already has the slug.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    ecosystemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ChatDefinitionCreate"];
+                };
+            };
+            responses: {
+                /** @description The new definition */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            definition: components["schemas"]["ChatDefinition"];
+                        };
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ecosystem/chat-definitions/{ecosystemId}/{definitionId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ecosystemId: string;
+                definitionId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a chat definition
+         * @description A SOFT delete: chats created from it keep working, and its slug is free again. The built-in `direct` definition cannot be deleted (400).
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    ecosystemId: string;
+                    definitionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Change a chat definition
+         * @description Partial update, validated as POST is. The built-in `direct` definition is read-only (400).
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    ecosystemId: string;
+                    definitionId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ChatDefinitionUpdate"];
+                };
+            };
+            responses: {
+                /** @description The definition after the update */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            definition: components["schemas"]["ChatDefinition"];
+                        };
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/ecosystem/server-bag/{id}": {
@@ -44901,6 +46131,162 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/usage/costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Cost report from the daily rollup (admin)
+         * @description Sums `usage.cost_daily` over `from`..`to` (both inclusive, at most 366 days — wider is a 400), one row per day or per spend key. Money is integer µUSD; a non-zero `unpricedLines` means `costMicros` is a floor. `ecosystemId=platform` selects platform-level spend (the nil uuid key).
+         */
+        get: {
+            parameters: {
+                query: {
+                    from: string;
+                    to: string;
+                    /** @description An ecosystem uuid, or `platform` for platform-level spend */
+                    ecosystemId?: string;
+                    /** @description Only this spend category */
+                    category?: "llm" | "embedding" | "email" | "sms" | "storage_op" | "outbound_http" | "realtime";
+                    provider?: string;
+                    /** @description Only this payer */
+                    paidBy?: "platform" | "customer_key";
+                    /** @description One row per day (default) or per spend key */
+                    groupBy?: "day" | "key";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Summed cost rows */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageCostReport"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/usage/costs/calls/{callId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The call id (x-request-id), a uuid */
+                callId: string;
+            };
+            cookie?: never;
+        };
+        /** One call's cost ledger and its child calls' (admin) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The call id (x-request-id), a uuid */
+                    callId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The call ledger */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageCallReport"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/usage/enforcement": {
         parameters: {
             query?: never;
@@ -45178,6 +46564,930 @@ export interface paths {
                 };
             };
         };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/usage/rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Every price, newest effective day first (admin)
+         * @description The rates the insight reports price usage with.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The rates */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageRateList"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Add a price (admin)
+         * @description A price change is a new row from the day it takes effect. `microsPerUnit` is exact decimal text. 409 when a rate for that item, quantity key and start day exists.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UsageRateCreate"];
+                };
+            };
+            responses: {
+                /** @description The rate */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageRate"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/usage/rates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The row id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a price that has not taken effect yet (admin)
+         * @description Only while `effectiveFrom` is today (UTC) or later; else 409 `past rates are immutable — add a new rate`.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The row id */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ok: boolean;
+                        };
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * Edit a price that has not taken effect yet (admin)
+         * @description Only while `effectiveFrom` is today (UTC) or later; else 409 `past rates are immutable — add a new rate`.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The row id */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UsageRatePatch"];
+                };
+            };
+            responses: {
+                /** @description The rate */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageRate"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/usage/fixed-costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Every fixed monthly cost, newest first (admin) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The fixed costs */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageFixedCostList"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Add a fixed monthly cost (admin)
+         * @description `effectiveTo`, when set, is inclusive and not before `effectiveFrom`.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UsageFixedCostCreate"];
+                };
+            };
+            responses: {
+                /** @description The fixed cost */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageFixedCost"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/usage/fixed-costs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The row id */
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete a fixed cost that has not started yet (admin)
+         * @description Only while `effectiveFrom` is today (UTC) or later; else 409 `a fixed cost already in effect is immutable except to end it or annotate it — end it and add a new row`.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The row id */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Success */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            ok: boolean;
+                        };
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        /**
+         * End, annotate or (before it starts) edit a fixed cost (admin)
+         * @description `effectiveTo` (inclusive; may be in the past — the correction path for a mistaken open row), `label` and `note` may always change. `monthlyMicros` and `effectiveFrom` only while `effectiveFrom` is today (UTC) or later, else 409 `a fixed cost already in effect is immutable except to end it or annotate it — end it and add a new row`. `effectiveTo` before `effectiveFrom` is a 400.
+         */
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description The row id */
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["UsageFixedCostPatch"];
+                };
+            };
+            responses: {
+                /** @description The fixed cost */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageFixedCost"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/usage/insight/run-rate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A month's run rate: direct to date, fixed, projected (admin)
+         * @description `month` is YYYY-MM; a future month is a 400. The current month counts its days through yesterday (UTC) — today is still being written.
+         */
+        get: {
+            parameters: {
+                query: {
+                    month: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The run rate */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageInsightRunRate"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/usage/insight/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Every cost item seen in a range, priced (admin)
+         * @description `from`..`to` are YYYY-MM-DD, both inclusive, at most 366 days — wider is a 400. Sorted by cost, highest first; unpriced items sort below priced ones.
+         */
+        get: {
+            parameters: {
+                query: {
+                    from: string;
+                    to: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The priced items */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageInsightItems"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/usage/insight/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Platform usage and direct cost as a time series (admin)
+         * @description `from`..`to` are YYYY-MM-DD, both inclusive, at most 366 days — wider is a 400. One point per bucket the range touches, empty ones included.
+         */
+        get: {
+            parameters: {
+                query: {
+                    from: string;
+                    to: string;
+                    /** @description Bucket size (default day) */
+                    interval?: "day" | "week" | "month";
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The series */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageInsightOverview"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/usage/insight/breakdown": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Usage and cost per organization, ecosystem, user or persona (admin)
+         * @description `from`..`to` are YYYY-MM-DD, both inclusive, at most 366 days — wider is a 400. One row per key; a persona call on a user's behalf counts under both. `limit` is 1–200 (default 50).
+         */
+        get: {
+            parameters: {
+                query: {
+                    from: string;
+                    to: string;
+                    /** @description The dimension */
+                    by: "organization" | "ecosystem" | "user" | "persona";
+                    /** @description Highest first (default direct) */
+                    sort?: "direct" | "estimated" | "requests";
+                    limit?: number;
+                    offset?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The breakdown page */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageInsightBreakdown"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/usage/insight/breakdown/{by}/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description The dimension */
+                by: "organization" | "ecosystem" | "user" | "persona";
+                /** @description The dimension key, a uuid (the nil uuid is the unattributed row) */
+                key: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * One breakdown key's items and daily trend (admin)
+         * @description `from`..`to` are YYYY-MM-DD, both inclusive, at most 366 days — wider is a 400.
+         */
+        get: {
+            parameters: {
+                query: {
+                    from: string;
+                    to: string;
+                };
+                header?: never;
+                path: {
+                    /** @description The dimension */
+                    by: "organization" | "ecosystem" | "user" | "persona";
+                    /** @description The dimension key, a uuid (the nil uuid is the unattributed row) */
+                    key: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The key detail */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["UsageInsightBreakdownDetail"];
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -70869,6 +73179,14 @@ export interface paths {
                             requestBytes: number;
                             responseBytes: number;
                             occurredAt: string;
+                            callId: string | null;
+                            parentCallId: string | null;
+                            kind: string;
+                            routePattern: string | null;
+                            durationMs: number | null;
+                            dbMs: number | null;
+                            dbQueries: number | null;
+                            streamEvents: number | null;
                         }[];
                     };
                 };
@@ -70904,6 +73222,14 @@ export interface paths {
                         requestBytes: number;
                         responseBytes: number;
                         occurredAt: string;
+                        callId?: string | null;
+                        parentCallId?: string | null;
+                        kind?: string;
+                        routePattern?: string | null;
+                        durationMs?: number | null;
+                        dbMs?: number | null;
+                        dbQueries?: number | null;
+                        streamEvents?: number | null;
                     };
                 };
             };
@@ -70925,6 +73251,14 @@ export interface paths {
                             requestBytes: number;
                             responseBytes: number;
                             occurredAt: string;
+                            callId: string | null;
+                            parentCallId: string | null;
+                            kind: string;
+                            routePattern: string | null;
+                            durationMs: number | null;
+                            dbMs: number | null;
+                            dbQueries: number | null;
+                            streamEvents: number | null;
                         };
                     };
                 };
@@ -70992,6 +73326,14 @@ export interface paths {
                             requestBytes: number;
                             responseBytes: number;
                             occurredAt: string;
+                            callId: string | null;
+                            parentCallId: string | null;
+                            kind: string;
+                            routePattern: string | null;
+                            durationMs: number | null;
+                            dbMs: number | null;
+                            dbQueries: number | null;
+                            streamEvents: number | null;
                         };
                     };
                 };
@@ -71037,6 +73379,14 @@ export interface paths {
                         requestBytes?: number;
                         responseBytes?: number;
                         occurredAt?: string;
+                        callId?: string | null;
+                        parentCallId?: string | null;
+                        kind?: string;
+                        routePattern?: string | null;
+                        durationMs?: number | null;
+                        dbMs?: number | null;
+                        dbQueries?: number | null;
+                        streamEvents?: number | null;
                     };
                 };
             };
@@ -71058,6 +73408,14 @@ export interface paths {
                             requestBytes: number;
                             responseBytes: number;
                             occurredAt: string;
+                            callId: string | null;
+                            parentCallId: string | null;
+                            kind: string;
+                            routePattern: string | null;
+                            durationMs: number | null;
+                            dbMs: number | null;
+                            dbQueries: number | null;
+                            streamEvents: number | null;
                         };
                     };
                 };
@@ -71277,6 +73635,23 @@ export interface components {
             leaseExpiresAt: string;
             /** @description Opaque lease token required for heartbeat / complete / fail */
             leaseToken: string;
+            /** @description Prior failed or reaped runs of this job; this claim is attempt attempts + 1 */
+            attempts?: number;
+        };
+        AiProcessingWorkerUsage: {
+            /** @description The provider billed, as its API host (e.g. api.openai.com, localhost:11434) */
+            provider: string;
+            /** @description Model id */
+            model: string;
+            inputTokens: number;
+            outputTokens: number;
+            cacheReadTokens?: number;
+            cacheWriteTokens?: number;
+            reasoningTokens?: number;
+            /** @description 1-based; default 1 */
+            attempt?: number;
+            /** @description The call did not run to its end; with no tokens at all, the spend is unknown (unpriced) */
+            partial?: boolean;
         };
         AiProcessingJob: {
             /** Format: uuid */
@@ -72067,6 +74442,27 @@ export interface components {
         } | Record<string, never> | {
             message: string;
         };
+        /** @description The `data` of an event on GET /chat/stream. Which fields are present depends on the SSE event name (see the route); every chat event carries `chatId`. */
+        ChatLiveEvent: {
+            chatId?: string;
+            /** @description `message`, `message_updated` */
+            seq?: number;
+            /** @description `typing` */
+            participantId?: string;
+            /**
+             * @description `typing`
+             * @enum {string}
+             */
+            state?: "start" | "stop";
+            /** @description `typing` — ISO time the indicator lapses */
+            expiresAt?: string;
+            /** @description `participants_changed` (participant ids), `chats_changed` (chat ids) */
+            added?: string[];
+            /** @description `participants_changed` (participant ids), `chats_changed` (chat ids) */
+            removed?: string[];
+            /** @description `ready` */
+            chatIds?: string[];
+        };
         /** @description One direct message. Also the payload of a `message` event on the DM SSE stream. */
         DmMessage: {
             id: string;
@@ -72129,6 +74525,101 @@ export interface components {
         DmReadResult: {
             success: boolean;
             unreadCount: number;
+        };
+        ChatParticipant: {
+            /** @description The participant ROW id — what a message’s `senderParticipantId` names */
+            id: string;
+            /** @description A user id or a persona id, per `type` */
+            participantId: string;
+            /** @enum {string} */
+            type: "user" | "persona";
+            /** @description owner, member or assistant */
+            role: string;
+            joinedAt: string;
+        };
+        Chat: {
+            id: string;
+            /** @enum {string} */
+            type: "dm" | "group";
+            /** @description The definition the chat follows; a DM reports the built-in `direct`’s id */
+            definitionId: string;
+            name: string;
+            photoStorageKey: string | null;
+            createdByUserId: string | null;
+            createdAt: string;
+            updatedAt: string;
+            /** @description Joined participants, longest-standing first */
+            participants: components["schemas"]["ChatParticipant"][];
+        };
+        /** @description One row of the caller’s chat list: a chat, its last message and unread count. */
+        ChatInboxEntry: components["schemas"]["Chat"] & {
+            lastMessage: components["schemas"]["DmMessagePreview"];
+            unreadCount: number;
+        };
+        ChatList: {
+            chats: components["schemas"]["ChatInboxEntry"][];
+            total: number;
+            page: number;
+            pageSize: number;
+        };
+        ChatDefinitionList: {
+            definitions: components["schemas"]["ChatDefinition"][];
+        };
+        ChatEnvelope: {
+            chat: components["schemas"]["Chat"];
+        };
+        ChatDetail: {
+            chat: components["schemas"]["Chat"];
+            definition: components["schemas"]["ChatDefinition"];
+        };
+        ChatCreateRequest: {
+            /** @description The definition’s id or slug */
+            definition: string;
+            userIds?: string[];
+            personaIds?: string[];
+            /** @description Defaults to the definition’s name */
+            name?: string;
+        };
+        ChatCreateResult: {
+            chat: components["schemas"]["Chat"];
+            /** @description The definition’s own personas that were not seated because they no longer exist */
+            skippedPersonaIds: string[];
+        };
+        ChatUpdateRequest: {
+            name?: string;
+            /** @description null clears the photo */
+            photoStorageKey?: string | null;
+        };
+        ChatParticipantsAddRequest: {
+            userIds?: string[];
+            personaIds?: string[];
+        };
+        ChatParticipantsAddResult: {
+            chat: components["schemas"]["Chat"];
+            added: components["schemas"]["ChatParticipant"][];
+            /** @description The definition’s own personas that were asked for but not seated because they no longer exist */
+            skippedPersonaIds: string[];
+        };
+        ChatParticipantRemoveResult: {
+            chat: components["schemas"]["Chat"];
+            removed: components["schemas"]["ChatParticipant"];
+            /** @description The user who became owner when the owner left; otherwise null */
+            newOwner: components["schemas"]["ChatParticipant"] | null;
+        };
+        ChatMessageList: {
+            items: components["schemas"]["DmMessage"][];
+        };
+        ChatTypingRequest: {
+            /** @enum {string} */
+            state: "start" | "stop";
+        };
+        /** @description The `data` of an event on the persona-reply stream of POST /chat/chats/{id}/messages. The SSE event name discriminates (see the route): `open` carries `message`; `persona_start` carries `participantId` and `personaId`; `message` carries `participantId` and `message`; every turn event (`token`, `tool_call_started`, `tool_call_completed`, `status`, `award`, `done`, `ended`, `error`) carries its own fields (see ChatStreamEvent) plus `participantId`. */
+        ChatPersonaReplyEvent: {
+            /** @description The replying persona’s participant row id */
+            participantId?: string;
+            /** @description `persona_start` */
+            personaId?: string;
+            message?: components["schemas"]["DmMessage"];
         };
         CommunicationSettings: {
             /** @description AUDIENCE bitmask of who may DM the user (0 = nobody; default PUBLIC|HUB = 3) */
@@ -72724,6 +75215,97 @@ export interface components {
             provisionedAt: string;
             provisionedBy?: string | null;
             updatedAt: string;
+        };
+        ChatDefinition: {
+            /**
+             * Format: uuid
+             * @description The built-in `direct` definition is always 00000000-0000-4000-8000-000000000001.
+             */
+            id: string;
+            /** @description Null for built-in `direct`. */
+            ecosystemId: string | null;
+            name: string;
+            description: string;
+            /**
+             * @description `archived` offers the definition for no new chats; existing chats keep working.
+             * @enum {string}
+             */
+            state: "active" | "archived";
+            /** @description The developer’s ceiling. Must not exceed the system maximum (CHAT_MAX_PARTICIPANTS, default 32) when written; at use, the lower of the two applies. */
+            maxParticipants: number;
+            allowInvites: boolean;
+            /** @enum {string} */
+            invitePolicy: "any_participant" | "owner";
+            /** @description Whether participants may change the chat’s own settings. */
+            userConfigurable: boolean;
+            /** @enum {string} */
+            personaReplyPolicy: "every_message" | "when_mentioned";
+            /** @description Whether participants may add personas beyond the definition’s own. */
+            allowAddedPersonas: boolean;
+            /** @description The personas every chat of this definition seats. Each must be usable by the caller, and they must leave at least one seat under maxParticipants. */
+            personaIds: string[];
+            /** @description Lowercase letters, digits and interior hyphens. `direct` is reserved, and a uuid-shaped slug is refused (a uuid in the path is always read as an id). */
+            slug: string;
+            /**
+             * @description Read-only. Only `none` until end-to-end encryption lands.
+             * @enum {string}
+             */
+            encryptionMode: "none";
+            /** @description True for `direct` (one-to-one DMs): read-only, present in every ecosystem. */
+            builtIn: boolean;
+            createdAt: string | null;
+            updatedAt: string | null;
+            /** @description Always null here: a deleted definition is never listed or returned. */
+            deletedAt: string | null;
+        };
+        ChatDefinitionCreate: {
+            name: string;
+            description?: string;
+            /**
+             * @description `archived` offers the definition for no new chats; existing chats keep working.
+             * @enum {string}
+             */
+            state?: "active" | "archived";
+            /** @description The developer’s ceiling. Must not exceed the system maximum (CHAT_MAX_PARTICIPANTS, default 32) when written; at use, the lower of the two applies. */
+            maxParticipants: number;
+            allowInvites?: boolean;
+            /** @enum {string} */
+            invitePolicy?: "any_participant" | "owner";
+            /** @description Whether participants may change the chat’s own settings. */
+            userConfigurable?: boolean;
+            /** @enum {string} */
+            personaReplyPolicy?: "every_message" | "when_mentioned";
+            /** @description Whether participants may add personas beyond the definition’s own. */
+            allowAddedPersonas?: boolean;
+            /** @description The personas every chat of this definition seats. Each must be usable by the caller, and they must leave at least one seat under maxParticipants. */
+            personaIds?: string[];
+            /** @description Lowercase letters, digits and interior hyphens. `direct` is reserved, and a uuid-shaped slug is refused (a uuid in the path is always read as an id). Defaults to the name, slugified and cut to 64 characters; `chat` when the name has no ASCII letter or digit. */
+            slug?: string;
+        };
+        /** @description Partial. `personaIds`, when present, REPLACES the set. */
+        ChatDefinitionUpdate: {
+            name?: string;
+            description?: string;
+            /**
+             * @description `archived` offers the definition for no new chats; existing chats keep working.
+             * @enum {string}
+             */
+            state?: "active" | "archived";
+            /** @description The developer’s ceiling. Must not exceed the system maximum (CHAT_MAX_PARTICIPANTS, default 32) when written; at use, the lower of the two applies. */
+            maxParticipants?: number;
+            allowInvites?: boolean;
+            /** @enum {string} */
+            invitePolicy?: "any_participant" | "owner";
+            /** @description Whether participants may change the chat’s own settings. */
+            userConfigurable?: boolean;
+            /** @enum {string} */
+            personaReplyPolicy?: "every_message" | "when_mentioned";
+            /** @description Whether participants may add personas beyond the definition’s own. */
+            allowAddedPersonas?: boolean;
+            /** @description The personas every chat of this definition seats. Each must be usable by the caller, and they must leave at least one seat under maxParticipants. */
+            personaIds?: string[];
+            /** @description Lowercase letters, digits and interior hyphens. `direct` is reserved, and a uuid-shaped slug is refused (a uuid in the path is always read as an id). */
+            slug?: string;
         };
         EcosystemServerBagEntry: {
             key: string;
@@ -75430,6 +78012,343 @@ export interface components {
             visitorGlobalDailyCostMicros: number | null;
             /** @description Tokens an anonymous turn claims up front (VISITOR_TURN_TOKEN_RESERVE); against the cost budget the same claim is priced at the output rate */
             visitorTurnTokenReserve: number;
+        };
+        UsageCostRow: {
+            /**
+             * Format: date
+             * @description groupBy=day only
+             */
+            day?: string;
+            /**
+             * Format: uuid
+             * @description groupBy=key only. The nil uuid is platform-level spend
+             */
+            ecosystemKey?: string;
+            /**
+             * @description groupBy=key only
+             * @enum {string}
+             */
+            category?: "llm" | "embedding" | "email" | "sms" | "storage_op" | "outbound_http" | "realtime";
+            /** @description groupBy=key only */
+            provider?: string;
+            /** @description groupBy=key only */
+            sku?: string;
+            /**
+             * @description groupBy=key only
+             * @enum {string}
+             */
+            paidBy?: "platform" | "customer_key";
+            /** @description Summed cost in µUSD (unpriced lines add 0) */
+            costMicros: number;
+            /** @description Lines with no price; > 0 ⇒ a floor */
+            unpricedLines: number;
+            /** @description Cost lines summed into this row */
+            lines: number;
+            /** @description Key-wise sums of the quantities (requests, input_tokens, minutes, …) */
+            quantities: {
+                [key: string]: number;
+            };
+        };
+        UsageCostReport: {
+            /** Format: date */
+            from: string;
+            /**
+             * Format: date
+             * @description Inclusive
+             */
+            to: string;
+            /** @enum {string} */
+            groupBy: "day" | "key";
+            rows: components["schemas"]["UsageCostRow"][];
+        };
+        UsageCallEvent: {
+            id: number;
+            scope: string;
+            principalId: string;
+            ecosystemId?: string | null;
+            route: string;
+            method: string;
+            status: number;
+            requestBytes?: number;
+            responseBytes?: number;
+            occurredAt: string;
+            /** Format: uuid */
+            callId?: string | null;
+            /** Format: uuid */
+            parentCallId?: string | null;
+            kind: string;
+            routePattern?: string | null;
+            durationMs?: number | null;
+            dbMs?: number | null;
+            dbQueries?: number | null;
+            streamEvents?: number | null;
+        };
+        UsageCostLine: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            callId: string;
+            /** Format: uuid */
+            ecosystemId?: string | null;
+            occurredAt: string;
+            /** @enum {string} */
+            category: "llm" | "embedding" | "email" | "sms" | "storage_op" | "outbound_http" | "realtime";
+            provider: string;
+            sku: string;
+            /** @description Key-wise sums of the quantities (requests, input_tokens, minutes, …) */
+            quantities: {
+                [key: string]: number;
+            };
+            /** @description The per-unit prices the cost was computed from, snapshotted */
+            unitPrices?: {
+                [key: string]: number;
+            } | null;
+            /** @description µUSD; null ⇒ unpriced */
+            costMicros: number | null;
+            /** @enum {string} */
+            paidBy: "platform" | "customer_key";
+            /** @description The provider call did not complete; a floor */
+            partial: boolean;
+            attempt: number;
+        };
+        UsageCallLedger: {
+            /** Format: uuid */
+            callId: string;
+            events: components["schemas"]["UsageCallEvent"][];
+            lines: components["schemas"]["UsageCostLine"][];
+        };
+        UsageCallReport: components["schemas"]["UsageCallLedger"] & {
+            /** @description Calls this one started (parent_call_id), one level deep */
+            children: components["schemas"]["UsageCallLedger"][];
+        };
+        UsageInsightRate: {
+            category: string;
+            provider: string;
+            sku: string;
+            /** @description The `quantities` key the rate prices */
+            quantityKey: string;
+            /** @description Decimal µUSD per unit (numeric text; may be a fraction of a µUSD) */
+            microsPerUnit: string;
+            /** Format: date */
+            effectiveFrom: string;
+        };
+        UsageRate: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            category: "llm" | "embedding" | "email" | "sms" | "storage_op" | "outbound_http" | "realtime" | "compute";
+            provider: string;
+            sku: string;
+            /** @description The `quantities` key the rate prices */
+            quantityKey: string;
+            /** @description Exact decimal µUSD per unit (numeric text, never a float) */
+            microsPerUnit: string;
+            /** Format: date */
+            effectiveFrom: string;
+            note: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: uuid */
+            createdByUserId: string | null;
+        };
+        UsageRateList: {
+            rows: components["schemas"]["UsageRate"][];
+        };
+        UsageRateCreate: {
+            /** @enum {string} */
+            category: "llm" | "embedding" | "email" | "sms" | "storage_op" | "outbound_http" | "realtime" | "compute";
+            provider: string;
+            sku: string;
+            quantityKey: string;
+            /** @description Exact decimal text, ≥ 0: at most 12 fractional digits and 18 integer digits (trailing fractional zeros do not count; exponent form such as `1e-3` is read exactly). Returned in plain form. */
+            microsPerUnit: string;
+            /**
+             * Format: date
+             * @description Default: today (UTC)
+             */
+            effectiveFrom?: string;
+            note?: string;
+        };
+        UsageRatePatch: {
+            /** @description Exact decimal text, ≥ 0: at most 12 fractional digits and 18 integer digits (trailing fractional zeros do not count; exponent form such as `1e-3` is read exactly). Returned in plain form. */
+            microsPerUnit?: string;
+            /** Format: date */
+            effectiveFrom?: string;
+            note?: string;
+        };
+        UsageFixedCost: {
+            /** Format: uuid */
+            id: string;
+            provider: string;
+            label: string;
+            /** @description µUSD a month, prorated by day */
+            monthlyMicros: number;
+            /** Format: date */
+            effectiveFrom: string;
+            /**
+             * Format: date
+             * @description Last day it charges (inclusive); null ⇒ still in effect
+             */
+            effectiveTo: string | null;
+            note: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        UsageFixedCostList: {
+            rows: components["schemas"]["UsageFixedCost"][];
+        };
+        UsageFixedCostCreate: {
+            provider: string;
+            label: string;
+            monthlyMicros: number;
+            /** Format: date */
+            effectiveFrom: string;
+            /** Format: date */
+            effectiveTo?: string | null;
+            note?: string;
+        };
+        UsageFixedCostPatch: {
+            label?: string;
+            monthlyMicros?: number;
+            /** Format: date */
+            effectiveFrom?: string;
+            /** Format: date */
+            effectiveTo?: string | null;
+            note?: string;
+        };
+        UsageInsightItem: {
+            category: string;
+            provider: string;
+            sku: string;
+            /** @description Key-wise sums of the quantities (requests, input_tokens, minutes, …) */
+            quantities: {
+                [key: string]: number;
+            };
+            /** @description Sum of the prices captured on the platform-paid lines */
+            capturedMicros: number;
+            /** @description Priced per (item, day): a rate in effect overrides the captured price. null ⇒ unpriced; a non-zero `unpricedLines` ⇒ a floor */
+            costMicros: number | null;
+            /**
+             * @description How the range was priced; `mixed` when days differ (a rate starting mid-range), `customer_key` when none of it was platform-paid
+             * @enum {string}
+             */
+            source: "rate" | "captured" | "unpriced" | "mixed" | "customer_key";
+            unpricedLines: number;
+            lines: number;
+            /** @description The rates in effect on some day of the range */
+            rates: components["schemas"]["UsageInsightRate"][];
+        };
+        UsageInsightItems: {
+            /** Format: date */
+            from: string;
+            /** Format: date */
+            to: string;
+            items: components["schemas"]["UsageInsightItem"][];
+        };
+        UsageInsightRunRate: {
+            /** @description YYYY-MM */
+            month: string;
+            /** @description Complete days: through yesterday (UTC) for the current month */
+            elapsedDays: number;
+            daysInMonth: number;
+            /** @description Direct cost over the elapsed days; null ⇒ every part of it is unpriced. Unpriced items add 0 to a priced total, so `unpricedItems` > 0 ⇒ a floor */
+            directToDateMicros: number | null;
+            /** @description The month's fixed cost, prorated by day */
+            fixedMonthMicros: number;
+            /** @description direct to date (null ⇒ 0) ÷ elapsed days × days in month + fixed */
+            projectedMonthMicros: number;
+            /** @description Items with unpriced lines; > 0 ⇒ the direct figures are a floor */
+            unpricedItems: number;
+            byCategory: {
+                category: string;
+                /** @description µUSD; null ⇒ every part of it is unpriced */
+                directMicros: number | null;
+            }[];
+        };
+        UsageLlmTokens: {
+            input: number;
+            /** @description All output, reasoning included */
+            output: number;
+            cacheRead: number;
+            cacheWrite: number;
+            reasoning: number;
+        };
+        UsageInsightOverviewPoint: {
+            /**
+             * Format: date
+             * @description First day of the bucket (a week starts Monday, UTC); may precede `from`
+             */
+            start: string;
+            requests: number;
+            bytesIn: number;
+            bytesOut: number;
+            serverMs: number;
+            dbMs: number;
+            llmTokens: components["schemas"]["UsageLlmTokens"];
+            /** @description Embedding calls */
+            embeddings: number;
+            emails: number;
+            /** @description SMS segments, plus one per send with no segment count */
+            smsSegments: number;
+            storageOps: number;
+            /** @description µUSD; null ⇒ every part of it is unpriced */
+            directMicros: number | null;
+            /** @description Lines with no price or an incomplete one; > 0 ⇒ `directMicros` is a floor */
+            unpricedLines: number;
+        };
+        UsageInsightOverview: {
+            /** @enum {string} */
+            interval: "day" | "week" | "month";
+            points: components["schemas"]["UsageInsightOverviewPoint"][];
+        };
+        UsageInsightBreakdownRow: {
+            /**
+             * Format: uuid
+             * @description The nil uuid is the unattributed row
+             */
+            key: string;
+            /** @description Name / handle; `Unattributed` for the nil key; the key when unresolved */
+            label: string;
+            requests: number;
+            serverMs: number;
+            dbMs: number;
+            llmTokens: components["schemas"]["UsageLlmTokens"];
+            /** @description µUSD; null ⇒ every part of it is unpriced */
+            directMicros: number | null;
+            /** @description Estimate: fixed cost × row (server + db ms) ÷ platform (server + db ms); each row is rounded separately, so rows may differ from fixedMicros by under 1 µUSD per row */
+            hostingShareMicros: number;
+            /** @description Estimate: direct + hosting share */
+            estimatedMicros: number;
+            unpricedLines: number;
+        };
+        UsageInsightBreakdown: {
+            /** @enum {string} */
+            by: "organization" | "ecosystem" | "user" | "persona";
+            /** @description Rows before paging */
+            total: number;
+            /** @description Fixed cost over the range (the shared pool) */
+            fixedMicros: number;
+            rows: components["schemas"]["UsageInsightBreakdownRow"][];
+        };
+        UsageInsightBreakdownDetail: {
+            /** @enum {string} */
+            by: "organization" | "ecosystem" | "user" | "persona";
+            /** Format: uuid */
+            key: string;
+            label: string;
+            items: components["schemas"]["UsageInsightItem"][];
+            /** @description Every day of the range */
+            daily: {
+                /** Format: date */
+                day: string;
+                /** @description µUSD; null ⇒ every part of it is unpriced */
+                directMicros: number | null;
+                /** @description Lines with no price or an incomplete one; > 0 ⇒ `directMicros` is a floor */
+                unpricedLines: number;
+                requests: number;
+            }[];
         };
         Workspace: {
             /** @description Routable workspace slug (caller-scoped) */
