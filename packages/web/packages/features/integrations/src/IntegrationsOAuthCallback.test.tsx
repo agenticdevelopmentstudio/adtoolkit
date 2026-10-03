@@ -293,11 +293,13 @@ describe("the exits that finish nothing", () => {
    * so the entry cannot be replayed and is only something for a later flow to trip on. The
    * tombstone is deliberately not laid here — a failed connect is one the operator may retry.
    *
-   * The STATUS on the rejection is the fixture's whole point, not decoration: it is what says a
-   * response came back at all. See the mirror test below, which is the same failure without one.
+   * The STATUS on the rejection is the fixture's whole point, not decoration: a 4xx is the
+   * backend reading the credential and refusing it. A 5xx would not do — `consumesCredential`
+   * reads that as "nothing was filed" and keeps the stash for a retry (the 5xx test below).
+   * See the mirror test below, which is the same failure with no status at all.
    */
   it("clears the stash when a connect the backend ANSWERED throws", async () => {
-    connect.mockRejectedValue(httpError(500, "installation already claimed"));
+    connect.mockRejectedValue(httpError(422, "installation already claimed"));
     const state = signedState(CLAIMS);
     stashPendingConnect(state, STASH);
     atCallback(`?installation_id=42&state=${encodeURIComponent(state)}`);
@@ -306,6 +308,8 @@ describe("the exits that finish nothing", () => {
 
     expect(await screen.findByText(/installation already claimed/i)).toBeTruthy();
     expect(stashed(state)).toBeNull();
+    // Refused, not set up: a reload must not be told "already set up".
+    expect(sessionStorage.getItem(`int-oauth-consumed:${state}`)).toBeNull();
     expect(reportUnexpectedAuthError).toHaveBeenCalledWith(
       expect.any(Error),
       // The step names WHICH flow failed — the only detail that distinguishes the three
@@ -335,6 +339,24 @@ describe("the exits that finish nothing", () => {
     expect(await screen.findByText(/failed to fetch/i)).toBeTruthy();
     expect(stashed(state)).not.toBeNull();
     // And no tombstone either — this connect is not "already set up", it is unmade.
+    expect(sessionStorage.getItem(`int-oauth-consumed:${state}`)).toBeNull();
+  });
+
+  /**
+   * A 5xx is a response, but not evidence the credential was read: a proxy's 502, a 503 while
+   * the backend restarts, a handler that threw on its first line. Burning the stash on one made
+   * the retry the error message invites impossible.
+   */
+  it("keeps the stash when the backend fails with a 5xx", async () => {
+    connect.mockRejectedValue(httpError(503, "backend restarting"));
+    const state = signedState(CLAIMS);
+    stashPendingConnect(state, STASH);
+    atCallback(`?installation_id=42&state=${encodeURIComponent(state)}`);
+
+    render(<IntegrationsOAuthCallback />);
+
+    expect(await screen.findByText(/backend restarting/i)).toBeTruthy();
+    expect(stashed(state)).not.toBeNull();
     expect(sessionStorage.getItem(`int-oauth-consumed:${state}`)).toBeNull();
   });
 

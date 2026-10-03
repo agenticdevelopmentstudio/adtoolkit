@@ -546,7 +546,9 @@ describe('what is no longer a contest', () => {
     const hooks = ['--bb-dock-rest-x', '--bb-dock-rest-lift', '--bb-dock-panel-width']
     expect(rule('site .bb-dock.adh-footer__chat').properties.sort()).toEqual([...hooks].sort())
     const resting = rule(
-      'bitbag .bb-dock--resting .bb-dock__avatar, .bb-dock--resting:has(.persona-chat.pc-collapsed) .bb-dock__avatar',
+      // The closing dock shares the rule: he travels back to the same resting spot.
+      'bitbag .bb-dock--resting .bb-dock__avatar, .bb-dock--resting:has(.persona-chat.pc-collapsed) .bb-dock__avatar, ' +
+        '.bb-dock--closing .bb-dock__avatar, .bb-dock--closing:has(.persona-chat.pc-collapsed) .bb-dock__avatar',
     )
     expect(resting.get('transform')).toContain('var(--bb-dock-rest-x')
     expect(resting.get('margin-bottom')).toContain('var(--bb-dock-rest-lift')

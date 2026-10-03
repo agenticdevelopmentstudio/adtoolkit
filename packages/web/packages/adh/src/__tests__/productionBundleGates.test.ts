@@ -50,6 +50,11 @@ const code = (text: string) => text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\
 /** Collapse formatting so an assertion survives prettier re-wrapping the expression. */
 const flat = (text: string) => text.replace(/\s+/g, ' ')
 
+/** One quote style, so an assertion survives prettier's quote preference as well: the bundler
+ *  folds `=== "local"` exactly as it folds `=== 'local'`, and a specifier is the same module in
+ *  either quote. Only the gate files are normalized — the assertions are written in `'`. */
+const quotes = (text: string) => text.replace(/"/g, "'")
+
 /** tsconfig.json, comments and all. */
 const tsconfigPaths = (): Record<string, string[]> =>
   (JSON.parse(code(read('tsconfig.json'))) as { compilerOptions: { paths: Record<string, string[]> } })
@@ -171,7 +176,7 @@ describe('production bundle gates', () => {
     const specifier = `@agentic-toolkit/adh/${subpath}`
 
     it('gates it on a folded comparison, never on an identifier', () => {
-      const src = flat(code(read(gate)))
+      const src = flat(quotes(code(read(gate))))
       const chains = src.split(FOLDABLE).length - 1
       expect(chains, `${gate} has no foldable gate`).toBeGreaterThan(0)
 
@@ -190,7 +195,7 @@ describe('production bundle gates', () => {
     })
 
     it('imports it by package subpath, never relatively', () => {
-      const src = code(read(gate))
+      const src = quotes(code(read(gate)))
       expect(src, `${gate} does not import ${specifier}`).toContain(`'${specifier}'`)
 
       // A relative VALUE import of the same module defeats the whole thing: esbuild inlines

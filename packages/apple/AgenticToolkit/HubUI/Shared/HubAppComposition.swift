@@ -27,12 +27,16 @@ public final class HubAppComposition {
         SignInViewModel(session: coordinator.session, passkeys: PasskeyAssertion(), social: WebAuthSocialSignIn())
     }
 
+    /// `transportSource` is injectable so a test decides whether the daemon is
+    /// "running" — the default probes the real one, which makes anything that
+    /// reads the status strip depend on the machine the test runs on.
     public static func macOS(
-        sessionStore: any SessionStore = KeychainSessionStore(keyPrefix: "adh.api")
+        sessionStore: any SessionStore = KeychainSessionStore(keyPrefix: "adh.api"),
+        transportSource: any HubTransportSource = ResolvedTransportSource()
     ) async -> HubAppComposition {
         let environment = await HubEnvironment.bootstrap(
             sessionStore: sessionStore,
-            transportSource: ResolvedTransportSource()
+            transportSource: transportSource
         )
         let composition = assemble(environment: environment, daemon: nil, expectsDaemon: true)
         composition.coordinator.onResume = { [environment] in

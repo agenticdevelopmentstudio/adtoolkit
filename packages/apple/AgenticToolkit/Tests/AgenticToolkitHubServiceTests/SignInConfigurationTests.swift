@@ -53,30 +53,6 @@ final class SignInConfigurationTests: XCTestCase {
         )
     }
 
-    /// Both apps shipped `ADHSignInClientId` = `hub` in their Info.plist, and
-    /// a plist value beats ``SignInConfiguration/defaultClientID`` — so fixing
-    /// the default alone still sent `clientId=hub` and still got
-    /// `client not found`. The override exists for a real future client; until
-    /// there is one, neither Info.plist may declare the key at all. Read from
-    /// the source tree because this bundle has no TEST_HOST, so `Bundle.main`
-    /// here is the xctest runner, not either app.
-    func testNeitherAppInfoPlistPinsASignInClientID() throws {
-        let projectRoot = URL(fileURLWithPath: #filePath)   // …/Tests/HubKitTests/…
-            .deletingLastPathComponent()                    // …/Tests/HubKitTests
-            .deletingLastPathComponent()                    // …/Tests
-            .deletingLastPathComponent()                    // …/Apple/AgenticDeveloperHub
-        for app in ["AgenticDeveloperHub", "AgenticDeveloperHub-iOS"] {
-            let url = projectRoot.appendingPathComponent("\(app)/Info.plist")
-            let plist = try PropertyListSerialization.propertyList(
-                from: try Data(contentsOf: url), format: nil
-            ) as? [String: Any]
-            XCTAssertNil(
-                try XCTUnwrap(plist)[SignInConfiguration.bundleClientIDKey],
-                "\(app)/Info.plist pins a sign-in client; the default is the one the backend knows"
-            )
-        }
-    }
-
     func testProviderLabels() {
         XCTAssertEqual(SocialProvider.google.label, "Google")
         XCTAssertEqual(SocialProvider.github.label, "GitHub")

@@ -304,20 +304,14 @@ export function IntegrationsOAuthCallback({
         // the operator to try again from here. A blanket clear took the stash away on all
         // four, so the retry the message invited then reported an expired link: `redirectUri`
         // exists nowhere but the stash, and the recovery path cannot invent one.
-        if (spent) {
-          // The tombstone goes down BEFORE the stash goes away, and on every spending exit
-          // rather than only on the two that file one of their own. After
-          // `clearPendingConnect` there is nothing left for a reload of this document to
-          // recognize itself by — the state is out of the stash and unspendable at the
-          // backend — so a spent-but-untombstoned replay reports "expired or was already
-          // used" as if the link had never worked, for a credential that was in fact
-          // redeemed. The tombstone is what turns that into the true sentence, and it
-          // carries `returnTo` so the replay lands where the operator started rather than on
-          // the family fallback. A plain overwrite, so the success and already-connected
-          // paths filing it first costs nothing.
-          markPendingConnectConsumed(state, ctx.returnTo);
-          clearPendingConnect(state);
-        }
+        //
+        // No tombstone here. A reload that finds one says "This connection is already set
+        // up", so it goes down only on the two exits where that is true — the success path
+        // and the already-connected conflict, each of which files its own above. A spending
+        // FAILURE (the backend read the credential and refused it: an installation attached
+        // elsewhere, a rejected code) set nothing up, and a reload of it must not claim
+        // otherwise; "expired or was already used" is the true sentence for that replay.
+        if (spent) clearPendingConnect(state);
       }
     })();
   }, [isLoading, isAuthenticated, userId, router, fallbackReturnTo]);

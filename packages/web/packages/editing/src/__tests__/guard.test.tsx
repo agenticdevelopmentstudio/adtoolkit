@@ -78,6 +78,13 @@ function askToNavigate(): { answer: () => boolean | undefined } {
  * wait can return while the guard is still legitimately armed. The container's
  * `data-editing-dirty` marker is the same signal the guard itself reads, and it
  * clears only when the write has landed and the baseline has moved.
+ *
+ * The marker clears at commit, but the guard unregisters in a passive effect
+ * that React flushes on a later scheduler task. `waitFor` can return in between
+ * (it drains on `setTimeout(0)`, the scheduler runs on `setImmediate`, and under
+ * load either may go first), so flush the pending effects before returning — a
+ * real user never lands in that gap, since React flushes passive effects before
+ * it handles the next discrete event.
  */
 async function saved(): Promise<void> {
   await waitFor(() =>
@@ -85,6 +92,7 @@ async function saved(): Promise<void> {
       "data-editing-dirty",
     ),
   )
+  await act(async () => {})
 }
 
 function fireBeforeUnload(): Event {

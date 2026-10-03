@@ -377,15 +377,12 @@ struct MarkdownStoreTests {
         }
     }
 
-    /// Was "…is skipped". Skipping is a lie the user cannot see through: the
-    /// note is simply absent from the list, nothing anywhere says why, and the
-    /// conclusion available to them is that their work was lost. Throwing names
-    /// the row and the column, and matches what `pendingRemoteOps` already does
-    /// with exactly the same kind of corrupt value one test up.
+    /// Asked for one named row, the only true answer is to fail loudly, naming
+    /// the row and the column — what `pendingRemoteOps` already does with
+    /// exactly the same kind of corrupt value one test up.
     @Test("a document row with an unreadable timestamp throws, naming the row and column")
     func unreadableDocumentTimestampThrows() throws {
         let store = try store()
-        _ = try store.createDocument(content: "good", markers: [.note])
         let bad = try store.createDocument(content: "bad", markers: [.note])
         try store.database.write { conn in
             try conn.execute(
@@ -394,9 +391,22 @@ struct MarkdownStoreTests {
         #expect(throws: MarkdownStoreError.unreadableTimestamp(id: bad.id, column: "updated_at")) {
             try store.document(id: bad.id)
         }
-        #expect(throws: MarkdownStoreError.unreadableTimestamp(id: bad.id, column: "updated_at")) {
-            try store.documents(marker: .note)
+    }
+
+    /// Asked for a list, throwing would empty the screen of every good note
+    /// because of one bad one, so the bad row is dropped and logged — and the
+    /// badge applies the same filter, so it never claims a note the list lacks.
+    @Test("a list skips a row with an unreadable timestamp and keeps the rest, badge agreeing")
+    func unreadableDocumentTimestampIsSkippedInAList() throws {
+        let store = try store()
+        let good = try store.createDocument(content: "good", markers: [.note])
+        let bad = try store.createDocument(content: "bad", markers: [.note])
+        try store.database.write { conn in
+            try conn.execute(
+                sql: "UPDATE markdown SET updated_at = 'garbage' WHERE id = ?", arguments: [bad.id])
         }
+        #expect(try store.documents(marker: .note).map(\.id) == [good.id])
+        #expect(try store.noteCount(marker: .note) == 1)
     }
 
     /// adh's columns are Postgres `timestamp` and its OpenAPI declares them as
