@@ -180,10 +180,10 @@ public protocol BillingPersistence {
     func attachSegments(ids: [String], toEntry entryId: String) throws
     func appendBillingAudit(entryId: String, field: String, oldValue: String, newValue: String, source: String) throws
     func billingSessionTitles(sessionIds: [String]) throws -> [String]
-    /// The ids in `sessionIds` with nothing to title them by: a session with
-    /// neither a transcript title nor a summary (or no row at all), or an
-    /// `app:` id whose span is gone or has no app name. A description built
-    /// while any of these is missing would silently drop their part.
+    /// The ids in `sessionIds` whose rows no longer exist: a session with no
+    /// row at all, or an `app:` id whose span is gone. A description built
+    /// while any of these is missing would silently drop their part. A row
+    /// that exists but has no title yet does not count — it loses nothing.
     func billingUntitledSessionIds(sessionIds: [String]) throws -> Set<String>
 
     // MARK: Assignment and overview

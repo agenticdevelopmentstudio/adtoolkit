@@ -24,6 +24,55 @@ import ApplicationServices
 /// is the only app whose internal focus can alter what the frontmost reading
 /// is. Watching every running app would multiply the notification traffic by
 /// the number of apps open to learn nothing more.
+/// What one attempt to subscribe to an app's notifications came to.
+enum FrontmostElementSubscription {
+    /// Subscribed; the handle is what `unsubscribe` takes back.
+    case attached(AnyObject)
+    /// Not this time — the app may simply have no AX server yet.
+    case failed
+    /// Accessibility is not granted. Asking again cannot succeed.
+    case apiDisabled
+}
+
+/// The Accessibility calls the observer makes, behind one seam so a test can
+/// count them. The live one is `SystemFrontmostElementAX`.
+@MainActor
+protocol FrontmostElementAX: AnyObject {
+    var frontmostPID: pid_t? { get }
+    func subscribe(pid: pid_t, notifications: [String], context: UnsafeMutableRawPointer)
+        -> FrontmostElementSubscription
+    func unsubscribe(_ handle: AnyObject)
+}
+
+@MainActor
+final class SystemFrontmostElementAX: FrontmostElementAX {
+    var frontmostPID: pid_t? { NSWorkspace.shared.frontmostApplication?.processIdentifier }
+
+    /// A created observer carrying no registrations delivers nothing, so a
+    /// subscription that fails wholesale counts as a failed attach and not as
+    /// a silent success. A *partial* success is kept: three of four
+    /// notifications still see more than none.
+    func subscribe(pid: pid_t, notifications: [String], context: UnsafeMutableRawPointer)
+        -> FrontmostElementSubscription {
+        var created: AXObserver?
+        let made = AXObserverCreate(pid, axObserverCallback, &created)
+        if made == .apiDisabled { return .apiDisabled }
+        guard made == .success, let created else { return .failed }
+        let app = AXUIElementCreateApplication(pid)
+        let results = notifications.map { AXObserverAddNotification(created, app, $0 as CFString, context) }
+        if results.contains(.apiDisabled) { return .apiDisabled }
+        guard results.contains(.success) else { return .failed }
+        CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(created), .defaultMode)
+        return .attached(created)
+    }
+
+    func unsubscribe(_ handle: AnyObject) {
+        // swiftlint:disable:next force_cast
+        let observer = handle as! AXObserver
+        CFRunLoopRemoveSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(observer), .defaultMode)
+    }
+}
+
 @MainActor
 public final class FrontmostElementObserver {
     /// Called on the main run loop each time the frontmost app moves its own
@@ -31,9 +80,18 @@ public final class FrontmostElementObserver {
     /// describe what changed.
     public var onChange: (() -> Void)?
 
-    private var observer: AXObserver?
+    private var observer: AnyObject?
     private var observedPID: pid_t?
     private var retryTask: Task<Void, Never>?
+    private let accessibility: any FrontmostElementAX
+    private let delays: [Duration]
+
+    /// True until `start()`, after `stop()`, and once Accessibility turns out
+    /// not to be granted: no AX call is made while it holds. A queued
+    /// activation or a retry already past its sleep would otherwise ask AX
+    /// again after the owner stopped watching — and, without the grant, every
+    /// ask costs a trip through `tccd`.
+    private var stopped = true
 
     /// How long to wait before each re-attempt, and so how many are made.
     ///
@@ -63,9 +121,17 @@ public final class FrontmostElementObserver {
         kAXTitleChangedNotification
     ]
 
-    public init() {}
+    public convenience init() {
+        self.init(accessibility: SystemFrontmostElementAX(), retryDelays: Self.retryDelays)
+    }
+
+    init(accessibility: any FrontmostElementAX, retryDelays: [Duration]) {
+        self.accessibility = accessibility
+        self.delays = retryDelays
+    }
 
     public func start() {
+        stopped = false
         NSWorkspace.shared.notificationCenter.addObserver(
             self, selector: #selector(activated),
             name: NSWorkspace.didActivateApplicationNotification, object: nil)
@@ -73,6 +139,7 @@ public final class FrontmostElementObserver {
     }
 
     public func stop() {
+        stopped = true
         NSWorkspace.shared.notificationCenter.removeObserver(self)
         detach()
     }
@@ -85,8 +152,9 @@ public final class FrontmostElementObserver {
     }
 
     /// Points the observation at whichever app is frontmost now.
-    private func retarget() {
-        guard let pid = NSWorkspace.shared.frontmostApplication?.processIdentifier,
+    func retarget() {
+        guard !stopped else { return }
+        guard let pid = accessibility.frontmostPID,
               pid != observedPID
         else { return }
         detach()
@@ -107,12 +175,13 @@ public final class FrontmostElementObserver {
 
     private func scheduleRetry(for pid: pid_t) {
         retryTask = Task { [weak self] in
-            for delay in Self.retryDelays {
+            guard let delays = self?.delays else { return }
+            for delay in delays {
                 try? await Task.sleep(for: delay)
-                guard !Task.isCancelled, let self else { return }
+                guard !Task.isCancelled, let self, !self.stopped else { return }
                 guard Self.shouldRetry(
                     failedPID: pid,
-                    frontmostPID: NSWorkspace.shared.frontmostApplication?.processIdentifier,
+                    frontmostPID: self.accessibility.frontmostPID,
                     observedPID: self.observedPID)
                 else { return }
                 if self.attach(pid: pid) { return }
@@ -121,37 +190,27 @@ public final class FrontmostElementObserver {
     }
 
     /// Subscribes to this app's notifications, reporting whether it worked.
-    ///
-    /// A created observer carrying no registrations delivers nothing, so a
-    /// subscription that fails wholesale counts as a failed attach and not as a
-    /// silent success — otherwise the retry above would never run and the
-    /// observer would sit attached to an app it cannot hear. A *partial*
-    /// success is kept: three of four notifications still see more than none.
+    /// Accessibility not granted stops the observer outright: no retry, and
+    /// no further AX call until the next `start()`.
     private func attach(pid: pid_t) -> Bool {
-        var created: AXObserver?
-        guard AXObserverCreate(pid, axObserverCallback, &created) == .success,
-              let created
-        else { return false }
-        let app = AXUIElementCreateApplication(pid)
         let context = Unmanaged.passUnretained(self).toOpaque()
-        let subscribed = Self.notifications.filter {
-            AXObserverAddNotification(created, app, $0 as CFString, context) == .success
+        switch accessibility.subscribe(pid: pid, notifications: Self.notifications, context: context) {
+        case .attached(let handle):
+            observer = handle
+            observedPID = pid
+            return true
+        case .failed:
+            return false
+        case .apiDisabled:
+            stopped = true
+            return true
         }
-        guard !subscribed.isEmpty else { return false }
-        CFRunLoopAddSource(CFRunLoopGetMain(),
-                           AXObserverGetRunLoopSource(created), .defaultMode)
-        observer = created
-        observedPID = pid
-        return true
     }
 
     private func detach() {
         retryTask?.cancel()
         retryTask = nil
-        if let observer {
-            CFRunLoopRemoveSource(CFRunLoopGetMain(),
-                                  AXObserverGetRunLoopSource(observer), .defaultMode)
-        }
+        if let observer { accessibility.unsubscribe(observer) }
         observer = nil
         observedPID = nil
     }

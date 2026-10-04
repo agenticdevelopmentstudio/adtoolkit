@@ -245,6 +245,14 @@ public enum BillingRollup {
                 database: database
             )
 
+            // An app entry left with no time of its own — every second of it
+            // already billed by a Claude entry beside it — is not written: its
+            // segments stay unattached, so they bill if that run ever moves.
+            if isAppGroupKey(slot.groupKey), entry.rawSeconds == 0 {
+                if let target { _ = try releasesZeroAppEntry(target.entry, database: database) }
+                return
+            }
+
             // The entry row goes in first: a segment may only point at an
             // entry that exists. The guard is the backstop — a row that is no
             // longer the rollup's is never overwritten.
@@ -332,16 +340,40 @@ public enum BillingRollup {
     /// - a run-granularity app entry bills only what the day's other entries
     ///   in the project (the per-run Claude entries, or a day entry from
     ///   before a granularity switch) do not, so an app span overlapping a
-    ///   Claude run is billed once, as the union.
+    ///   Claude run is billed once, as the union;
+    /// - the other way round, a Claude entry bills only what the day's
+    ///   *frozen* app entries (billed, paid or hand edited) do not: those never
+    ///   shrink, so the overlap is already billed there. An unbilled app entry
+    ///   is the one that shrinks instead, so it is never subtracted here — the
+    ///   overlap is taken off exactly one side.
     private static func coverage(
         projectId: String, day: String, groupKey: String, supplements: String?, database: any BillingPersistence
     ) throws -> [BillingSegmentDTO] {
         var covered = try supplements.map { try database.billingSegmentsForEntry(id: $0) } ?? []
-        guard isAppGroupKey(groupKey) else { return covered }
-        let others = try database.billingEntries(projectId: projectId, status: nil, since: day)
-            .filter { $0.day == day && !isAppGroupKey($0.groupKey) }
-        for other in others { covered += try database.billingSegmentsForEntry(id: other.id) }
+        let isApp = isAppGroupKey(groupKey)
+        let others = try database.billingEntries(projectId: projectId, status: nil, since: day).filter { other in
+            guard other.day == day else { return false }
+            return isApp
+                ? !isAppGroupKey(other.groupKey)
+                : isAppGroupKey(other.groupKey) && (other.locked || other.origin == "user")
+        }
+        for other in others where other.id != supplements {
+            covered += try database.billingSegmentsForEntry(id: other.id)
+        }
         return covered
+    }
+
+    /// Deletes an app entry the day's Claude time now covers entirely,
+    /// releasing its segments to the next roll. Only an unlocked, automatic
+    /// entry no supplement points at goes; returns whether it did.
+    private static func releasesZeroAppEntry(
+        _ entry: BillingEntryDTO, database: any BillingPersistence
+    ) throws -> Bool {
+        guard !entry.locked, entry.origin == "auto",
+              try database.billingOpenSupplement(of: entry.id) == nil,
+              try database.billingFrozenSupplementCount(of: entry.id) == 0 else { return false }
+        try database.deleteBillingEntry(id: entry.id)
+        return true
     }
 
     /// `ids` plus every unbilled app entry sharing a project day with one of
@@ -518,6 +550,11 @@ public enum BillingRollup {
                     of: segments, covered: covered, roundingMinutes: entry.roundingMinutes,
                     roundingMode: entry.roundingMode, rateCents: entry.rateCents
                 )
+                if isAppGroupKey(entry.groupKey), computed.raw == 0,
+                   try releasesZeroAppEntry(entry, database: database) {
+                    changed += 1
+                    return
+                }
                 let description = stored.descriptionEdited
                     ? entry.description
                     : try describe(segments: segments, previous: entry.description, database: database)

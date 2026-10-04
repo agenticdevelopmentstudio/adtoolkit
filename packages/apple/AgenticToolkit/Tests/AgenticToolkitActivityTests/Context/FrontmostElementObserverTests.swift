@@ -73,5 +73,52 @@ final class FrontmostElementObserverTests: XCTestCase {
         XCTAssertEqual(Set(FrontmostElementObserver.notifications).count,
                        FrontmostElementObserver.notifications.count)
     }
+
+    // MARK: - No AX call once stopped or denied
+
+    private static let quickRetries: [Duration] = [.milliseconds(5), .milliseconds(5), .milliseconds(5)]
+
+    @MainActor
+    func testNoAXCallIsMadeAfterStop() async throws {
+        let accessibility = CountingAccessibility(result: .failed)
+        let observer = FrontmostElementObserver(accessibility: accessibility, retryDelays: Self.quickRetries)
+        observer.start()
+        XCTAssertEqual(accessibility.subscribes, 1)
+        observer.stop()
+
+        // A queued activation delivered after stop, and the retries' window.
+        observer.retarget()
+        try await Task.sleep(for: .milliseconds(100))
+        XCTAssertEqual(accessibility.subscribes, 1, "stopped means no AX call at all")
+    }
+
+    @MainActor
+    func testAccessibilityDeniedStopsAskingAtOnce() async throws {
+        let accessibility = CountingAccessibility(result: .apiDisabled)
+        let observer = FrontmostElementObserver(accessibility: accessibility, retryDelays: Self.quickRetries)
+        defer { observer.stop() }
+        observer.start()
+        try await Task.sleep(for: .milliseconds(100))
+        observer.retarget()
+        XCTAssertEqual(accessibility.subscribes, 1, "no retry, and no re-ask on the next activation")
+    }
+}
+
+/// Counts every subscription attempt; the frontmost app never changes.
+@MainActor
+private final class CountingAccessibility: FrontmostElementAX {
+    let result: FrontmostElementSubscription
+    private(set) var subscribes = 0
+    var frontmostPID: pid_t? { 4242 }
+
+    init(result: FrontmostElementSubscription) { self.result = result }
+
+    func subscribe(pid: pid_t, notifications: [String], context: UnsafeMutableRawPointer)
+        -> FrontmostElementSubscription {
+        subscribes += 1
+        return result
+    }
+
+    func unsubscribe(_ handle: AnyObject) {}
 }
 #endif
