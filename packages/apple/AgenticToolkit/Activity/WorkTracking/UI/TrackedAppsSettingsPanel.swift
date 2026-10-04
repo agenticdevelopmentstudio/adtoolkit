@@ -31,6 +31,12 @@ public final class TrackedAppsSettingsPanel: ComposableSettings.SettingsPanelVie
     private var accessibilityLine: ComposableSettings.ExplanationView?
     private var degradedLine: ComposableSettings.ExplanationView?
     private var failureLine: ComposableSettings.ExplanationView?
+    private var checkButton: ComposableSettings.ButtonView?
+    /// Bumped before every `status()`/`recheck()` await; a result whose
+    /// generation is no longer current is stale and dropped.
+    private var refreshGeneration = 0
+    private var rechecksInFlight = 0
+    private var lastStatus: WorkTrackingStatus?
     private var appsCard: ComposableSettings.EditableTableCard?
 
     public init(settings: WorkTrackingUserSettings,
@@ -96,6 +102,11 @@ public final class TrackedAppsSettingsPanel: ComposableSettings.SettingsPanelVie
         return next.normalized()
     }
 
+    /// True for an app the user added; false for a built-in default.
+    static func isAddedApp(_ bundleId: String) -> Bool {
+        !AppAllowlist.defaults.contains { $0.bundleId == bundleId }
+    }
+
     static func accessibilityText(_ status: WorkTrackingStatus?) -> String {
         switch status?.accessibility ?? .unknown {
         case .granted: "Granted"
@@ -157,12 +168,14 @@ public final class TrackedAppsSettingsPanel: ComposableSettings.SettingsPanelVie
             },
             placement: .leading
         ))
-        access.addSettingSubview(ComposableSettings.ButtonView(
+        let check = ComposableSettings.ButtonView(
             viewModel: ComposableSettings.ButtonViewModel(title: "Check Again") { [weak self] in
                 MainActor.assumeIsolated { self?.checkAgainTapped() }
             },
             placement: .leading
-        ))
+        )
+        checkButton = check
+        access.addSettingSubview(check)
         let degraded = ComposableSettings.ExplanationView(withText: WorkTrackingStatus.degradedNotice)
         degraded.isHidden = true
         degradedLine = degraded
@@ -186,6 +199,8 @@ public final class TrackedAppsSettingsPanel: ComposableSettings.SettingsPanelVie
         card.onToggle = { [weak self] rowID, _, isOn in self?.apply(toggling: rowID, on: isOn) }
         card.onAdd = { [weak self] in self?.addTapped() }
         card.onRemove = { [weak self] rowID in self?.apply(toggling: rowID, on: false) }
+        // Defaults are switched off with their toggle; only added apps are removed.
+        card.canRemoveRow = { Self.isAddedApp($0) }
         appsCard = card
         addGroup(card)
         reloadRows()
@@ -216,25 +231,44 @@ public final class TrackedAppsSettingsPanel: ComposableSettings.SettingsPanelVie
     }
 
     private func checkAgainTapped() {
-        Task { @MainActor [weak self] in
-            guard let self else { return }
-            self.show(await self.recheck())
-        }
+        Task { @MainActor [weak self] in await self?.checkAgain() }
+    }
+
+    /// An explicit recheck satisfies the pending "Grant…" one, so the next
+    /// appear does not repeat it.
+    private func checkAgain() async {
+        grantPressed = false
+        rechecksInFlight += 1
+        renderChecking()
+        refreshGeneration += 1
+        let generation = refreshGeneration
+        let result = await recheck()
+        rechecksInFlight -= 1
+        if generation == refreshGeneration { lastStatus = result }
+        renderChecking()
+        if generation == refreshGeneration { show(result) }
     }
 
     /// The `viewWillAppear` path: a recheck only if "Grant…" was pressed since
     /// the last one; otherwise a plain status read.
     private func refresh() async {
-        if grantPressed {
-            grantPressed = false
-            show(await recheck())
-        } else {
-            show(await status())
-        }
+        let wantsRecheck = grantPressed
+        grantPressed = false
+        refreshGeneration += 1
+        let generation = refreshGeneration
+        let result = wantsRecheck ? await recheck() : await status()
+        guard generation == refreshGeneration else { return }
+        lastStatus = result
+        show(result)
+    }
+
+    private func renderChecking() {
+        checkButton?.button.isEnabled = rechecksInFlight == 0
+        accessibilityLine?.text = rechecksInFlight > 0 ? "Checking…" : Self.accessibilityText(lastStatus)
     }
 
     private func show(_ status: WorkTrackingStatus?) {
-        accessibilityLine?.text = Self.accessibilityText(status)
+        if rechecksInFlight == 0 { accessibilityLine?.text = Self.accessibilityText(status) }
         degradedLine?.isHidden = !(status?.isDegraded ?? false)
         if let text = Self.failureText(status) {
             failureLine?.text = text
@@ -287,7 +321,13 @@ public final class TrackedAppsSettingsPanel: ComposableSettings.SettingsPanelVie
     // MARK: - Test seams
 
     func refreshForTesting() async { await refresh() }
+    func checkAgainForTesting() async { await checkAgain() }
     func grantPressedForTesting() { grantTapped() }
     var accessibilityLineTextForTesting: String { accessibilityLine?.text ?? "" }
+    var degradedLineHiddenForTesting: Bool { degradedLine?.isHidden ?? true }
+    var failureLineHiddenForTesting: Bool { failureLine?.isHidden ?? true }
+    var failureLineTextForTesting: String { failureLine?.text ?? "" }
+    var checkAgainEnabledForTesting: Bool { checkButton?.button.isEnabled ?? false }
+    var appsCardForTesting: ComposableSettings.EditableTableCard? { appsCard }
 }
 #endif
