@@ -41,15 +41,18 @@ private struct OtherPreparation: PreparationJob {
     var arrived = 0
     var timedOut = false
     private var waiters: [CheckedContinuation<Void, Never>] = []
+    private var timeout: Task<Void, Never>?
     init(expected: Int) { self.expected = expected }
 
     func arriveAndWait() async {
         arrived += 1
+        // After a timeout nobody waits again, so a serial run fails, not hangs.
+        if timedOut { return }
         if arrived == expected { release(); return }
         if arrived == 1 {
-            Task { [weak self] in
+            timeout = Task { [weak self] in
                 try? await Task.sleep(for: .seconds(10))
-                guard let self, !self.waiters.isEmpty else { return }
+                guard !Task.isCancelled, let self, !self.waiters.isEmpty else { return }
                 self.timedOut = true
                 self.release()
             }
@@ -58,6 +61,7 @@ private struct OtherPreparation: PreparationJob {
     }
 
     private func release() {
+        timeout?.cancel()
         let pending = waiters
         waiters = []
         pending.forEach { $0.resume() }
@@ -95,11 +99,15 @@ private struct GatedPreparation: PreparationJob {
 @MainActor private final class PendingPresenter: LaunchPresenter {
     var events: [String] = []
     var pending: CheckedContinuation<Bool, Never>?
+    private var calls = 0
     func begin(needsAdministrator: Bool) { events.append("begin") }
     func willRun(_ job: any StartupJob) { events.append("run:\(job.id)") }
     func finish() { events.append("finish") }
     func reportFailures(_ failures: [StartupFailure]) async -> Bool {
-        await withCheckedContinuation { pending = $0 }
+        calls += 1
+        // Only the first call parks; a regressed retry then fails the test, not hangs it.
+        guard calls == 1 else { return false }
+        return await withCheckedContinuation { pending = $0 }
     }
 }
 
@@ -220,14 +228,15 @@ private struct Talker: StartupJob {
         #expect(quiet.events.isEmpty)
     }
 
-    @Test func cancellationDuringFailureReportStopsRetry() async {
+    @Test func cancellationDuringFailureReportStopsRetry() async throws {
         let log = LMLog()
         let presenter = PendingPresenter()
         let task = Task { @MainActor in
             await LaunchManager.runJobs([LMJob(id: "bad", fails: true, log: log)],
                                         privileged: LMRunner(), presenter: presenter, progress: { _ in })
         }
-        while presenter.pending == nil { await Task.yield() }
+        for _ in 0..<10_000 where presenter.pending == nil { await Task.yield() }
+        try #require(presenter.pending != nil)
         task.cancel()
         presenter.pending?.resume(returning: true)
         let outcome = await task.value
