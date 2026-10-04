@@ -16,6 +16,8 @@ import Foundation
 /// non-empty one is renamed aside (reported as `.migratedReplacingPlaceholder`),
 /// and the legacy directory takes its place.
 ///
+/// A filesystem without `RENAME_EXCL` support throws `ENOTSUP` and nothing is moved.
+///
 /// Callers must run `migrate` before anything opens files in `current`: the
 /// placeholder check lists the directory and then moves it, so a writer that
 /// creates a marker in between would be moved aside with the placeholder.
@@ -24,6 +26,12 @@ public enum LegacyDirectoryMigration {
         case nothingToMigrate, migrated, alreadyMigrated, bothExist
         /// A non-empty placeholder was renamed to `asideAt`; nothing was deleted.
         case migratedReplacingPlaceholder(asideAt: URL)
+    }
+
+    public enum MigrationError: Error, Sendable {
+        /// The move failed and the placeholder could not be put back: its contents
+        /// are at `asideAt`.
+        case rollbackFailed(original: any Error, asideAt: URL)
     }
 
     private static let maxAsideAttempts = 100
@@ -63,10 +71,14 @@ public enum LegacyDirectoryMigration {
                 try fileManager.createDirectory(
                     at: current.deletingLastPathComponent(), withIntermediateDirectories: true)
                 try renameExclusive(legacy, to: current)
-            } catch {
+            } catch let originalError {
                 // Put the placeholder back where it was (best effort), then rethrow.
-                if let asideAt { try? renameExclusive(asideAt, to: current) }
-                throw error
+                if let asideAt {
+                    do { try renameExclusive(asideAt, to: current) } catch {
+                        throw MigrationError.rollbackFailed(original: originalError, asideAt: asideAt)
+                    }
+                }
+                throw originalError
             }
             return asideAt.map { .migratedReplacingPlaceholder(asideAt: $0) } ?? .migrated
         }

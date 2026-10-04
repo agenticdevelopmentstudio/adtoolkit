@@ -191,6 +191,31 @@ import Testing
             return
         }
         #expect(try Data(contentsOf: aside.appendingPathComponent("cache.tmp")) == Data("junk".utf8))
-        #expect(aside.lastPathComponent.contains("-1") || aside.lastPathComponent.hasSuffix("-1"))
+        #expect(aside.lastPathComponent.hasSuffix("-1"))
+    }
+
+    @Test func failedLegacyMoveRestoresPlaceholder() throws {
+        try #require(geteuid() != 0)
+        let root = try scratch()
+        defer { try? FileManager.default.removeItem(at: root) }
+        let legacyParent = root.appendingPathComponent("lp")
+        let legacy = legacyParent.appendingPathComponent("old"), current = root.appendingPathComponent("new")
+        try makeDirs(legacy, current)
+        try Data("db".utf8).write(to: legacy.appendingPathComponent("stenographer.db"))
+        try Data("junk".utf8).write(to: current.appendingPathComponent("cache.tmp"))
+        chmod(legacyParent.path, 0o555)
+        defer { chmod(legacyParent.path, 0o755) }
+
+        do {
+            _ = try LegacyDirectoryMigration.migrate(from: legacy, to: current, markers: ["stenographer.db"])
+            Issue.record("expected a throw")
+        } catch let error as POSIXError {
+            #expect(error.code == .EACCES)
+        }
+        #expect(try Data(contentsOf: current.appendingPathComponent("cache.tmp")) == Data("junk".utf8))
+        let asides = try FileManager.default.contentsOfDirectory(atPath: root.path)
+            .filter { $0.hasPrefix("new.preempted-") }
+        #expect(asides.isEmpty)
+        #expect(try Data(contentsOf: legacy.appendingPathComponent("stenographer.db")) == Data("db".utf8))
     }
 }
