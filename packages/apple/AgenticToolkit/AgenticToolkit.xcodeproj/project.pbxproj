@@ -136,6 +136,7 @@
 		02D95A47C52BCEA6C9553FA5 /* ToggleSerializer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E6D7F98F017FF07E7D6C690 /* ToggleSerializer.swift */; };
 		03270D9D1D7118B2F91BB934 /* EcosystemsModuleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B47643A0690AC7AD7B95641A /* EcosystemsModuleTests.swift */; };
 		0344C60D9C7EBB60BAEADBE1 /* UnassignedPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F63548A0FB8EED4E7A662BE4 /* UnassignedPanel.swift */; };
+		0355F7084A3A11AD8A8EC9B3 /* ClaudeCLIFindBinaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFBE2DC017DD3FFE87038A1D /* ClaudeCLIFindBinaryTests.swift */; };
 		036CB8BC6BCC6B6731434931 /* ContextEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E4C8B1DE216BAFBB990D042 /* ContextEventTests.swift */; };
 		039C20AEAD7CDF8B09D0D484 /* CapturePermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = 990C30C3DAFBC4CB96C4C2CB /* CapturePermission.swift */; };
 		03A98E36410093DAEEF60F6E /* AgenticToolkitCoreMacOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 61310A916E242BA60A9FE8C1 /* AgenticToolkitCoreMacOS.framework */; };
@@ -5672,6 +5673,7 @@
 		FF857DF2BB3D2BE006BBA101 /* AgenticToolkitCore.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AgenticToolkitCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FF8D6552049C0D168CF50741 /* SessionWatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionWatcher.swift; sourceTree = "<group>"; };
 		FFA22ABF33FFF87E4E4A9B4B /* Layout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Layout.swift; sourceTree = "<group>"; };
+		FFBE2DC017DD3FFE87038A1D /* ClaudeCLIFindBinaryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeCLIFindBinaryTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -8616,6 +8618,7 @@
 				78DB3997CE98A02DF7D31449 /* Time */,
 				E704045A9988FA8B0269C338 /* ArtificialAnalysisStoreTests.swift */,
 				996BC129EFE3C2D78BE1C0D2 /* CGFloatClampedTests.swift */,
+				FFBE2DC017DD3FFE87038A1D /* ClaudeCLIFindBinaryTests.swift */,
 				A2925891EDC330DE6D5D2FA1 /* DurationFormatterTests.swift */,
 				9640D313E020C0A0C615326E /* KeychainHelperTests.swift */,
 				4AB8205EC137E597D6346D60 /* LegacyDirectoryMigrationTests.swift */,
@@ -12174,6 +12177,7 @@
 				7B629BD968AB0BBAEE79ED18 /* BillingXPCClientTests.swift in Sources */,
 				A4615DB470BB4650A1631599 /* CGFloatClampedTests.swift in Sources */,
 				7D5F96ED90E05AE4171C33CA /* ChatTranscriptReducerTests.swift in Sources */,
+				0355F7084A3A11AD8A8EC9B3 /* ClaudeCLIFindBinaryTests.swift in Sources */,
 				4DFFFC47A01AF3899448B4AE /* CommandRunnerTests.swift in Sources */,
 				E9D995597BFF1D0DF37EB204 /* ContributedSettingsBuilderTests.swift in Sources */,
 				ABFBB6B75FF57B15E92DF184 /* ContributedViewsBuilderTests.swift in Sources */,

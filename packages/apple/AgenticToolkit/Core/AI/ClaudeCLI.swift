@@ -26,14 +26,49 @@ public enum ClaudeCLI {
         }
     }
 
-    /// Common install locations for the `claude` binary, in priority order.
-    public static func findBinary() -> String? {
-        let candidates = [
-            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".local/bin/claude").path,
+    /// Every place a `claude` install lands, in priority order: the native
+    /// installer, Homebrew/system prefixes, then the Node version managers
+    /// (Volta, Bun, fnm, nvm's newest node) and a custom npm prefix.
+    public static func findBinary(
+        home: URL = FileManager.default.homeDirectoryForCurrentUser,
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        isExecutable: (String) -> Bool = { FileManager.default.isExecutableFile(atPath: $0) },
+        listDirectory: (String) -> [String] = {
+            (try? FileManager.default.contentsOfDirectory(atPath: $0)) ?? []
+        }
+    ) -> String? {
+        let homePath = home.path
+        var candidates = [
+            "\(homePath)/.local/bin/claude",
             "/usr/local/bin/claude",
-            "/opt/homebrew/bin/claude"
+            "/opt/homebrew/bin/claude",
+            "\(homePath)/.claude/local/claude",
+            "\(homePath)/.volta/bin/claude",
+            "\(homePath)/.bun/bin/claude",
+            "\(homePath)/.npm-global/bin/claude"
         ]
-        return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
+        if let prefix = environment["NPM_CONFIG_PREFIX"] ?? environment["npm_config_prefix"] {
+            candidates.append("\(prefix)/bin/claude")
+        }
+        let fnmRoot = "\(homePath)/Library/Application Support/fnm/node-versions"
+        for version in sortedVersions(listDirectory(fnmRoot)) {
+            candidates.append("\(fnmRoot)/\(version)/installation/bin/claude")
+        }
+        let nvmRoot = "\(homePath)/.nvm/versions/node"
+        for version in sortedVersions(listDirectory(nvmRoot)) {
+            candidates.append("\(nvmRoot)/\(version)/bin/claude")
+        }
+        return candidates.first(where: isExecutable)
+    }
+
+    /// `v22.3.0` > `v20.0.0` > `v18.1.0`: numeric, newest first. Non-numeric
+    /// components count as 0, so stray entries (`.DS_Store`) never crash.
+    static func sortedVersions(_ names: [String]) -> [String] {
+        func key(_ name: String) -> [Int] {
+            name.trimmingCharacters(in: CharacterSet(charactersIn: "v"))
+                .split(separator: ".").map { Int($0) ?? 0 }
+        }
+        return names.sorted { key($0).lexicographicallyPrecedes(key($1)) }.reversed()
     }
 
     /// Runs `claude -p` with `prompt` on stdin and returns trimmed stdout.
