@@ -35,6 +35,10 @@ final class WorkingPathResolverTests: XCTestCase {
         let r = resolver().attribution(kind: .editor, documentPath: nil, title: "Welcome")
         XCTAssertEqual(r.path, ""); XCTAssertNil(r.repo)
     }
+    func testFileURLWithUnescapedSpaceIsKept() {
+        XCTAssertEqual(resolver().workingPath(kind: .document, documentPath: "file:///src/my app/a.swift", title: ""),
+                       "/src/my app/a.swift")
+    }
     func testLongestRootWinsOnTie() {
         let r = resolver(["/a/app", "/a/deeper/app"])
         XCTAssertEqual(r.workingPath(kind: .editor, documentPath: nil, title: "f.swift - app"), "/a/deeper/app")

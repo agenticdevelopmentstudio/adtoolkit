@@ -16,6 +16,9 @@ final class AppAllowlistTests: XCTestCase {
         XCTAssertTrue(list.isAllowed("org.example.Editor"))
         XCTAssertEqual(list.app(for: "org.example.Editor")?.resolver, .editor)
     }
+    func testSublimeMergeIsAGitClientWithNoPath() {
+        XCTAssertEqual(AppAllowlist(preferences: .default).app(for: "com.sublimemerge")?.resolver, PathResolverKind.none)
+    }
     func testDefaultBundleIdsAreUnique() {
         XCTAssertEqual(Set(AppAllowlist.defaults.map(\.bundleId)).count, AppAllowlist.defaults.count)
     }

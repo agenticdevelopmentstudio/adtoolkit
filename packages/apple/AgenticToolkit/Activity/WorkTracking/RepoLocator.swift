@@ -32,7 +32,16 @@ public struct RepoLocator: Sendable {
                 guard FileManager.default.fileExists(atPath: path, isDirectory: &isDirectory) else { return .missing }
                 return isDirectory.boolValue ? .directory : .file
             },
-            read: { try? String(contentsOfFile: $0, encoding: .utf8) })
+            read: { path in
+                // `.git`, `HEAD` and `commondir` are tiny; never slurp a hostile big file.
+                guard let handle = FileHandle(forReadingAtPath: path) else { return nil }
+                defer { try? handle.close() }
+                guard let data = try? handle.read(upToCount: readLimit) else { return nil }
+                return String(decoding: data, as: UTF8.self)
+            })
+
+        /// The most any one git metadata file is read.
+        public static let readLimit = 4096
     }
 
     private let fileSystem: FileSystem
@@ -72,6 +81,11 @@ public struct RepoLocator: Sendable {
     /// `<super>/.git/modules`. Odd, but it is what the daemon produces.
     /// `branch` comes from the worktree's own HEAD (`gitDir/HEAD`).
     private func location(gitDir: String, fallbackRoot: String) -> RepoLocation {
+        // A gitdir with no readable HEAD (a dangling worktree) is not a git dir:
+        // its parent would be bogus, so attribute to the directory holding `.git`.
+        guard fileSystem.read(gitDir + "/HEAD") != nil else {
+            return RepoLocation(root: fallbackRoot, branch: "")
+        }
         var commonDir = gitDir
         if let text = fileSystem.read(gitDir + "/commondir")?.trimmingCharacters(in: .whitespacesAndNewlines),
            !text.isEmpty {

@@ -51,6 +51,7 @@ public struct AppAllowlist: Sendable, Equatable {
         TrackedApp(bundleId: "com.mitchellh.ghostty", name: "Ghostty", resolver: .terminal),
         TrackedApp(bundleId: "dev.warp.Warp-Stable", name: "Warp", resolver: .terminal),
         TrackedApp(bundleId: "com.fournova.Tower3", name: "Tower", resolver: .none),
+        TrackedApp(bundleId: "com.sublimemerge", name: "Sublime Merge", resolver: .none),
         TrackedApp(bundleId: "com.DanPristupov.Fork", name: "Fork", resolver: .none),
         TrackedApp(bundleId: "com.github.GitHubClient", name: "GitHub Desktop", resolver: .none)
     ]

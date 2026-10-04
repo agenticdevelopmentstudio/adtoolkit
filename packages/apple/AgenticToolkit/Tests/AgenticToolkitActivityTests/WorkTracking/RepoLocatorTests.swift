@@ -81,6 +81,37 @@ final class RepoLocatorTests: XCTestCase {
         let locator = RepoLocator(fileSystem: fs(dirs: ["/r/.git"], files: ["/r/.git/HEAD": "0123abcd\n"]))
         XCTAssertEqual(locator.locate("/r/f"), RepoLocation(root: "/r", branch: ""))
     }
+    func testDanglingWorktreeRootsAtItsOwnDirectory() {
+        let locator = RepoLocator(fileSystem: fs(dirs: [], files: [
+            "/wt/b/.git": "gitdir: /super/.git/worktrees/gone\n"]))
+        XCTAssertEqual(locator.locate("/wt/b/x"), RepoLocation(root: "/wt/b", branch: ""))
+    }
+    func testEmptyGitFile() {
+        let locator = RepoLocator(fileSystem: fs(dirs: [], files: ["/wt/b/.git": ""]))
+        XCTAssertEqual(locator.locate("/wt/b"), RepoLocation(root: "/wt/b", branch: ""))
+    }
+    func testGitFileWithoutGitdirPrefix() {
+        let locator = RepoLocator(fileSystem: fs(dirs: [], files: ["/wt/b/.git": "/somewhere/else\n"]))
+        XCTAssertEqual(locator.locate("/wt/b"), RepoLocation(root: "/wt/b", branch: ""))
+    }
+    func testCRLFInGitFileCommondirAndHead() {
+        let locator = RepoLocator(fileSystem: fs(dirs: [], files: [
+            "/wt/b/.git": "gitdir: /src/app/.git/worktrees/b\r\n",
+            "/src/app/.git/worktrees/b/commondir": "../..\r\n",
+            "/src/app/.git/worktrees/b/HEAD": "ref: refs/heads/crlf\r\n"]))
+        XCTAssertEqual(locator.locate("/wt/b"), RepoLocation(root: "/src/app", branch: "crlf"))
+    }
+    func testBareSHAHeadHasEmptyBranch() {
+        let sha = "0123456789abcdef0123456789abcdef01234567"
+        let locator = RepoLocator(fileSystem: fs(dirs: ["/r/.git"], files: ["/r/.git/HEAD": sha + "\n"]))
+        XCTAssertEqual(locator.locate("/r"), RepoLocation(root: "/r", branch: ""))
+    }
+    func testLiveReadIsCapped() throws {
+        let path = NSTemporaryDirectory() + "cap-\(UUID().uuidString)"
+        try String(repeating: "a", count: 10_000).write(toFile: path, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        XCTAssertEqual(RepoLocator.FileSystem.live.read(path)?.count, RepoLocator.FileSystem.readLimit)
+    }
     func testNoRepoIsNil() {
         XCTAssertNil(RepoLocator(fileSystem: fs(dirs: [], files: [:])).locate("/tmp/x"))
     }

@@ -32,8 +32,10 @@ public struct WorkingPathResolver: Sendable {
     private static func normalizedDocumentPath(_ raw: String?) -> String? {
         guard let raw, !raw.isEmpty else { return nil }
         if raw.hasPrefix("file://") {
-            guard let path = URL(string: raw)?.path, !path.isEmpty else { return nil }
-            return path
+            if let path = URL(string: raw)?.path, !path.isEmpty { return path }
+            // Unescaped spaces make `URL(string:)` fail; take the text after `file://` as the path.
+            let plain = String(raw.dropFirst("file://".count))
+            return plain.hasPrefix("/") ? plain : nil
         }
         return raw
     }
