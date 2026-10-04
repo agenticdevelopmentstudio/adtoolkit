@@ -32,6 +32,11 @@ private final class SampleDialog: FirstRunDialog {
 }
 
 @MainActor
+private final class DoneBox {
+    var done = false
+}
+
+@MainActor
 private final class DialogBox {
     var dialog: SampleDialog?
 }
@@ -120,9 +125,16 @@ private func waitForEnter(_ session: RecordingSession) async throws {
     @Test func programmaticCloseCancelsTheWaitingCaller() async throws {
         let session = RecordingSession()
         let dialog = SampleDialog(modal: session)
-        let task = Task { await dialog.runModal() }
+        let box = DoneBox()
+        let task = Task {
+            let result = await dialog.runModal()
+            box.done = true
+            return result
+        }
         try await waitForEnter(session)
         dialog.close()
+        for _ in 0..<10_000 where !box.done { await Task.yield() }
+        try #require(box.done)
         guard case .cancelled = await task.value else { Issue.record("expected cancelled"); return }
     }
 
