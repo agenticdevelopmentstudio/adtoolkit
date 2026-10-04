@@ -73,6 +73,9 @@ public final class WorkActivityRecorder {
 
     deinit { heartbeatTimer?.invalidate() }
 
+    /// Whether the heartbeat timer is live (test seam).
+    var isHeartbeatScheduled: Bool { heartbeatTimer?.isValid ?? false }
+
     public var currentSpan: ActivitySpanDTO? { current }
 
     /// Starts each trigger; a throwing one is logged and skipped.
@@ -100,6 +103,7 @@ public final class WorkActivityRecorder {
 
     /// Closes the open span at `now()`, stops the triggers, cancels the heartbeat.
     public func stop() {
+        guard running else { return }
         heartbeatTimer?.invalidate()
         heartbeatTimer = nil
         for trigger in [triggers.focus, triggers.input, triggers.session, triggers.lifecycle] {

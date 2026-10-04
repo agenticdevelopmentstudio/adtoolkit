@@ -157,6 +157,7 @@ final class WorkActivityRecorderTests: XCTestCase {
     }
 
     func testStopClosesTheOpenSpan() {
+        recorder.start()
         focus("com.apple.dt.Xcode", path: "/r/a.swift", at: 0)
         clock.addTimeInterval(90)
         recorder.stop(); recorder.drainWrites()
@@ -216,10 +217,13 @@ final class WorkActivityRecorderTests: XCTestCase {
     }
 
     func testStopCancelsHeartbeat() {
+        XCTAssertFalse(recorder.isHeartbeatScheduled)
         recorder.start()
+        XCTAssertTrue(recorder.isHeartbeatScheduled)
         focus("com.apple.dt.Xcode", path: "/r/a.swift", at: 0)
         clock.addTimeInterval(90)
         recorder.stop(); recorder.drainWrites()
+        XCTAssertFalse(recorder.isHeartbeatScheduled)
         clock.addTimeInterval(60); recorder.heartbeat(); recorder.drainWrites()
         XCTAssertTrue(store.spans[0].lastSeenAt.isEmpty)
     }
