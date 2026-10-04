@@ -39,6 +39,19 @@ final class WorkingPathResolverTests: XCTestCase {
         XCTAssertEqual(resolver().workingPath(kind: .document, documentPath: "file:///src/my app/a.swift", title: ""),
                        "/src/my app/a.swift")
     }
+    func testPercentSequencesInSpacedFileURLDoNotCrash() {
+        // On macOS 14+ `URL(string:)` escapes spaces and stray `%` itself, so the plain-path
+        // fallback is unreachable for path-shaped input; the primary branch decodes.
+        XCTAssertEqual(resolver().workingPath(kind: .document, documentPath: "file:///src/my%20app/a.swift",
+                                              title: ""), "/src/my app/a.swift")
+        XCTAssertEqual(resolver().workingPath(kind: .document, documentPath: "file:///src/my app/100%zz/a.swift",
+                                              title: ""), "/src/my app/100%zz/a.swift")
+    }
+    func testFileURLThatCannotParseAndIsNotAPathIsUnresolved() {
+        // `URL(string:)` returns nil (bad host bracket) and the remainder is not absolute.
+        XCTAssertNil(URL(string: "file://[/a b"))
+        XCTAssertEqual(resolver().workingPath(kind: .document, documentPath: "file://[/a b", title: ""), "")
+    }
     func testLongestRootWinsOnTie() {
         let r = resolver(["/a/app", "/a/deeper/app"])
         XCTAssertEqual(r.workingPath(kind: .editor, documentPath: nil, title: "f.swift - app"), "/a/deeper/app")

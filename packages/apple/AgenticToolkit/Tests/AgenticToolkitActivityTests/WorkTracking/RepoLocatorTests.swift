@@ -106,6 +106,19 @@ final class RepoLocatorTests: XCTestCase {
         let locator = RepoLocator(fileSystem: fs(dirs: ["/r/.git"], files: ["/r/.git/HEAD": sha + "\n"]))
         XCTAssertEqual(locator.locate("/r"), RepoLocation(root: "/r", branch: ""))
     }
+    func testEmptyHeadWithCommondirRootsAtCommonRepo() {
+        let locator = RepoLocator(fileSystem: fs(dirs: [], files: [
+            "/wt/b/.git": "gitdir: /src/app/.git/worktrees/b\n",
+            "/src/app/.git/worktrees/b/commondir": "../..\n",
+            "/src/app/.git/worktrees/b/HEAD": ""]))
+        XCTAssertEqual(locator.locate("/wt/b"), RepoLocation(root: "/src/app", branch: ""))
+    }
+    func testLiveReadOfEmptyFileIsEmptyNotNil() throws {
+        let path = NSTemporaryDirectory() + "empty-\(UUID().uuidString)"
+        try "".write(toFile: path, atomically: true, encoding: .utf8)
+        defer { try? FileManager.default.removeItem(atPath: path) }
+        XCTAssertEqual(RepoLocator.FileSystem.live.read(path), "")
+    }
     func testLiveReadIsCapped() throws {
         let path = NSTemporaryDirectory() + "cap-\(UUID().uuidString)"
         try String(repeating: "a", count: 10_000).write(toFile: path, atomically: true, encoding: .utf8)

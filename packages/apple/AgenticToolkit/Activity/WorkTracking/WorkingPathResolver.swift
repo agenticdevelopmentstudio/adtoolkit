@@ -34,7 +34,8 @@ public struct WorkingPathResolver: Sendable {
         if raw.hasPrefix("file://") {
             if let path = URL(string: raw)?.path, !path.isEmpty { return path }
             // Unescaped spaces make `URL(string:)` fail; take the text after `file://` as the path.
-            let plain = String(raw.dropFirst("file://".count))
+            let undecoded = String(raw.dropFirst("file://".count))
+            let plain = undecoded.removingPercentEncoding ?? undecoded
             return plain.hasPrefix("/") ? plain : nil
         }
         return raw

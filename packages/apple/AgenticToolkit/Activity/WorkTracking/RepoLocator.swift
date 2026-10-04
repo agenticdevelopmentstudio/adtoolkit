@@ -36,8 +36,13 @@ public struct RepoLocator: Sendable {
                 // `.git`, `HEAD` and `commondir` are tiny; never slurp a hostile big file.
                 guard let handle = FileHandle(forReadingAtPath: path) else { return nil }
                 defer { try? handle.close() }
-                guard let data = try? handle.read(upToCount: readLimit) else { return nil }
-                return String(decoding: data, as: UTF8.self)
+                // `read(upToCount:)` yields nil at EOF, which for an empty file is a successful empty read.
+                do {
+                    let data = try handle.read(upToCount: readLimit)
+                    return String(decoding: data ?? Data(), as: UTF8.self)
+                } catch {
+                    return nil
+                }
             })
 
         /// The most any one git metadata file is read.
