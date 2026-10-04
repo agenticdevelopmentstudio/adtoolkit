@@ -38,6 +38,7 @@ import {
 import { cn } from "../lib/utils"
 import {
   TopicRail,
+  topicLinkOf,
   FULL_RAIL,
   COLLAPSED_RAIL,
   rootFontPx,
@@ -1457,6 +1458,9 @@ function railOnSelect(
   exit: (proceed: () => void) => void = (proceed) => proceed(),
 ) {
   return (id: string) => {
+    // A link row is never this level's selection: it runs, guarded as a select here would be.
+    const link = topicLinkOf(level.items, id)
+    if (link) return level.selectedId != null ? attemptExit(link) : link()
     const plan = planRailSelect(level.selectedId ?? null, id)
     const navigate = () => (plan.action === "clear" ? level.onClear() : level.onSelect(id))
     const run = () => (plan.collapse ? exit(navigate) : navigate())

@@ -16,7 +16,7 @@ import {
   type ReactNode,
 } from "react"
 
-import { ChevronRight, Circle, Loader2, Plus, Search, Trash2, X } from "lucide-react"
+import { ChevronRight, Circle, Link as LinkIcon, Loader2, Plus, Search, Trash2, X } from "lucide-react"
 
 import { AlertModal } from "../components/alert-modal"
 import { Checkbox } from "../components/checkbox"
@@ -74,6 +74,14 @@ export interface TopicDetailItem {
    *  (hold-the-detail-until-the-final-choice) key off it at click time. `"detail"` is the
    *  fail-safe — an undeclared row swaps the pane immediately, it can never hold it hostage. */
   leadsTo?: "list" | "detail"
+  /** Makes this row a LINK to something that lives elsewhere: another list, another pane, another
+   *  page. Choosing it runs this and NEVER selects the row — the level's `onSelect` is not called
+   *  for it, so the row is not an entry of its own list and cannot become its `selectedId`. The
+   *  row is marked as chosen for {@link LINK_FLASH_MS} while its target opens, so the click is
+   *  seen to land, and then lets go. It gets a link glyph in place of the neutral ring when no
+   *  `icon` is given, and no disclosure chevron: it opens nothing under itself. In the stacks
+   *  the call is exit-guarded exactly as a select of the same row would be. */
+  onLink?: () => void
   /** Render a separator row after this item (hub: before Settings). */
   dividerAfter?: boolean
   /** With {@link dividerAfter}: a caption under the separator naming the section it opens
@@ -237,6 +245,18 @@ function horizontalClipOf(el: HTMLElement): HTMLElement | null {
 // one. `||` (not `??`) also fills in for a `false` node from `cond && <Icon/>`.
 const FALLBACK_ICON = <Circle size={16} aria-hidden />
 
+// The glyph of a link row ({@link TopicDetailItem.onLink}) that names no icon of its own.
+const LINK_ICON = <LinkIcon size={16} className="text-apt-blue" aria-label="link" />
+
+/** How long a link row stays marked as chosen after it is clicked. */
+export const LINK_FLASH_MS = 1000
+
+/** The link a row id names in `items`, or undefined where that row is an ordinary one. What every
+ *  owner of a list's `onSelect` asks before treating the id as a selection. */
+export function topicLinkOf(items: TopicDetailItem[], id: string): (() => void) | undefined {
+  return items.find((it) => it.id === id)?.onLink
+}
+
 // The clamp for each supported preview height. A lookup and not `line-clamp-${n}`: Tailwind reads
 // the source text, so a class it never sees written out is a class it never generates.
 const PREVIEW_CLAMP: Record<number, string> = {
@@ -389,6 +409,24 @@ function TopicList({
     [onPrefetch],
   )
   useEffect(() => disarmPrefetch, [disarmPrefetch])
+  // A link row just chosen: marked for a moment in place of the list's selection, as its target
+  // opens. The list's own selection is never the link, so without this the click shows nothing.
+  const [flashId, setFlashId] = useState<string | null>(null)
+  const flashRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const flash = useCallback((id: string) => {
+    if (flashRef.current) clearTimeout(flashRef.current)
+    setFlashId(id)
+    flashRef.current = setTimeout(() => {
+      flashRef.current = null
+      setFlashId(null)
+    }, LINK_FLASH_MS)
+  }, [])
+  useEffect(
+    () => () => {
+      if (flashRef.current) clearTimeout(flashRef.current)
+    },
+    [],
+  )
   // Retain the last target through the dialog's close animation so its title doesn't blank out.
   const lastDeleteRef = useRef<TopicDetailItem | null>(null)
   if (pendingDelete) lastDeleteRef.current = pendingDelete
@@ -416,7 +454,7 @@ function TopicList({
     // Never in the icon-only strips: there the icon IS the row.
     const hideIcon = hideItemIcons && !iconOnly
     // Every row is guaranteed a leading icon so the icon-only strip never shows a blank slot.
-    const icon = item.icon || FALLBACK_ICON
+    const icon = item.icon || (item.onLink ? LINK_ICON : FALLBACK_ICON)
     // A deletable expanded row reserves extra right padding so the label never runs under the
     // hover-revealed trash button (and the rail width accounts for it).
     const deletable = !!item.onDelete && !hideLabel
@@ -446,6 +484,8 @@ function TopicList({
           // shows the chosen item's detail (onSelect's job). Uncovered lists keep the package's toggle
           // (re-click a selected row to deselect).
           if (covered && active) return
+          // A link is reported like any row; whoever owns `onSelect` runs the link, not a select.
+          if (item.onLink) flash(item.id)
           onSelect(item.id)
         }}
         // Never ARM on the row that is already open: a prefetch is a guess about where the user is
@@ -603,7 +643,7 @@ function TopicList({
           // right edge, so the line never draws over a count or badge (see `rowExitEl`).
           <span data-htd-trailing className="ml-auto flex shrink-0 items-center gap-1 pl-1.5">
             {item.trailing}
-            {rowDisclosure && !item.disabled && (
+            {rowDisclosure && !item.disabled && !item.onLink && (
               <ChevronRight size={14} aria-hidden className="shrink-0 text-apt-text-dim" />
             )}
           </span>
@@ -644,7 +684,7 @@ function TopicList({
           </li>
         )}
         {items.map((item) => {
-          const active = item.id === selectedId
+          const active = item.id === (flashId ?? selectedId)
           const button = itemButton(item, active)
           const deletable = !!item.onDelete && !iconOnly
           const checkboxed = checkable && !iconOnly
@@ -1564,7 +1604,7 @@ export function TopicDetail({
       <TopicRail
         items={items}
         selectedId={selectedId}
-        onSelect={onSelect}
+        onSelect={(id) => (topicLinkOf(items, id) ?? (() => onSelect(id)))()}
         emptyLabel={emptyLabel}
         railSlot={railSlot}
         railSlotActive={railSlotActive}

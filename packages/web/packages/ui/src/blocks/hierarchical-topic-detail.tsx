@@ -34,6 +34,7 @@ import {
   FULL_RAIL,
   COLLAPSED_RAIL,
   rootFontPx,
+  topicLinkOf,
   type TopicDetailItem,
   type RailSlot,
   type TopicListSearch,
@@ -1322,12 +1323,16 @@ function railOnSelect(
   attemptExit: (action: () => void) => void,
   child?: TopicLevel,
 ) {
-  return (id: string) =>
-    id === level.selectedId
+  return (id: string) => {
+    // A link row is never this level's selection: it runs, guarded as a select here would be.
+    const link = topicLinkOf(level.items, id)
+    if (link) return level.selectedId != null ? attemptExit(link) : link()
+    return id === level.selectedId
       ? attemptExit(() => (child?.selectedId != null ? child.onClear() : level.onClear()))
       : level.selectedId != null
         ? attemptExit(() => level.onSelect(id))
         : level.onSelect(id)
+  }
 }
 
 interface StackProps {
