@@ -47,8 +47,8 @@ public enum ClaudeCLI {
             "\(homePath)/.bun/bin/claude",
             "\(homePath)/.npm-global/bin/claude"
         ]
-        if let prefix = environment["NPM_CONFIG_PREFIX"] ?? environment["npm_config_prefix"] {
-            candidates.append("\(prefix)/bin/claude")
+        if let prefix = environment["NPM_CONFIG_PREFIX"] ?? environment["npm_config_prefix"], !prefix.isEmpty {
+            candidates.append(URL(fileURLWithPath: prefix).appendingPathComponent("bin/claude").path)
         }
         let fnmRoot = "\(homePath)/Library/Application Support/fnm/node-versions"
         for version in sortedVersions(listDirectory(fnmRoot)) {

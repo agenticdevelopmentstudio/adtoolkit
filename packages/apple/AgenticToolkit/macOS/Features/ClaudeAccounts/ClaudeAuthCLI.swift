@@ -52,20 +52,10 @@ public enum ClaudeAuthCLI {
 
     // MARK: - Binaries
 
-    public static func claudeBinary() -> String? { findBinary(named: "claude") }
-
-    /// The same three install locations `ClaudeCLI.findBinary()` searches, in
-    /// the same order — an app launched from Finder inherits no login shell, so
-    /// `PATH` is not an answer here.
-    private static func findBinary(named name: String) -> String? {
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let candidates = [
-            "\(home)/.local/bin/\(name)",
-            "/usr/local/bin/\(name)",
-            "/opt/homebrew/bin/\(name)"
-        ]
-        return candidates.first { FileManager.default.isExecutableFile(atPath: $0) }
-    }
+    /// Delegates to `ClaudeCLI.findBinary()`, which searches the native, Homebrew
+    /// and Node version-manager install locations. `PATH` is deliberately not
+    /// consulted: an app launched from Finder inherits no login shell.
+    public static func claudeBinary() -> String? { ClaudeCLI.findBinary() }
 
     // MARK: - The CLI
 
