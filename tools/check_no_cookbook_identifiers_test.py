@@ -29,14 +29,16 @@ ALLOWED_LEGACY_LINE = re.compile(
     r"""^(export const|var|export declare const) LEGACY_THEME_ID = ['"]agenticcookbookweb['"];?$"""
 )
 THIS_FILE = "tools/check_no_cookbook_identifiers_test.py"
+# Only the adh package's tracked dist source maps embed the allowed legacy line.
+SOURCE_MAP_DIR = "packages/web/packages/adh/dist/"
 
 
 def is_excluded(relative: str) -> bool:
     parts = relative.split("/")
     if "archive" in parts[:-1] or relative.startswith("docs/sessions/"):
         return True
-    if relative.endswith(".map"):
-        return True  # source maps embed source text, including the allowed legacy line
+    if relative.startswith(SOURCE_MAP_DIR) and relative.endswith(".map"):
+        return True  # adh dist source maps embed source text, including the allowed legacy line
     if relative == THIS_FILE:
         return True
     return relative.startswith(ALLOWED_FILE_PREFIXES)
@@ -69,3 +71,10 @@ def offending_lines() -> list[str]:
 def test_no_cookbook_identifiers() -> None:
     hits = offending_lines()
     assert not hits, f"{len(hits)} hits\n" + "\n".join(hits[:50])
+
+
+def test_map_exclusion_is_limited_to_adh_dist() -> None:
+    assert is_excluded("packages/web/packages/adh/dist/themes/adh-themes.js.map")
+    assert not is_excluded("packages/web/packages/other/dist/x.js.map")
+    assert not is_excluded("docs/stray.map")
+    assert not is_excluded("x.map")
