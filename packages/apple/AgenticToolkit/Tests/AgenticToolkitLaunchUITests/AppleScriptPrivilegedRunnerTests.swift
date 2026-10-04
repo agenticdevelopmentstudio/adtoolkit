@@ -29,6 +29,29 @@ import Testing
         #expect(script == #"do shell script "'/bin/echo' '$(rm -rf /)' '`id`'" with administrator privileges"#)
     }
 
+    @Test func quoteWithCombiningMarkIsStillEscaped() {
+        let script = AppleScriptPrivilegedRunner.script(for: ["a'\u{301}b"])
+        #expect(script == "do shell script \"'a'\\\\''\u{301}b'\" with administrator privileges")
+    }
+
+    @Test func doubleQuoteWithCombiningMarkIsStillEscaped() {
+        let script = AppleScriptPrivilegedRunner.script(for: ["a\"\u{301}b"])
+        #expect(script == "do shell script \"'a\\\"\u{301}b'\" with administrator privileges")
+    }
+
+    @Test func backslashWithCombiningMarkIsStillEscaped() {
+        let script = AppleScriptPrivilegedRunner.script(for: ["a\\\u{301}b"])
+        #expect(script == "do shell script \"'a\\\\\u{301}b'\" with administrator privileges")
+    }
+
+    @Test @MainActor func nulArgumentThrowsBeforeAnyPrompt() async {
+        let failure = AppleScriptPrivilegedRunner.Failure.failed(
+            code: -1, message: "A command argument contains a NUL character.")
+        await #expect(throws: failure) {
+            try await AppleScriptPrivilegedRunner().run(["/bin/echo", "a\u{0}b"])
+        }
+    }
+
     @Test @MainActor func emptyArgvThrowsBeforeAnyPrompt() async {
         await #expect(throws: AppleScriptPrivilegedRunner.Failure.failed(code: -1, message: "No command given.")) {
             try await AppleScriptPrivilegedRunner().run([])
