@@ -1,10 +1,14 @@
 import Testing
 @testable import AgenticToolkitLaunch
 
-@MainActor final class Log { var entries: [String] = [] }
-struct Boom: Error {}
+private struct QueueNoopRunner: PrivilegedRunner {
+    @MainActor func run(_ argv: [String]) async throws {}
+}
 
-struct RecordingJob: StartupJob {
+@MainActor private final class Log { var entries: [String] = [] }
+private struct Boom: Error {}
+
+private struct RecordingJob: StartupJob {
     let id: String
     var order: StartupJobOrder = .normal
     var needsAdministrator = false
@@ -18,7 +22,7 @@ struct RecordingJob: StartupJob {
 }
 
 @MainActor @Suite struct StartupQueueTests {
-    let context = StartupJobContext(privileged: NoopRunner(), progress: { _ in })
+    let context = StartupJobContext(privileged: QueueNoopRunner(), progress: { _ in })
 
     @Test func runsFifoWithLastAtEnd() async {
         let log = Log()
@@ -43,18 +47,30 @@ struct RecordingJob: StartupJob {
     @Test func failuresCollectedAndRetryRunsOnlyFailed() async {
         let log = Log()
         let queue = StartupQueue(jobs: [
-            RecordingJob(id: "a", log: log),
-            RecordingJob(id: "b", fails: true, log: log),
-            RecordingJob(id: "c", log: log)
+            RecordingJob(id: "a", fails: true, log: log),
+            RecordingJob(id: "b", log: log),
+            RecordingJob(id: "c", fails: true, log: log)
         ])
         let failures = await queue.run(context: context) { _ in }
-        #expect(failures.map(\.job.id) == ["b"])
+        #expect(failures.map(\.job.id) == ["a", "c"], "failures come back in run order")
         #expect(log.entries == ["a", "b", "c"], "a failure does not stop the queue")
 
         log.entries = []
         let retry = StartupQueue(jobs: failures.map(\.job))
         _ = await retry.run(context: context) { _ in }
-        #expect(log.entries == ["b"])
+        #expect(log.entries == ["a", "c"])
+    }
+
+    @Test func lastJobsKeepRelativeOrder() async {
+        let log = Log()
+        let queue = StartupQueue(jobs: [
+            RecordingJob(id: "last1", order: .last, log: log),
+            RecordingJob(id: "a", log: log),
+            RecordingJob(id: "last2", order: .last, log: log),
+            RecordingJob(id: "b", log: log)
+        ])
+        _ = await queue.run(context: context) { _ in }
+        #expect(log.entries == ["a", "b", "last1", "last2"])
     }
 
     @Test func reportsAdministratorNeed() {

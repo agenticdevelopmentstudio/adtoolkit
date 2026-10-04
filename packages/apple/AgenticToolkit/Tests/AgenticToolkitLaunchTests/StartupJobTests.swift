@@ -1,17 +1,17 @@
 import Testing
 @testable import AgenticToolkitLaunch
 
-struct NoopRunner: PrivilegedRunner {
+private struct NoopRunner: PrivilegedRunner {
     @MainActor func run(_ argv: [String]) async throws {}
 }
 
-struct PlainJob: StartupJob {
+private struct PlainJob: StartupJob {
     let id = "plain"
     let title = "Plain"
     @MainActor func run(context: StartupJobContext) async throws {}
 }
 
-struct LateAdminJob: StartupJob {
+private struct LateAdminJob: StartupJob {
     let id = "late-admin"
     let title = "Late admin"
     let needsAdministrator = true
@@ -20,12 +20,12 @@ struct LateAdminJob: StartupJob {
 }
 
 /// Main-actor isolated, so it is Sendable without an unchecked escape hatch.
-@MainActor final class Sink {
+@MainActor private final class Sink {
     var details: [String] = []
     var ranPrivileged = false
 }
 
-struct ReportingJob: StartupJob {
+private struct ReportingJob: StartupJob {
     let id = "reporting"
     let title = "Reporting"
     let sink: Sink
