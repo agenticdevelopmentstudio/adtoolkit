@@ -1,4 +1,5 @@
 import AppKit
+import AgenticToolkitCoreMacOS
 import AgenticToolkitLaunch
 
 /// How the panel's modal session is entered and left. Injected so tests can
@@ -34,22 +35,36 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
 
     private let appName: String
     private let modal: any ModalSession
-    private var finished = false
+    private let runAlert: @MainActor (NSAlert) async -> NSApplication.ModalResponse
+    /// Bumped by every begin() and finish(); a queued run-loop block carries the
+    /// value it was scheduled under and does nothing if it no longer matches.
+    private var generation = 0
     private var inModal = false
     private let detail = NSTextField(labelWithString: "")
     private let notice = NSTextField(wrappingLabelWithString: "")
     private let spinner = NSProgressIndicator()
 
-    public init(appName: String, modal: any ModalSession = ApplicationModalSession()) {
+    public init(appName: String,
+                modal: any ModalSession = ApplicationModalSession(),
+                runAlert: @escaping @MainActor (NSAlert) async -> NSApplication.ModalResponse = {
+                    await runAlertFromRunLoop($0)
+                }) {
         self.appName = appName
         self.modal = modal
+        self.runAlert = runAlert
     }
 
     public func begin(needsAdministrator: Bool) {
-        finished = false
+        // A second begin() replaces the first completely: leave its modal and
+        // order its panel out, so sessions never nest and no panel is orphaned.
+        finish()
+        let token = generation
         let panel = UndismissablePanel(
             contentRect: NSRect(x: 0, y: 0, width: 380, height: 120),
             styleMask: [.titled], backing: .buffered, defer: false)
+        // The password prompt takes focus; the panel is the app's only surface
+        // and must stay up while the app is inactive.
+        panel.hidesOnDeactivate = false
         panel.title = "Setting up \(appName)"
         noticeText = needsAdministrator
             ? "\(appName) is getting ready. You may be asked for your password."
@@ -65,6 +80,7 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
         panel.center()
         self.panel = panel
         isPresented = true
+        NSApp.activateUnlessQuiet()
         panel.makeKeyAndOrderFront(nil)
         // Entered from a run-loop block — not a main-queue block or a main-actor
         // Task — so the main queue stays drainable under the modal session and
@@ -72,9 +88,13 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
         // PermissionWalkthrough.presentFromRunLoop.
         RunLoop.main.perform(inModes: [.common]) {
             MainActor.assumeIsolated {
-                guard !self.finished, let window = self.panel else { return }
+                guard self.generation == token, let window = self.panel else { return }
                 self.inModal = true
                 self.modal.enter(window)
+                // enter() blocks until the session ends; if it ended some way
+                // other than finish(), a later finish() must not abort whatever
+                // modal is topmost by then.
+                if self.generation == token { self.inModal = false }
             }
         }
     }
@@ -87,7 +107,7 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
     }
 
     public func finish() {
-        finished = true
+        generation += 1
         if inModal {
             inModal = false
             modal.leave()
@@ -98,19 +118,26 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
     }
 
     public func reportFailures(_ failures: [StartupFailure]) async -> Bool {
-        let alert = NSAlert()
-        alert.alertStyle = .warning
-        alert.messageText = "\(appName) couldn’t finish setting up"
-        alert.informativeText = failures
-            .map { "• \($0.job.title): \($0.error.localizedDescription)" }
-            .joined(separator: "\n")
-        alert.addButton(withTitle: "Retry Failed")
-        alert.addButton(withTitle: "Continue")
+        let alert = makeFailureAlert(appName: appName, failures)
         guard let panel else {
-            return await runAlertFromRunLoop(alert) == .alertFirstButtonReturn
+            return await runAlert(alert) == .alertFirstButtonReturn
         }
         return await withCheckedContinuation { cont in
             alert.beginSheetModal(for: panel) { cont.resume(returning: $0 == .alertFirstButtonReturn) }
         }
     }
+}
+
+/// The retry-or-continue alert. The first button retries the failed jobs.
+@MainActor
+func makeFailureAlert(appName: String, _ failures: [StartupFailure]) -> NSAlert {
+    let alert = NSAlert()
+    alert.alertStyle = .warning
+    alert.messageText = "\(appName) couldn’t finish setting up"
+    alert.informativeText = failures
+        .map { "• \($0.job.title): \($0.error.localizedDescription)" }
+        .joined(separator: "\n")
+    alert.addButton(withTitle: "Retry Failed")
+    alert.addButton(withTitle: "Continue")
+    return alert
 }

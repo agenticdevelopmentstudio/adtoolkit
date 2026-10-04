@@ -1,4 +1,5 @@
 import AppKit
+import AgenticToolkitCoreMacOS
 
 /// Runs `alert` modally from a run-loop block and returns the response.
 ///
@@ -10,7 +11,12 @@ import AppKit
 @MainActor
 public func runAlertFromRunLoop(
     _ alert: NSAlert,
-    run: @escaping @MainActor (NSAlert) -> NSApplication.ModalResponse = { $0.runModal() }
+    run: @escaping @MainActor (NSAlert) -> NSApplication.ModalResponse = {
+        // A menubar app has no active window at launch; without this the modal
+        // can start behind the frontmost app.
+        NSApp.activateUnlessQuiet()
+        return $0.runModal()
+    }
 ) async -> NSApplication.ModalResponse {
     await withCheckedContinuation { continuation in
         RunLoop.main.perform(inModes: [.common]) {
