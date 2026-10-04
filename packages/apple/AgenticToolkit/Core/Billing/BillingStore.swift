@@ -377,8 +377,12 @@ public enum BillingStore {
             sessionId: span.sessionId, runs: runs, context: context, historyStartsAt: nil
         )
         // Stamped with `endedAt` as read at selection: an open span stamps ""
-        // and is re-selected every pass until it closes.
-        try database.markAppSpanBillingDerived(spanId: span.id, at: span.endedAt)
+        // and is re-selected every pass until it closes. So does a closed span
+        // that an idle interval still open overlaps: that idle was measured up
+        // to `now`, and once it grows past the cutoff the time it covers must
+        // come back out — which only happens if the span is derived again.
+        let idleStillOpen = idle.contains { $0.idleUntil.isEmpty }
+        try database.markAppSpanBillingDerived(spanId: span.id, at: idleStillOpen ? "" : span.endedAt)
         return written
     }
 
