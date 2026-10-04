@@ -235,21 +235,28 @@ public enum BillingRollup {
             let previouslyAttached = try target.map {
                 try database.billingSegmentsForEntry(id: $0.entry.id).filter { !freshIds.contains($0.id) }
             } ?? []
+            let segments = previouslyAttached + fresh
+            let covered = try coverage(projectId: slot.projectId, day: slot.day, groupKey: slot.groupKey,
+                                       supplements: supplements, database: database)
             let entry = try compose(
                 slot: slot,
-                segments: previouslyAttached + fresh,
+                segments: segments,
+                covered: covered,
                 previous: target,
                 supplements: supplements,
                 project: project,
                 options: options,
                 database: database
             )
+            let isApp = isAppGroupKey(slot.groupKey)
 
             // An app entry left with no time of its own — every second of it
-            // already billed by a Claude entry beside it — is not written: its
-            // segments stay unattached, so they bill if that run ever moves.
-            if isAppGroupKey(slot.groupKey), entry.rawSeconds == 0 {
-                if let target { _ = try releasesZeroAppEntry(target.entry, database: database) }
+            // already billed by a Claude entry beside it — is not written. Its
+            // segments stay unattached and are settled, so later rolls skip
+            // them until that run moves (`releaseSettledBillingSegments`).
+            if isApp, entry.rawSeconds == 0,
+               try target.map({ try releasesZeroAppEntry($0.entry, database: database) }) ?? true {
+                try database.settleBillingSegments(ids: segments.map(\.id))
                 return
             }
 
@@ -258,6 +265,11 @@ public enum BillingRollup {
             // longer the rollup's is never overwritten.
             guard try database.upsertBillingEntry(entry, overwrite: .rollupOwned) else { return }
             try database.attachSegments(ids: fresh.map(\.id), toEntry: entry.id)
+            if isApp {
+                try database.setBillingSegmentBilledRanges(billedRanges(of: segments, excluding: covered))
+            } else {
+                try releaseAppTimeBeside(old: target?.entry, new: entry, database: database)
+            }
             wrote = entry.id
         }
         return wrote
@@ -287,6 +299,7 @@ public enum BillingRollup {
     private static func compose(
         slot: Slot,
         segments: [BillingSegmentDTO],
+        covered: [BillingSegmentDTO],
         previous: StoredBillingEntry?,
         supplements: String?,
         project: BillingProjectDTO?,
@@ -299,8 +312,6 @@ public enum BillingRollup {
         let rate = old?.rateCents ?? slot.rateCents
         let currency = try old?.currency ?? currencyCode(for: project, options: options, database: database)
         let clientId = old.map(\.clientId) ?? project?.clientId
-        let covered = try coverage(projectId: slot.projectId, day: slot.day, groupKey: slot.groupKey,
-                                   supplements: supplements, database: database)
         let computed = figures(
             of: segments, covered: covered, roundingMinutes: roundingMinutes,
             roundingMode: roundingMode, rateCents: rate
@@ -343,9 +354,12 @@ public enum BillingRollup {
     ///   Claude run is billed once, as the union;
     /// - the other way round, a Claude entry bills only what the day's
     ///   *frozen* app entries (billed, paid or hand edited) do not: those never
-    ///   shrink, so the overlap is already billed there. An unbilled app entry
-    ///   is the one that shrinks instead, so it is never subtracted here — the
-    ///   overlap is taken off exactly one side.
+    ///   shrink, so their time is already billed there. Only the intervals
+    ///   each one actually billed count — its segments' recorded billed
+    ///   ranges, not their full bounds. An app entry shrunk by this Claude run
+    ///   before it froze billed none of the overlap, so the run keeps it. An
+    ///   unbilled app entry is the one that shrinks instead, so it is never
+    ///   subtracted here — the overlap is taken off exactly one side.
     private static func coverage(
         projectId: String, day: String, groupKey: String, supplements: String?, database: any BillingPersistence
     ) throws -> [BillingSegmentDTO] {
@@ -358,9 +372,87 @@ public enum BillingRollup {
                 : isAppGroupKey(other.groupKey) && (other.locked || other.origin == "user")
         }
         for other in others where other.id != supplements {
-            covered += try database.billingSegmentsForEntry(id: other.id)
+            let segments = try database.billingSegmentsForEntry(id: other.id)
+            covered += isApp ? segments : try billedPart(of: segments, database: database, entryId: other.id)
         }
         return covered
+    }
+
+    /// The parts of a frozen app entry's segments it billed, as segments
+    /// `rawSeconds` can subtract. A segment with no recorded ranges (one
+    /// rolled before they were kept) counts whole.
+    private static func billedPart(
+        of segments: [BillingSegmentDTO], database: any BillingPersistence, entryId: String
+    ) throws -> [BillingSegmentDTO] {
+        let recorded = try database.billingSegmentBilledRanges(entryId: entryId)
+        return segments.flatMap { segment -> [BillingSegmentDTO] in
+            guard let ranges = recorded[segment.id] else { return [segment] }
+            return decodeRanges(ranges).map { range in
+                BillingSegmentDTO(
+                    id: segment.id, sessionId: segment.sessionId, origin: segment.origin,
+                    projectId: segment.projectId, projectRoot: segment.projectRoot, branch: segment.branch,
+                    startedAt: UTCTimestamp.string(epochSeconds: range.start),
+                    endedAt: UTCTimestamp.string(epochSeconds: range.end),
+                    tz: segment.tz, seconds: range.end - range.start)
+            }
+        }
+    }
+
+    /// What each app segment bills once `covered` is taken out of it, encoded
+    /// per segment id: `start-end` epoch-second pairs joined by `;`, `""` for
+    /// a segment that bills nothing. A segment without a readable start is
+    /// left out — it has no interval to clip.
+    static func billedRanges(
+        of segments: [BillingSegmentDTO], excluding covered: [BillingSegmentDTO]
+    ) -> [String: String] {
+        var holes: [(start: Int, end: Int)] = []
+        for segment in covered {
+            guard let start = UTCTimestamp.epochSeconds(segment.startedAt) else { continue }
+            holes.append((start, start + max(0, segment.seconds)))
+        }
+        holes.sort { $0.start < $1.start }
+        var merged: [(start: Int, end: Int)] = []
+        for hole in holes {
+            if let last = merged.last, hole.start <= last.end {
+                merged[merged.count - 1].end = max(last.end, hole.end)
+            } else {
+                merged.append(hole)
+            }
+        }
+        var ranges: [String: String] = [:]
+        for segment in segments {
+            guard let start = UTCTimestamp.epochSeconds(segment.startedAt) else { continue }
+            var pieces: [(start: Int, end: Int)] = []
+            var cursor = start
+            let end = start + max(0, segment.seconds)
+            for hole in merged where hole.end > cursor && hole.start < end {
+                if hole.start > cursor { pieces.append((cursor, hole.start)) }
+                cursor = max(cursor, hole.end)
+            }
+            if cursor < end { pieces.append((cursor, end)) }
+            ranges[segment.id] = pieces.map { "\($0.start)-\($0.end)" }.joined(separator: ";")
+        }
+        return ranges
+    }
+
+    static func decodeRanges(_ text: String) -> [(start: Int, end: Int)] {
+        text.split(separator: ";").compactMap { pair in
+            let bounds = pair.split(separator: "-").compactMap { Int($0) }
+            guard bounds.count == 2, bounds[1] > bounds[0] else { return nil }
+            return (bounds[0], bounds[1])
+        }
+    }
+
+    /// A Claude entry that was written or went away changes what the app time
+    /// beside it may bill: app segments settled as covered within its old or
+    /// new bounds go back to the roll.
+    private static func releaseAppTimeBeside(
+        old: BillingEntryDTO?, new: BillingEntryDTO?, database: any BillingPersistence
+    ) throws {
+        for entry in [old, new].compactMap({ $0 }) where !entry.startedAt.isEmpty {
+            try database.releaseSettledBillingSegments(
+                projectId: entry.projectId, from: entry.startedAt, to: entry.endedAt)
+        }
     }
 
     /// Deletes an app entry the day's Claude time now covers entirely,
@@ -539,7 +631,9 @@ public enum BillingRollup {
                       !stored.entry.locked, stored.entry.origin == "auto" else { return }
                 let entry = stored.entry
                 let segments = try database.billingSegmentsForEntry(id: id)
+                let isApp = isAppGroupKey(entry.groupKey)
                 if segments.isEmpty, try database.deleteEmptyBillingEntry(id: id) {
+                    if !isApp { try releaseAppTimeBeside(old: entry, new: nil, database: database) }
                     changed += 1
                     return
                 }
@@ -550,10 +644,13 @@ public enum BillingRollup {
                     of: segments, covered: covered, roundingMinutes: entry.roundingMinutes,
                     roundingMode: entry.roundingMode, rateCents: entry.rateCents
                 )
-                if isAppGroupKey(entry.groupKey), computed.raw == 0,
-                   try releasesZeroAppEntry(entry, database: database) {
+                if isApp, computed.raw == 0, try releasesZeroAppEntry(entry, database: database) {
+                    try database.settleBillingSegments(ids: segments.map(\.id))
                     changed += 1
                     return
+                }
+                if isApp {
+                    try database.setBillingSegmentBilledRanges(billedRanges(of: segments, excluding: covered))
                 }
                 let description = stored.descriptionEdited
                     ? entry.description
@@ -588,6 +685,11 @@ public enum BillingRollup {
                     updatedAt: UTCTimestamp.now()
                 ), overwrite: .rollupOwned)
                 if written { changed += 1 }
+                if written, !isApp {
+                    try releaseAppTimeBeside(old: entry, new: nil, database: database)
+                    try database.releaseSettledBillingSegments(
+                        projectId: entry.projectId, from: computed.startedAt, to: computed.endedAt)
+                }
             }
         }
         return changed

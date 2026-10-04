@@ -178,6 +178,21 @@ public protocol BillingPersistence {
     func billingRollupCandidates(ids: [String]?) throws -> [BillingSegmentDTO]
     func billingSegmentsForEntry(id: String) throws -> [BillingSegmentDTO]
     func attachSegments(ids: [String], toEntry entryId: String) throws
+    /// Records what each app segment billed: segment id to `start-end`
+    /// epoch pairs joined by `;` (`""` = nothing). Rows whose record is
+    /// already that are not written.
+    func setBillingSegmentBilledRanges(_ ranges: [String: String]) throws
+    /// The recorded billed ranges of the segments attached to `entryId`; a
+    /// segment with none recorded is absent.
+    func billingSegmentBilledRanges(entryId: String) throws -> [String: String]
+    /// Marks unattached segments the roll found entirely billed elsewhere, so
+    /// later rolls skip them. Re-derivation, a backfill or reset, assignment
+    /// and `releaseSettledBillingSegments` clear the mark.
+    func settleBillingSegments(ids: [String]) throws
+    /// Clears the settled mark on the project's unattached segments that
+    /// overlap `[from, to]` — the time a Claude entry that moved used to,
+    /// or now does, cover.
+    func releaseSettledBillingSegments(projectId: String, from start: String, to end: String) throws
     func appendBillingAudit(entryId: String, field: String, oldValue: String, newValue: String, source: String) throws
     func billingSessionTitles(sessionIds: [String]) throws -> [String]
     /// The ids in `sessionIds` whose rows no longer exist: a session with no
