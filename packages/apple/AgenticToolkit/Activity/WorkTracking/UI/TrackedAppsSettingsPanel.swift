@@ -26,6 +26,7 @@ public final class TrackedAppsSettingsPanel: ComposableSettings.SettingsPanelVie
     /// Set by "Grant…"; the next refresh runs `recheck` instead of `status`
     /// and clears it, so the check happens once per press.
     private var grantPressed = false
+    private var grantPresses = 0
     private var chosenNames: [String: String] = [:]
 
     private var accessibilityLine: ComposableSettings.ExplanationView?
@@ -227,6 +228,7 @@ public final class TrackedAppsSettingsPanel: ComposableSettings.SettingsPanelVie
 
     private func grantTapped() {
         grantPressed = true
+        grantPresses += 1
         openAccessibilitySettings()
     }
 
@@ -252,12 +254,15 @@ public final class TrackedAppsSettingsPanel: ComposableSettings.SettingsPanelVie
     /// The `viewWillAppear` path: a recheck only if "Grant…" was pressed since
     /// the last one; otherwise a plain status read.
     private func refresh() async {
+        // The pending "Grant…" recheck is cleared only once a result is
+        // applied, so a refresh that is superseded hands it on to the newer one.
         let wantsRecheck = grantPressed
-        grantPressed = false
+        let pressesSeen = grantPresses
         refreshGeneration += 1
         let generation = refreshGeneration
         let result = wantsRecheck ? await recheck() : await status()
         guard generation == refreshGeneration else { return }
+        if wantsRecheck && grantPresses == pressesSeen { grantPressed = false }
         lastStatus = result
         show(result)
     }

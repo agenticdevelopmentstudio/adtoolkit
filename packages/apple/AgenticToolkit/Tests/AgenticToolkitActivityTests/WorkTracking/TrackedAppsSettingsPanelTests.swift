@@ -175,5 +175,40 @@ final class TrackedAppsSettingsPanelTests: XCTestCase {
         card?.onToggle?("org.e.Editor", "track", false)
         XCTAssertEqual(settings.addedBundleIds.value, [])
     }
+
+    func testSupersededGrantRecheckIsInheritedByNewerRefresh() async {
+        let gate = Gate()
+        let counter = Counter()
+        let panel = makePanel(status: { counter.statuses += 1; return WorkTrackingStatus() },
+                              recheck: { counter.rechecks += 1; return await gate.call() })
+        panel.grantPressedForTesting()
+        let older = Task { @MainActor in await panel.refreshForTesting() }
+        await gate.waitForCalls(1)
+        let newer = Task { @MainActor in await panel.refreshForTesting() }
+        await gate.waitForCalls(2)
+        XCTAssertEqual(counter.statuses, 0, "the newer refresh must inherit the pending recheck")
+        gate.complete(1, with: WorkTrackingStatus(accessibility: .granted))
+        await newer.value
+        gate.complete(0, with: WorkTrackingStatus(accessibility: .denied))
+        await older.value
+        XCTAssertEqual(counter.rechecks, 2)
+        XCTAssertEqual(panel.accessibilityLineTextForTesting, "Granted")
+        await panel.refreshForTesting()
+        XCTAssertEqual(counter.statuses, 1, "once applied, the recheck is not repeated")
+    }
+
+    func testRefreshDuringCheckAgainLeavesButtonAndLineRestored() async {
+        let gate = Gate()
+        let panel = makePanel(status: { WorkTrackingStatus(accessibility: .granted) },
+                              recheck: { await gate.call() })
+        let check = Task { @MainActor in await panel.checkAgainForTesting() }
+        await gate.waitForCalls(1)
+        await panel.refreshForTesting()
+        gate.complete(0, with: WorkTrackingStatus(accessibility: .denied))
+        await check.value
+        XCTAssertTrue(panel.checkAgainEnabledForTesting)
+        XCTAssertNotEqual(panel.accessibilityLineTextForTesting, "Checking…")
+        XCTAssertEqual(panel.accessibilityLineTextForTesting, "Granted")
+    }
 }
 #endif
