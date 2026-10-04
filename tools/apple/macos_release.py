@@ -695,10 +695,13 @@ def _version_tuple(version: str) -> tuple[int, ...]:
 
 
 def merge_release(existing: dict, entry: ReleaseEntry) -> dict:
-    """Schema 1: `releases` is always kept sorted newest-first by numeric
-    version (descending), regardless of merge order; `latest` is the version
-    at the front. Merging an entry whose version already exists replaces
-    that entry in place."""
+    """Schema 1: `releases` is always kept sorted newest-first, regardless of
+    merge order; `latest` is the version at the front. Newest means the
+    highest `build` (CFBundleVersion — what Sparkle compares, and what
+    `preflight` requires to rise), with the numeric version breaking a tie,
+    so re-versioning for marketing (2.161.0 → 1.0.172.0) still lands the new
+    release at the front. Merging an entry whose version already exists
+    replaces that entry in place."""
     schema = existing.get("schema")
     if schema != 1:
         raise ValueError(f"unsupported releases schema: {schema!r}")
@@ -715,7 +718,7 @@ def merge_release(existing: dict, entry: ReleaseEntry) -> dict:
             "zip": _asset_dict(entry.zip),
         }
     )
-    releases.sort(key=lambda r: _version_tuple(r["version"]), reverse=True)
+    releases.sort(key=lambda r: (r["build"], _version_tuple(r["version"])), reverse=True)
     return {"schema": 1, "latest": releases[0]["version"], "releases": releases}
 
 

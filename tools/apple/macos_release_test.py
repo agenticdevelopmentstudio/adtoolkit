@@ -102,6 +102,21 @@ def test_merge_release_sorts_2_10_ahead_of_2_9():
     assert [r["version"] for r in doc["releases"]] == ["2.10.0", "2.9.0"]
 
 
+def test_merge_release_orders_by_build_across_a_marketing_reversion():
+    # 2.161.0 (build 421) was published before the product was re-versioned
+    # to 1.0 for launch; 1.0.172.0 (build 446) is newer and must be latest.
+    def entry(version: str, build: int) -> mr.ReleaseEntry:
+        return mr.ReleaseEntry(
+            version, build, "d", "26.0", f"notes/{version}.md",
+            mr.ReleaseAsset("u", 1, "s"), mr.ReleaseAsset("u", 1, "s"),
+        )
+
+    empty = {"schema": 1, "latest": None, "releases": []}
+    doc = mr.merge_release(mr.merge_release(empty, entry("2.161.0", 421)), entry("1.0.172.0", 446))
+    assert doc["latest"] == "1.0.172.0"
+    assert [r["version"] for r in doc["releases"]] == ["1.0.172.0", "2.161.0"]
+
+
 # ---------------------------------------------------------------------------
 # preflight
 # ---------------------------------------------------------------------------
