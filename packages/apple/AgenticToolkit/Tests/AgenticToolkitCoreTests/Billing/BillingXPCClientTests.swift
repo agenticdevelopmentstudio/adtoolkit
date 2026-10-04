@@ -20,11 +20,14 @@ final class BillingXPCClientTests: XCTestCase {
         var refusableData: Result<Data, Refusal> = .success(Data())
         var refusable: Result<Void, Refusal> = .success(())
         var unreachable = false
+        /// When set, calls past this many throw, as a daemon that stops answering does.
+        var failAfterCalls: Int?
         private(set) var calls: [(timeout: TimeInterval??, retries: Int)] = []
 
         private func record(_ timeout: TimeInterval??, _ retries: Int) throws {
             calls.append((timeout, retries))
             if unreachable { throw Unreachable() }
+            if let limit = failAfterCalls, calls.count > limit { throw Unreachable() }
         }
 
         func callDecoding<T: Decodable>(
@@ -149,6 +152,27 @@ final class BillingXPCClientTests: XCTestCase {
         transport.unreachable = true
         let failed = await client.billingAppNames(sessionIds: ["app:a"])
         XCTAssertNil(failed)
+    }
+
+    func testMoreThan500AppIdsGoInTwoCallsWithTheShortTimeout() async {
+        transport.rows = [wire(BillingAppNameDTO(sessionId: "app:0", appName: "Xcode"))]
+        let ids = (0..<501).map { "app:\($0)" }
+        let names = await client.billingAppNames(sessionIds: ids)
+        XCTAssertEqual(names, ["app:0": "Xcode"])
+        XCTAssertEqual(transport.calls.count, 2)
+        XCTAssertTrue(transport.calls.allSatisfy { $0.timeout == .some(.some(2)) && $0.retries == 0 })
+    }
+
+    func testAFailedChunkKeepsTheOthersAndOnlyAllFailingIsNil() async {
+        transport.rows = [wire(BillingAppNameDTO(sessionId: "app:0", appName: "Xcode"))]
+        transport.failAfterCalls = 1
+        let ids = (0..<501).map { "app:\($0)" }
+        let partial = await client.billingAppNames(sessionIds: ids)
+        XCTAssertEqual(partial, ["app:0": "Xcode"])
+
+        transport.failAfterCalls = 0
+        let none = await client.billingAppNames(sessionIds: ids)
+        XCTAssertNil(none)
     }
 
     func testANegativeCountIsAFailedWrite() async {

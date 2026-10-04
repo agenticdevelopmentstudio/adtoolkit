@@ -223,10 +223,11 @@ public final class BillingXPCClient<Transport: BillingXPCTransport>: BillingServ
     /// replied `BillingWire.readFailedRow` — a failed read is never "none".
     private func list<T: Decodable>(
         _ type: T.Type,
+        timeout: TimeInterval?? = nil,
         _ invoke: @escaping @Sendable (Transport.Proxy, @escaping @Sendable ([Data]) -> Void) -> Void
     ) async -> [T]? {
         guard let rows = try? await transport.callDecodingArray(
-            BillingListRow<T>.self, timeout: nil, retries: 0, invoke
+            BillingListRow<T>.self, timeout: timeout, retries: 0, invoke
         ) else { return nil }
         var values: [T] = []
         for row in rows {
@@ -340,12 +341,29 @@ public final class BillingXPCClient<Transport: BillingXPCTransport>: BillingServ
         await list(BillingSegmentDTO.self) { $0.billingRunningTimers(reply: $1) }
     }
 
+    /// Ids per call: the daemon reads at most this many.
+    public static var appNamesChunk: Int { 500 }
+    /// A short wait with no retry, so a daemon that predates this call (and
+    /// never replies) costs a load at most this long.
+    public static var appNamesTimeout: TimeInterval { 2 }
+
+    /// Chunked at the daemon's cap. A chunk that fails costs only its own
+    /// names; nil only when every chunk failed.
     public func billingAppNames(sessionIds: [String]) async -> [String: String]? {
         let appIds = sessionIds.filter { ActivitySpanSession.spanId(sessionId: $0) != nil }
         guard !appIds.isEmpty else { return [:] }
-        guard let rows = await list(BillingAppNameDTO.self, { $0.billingAppNames(sessionIds: appIds, reply: $1) })
-        else { return nil }
-        return Dictionary(rows.map { ($0.sessionId, $0.appName) }, uniquingKeysWith: { first, _ in first })
+        var merged: [String: String] = [:]
+        var succeeded = false
+        for start in stride(from: 0, to: appIds.count, by: Self.appNamesChunk) {
+            let chunk = Array(appIds[start..<min(start + Self.appNamesChunk, appIds.count)])
+            guard let rows = await list(
+                BillingAppNameDTO.self, timeout: Self.appNamesTimeout,
+                { $0.billingAppNames(sessionIds: chunk, reply: $1) }
+            ) else { continue }
+            succeeded = true
+            for row in rows where merged[row.sessionId] == nil { merged[row.sessionId] = row.appName }
+        }
+        return succeeded ? merged : nil
     }
 
     public func billingStartTimer(_ start: BillingTimerStartDTO) async -> Result<BillingSegmentDTO, BillingRefusal> {

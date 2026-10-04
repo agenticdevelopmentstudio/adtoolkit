@@ -142,9 +142,7 @@ public final class BillingModel {
         let overviewValue = await overview ?? self.overview
         // One batched read for every app run on screen. Its failure costs
         // the names only, never the load.
-        let appIds = Array(Set((running + segments).map(\.sessionId)
-            .filter { ActivitySpanSession.spanId(sessionId: $0) != nil }))
-        let names = appIds.isEmpty ? [:] : (await service.billingAppNames(sessionIds: appIds) ?? [:])
+        let names = await Self.loadAppNames(service, for: running + segments, known: [:])
         guard generation == writesStarted else { return }
         let changed = names != self.appNames || clients != self.clients || projects != self.projects
             || running != self.runningTimers || segments != self.recentSegments
@@ -162,10 +160,28 @@ public final class BillingModel {
 
     private func refreshRunningTimers() async {
         let generation = writesStarted
-        guard let running = await service.billingRunningTimers(),
-              generation == writesStarted, running != runningTimers else { return }
+        guard let running = await service.billingRunningTimers(), generation == writesStarted else { return }
+        // A new app timer is named now, not at the next full load; only the
+        // ids not yet known are asked for.
+        let names = await Self.loadAppNames(service, for: running, known: appNames)
+        guard generation == writesStarted, running != runningTimers || names != appNames else { return }
         runningTimers = running
+        appNames = names
         changes.send()
+    }
+
+    /// `known` plus the names of the app runs in `segments` that it lacks, in
+    /// one call. With nothing unknown there is no call; a failed call keeps
+    /// `known` (the rows read "App"), and never fails a load.
+    private static func loadAppNames(
+        _ service: any BillingService, for segments: [BillingSegmentDTO], known: [String: String]
+    ) async -> [String: String] {
+        let unknown = Array(Set(segments.map(\.sessionId).filter {
+            ActivitySpanSession.spanId(sessionId: $0) != nil && known[$0] == nil
+        }))
+        guard !unknown.isEmpty else { return known }
+        let fetched = await service.billingAppNames(sessionIds: unknown) ?? [:]
+        return known.merging(fetched) { first, _ in first }
     }
 
     // MARK: - Lookups

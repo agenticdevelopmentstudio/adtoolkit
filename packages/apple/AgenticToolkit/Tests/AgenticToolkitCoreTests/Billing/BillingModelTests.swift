@@ -230,6 +230,22 @@ final class BillingModelTests: XCTestCase {
         XCTAssertFalse(model.projects.contains { $0.id == "p3" })
     }
 
+    func testANewRunningAppTimerIsNamedOnThePeriodicRefresh() async {
+        let model = BillingModel(service: fake, refreshInterval: 999)
+        await model.poll()
+        XCTAssertTrue(fake.appNameCalls.isEmpty, "no app runs, no call")
+
+        fake.appNames = ["app:new": "Xcode"]
+        fake.segments.append(BillingSegmentDTO(
+            id: "s-app", sessionId: "app:new", origin: "auto", projectId: "p1", startedAt: "2026-09-22T09:20:00Z"))
+        await model.poll()
+        XCTAssertEqual(model.appNames, ["app:new": "Xcode"])
+        XCTAssertEqual(fake.appNameCalls, [["app:new"]])
+
+        await model.poll()
+        XCTAssertEqual(fake.appNameCalls.count, 1, "a name already known is not asked for again")
+    }
+
     func testAWindowOnScreenMakesAPassReadEverything() async {
         let model = BillingModel(service: fake, refreshInterval: 999)
         await model.poll()
