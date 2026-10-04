@@ -41,7 +41,7 @@ describe("canon helpers", () => {
     // No marker at all is production — the un-suffixed project IS the prod one in this
     // fleet, so reading it as anything else would leave every prod deploy unclassified.
     expect(envFromProject("adh")).toBe("production");
-    expect(envFromProject("agenticcookbook")).toBe("production");
+    expect(envFromProject("exampleproject")).toBe("production");
   });
 
   it("siteApex collapses www AND env labels onto one apex", () => {

@@ -25,7 +25,7 @@ public actor LocalInferenceGuard {
     public static let shared = LocalInferenceGuard()
 
     private static let logger = Logger(
-        subsystem: "com.agentic-cookbook.AIPluginKit", category: "LocalInferenceGuard")
+        subsystem: "com.agenticdevelopmentstudio.AIPluginKit", category: "LocalInferenceGuard")
 
     /// Default wall-clock bound on one exclusive operation: a hung local server
     /// must not hold the process-wide inference lock forever.

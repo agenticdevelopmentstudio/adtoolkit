@@ -42,7 +42,7 @@ extension BuiltInThemes {
         mikeFullerton,
         myProjects,
         projectsOverview,
-        agenticCookbook
+        agenticDevelopmentStudio
     ]
 
     /// "Charcoal" — ported from the web theme catalogue (`charcoal.css`).
@@ -1229,10 +1229,10 @@ extension BuiltInThemes {
         ])
     )
 
-    /// "Agentic Cookbook" — ported from the web theme catalogue (`agenticcookbookweb.css`).
+    /// "Agentic Cookbook" — ported from the web theme catalogue (`agenticdevelopmentstudioweb.css`).
     /// Typography is web's own stack: `Manrope`, code in `DM Mono`, falling back to the
     /// system face at the same metrics when the family is not installed.
-    static let agenticCookbook = ColorTheme(
+    static let agenticDevelopmentStudio = ColorTheme(
         id: "B1B6F0E2-0000-4000-8000-000000000121",
         name: "Agentic Cookbook",
         appearance: .dark,

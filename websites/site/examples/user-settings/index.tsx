@@ -51,7 +51,7 @@ const SparkleIcon = () => (
 
 function GeneralPane() {
   const [name, setName] = useState('Mike Fullerton')
-  const [theme, setTheme] = useState('agenticcookbookweb')
+  const [theme, setTheme] = useState('agenticdevelopmentstudioweb')
   const [profilePublic, setProfilePublic] = useState(true)
   const [bio, setBio] = useState('')
   const [accent, setAccent] = useState('#c4a35a')
@@ -66,7 +66,7 @@ function GeneralPane() {
           value={theme}
           onChange={setTheme}
           choices={[
-            { value: 'agenticcookbookweb', label: 'Agentic Cookbook (default)' },
+            { value: 'agenticdevelopmentstudioweb', label: 'Agentic Cookbook (default)' },
             { value: 'dev-team', label: 'Dev Team' },
             { value: 'terminal', label: 'Terminal' },
             { value: 'whimsical', label: 'Whimsical' },
@@ -150,7 +150,7 @@ function ShowcasePane() {
   return (
     <>
       <DismissibleHint id="user-settings-demo:showcase-tip">
-        This pane exercises every primitive in <code>@agentic-cookbook/agentic-web-toolkit/user-settings</code>.
+        This pane exercises every primitive in <code>@agenticdevelopmentstudio/agentic-web-toolkit/user-settings</code>.
       </DismissibleHint>
 
       <Header>Layout</Header>

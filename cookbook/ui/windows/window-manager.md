@@ -538,7 +538,7 @@ Not applicable: the source emits no analytics events.
 
 ## Logging
 
-Subsystem: `com.agentic-cookbook.agentictoolkit` | Category: `WindowManager`
+Subsystem: `com.agenticdevelopmentstudio.agentictoolkit` | Category: `WindowManager`
 
 | Event | Level | Message |
 |-------|-------|---------|

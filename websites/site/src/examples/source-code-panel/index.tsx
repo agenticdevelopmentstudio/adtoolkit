@@ -19,7 +19,7 @@ export function Counter({ start = 0 }: { start?: number }) {
   )
 }`,
   json: `{
-  "name": "@agentic-cookbook/agentic-web-toolkit",
+  "name": "@agenticdevelopmentstudio/agentic-web-toolkit",
   "version": "0.1.0",
   "exports": {
     "./source-code-panel": "./packages/source-code-panel/index.ts"

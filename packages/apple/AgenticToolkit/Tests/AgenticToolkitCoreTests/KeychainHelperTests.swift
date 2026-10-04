@@ -94,7 +94,7 @@ struct KeychainHelperTests {
 
     @Test("makeQuery injects access group and data-protection flag when set")
     func queryWithAccessGroup() {
-        let group = "ABCDE12345.com.agentic-cookbook.stenographer.shared"
+        let group = "ABCDE12345.com.agenticdevelopmentstudio.stenographer.shared"
         let query = KeychainHelper.makeQuery(account: "acct", accessGroup: group)
 
         #expect(query[kSecAttrAccessGroup as String] as? String == group)

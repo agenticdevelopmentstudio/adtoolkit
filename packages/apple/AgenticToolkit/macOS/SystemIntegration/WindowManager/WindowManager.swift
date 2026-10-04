@@ -32,7 +32,7 @@ public final class WindowManager {
     private var windowFactories: [String: @MainActor () -> Void] = [:]
 
     private static let logger = Logger(
-        subsystem: "com.agentic-cookbook.agentictoolkit",
+        subsystem: "com.agenticdevelopmentstudio.agentictoolkit",
         category: "WindowManager"
     )
 

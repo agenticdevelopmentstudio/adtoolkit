@@ -40,7 +40,7 @@ const ExampleStage = memo(function ExampleStage({ Component }: { Component: Comp
 const RAIL_WIDTH = 200
 const SHELL_THEME: ThemeKey = 'myprojects'
 const EXAMPLE_SCOPE = '.awt-example-content'
-const DEFAULT_THEME: ThemeKey = 'agenticcookbookweb'
+const DEFAULT_THEME: ThemeKey = 'agenticdevelopmentstudioweb'
 
 const sectionHeaderStyle: React.CSSProperties = {
   fontSize: '0.7rem',

@@ -186,7 +186,7 @@ something in your consumer's scripts is re-introducing chained shells
 - [`next-js-consumer.md`](next-js-consumer.md) — integration guide
   (both consumer patterns, layout wiring, Tailwind config).
 - [`migrate-consumer.md`](migrate-consumer.md) — 8-step checklist for
-  consumers moving off the old `"@agentic-cookbook/agentic-web-toolkit":
+  consumers moving off the old `"@agenticdevelopmentstudio/agentic-web-toolkit":
   "file:..."` dep.
 - [`monorepo-conversion.md`](monorepo-conversion.md) — what changed in
   the toolkit itself and why.

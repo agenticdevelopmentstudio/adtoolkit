@@ -634,7 +634,7 @@ visual component.
 | deploy-engine-005 | domain-family-provider-exclusion | `domainFamily("my-app.vercel.app")` | `null` |
 | deploy-engine-006 | domain-family-provider-exclusion | `domainFamily("")` / `domainFamily("localhost")` | `null` for both |
 | deploy-engine-007 | project-base-name-stripping | `projectBaseName("staging.adh")` | `"adh"` |
-| deploy-engine-008 | env-from-project-name | `envFromProject("agenticcookbook")` | `"production"` (no marker present) |
+| deploy-engine-008 | env-from-project-name | `envFromProject("exampleproject")` | `"production"` (no marker present) |
 | deploy-engine-009 | host-env-label | `hostEnv("www.staging.example.com")` | `"staging"` (www stripped before env match) |
 | deploy-engine-010 | cooldown-never-shortens | Two `noteRateLimited("vercel", …)` calls, the second with a shorter Retry-After than the first's remaining time | The stored expiry stays at the FIRST (longer) value |
 | deploy-engine-011 | cooldown-unknown-provider-degrades | `noteRateLimited("crunchy-legacy" as ProviderName, null)` | Returns `now + DEFAULT_COOLDOWN_MS`; no `RangeError`; no slot written |

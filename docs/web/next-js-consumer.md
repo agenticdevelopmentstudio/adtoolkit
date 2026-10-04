@@ -150,7 +150,7 @@ mismatch.
 ```css
 @import 'tailwindcss';
 @import '@agenticdevelopertoolkit/ui/styles/globals.css';
-@import '@agenticdevelopertoolkit/themes/styles/agentic-cookbook.css';
+@import '@agenticdevelopertoolkit/themes/styles/agenticdevelopmentstudioweb.css';
 
 /* Pattern A (submodule) — scan toolkit's built dist for utility classes */
 @source "../../external/agentic-web-toolkit/packages/*/dist/**/*.{js,d.ts}";

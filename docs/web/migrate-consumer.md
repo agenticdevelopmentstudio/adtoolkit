@@ -7,7 +7,7 @@ umbrella `file:` dependency pattern onto the new per-package
 Old pattern (going away):
 
 ```json
-"@agentic-cookbook/agentic-web-toolkit": "file:../external/agentic-web-toolkit"
+"@agenticdevelopmentstudio/agentic-web-toolkit": "file:../external/agentic-web-toolkit"
 ```
 
 New pattern (this doc):
@@ -53,7 +53,7 @@ by `package.json` presence so this is safe.
 Remove:
 
 ```json
-"@agentic-cookbook/agentic-web-toolkit": "file:../external/agentic-web-toolkit"
+"@agenticdevelopmentstudio/agentic-web-toolkit": "file:../external/agentic-web-toolkit"
 ```
 
 Add only the packages you actually import. A typical consumer needs some
@@ -81,10 +81,10 @@ roots:
 
 | Old import path                                           | New import path                                         |
 | --------------------------------------------------------- | ------------------------------------------------------- |
-| `@agentic-cookbook/agentic-web-toolkit/themes/...`        | `@agenticdevelopertoolkit/themes/...`                       |
-| `@agentic-cookbook/agentic-web-toolkit/model/...`         | `@agenticdevelopertoolkit/model/...`                        |
-| `@agentic-cookbook/agentic-web-toolkit/controls/<ctrl>`   | `@agenticdevelopertoolkit/controls/<ctrl>`                  |
-| `@agentic-cookbook/agentic-web-toolkit/features/chat/...` | `@agenticdevelopertoolkit/chat/...`                     |
+| `@agenticdevelopmentstudio/agentic-web-toolkit/themes/...`        | `@agenticdevelopertoolkit/themes/...`                       |
+| `@agenticdevelopmentstudio/agentic-web-toolkit/model/...`         | `@agenticdevelopertoolkit/model/...`                        |
+| `@agenticdevelopmentstudio/agentic-web-toolkit/controls/<ctrl>`   | `@agenticdevelopertoolkit/controls/<ctrl>`                  |
+| `@agenticdevelopmentstudio/agentic-web-toolkit/features/chat/...` | `@agenticdevelopertoolkit/chat/...`                     |
 
 Three of the old umbrella sub-paths have **no successor** — `layout/…`,
 `content/…`, and `site-templates/reference-web-site/…` were deleted in July
@@ -123,7 +123,7 @@ runtime renders.
 If your consumer had:
 
 ```ts
-transpilePackages: ['@agentic-cookbook/agentic-web-toolkit']
+transpilePackages: ['@agenticdevelopmentstudio/agentic-web-toolkit']
 ```
 
 Delete it. Toolkit packages now ship pre-built ESM with `"use client"`

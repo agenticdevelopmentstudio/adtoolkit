@@ -79,7 +79,7 @@ commits survive.
   revisions, which is acceptable without a rewrite.
 - **Consumers.** About 30 active repos consume ATK, ADT or both (table in
   Phase 3). Most carry both repos, with a second ADT nested inside ATK.
-  Several still point at the old `agentic-cookbook/…` org URLs.
+  Several still point at the old `agenticdevelopmentstudio/…` org URLs.
 
 ## Approach: an unrelated-histories merge, with no path rewriting
 
@@ -204,7 +204,7 @@ mechanical prefix swap:
 - `…/external/agentictoolkit/external/agenticdevelopertoolkit/<path>` also
   becomes `…/external/agenticdevelopertoolkit/<path>`.
 - The `agentictoolkit` submodule is removed, ADT is bumped to the merged
-  `main`, and old `agentic-cookbook/…` URLs are corrected.
+  `main`, and old `agenticdevelopmentstudio/…` URLs are corrected.
 
 All of this goes into one Python tool, a new `migrate_consumer.py` under
 `tools/`, with

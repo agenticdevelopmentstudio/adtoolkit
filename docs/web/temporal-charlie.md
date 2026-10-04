@@ -2,7 +2,7 @@
 
 A reference snapshot of how the **Charlie** persona is wired in the Temporal
 monorepo (`~/Development/projects/temporal`), as of 2026-05-15. Useful as a
-worked example of an `@agentic-cookbook/agentic-web-toolkit` consumer talking
+worked example of an `@agenticdevelopmentstudio/agentic-web-toolkit` consumer talking
 to a Ktor backend with persona-driven prompts and a shared tool registry.
 
 ## Surface map
@@ -26,7 +26,7 @@ to a Ktor backend with persona-driven prompts and a shared tool registry.
 `CharliePage` is a thin mount of the toolkit's `InlineChat`:
 
 ```tsx
-import { InlineChat } from '@agentic-cookbook/agentic-web-toolkit/chat'
+import { InlineChat } from '@agenticdevelopmentstudio/agentic-web-toolkit/chat'
 import { CharlieRealBackend } from './CharlieRealBackend'
 
 const backend = useMemo(

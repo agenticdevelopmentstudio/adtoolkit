@@ -38,7 +38,7 @@ public final class HubEnvironment {
     public static let transportDeadline: Duration = .seconds(3)
 
     private nonisolated static let log = Logger(
-        subsystem: "com.agentic-cookbook.agenticdeveloperhub",
+        subsystem: "com.agenticdevelopmentstudio.agenticdeveloperhub",
         category: "transport"
     )
 

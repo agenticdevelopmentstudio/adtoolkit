@@ -64,7 +64,7 @@ export declare const DEFAULT_ADH_THEME: AdhThemeKey;
  *  `charcoal` and `fishlamp` are the two that do this; fishlamp's header comment carries
  *  the arithmetic. For the family's DEFAULT theme it is not optional — see
  *  DEFAULT_SITE_THEME below, and rule 6 in fullPaletteThemes.test.ts, which asserts it. */
-export declare const FULL_PALETTE_THEMES: readonly ["signal", "nord", "solarized", "rose-pine", "gruvbox", "github", "tokyo-night", "catppuccin", "one-dark", "dracula", "monokai", "cobalt2", "synthwave84", "vesper", "agenticcookbookweb", "dev-team", "mikefullerton", "myprojects", "myprojectsoverview", "professional", "techy", "terminal", "terminal-split", "whimsical", "green-matrix", "green-matrix-glass", "old-school-terminal", "charcoal", "fishlamp"];
+export declare const FULL_PALETTE_THEMES: readonly ["signal", "nord", "solarized", "rose-pine", "gruvbox", "github", "tokyo-night", "catppuccin", "one-dark", "dracula", "monokai", "cobalt2", "synthwave84", "vesper", "agenticdevelopmentstudioweb", "dev-team", "mikefullerton", "myprojects", "myprojectsoverview", "professional", "techy", "terminal", "terminal-split", "whimsical", "green-matrix", "green-matrix-glass", "old-school-terminal", "charcoal", "fishlamp"];
 export type FullPaletteThemeKey = (typeof FULL_PALETTE_THEMES)[number];
 /** Any theme the footer switcher can select: adh font-variants + full-palette themes. */
 export type SwitcherThemeKey = AdhThemeKey | FullPaletteThemeKey;

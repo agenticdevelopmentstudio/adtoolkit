@@ -45,7 +45,7 @@ var FULL_PALETTE_THEMES = [
   // underneath untouched); they now declare the full role set, converted by the toolkit's
   // scripts/convert-legacy-theme.py. The last three were only ever in the OLD toolkit and
   // were missed when its themes were merged in — see that script for the whole story.
-  "agenticcookbookweb",
+  "agenticdevelopmentstudioweb",
   "dev-team",
   "mikefullerton",
   "myprojects",

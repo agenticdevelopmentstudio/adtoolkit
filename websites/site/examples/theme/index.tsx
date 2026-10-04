@@ -22,7 +22,7 @@ import { noAutofillProps } from '@agenticdevelopertoolkit/ui/lib/autofill'
 export const meta = { id: 'theme', label: 'Theme' }
 
 const STORAGE_THEME = 'awt-site:theme'
-const DEFAULT_THEME: ThemeKey = 'agenticcookbookweb'
+const DEFAULT_THEME: ThemeKey = 'agenticdevelopmentstudioweb'
 
 function readTheme(): ThemeKey {
   try {

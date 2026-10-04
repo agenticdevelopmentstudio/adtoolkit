@@ -69,7 +69,7 @@ public final class LoopbackAuthServer: @unchecked Sendable {
         self.nonce = nonce
         self.dismissURL = dismissURL
         self.timeout = timeout
-        self.queue = DispatchQueue(label: "com.agentic-cookbook.hubkit.loopback-auth.\(port)")
+        self.queue = DispatchQueue(label: "com.agenticdevelopmentstudio.hubkit.loopback-auth.\(port)")
     }
 
     /// Binds the first free port in `ports`, in order.

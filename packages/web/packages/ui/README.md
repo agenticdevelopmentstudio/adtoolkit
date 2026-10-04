@@ -36,7 +36,7 @@ shadcn writes is required by Next.js App Router and is a no-op under Vite.
 2. Import the CSS once in your entry (e.g. `src/main.tsx`):
    ```ts
    import '@agenticdevelopertoolkit/ui/styles/globals.css'
-   import '@agenticdevelopertoolkit/themes/styles/agenticcookbookweb.css'
+   import '@agenticdevelopertoolkit/themes/styles/agenticdevelopmentstudioweb.css'
    ```
 3. `vite.config.ts` should already include `@tailwindcss/vite` — no change.
 4. Use:
@@ -50,7 +50,7 @@ shadcn writes is required by Next.js App Router and is a no-op under Vite.
 2. Import the CSS once in `app/layout.tsx`:
    ```ts
    import '@agenticdevelopertoolkit/ui/styles/globals.css'
-   import '@agenticdevelopertoolkit/themes/styles/agenticcookbookweb.css'
+   import '@agenticdevelopertoolkit/themes/styles/agenticdevelopmentstudioweb.css'
    ```
 3. Ensure your Tailwind v4 setup is wired (`@tailwindcss/postcss` in `postcss.config.mjs`).
 4. Use:

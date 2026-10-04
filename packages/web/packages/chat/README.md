@@ -106,7 +106,7 @@ import '@agenticdevelopertoolkit/chat/css/modes/inline.css'  // for inline mode
 import '@agenticdevelopertoolkit/themes/styles/professional.css'
 ```
 
-Themes shipped today: `professional`, `techy`, `whimsical`, `agenticcookbookweb`, `dev-team`, `mikefullerton`, `myprojects`, `myprojectsoverview`, `terminal`, `terminal-split`. See [`themes/styles/`](../themes/src/styles/) in the `@agenticdevelopertoolkit/themes` package.
+Themes shipped today: `professional`, `techy`, `whimsical`, `agenticdevelopmentstudioweb`, `dev-team`, `mikefullerton`, `myprojects`, `myprojectsoverview`, `terminal`, `terminal-split`. See [`themes/styles/`](../themes/src/styles/) in the `@agenticdevelopertoolkit/themes` package.
 
 **Themes are mutually exclusive.** Importing two at once produces a last-import-wins style cascade. If you need to switch themes at runtime, do it via dynamic import + remount (the example uses `<style>{themeCss}</style>` swapping for the same effect).
 

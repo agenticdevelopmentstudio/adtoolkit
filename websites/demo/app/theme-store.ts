@@ -10,7 +10,7 @@ import { themeIds, type ThemeKey } from '@agenticdevelopertoolkit/themes'
  * theme showcase — stays in sync without prop-drilling.
  */
 export const STORAGE_THEME = 'apt-demo:theme'
-export const DEFAULT_THEME: ThemeKey = 'agenticcookbookweb'
+export const DEFAULT_THEME: ThemeKey = 'agenticdevelopmentstudioweb'
 
 export function readStoredTheme(): ThemeKey {
   if (typeof window === 'undefined') return DEFAULT_THEME
