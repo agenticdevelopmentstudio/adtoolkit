@@ -689,6 +689,7 @@
 		4A72AECC458F85C311EC5C9E /* UsageCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A221B3241D5E5436EFAE23E /* UsageCollector.swift */; };
 		4AA27500B4AB249FD6F90F9C /* ExtensionHostInstaller.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4A5AB8403FDA633F51EC81F /* ExtensionHostInstaller.swift */; };
 		4AE9D0D1AB1FA9C7889F2ED0 /* ExtensionTreeRowTable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 946D33214CD0DD52306CA22A /* ExtensionTreeRowTable.swift */; };
+		4B1BD19CA14095A0E0FC58FA /* StartupQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9A3EC5FBF47EAA9E1E82137 /* StartupQueueTests.swift */; };
 		4B205E8F61AFA1AF202A569D /* CommandPaletteModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA0470344B9A5D9015F0237F /* CommandPaletteModel.swift */; };
 		4B23C87D2F4AD2C44D469115 /* AgenticToolkitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FF857DF2BB3D2BE006BBA101 /* AgenticToolkitCore.framework */; };
 		4B556CFC5B14E9A9811F54F9 /* ProviderPickerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0904313AC1BEE6662DBB5BC /* ProviderPickerTests.swift */; };
@@ -909,6 +910,7 @@
 		653F7CD2B83C10F7C3CD5FFD /* EditDeferredValueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1135DFE48665463EA3C19B7A /* EditDeferredValueTests.swift */; };
 		65440185D4A0757885DF2F10 /* NSColor+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 690A3F776886927C6C0E93A0 /* NSColor+Hex.swift */; };
 		65488A66BB9869A0ED17EC39 /* UsageTypesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9832C3D4EEF8A77B50EE4FD /* UsageTypesTests.swift */; };
+		65754815F200607627AF8E02 /* StartupQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68FBBAE65B74F2D17FD794E5 /* StartupQueue.swift */; };
 		65A4B1BF9ADD768DC0C66BB9 /* UserSettings+SessionWatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83891226E4E59687EFD31663 /* UserSettings+SessionWatcher.swift */; };
 		65BC4AFED3A51A4BF9767AFD /* CaptionedSliderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53642ACF172CFEC27284CADD /* CaptionedSliderView.swift */; };
 		660CB134D89A53AE643AE21A /* SchemaMigrator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 762C325A6A70C2876B03CAFE /* SchemaMigrator.swift */; };
@@ -4805,6 +4807,7 @@
 		6872272FD02DECD612348394 /* NotesWindowToolbarTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesWindowToolbarTests.swift; sourceTree = "<group>"; };
 		68A4BBEE28B705FB8FF593A0 /* JSONCPreprocessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JSONCPreprocessor.swift; sourceTree = "<group>"; };
 		68D8A687BA975179C597AA7F /* ComposableTabsViewControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposableTabsViewControllerTests.swift; sourceTree = "<group>"; };
+		68FBBAE65B74F2D17FD794E5 /* StartupQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupQueue.swift; sourceTree = "<group>"; };
 		690A3F776886927C6C0E93A0 /* NSColor+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSColor+Hex.swift"; sourceTree = "<group>"; };
 		69252BAE3CC77677D9905039 /* WebviewSchemeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebviewSchemeHandlerTests.swift; sourceTree = "<group>"; };
 		693DAA1E20FBD24634CBB240 /* LLMPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMPickerView.swift; sourceTree = "<group>"; };
@@ -5281,6 +5284,7 @@
 		B96245BEEF6960524F4E7269 /* MoneyFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyFormatter.swift; sourceTree = "<group>"; };
 		B96CF5B3737039A880292A4F /* AIProviderConfigSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderConfigSyncTests.swift; sourceTree = "<group>"; };
 		B97C55C1933FDB066F01BA7C /* ThemeTerminalTopicPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeTerminalTopicPanel.swift; sourceTree = "<group>"; };
+		B9A3EC5FBF47EAA9E1E82137 /* StartupQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupQueueTests.swift; sourceTree = "<group>"; };
 		B9D78EBD9C75F8215D809DC3 /* ThemePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemePickerView.swift; sourceTree = "<group>"; };
 		B9F802CE87AAB4F3411BE1A5 /* LocalInferenceGuard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalInferenceGuard.swift; sourceTree = "<group>"; };
 		BA0E17288E6E5BF3D3651C70 /* ApplicationsTopic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationsTopic.swift; sourceTree = "<group>"; };
@@ -6532,6 +6536,7 @@
 				064FAE04F37F00C47FA800F7 /* FirstRunExperience.swift */,
 				A6F9550B0951931BB29B711C /* PreparationJob.swift */,
 				0840ABCD3FD0288D138BA38B /* StartupJob.swift */,
+				68FBBAE65B74F2D17FD794E5 /* StartupQueue.swift */,
 			);
 			path = Launch;
 			sourceTree = "<group>";
@@ -7403,6 +7408,7 @@
 			isa = PBXGroup;
 			children = (
 				334A359CB9C258AC16F98B6F /* StartupJobTests.swift */,
+				B9A3EC5FBF47EAA9E1E82137 /* StartupQueueTests.swift */,
 			);
 			name = AgenticToolkitLaunchTests;
 			path = Tests/AgenticToolkitLaunchTests;
@@ -13324,6 +13330,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C2CBFEFE7485AB98C0A61694 /* StartupJobTests.swift in Sources */,
+				4B1BD19CA14095A0E0FC58FA /* StartupQueueTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -14122,6 +14129,7 @@
 				6D314F6F204D34918DA1E5FD /* FirstRunExperience.swift in Sources */,
 				14FC53CDDF6970E35F73598C /* PreparationJob.swift in Sources */,
 				3A9C0307383423C96D62A0F4 /* StartupJob.swift in Sources */,
+				65754815F200607627AF8E02 /* StartupQueue.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
