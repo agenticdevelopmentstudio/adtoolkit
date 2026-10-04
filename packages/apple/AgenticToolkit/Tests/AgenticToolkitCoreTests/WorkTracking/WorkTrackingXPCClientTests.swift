@@ -49,11 +49,20 @@ final class WorkTrackingXPCClientTests: XCTestCase {
     }
 
     func testStatusDecodesSnakeCase() async {
-        let sent = WorkTrackingStatus(enabled: true, accessibility: .granted, writeFailures: 2, lastError: "x")
-        transport.data = wire(sent)
-        XCTAssertTrue((String(bytes: transport.data, encoding: .utf8) ?? "").contains("write_failures"))
+        let literal = """
+        {"enabled":true,"accessibility":"granted","write_failures":2,"last_error":"x",
+         "current_span":{"id":"s1","bundle_id":"com.x","app_name":"X","window_title":"w",
+         "working_path":"/p","repo_root":"/p","branch":"main","started_at":"2026-10-03T10:00:00Z",
+         "ended_at":"","tz":"UTC","last_seen_at":"2026-10-03T10:00:05Z"}}
+        """
+        transport.data = Data(literal.utf8)
         let status = await client.status()
-        XCTAssertEqual(status, sent)
+        XCTAssertEqual(status?.enabled, true)
+        XCTAssertEqual(status?.accessibility, .granted)
+        XCTAssertEqual(status?.writeFailures, 2)
+        XCTAssertEqual(status?.lastError, "x")
+        XCTAssertEqual(status?.currentSpan?.bundleId, "com.x")
+        XCTAssertEqual(status?.currentSpan?.lastSeenAt, "2026-10-03T10:00:05Z")
     }
 
     func testEmptyReplyIsNil() async {
@@ -84,13 +93,17 @@ final class WorkTrackingXPCClientTests: XCTestCase {
     }
 
     func testSpansDecodeNewestFirstAsSent() async {
-        let newer = ActivitySpanDTO(id: "b", bundleId: "com.x", appName: "X",
-                                    startedAt: "2026-10-03T10:00:00Z", tz: "UTC")
-        let older = ActivitySpanDTO(id: "a", bundleId: "com.x", appName: "X",
-                                    startedAt: "2026-10-03T09:00:00Z", tz: "UTC")
-        transport.rows = [wire(newer), wire(older)]
+        func literal(_ id: String, _ start: String) -> Data {
+            Data("""
+            {"id":"\(id)","bundle_id":"com.x","app_name":"X","window_title":"w","working_path":"/p",
+             "repo_root":"/p","branch":"main","started_at":"\(start)","ended_at":"","tz":"UTC","last_seen_at":""}
+            """.utf8)
+        }
+        transport.rows = [literal("b", "2026-10-03T10:00:00Z"), literal("a", "2026-10-03T09:00:00Z")]
         let spans = await client.spans(since: nil, limit: 10)
         XCTAssertEqual(spans?.map(\.id), ["b", "a"])
+        XCTAssertEqual(spans?.first?.bundleId, "com.x")
+        XCTAssertEqual(spans?.first?.startedAt, "2026-10-03T10:00:00Z")
     }
 
     @MainActor
