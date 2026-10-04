@@ -45,6 +45,14 @@ final class ActivityPersistenceContractTests: XCTestCase {
         XCTAssertEqual(store.spans.map(\.id), ["old"])
     }
 
+    func testInMemoryPruneNeverRemovesOpenSpans() throws {
+        let store = InMemoryActivityStore()
+        store.spans = [ActivitySpanDTO(id: "open", bundleId: "b", appName: "A",
+                                       startedAt: "2026-09-01T09:00:00Z", tz: "UTC")]
+        XCTAssertEqual(try store.pruneActivity(endedBefore: "2099-01-01T00:00:00Z"), 0)
+        XCTAssertEqual(store.spans.map(\.id), ["open"])
+    }
+
     func testInMemoryPruneRemovesOnlyClosedOldIdleIntervals() throws {
         let store = InMemoryActivityStore()
         store.idle = [(from: "2026-09-01T09:00:00Z", until: "2026-09-01T09:30:00Z"),

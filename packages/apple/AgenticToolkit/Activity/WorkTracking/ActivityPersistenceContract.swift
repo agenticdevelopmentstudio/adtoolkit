@@ -10,7 +10,10 @@ public enum ActivityPersistenceContract {
     private static let base = "2026-10-01T09:00:00Z"
 
     private static func at(_ offset: Int) -> String {
-        UTCTimestamp.adding(offset, to: base) ?? base
+        guard let result = UTCTimestamp.adding(offset, to: base) else {
+            preconditionFailure("cannot offset \(base) by \(offset)")
+        }
+        return result
     }
 
     private static func span(_ id: String, start: Int = 0) -> ActivitySpanDTO {
@@ -31,11 +34,17 @@ public enum ActivityPersistenceContract {
             ("recovery with heartbeat", recoveryWithHeartbeat),
             ("recovery without heartbeat", recoveryWithoutHeartbeat),
             ("recovery with idle", recoveryWithIdle),
+            ("recovery ignores late idle", recoveryIgnoresLateIdle),
+            ("recovery leaves closed spans", recoveryLeavesClosedSpans),
             ("listing", listing)
         ]
         for (name, check) in checks {
             var local: [String] = []
-            try check(try make(), &local)
+            do {
+                try check(try make(), &local)
+            } catch {
+                local.append("threw \(error)")
+            }
             failures += local.map { "\(name): \($0)" }
         }
         return failures
@@ -121,12 +130,32 @@ public enum ActivityPersistenceContract {
         if second != at(4050) { out.append("idle interval not closed by recovery, b ended \(second ?? "nil")") }
     }
 
+    private static func recoveryIgnoresLateIdle(_ store: any ActivityPersistence, _ out: inout [String]) throws {
+        try store.openActivitySpan(span("a"))
+        try store.touchActivitySpan(id: "a", at: at(120))
+        try store.openIdleInterval(from: at(300))   // after the heartbeat: not this span's
+        try store.recoverActivity(now: at(3600))
+        let ended = try endedAt(store, "a")
+        if ended != at(120) { out.append("idle after heartbeat moved the end to \(ended ?? "nil")") }
+    }
+
+    private static func recoveryLeavesClosedSpans(_ store: any ActivityPersistence, _ out: inout [String]) throws {
+        try store.openActivitySpan(span("a"))
+        try store.closeActivitySpan(id: "a", endedAt: at(60))
+        try store.openActivitySpan(span("b", start: 100))
+        try store.touchActivitySpan(id: "b", at: at(200))
+        let count = try store.recoverActivity(now: at(3600))
+        if count != 1 { out.append("expected 1 span closed, got \(count)") }
+        let ended = try endedAt(store, "a")
+        if ended != at(60) { out.append("closed span changed to \(ended ?? "nil")") }
+    }
+
     private static func listing(_ store: any ActivityPersistence, _ out: inout [String]) throws {
-        try store.openActivitySpan(span("old", start: 0))
-        try store.closeActivitySpan(id: "old", endedAt: at(60))
         try store.openActivitySpan(span("mid", start: 100))
         try store.closeActivitySpan(id: "mid", endedAt: at(160))
         try store.openActivitySpan(span("live", start: 200))
+        try store.openActivitySpan(span("old", start: 0))
+        try store.closeActivitySpan(id: "old", endedAt: at(60))
         let ids = try store.activitySpans(since: at(-10), limit: 10).map(\.id)
         if ids != ["live", "mid", "old"] { out.append("got \(ids), expected newest first including open") }
         let limited = try store.activitySpans(since: at(-10), limit: 2).map(\.id)

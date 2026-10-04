@@ -11,16 +11,20 @@ public final class InMemoryActivityStore: ActivityPersistence, @unchecked Sendab
     public init() {}
 
     /// Stands in for "derived": only spans this accepts are pruned.
+    /// It runs while the store's lock is held, so it must not touch the store.
     public var prunable: @Sendable (ActivitySpanDTO) -> Bool {
         get { lock.withLock { prunePredicate } }
         set { lock.withLock { prunePredicate = newValue } }
     }
 
+    /// For test setup. The setter replaces the whole array and is not atomic
+    /// for a read-modify-write (`store.spans.append(x)` can lose a concurrent write).
     public var spans: [ActivitySpanDTO] {
         get { lock.withLock { storedSpans } }
         set { lock.withLock { storedSpans = newValue } }
     }
 
+    /// For test setup; same non-atomic read-modify-write caveat as `spans`.
     public var idle: [(from: String, until: String)] {
         get { lock.withLock { storedIdle } }
         set { lock.withLock { storedIdle = newValue } }
