@@ -303,6 +303,33 @@ final class ProjectsWindowControllerTests: XCTestCase {
         XCTAssertEqual(saved?.roundingMode, "nearest")
     }
 
+    func testIdleCutoffUseGlobalAndOverrideSave() async throws {
+        let controller = makeController()
+        let panel = try await open(controller, "p1")
+        let toggle = panel.idleCutoffUsesGlobalToggle.toggle
+        XCTAssertEqual(toggle.state, .on)
+        XCTAssertFalse(panel.idleCutoffField.textField.isEnabled)
+        XCTAssertTrue(panel.idleCutoffUsesGlobalToggle.label.stringValue.hasPrefix("Use Global Idle Cutoff ("))
+
+        toggle.state = .off
+        toggle.sendAction(toggle.action, to: toggle.target)
+        await controller.lastWrite?.value
+        XCTAssertNotNil(fake.projects.first { $0.id == "p1" }?.idleCutoffMinutes)
+        XCTAssertTrue(panel.idleCutoffField.textField.isEnabled)
+
+        panel.idleCutoffField.textField.stringValue = "40"
+        panel.idleCutoffField.controlTextDidEndEditing(
+            Notification(name: NSControl.textDidEndEditingNotification, object: panel.idleCutoffField.textField))
+        await controller.lastWrite?.value
+        XCTAssertEqual(fake.projects.first { $0.id == "p1" }?.idleCutoffMinutes, 40)
+
+        toggle.state = .on
+        toggle.sendAction(toggle.action, to: toggle.target)
+        await controller.lastWrite?.value
+        XCTAssertNil(fake.projects.first { $0.id == "p1" }?.idleCutoffMinutes)
+        XCTAssertFalse(panel.idleCutoffField.textField.isEnabled)
+    }
+
     func testBillingAndArchivedTogglesSave() async throws {
         let controller = makeController()
         let panel = try await open(controller, "p1")

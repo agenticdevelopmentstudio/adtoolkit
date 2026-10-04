@@ -32,6 +32,8 @@ public final class ProjectDetailPanel: ComposableSettings.RecordDetailPanel<Bill
     public private(set) var rateField: ComposableSettings.MoneyFieldView!
     public private(set) var roundingField: ComposableSettings.IntegerFieldView!
     public private(set) var roundingModePopup: ComposableSettings.PopupMenuChoiceView<String>!
+    public private(set) var idleCutoffUsesGlobalToggle: ComposableSettings.CheckboxView!
+    public private(set) var idleCutoffField: ComposableSettings.IntegerFieldView!
     public private(set) var archivedToggle: ComposableSettings.CheckboxView!
     public private(set) var reposCard: ComposableSettings.EditableTableCard!
 
@@ -45,6 +47,8 @@ public final class ProjectDetailPanel: ComposableSettings.RecordDetailPanel<Bill
     private var billingModel: ComposableSettings.ViewModel<Bool>!
     private var roundingModel: ComposableSettings.RangeViewModel<Int>!
     private var roundingModeModel: ComposableSettings.ChoiceViewModel<String>!
+    private var idleCutoffUsesGlobalModel: ComposableSettings.ViewModel<Bool>!
+    private var idleCutoffModel: ComposableSettings.RangeViewModel<Int>!
     private var archivedModel: ComposableSettings.ViewModel<Bool>!
     /// The blank-rate hint shows the Settings default, which can change while
     /// the pane is open and nothing in the billing lists changes with it.
@@ -137,7 +141,8 @@ public final class ProjectDetailPanel: ComposableSettings.RecordDetailPanel<Bill
         }
         settingObservers = [
             UserSettingObserver(settings.defaultRateCents) { refreshRate($0) },
-            UserSettingObserver(settings.currency) { refreshRate($0) }
+            UserSettingObserver(settings.currency) { refreshRate($0) },
+            UserSettingObserver(settings.idleCutoffMinutes) { refreshRate($0) }
         ]
     }
 
@@ -252,6 +257,38 @@ public final class ProjectDetailPanel: ComposableSettings.RecordDetailPanel<Bill
         _ = roundingModePopup.popUpButton.accessibilityID("billing.project.roundingMode")
         card.addSettingSubview(roundingModePopup)
 
+        idleCutoffUsesGlobalModel = ComposableSettings.ViewModel<Bool>(
+            title: Self.useGlobalIdleCutoffTitle(settings.idleCutoffMinutes.value),
+            get: { [weak self] in self?.project.idleCutoffMinutes == nil },
+            set: { [weak self] useGlobal in
+                guard let self else { return }
+                let own = self.project.idleCutoffMinutes ?? self.settings.idleCutoffMinutes.value
+                self.commit(self.project.replacing(idleCutoffMinutes: .some(useGlobal ? nil : own)))
+            },
+            explanation: "Minutes of inactivity after which tracked time stops counting."
+        )
+        idleCutoffUsesGlobalToggle = ComposableSettings.CheckboxView(with: idleCutoffUsesGlobalModel)
+        _ = idleCutoffUsesGlobalToggle.toggle.accessibilityID("billing.project.idleCutoffUsesGlobal")
+        card.addSettingSubview(idleCutoffUsesGlobalToggle)
+
+        idleCutoffModel = ComposableSettings.RangeViewModel<Int>(
+            title: "Idle Cutoff (minutes)",
+            minValue: BillingLimits.idleCutoffMinutes.lowerBound,
+            maxValue: BillingLimits.idleCutoffMinutes.upperBound,
+            get: { [weak self] in
+                guard let self else { return BillingDefaults.idleCutoffMinutes }
+                return self.project.idleCutoffMinutes ?? self.settings.idleCutoffMinutes.value
+            },
+            set: { [weak self] minutes in
+                guard let self else { return }
+                self.commit(self.project.replacing(idleCutoffMinutes: .some(minutes)))
+            }
+        )
+        idleCutoffField = ComposableSettings.IntegerFieldView(viewModel: idleCutoffModel)
+        _ = idleCutoffField.textField.accessibilityID("billing.project.idleCutoff")
+        card.addSettingSubview(idleCutoffField)
+        syncIdleCutoffControls()
+
         archivedModel = ComposableSettings.ViewModel<Bool>(
             title: "Archived",
             get: { [weak self] in self?.project.archived ?? false },
@@ -315,6 +352,8 @@ public final class ProjectDetailPanel: ComposableSettings.RecordDetailPanel<Bill
         roundingModel.refresh()
         roundingModeModel.refresh()
         archivedModel.refresh()
+        idleCutoffUsesGlobalModel.refresh()
+        idleCutoffModel.refresh()
         clientChoice.updateChoices(Self.clientChoices(clients: clients, current: fresh.clientId))
         clientChoice.refresh()
         notesModel.refresh()
@@ -333,13 +372,29 @@ public final class ProjectDetailPanel: ComposableSettings.RecordDetailPanel<Bill
         if attempted.defaultRateCents != stored.defaultRateCents { rateField.revert() }
         if attempted.roundingMinutes != stored.roundingMinutes { roundingModel.revert() }
         if attempted.notes != stored.notes { notesModel.revert() }
+        if attempted.idleCutoffMinutes != stored.idleCutoffMinutes { idleCutoffModel.revert() }
     }
 
     private func refreshRate() {
         guard let rateField else { return }
         rateField.placeholderCents = settings.defaultRateCents.value
         rateField.refresh()
+        syncIdleCutoffControls()
         showRepos(repos)
+    }
+
+    static func useGlobalIdleCutoffTitle(_ minutes: Int) -> String {
+        "Use Global Idle Cutoff (\(minutes) min)"
+    }
+
+    /// The checkbox names the current global value, and the field is live only
+    /// while the project has its own. The label is set after a model refresh
+    /// because a refresh redraws it from the model's fixed title.
+    private func syncIdleCutoffControls() {
+        guard let idleCutoffField, let idleCutoffUsesGlobalToggle else { return }
+        idleCutoffUsesGlobalToggle.label.stringValue = Self.useGlobalIdleCutoffTitle(settings.idleCutoffMinutes.value)
+        idleCutoffModel.refresh()
+        idleCutoffField.textField.isEnabled = project.idleCutoffMinutes != nil
     }
 
     /// The project's repositories, ordered by path with the any-branch row first.
