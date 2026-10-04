@@ -33,6 +33,8 @@ public final class BillingModel {
     /// `[sessionId: app name]` for the app-tracked runs in `recentSegments`
     /// and `runningTimers`. Empty when the names read failed: rows then say "App".
     public private(set) var appNames: [String: String] = [:]
+    /// App ids already asked for since the last full load, named or not.
+    private var askedAppIds: Set<String> = []
     public private(set) var overview: BillingOverviewDTO?
     public private(set) var lastError: String?
     public private(set) var lastUpdated: Date?
@@ -142,7 +144,8 @@ public final class BillingModel {
         let overviewValue = await overview ?? self.overview
         // One batched read for every app run on screen. Its failure costs
         // the names only, never the load.
-        let names = await Self.loadAppNames(service, for: running + segments, known: [:])
+        askedAppIds = []
+        let names = await loadAppNames(service, for: running + segments, known: [:])
         guard generation == writesStarted else { return }
         let changed = names != self.appNames || clients != self.clients || projects != self.projects
             || running != self.runningTimers || segments != self.recentSegments
@@ -163,7 +166,7 @@ public final class BillingModel {
         guard let running = await service.billingRunningTimers(), generation == writesStarted else { return }
         // A new app timer is named now, not at the next full load; only the
         // ids not yet known are asked for.
-        let names = await Self.loadAppNames(service, for: running, known: appNames)
+        let names = await loadAppNames(service, for: running, known: appNames)
         guard generation == writesStarted, running != runningTimers || names != appNames else { return }
         runningTimers = running
         appNames = names
@@ -173,13 +176,17 @@ public final class BillingModel {
     /// `known` plus the names of the app runs in `segments` that it lacks, in
     /// one call. With nothing unknown there is no call; a failed call keeps
     /// `known` (the rows read "App"), and never fails a load.
-    private static func loadAppNames(
+    ///
+    /// An id is asked for once between full loads: one the daemon has no name
+    /// for (a pruned span, an older daemon) is not asked again on every tick.
+    private func loadAppNames(
         _ service: any BillingService, for segments: [BillingSegmentDTO], known: [String: String]
     ) async -> [String: String] {
         let unknown = Array(Set(segments.map(\.sessionId).filter {
-            ActivitySpanSession.spanId(sessionId: $0) != nil && known[$0] == nil
+            ActivitySpanSession.spanId(sessionId: $0) != nil && known[$0] == nil && !askedAppIds.contains($0)
         }))
         guard !unknown.isEmpty else { return known }
+        askedAppIds.formUnion(unknown)
         let fetched = await service.billingAppNames(sessionIds: unknown) ?? [:]
         return known.merging(fetched) { first, _ in first }
     }

@@ -246,6 +246,20 @@ final class BillingModelTests: XCTestCase {
         XCTAssertEqual(fake.appNameCalls.count, 1, "a name already known is not asked for again")
     }
 
+    func testAnIdWithNoNameIsAskedOncePerLoad() async {
+        let model = BillingModel(service: fake, refreshInterval: 999)
+        await model.poll()
+        fake.segments.append(BillingSegmentDTO(
+            id: "s-gone", sessionId: "app:gone", origin: "auto", projectId: "p1", startedAt: "2026-09-22T09:20:00Z"))
+        await model.poll()
+        XCTAssertEqual(fake.appNameCalls, [["app:gone"]])
+        await model.poll()
+        XCTAssertEqual(fake.appNameCalls.count, 1, "not asked again on the next periodic refresh")
+
+        await model.refresh()
+        XCTAssertEqual(fake.appNameCalls.count, 2, "a full load asks again")
+    }
+
     func testAWindowOnScreenMakesAPassReadEverything() async {
         let model = BillingModel(service: fake, refreshInterval: 999)
         await model.poll()
