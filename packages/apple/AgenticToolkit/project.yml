@@ -237,6 +237,16 @@ targets:
     # Daemon-safe: Foundation + ApplicationServices (AX) + CoreServices (Apple
     # Events) + UserNotifications, all auto-linked via import. No AppKit.
 
+  AgenticToolkitLaunch:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Launch
+    dependencies:
+      - target: AgenticToolkitCore
+
   AgenticToolkitDisplays:
     type: framework
     platform: macOS
@@ -676,6 +686,21 @@ targets:
       - Tests/AgenticToolkitPermissionsTests
     dependencies:
       - target: AgenticToolkitPermissions
+        embed: true
+        codeSign: true
+
+  AgenticToolkitLaunchTests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitLaunchTests
+    dependencies:
+      - target: AgenticToolkitLaunch
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCore
         embed: true
         codeSign: true
 
@@ -1189,6 +1214,7 @@ aggregateTargets:
       - AgenticToolkitCoreMacOS
       - AgenticToolkitPermissions
       - AgenticToolkitPermissionsUI
+      - AgenticToolkitLaunch
       - AgenticToolkitDisplays
       - AgenticToolkitScripting
       - AgenticToolkitMacOS
@@ -1230,6 +1256,7 @@ aggregateTargets:
       - AgenticToolkitCoreUI
       - AgenticToolkitPermissions
       - AgenticToolkitPermissionsUI
+      - AgenticToolkitLaunch
       - AgenticToolkitDisplays
       - AgenticToolkitScripting
       - AgenticToolkitMacOS
@@ -1239,6 +1266,7 @@ aggregateTargets:
       - AgenticToolkitCoreUITests
       - AgenticToolkitPermissionsTests
       - AgenticToolkitPermissionsUITests
+      - AgenticToolkitLaunchTests
       - AgenticToolkitDisplaysTests
       - AgenticToolkitMacOSTests
       - AgenticToolkitSystemMonitor
@@ -1420,6 +1448,23 @@ schemes:
       config: Debug
       targets:
         - AgenticToolkitPermissionsTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitLaunch:
+    build:
+      targets:
+        AgenticToolkitLaunch: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitLaunchTests
     profile:
       config: Release
     analyze:

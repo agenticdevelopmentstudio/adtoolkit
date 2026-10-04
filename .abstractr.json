@@ -124,6 +124,17 @@
       "holds": "AgenticToolkitDisplays. Display inventory, modes, anchor layouts, monitoring, thumbnails, Universal Control placement. System frameworks only - the displayr CLI links it alone."
     },
     {
+      "name": "apple-launch",
+      "paths": [
+        "packages/apple/AgenticToolkit/Launch/"
+      ],
+      "depends_on": [
+        "apple-core"
+      ],
+      "shared": true,
+      "holds": "AgenticToolkitLaunch. Startup-job protocols, StartupQueue and LaunchManager: first-run and install work done natively."
+    },
+    {
       "name": "apple-permissionsui",
       "paths": [
         "packages/apple/AgenticToolkit/PermissionsUI/"
@@ -310,6 +321,7 @@
         "apple-macos",
         "apple-permissions",
         "apple-permissionsui",
+        "apple-launch",
         "apple-pluginkit",
         "apple-database",
         "apple-sync",
