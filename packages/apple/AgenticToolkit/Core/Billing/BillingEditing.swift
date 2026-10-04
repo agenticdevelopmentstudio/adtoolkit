@@ -26,7 +26,8 @@ extension BillingProjectDTO {
         id: String? = nil, clientId: String?? = nil, name: String? = nil,
         notes: String? = nil, defaultRateCents: Int?? = nil,
         roundingMinutes: Int? = nil, roundingMode: String? = nil,
-        billingEnabled: Bool? = nil, archived: Bool? = nil
+        billingEnabled: Bool? = nil, archived: Bool? = nil,
+        idleCutoffMinutes: Int?? = nil
     ) -> BillingProjectDTO {
         BillingProjectDTO(
             id: id ?? self.id, clientId: clientId ?? self.clientId, name: name ?? self.name,
@@ -35,7 +36,8 @@ extension BillingProjectDTO {
             roundingMode: roundingMode ?? self.roundingMode,
             billingEnabled: billingEnabled ?? self.billingEnabled,
             archived: archived ?? self.archived,
-            createdAt: createdAt, updatedAt: updatedAt
+            createdAt: createdAt, updatedAt: updatedAt,
+            idleCutoffMinutes: idleCutoffMinutes ?? self.idleCutoffMinutes
         )
     }
 }

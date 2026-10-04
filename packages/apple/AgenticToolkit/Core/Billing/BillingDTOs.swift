@@ -81,6 +81,9 @@ public struct BillingProjectDTO: Codable, Sendable, Equatable, Identifiable {
     public let archived: Bool
     public let createdAt: String
     public let updatedAt: String
+    /// Minutes of silence that end a run on this project; nil = the global
+    /// setting. Governs Claude-derived and app-derived time alike.
+    public let idleCutoffMinutes: Int?
 
     public init(
         id: String,
@@ -93,7 +96,8 @@ public struct BillingProjectDTO: Codable, Sendable, Equatable, Identifiable {
         billingEnabled: Bool = true,
         archived: Bool = false,
         createdAt: String = "",
-        updatedAt: String = ""
+        updatedAt: String = "",
+        idleCutoffMinutes: Int? = nil
     ) {
         self.id = id
         self.clientId = clientId
@@ -106,6 +110,7 @@ public struct BillingProjectDTO: Codable, Sendable, Equatable, Identifiable {
         self.archived = archived
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        self.idleCutoffMinutes = idleCutoffMinutes
     }
 }
 

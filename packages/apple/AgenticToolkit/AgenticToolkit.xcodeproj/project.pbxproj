@@ -1297,6 +1297,7 @@
 		8F6836DC7D80A7B50BFCD91C /* AgenticDeveloperHubClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1135775DADF0951E93877DC0 /* AgenticDeveloperHubClient.framework */; };
 		8F6948DE534CE263A6363612 /* ExtensionManifestLocalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1316ACD5A373C54A1769F255 /* ExtensionManifestLocalization.swift */; };
 		8FC6058DE13D71FBE42DCF61 /* LogViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07014813B693D6B7CA357C8C /* LogViewTests.swift */; };
+		8FD5C575334E8C7895674B98 /* BillingProjectCutoffTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C17CD5378F08D914FF09EF18 /* BillingProjectCutoffTests.swift */; };
 		8FED2A85C99076782C8E7C11 /* AppearanceController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BA301AB6BB379592455B323 /* AppearanceController.swift */; };
 		902052303A539C37552920FD /* ExtensionHostInstallerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5EAE339C94E99D5A0FBE738 /* ExtensionHostInstallerTests.swift */; };
 		907D431A86802EBCA1D135CB /* OllamaModelMetadataTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A53F5510AE3A737BC98AEC4 /* OllamaModelMetadataTests.swift */; };
@@ -5500,6 +5501,7 @@
 		C14B323738F9492A9275261A /* SessionWatcherActionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionWatcherActionHandler.swift; sourceTree = "<group>"; };
 		C15F1B5330F8EB389272C517 /* AIProviderConfigKeys.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderConfigKeys.swift; sourceTree = "<group>"; };
 		C16470272D3A02EFD3772340 /* PinnedEndsLine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinnedEndsLine.swift; sourceTree = "<group>"; };
+		C17CD5378F08D914FF09EF18 /* BillingProjectCutoffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BillingProjectCutoffTests.swift; sourceTree = "<group>"; };
 		C18DCBEAB2F005EEAB1BEFB2 /* ExtensionIdentityComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionIdentityComponent.swift; sourceTree = "<group>"; };
 		C1AF85868198DDB4610027CC /* LanguageServerDocumentSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageServerDocumentSync.swift; sourceTree = "<group>"; };
 		C2013C6FE153DD7C70B1BBF2 /* LSPEditorAnnotationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LSPEditorAnnotationCoordinator.swift; sourceTree = "<group>"; };
@@ -8546,6 +8548,7 @@
 				F9A0B33BE7A2A0CE89DFE2FA /* BillingDTOsTests.swift */,
 				95667A29FEECD3146AF99CE5 /* BillingModelAssignmentTests.swift */,
 				817621AAD3A5DDB7468190B7 /* BillingModelTests.swift */,
+				C17CD5378F08D914FF09EF18 /* BillingProjectCutoffTests.swift */,
 				AD6F38A1CD44F2C024089F13 /* BillingRateResolutionTests.swift */,
 				502A639D1518E7E949E7093E /* BillingRollupUnionTests.swift */,
 				21CAAD59C4EA6049BB4CBF1C /* BillingRoundingTests.swift */,
@@ -12688,6 +12691,7 @@
 				ABB402C62183E526FFC08CA6 /* BillingDerivationTests.swift in Sources */,
 				110CAAB748954329C3672BD3 /* BillingModelAssignmentTests.swift in Sources */,
 				A47C173DF8606ABD7FA47BCD /* BillingModelTests.swift in Sources */,
+				8FD5C575334E8C7895674B98 /* BillingProjectCutoffTests.swift in Sources */,
 				FC73F156B53AABBADB907421 /* BillingRateResolutionTests.swift in Sources */,
 				E230BA64651688B955BAE3DF /* BillingRollupUnionTests.swift in Sources */,
 				CD96F51A779F2AB74DA1DF76 /* BillingRoundingTests.swift in Sources */,

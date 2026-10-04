@@ -10,6 +10,7 @@ public enum BillingStore {
     public enum BillingError: Error, LocalizedError {
         case missingName
         case invalidRounding(Int)
+        case invalidIdleCutoff(Int)
         case unknownProject(String)
         case missingRepoRoot
         case repoAlreadyClaimed(root: String, branch: String)
@@ -30,6 +31,9 @@ public enum BillingStore {
                     return "Rounding must be at least one minute (got \(minutes))."
                 }
                 return "Rounding can be at most \(BillingLimits.roundingMinutes.upperBound) minutes (got \(minutes))."
+            case .invalidIdleCutoff:
+                return "The idle cutoff must be between \(BillingLimits.idleCutoffMinutes.lowerBound) and "
+                    + "\(BillingLimits.idleCutoffMinutes.upperBound) minutes."
             case .invalidRate(let cents):
                 let most = BillingLimits.defaultRateCents.upperBound / 100
                 return "A rate must be between 0 and \(most) per hour (got \(cents) cents)."
@@ -108,6 +112,9 @@ public enum BillingStore {
         guard BillingLimits.roundingMinutes.contains(dto.roundingMinutes) else {
             throw BillingError.invalidRounding(dto.roundingMinutes)
         }
+        if let minutes = dto.idleCutoffMinutes, !BillingLimits.idleCutoffMinutes.contains(minutes) {
+            throw BillingError.invalidIdleCutoff(minutes)
+        }
         try checkRate(dto.defaultRateCents)
 
         let now = UTCTimestamp.now()
@@ -122,10 +129,24 @@ public enum BillingStore {
             defaultRateCents: dto.defaultRateCents,
             roundingMinutes: dto.roundingMinutes, roundingMode: dto.roundingMode,
             billingEnabled: dto.billingEnabled, archived: dto.archived,
-            createdAt: existing?.createdAt ?? now, updatedAt: now
+            createdAt: existing?.createdAt ?? now, updatedAt: now,
+            idleCutoffMinutes: dto.idleCutoffMinutes
         )
         try database.upsertBillingProject(stored)
+        // A changed cutoff changes where every run of this project splits.
+        // Unlocked days re-derive; locked entries keep their segments.
+        if let existing, existing.idleCutoffMinutes != stored.idleCutoffMinutes {
+            _ = try database.resetBillingDerivationOfDerivedSessions()
+        }
         return stored
+    }
+
+    /// The idle cutoff for work claimed by `project`: its override, else the
+    /// global default. A stored override outside the limits (from an older
+    /// build) is clamped, not trusted.
+    public static func cutoffSeconds(for project: BillingProjectDTO?, default defaultSeconds: Int) -> Int {
+        guard let minutes = project?.idleCutoffMinutes else { return defaultSeconds }
+        return BillingLimits.clamp(minutes, to: BillingLimits.idleCutoffMinutes) * 60
     }
 
     /// `billing_entry.project_id` is `NOT NULL`, so deleting a project out from
@@ -208,17 +229,16 @@ public enum BillingStore {
     /// its project must have Track Time on. Unassigned work has no switch.
     private static func claim(
         projectRoot: String, branch: String, database: any BillingPersistence
-    ) throws -> (resolution: BillingRateResolution, tracked: Bool) {
+    ) throws -> (resolution: BillingRateResolution, tracked: Bool, project: BillingProjectDTO?) {
         let repos = try database.billingRepos(projectId: nil)
         let projects = try database.billingProjects(includeArchived: true)
         let resolution = BillingRate.resolve(
             projectRoot: projectRoot, branch: branch, repos: repos, projects: projects
         )
         let repoOn = resolution.repoId.map { id in repos.first { $0.id == id }?.billingEnabled ?? true } ?? true
-        let projectOn = resolution.projectId.map { id in
-            projects.first { $0.id == id }?.billingEnabled ?? true
-        } ?? true
-        return (resolution, repoOn && projectOn)
+        let project = resolution.projectId.flatMap { id in projects.first { $0.id == id } }
+        let projectOn = project?.billingEnabled ?? true
+        return (resolution, repoOn && projectOn, project)
     }
 
     // MARK: - Derivation
@@ -226,6 +246,9 @@ public enum BillingStore {
     /// Derives one session's runs and persists them. The unit of work is a
     /// session because that is the unit the watermark is stamped on: a failure
     /// mid-batch leaves every session either fully derived or untouched.
+    ///
+    /// `cutoffSeconds` is the **global default** idle cutoff; the claiming
+    /// project's own override, when it has one, replaces it.
     ///
     /// Returns how many segments were written.
     @discardableResult
@@ -240,7 +263,7 @@ public enum BillingStore {
         // The claim can come back unassigned (repoId and projectId nil). The
         // segment is still written: unmapped time is tracked, never discarded,
         // so it can be assigned to a project later without re-deriving history.
-        let (resolution, tracked) = try claim(
+        let (resolution, tracked, project) = try claim(
             projectRoot: session.projectRoot,
             branch: session.branch,
             database: database
@@ -251,8 +274,9 @@ public enum BillingStore {
         // until it is, so leaving it open meant a run shown Running forever.
         // The watermark still advances, so the session is not reconsidered on
         // every pass forever.
+        let cutoff = Self.cutoffSeconds(for: project, default: cutoffSeconds)
         guard resolution.projectId != nil || trackUnassigned else {
-            try closeOpenRuns(of: session, cutoffSeconds: cutoffSeconds, now: now,
+            try closeOpenRuns(of: session, cutoffSeconds: cutoff, now: now,
                               database: database, activity: activity)
             try database.markBillingDerived(sessionId: session.sessionId, at: session.lastActivityAt)
             return 0
@@ -266,7 +290,7 @@ public enum BillingStore {
             sessionStartedAt: session.startedAt,
             sessionIsActive: session.isActive,
             now: now,
-            cutoffSeconds: cutoffSeconds
+            cutoffSeconds: cutoff
         )
         let context = BillingSegmentContext(
             projectId: resolution.projectId,
