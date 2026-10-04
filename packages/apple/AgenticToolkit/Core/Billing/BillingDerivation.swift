@@ -105,6 +105,69 @@ public enum BillingDerivation {
         return result
     }
 
+    /// Splits one app-activity span into runs at its idle gaps.
+    ///
+    /// An idle interval of at least `cutoffSeconds` is cut out of the span
+    /// (an open one counts as idle until `now`); shorter idles stay billed.
+    /// An open span (`spanEnd == ""`) runs to `now`, and its last run stays
+    /// open unless an open idle past the cutoff ends it — then it closes at
+    /// the idle's start, the last input. Any unparsable timestamp yields no
+    /// runs.
+    public static func appRuns(
+        spanStart: String,
+        spanEnd: String,
+        idle: [BillingIdleInterval],
+        cutoffSeconds: Int,
+        now: String
+    ) -> [BillingRun] {
+        let cutoff = cutoffSeconds > 0 ? cutoffSeconds : defaultCutoffSeconds
+        guard let start = UTCTimestamp.epochSeconds(spanStart),
+              let nowSeconds = UTCTimestamp.epochSeconds(now) else { return [] }
+        let end: Int
+        if spanEnd.isEmpty {
+            end = nowSeconds
+        } else {
+            guard let parsed = UTCTimestamp.epochSeconds(spanEnd) else { return [] }
+            end = parsed
+        }
+        guard end > start else { return [] }
+
+        var gaps: [ActivityRuns.Span<Int>] = []
+        for interval in idle {
+            guard let from = UTCTimestamp.epochSeconds(interval.idleFrom) else { return [] }
+            let until: Int
+            if interval.idleUntil.isEmpty {
+                until = nowSeconds
+            } else {
+                guard let parsed = UTCTimestamp.epochSeconds(interval.idleUntil) else { return [] }
+                until = parsed
+            }
+            guard until - from >= cutoff else { continue }
+            let clippedStart = max(from, start)
+            let clippedEnd = min(until, end)
+            if clippedEnd > clippedStart {
+                gaps.append(ActivityRuns.Span(start: clippedStart, end: clippedEnd))
+            }
+        }
+
+        var pieces: [ActivityRuns.Span<Int>] = []
+        var cursor = start
+        for gap in ActivityRuns.union(gaps) {
+            if gap.start > cursor { pieces.append(ActivityRuns.Span(start: cursor, end: gap.start)) }
+            cursor = max(cursor, gap.end)
+        }
+        if end > cursor { pieces.append(ActivityRuns.Span(start: cursor, end: end)) }
+
+        return pieces.map { piece in
+            // A piece reaching `now` on an open span means no gap ends at
+            // now: the user is still at it, so the run is still running.
+            if spanEnd.isEmpty && piece.end == end {
+                return BillingRun(startedAt: UTCTimestamp.string(epochSeconds: piece.start), endedAt: "", seconds: 0)
+            }
+            return closed(from: piece.start, to: piece.end)
+        }
+    }
+
     private static func closed(from start: Int, to end: Int) -> BillingRun {
         BillingRun(
             startedAt: UTCTimestamp.string(epochSeconds: start),

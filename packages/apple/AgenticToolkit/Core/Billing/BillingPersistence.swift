@@ -144,6 +144,16 @@ public protocol BillingPersistence {
         sessionId: String, runs: [BillingRun], context: BillingSegmentContext, historyStartsAt: String?
     ) throws -> Int
 
+    // MARK: App-span derivation
+
+    /// Spans still to derive: every open span, and every closed span whose
+    /// watermark differs from its end. Oldest first.
+    func billingAppSpansNeedingDerivation(limit: Int) throws -> [BillingAppSpanRow]
+    /// Idle intervals overlapping `[from, to]`; `to == ""` is open-ended.
+    func billingIdleIntervals(from start: String, to end: String) throws -> [BillingIdleInterval]
+    /// Stamps the span's derivation watermark (its `endedAt` at selection time).
+    func markAppSpanBillingDerived(spanId: String, at value: String) throws
+
     // MARK: Entries
 
     func billingEntries(projectId: String?, status: String?, since: String) throws -> [BillingEntryDTO]

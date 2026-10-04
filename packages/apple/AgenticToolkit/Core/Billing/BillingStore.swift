@@ -323,6 +323,65 @@ public enum BillingStore {
         return written
     }
 
+    /// Derives one app-activity span's runs and persists them as ordinary
+    /// derived segments under `span.sessionId` (`app:` + span id), so they get
+    /// everything a Claude segment gets: locked-entry subtraction, hand
+    /// assignment survival and the rollup's per-run grouping.
+    ///
+    /// `defaultCutoffSeconds` is the global idle cutoff; the claiming project's
+    /// override replaces it. Returns how many segments were written.
+    @discardableResult
+    public static func deriveAppSegments(
+        for span: BillingAppSpanRow,
+        defaultCutoffSeconds: Int,
+        trackUnassigned: Bool,
+        now: String,
+        database: any BillingPersistence
+    ) throws -> Int {
+        // An empty repo root resolves unassigned, which is what a span with
+        // no repo is.
+        let (resolution, tracked, project) = try claim(
+            projectRoot: span.repoRoot, branch: span.branch, database: database
+        )
+        let cutoff = Self.cutoffSeconds(for: project, default: defaultCutoffSeconds)
+        // The opt-out, as for sessions: no new trace, and a run left open by
+        // an earlier pass is closed with no time rather than shown Running
+        // forever.
+        guard resolution.projectId != nil || trackUnassigned else {
+            let open = try database.runningBillingSegments(origin: BillingSegmentDTO.autoOrigin)
+                .filter { $0.sessionId == span.sessionId }
+            for segment in open {
+                try database.closeBillingSegment(id: segment.id, endedAt: segment.startedAt, seconds: 0)
+            }
+            try database.markAppSpanBillingDerived(spanId: span.id, at: span.endedAt)
+            return 0
+        }
+
+        let idle = try database.billingIdleIntervals(from: span.startedAt, to: span.endedAt)
+        let runs = BillingDerivation.appRuns(
+            spanStart: span.startedAt, spanEnd: span.endedAt, idle: idle,
+            cutoffSeconds: cutoff, now: now
+        )
+        let context = BillingSegmentContext(
+            projectId: resolution.projectId,
+            repoId: resolution.repoId,
+            projectRoot: span.repoRoot.isEmpty ? span.workingPath : span.repoRoot,
+            branch: span.branch,
+            // The zone the span was recorded in, so local-day bucketing
+            // follows where the work happened.
+            tz: span.tz.isEmpty ? TimeZone.current.identifier : span.tz,
+            tracked: tracked
+        )
+        // Spans are never trimmed while pending, so there is no history start.
+        let written = try database.replaceDerivedSegments(
+            sessionId: span.sessionId, runs: runs, context: context, historyStartsAt: nil
+        )
+        // Stamped with `endedAt` as read at selection: an open span stamps ""
+        // and is re-selected every pass until it closes.
+        try database.markAppSpanBillingDerived(spanId: span.id, at: span.endedAt)
+        return written
+    }
+
     /// Closes this session's open derived runs without writing anything new:
     /// each ends where its run ends once the session is treated as finished,
     /// or — when no run covers it any more — at its own start, with no time.
