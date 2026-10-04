@@ -24,8 +24,14 @@ public final class WorkActivityRecorder {
         }
 
         /// The production set. `readsWindows: false` without the AX grant.
-        @MainActor public static func live(readsWindows: Bool) -> Triggers {
-            Triggers(focus: AppFocusTrigger(source: FrontmostFocusAdapter(readsWindows: readsWindows)),
+        /// `onAccessibilityRevoked` fires once, on the main actor, when the
+        /// grant is found withdrawn mid-run — see `FrontmostFocusAdapter`.
+        @MainActor public static func live(
+            readsWindows: Bool, onAccessibilityRevoked: (@MainActor () -> Void)? = nil
+        ) -> Triggers {
+            let adapter = FrontmostFocusAdapter(readsWindows: readsWindows)
+            adapter.onAccessibilityRevoked = onAccessibilityRevoked
+            return Triggers(focus: AppFocusTrigger(source: adapter),
                      input: InputActivityTrigger(interval: 30, idleThreshold: 60),
                      session: SessionTrigger(),
                      lifecycle: AppLifecycleTrigger())
@@ -47,6 +53,11 @@ public final class WorkActivityRecorder {
     private var current: ActivitySpanDTO?
     private var lastFocus: AppFocusDetail?
     private var inputActive = true
+    /// When input last resumed this run. The next idle closes any interval
+    /// still open at that moment before opening its own: a close that failed
+    /// to land would otherwise leave one idle open forever, and every span
+    /// after it would wait on it to derive.
+    private var lastResumedAt: String?
     private var running = false
     /// Not main-actor isolated only so `deinit` can invalidate it; every other
     /// access is on the main actor.
@@ -82,6 +93,11 @@ public final class WorkActivityRecorder {
     public func start() {
         guard !running else { return }
         running = true
+        // Presence as it is now, not assumed: a restart while the user is away
+        // must not heartbeat the span as if they were here until the first
+        // input tick (up to its interval later) says otherwise.
+        inputActive = (triggers.input as? any PresenceSampling)?.samplePresence() ?? true
+        lastResumedAt = nil
         let wired: [any ContextTrigger] = [triggers.focus, triggers.input, triggers.session, triggers.lifecycle]
         for trigger in wired {
             trigger.onEvent = { [weak self] detail, date in
@@ -150,10 +166,15 @@ public final class WorkActivityRecorder {
             case .inactive:
                 inputActive = false
                 let from = UTCTimestamp.string(from: date)
+                // Anything still open ended when input last resumed (or now, if
+                // it never did this run). A no-op when the last close landed.
+                let staleUntil = min(lastResumedAt ?? from, from)
+                write { try $0.closeIdleInterval(until: staleUntil) }
                 write { try $0.openIdleInterval(from: from) }
             case .active:
                 inputActive = true
                 let until = UTCTimestamp.string(from: date)
+                lastResumedAt = until
                 write { try $0.closeIdleInterval(until: until) }
             case .sample: break
             }

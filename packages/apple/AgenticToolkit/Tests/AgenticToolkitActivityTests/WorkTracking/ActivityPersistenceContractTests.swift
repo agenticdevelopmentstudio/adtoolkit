@@ -60,4 +60,16 @@ final class ActivityPersistenceContractTests: XCTestCase {
         XCTAssertEqual(try store.pruneActivity(endedBefore: "2026-09-15T00:00:00Z"), 1)
         XCTAssertEqual(store.idle.count, 1)
     }
+
+    func testInMemoryPruneKeepsIdleTimeAKeptSpanStillOverlaps() throws {
+        let store = InMemoryActivityStore()
+        store.prunable = { $0.id == "derived" }
+        store.spans = [closedSpan("derived", start: "2026-09-01T09:00:00Z", end: "2026-09-01T10:00:00Z"),
+                       closedSpan("pending", start: "2026-09-01T11:00:00Z", end: "2026-09-01T12:00:00Z")]
+        store.idle = [(from: "2026-09-01T09:15:00Z", until: "2026-09-01T09:30:00Z"),
+                      (from: "2026-09-01T11:15:00Z", until: "2026-09-01T11:30:00Z")]
+        XCTAssertEqual(try store.pruneActivity(endedBefore: "2026-09-15T00:00:00Z"), 2)
+        XCTAssertEqual(store.spans.map(\.id), ["pending"])
+        XCTAssertEqual(store.idle.map(\.from), ["2026-09-01T11:15:00Z"])
+    }
 }

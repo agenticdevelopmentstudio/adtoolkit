@@ -114,5 +114,40 @@ final class FrontmostFocusAdapterReadsWindowsTests: XCTestCase {
         XCTAssertEqual(probe.calls, 0)
         XCTAssertEqual(runner.calls, 0)
     }
+
+    // MARK: - Accessibility withdrawn mid-run
+
+    func testDeniedReadStopsEveryFurtherAXCallAndReportsOnce() {
+        var reads = 0
+        var revoked = 0
+        let probe = RecordingProbe()
+        let runner = RecordingRunner()
+        let adapter = FrontmostFocusAdapter(
+            readsWindows: true,
+            windowReader: { _, _ in reads += 1; return .init(accessDenied: true) },
+            apps: FakeTerminalApps(),
+            terminals: TerminalWorkingDirectoryReader(probe: probe, runner: runner))
+        adapter.onAccessibilityRevoked = { revoked += 1 }
+        var seen: [WindowFocus] = []
+        adapter.onFocus = { seen.append($0) }
+        adapter.emit()
+        adapter.emit()
+        adapter.poll()
+        XCTAssertEqual(reads, 1, "one denied read, then no AX call at all")
+        XCTAssertEqual(probe.calls, 0, "nor any Apple Events read of the terminal")
+        XCTAssertEqual(runner.calls, 0)
+        XCTAssertEqual(revoked, 1, "the host hears once")
+        XCTAssertTrue(adapter.accessibilityRevoked)
+        XCTAssertEqual(seen.count, 3, "focus keeps flowing, app-only")
+        XCTAssertTrue(seen.allSatisfy { $0.app.bundleID == "com.googlecode.iterm2" && $0.title == ""
+            && $0.windowID == 0 && $0.documentPath == nil })
+    }
+
+    func testOnlyAPIDisabledCountsAsAWithdrawnGrant() {
+        XCTAssertTrue(FrontmostFocusAdapter.deniesAccess(.apiDisabled))
+        XCTAssertFalse(FrontmostFocusAdapter.deniesAccess(.cannotComplete), "a hung app is not a revoked grant")
+        XCTAssertFalse(FrontmostFocusAdapter.deniesAccess(.noValue))
+        XCTAssertFalse(FrontmostFocusAdapter.deniesAccess(.failure))
+    }
 }
 #endif

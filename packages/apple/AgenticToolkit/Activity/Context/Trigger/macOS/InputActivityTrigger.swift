@@ -31,6 +31,14 @@ public protocol InputStatisticsSource: AnyObject {
     func sample() -> InputSample
 }
 
+/// A trigger that can say, on demand, whether the user is present now — so a
+/// consumer started mid-absence does not assume presence until the first tick.
+/// `nil` means it cannot tell.
+@MainActor
+public protocol PresenceSampling: AnyObject {
+    func samplePresence() -> Bool?
+}
+
 @MainActor
 public final class SystemInputStatisticsSource: InputStatisticsSource {
     public init() {}
@@ -71,7 +79,7 @@ public final class SystemInputStatisticsSource: InputStatisticsSource {
 /// reach the store slightly out of timestamp order; the store pages by `rowid`
 /// and ``TimelineBuilder`` sorts by time, which is where that is reconciled.
 @MainActor
-public final class InputActivityTrigger: ContextTrigger {
+public final class InputActivityTrigger: ContextTrigger, PresenceSampling {
     public let kind: ContextEventKind = .input
     public let requiredPermission: ContextPermission = .none
     public var onEvent: ((ContextEventDetail, Date) -> Void)?
@@ -187,6 +195,13 @@ public final class InputActivityTrigger: ContextTrigger {
             inactiveSince = stoppedAt
             emit(.inactive, at: stoppedAt, sample: sample, idleSeconds: nil)
         }
+    }
+
+    /// Whether the user is at the machine right now, read straight from the
+    /// source against the current threshold — without waiting for a tick and
+    /// without emitting anything.
+    public func samplePresence() -> Bool? {
+        Self.silence(in: source.sample()) < idleThreshold
     }
 
     /// How long the machine has been quiet: the *most recent* of the four

@@ -119,25 +119,35 @@ public enum BillingStore {
 
         let now = UTCTimestamp.now()
         let id = dto.id.isEmpty ? UUID().uuidString : dto.id
-        let existing = dto.id.isEmpty ? nil : try database.billingProject(id: dto.id)
-        // A client id that no longer resolves becomes nil rather than dangling.
-        let clientId = try dto.clientId.flatMap {
-            try database.billingClient(id: $0) == nil ? nil : $0
+        var stored: BillingProjectDTO?
+        // One transaction: the new cutoff and the reset it demands land
+        // together. Committed apart, a failed reset left the cutoff saved and
+        // history still split at the old one — with nothing to retry it, since
+        // the next save sees no change.
+        try database.transaction {
+            let existing = dto.id.isEmpty ? nil : try database.billingProject(id: dto.id)
+            // A client id that no longer resolves becomes nil rather than dangling.
+            let clientId = try dto.clientId.flatMap {
+                try database.billingClient(id: $0) == nil ? nil : $0
+            }
+            let project = BillingProjectDTO(
+                id: id, clientId: clientId, name: name, notes: dto.notes,
+                defaultRateCents: dto.defaultRateCents,
+                roundingMinutes: dto.roundingMinutes, roundingMode: dto.roundingMode,
+                billingEnabled: dto.billingEnabled, archived: dto.archived,
+                createdAt: existing?.createdAt ?? now, updatedAt: now,
+                idleCutoffMinutes: dto.idleCutoffMinutes
+            )
+            try database.upsertBillingProject(project)
+            // A changed cutoff changes where every run of this project splits.
+            // Unlocked days re-derive; locked entries keep their segments.
+            if let existing, existing.idleCutoffMinutes != project.idleCutoffMinutes {
+                _ = try database.resetBillingDerivationOfDerivedSessions()
+            }
+            stored = project
         }
-        let stored = BillingProjectDTO(
-            id: id, clientId: clientId, name: name, notes: dto.notes,
-            defaultRateCents: dto.defaultRateCents,
-            roundingMinutes: dto.roundingMinutes, roundingMode: dto.roundingMode,
-            billingEnabled: dto.billingEnabled, archived: dto.archived,
-            createdAt: existing?.createdAt ?? now, updatedAt: now,
-            idleCutoffMinutes: dto.idleCutoffMinutes
-        )
-        try database.upsertBillingProject(stored)
-        // A changed cutoff changes where every run of this project splits.
-        // Unlocked days re-derive; locked entries keep their segments.
-        if let existing, existing.idleCutoffMinutes != stored.idleCutoffMinutes {
-            _ = try database.resetBillingDerivationOfDerivedSessions()
-        }
+        // Unreachable: the body either set `stored` or threw out of `transaction`.
+        guard let stored else { throw BillingError.missingName }
         return stored
     }
 

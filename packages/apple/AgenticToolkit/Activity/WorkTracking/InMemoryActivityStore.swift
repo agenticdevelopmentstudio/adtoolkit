@@ -83,7 +83,14 @@ public final class InMemoryActivityStore: ActivityPersistence, @unchecked Sendab
             let spanCount = storedSpans.count
             storedSpans.removeAll { !$0.isOpen && $0.endedAt < before && prunePredicate($0) }
             let idleCount = storedIdle.count
-            storedIdle.removeAll { !$0.until.isEmpty && $0.until < before }
+            // Idle time a kept span still overlaps stays: re-deriving that span
+            // needs it (mirrors the SQLite store's `NOT EXISTS`).
+            let kept = storedSpans
+            storedIdle.removeAll { idle in
+                !idle.until.isEmpty && idle.until < before && !kept.contains { span in
+                    span.startedAt < idle.until && (span.endedAt.isEmpty || span.endedAt > idle.from)
+                }
+            }
             return (spanCount - storedSpans.count) + (idleCount - storedIdle.count)
         }
     }

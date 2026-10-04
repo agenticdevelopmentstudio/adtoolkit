@@ -40,6 +40,46 @@ private final class SlowCloseStore: ActivityPersistence, @unchecked Sendable {
     func openActivitySpans() throws -> [ActivitySpanDTO] { try inner.openActivitySpans() }
 }
 
+/// The first idle close is lost, as a failed write would lose it.
+private final class FailingFirstIdleCloseStore: ActivityPersistence, @unchecked Sendable {
+    let inner = InMemoryActivityStore()
+    private let lock = NSLock()
+    private var failed = false
+    func openActivitySpan(_ span: ActivitySpanDTO) throws { try inner.openActivitySpan(span) }
+    func closeActivitySpan(id: String, endedAt: String) throws { try inner.closeActivitySpan(id: id, endedAt: endedAt) }
+    func retitleActivitySpan(id: String, title: String) throws { try inner.retitleActivitySpan(id: id, title: title) }
+    func touchActivitySpan(id: String, at: String) throws { try inner.touchActivitySpan(id: id, at: at) }
+    func openIdleInterval(from: String) throws { try inner.openIdleInterval(from: from) }
+    func closeIdleInterval(until: String) throws {
+        let fail = lock.withLock { () -> Bool in
+            // Only a close that would close something counts as "the" close.
+            guard !failed, inner.idle.contains(where: { $0.until.isEmpty }) else { return false }
+            failed = true
+            return true
+        }
+        if fail { throw NSError(domain: "t", code: 3) }
+        try inner.closeIdleInterval(until: until)
+    }
+    func recoverActivity(now: String) throws -> Int { try inner.recoverActivity(now: now) }
+    func pruneActivity(endedBefore before: String) throws -> Int { try inner.pruneActivity(endedBefore: before) }
+    func activitySpans(since: String, limit: Int) throws -> [ActivitySpanDTO] {
+        try inner.activitySpans(since: since, limit: limit)
+    }
+    func openActivitySpans() throws -> [ActivitySpanDTO] { try inner.openActivitySpans() }
+}
+
+/// An input trigger that can be asked whether the user is present now.
+private final class SamplingInputTrigger: ContextTrigger, PresenceSampling {
+    let kind: ContextEventKind = .input
+    let requiredPermission: ContextPermission = .none
+    var onEvent: ((ContextEventDetail, Date) -> Void)?
+    var present: Bool?
+    init(present: Bool?) { self.present = present }
+    func start() throws {}
+    func stop() {}
+    func samplePresence() -> Bool? { present }
+}
+
 private final class Counter: @unchecked Sendable {
     private let lock = NSLock()
     private var value = 0
@@ -150,6 +190,40 @@ final class WorkActivityRecorderTests: XCTestCase {
         recorder.handle(Self.input(.inactive), at: clock)
         clock.addTimeInterval(60); recorder.heartbeat(); recorder.drainWrites()
         XCTAssertEqual(store.spans[0].lastSeenAt, seen)
+    }
+
+    func testStartSeedsPresenceFromTheInputTriggerNotAssumingIt() {
+        let rec = WorkActivityRecorder(
+            triggers: .init(focus: FakeContextTrigger(kind: .appFocus), input: SamplingInputTrigger(present: false),
+                            session: FakeContextTrigger(kind: .session),
+                            lifecycle: FakeContextTrigger(kind: .appLifecycle)),
+            allowlist: AppAllowlist(preferences: .default),
+            resolver: WorkingPathResolver(knownRoots: { [] }),
+            store: store, now: { [unowned self] in self.clock })
+        rec.start()
+        defer { rec.stop() }
+        rec.handle(Self.focusDetail("com.apple.dt.Xcode", path: nil), at: clock)
+        clock.addTimeInterval(60); rec.heartbeat(); rec.drainWrites()
+        XCTAssertEqual(store.spans.count, 1)
+        XCTAssertEqual(store.spans[0].lastSeenAt, "", "started while the user was away: no heartbeat")
+    }
+
+    func testAStuckOpenIdleIsClosedWhenTheNextIdleOpens() {
+        let failing = FailingFirstIdleCloseStore()
+        let rec = WorkActivityRecorder(
+            triggers: Self.triggers(), allowlist: AppAllowlist(preferences: .default),
+            resolver: WorkingPathResolver(knownRoots: { [] }), store: failing,
+            now: { [unowned self] in self.clock })
+        rec.handle(Self.input(.inactive), at: clock)
+        rec.handle(Self.input(.active), at: clock.addingTimeInterval(300))   // this close is lost
+        rec.handle(Self.input(.inactive), at: clock.addingTimeInterval(600))
+        rec.drainWrites()
+        let idle = failing.inner.idle
+        XCTAssertEqual(idle.count, 2, "the next idle opens instead of waiting on the stuck one")
+        XCTAssertEqual(idle[0].until, UTCTimestamp.string(from: clock.addingTimeInterval(300)),
+                       "the stuck idle ends when input resumed")
+        XCTAssertEqual(idle[1].from, UTCTimestamp.string(from: clock.addingTimeInterval(600)))
+        XCTAssertEqual(idle[1].until, "")
     }
 
     func testUpdatingAllowlistReevaluatesCurrentFocus() {

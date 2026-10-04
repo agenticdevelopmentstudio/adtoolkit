@@ -64,7 +64,10 @@ public enum BillingRollup {
         options: BillingRollupOptions, database: any BillingPersistence, recomputing: Set<String>? = nil
     ) throws -> Int {
         let rolled = try roll(try database.billingRollupCandidates(ids: nil), options: options, database: database)
-        return rolled + (try recomputeOwnedEntries(database: database, only: recomputing))
+        // The entries this roll wrote join the recompute, so an app entry on
+        // the same day sheds time a newly rolled Claude run now covers.
+        let scope = recomputing.map { $0.union(rolled.written) }
+        return rolled.count + (try recomputeOwnedEntries(database: database, only: scope))
     }
 
     /// The same pass restricted to named segments — what the Billing Activity
@@ -74,7 +77,11 @@ public enum BillingRollup {
         ids: [String], options: BillingRollupOptions, database: any BillingPersistence
     ) throws -> Int {
         guard !ids.isEmpty else { return 0 }
-        return try roll(try database.billingRollupCandidates(ids: ids), options: options, database: database)
+        let rolled = try roll(try database.billingRollupCandidates(ids: ids), options: options, database: database)
+        // A promoted Claude run can cover time an app entry on its day already
+        // bills; that entry is recomputed so the overlap is billed once.
+        guard !rolled.written.isEmpty else { return rolled.count }
+        return rolled.count + (try recomputeOwnedEntries(database: database, only: rolled.written))
     }
 
     private struct Slot: Hashable {
@@ -95,10 +102,36 @@ public enum BillingRollup {
         segment.origin == BillingSegmentDTO.autoOrigin ? "\(segment.sessionId)|\(segment.startedAt)" : segment.id
     }
 
+    /// At run granularity, app time is not a run: it arrives as dozens of short
+    /// focus spans an hour. Billed one entry per span, each rounded up on its
+    /// own, forty two-minute spans became ten billed hours. So app time keeps
+    /// day grouping — one entry per project, day and rate, unioned and rounded
+    /// once — under a key of its own, beside the per-run Claude entries.
+    public static func appGroupKey(rateCents: Int) -> String { appGroupPrefix + dayGroupKey(rateCents: rateCents) }
+
+    static let appGroupPrefix = "app|"
+
+    /// Whether `groupKey` names a run-granularity app entry.
+    public static func isAppGroupKey(_ groupKey: String) -> Bool { groupKey.hasPrefix(appGroupPrefix) }
+
+    /// A segment derived from an app-focus span (`app:` + span id).
+    static func isAppSegment(_ segment: BillingSegmentDTO) -> Bool {
+        segment.origin == BillingSegmentDTO.autoOrigin
+            && ActivitySpanSession.spanId(sessionId: segment.sessionId) != nil
+    }
+
+    /// What a roll did: how many entries it wrote, and the ids of the non-app
+    /// entries among them — the ones whose time an app entry on the same day
+    /// must stop billing.
+    private struct Rolled {
+        var count = 0
+        var written: Set<String> = []
+    }
+
     private static func roll(
         _ candidates: [BillingSegmentDTO], options: BillingRollupOptions, database: any BillingPersistence
-    ) throws -> Int {
-        guard !candidates.isEmpty else { return 0 }
+    ) throws -> Rolled {
+        guard !candidates.isEmpty else { return Rolled() }
 
         let repos = try database.billingRepos(projectId: nil)
         var projects: [String: BillingProjectDTO?] = [:]
@@ -121,7 +154,8 @@ public enum BillingRollup {
                 // `group_key` exists: two runs on one day would otherwise
                 // collide on the project-day unique index. Keyed on the run's
                 // stable identity, never a row id a rewrite could replace.
-                groupKey = runGroupKey(for: segment)
+                // App time is the exception: see `appGroupKey`.
+                groupKey = isAppSegment(segment) ? appGroupKey(rateCents: rate) : runGroupKey(for: segment)
             case .day:
                 // One entry per project, day **and rate**, always keyed by the
                 // rate itself. A key meaning "the project's *current* default"
@@ -139,20 +173,24 @@ public enum BillingRollup {
             grouped[slot, default: []].append(segment)
         }
 
-        var touched = 0
-        for slot in order
-        where try apply(grouped[slot] ?? [], to: slot, project: projects[slot.projectId] ?? nil,
-                        options: options, database: database) {
-            touched += 1
+        // App slots last: an app entry bills only what the day's other entries
+        // do not, so those must already hold this pass's runs when it is built.
+        let ordered = order.filter { !isAppGroupKey($0.groupKey) } + order.filter { isAppGroupKey($0.groupKey) }
+        var rolled = Rolled()
+        for slot in ordered {
+            guard let entryId = try apply(grouped[slot] ?? [], to: slot, project: projects[slot.projectId] ?? nil,
+                                          options: options, database: database) else { continue }
+            rolled.count += 1
+            if !isAppGroupKey(slot.groupKey) { rolled.written.insert(entryId) }
         }
-        return touched
+        return rolled
     }
 
     /// The day-granularity key for time billed at `rateCents`.
     public static func dayGroupKey(rateCents: Int) -> String { "rate:\(rateCents)" }
 
     /// Routes one group's segments to the entry that should own them.
-    /// Returns whether an entry was written.
+    /// Returns the id of the entry written, or nil when none was.
     ///
     /// Everything — re-reading the segments, finding the owner, summing what
     /// it already holds, writing — happens in one write transaction. Read on a
@@ -165,8 +203,8 @@ public enum BillingRollup {
         project: BillingProjectDTO?,
         options: BillingRollupOptions,
         database: any BillingPersistence
-    ) throws -> Bool {
-        var wrote = false
+    ) throws -> String? {
+        var wrote: String?
         try database.transaction {
             // Still unattached, still billable, still where they were grouped:
             // another writer may have rolled, re-derived or reassigned them,
@@ -212,7 +250,7 @@ public enum BillingRollup {
             // longer the rollup's is never overwritten.
             guard try database.upsertBillingEntry(entry, overwrite: .rollupOwned) else { return }
             try database.attachSegments(ids: fresh.map(\.id), toEntry: entry.id)
-            wrote = true
+            wrote = entry.id
         }
         return wrote
     }
@@ -253,8 +291,8 @@ public enum BillingRollup {
         let rate = old?.rateCents ?? slot.rateCents
         let currency = try old?.currency ?? currencyCode(for: project, options: options, database: database)
         let clientId = old.map(\.clientId) ?? project?.clientId
-        // A supplement bills only what its locked owner has not already billed.
-        let covered = try supplements.map { try database.billingSegmentsForEntry(id: $0) } ?? []
+        let covered = try coverage(projectId: slot.projectId, day: slot.day, groupKey: slot.groupKey,
+                                   supplements: supplements, database: database)
         let computed = figures(
             of: segments, covered: covered, roundingMinutes: roundingMinutes,
             roundingMode: roundingMode, rateCents: rate
@@ -279,13 +317,51 @@ public enum BillingRollup {
             status: old?.status ?? BillingStatus.unbilled.rawValue,
             description: previous?.descriptionEdited == true
                 ? old?.description ?? ""
-                : try describe(segments: segments, database: database),
+                : try describe(segments: segments, previous: old?.description, database: database),
             origin: "auto",
             locked: false,
             supplementsEntryId: supplements,
             createdAt: old?.createdAt ?? now,
             updatedAt: now
         )
+    }
+
+    /// Time an entry must not bill because another entry already does — the
+    /// `excluding` side of `rawSeconds`. Two sources, one subtraction:
+    /// - a supplement bills only what its locked owner has not;
+    /// - a run-granularity app entry bills only what the day's other entries
+    ///   in the project (the per-run Claude entries, or a day entry from
+    ///   before a granularity switch) do not, so an app span overlapping a
+    ///   Claude run is billed once, as the union.
+    private static func coverage(
+        projectId: String, day: String, groupKey: String, supplements: String?, database: any BillingPersistence
+    ) throws -> [BillingSegmentDTO] {
+        var covered = try supplements.map { try database.billingSegmentsForEntry(id: $0) } ?? []
+        guard isAppGroupKey(groupKey) else { return covered }
+        let others = try database.billingEntries(projectId: projectId, status: nil, since: day)
+            .filter { $0.day == day && !isAppGroupKey($0.groupKey) }
+        for other in others { covered += try database.billingSegmentsForEntry(id: other.id) }
+        return covered
+    }
+
+    /// `ids` plus every unbilled app entry sharing a project day with one of
+    /// the non-app entries among them: a Claude run that moved changes what
+    /// the app entry beside it may bill.
+    private static func withAppDependents(_ ids: Set<String>, database: any BillingPersistence) throws -> Set<String> {
+        var days: Set<[String]> = []
+        for id in ids {
+            guard let entry = try database.billingEntry(id: id), !isAppGroupKey(entry.groupKey) else { continue }
+            days.insert([entry.projectId, entry.day])
+        }
+        var expanded = ids
+        for projectDay in days {
+            let (projectId, day) = (projectDay[0], projectDay[1])
+            let apps = try database.billingEntries(projectId: projectId, status: BillingStatus.unbilled.rawValue,
+                                                   since: day)
+                .filter { $0.day == day && isAppGroupKey($0.groupKey) }
+            expanded.formUnion(apps.map(\.id))
+        }
+        return expanded
     }
 
     /// An entry's figures over its segments — the one formula both the roll
@@ -367,8 +443,14 @@ public enum BillingRollup {
     /// sessions the time came from, the notes typed on its timers, and the
     /// branches they ran on. A generic time tracker cannot write this line,
     /// because it never saw the work.
+    ///
+    /// The titles come from rows retention deletes: a session's transcript
+    /// title, an app span's name. A recompute after they are gone would
+    /// rebuild the line without them and blank a description the client may
+    /// already have seen. So while any of the entry's segments has nothing to
+    /// title it by, the entry's `previous` description is kept as it is.
     private static func describe(
-        segments: [BillingSegmentDTO], database: any BillingPersistence
+        segments: [BillingSegmentDTO], previous: String?, database: any BillingPersistence
     ) throws -> String {
         var sessionIds: [String] = []
         var notes: [String] = []
@@ -384,6 +466,10 @@ public enum BillingRollup {
             }
         }
 
+        if let previous, !previous.isEmpty,
+           !(try database.billingUntitledSessionIds(sessionIds: sessionIds)).isEmpty {
+            return previous
+        }
         var parts = try database.billingSessionTitles(sessionIds: sessionIds)
         parts.append(contentsOf: notes)
         if !branches.isEmpty { parts.append("on \(branches.joined(separator: ", "))") }
@@ -413,7 +499,8 @@ public enum BillingRollup {
     @discardableResult
     public static func recomputeOwnedEntries(database: any BillingPersistence, only: Set<String>? = nil) throws -> Int {
         var changed = 0
-        let ids = try database.billingRecomputableEntryIds().filter { only?.contains($0) ?? true }
+        let scope = try only.map { try withAppDependents($0, database: database) }
+        let ids = try database.billingRecomputableEntryIds().filter { scope?.contains($0) ?? true }
         for id in ids {
             try database.transaction {
                 guard let stored = try database.billingStoredEntry(id: id),
@@ -425,14 +512,15 @@ public enum BillingRollup {
                     return
                 }
 
-                let covered = try entry.supplementsEntryId.map { try database.billingSegmentsForEntry(id: $0) } ?? []
+                let covered = try coverage(projectId: entry.projectId, day: entry.day, groupKey: entry.groupKey,
+                                           supplements: entry.supplementsEntryId, database: database)
                 let computed = figures(
                     of: segments, covered: covered, roundingMinutes: entry.roundingMinutes,
                     roundingMode: entry.roundingMode, rateCents: entry.rateCents
                 )
                 let description = stored.descriptionEdited
                     ? entry.description
-                    : try describe(segments: segments, database: database)
+                    : try describe(segments: segments, previous: entry.description, database: database)
                 let current = Figures(
                     startedAt: entry.startedAt, endedAt: entry.endedAt, raw: entry.rawSeconds,
                     billed: entry.billedSeconds, amount: entry.amountCents

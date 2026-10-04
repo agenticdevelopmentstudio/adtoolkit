@@ -52,6 +52,19 @@ public final class FrontmostFocusAdapter: FocusSource {
     /// ``FrontmostElementObserver``.
     /// `nil` in app-only mode, for the same reason as ``terminals``.
     private let elements: FrontmostElementObserver?
+    /// Called once, on the main actor, when an AX read answers
+    /// `kAXErrorAPIDisabled`: the Accessibility grant was withdrawn while
+    /// running. From that moment the adapter is app-only for good — no further
+    /// AX or Apple Events call of any kind — because every AX call made without
+    /// the grant stalls tccd, and a host must not have to notice first. The
+    /// host decides what else follows (Stenographer records the denial and
+    /// restarts its recorder app-only). It never re-checks the grant itself.
+    ///
+    /// (`kAXErrorNotTrusted` does not exist: `kAXErrorAPIDisabled` is the one
+    /// AXError the SDK defines for a process without the grant.)
+    public var onAccessibilityRevoked: (@MainActor () -> Void)?
+    /// Set on the first denied read; see ``onAccessibilityRevoked``.
+    public private(set) var accessibilityRevoked = false
 
     public init(readsWindows: Bool = true) {
         self.readsWindows = readsWindows
@@ -75,7 +88,7 @@ public final class FrontmostFocusAdapter: FocusSource {
         NSWorkspace.shared.notificationCenter.addObserver(
             self, selector: #selector(activated),
             name: NSWorkspace.didActivateApplicationNotification, object: nil)
-        if let elements {
+        if let elements, !accessibilityRevoked {
             elements.onChange = { [weak self] in self?.emit() }
             elements.start()
         }
@@ -107,12 +120,16 @@ public final class FrontmostFocusAdapter: FocusSource {
         guard let a = apps.frontmostApplication else { return }
         let pid = a.processIdentifier
         let bundleID = a.bundleIdentifier ?? "unknown"
-        let reading = readsWindows ? windowReader(pid, bundleID) : WindowReading()
+        var reading = readsWindows && !accessibilityRevoked ? windowReader(pid, bundleID) : WindowReading()
+        if reading.accessDenied {
+            revokeAccessibility()
+            reading = WindowReading()
+        }
         // A terminal answers `kAXDocumentAttribute` with nothing, so its
         // working directory is asked for over Apple Events instead — but only
         // once Accessibility has had its turn, so an app that really does have
         // a document is never charged the round-trip.
-        let documentPath = readsWindows
+        let documentPath = readsWindows && !accessibilityRevoked
             ? (reading.documentPath ?? terminals?.workingDirectory(forBundleID: bundleID))
             : nil
         onFocus?(WindowFocus(app: AppInfo(bundleID: bundleID,
@@ -120,12 +137,29 @@ public final class FrontmostFocusAdapter: FocusSource {
             title: reading.title, documentPath: documentPath, url: reading.url))
     }
 
+    /// Goes app-only for good, then tells the host — once.
+    private func revokeAccessibility() {
+        guard !accessibilityRevoked else { return }
+        accessibilityRevoked = true
+        if let elements {
+            elements.onChange = nil
+            elements.stop()
+        }
+        onAccessibilityRevoked?()
+    }
+
     struct WindowReading: Equatable {
         var windowID: UInt32 = 0
         var title: String = ""
         var documentPath: String?
         var url: String?
+        /// The read was refused for want of the Accessibility grant.
+        var accessDenied = false
     }
+
+    /// Whether `error` means this process may not use Accessibility at all —
+    /// as opposed to one app or element declining to answer.
+    nonisolated static func deniesAccess(_ error: AXError) -> Bool { error == .apiDisabled }
 
     /// `bundleID` is passed in rather than re-derived from the pid because it
     /// selects how the address bar is read — see ``BrowserAddressReader``.
@@ -138,8 +172,10 @@ public final class FrontmostFocusAdapter: FocusSource {
         // Verify the returned CF type before casting: a soft return here beats
         // an `as!` trap crashing the daemon's main thread if a frontmost app's
         // AX server ever answers kAXFocusedWindowAttribute with an off-type value.
-        guard AXUIElementCopyAttributeValue(appEl, kAXFocusedWindowAttribute as CFString, &winRef) == .success,
-              let winRef, CFGetTypeID(winRef) == AXUIElementGetTypeID() else { return WindowReading() }
+        let status = AXUIElementCopyAttributeValue(appEl, kAXFocusedWindowAttribute as CFString, &winRef)
+        // The grant is gone: stop here, before a second AX call stalls tccd again.
+        if deniesAccess(status) { return WindowReading(accessDenied: true) }
+        guard status == .success, let winRef, CFGetTypeID(winRef) == AXUIElementGetTypeID() else { return WindowReading() }
         let w = winRef as! AXUIElement   // safe: type-id verified above
         var tRef: CFTypeRef?; AXUIElementCopyAttributeValue(w, kAXTitleAttribute as CFString, &tRef)
         var dRef: CFTypeRef?; AXUIElementCopyAttributeValue(w, kAXDocumentAttribute as CFString, &dRef)
