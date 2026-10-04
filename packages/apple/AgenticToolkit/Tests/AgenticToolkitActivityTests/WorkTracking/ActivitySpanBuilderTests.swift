@@ -34,7 +34,46 @@ final class ActivitySpanBuilderTests: XCTestCase {
     func testQuitClosesOnlyItsOwnSpan() {
         var b = ActivitySpanBuilder(); _ = b.focus(xcodeApp, at: t0)
         XCTAssertEqual(b.appTerminated(bundleId: "other", at: t1), [])
+        XCTAssertEqual(b.open, xcodeApp)
         XCTAssertEqual(b.appTerminated(bundleId: "x", at: t1), [.close(at: t1)])
+        XCTAssertNil(b.open)
+    }
+    func testStrayResumeWhileOpenIsIgnored() {
+        var b = ActivitySpanBuilder(); _ = b.focus(xcodeApp, at: t0)
+        XCTAssertEqual(b.resume(.locked, at: t1), [])
+        XCTAssertEqual(b.open, xcodeApp)
+    }
+    func testDoubleSuspendSameReasonResumesOnce() {
+        var b = ActivitySpanBuilder(); _ = b.focus(xcodeApp, at: t0)
+        XCTAssertEqual(b.suspend(.locked, at: t1), [.close(at: t1)])
+        XCTAssertEqual(b.suspend(.locked, at: t1), [])
+        XCTAssertNil(b.open)
+        XCTAssertEqual(b.resume(.locked, at: t1), [.open(xcodeApp, at: t1)])
+        XCTAssertEqual(b.open, xcodeApp)
+    }
+    func testNilFocusWhileSuspendedThenResumeStaysClosed() {
+        var b = ActivitySpanBuilder(); _ = b.focus(xcodeApp, at: t0); _ = b.suspend(.locked, at: t1)
+        XCTAssertEqual(b.focus(nil, at: t1), [])
+        XCTAssertEqual(b.resume(.locked, at: t1), [])
+        XCTAssertNil(b.open)
+    }
+    func testLatestFocusWhileSuspendedWins() {
+        var b = ActivitySpanBuilder(); _ = b.suspend(.locked, at: t0)
+        let term = SpanAttribution(bundleId: "t", appName: "Terminal", workingPath: "/r", repoRoot: "/r", branch: "main")
+        XCTAssertEqual(b.focus(xcodeApp, at: t0), [])
+        XCTAssertEqual(b.focus(term, at: t0), [])
+        XCTAssertEqual(b.resume(.locked, at: t1), [.open(term, at: t1)])
+        XCTAssertEqual(b.open, term)
+    }
+    func testOtherAppQuitWhileSuspendedKeepsFocus() {
+        var b = ActivitySpanBuilder(); _ = b.focus(xcodeApp, at: t0); _ = b.suspend(.locked, at: t1)
+        XCTAssertEqual(b.appTerminated(bundleId: "other", at: t1), [])
+        XCTAssertEqual(b.resume(.locked, at: t1), [.open(xcodeApp, at: t1)])
+    }
+    func testSameKeySameTitleIsNoOp() {
+        var b = ActivitySpanBuilder(); _ = b.focus(xcodeApp, at: t0)
+        XCTAssertEqual(b.focus(xcodeApp, at: t1), [])
+        XCTAssertEqual(b.open, xcodeApp)
     }
     func testLockClosesAndUnlockReopensOnTheLastFocus() {
         var b = ActivitySpanBuilder(); _ = b.focus(xcodeApp, at: t0)

@@ -75,8 +75,7 @@ public struct ActivitySpanBuilder: Sendable {
     }
 
     public mutating func resume(_ reason: SpanSuspension, at date: Date) -> [SpanCommand] {
-        suspensions.remove(reason)
-        guard suspensions.isEmpty, let lastFocus else { return [] }
+        guard suspensions.remove(reason) != nil, suspensions.isEmpty, open == nil, let lastFocus else { return [] }
         open = lastFocus
         return [.open(lastFocus, at: date)]
     }
