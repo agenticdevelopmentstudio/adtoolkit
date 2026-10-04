@@ -1941,6 +1941,7 @@
 		E1F5AD2FB4A52A627D7B36EE /* MultiTabbedHostedItemTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3049C1C30EAC6D3BEFCBFF9 /* MultiTabbedHostedItemTests.swift */; };
 		E1FF8AC7964559290F129842 /* SettingsPanelViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A822229D4B74BB4B6D5371B4 /* SettingsPanelViewController.swift */; };
 		E22859BB43196268E4CD896E /* NumberFieldView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79EFA06943B614849BDDA6A6 /* NumberFieldView.swift */; };
+		E230BA64651688B955BAE3DF /* BillingRollupUnionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 502A639D1518E7E949E7093E /* BillingRollupUnionTests.swift */; };
 		E245477BCBB3A4BADD536EDC /* LLMProvidersListViewModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02A0409594B91B8612E5DFA9 /* LLMProvidersListViewModelTests.swift */; };
 		E260EDCD665B8E03E05010C1 /* SettingsStoreWindowStateStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 27ECB0B3683D7B48A177ACC2 /* SettingsStoreWindowStateStorage.swift */; };
 		E29EB62074BC387FCB3772DD /* DismissibleHintView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AE8B31750EED92B70F56F0E /* DismissibleHintView.swift */; };
@@ -4802,6 +4803,7 @@
 		500FB0294239707F62E39E98 /* AIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProvider.swift; sourceTree = "<group>"; };
 		501CE3C0EDC3A3CBD2D1BADC /* EditorOptionsOverrideTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorOptionsOverrideTests.swift; sourceTree = "<group>"; };
 		501F5C38DE7AEF4AB2D504C0 /* ComposableTabsLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposableTabsLayout.swift; sourceTree = "<group>"; };
+		502A639D1518E7E949E7093E /* BillingRollupUnionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BillingRollupUnionTests.swift; sourceTree = "<group>"; };
 		503F40D6991D4F1C4A8A6153 /* FeatureFlagsAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureFlagsAdapter.swift; sourceTree = "<group>"; };
 		50521AF5F88C835BEE200B38 /* ProjectDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDatabase.swift; sourceTree = "<group>"; };
 		5053D246C0FFEFF52911D3B9 /* SingleWindowControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingleWindowControllerTests.swift; sourceTree = "<group>"; };
@@ -8545,6 +8547,7 @@
 				95667A29FEECD3146AF99CE5 /* BillingModelAssignmentTests.swift */,
 				817621AAD3A5DDB7468190B7 /* BillingModelTests.swift */,
 				AD6F38A1CD44F2C024089F13 /* BillingRateResolutionTests.swift */,
+				502A639D1518E7E949E7093E /* BillingRollupUnionTests.swift */,
 				21CAAD59C4EA6049BB4CBF1C /* BillingRoundingTests.swift */,
 				57B9E4B1FD64227BB64AC927 /* BillingXPCClientTests.swift */,
 				53DCE3E46479CF9A3B2037F3 /* FakeBillingClient.swift */,
@@ -12686,6 +12689,7 @@
 				110CAAB748954329C3672BD3 /* BillingModelAssignmentTests.swift in Sources */,
 				A47C173DF8606ABD7FA47BCD /* BillingModelTests.swift in Sources */,
 				FC73F156B53AABBADB907421 /* BillingRateResolutionTests.swift in Sources */,
+				E230BA64651688B955BAE3DF /* BillingRollupUnionTests.swift in Sources */,
 				CD96F51A779F2AB74DA1DF76 /* BillingRoundingTests.swift in Sources */,
 				7B629BD968AB0BBAEE79ED18 /* BillingXPCClientTests.swift in Sources */,
 				A4615DB470BB4650A1631599 /* CGFloatClampedTests.swift in Sources */,

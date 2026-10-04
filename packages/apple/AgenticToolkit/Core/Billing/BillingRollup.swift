@@ -253,8 +253,11 @@ public enum BillingRollup {
         let rate = old?.rateCents ?? slot.rateCents
         let currency = try old?.currency ?? currencyCode(for: project, options: options, database: database)
         let clientId = old.map(\.clientId) ?? project?.clientId
+        // A supplement bills only what its locked owner has not already billed.
+        let covered = try supplements.map { try database.billingSegmentsForEntry(id: $0) } ?? []
         let computed = figures(
-            of: segments, roundingMinutes: roundingMinutes, roundingMode: roundingMode, rateCents: rate
+            of: segments, covered: covered, roundingMinutes: roundingMinutes,
+            roundingMode: roundingMode, rateCents: rate
         )
         let now = UTCTimestamp.now()
 
@@ -295,11 +298,39 @@ public enum BillingRollup {
         let amount: Int
     }
 
+    /// Wall-clock seconds the segments cover: their union, so overlapping
+    /// time from parallel sessions or an app is counted once. With `covered`,
+    /// only the part of that union outside `covered` — what a supplement adds
+    /// to a locked owner that already billed the rest. A segment whose start
+    /// does not parse cannot be placed, so its seconds are added as they are.
+    public static func rawSeconds(
+        of segments: [BillingSegmentDTO], excluding covered: [BillingSegmentDTO] = []
+    ) -> Int {
+        func spans(_ list: [BillingSegmentDTO]) -> (spans: [ActivityRuns.Span<Int>], loose: Int) {
+            var spans: [ActivityRuns.Span<Int>] = []
+            var loose = 0
+            for segment in list {
+                let seconds = max(0, segment.seconds)
+                if let start = UTCTimestamp.epochSeconds(segment.startedAt) {
+                    spans.append(ActivityRuns.Span(start: start, end: start + seconds))
+                } else {
+                    loose += seconds
+                }
+            }
+            return (spans, loose)
+        }
+        let own = spans(segments)
+        guard !covered.isEmpty else { return ActivityRuns.unionLength(own.spans) + own.loose }
+        let other = spans(covered).spans
+        return ActivityRuns.unionLength(own.spans + other) - ActivityRuns.unionLength(other) + own.loose
+    }
+
     private static func figures(
-        of segments: [BillingSegmentDTO], roundingMinutes: Int, roundingMode: String, rateCents: Int
+        of segments: [BillingSegmentDTO], covered: [BillingSegmentDTO],
+        roundingMinutes: Int, roundingMode: String, rateCents: Int
     ) -> Figures {
-        let raw = segments.reduce(0) { $0 + $1.seconds }
-        // Once, over the total. Rounding each segment first is how five
+        let raw = rawSeconds(of: segments, excluding: covered)
+        // Once, over the union total. Rounding each segment first is how five
         // five-minute checks become 75 billed minutes.
         let billed = BillingRounding.billedSeconds(
             rawSeconds: raw, roundingMinutes: roundingMinutes, mode: roundingMode
@@ -394,8 +425,9 @@ public enum BillingRollup {
                     return
                 }
 
+                let covered = try entry.supplementsEntryId.map { try database.billingSegmentsForEntry(id: $0) } ?? []
                 let computed = figures(
-                    of: segments, roundingMinutes: entry.roundingMinutes,
+                    of: segments, covered: covered, roundingMinutes: entry.roundingMinutes,
                     roundingMode: entry.roundingMode, rateCents: entry.rateCents
                 )
                 let description = stored.descriptionEdited
