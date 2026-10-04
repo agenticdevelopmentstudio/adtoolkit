@@ -26,7 +26,18 @@ private func _AXUIElementGetWindow(_ element: AXUIElement, _ windowID: UnsafeMut
 @MainActor
 public final class FrontmostFocusAdapter: FocusSource {
     public var onFocus: ((WindowFocus) -> Void)?
-    private let apps = RealRunningAppsProvider()
+    /// `false` is the app-only mode for a process without the Accessibility
+    /// grant: an `AXIsProcessTrusted`-less AX call stalls tccd, so in that mode
+    /// no AX or Apple Events call is made at all — no window read, no
+    /// ``FrontmostElementObserver``, no terminal working-directory read. The
+    /// emitted ``WindowFocus`` then carries windowID 0, an empty title and no
+    /// document path or URL.
+    public let readsWindows: Bool
+    /// The window read — AX in production. Injected so a test can prove the
+    /// app-only mode never calls it.
+    typealias WindowReader = (pid_t, String) -> WindowReading
+    private let windowReader: WindowReader
+    private let apps: any RunningAppsProvider
     /// Held across focus changes rather than made per read: it remembers this
     /// process's Automation answer, so the consent dialog is raised once and
     /// a denial costs nothing thereafter. See ``TerminalWorkingDirectoryReader``.
@@ -37,20 +48,35 @@ public final class FrontmostFocusAdapter: FocusSource {
     /// ``FrontmostElementObserver``.
     private let elements = FrontmostElementObserver()
 
-    public init() {}
+    public init(readsWindows: Bool = true) {
+        self.readsWindows = readsWindows
+        self.windowReader = { Self.focusedWindow(pid: $0, bundleID: $1) }
+        self.apps = RealRunningAppsProvider()
+    }
+
+    init(readsWindows: Bool, windowReader: @escaping WindowReader,
+         apps: any RunningAppsProvider) {
+        self.readsWindows = readsWindows
+        self.windowReader = windowReader
+        self.apps = apps
+    }
 
     public func start() {
         NSWorkspace.shared.notificationCenter.addObserver(
             self, selector: #selector(activated),
             name: NSWorkspace.didActivateApplicationNotification, object: nil)
-        elements.onChange = { [weak self] in self?.emit() }
-        elements.start()
+        if readsWindows {
+            elements.onChange = { [weak self] in self?.emit() }
+            elements.start()
+        }
         emit()
     }
     public func stop() {
         NSWorkspace.shared.notificationCenter.removeObserver(self)
-        elements.onChange = nil
-        elements.stop()
+        if readsWindows {
+            elements.onChange = nil
+            elements.stop()
+        }
     }
 
     /// Re-emits the current focus on demand: wired to idle/lock/sleep resume
@@ -71,13 +97,14 @@ public final class FrontmostFocusAdapter: FocusSource {
         guard let a = apps.frontmostApplication else { return }
         let pid = a.processIdentifier
         let bundleID = a.bundleIdentifier ?? "unknown"
-        let reading = Self.focusedWindow(pid: pid, bundleID: bundleID)
+        let reading = readsWindows ? windowReader(pid, bundleID) : WindowReading()
         // A terminal answers `kAXDocumentAttribute` with nothing, so its
         // working directory is asked for over Apple Events instead — but only
         // once Accessibility has had its turn, so an app that really does have
         // a document is never charged the round-trip.
-        let documentPath = reading.documentPath
-            ?? terminals.workingDirectory(forBundleID: bundleID)
+        let documentPath = readsWindows
+            ? (reading.documentPath ?? terminals.workingDirectory(forBundleID: bundleID))
+            : nil
         onFocus?(WindowFocus(app: AppInfo(bundleID: bundleID,
             name: a.localizedName ?? "unknown", pid: pid), windowID: reading.windowID,
             title: reading.title, documentPath: documentPath, url: reading.url))
