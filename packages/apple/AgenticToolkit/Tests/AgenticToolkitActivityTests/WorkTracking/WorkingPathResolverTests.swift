@@ -4,7 +4,7 @@ import XCTest
 final class WorkingPathResolverTests: XCTestCase {
     private let locator = RepoLocator(fileSystem: .init(
         kind: { ["/src/app/.git", "/src/other/.git"].contains($0) ? .directory : .missing },
-        read: { _ in "ref: refs/heads/main\n" }))
+        read: { $0.hasSuffix("/HEAD") ? "ref: refs/heads/main\n" : nil }))
     private func resolver(_ roots: [String] = ["/src/app", "/src/other"]) -> WorkingPathResolver {
         WorkingPathResolver(locator: locator, knownRoots: { roots })
     }

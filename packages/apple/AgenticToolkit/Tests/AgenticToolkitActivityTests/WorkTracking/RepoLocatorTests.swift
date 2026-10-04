@@ -20,17 +20,62 @@ final class RepoLocatorTests: XCTestCase {
         XCTAssertEqual(locator.locate("/src/app/external/kit/a.swift"),
                        RepoLocation(root: "/src/app/external/kit", branch: "feature/x"))
     }
-    func testWorktreeGitFile() {
+    func testLinkedWorktreeRootsAtMainRepoWithOwnBranch() {
         let locator = RepoLocator(fileSystem: fs(dirs: [], files: [
             "/wt/b/.git": "gitdir: /src/app/.git/worktrees/b\n",
+            "/src/app/.git/worktrees/b/commondir": "../..\n",
             "/src/app/.git/worktrees/b/HEAD": "ref: refs/heads/b\n"]))
-        XCTAssertEqual(locator.locate("/wt/b/x"), RepoLocation(root: "/wt/b", branch: "b"))
+        XCTAssertEqual(locator.locate("/wt/b/x"), RepoLocation(root: "/src/app", branch: "b"))
     }
-    func testRelativeGitdirResolvesAgainstRoot() {
+    func testRelativeGitdirAndAbsoluteCommondir() {
         let locator = RepoLocator(fileSystem: fs(dirs: [], files: [
-            "/wt/b/.git": "gitdir: ../meta\n",
-            "/wt/meta/HEAD": "ref: refs/heads/rel\n"]))
-        XCTAssertEqual(locator.locate("/wt/b"), RepoLocation(root: "/wt/b", branch: "rel"))
+            "/wt/b/.git": "gitdir: ../meta/worktrees/b\n",
+            "/wt/meta/worktrees/b/commondir": "/wt/meta\n",
+            "/wt/meta/worktrees/b/HEAD": "ref: refs/heads/rel\n"]))
+        XCTAssertEqual(locator.locate("/wt/b"), RepoLocation(root: "/wt", branch: "rel"))
+    }
+    func testSubmoduleMatchesGitCommonDirParent() {
+        let locator = RepoLocator(fileSystem: fs(dirs: [], files: [
+            "/super/sub/.git": "gitdir: ../.git/modules/sub\n",
+            "/super/.git/modules/sub/HEAD": "ref: refs/heads/dev\n"]))
+        XCTAssertEqual(locator.locate("/super/sub/a.swift"),
+                       RepoLocation(root: "/super/.git/modules", branch: "dev"))
+    }
+    func testRealGitWorktreeAndSubmoduleMatchCommonDir() throws {
+        let base = (NSTemporaryDirectory() as NSString).appendingPathComponent("rl-\(UUID().uuidString)")
+        let canonical = URL(fileURLWithPath: base).resolvingSymlinksInPath().path
+        try FileManager.default.createDirectory(atPath: canonical, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(atPath: canonical) }
+        func git(_ dir: String, _ args: String...) throws -> String {
+            let p = Process()
+            p.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+            p.arguments = ["git", "-C", dir, "-c", "user.name=t", "-c", "user.email=t@t",
+                           "-c", "protocol.file.allow=always"] + args
+            let out = Pipe()
+            p.standardOutput = out; p.standardError = Pipe()
+            try p.run()
+            let data = out.fileHandleForReading.readDataToEndOfFile()
+            p.waitUntilExit()
+            guard p.terminationStatus == 0 else { throw XCTSkip("git \(args) failed") }
+            return String(decoding: data, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        let main = canonical + "/main", wt = canonical + "/wt", subSrc = canonical + "/subsrc"
+        try FileManager.default.createDirectory(atPath: main, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(atPath: subSrc, withIntermediateDirectories: true)
+        _ = try git(main, "init", "-q", "-b", "main")
+        _ = try git(main, "commit", "-q", "--allow-empty", "-m", "i")
+        _ = try git(subSrc, "init", "-q", "-b", "main")
+        _ = try git(subSrc, "commit", "-q", "--allow-empty", "-m", "i")
+        _ = try git(main, "worktree", "add", "-q", "-b", "feat", wt)
+        _ = try git(main, "submodule", "add", "-q", subSrc, "sub")
+        for dir in [main, wt, main + "/sub"] {
+            let common = try git(dir, "rev-parse", "--path-format=absolute", "--git-common-dir")
+            let expected = (common as NSString).deletingLastPathComponent
+            // git reports /private/var/...; Foundation's symlink resolution drops /private.
+            func bare(_ p: String?) -> String? { p.map { $0.hasPrefix("/private/") ? String($0.dropFirst(8)) : $0 } }
+            XCTAssertEqual(bare(RepoLocator().locate(dir)?.root), bare(expected), dir)
+        }
+        XCTAssertEqual(RepoLocator().locate(wt)?.branch, "feat")
     }
     func testDetachedHeadHasEmptyBranch() {
         let locator = RepoLocator(fileSystem: fs(dirs: ["/r/.git"], files: ["/r/.git/HEAD": "0123abcd\n"]))

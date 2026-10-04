@@ -49,9 +49,12 @@ public struct RepoLocator: Sendable {
             let gitPath = (current == "/" ? "" : current) + "/.git"
             switch fileSystem.kind(gitPath) {
             case .directory:
-                return RepoLocation(root: current, branch: branch(headPath: gitPath + "/HEAD"))
+                return location(gitDir: gitPath, fallbackRoot: current)
             case .file:
-                return RepoLocation(root: current, branch: branch(gitFile: gitPath, root: current))
+                guard let gitDir = gitDir(fromFile: gitPath, workTree: current) else {
+                    return RepoLocation(root: current, branch: "")
+                }
+                return location(gitDir: gitDir, fallbackRoot: current)
             case .missing:
                 break
             }
@@ -62,14 +65,34 @@ public struct RepoLocator: Sendable {
         }
     }
 
-    private func branch(gitFile: String, root: String) -> String {
-        guard let text = fileSystem.read(gitFile) else { return "" }
+    /// `root` is the parent of the git COMMON dir, exactly what the daemon's
+    /// `resolveRepoRoot` (`git rev-parse --git-common-dir`) yields, so a linked
+    /// worktree bills to its main repo. Git parity includes a submodule, whose
+    /// gitdir (`<super>/.git/modules/<name>`) has no `commondir`: its root is
+    /// `<super>/.git/modules`. Odd, but it is what the daemon produces.
+    /// `branch` comes from the worktree's own HEAD (`gitDir/HEAD`).
+    private func location(gitDir: String, fallbackRoot: String) -> RepoLocation {
+        var commonDir = gitDir
+        if let text = fileSystem.read(gitDir + "/commondir")?.trimmingCharacters(in: .whitespacesAndNewlines),
+           !text.isEmpty {
+            commonDir = Self.resolve(text, relativeTo: gitDir)
+        }
+        var root = (commonDir as NSString).deletingLastPathComponent
+        if root.isEmpty { root = fallbackRoot }
+        return RepoLocation(root: (root as NSString).standardizingPath, branch: branch(headPath: gitDir + "/HEAD"))
+    }
+
+    private func gitDir(fromFile gitFile: String, workTree: String) -> String? {
+        guard let text = fileSystem.read(gitFile) else { return nil }
         let prefix = "gitdir:"
-        guard let line = text.split(whereSeparator: \.isNewline).first(where: { $0.hasPrefix(prefix) }) else { return "" }
+        guard let line = text.split(whereSeparator: \.isNewline).first(where: { $0.hasPrefix(prefix) }) else { return nil }
         let dir = line.dropFirst(prefix.count).trimmingCharacters(in: .whitespaces)
-        guard !dir.isEmpty else { return "" }
-        let absolute = dir.hasPrefix("/") ? dir : root + "/" + dir
-        return branch(headPath: (absolute as NSString).standardizingPath + "/HEAD")
+        guard !dir.isEmpty else { return nil }
+        return Self.resolve(dir, relativeTo: workTree)
+    }
+
+    private static func resolve(_ path: String, relativeTo base: String) -> String {
+        ((path.hasPrefix("/") ? path : base + "/" + path) as NSString).standardizingPath
     }
 
     private func branch(headPath: String) -> String {
