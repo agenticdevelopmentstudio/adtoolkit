@@ -247,6 +247,22 @@ targets:
     dependencies:
       - target: AgenticToolkitCore
 
+  AgenticToolkitLaunchUI:
+    type: framework
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - LaunchUI
+    dependencies:
+      - target: AgenticToolkitLaunch
+      - target: AgenticToolkitCore
+      - target: AgenticToolkitCoreUI
+      - target: AgenticToolkitCoreMacOS
+      - target: AgenticToolkitPermissions
+      - target: AgenticToolkitPermissionsUI
+    # AppKit presenter for LaunchManager: the undismissable progress panel.
+
   AgenticToolkitDisplays:
     type: framework
     platform: macOS
@@ -697,6 +713,24 @@ targets:
     sources:
       - Tests/AgenticToolkitLaunchTests
     dependencies:
+      - target: AgenticToolkitLaunch
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCore
+        embed: true
+        codeSign: true
+
+  AgenticToolkitLaunchUITests:
+    type: bundle.unit-test
+    platform: macOS
+    templates:
+      - SwiftLint
+    sources:
+      - Tests/AgenticToolkitLaunchUITests
+    dependencies:
+      - target: AgenticToolkitLaunchUI
+        embed: true
+        codeSign: true
       - target: AgenticToolkitLaunch
         embed: true
         codeSign: true
@@ -1215,6 +1249,7 @@ aggregateTargets:
       - AgenticToolkitPermissions
       - AgenticToolkitPermissionsUI
       - AgenticToolkitLaunch
+      - AgenticToolkitLaunchUI
       - AgenticToolkitDisplays
       - AgenticToolkitScripting
       - AgenticToolkitMacOS
@@ -1257,6 +1292,7 @@ aggregateTargets:
       - AgenticToolkitPermissions
       - AgenticToolkitPermissionsUI
       - AgenticToolkitLaunch
+      - AgenticToolkitLaunchUI
       - AgenticToolkitDisplays
       - AgenticToolkitScripting
       - AgenticToolkitMacOS
@@ -1267,6 +1303,7 @@ aggregateTargets:
       - AgenticToolkitPermissionsTests
       - AgenticToolkitPermissionsUITests
       - AgenticToolkitLaunchTests
+      - AgenticToolkitLaunchUITests
       - AgenticToolkitDisplaysTests
       - AgenticToolkitMacOSTests
       - AgenticToolkitSystemMonitor
@@ -1465,6 +1502,23 @@ schemes:
       config: Debug
       targets:
         - AgenticToolkitLaunchTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitLaunchUI:
+    build:
+      targets:
+        AgenticToolkitLaunchUI: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitLaunchUITests
     profile:
       config: Release
     analyze:

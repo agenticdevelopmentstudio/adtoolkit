@@ -135,6 +135,22 @@
       "holds": "AgenticToolkitLaunch. Startup-job protocols, StartupQueue and LaunchManager: first-run and install work done natively."
     },
     {
+      "name": "apple-launchui",
+      "paths": [
+        "packages/apple/AgenticToolkit/LaunchUI/"
+      ],
+      "depends_on": [
+        "apple-launch",
+        "apple-core",
+        "apple-coreui",
+        "apple-coremacos",
+        "apple-permissions",
+        "apple-permissionsui"
+      ],
+      "shared": true,
+      "holds": "AgenticToolkitLaunchUI. The AppKit presenter for LaunchManager: the undismissable progress panel and run-loop alerts."
+    },
+    {
       "name": "apple-permissionsui",
       "paths": [
         "packages/apple/AgenticToolkit/PermissionsUI/"
@@ -322,6 +338,7 @@
         "apple-permissions",
         "apple-permissionsui",
         "apple-launch",
+        "apple-launchui",
         "apple-pluginkit",
         "apple-database",
         "apple-sync",
