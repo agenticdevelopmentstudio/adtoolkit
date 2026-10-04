@@ -571,3 +571,16 @@ public enum BillingRefusalText {
         "Saving an entry can't move it from \(current) to \(requested). Change its status instead."
     }
 }
+
+/// One app-tracked segment's app, as the Activity window labels it: the
+/// segment's `app:<spanId>` session id and the app's name, with no window
+/// title, which belongs to the entry's description and not to a row label.
+public struct BillingAppNameDTO: Codable, Sendable, Equatable {
+    public let sessionId: String
+    public let appName: String
+
+    public init(sessionId: String, appName: String) {
+        self.sessionId = sessionId
+        self.appName = appName
+    }
+}

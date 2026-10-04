@@ -14,6 +14,31 @@ final class BillingModelTests: XCTestCase {
         fake = FakeBillingClient.seeded()
     }
 
+    func testAppNamesAreLoadedInOneBatchForAppRunsOnly() async {
+        fake.segments = [
+            BillingSegmentDTO(id: "a", sessionId: "app:1", origin: "auto", startedAt: "2026-09-22T09:00:00Z"),
+            BillingSegmentDTO(id: "b", sessionId: "app:2", origin: "auto", startedAt: "2026-09-22T08:00:00Z"),
+            BillingSegmentDTO(id: "c", sessionId: "claude-1", origin: "auto", startedAt: "2026-09-22T07:00:00Z")
+        ]
+        fake.appNames = ["app:1": "Xcode", "app:2": "Terminal"]
+        let model = BillingModel(service: fake, refreshInterval: 999)
+        await model.refresh()
+        XCTAssertEqual(model.appNames, ["app:1": "Xcode", "app:2": "Terminal"])
+        XCTAssertEqual(fake.appNameCalls.count, 1)
+        XCTAssertEqual(Set(fake.appNameCalls[0]), ["app:1", "app:2"])
+    }
+
+    func testAFailedNamesReadNeverBlocksTheLoad() async {
+        fake.segments = [BillingSegmentDTO(id: "a", sessionId: "app:1", origin: "auto",
+                                           startedAt: "2026-09-22T09:00:00Z")]
+        fake.appNamesFail = true
+        let model = BillingModel(service: fake, refreshInterval: 999)
+        await model.refresh()
+        XCTAssertNil(model.lastError)
+        XCTAssertEqual(model.recentSegments.count, 1)
+        XCTAssertTrue(model.appNames.isEmpty)
+    }
+
     func testRefreshCachesEverythingTheWindowsList() async {
         let model = BillingModel(service: fake, refreshInterval: 999)
         await model.refresh()

@@ -56,6 +56,8 @@ public final class BillingActivityViewController: NSViewController {
     public private(set) var running: [BillingSegmentDTO] = []
     /// Every run the table lists, newest first.
     public private(set) var runs: [BillingSegmentDTO] = []
+    /// `[sessionId: app name]` for the app-tracked runs; see ``originLabel(for:appNames:)``.
+    private var appNames: [String: String] = [:]
     public private(set) var projects: [BillingProjectDTO] = []
     /// Only for telling apart projects that share a name in the choosers.
     private var clients: [BillingClientDTO] = []
@@ -253,8 +255,10 @@ public final class BillingActivityViewController: NSViewController {
         recent: [BillingSegmentDTO],
         projects: [BillingProjectDTO],
         clients: [BillingClientDTO] = [],
+        appNames: [String: String] = [:],
         overview: BillingOverviewDTO?
     ) {
+        self.appNames = appNames
         self.projects = projects
         self.clients = clients
         self.running = running.sorted(by: Self.newestFirst)
@@ -383,9 +387,24 @@ public final class BillingActivityViewController: NSViewController {
                 LocalTimeText.dayAndClock($0, timeZone: timeZone, locale: locale)
             } ?? segment.startedAt),
             "elapsed": .text(DurationFormatter.clock(seconds: elapsed)),
-            "origin": .text(segment.isManual ? "Timer" : "Tracked"),
+            "origin": .text(Self.originLabel(for: segment, appNames: appNames)),
             "status": .text(Self.status(of: segment))
         ], isFlagged: Self.isRunaway(segment))
+    }
+
+    /// "Timer", "Tracked" (Claude), or the app's name for app-tracked time.
+    static func originLabel(for segment: BillingSegmentDTO, appNames: [String: String]) -> String {
+        if segment.isManual { return "Timer" }
+        if ActivitySpanSession.spanId(sessionId: segment.sessionId) != nil {
+            let name = appNames[segment.sessionId].map(appName(from:)) ?? ""
+            return name.isEmpty ? "App" : name
+        }
+        return "Tracked"
+    }
+
+    /// A title reads "Xcode — a.swift"; the label is the part before the dash.
+    private static func appName(from title: String) -> String {
+        title.components(separatedBy: " — ").first ?? title
     }
 
     private func projectName(_ id: String?) -> String {

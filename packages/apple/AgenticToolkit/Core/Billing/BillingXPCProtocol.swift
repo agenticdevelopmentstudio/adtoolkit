@@ -86,6 +86,11 @@ import Foundation
     /// Recorded time, newest first. `since` is an ISO-8601 timestamp.
     func billingSegments(since: String?, limit: Int, reply: @escaping ([Data]) -> Void)
 
+    /// The app name of each `app:<spanId>` session id among `sessionIds`, as
+    /// `BillingAppNameDTO` rows. Ids that are not app sessions, or whose span
+    /// is gone, are left out; at most 500 ids are read.
+    func billingAppNames(sessionIds: [String], reply: @escaping ([Data]) -> Void)
+
     /// Running timers and runs, for the Activity window's live rows.
     func billingRunningTimers(reply: @escaping ([Data]) -> Void)
 

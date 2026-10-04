@@ -241,6 +241,17 @@ final class FakeBillingClient: BillingService, @unchecked Sendable {
         reachable ? Array(segments.sorted { $0.startedAt > $1.startedAt }.prefix(limit)) : nil
     }
 
+    /// `[sessionId: app name]` the fake knows; `appNameCalls` records the ids of each call.
+    var appNames: [String: String] = [:]
+    var appNamesFail = false
+    private(set) var appNameCalls: [[String]] = []
+
+    func billingAppNames(sessionIds: [String]) async -> [String: String]? {
+        appNameCalls.append(sessionIds)
+        guard reachable, !appNamesFail else { return nil }
+        return appNames.filter { sessionIds.contains($0.key) }
+    }
+
     func billingRunningTimers() async -> [BillingSegmentDTO]? {
         runningReads += 1
         return reachable ? segments.filter(\.isRunning) : nil

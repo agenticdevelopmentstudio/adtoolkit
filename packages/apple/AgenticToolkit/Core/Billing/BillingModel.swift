@@ -30,6 +30,9 @@ public final class BillingModel {
     public private(set) var projects: [BillingProjectDTO] = []
     public private(set) var runningTimers: [BillingSegmentDTO] = []
     public private(set) var recentSegments: [BillingSegmentDTO] = []
+    /// `[sessionId: app name]` for the app-tracked runs in `recentSegments`
+    /// and `runningTimers`. Empty when the names read failed: rows then say "App".
+    public private(set) var appNames: [String: String] = [:]
     public private(set) var overview: BillingOverviewDTO?
     public private(set) var lastError: String?
     public private(set) var lastUpdated: Date?
@@ -137,14 +140,20 @@ public final class BillingModel {
         // reply that doesn't decode. The last good figures stay rather than
         // turning into dashes, as if nothing were billable.
         let overviewValue = await overview ?? self.overview
+        // One batched read for every app run on screen. Its failure costs
+        // the names only, never the load.
+        let appIds = Array(Set((running + segments).map(\.sessionId)
+            .filter { ActivitySpanSession.spanId(sessionId: $0) != nil }))
+        let names = appIds.isEmpty ? [:] : (await service.billingAppNames(sessionIds: appIds) ?? [:])
         guard generation == writesStarted else { return }
-        let changed = clients != self.clients || projects != self.projects
+        let changed = names != self.appNames || clients != self.clients || projects != self.projects
             || running != self.runningTimers || segments != self.recentSegments
             || overviewValue != self.overview || lastError != nil
         self.clients = clients
         self.projects = projects
         self.runningTimers = running
         self.recentSegments = segments
+        self.appNames = names
         self.overview = overviewValue
         lastError = nil
         lastUpdated = Date()

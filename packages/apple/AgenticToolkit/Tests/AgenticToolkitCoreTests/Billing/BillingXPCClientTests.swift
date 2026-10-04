@@ -136,6 +136,21 @@ final class BillingXPCClientTests: XCTestCase {
         XCTAssertNil(failed)
     }
 
+    func testAppNamesAreAskedOnceForAppIdsOnlyAndKeyedBySession() async {
+        transport.rows = [wire(BillingAppNameDTO(sessionId: "app:a", appName: "Xcode"))]
+        let names = await client.billingAppNames(sessionIds: ["app:a", "claude-1"])
+        XCTAssertEqual(names, ["app:a": "Xcode"])
+        XCTAssertEqual(transport.calls.count, 1)
+
+        let none = await client.billingAppNames(sessionIds: ["claude-1"])
+        XCTAssertEqual(none, [:])
+        XCTAssertEqual(transport.calls.count, 1, "no app ids, no call")
+
+        transport.unreachable = true
+        let failed = await client.billingAppNames(sessionIds: ["app:a"])
+        XCTAssertNil(failed)
+    }
+
     func testANegativeCountIsAFailedWrite() async {
         transport.count = 3
         let moved = await client.billingAssignSegments(ids: ["s1"], projectId: "p1")

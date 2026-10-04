@@ -141,6 +141,7 @@ public final class BillingActivityWindowController: SingleWindowController {
             recent: model.recentSegments,
             projects: model.projects,
             clients: model.clients,
+            appNames: model.appNames,
             overview: model.overview
         )
     }

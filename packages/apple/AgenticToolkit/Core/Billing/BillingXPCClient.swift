@@ -52,6 +52,9 @@ public protocol BillingService: Sendable {
 
     func billingSegments(since: String?, limit: Int) async -> [BillingSegmentDTO]?
     func billingRunningTimers() async -> [BillingSegmentDTO]?
+    /// `[sessionId: app name]` for the `app:` ids among `sessionIds`, in one
+    /// call; nil when the read failed.
+    func billingAppNames(sessionIds: [String]) async -> [String: String]?
     func billingStartTimer(_ start: BillingTimerStartDTO) async -> Result<BillingSegmentDTO, BillingRefusal>
     func billingStopTimer(id: String) async -> Result<BillingSegmentDTO, BillingRefusal>
 
@@ -75,6 +78,9 @@ extension BillingService {
     /// reports every push as not applied.
     @discardableResult
     public func billingSetPreferences(_ body: Data) async -> Bool { false }
+
+    /// A service that cannot name apps answers nil, and rows read "App".
+    public func billingAppNames(sessionIds: [String]) async -> [String: String]? { nil }
 }
 
 // MARK: - Transport
@@ -332,6 +338,14 @@ public final class BillingXPCClient<Transport: BillingXPCTransport>: BillingServ
 
     public func billingRunningTimers() async -> [BillingSegmentDTO]? {
         await list(BillingSegmentDTO.self) { $0.billingRunningTimers(reply: $1) }
+    }
+
+    public func billingAppNames(sessionIds: [String]) async -> [String: String]? {
+        let appIds = sessionIds.filter { ActivitySpanSession.spanId(sessionId: $0) != nil }
+        guard !appIds.isEmpty else { return [:] }
+        guard let rows = await list(BillingAppNameDTO.self, { $0.billingAppNames(sessionIds: appIds, reply: $1) })
+        else { return nil }
+        return Dictionary(rows.map { ($0.sessionId, $0.appName) }, uniquingKeysWith: { first, _ in first })
     }
 
     public func billingStartTimer(_ start: BillingTimerStartDTO) async -> Result<BillingSegmentDTO, BillingRefusal> {

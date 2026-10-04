@@ -77,6 +77,29 @@ final class BillingActivityViewControllerTests: XCTestCase {
         _ = popup.sendAction(popup.action, to: popup.target)
     }
 
+    // MARK: - Origin labels
+
+    func testOriginLabels() {
+        let app = BillingSegmentDTO(id: "1", sessionId: "app:x", origin: "auto", startedAt: "2026-10-01T09:00:00Z")
+        let claude = BillingSegmentDTO(id: "2", sessionId: "abc", origin: "auto", startedAt: "2026-10-01T09:00:00Z")
+        let timer = BillingSegmentDTO(id: "3", origin: BillingSegmentDTO.manualOrigin,
+                                      startedAt: "2026-10-01T09:00:00Z")
+        XCTAssertEqual(BillingActivityViewController.originLabel(for: app, appNames: ["app:x": "Xcode"]), "Xcode")
+        XCTAssertEqual(BillingActivityViewController.originLabel(for: app, appNames: ["app:x": "Xcode — a.swift"]),
+                       "Xcode", "a merged title is cut at the em dash")
+        XCTAssertEqual(BillingActivityViewController.originLabel(for: app, appNames: [:]), "App")
+        XCTAssertEqual(BillingActivityViewController.originLabel(for: claude, appNames: [:]), "Tracked")
+        XCTAssertEqual(BillingActivityViewController.originLabel(for: timer, appNames: ["app:x": "Xcode"]), "Timer")
+    }
+
+    func testAppRunRowShowsTheAppName() {
+        let pane = makePane()
+        let app = BillingSegmentDTO(id: "r1", sessionId: "app:x", origin: "auto", projectId: "p1",
+                                    startedAt: "2026-09-22T08:00:00Z", endedAt: "2026-09-22T08:30:00Z", seconds: 1800)
+        pane.show(running: [], recent: [app], projects: projects, appNames: ["app:x": "Xcode"], overview: nil)
+        XCTAssertEqual(cell(pane, "r1", "origin"), "Xcode")
+    }
+
     // MARK: - Runs
 
     func testRunsAreTheRecentOnesAndTheRunningOnesNewestFirst() {
