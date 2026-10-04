@@ -516,6 +516,78 @@ targets:
       - package: GRDB
         product: GRDB
 
+  # Activity capture and tracking, moved verbatim from Olylo's OlyloCore:
+  # the usage-capture pipeline (FocusTracker, UsageCollector, UsageStore),
+  # the context-event model/store/triggers, the capture permission gate, and
+  # usage sync. Two targets for the same reason as AgenticToolkitMarkdown:
+  # the macOS build depends on single-platform frameworks (AgenticToolkitMacOS,
+  # PermissionsUI). Both compile the same `Activity` sources under one product
+  # name; the macOS-only adapters and triggers are whole-file
+  # `#if os(macOS)`-gated and the no-op observation adapters `#if os(iOS)`.
+  AgenticToolkitActivity-macOS:
+    type: framework
+    platform: macOS
+    sources:
+      - Activity
+    dependencies:
+      - target: AgenticToolkitDatabase
+      - target: AgenticToolkitCore
+      - target: AgenticToolkitCoreMacOS
+      - target: AgenticToolkitMacOS
+      - target: AgenticToolkitPermissions
+      - target: AgenticToolkitPermissionsUI
+      - package: GRDB
+        product: GRDB
+      - sdk: libsqlite3.tbd
+    settings:
+      base:
+        PRODUCT_NAME: AgenticToolkitActivity
+
+  AgenticToolkitActivity-iOS:
+    type: framework
+    platform: iOS
+    sources:
+      - Activity
+    dependencies:
+      - target: AgenticToolkitDatabase
+      - package: GRDB
+        product: GRDB
+      - sdk: libsqlite3.tbd
+    settings:
+      base:
+        SDKROOT: iphoneos
+        PRODUCT_NAME: AgenticToolkitActivity
+        IPHONEOS_DEPLOYMENT_TARGET: "26.0"
+        TARGETED_DEVICE_FAMILY: "1,2"
+
+  AgenticToolkitActivityTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests/AgenticToolkitActivityTests
+    dependencies:
+      - target: AgenticToolkitActivity-macOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitDatabase
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCore
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCoreMacOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitMacOS
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitPermissions
+        embed: true
+        codeSign: true
+      - package: GRDB
+        product: GRDB
+      - sdk: libsqlite3.tbd
+
   AgenticToolkitCoreTests:
     type: bundle.unit-test
     platform: macOS
@@ -1282,6 +1354,36 @@ schemes:
     build:
       targets:
         AgenticToolkitMarkdown-iOS: all
+    run:
+      config: Debug
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitActivity:
+    build:
+      targets:
+        AgenticToolkitActivity-macOS: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - AgenticToolkitActivityTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release
+
+  AgenticToolkitActivity-iOS:
+    build:
+      targets:
+        AgenticToolkitActivity-iOS: all
     run:
       config: Debug
     profile:

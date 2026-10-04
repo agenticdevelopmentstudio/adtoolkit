@@ -8,6 +8,10 @@ disabled_rules:
   - type_body_length
 
 excluded:
+  # Moved verbatim from Olylo's OlyloCore, which was never linted; kept
+  # byte-for-byte rather than restyled as part of the move.
+  - Activity
+  - Tests/AgenticToolkitActivityTests
   - .build
   - .swiftpm
   - DerivedData

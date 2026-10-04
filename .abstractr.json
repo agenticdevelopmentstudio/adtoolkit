@@ -182,6 +182,22 @@
       "holds": "AgenticToolkitMarkdown. The GRDB-backed markdown note store, built for macOS and iOS, re-exporting AgenticDeveloperToolkit. Storage and sync only — no UI."
     },
     {
+      "name": "apple-activity",
+      "paths": [
+        "packages/apple/AgenticToolkit/Activity/"
+      ],
+      "depends_on": [
+        "apple-database",
+        "apple-core",
+        "apple-coremacos",
+        "apple-macos",
+        "apple-permissions",
+        "apple-permissionsui"
+      ],
+      "shared": true,
+      "holds": "AgenticToolkitActivity. Activity capture and tracking moved from Olylo: the usage-capture pipeline (FocusTracker, UsageCollector, UsageStore), context-event model, store and triggers, the capture permission gate, and usage sync. Built for macOS and iOS; macOS-only adapters and triggers are #if os(macOS)-gated."
+    },
+    {
       "name": "apple-macos",
       "paths": [
         "packages/apple/AgenticToolkit/macOS/"
@@ -300,6 +316,7 @@
         "apple-syncgrdb",
         "apple-language",
         "apple-markdown",
+        "apple-activity",
         "apple-htdv",
         "apple-hub",
         "apple-hubservice",
