@@ -50,6 +50,25 @@ private func readCompleteOffMainActor() -> @Sendable () -> Bool {
         presenter.finish()
     }
 
+    @Test func failuresAfterALastJobUseTheStandaloneAlert() async throws {
+        var alertShown = false
+        let presenter = ModalProgressPanel(appName: "Stenographer", modal: PanelSession()) { _ in
+            alertShown = true
+            return .alertFirstButtonReturn
+        }
+        presenter.begin(needsAdministrator: false)
+        presenter.willRun(FakeJob(order: .last))
+        let failures = [StartupFailure(job: FakeJob(order: .normal), error: CancellationError())]
+        var result: Bool?
+        let task = Task { @MainActor in result = await presenter.reportFailures(failures) }
+        for _ in 0..<10_000 where result == nil { await Task.yield() }
+        try #require(result != nil, "reportFailures never answered")
+        task.cancel()
+        #expect(result == true)
+        #expect(alertShown)
+        presenter.finish()
+    }
+
     @Test func normalJobLeavesTheProgressPanelVisible() throws {
         let presenter = ModalProgressPanel(appName: "Stenographer", modal: PanelSession())
         presenter.begin(needsAdministrator: false)

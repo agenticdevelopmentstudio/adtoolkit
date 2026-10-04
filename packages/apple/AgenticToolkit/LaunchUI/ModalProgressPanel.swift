@@ -124,7 +124,9 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
 
     public func reportFailures(_ failures: [StartupFailure]) async -> Bool {
         let alert = makeFailureAlert(appName: appName, failures)
-        guard let panel else {
+        // A `.last` job orders the panel out; a sheet on an invisible window is
+        // never seen and never answers, so fall back to the standalone alert.
+        guard let panel, panel.isVisible else {
             return await runAlert(alert) == .alertFirstButtonReturn
         }
         return await withCheckedContinuation { cont in
