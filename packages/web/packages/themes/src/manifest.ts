@@ -96,7 +96,7 @@ export const themes: Record<ThemeKey, ThemeEntry> = {
   'adh-iosevka': { id: 'adh-iosevka', label: 'ADH · Iosevka', css: adhIosevkaCss },
   'adh-jetbrains': { id: 'adh-jetbrains', label: 'ADH · JetBrains', css: adhJetbrainsCss },
   'adh-manrope': { id: 'adh-manrope', label: 'ADH · Manrope', css: adhManropeCss },
-  agenticdevelopmentstudioweb: { id: 'agenticdevelopmentstudioweb', label: 'Agentic Cookbook', css: agenticdevelopmentstudiowebCss },
+  agenticdevelopmentstudioweb: { id: 'agenticdevelopmentstudioweb', label: 'Agentic Development Studio', css: agenticdevelopmentstudiowebCss },
   charcoal: { id: 'charcoal', label: 'Charcoal', css: charcoalCss },
   'dev-team': { id: 'dev-team', label: 'Dev Team', css: devTeamCss },
   fishlamp: { id: 'fishlamp', label: 'Fishlamp', css: fishlampCss },

@@ -2,8 +2,10 @@
 
 Excluded: the cookbook's own domain and repo name (references to a different
 project), archived docs and session logs (history), the historical-bug fixtures
-in tools/check_doc_subpaths*, and the one legacy theme id kept so a persisted
-theme choice can be migrated on read.
+in tools/check_doc_subpaths*, docs/web/migrate-consumer.md (its "old" columns
+quote the pre-rename package scope on purpose), and the one real
+`LEGACY_THEME_ID` line in the adh themes module, which maps a persisted
+pre-rename theme key to its new one.
 """
 from __future__ import annotations
 
@@ -20,10 +22,9 @@ ALLOWED = (
     re.compile(r"\(agenticcookbook `cookr` branch"),
 )
 # Files that quote the old name on purpose (historical-bug fixtures).
-ALLOWED_FILE_PREFIXES = ("tools/check_doc_subpaths",)
-# The pre-rename theme id, mapped to the new one when a persisted setting is read.
-LEGACY_THEME_ID = "agenticcookbookweb"
-ALLOWED_LEGACY_LINE = re.compile(r'LEGACY_THEME_ID\b.*"agenticcookbookweb"')
+ALLOWED_FILE_PREFIXES = ("tools/check_doc_subpaths", "docs/web/migrate-consumer.md")
+# The one declaration of the pre-rename theme id (packages/web/packages/adh/src/themes/adh-themes.ts).
+ALLOWED_LEGACY_LINE = re.compile(r"^export const LEGACY_THEME_ID = 'agenticcookbookweb'$")
 THIS_FILE = "tools/check_no_cookbook_identifiers_test.py"
 
 
@@ -50,7 +51,7 @@ def offending_lines() -> list[str]:
         except (UnicodeDecodeError, FileNotFoundError, IsADirectoryError):
             continue
         for number, line in enumerate(text.splitlines(), 1):
-            if ALLOWED_LEGACY_LINE.search(line):
+            if ALLOWED_LEGACY_LINE.search(line.strip()):
                 continue
             stripped = line
             for allowed in ALLOWED:

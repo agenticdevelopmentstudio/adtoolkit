@@ -8,7 +8,7 @@ struct PortedThemeTests {
     /// Names are the manifest's own labels, verbatim — four of them do not
     /// match the obvious guess, so copy from here rather than inventing:
     /// "Green Matrix (Glass)" is parenthesised, "Synthwave '84" carries an
-    /// apostrophe, and Projects Overview / Agentic Cookbook have no trailing
+    /// apostrophe, and Projects Overview / Agentic Development Studio have no trailing
     /// "My" or "Web".
     @Test("every web theme Swift is missing has been ported")
     func catalogMatchesWeb() {
@@ -18,7 +18,7 @@ struct PortedThemeTests {
             "Handheld Communicator", "Synthwave '84", "Cobalt2", "Vesper",
             "Professional", "Techy", "Whimsical", "Fishlamp", "Dev Team",
             "Mike Fullerton", "My Projects", "Projects Overview",
-            "Agentic Cookbook",
+            "Agentic Development Studio",
         ]
         let names = Set(BuiltInThemes.webPorted.map(\.name))
         #expect(names == expected)

@@ -7,7 +7,7 @@
 // drifting between those call sites — the pre-paint below re-implements all of it as a
 // string, and a mirror is only maintainable next to the thing it mirrors.
 
-import { DEFAULT_SITE_THEME } from './adh-themes'
+import { DEFAULT_SITE_THEME, LEGACY_THEME_ID, RENAMED_THEME_ID, normalizeThemeKey } from './adh-themes'
 
 export const THEME_STORAGE_KEY = 'adh-theme'
 
@@ -46,9 +46,9 @@ export function cookieDomain(): string {
 
 export function readStoredTheme(): string | null {
   const m = document.cookie.match(/(?:^|; )adh-theme=([^;]+)/)
-  if (m?.[1]) return decodeURIComponent(m[1])
+  if (m?.[1]) return normalizeThemeKey(decodeURIComponent(m[1]))
   try {
-    return localStorage.getItem(THEME_STORAGE_KEY)
+    return normalizeThemeKey(localStorage.getItem(THEME_STORAGE_KEY))
   } catch {
     return null
   }
@@ -110,10 +110,12 @@ export function appendThemePreview(href: string, theme: string | null): string {
 export function themePrePaintScript(): string {
   const K = THEME_STORAGE_KEY
   const D = DEFAULT_SITE_THEME
+  const L = LEGACY_THEME_ID
+  const N = RENAMED_THEME_ID
   return (
-    `(function(){try{var K='${K}',D='${D}',OK=/^[-\\w]+$/;` +
+    `(function(){try{var K='${K}',D='${D}',OK=/^[-\\w]+$/,fx=function(v){return v==='${L}'?'${N}':v;};` +
     `var hm=location.hash.match(/(?:^|[#&])${K}=([^&]+)/);` +
-    `var raw=hm?decodeURIComponent(hm[1]):null;` +
+    `var raw=hm?fx(decodeURIComponent(hm[1])):null;` +
     `var carried=(raw&&OK.test(raw)&&document.querySelector('style[data-adh-theme-alt="'+raw+'"]'))?raw:null;` +
     `if(carried){try{localStorage.setItem(K,carried);}catch(e){}` +
     `var hn=location.hostname,d=(hn==='localhost'||/\\.localhost$/.test(hn))?'localhost':` +
@@ -121,7 +123,7 @@ export function themePrePaintScript(): string {
     `document.cookie=K+'='+carried+';domain='+d+';path=/;max-age=31536000;samesite=lax';}` +
     `if(hm){history.replaceState(null,'',location.pathname+location.search);}` +
     `var m=document.cookie.match(/(?:^|; )${K}=([^;]+)/);` +
-    `var t=carried||(m?decodeURIComponent(m[1]):localStorage.getItem(K));` +
+    `var t=fx(carried||(m?decodeURIComponent(m[1]):localStorage.getItem(K)));` +
     `if(!t||!OK.test(t))t=D;` +
     `var s=document.querySelector('style[data-adh-theme-alt="'+t+'"]')||` +
     `document.querySelector('style[data-adh-theme-alt="'+D+'"]');` +

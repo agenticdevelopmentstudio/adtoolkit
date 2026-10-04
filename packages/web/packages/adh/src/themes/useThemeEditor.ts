@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { themes } from '@agenticdevelopertoolkit/themes/manifest'
 
-import { DEFAULT_ADH_THEME, DEFAULT_SITE_THEME } from './adh-themes'
+import { DEFAULT_ADH_THEME, DEFAULT_SITE_THEME, normalizeThemeKey } from './adh-themes'
 import { switcherThemeKeys } from './theme-keys'
 import { isSwitcherSeed, concatItemCss } from './resolve'
 import { applyThemeCss, clearThemeOverride } from './theme-overrides'
@@ -63,7 +63,7 @@ function uniqueKey(base: string, taken: Set<string>): string {
 }
 
 const baseSeedOf = (t: { source: ThemeSource; key: string; basedOn: string | null }): string =>
-  t.source === 'seed' ? t.key : isSwitcherSeed(t.basedOn) ? t.basedOn : DEFAULT_ADH_THEME
+  t.source === 'seed' ? t.key : isSwitcherSeed(t.basedOn) ? normalizeThemeKey(t.basedOn) : DEFAULT_ADH_THEME
 
 export interface ThemeEditorApi {
   loading: boolean
@@ -234,9 +234,10 @@ export function useThemeEditor(): ThemeEditorApi {
   const newTheme = useCallback(() => {
     const taken = new Set(allThemes.map((t) => t.key))
     const key = uniqueKey('custom', taken)
-    const based =
+    const based = normalizeThemeKey(
       (selectedKey ? allThemes.find((t) => t.key === selectedKey) : undefined)?.basedOn ??
-      (isSwitcherSeed(selectedKey) ? selectedKey : DEFAULT_ADH_THEME)
+      (isSwitcherSeed(selectedKey) ? selectedKey : DEFAULT_ADH_THEME),
+    )
     setSelectedKey(key)
     setIsSeed(false)
     setIsNew(true)

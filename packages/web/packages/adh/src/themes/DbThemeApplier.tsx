@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 
-import { DEFAULT_ADH_THEME } from './adh-themes'
+import { DEFAULT_ADH_THEME, normalizeThemeKey } from './adh-themes'
 import { ALT_STYLE_SELECTOR, applyBaseTheme, readStoredTheme } from './theme-preview'
 import { isSwitcherSeed, concatItemCss } from './resolve'
 import { applyThemeCss } from './theme-overrides'
@@ -24,7 +24,8 @@ export function DbThemeApplier() {
         if (cancelled) return
         const t = rows.find((r) => r.key === key)
         if (!t) return
-        applyBaseTheme(isSwitcherSeed(t.basedOn) ? t.basedOn : DEFAULT_ADH_THEME)
+        const base = normalizeThemeKey(t.basedOn)
+        applyBaseTheme(isSwitcherSeed(base) ? base : DEFAULT_ADH_THEME)
         applyThemeCss(concatItemCss(t.data))
       })
       .catch(() => {})

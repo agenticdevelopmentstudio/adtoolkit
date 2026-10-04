@@ -180,6 +180,18 @@ export type SwitcherThemeKey = AdhThemeKey | FullPaletteThemeKey
  *  swap is checked rather than trusted. */
 export const DEFAULT_SITE_THEME: SwitcherThemeKey = 'charcoal'
 
+/** The pre-rename key of the `agenticdevelopmentstudioweb` theme. Visitors' cookies and
+ *  localStorage, and saved DB themes' `basedOn`, may still hold it; every reader of a
+ *  persisted theme key maps it through {@link normalizeThemeKey}. */
+export const LEGACY_THEME_ID = 'agenticcookbookweb'
+export const RENAMED_THEME_ID = 'agenticdevelopmentstudioweb'
+
+/** Map a persisted theme key written before the rename to its current key; any other
+ *  key (or null) passes through unchanged. */
+export function normalizeThemeKey<T extends string | null>(key: T): T | typeof RENAMED_THEME_ID {
+  return key === LEGACY_THEME_ID ? RENAMED_THEME_ID : key
+}
+
 /** Themes whose `--font-*` stack IS the base theme's — the Iosevka cut adh self-hosts and
  *  ships `@font-face` rules for. AdhThemeStyle preloads those faces only when the theme the
  *  page actually paints in is one of these: a preload for a face the winning theme never
