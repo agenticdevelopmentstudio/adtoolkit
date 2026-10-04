@@ -20,6 +20,26 @@ private final class FailingOpenStore: ActivityPersistence, @unchecked Sendable {
     func openActivitySpans() throws -> [ActivitySpanDTO] { try inner.openActivitySpans() }
 }
 
+/// Closes land late, as a slow disk would make them.
+private final class SlowCloseStore: ActivityPersistence, @unchecked Sendable {
+    let inner = InMemoryActivityStore()
+    func openActivitySpan(_ span: ActivitySpanDTO) throws { try inner.openActivitySpan(span) }
+    func closeActivitySpan(id: String, endedAt: String) throws {
+        Thread.sleep(forTimeInterval: 0.2)
+        try inner.closeActivitySpan(id: id, endedAt: endedAt)
+    }
+    func retitleActivitySpan(id: String, title: String) throws { try inner.retitleActivitySpan(id: id, title: title) }
+    func touchActivitySpan(id: String, at: String) throws { try inner.touchActivitySpan(id: id, at: at) }
+    func openIdleInterval(from: String) throws { try inner.openIdleInterval(from: from) }
+    func closeIdleInterval(until: String) throws { try inner.closeIdleInterval(until: until) }
+    func recoverActivity(now: String) throws -> Int { try inner.recoverActivity(now: now) }
+    func pruneActivity(endedBefore before: String) throws -> Int { try inner.pruneActivity(endedBefore: before) }
+    func activitySpans(since: String, limit: Int) throws -> [ActivitySpanDTO] {
+        try inner.activitySpans(since: since, limit: limit)
+    }
+    func openActivitySpans() throws -> [ActivitySpanDTO] { try inner.openActivitySpans() }
+}
+
 private final class Counter: @unchecked Sendable {
     private let lock = NSLock()
     private var value = 0
@@ -162,6 +182,25 @@ final class WorkActivityRecorderTests: XCTestCase {
         clock.addTimeInterval(90)
         recorder.stop(); recorder.drainWrites()
         XCTAssertFalse(store.spans[0].isOpen)
+    }
+
+    /// Shutdown calls `stop()` then `drainWrites()`; the close must have landed
+    /// when the drain returns, however slow the store.
+    func testDrainAfterStopWaitsForTheClose() throws {
+        let slow = SlowCloseStore()
+        let start = clock
+        let slowRecorder = WorkActivityRecorder(
+            triggers: Self.triggers(), allowlist: AppAllowlist(preferences: .default),
+            resolver: WorkingPathResolver(knownRoots: { [] }), store: slow,
+            now: { start.addingTimeInterval(90) }, timeZone: { TimeZone(identifier: "UTC")! })
+        slowRecorder.start()
+        slowRecorder.handle(Self.focusDetail("com.apple.dt.Xcode", path: nil, title: "t"), at: start)
+        slowRecorder.stop()
+        slowRecorder.drainWrites()
+        let spans = try slow.openActivitySpans()
+        XCTAssertEqual(spans.count, 0, "the close landed before drainWrites returned")
+        XCTAssertEqual(slow.inner.spans.count, 1)
+        XCTAssertFalse(slow.inner.spans[0].isOpen)
     }
 
     func testTerminateThenUpdateWritesNothing() {

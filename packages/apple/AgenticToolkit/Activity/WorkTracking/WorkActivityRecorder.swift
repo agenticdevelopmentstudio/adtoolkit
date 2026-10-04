@@ -170,9 +170,11 @@ public final class WorkActivityRecorder {
         write { try $0.touchActivitySpan(id: id, at: at) }
     }
 
-    /// Test seam: waits for queued writes.
+    /// Blocks until every write issued so far has landed in the store. Call it
+    /// after `stop()` when the process is about to exit: `stop()` only queues the
+    /// close of the open span, and an exit before the queue runs loses it.
     /// Relies on `writeQueue` being serial: the empty block runs after every earlier write.
-    func drainWrites() { writeQueue.sync {} }
+    public func drainWrites() { writeQueue.sync {} }
 
     // MARK: - Private
 
