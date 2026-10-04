@@ -102,6 +102,57 @@ final class FrontmostElementObserverTests: XCTestCase {
         observer.retarget()
         XCTAssertEqual(accessibility.subscribes, 1, "no retry, and no re-ask on the next activation")
     }
+
+    // MARK: - Inside one subscribe
+
+    @MainActor
+    func testADeniedRegistrationEndsTheSubscribeAtTheFirstCall() {
+        // Four registrations, each its own trip through `tccd` without the
+        // grant. The first denial answers for all of them.
+        let adds = CallCounter()
+        let accessibility = SystemFrontmostElementAX(
+            create: { _ in (.success, NSObject()) },
+            add: { _, _, _, _ in adds.count += 1; return .apiDisabled }
+        )
+        let result = accessibility.subscribe(
+            pid: 4242, notifications: FrontmostElementObserver.notifications, context: Self.context)
+        guard case .apiDisabled = result else { return XCTFail("expected .apiDisabled, got \(result)") }
+        XCTAssertEqual(adds.count, 1, "no registration is attempted after the first denial")
+    }
+
+    @MainActor
+    func testADeniedCreateMakesNoRegistrationAtAll() {
+        let adds = CallCounter()
+        let accessibility = SystemFrontmostElementAX(
+            create: { _ in (.apiDisabled, nil) },
+            add: { _, _, _, _ in adds.count += 1; return .success }
+        )
+        let result = accessibility.subscribe(
+            pid: 4242, notifications: FrontmostElementObserver.notifications, context: Self.context)
+        guard case .apiDisabled = result else { return XCTFail("expected .apiDisabled, got \(result)") }
+        XCTAssertEqual(adds.count, 0)
+    }
+
+    @MainActor
+    func testRegistrationsThatAllFailAreAFailedAttach() {
+        let adds = CallCounter()
+        let accessibility = SystemFrontmostElementAX(
+            create: { _ in (.success, NSObject()) },
+            add: { _, _, _, _ in adds.count += 1; return .failure }
+        )
+        let result = accessibility.subscribe(
+            pid: 4242, notifications: FrontmostElementObserver.notifications, context: Self.context)
+        guard case .failed = result else { return XCTFail("expected .failed, got \(result)") }
+        XCTAssertEqual(adds.count, FrontmostElementObserver.notifications.count)
+    }
+
+    private static var context: UnsafeMutableRawPointer { UnsafeMutableRawPointer(bitPattern: 0x1)! }
+}
+
+/// Counts the AX calls made inside one `subscribe`.
+@MainActor
+private final class CallCounter {
+    var count = 0
 }
 
 /// Counts every subscription attempt; the frontmost app never changes.

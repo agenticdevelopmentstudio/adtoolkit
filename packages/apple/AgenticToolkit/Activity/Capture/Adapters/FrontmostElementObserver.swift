@@ -46,23 +46,60 @@ protocol FrontmostElementAX: AnyObject {
 
 @MainActor
 final class SystemFrontmostElementAX: FrontmostElementAX {
+    /// `AXObserverCreate`, as the error and the observer it made.
+    typealias Create = (pid_t) -> (AXError, AnyObject?)
+    /// `AXObserverAddNotification` for one notification name.
+    typealias Add = (AnyObject, AXUIElement, String, UnsafeMutableRawPointer) -> AXError
+
+    private let create: Create
+    private let add: Add
+
+    /// The two AX calls are injectable so a test can count them; the
+    /// defaults are the real ones.
+    init(create: @escaping Create = SystemFrontmostElementAX.liveCreate,
+         add: @escaping Add = SystemFrontmostElementAX.liveAdd) {
+        self.create = create
+        self.add = add
+    }
+
+    nonisolated static func liveCreate(_ pid: pid_t) -> (AXError, AnyObject?) {
+        var created: AXObserver?
+        let made = AXObserverCreate(pid, axObserverCallback, &created)
+        return (made, created)
+    }
+
+    nonisolated static func liveAdd(
+        _ observer: AnyObject, _ app: AXUIElement, _ name: String, _ context: UnsafeMutableRawPointer
+    ) -> AXError {
+        // swiftlint:disable:next force_cast
+        AXObserverAddNotification(observer as! AXObserver, app, name as CFString, context)
+    }
+
     var frontmostPID: pid_t? { NSWorkspace.shared.frontmostApplication?.processIdentifier }
 
     /// A created observer carrying no registrations delivers nothing, so a
     /// subscription that fails wholesale counts as a failed attach and not as
     /// a silent success. A *partial* success is kept: three of four
     /// notifications still see more than none.
+    ///
+    /// The first `.apiDisabled` ends it: Accessibility is not granted, every
+    /// further registration would be one more trip through `tccd` to learn
+    /// the same thing, and a burst of those is what freezes the machine.
     func subscribe(pid: pid_t, notifications: [String], context: UnsafeMutableRawPointer)
         -> FrontmostElementSubscription {
-        var created: AXObserver?
-        let made = AXObserverCreate(pid, axObserverCallback, &created)
+        let (made, created) = create(pid)
         if made == .apiDisabled { return .apiDisabled }
         guard made == .success, let created else { return .failed }
         let app = AXUIElementCreateApplication(pid)
-        let results = notifications.map { AXObserverAddNotification(created, app, $0 as CFString, context) }
-        if results.contains(.apiDisabled) { return .apiDisabled }
-        guard results.contains(.success) else { return .failed }
-        CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(created), .defaultMode)
+        var registered = false
+        for name in notifications {
+            let result = add(created, app, name, context)
+            if result == .apiDisabled { return .apiDisabled }
+            if result == .success { registered = true }
+        }
+        guard registered else { return .failed }
+        // swiftlint:disable:next force_cast
+        CFRunLoopAddSource(CFRunLoopGetMain(), AXObserverGetRunLoopSource(created as! AXObserver), .defaultMode)
         return .attached(created)
     }
 
