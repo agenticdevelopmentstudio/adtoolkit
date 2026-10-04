@@ -314,7 +314,9 @@ final class ProjectsWindowControllerTests: XCTestCase {
         toggle.state = .off
         toggle.sendAction(toggle.action, to: toggle.target)
         await controller.lastWrite?.value
-        XCTAssertNotNil(fake.projects.first { $0.id == "p1" }?.idleCutoffMinutes)
+        let global = BillingUserSettings.forTests.idleCutoffMinutes.value
+        XCTAssertEqual(fake.projects.first { $0.id == "p1" }?.idleCutoffMinutes, global)
+        XCTAssertTrue(panel.idleCutoffUsesGlobalToggle.label.stringValue.contains("(\(global) min)"))
         XCTAssertTrue(panel.idleCutoffField.textField.isEnabled)
 
         panel.idleCutoffField.textField.stringValue = "40"

@@ -352,8 +352,6 @@ public final class ProjectDetailPanel: ComposableSettings.RecordDetailPanel<Bill
         roundingModel.refresh()
         roundingModeModel.refresh()
         archivedModel.refresh()
-        idleCutoffUsesGlobalModel.refresh()
-        idleCutoffModel.refresh()
         clientChoice.updateChoices(Self.clientChoices(clients: clients, current: fresh.clientId))
         clientChoice.refresh()
         notesModel.refresh()
@@ -392,6 +390,7 @@ public final class ProjectDetailPanel: ComposableSettings.RecordDetailPanel<Bill
     /// because a refresh redraws it from the model's fixed title.
     private func syncIdleCutoffControls() {
         guard let idleCutoffField, let idleCutoffUsesGlobalToggle else { return }
+        idleCutoffUsesGlobalModel.refresh()
         idleCutoffUsesGlobalToggle.label.stringValue = Self.useGlobalIdleCutoffTitle(settings.idleCutoffMinutes.value)
         idleCutoffModel.refresh()
         idleCutoffField.textField.isEnabled = project.idleCutoffMinutes != nil
