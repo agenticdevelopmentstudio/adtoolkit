@@ -734,6 +734,12 @@ targets:
       - target: AgenticToolkitLaunch
         embed: true
         codeSign: true
+      - target: AgenticToolkitPermissionsUI
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitPermissions
+        embed: true
+        codeSign: true
       - target: AgenticToolkitCore
         embed: true
         codeSign: true

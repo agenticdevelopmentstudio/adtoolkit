@@ -36,10 +36,12 @@ public final class PermissionWalkthrough {
     public static let defaultAutomationTarget = "com.googlecode.iterm2"
 
     /// UserDefaults key tracking whether the walkthrough has completed.
-    public static let walkthroughCompleteKey = "permission_walkthrough_complete"
+    nonisolated public static let walkthroughCompleteKey = "permission_walkthrough_complete"
 
     /// Whether the walkthrough has already been completed.
-    public static var isComplete: Bool {
+    /// `nonisolated`: it only reads `UserDefaults.standard`, which is thread-safe,
+    /// so a launch-time assessment can ask without hopping to the main actor.
+    nonisolated public static var isComplete: Bool {
         UserDefaults.standard.bool(forKey: walkthroughCompleteKey)
     }
 

@@ -99,7 +99,12 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
         }
     }
 
-    public func willRun(_ job: any StartupJob) { update(detail: job.title) }
+    public func willRun(_ job: any StartupJob) {
+        update(detail: job.title)
+        // A `.last` job (the permissions walkthrough) runs its own modal; the
+        // progress panel steps out of its way. Last thing done to the panel.
+        if job.order == .last { panel?.orderOut(nil) }
+    }
 
     public func update(detail text: String) {
         detailText = text
