@@ -133,6 +133,8 @@ final class WorkActivityRecorderTests: XCTestCase {
     }
 
     func testUpdatingAllowlistReevaluatesCurrentFocus() {
+        recorder.start()
+        defer { recorder.stop() }
         focus("com.apple.dt.Xcode", path: "/r/a.swift", at: 0)
         clock.addTimeInterval(120)
         recorder.update(allowlist: AppAllowlist(preferences: WorkTrackingPreferences(
@@ -159,6 +161,80 @@ final class WorkActivityRecorderTests: XCTestCase {
         clock.addTimeInterval(90)
         recorder.stop(); recorder.drainWrites()
         XCTAssertFalse(store.spans[0].isOpen)
+    }
+
+    func testTerminateThenUpdateWritesNothing() {
+        recorder.start()
+        focus("com.apple.dt.Xcode", path: "/r/a.swift", at: 0)
+        recorder.handle(.appLifecycle(AppLifecycleDetail(change: .terminated, bundleID: "com.apple.dt.Xcode",
+                                                         appName: "Xcode", pid: 1)), at: clock.addingTimeInterval(60))
+        recorder.drainWrites()
+        recorder.update(allowlist: AppAllowlist(preferences: .default))
+        recorder.drainWrites()
+        XCTAssertEqual(store.spans.count, 1)
+        XCTAssertFalse(store.spans[0].isOpen)
+        XCTAssertNil(recorder.currentSpan)
+        recorder.stop()
+    }
+
+    func testStopThenUpdateWritesNothing() {
+        recorder.start()
+        focus("com.apple.dt.Xcode", path: "/r/a.swift", at: 0)
+        clock.addTimeInterval(90)
+        recorder.stop(); recorder.drainWrites()
+        recorder.update(allowlist: AppAllowlist(preferences: .default))
+        recorder.drainWrites()
+        XCTAssertEqual(store.spans.count, 1)
+        XCTAssertFalse(store.spans[0].isOpen)
+        XCTAssertNil(recorder.currentSpan)
+    }
+
+    func testStopClosesIdleAndRestartHeartbeats() {
+        recorder.start()
+        recorder.handle(Self.input(.inactive), at: clock)
+        clock.addTimeInterval(120)
+        recorder.stop(); recorder.drainWrites()
+        XCTAssertFalse(store.idle[0].until.isEmpty)
+        recorder.start()
+        focus("com.apple.dt.Xcode", path: "/r/a.swift", at: 0)
+        clock.addTimeInterval(60); recorder.heartbeat(); recorder.drainWrites()
+        XCTAssertFalse(store.spans[0].lastSeenAt.isEmpty)
+        recorder.stop()
+    }
+
+    func testUpdateAddingFrontmostAppOpensSpan() {
+        recorder.start()
+        focus("com.example.NewIDE", path: "/r/a.swift", at: 0)
+        XCTAssertTrue(store.spans.isEmpty)
+        recorder.update(allowlist: AppAllowlist(preferences: WorkTrackingPreferences(
+            enabled: true, addedBundleIds: ["com.example.NewIDE"], removedBundleIds: [], retentionDays: 90)))
+        recorder.drainWrites()
+        XCTAssertEqual(store.spans.count, 1)
+        XCTAssertEqual(store.spans[0].bundleId, "com.example.NewIDE")
+        XCTAssertEqual(store.spans[0].repoRoot, "/r")
+        recorder.stop()
+    }
+
+    func testStopCancelsHeartbeat() {
+        recorder.start()
+        focus("com.apple.dt.Xcode", path: "/r/a.swift", at: 0)
+        clock.addTimeInterval(90)
+        recorder.stop(); recorder.drainWrites()
+        clock.addTimeInterval(60); recorder.heartbeat(); recorder.drainWrites()
+        XCTAssertTrue(store.spans[0].lastSeenAt.isEmpty)
+    }
+
+    func testStartTwiceStartsTriggersOnce() {
+        let focusTrigger = FakeContextTrigger(kind: .appFocus)
+        let rec = WorkActivityRecorder(
+            triggers: .init(focus: focusTrigger, input: FakeContextTrigger(kind: .input),
+                            session: FakeContextTrigger(kind: .session),
+                            lifecycle: FakeContextTrigger(kind: .appLifecycle)),
+            allowlist: AppAllowlist(preferences: .default),
+            resolver: WorkingPathResolver(knownRoots: { [] }), store: store)
+        rec.start(); rec.start()
+        XCTAssertEqual(focusTrigger.startCount, 1)
+        rec.stop()
     }
 
     func testStartSkipsAThrowingTrigger() {

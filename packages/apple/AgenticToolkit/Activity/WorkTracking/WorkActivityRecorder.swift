@@ -47,8 +47,13 @@ public final class WorkActivityRecorder {
     private var current: ActivitySpanDTO?
     private var lastFocus: AppFocusDetail?
     private var inputActive = true
-    private var heartbeatTimer: Timer?
+    private var running = false
+    /// Not main-actor isolated only so `deinit` can invalidate it; every other
+    /// access is on the main actor.
+    nonisolated(unsafe) private var heartbeatTimer: Timer?
 
+    /// - Parameter writeQueue: MUST be serial. Writes must land in the order
+    ///   they were issued, and `drainWrites()` only waits for all of them on a serial queue.
     public init(triggers: Triggers, allowlist: AppAllowlist, resolver: WorkingPathResolver,
                 store: any ActivityPersistence,
                 writeQueue: DispatchQueue = DispatchQueue(label: "work-activity-writes"),
@@ -66,10 +71,14 @@ public final class WorkActivityRecorder {
         self.onWriteFailure = onWriteFailure
     }
 
+    deinit { heartbeatTimer?.invalidate() }
+
     public var currentSpan: ActivitySpanDTO? { current }
 
     /// Starts each trigger; a throwing one is logged and skipped.
     public func start() {
+        guard !running else { return }
+        running = true
         let wired: [any ContextTrigger] = [triggers.focus, triggers.input, triggers.session, triggers.lifecycle]
         for trigger in wired {
             trigger.onEvent = { [weak self] detail, date in
@@ -97,13 +106,22 @@ public final class WorkActivityRecorder {
             trigger.stop()
             trigger.onEvent = nil
         }
-        apply(builder.focus(nil, at: now()))
+        let stoppedAt = now()
+        apply(builder.focus(nil, at: stoppedAt))
+        if !inputActive {
+            let until = UTCTimestamp.string(from: stoppedAt)
+            write { try $0.closeIdleInterval(until: until) }
+        }
+        inputActive = true
+        builder = ActivitySpanBuilder()
+        lastFocus = nil
+        running = false
     }
 
     /// Replaces the allowlist and re-evaluates the current focus.
     public func update(allowlist: AppAllowlist) {
         self.allowlist = allowlist
-        if let lastFocus { handleFocus(lastFocus, at: now(), remember: false) }
+        if running, let lastFocus { handleFocus(lastFocus, at: now(), remember: false) }
     }
 
     /// Test seam: feeds an event as if a trigger emitted it.
@@ -114,6 +132,7 @@ public final class WorkActivityRecorder {
         case .appLifecycle(let lifecycle):
             guard lifecycle.change == .terminated else { return }
             apply(builder.appTerminated(bundleId: lifecycle.bundleID, at: date))
+            if lastFocus?.bundleID == lifecycle.bundleID { lastFocus = nil }
         case .session(let session):
             switch session.change {
             case .lock: apply(builder.suspend(.locked, at: date))
@@ -148,6 +167,7 @@ public final class WorkActivityRecorder {
     }
 
     /// Test seam: waits for queued writes.
+    /// Relies on `writeQueue` being serial: the empty block runs after every earlier write.
     func drainWrites() { writeQueue.sync {} }
 
     // MARK: - Private
