@@ -58,6 +58,8 @@ var FULL_PALETTE_THEMES = [
   "fishlamp"
 ];
 var DEFAULT_SITE_THEME = "charcoal";
+var LEGACY_THEME_ID = "agenticcookbookweb";
+var RENAMED_THEME_ID = "agenticdevelopmentstudioweb";
 var BASE_FACE_THEMES = [
   DEFAULT_ADH_THEME,
   ...BASE_CUT_ALIASES,
@@ -99,7 +101,9 @@ var THEME_STORAGE_KEY = "adh-theme";
 function themePrePaintScript() {
   const K = THEME_STORAGE_KEY;
   const D = DEFAULT_SITE_THEME;
-  return `(function(){try{var K='${K}',D='${D}',OK=/^[-\\w]+$/;var hm=location.hash.match(/(?:^|[#&])${K}=([^&]+)/);var raw=hm?decodeURIComponent(hm[1]):null;var carried=(raw&&OK.test(raw)&&document.querySelector('style[data-adh-theme-alt="'+raw+'"]'))?raw:null;if(carried){try{localStorage.setItem(K,carried);}catch(e){}var hn=location.hostname,d=(hn==='localhost'||/\\.localhost$/.test(hn))?'localhost':(function(){var p=hn.split('.');return p.length<=2?hn:p.slice(-2).join('.');})();document.cookie=K+'='+carried+';domain='+d+';path=/;max-age=31536000;samesite=lax';}if(hm){history.replaceState(null,'',location.pathname+location.search);}var m=document.cookie.match(/(?:^|; )${K}=([^;]+)/);var t=carried||(m?decodeURIComponent(m[1]):localStorage.getItem(K));if(!t||!OK.test(t))t=D;var s=document.querySelector('style[data-adh-theme-alt="'+t+'"]')||document.querySelector('style[data-adh-theme-alt="'+D+'"]');if(s)s.media='all';}catch(e){}})();`;
+  const L = LEGACY_THEME_ID;
+  const N = RENAMED_THEME_ID;
+  return `(function(){try{var K='${K}',D='${D}',OK=/^[-\\w]+$/,fx=function(v){return v==='${L}'?'${N}':v;};var hm=location.hash.match(/(?:^|[#&])${K}=([^&]+)/);var raw=hm?fx(decodeURIComponent(hm[1])):null;var carried=(raw&&OK.test(raw)&&document.querySelector('style[data-adh-theme-alt="'+raw+'"]'))?raw:null;if(carried){try{localStorage.setItem(K,carried);}catch(e){}var hn=location.hostname,d=(hn==='localhost'||/\\.localhost$/.test(hn))?'localhost':(function(){var p=hn.split('.');return p.length<=2?hn:p.slice(-2).join('.');})();document.cookie=K+'='+carried+';domain='+d+';path=/;max-age=31536000;samesite=lax';}if(hm){history.replaceState(null,'',location.pathname+location.search);}var m=document.cookie.match(/(?:^|; )${K}=([^;]+)/);var t=fx(carried||(m?decodeURIComponent(m[1]):localStorage.getItem(K)));if(!t||!OK.test(t))t=D;var s=document.querySelector('style[data-adh-theme-alt="'+t+'"]')||document.querySelector('style[data-adh-theme-alt="'+D+'"]');if(s)s.media='all';}catch(e){}})();`;
 }
 
 // src/themes/AdhThemeStyle.tsx

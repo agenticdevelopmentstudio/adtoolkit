@@ -24,7 +24,10 @@ ALLOWED = (
 # Files that quote the old name on purpose (historical-bug fixtures).
 ALLOWED_FILE_PREFIXES = ("tools/check_doc_subpaths", "docs/web/migrate-consumer.md")
 # The one declaration of the pre-rename theme id (packages/web/packages/adh/src/themes/adh-themes.ts).
-ALLOWED_LEGACY_LINE = re.compile(r"^export const LEGACY_THEME_ID = 'agenticcookbookweb'$")
+# Also its emitted forms in the tracked dist/ (`var ... = "..."`, `export declare const ... = "..."`).
+ALLOWED_LEGACY_LINE = re.compile(
+    r"""^(export const|var|export declare const) LEGACY_THEME_ID = ['"]agenticcookbookweb['"];?$"""
+)
 THIS_FILE = "tools/check_no_cookbook_identifiers_test.py"
 
 
@@ -32,6 +35,8 @@ def is_excluded(relative: str) -> bool:
     parts = relative.split("/")
     if "archive" in parts[:-1] or relative.startswith("docs/sessions/"):
         return True
+    if relative.endswith(".map"):
+        return True  # source maps embed source text, including the allowed legacy line
     if relative == THIS_FILE:
         return True
     return relative.startswith(ALLOWED_FILE_PREFIXES)

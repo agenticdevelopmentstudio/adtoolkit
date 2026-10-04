@@ -60,6 +60,11 @@ var FULL_PALETTE_THEMES = [
   "charcoal",
   "fishlamp"
 ];
+var LEGACY_THEME_ID = "agenticcookbookweb";
+var RENAMED_THEME_ID = "agenticdevelopmentstudioweb";
+function normalizeThemeKey(key) {
+  return key === LEGACY_THEME_ID ? RENAMED_THEME_ID : key;
+}
 var BASE_FACE_THEMES = [
   DEFAULT_ADH_THEME,
   ...BASE_CUT_ALIASES,
@@ -78,9 +83,9 @@ function applyBaseTheme(seedKey) {
 }
 function readStoredTheme() {
   const m = document.cookie.match(/(?:^|; )adh-theme=([^;]+)/);
-  if (m?.[1]) return decodeURIComponent(m[1]);
+  if (m?.[1]) return normalizeThemeKey(decodeURIComponent(m[1]));
   try {
-    return localStorage.getItem(THEME_STORAGE_KEY);
+    return normalizeThemeKey(localStorage.getItem(THEME_STORAGE_KEY));
   } catch {
     return null;
   }
@@ -98,7 +103,8 @@ var switcherThemeKeys = () => [
 
 // src/themes/resolve.ts
 function isSwitcherSeed(key) {
-  return key != null && switcherThemeKeys().includes(key);
+  const current = normalizeThemeKey(key);
+  return current != null && switcherThemeKeys().includes(current);
 }
 function concatItemCss(data) {
   return Object.values(data).map((s) => s.trim()).filter(Boolean).join("\n\n");
@@ -145,7 +151,8 @@ function DbThemeApplier() {
       if (cancelled) return;
       const t = rows.find((r) => r.key === key);
       if (!t) return;
-      applyBaseTheme(isSwitcherSeed(t.basedOn) ? t.basedOn : DEFAULT_ADH_THEME);
+      const base = normalizeThemeKey(t.basedOn);
+      applyBaseTheme(isSwitcherSeed(base) ? base : DEFAULT_ADH_THEME);
       applyThemeCss(concatItemCss(t.data));
     }).catch(() => {
     });

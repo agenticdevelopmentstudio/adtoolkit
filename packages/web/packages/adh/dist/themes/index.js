@@ -65,6 +65,11 @@ var FULL_PALETTE_THEMES = [
   "fishlamp"
 ];
 var DEFAULT_SITE_THEME = "charcoal";
+var LEGACY_THEME_ID = "agenticcookbookweb";
+var RENAMED_THEME_ID = "agenticdevelopmentstudioweb";
+function normalizeThemeKey(key) {
+  return key === LEGACY_THEME_ID ? RENAMED_THEME_ID : key;
+}
 var BASE_FACE_THEMES = [
   DEFAULT_ADH_THEME,
   ...BASE_CUT_ALIASES,
@@ -101,9 +106,9 @@ function cookieDomain() {
 }
 function readStoredTheme() {
   const m = document.cookie.match(/(?:^|; )adh-theme=([^;]+)/);
-  if (m?.[1]) return decodeURIComponent(m[1]);
+  if (m?.[1]) return normalizeThemeKey(decodeURIComponent(m[1]));
   try {
-    return localStorage.getItem(THEME_STORAGE_KEY);
+    return normalizeThemeKey(localStorage.getItem(THEME_STORAGE_KEY));
   } catch {
     return null;
   }
@@ -137,7 +142,9 @@ function appendThemePreview(href, theme) {
 function themePrePaintScript() {
   const K = THEME_STORAGE_KEY;
   const D = DEFAULT_SITE_THEME;
-  return `(function(){try{var K='${K}',D='${D}',OK=/^[-\\w]+$/;var hm=location.hash.match(/(?:^|[#&])${K}=([^&]+)/);var raw=hm?decodeURIComponent(hm[1]):null;var carried=(raw&&OK.test(raw)&&document.querySelector('style[data-adh-theme-alt="'+raw+'"]'))?raw:null;if(carried){try{localStorage.setItem(K,carried);}catch(e){}var hn=location.hostname,d=(hn==='localhost'||/\\.localhost$/.test(hn))?'localhost':(function(){var p=hn.split('.');return p.length<=2?hn:p.slice(-2).join('.');})();document.cookie=K+'='+carried+';domain='+d+';path=/;max-age=31536000;samesite=lax';}if(hm){history.replaceState(null,'',location.pathname+location.search);}var m=document.cookie.match(/(?:^|; )${K}=([^;]+)/);var t=carried||(m?decodeURIComponent(m[1]):localStorage.getItem(K));if(!t||!OK.test(t))t=D;var s=document.querySelector('style[data-adh-theme-alt="'+t+'"]')||document.querySelector('style[data-adh-theme-alt="'+D+'"]');if(s)s.media='all';}catch(e){}})();`;
+  const L = LEGACY_THEME_ID;
+  const N = RENAMED_THEME_ID;
+  return `(function(){try{var K='${K}',D='${D}',OK=/^[-\\w]+$/,fx=function(v){return v==='${L}'?'${N}':v;};var hm=location.hash.match(/(?:^|[#&])${K}=([^&]+)/);var raw=hm?fx(decodeURIComponent(hm[1])):null;var carried=(raw&&OK.test(raw)&&document.querySelector('style[data-adh-theme-alt="'+raw+'"]'))?raw:null;if(carried){try{localStorage.setItem(K,carried);}catch(e){}var hn=location.hostname,d=(hn==='localhost'||/\\.localhost$/.test(hn))?'localhost':(function(){var p=hn.split('.');return p.length<=2?hn:p.slice(-2).join('.');})();document.cookie=K+'='+carried+';domain='+d+';path=/;max-age=31536000;samesite=lax';}if(hm){history.replaceState(null,'',location.pathname+location.search);}var m=document.cookie.match(/(?:^|; )${K}=([^;]+)/);var t=fx(carried||(m?decodeURIComponent(m[1]):localStorage.getItem(K)));if(!t||!OK.test(t))t=D;var s=document.querySelector('style[data-adh-theme-alt="'+t+'"]')||document.querySelector('style[data-adh-theme-alt="'+D+'"]');if(s)s.media='all';}catch(e){}})();`;
 }
 
 // src/themes/AdhThemeStyle.tsx
@@ -308,7 +315,8 @@ import { themes as themes3 } from "@agenticdevelopertoolkit/themes/manifest";
 
 // src/themes/resolve.ts
 function isSwitcherSeed(key) {
-  return key != null && switcherThemeKeys().includes(key);
+  const current = normalizeThemeKey(key);
+  return current != null && switcherThemeKeys().includes(current);
 }
 function concatItemCss(data) {
   return Object.values(data).map((s) => s.trim()).filter(Boolean).join("\n\n");
@@ -390,7 +398,7 @@ function uniqueKey(base, taken) {
   if (!taken.has(base)) return base;
   for (let i = 2; ; i++) if (!taken.has(`${base}-${i}`)) return `${base}-${i}`;
 }
-var baseSeedOf = (t) => t.source === "seed" ? t.key : isSwitcherSeed(t.basedOn) ? t.basedOn : DEFAULT_ADH_THEME;
+var baseSeedOf = (t) => t.source === "seed" ? t.key : isSwitcherSeed(t.basedOn) ? normalizeThemeKey(t.basedOn) : DEFAULT_ADH_THEME;
 function useThemeEditor() {
   const seeds = useMemo(seedThemes, []);
   const [dbRaw, setDbRaw] = useState([]);
@@ -505,7 +513,9 @@ function useThemeEditor() {
   const newTheme = useCallback(() => {
     const taken = new Set(allThemes.map((t) => t.key));
     const key = uniqueKey("custom", taken);
-    const based = (selectedKey ? allThemes.find((t) => t.key === selectedKey) : void 0)?.basedOn ?? (isSwitcherSeed(selectedKey) ? selectedKey : DEFAULT_ADH_THEME);
+    const based = normalizeThemeKey(
+      (selectedKey ? allThemes.find((t) => t.key === selectedKey) : void 0)?.basedOn ?? (isSwitcherSeed(selectedKey) ? selectedKey : DEFAULT_ADH_THEME)
+    );
     setSelectedKey(key);
     setIsSeed(false);
     setIsNew(true);

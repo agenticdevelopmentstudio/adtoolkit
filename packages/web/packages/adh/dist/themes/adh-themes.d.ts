@@ -95,6 +95,14 @@ export type SwitcherThemeKey = AdhThemeKey | FullPaletteThemeKey;
  *  silence. fullPaletteThemes.test.ts asserts the property off THIS constant, so the next
  *  swap is checked rather than trusted. */
 export declare const DEFAULT_SITE_THEME: SwitcherThemeKey;
+/** The pre-rename key of the `agenticdevelopmentstudioweb` theme. Visitors' cookies and
+ *  localStorage, and saved DB themes' `basedOn`, may still hold it; every reader of a
+ *  persisted theme key maps it through {@link normalizeThemeKey}. */
+export declare const LEGACY_THEME_ID = "agenticcookbookweb";
+export declare const RENAMED_THEME_ID = "agenticdevelopmentstudioweb";
+/** Map a persisted theme key written before the rename to its current key; any other
+ *  key (or null) passes through unchanged. */
+export declare function normalizeThemeKey<T extends string | null>(key: T): T | typeof RENAMED_THEME_ID;
 /** Whether `key` paints in the base theme's self-hosted faces — i.e. whether the base's
  *  font preloads are worth emitting for a page whose winning theme is `key`. */
 export declare const usesBaseThemeFonts: (key: string) => boolean;
