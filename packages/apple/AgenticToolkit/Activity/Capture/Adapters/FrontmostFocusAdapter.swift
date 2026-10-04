@@ -41,31 +41,41 @@ public final class FrontmostFocusAdapter: FocusSource {
     /// Held across focus changes rather than made per read: it remembers this
     /// process's Automation answer, so the consent dialog is raised once and
     /// a denial costs nothing thereafter. See ``TerminalWorkingDirectoryReader``.
-    private let terminals = TerminalWorkingDirectoryReader()
+    ///
+    /// Optional, and `nil` in app-only mode unless a test injects one: the
+    /// reader is never even constructed when `readsWindows` is false, so a
+    /// future change to its initialiser cannot run Apple Events code there.
+    private let terminals: TerminalWorkingDirectoryReader?
     /// Catches focus moving *inside* the frontmost app — another of its
     /// windows, another terminal tab — which no app activation announces and
     /// which was previously not observed at all. See
     /// ``FrontmostElementObserver``.
-    private let elements = FrontmostElementObserver()
+    /// `nil` in app-only mode, for the same reason as ``terminals``.
+    private let elements: FrontmostElementObserver?
 
     public init(readsWindows: Bool = true) {
         self.readsWindows = readsWindows
         self.windowReader = { Self.focusedWindow(pid: $0, bundleID: $1) }
         self.apps = RealRunningAppsProvider()
+        self.terminals = readsWindows ? TerminalWorkingDirectoryReader() : nil
+        self.elements = readsWindows ? FrontmostElementObserver() : nil
     }
 
     init(readsWindows: Bool, windowReader: @escaping WindowReader,
-         apps: any RunningAppsProvider) {
+         apps: any RunningAppsProvider,
+         terminals: TerminalWorkingDirectoryReader? = nil) {
         self.readsWindows = readsWindows
         self.windowReader = windowReader
         self.apps = apps
+        self.terminals = terminals ?? (readsWindows ? TerminalWorkingDirectoryReader() : nil)
+        self.elements = readsWindows ? FrontmostElementObserver() : nil
     }
 
     public func start() {
         NSWorkspace.shared.notificationCenter.addObserver(
             self, selector: #selector(activated),
             name: NSWorkspace.didActivateApplicationNotification, object: nil)
-        if readsWindows {
+        if let elements {
             elements.onChange = { [weak self] in self?.emit() }
             elements.start()
         }
@@ -73,7 +83,7 @@ public final class FrontmostFocusAdapter: FocusSource {
     }
     public func stop() {
         NSWorkspace.shared.notificationCenter.removeObserver(self)
-        if readsWindows {
+        if let elements {
             elements.onChange = nil
             elements.stop()
         }
@@ -103,7 +113,7 @@ public final class FrontmostFocusAdapter: FocusSource {
         // once Accessibility has had its turn, so an app that really does have
         // a document is never charged the round-trip.
         let documentPath = readsWindows
-            ? (reading.documentPath ?? terminals.workingDirectory(forBundleID: bundleID))
+            ? (reading.documentPath ?? terminals?.workingDirectory(forBundleID: bundleID))
             : nil
         onFocus?(WindowFocus(app: AppInfo(bundleID: bundleID,
             name: a.localizedName ?? "unknown", pid: pid), windowID: reading.windowID,
