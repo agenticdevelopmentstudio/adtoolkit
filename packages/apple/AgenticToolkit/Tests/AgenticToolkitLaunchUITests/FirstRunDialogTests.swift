@@ -36,6 +36,13 @@ private final class DialogBox {
     var dialog: SampleDialog?
 }
 
+@MainActor
+private func drainMainRunLoop() async {
+    await withCheckedContinuation { cont in
+        RunLoop.main.perform(inModes: [.common]) { cont.resume() }
+    }
+}
+
 /// Waits (bounded, no wall clock) until the session was entered.
 @MainActor
 private func waitForEnter(_ session: RecordingSession) async throws {
@@ -62,7 +69,7 @@ private func waitForEnter(_ session: RecordingSession) async throws {
         #expect(dialog.confirmButton.isEnabled)
     }
 
-    @Test func confirmReturnsJobsAndLeavesModal() async throws {
+    @Test func confirmAfterModalEndedOnItsOwnDoesNotAbortAnother() async throws {
         let session = RecordingSession()
         let dialog = SampleDialog(modal: session)
         dialog.checked = true
@@ -71,6 +78,27 @@ private func waitForEnter(_ session: RecordingSession) async throws {
         dialog.confirm()
         guard case .confirmed(let jobs) = await task.value else { Issue.record("expected confirmed"); return }
         #expect(jobs.map(\.id) == ["x"])
+        // enter() already returned, so the session is over: leave() would
+        // abort whatever modal is topmost now.
+        #expect(session.entered == 1)
+        #expect(session.left == 0)
+    }
+
+    @Test func confirmBeforeEnterNeverEntersModal() async throws {
+        let session = RecordingSession()
+        let dialog = SampleDialog(modal: session)
+        dialog.checked = true
+        let task = Task { await dialog.runModal() }
+        // showWindow runs synchronously inside runModal, before the entry
+        // block is queued.
+        for _ in 0..<10_000 where dialog.window?.isVisible != true { await Task.yield() }
+        try #require(dialog.window?.isVisible == true)
+        dialog.confirm()
+        _ = await task.value
+        await drainMainRunLoop()   // FIFO: runs after the queued entry block
+        #expect(session.entered == 0)
+        #expect(session.left == 0)
+        #expect(dialog.window?.isVisible == false)
     }
 
     @Test func confirmInsideModalLeavesIt() async throws {
@@ -78,8 +106,24 @@ private func waitForEnter(_ session: RecordingSession) async throws {
         let dialog = SampleDialog(modal: session)
         session.onEnter = { dialog.confirm() }
         let task = Task { await dialog.runModal() }
+        try await waitForEnter(session)
         guard case .confirmed = await task.value else { Issue.record("expected confirmed"); return }
         #expect(session.left == 1)
+    }
+
+    @Test func closeBoxWithNoModalRunningCloses() throws {
+        let dialog = SampleDialog(modal: RecordingSession())
+        let window = try #require(dialog.window)
+        #expect(dialog.windowShouldClose(window) == true)
+    }
+
+    @Test func programmaticCloseCancelsTheWaitingCaller() async throws {
+        let session = RecordingSession()
+        let dialog = SampleDialog(modal: session)
+        let task = Task { await dialog.runModal() }
+        try await waitForEnter(session)
+        dialog.close()
+        guard case .cancelled = await task.value else { Issue.record("expected cancelled"); return }
     }
 
     @Test func closeBoxCancels() async throws {

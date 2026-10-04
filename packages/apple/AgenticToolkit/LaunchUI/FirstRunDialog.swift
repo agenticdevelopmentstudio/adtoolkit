@@ -108,9 +108,16 @@ open class FirstRunDialog: NSWindowController, NSWindowDelegate {
     public func cancel() { complete(.cancelled) }
 
     public func windowShouldClose(_ sender: NSWindow) -> Bool {
+        // Not running: nothing to cancel, so let the window close normally.
+        guard continuation != nil else { return true }
         cancel()
         return false   // complete() already ordered it out
     }
+
+    /// A programmatic close() skips windowShouldClose; it still must resume
+    /// the waiting caller. complete() orders out rather than closes, so this
+    /// cannot re-enter, and cancel() is idempotent.
+    public func windowWillClose(_ notification: Notification) { cancel() }
 
     private func complete(_ result: Result) {
         guard let continuation else { return }
