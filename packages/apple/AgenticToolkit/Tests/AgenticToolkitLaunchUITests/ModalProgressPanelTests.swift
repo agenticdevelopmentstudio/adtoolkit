@@ -22,6 +22,24 @@ private struct NamedJob: StartupJob {
     @MainActor func run(context: StartupJobContext) async throws {}
 }
 
+@MainActor private final class Order { var events: [String] = [] }
+
+/// Blocks the main thread in a nested run loop, as NSAppleScript does.
+private struct NestedLoopJob: StartupJob {
+    let id = "nested"
+    let title = "Nested"
+    let order: Order
+    @MainActor func run(context: StartupJobContext) async throws {
+        order.events.append("job")
+        spinNestedRunLoop()
+    }
+}
+
+/// Synchronous on purpose: NSAppleScript's nested loop runs from a blocking call.
+private func spinNestedRunLoop() {
+    RunLoop.current.run(mode: .default, before: Date().addingTimeInterval(0.05))
+}
+
 private enum TestError: Error, LocalizedError {
     case boom
     var errorDescription: String? { "boom" }
@@ -114,6 +132,28 @@ private func drainMainRunLoop() async {
         #expect(!first.isVisible)
         #expect(presenter.isPresented)
         presenter.finish()
+    }
+
+    /// NSAppleScript spins a nested run loop while it blocks for the password.
+    /// Had the first job started before the panel's modal, that loop would run
+    /// the queued modal entry inside the script, and neither could return.
+    @Test func firstJobStartsOnlyOnceTheModalIsEntered() async {
+        let session = RecordingSession()
+        let order = Order()
+        session.onEnter = { order.events.append("enter") }
+        let presenter = ModalProgressPanel(appName: "Stenographer", modal: session)
+        _ = await LaunchManager.runJobs([NestedLoopJob(order: order)], privileged: AppleScriptPrivilegedRunner(),
+                                        presenter: presenter, progress: { _ in })
+        #expect(order.events == ["enter", "job"])
+        #expect(!presenter.isPresented)
+    }
+
+    @Test func waitUntilPresentedReturnsWhenFinishedFirst() async {
+        let presenter = ModalProgressPanel(appName: "Stenographer", modal: RecordingSession())
+        presenter.begin(needsAdministrator: false)
+        presenter.finish()
+        await presenter.waitUntilPresented()   // must not park forever
+        #expect(!presenter.isPresented)
     }
 
     @Test func failureAlertTextAndButtons() {

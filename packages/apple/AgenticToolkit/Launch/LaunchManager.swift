@@ -5,11 +5,21 @@ public protocol LaunchPresenter: AnyObject {
     /// The queue is about to run. `needsAdministrator` lets the panel say a
     /// password may be asked for before the prompt appears.
     func begin(needsAdministrator: Bool)
+    /// Returns once the presenter is on screen and ready for jobs. The first
+    /// job waits for it: a job that blocks the main thread in a nested run loop
+    /// (NSAppleScript, while its password prompt is up) must never be where a
+    /// modal presenter enters its session, or neither can return.
+    func waitUntilPresented() async
     func willRun(_ job: any StartupJob)
     /// The queue is done (after any retries); dismiss.
     func finish()
     /// Some jobs failed; return true to retry exactly those.
     func reportFailures(_ failures: [StartupFailure]) async -> Bool
+}
+
+public extension LaunchPresenter {
+    /// A presenter with no session of its own is ready as soon as it begins.
+    func waitUntilPresented() async {}
 }
 
 public struct LaunchReport: Sendable {
@@ -82,6 +92,7 @@ public final class LaunchManager {
         guard !queue.jobs.isEmpty else { return JobsOutcome(ran: [], failed: []) }
 
         presenter?.begin(needsAdministrator: queue.needsAdministrator)
+        await presenter?.waitUntilPresented()
         let context = StartupJobContext(privileged: privileged, progress: progress)
         var failures = await queue.run(context: context) { presenter?.willRun($0) }
         while !failures.isEmpty, !Task.isCancelled, let presenter {

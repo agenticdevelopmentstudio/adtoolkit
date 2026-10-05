@@ -40,6 +40,9 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
     /// value it was scheduled under and does nothing if it no longer matches.
     private var generation = 0
     private var inModal = false
+    /// Callers of waitUntilPresented(), resumed as the modal session opens or
+    /// the panel goes away.
+    private var presentedWaiters: [CheckedContinuation<Void, Never>] = []
     private let detail = NSTextField(labelWithString: "")
     private let notice = NSTextField(wrappingLabelWithString: "")
     private let spinner = NSProgressIndicator()
@@ -90,6 +93,9 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
             MainActor.assumeIsolated {
                 guard self.generation == token, let window = self.panel else { return }
                 self.inModal = true
+                // Resumed waiters run inside the session about to start, so a
+                // job's nested run loop nests inside the modal, never under it.
+                self.releasePresentedWaiters()
                 self.modal.enter(window)
                 // enter() blocks until the session ends; if it ended some way
                 // other than finish(), a later finish() must not abort whatever
@@ -97,6 +103,17 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
                 if self.generation == token { self.inModal = false }
             }
         }
+    }
+
+    public func waitUntilPresented() async {
+        guard panel != nil, !inModal else { return }
+        await withCheckedContinuation { presentedWaiters.append($0) }
+    }
+
+    private func releasePresentedWaiters() {
+        let waiters = presentedWaiters
+        presentedWaiters = []
+        waiters.forEach { $0.resume() }
     }
 
     public func willRun(_ job: any StartupJob) {
@@ -120,6 +137,7 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
         panel?.orderOut(nil)
         panel = nil
         isPresented = false
+        releasePresentedWaiters()
     }
 
     public func reportFailures(_ failures: [StartupFailure]) async -> Bool {
