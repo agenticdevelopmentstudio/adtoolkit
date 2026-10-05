@@ -1,7 +1,7 @@
 # The library cookbook — how it is organized, and why
 
 `cookbook/` holds one behavioral spec per component, window, service or model
-this repo implements (442 specs at 2026-10-04). Each spec is addressed as
+this repo implements (443 specs at 2026-10-04). Each spec is addressed as
 `adtoolkit://cookbook/<group>/.../<name>` and lists the code that implements it
 in its **Reference Implementations** table. The legacy root `recipes/` keeps
 its own `agenticdevelopertoolkit://recipes/<name>` domains.
@@ -174,3 +174,9 @@ this order:
 Converting surfaced a cookr bug, fixed in agenticcookbook PR #68: child specs
 grouped under a plain subdirectory of a parent spec's folder (for example
 `vscode-api/languages/`) had dropped out of the corpus.
+
+Main moved while the branch was open, so a follow-up landed the rest:
+- the identifier rename's edits to three compiled specs were folded into
+  their folders;
+- a spec was added for `LegacyDirectoryMigration`
+  (`foundation/legacy-directory-migration`).

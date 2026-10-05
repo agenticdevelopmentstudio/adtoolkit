@@ -1,5 +1,5 @@
 
-Subsystem: `com.agentic-cookbook.agentictoolkit` | Category: `WindowManager`
+Subsystem: `com.agenticdevelopmentstudio.agentictoolkit` | Category: `WindowManager`
 
 | Event | Level | Message |
 |-------|-------|---------|

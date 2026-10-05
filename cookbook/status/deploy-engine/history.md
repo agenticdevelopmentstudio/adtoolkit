@@ -6,3 +6,4 @@
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.3 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.1.0 | 2026-10-04 | Mike Fullerton | Resolved map-limit-non-positive-limit marker as current behavior plus pending decision |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Logging subsystem and example identifiers renamed off agentic-cookbook. |

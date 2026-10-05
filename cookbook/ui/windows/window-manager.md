@@ -3,7 +3,7 @@ id: 61c7b509-78d1-4407-9a4e-25b155f06fbb
 title: "Window Manager"
 domain: adtoolkit://cookbook/ui/windows/window-manager
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
 created: 2026-09-24
@@ -690,6 +690,7 @@ separation-of-concerns passes because frame persistence (`WindowFrameManager`), 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Logging subsystem and example identifiers renamed off agentic-cookbook. |
 | 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the reopen-open-failure and storage-codec-failure markers as current behavior (empty open-recent handler, try?-absorbed codec failures) with two pending Design Decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/windows/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |

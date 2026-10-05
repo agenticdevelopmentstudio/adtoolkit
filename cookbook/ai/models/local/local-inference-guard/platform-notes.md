@@ -19,7 +19,7 @@
   `public`/`private` modifier (Swift's default `internal`), so it functions
   as a test seam reachable only via `@testable import` without becoming
   part of the type's public API. It uses `os.Logger` for logging
-  (subsystem `com.agentic-cookbook.AIPluginKit`, category
+  (subsystem `com.agenticdevelopmentstudio.AIPluginKit`, category
   `LocalInferenceGuard`, `privacy: .public` on the warn-tier message), and
   `DispatchSourceMemoryPressure` (via `SystemMemoryMonitor`) for live
   pressure. Nothing here is SwiftUI-specific — any host consumes

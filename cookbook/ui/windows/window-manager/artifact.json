@@ -5,7 +5,7 @@
     "title": "Window Manager",
     "domain": "adtoolkit://cookbook/ui/windows/window-manager",
     "type": "ingredient",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "status": "review",
     "language": "en",
     "created": "2026-09-24",
@@ -35,7 +35,7 @@
     "approved-by": "",
     "approved-date": ""
   },
-  "synced": "6f96bb106a01b719",
+  "synced": "19b1db1f9510acaa",
   "parts": [
     {"part": "intro"},
     {"part": "overview", "heading": "Overview"},

@@ -1,5 +1,5 @@
 
-Subsystem: `com.agentic-cookbook.AIPluginKit` | Category: `LocalInferenceGuard`
+Subsystem: `com.agenticdevelopmentstudio.AIPluginKit` | Category: `LocalInferenceGuard`
 
 | Event | Level | Message |
 |-------|-------|---------|
