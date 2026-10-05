@@ -19,12 +19,12 @@ public enum RowAlert {
     }
 }
 
-/// The row layout of a three-or-more-button alert, the long-standing macOS
-/// arrangement (Don't Save … Cancel Save):
+/// The row layout of a three-or-more-button alert, the traditional macOS
+/// arrangement (Cancel … Skip Remove):
 ///
-/// - the first button is the default: rightmost, answers Return;
-/// - a button titled "Cancel" sits just left of it and answers Escape;
-/// - every other button goes at the far left, in the order added.
+/// - a button titled "Cancel" goes alone at the far left and answers Escape;
+/// - the others sit together on the right, the first (the default, answering
+///   Return) rightmost and each later one to the left of the one before.
 ///
 /// Only the alert's text, icon and buttons are shown; it has no accessory view
 /// or suppression button.
@@ -79,16 +79,17 @@ public final class RowAlertPanel: NSObject {
             button.target = self
             button.action = #selector(clicked(_:))
             button.widthAnchor.constraint(greaterThanOrEqualToConstant: Self.minimumButtonWidth).isActive = true
-            if index != 0, index != cancelIndex { row.addView(button, in: .leading) }
         }
         if let cancelIndex {
             buttons[cancelIndex].keyEquivalent = "\u{1b}"
-            row.addView(buttons[cancelIndex], in: .trailing)
+            row.addView(buttons[cancelIndex], in: .leading)
         }
-        if let first = buttons.first {
-            first.keyEquivalent = "\r"
-            row.addView(first, in: .trailing)
+        // Trailing views lay out left to right, so the last-added button goes
+        // in first and the default ends up rightmost.
+        for (index, button) in buttons.enumerated().reversed() where index != cancelIndex {
+            row.addView(button, in: .trailing)
         }
+        buttons.first?.keyEquivalent = "\r"
 
         let column = NSStackView(views: [text, row])
         column.orientation = .vertical
