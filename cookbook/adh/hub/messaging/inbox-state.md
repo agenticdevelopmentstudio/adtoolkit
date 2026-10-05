@@ -1,38 +1,37 @@
 ---
 id: 8da824cf-e518-4cee-b897-3a8e17f9c32a
-title: Inbox State
-domain: agenticdevelopertoolkit://cookbook/adh/hub/messaging/inbox-state
+title: "Inbox State"
+domain: adtoolkit://cookbook/adh/hub/messaging/inbox-state
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'State and transport logic for the direct-message inbox/thread and the notification
-  list: a live-update channel with a shared poll fallback, pagination, and message dedupe.'
+summary: "State and transport logic for the direct-message inbox/thread and the notification list: a live-update channel with a shared poll fallback, pagination, and message dedupe."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- hub
-- messaging
-- notifications
-- direct-messages
-- real-time
+  - hub
+  - messaging
+  - notifications
+  - direct-messages
+  - real-time
 depends-on: []
 related: []
 references:
-- packages/web/packages/messaging/src/hooks/use-dms.ts (agenticdevelopertoolkit)
-- packages/web/packages/messaging/src/hooks/use-notifications.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/stream/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/context.tsx (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/messaging/src/hooks/use-dms.ts (agenticdevelopertoolkit)
+  - packages/web/packages/messaging/src/hooks/use-notifications.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/stream/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/context.tsx (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Inbox State
@@ -278,7 +277,7 @@ Not applicable — this is the DM and notification data-and-transport layer, not
 | hub-domain-hooks-030 | start-dm-other-errors-propagate | `POST /api/chat/dms` responds `500` | The start-DM action's returned promise rejects with a typed HTTP error, status `500` — no dedicated test; derived directly from source |
 | hub-domain-hooks-031 | session-refresh-waterfall | Any plain HTTP call in this recipe first responds `401`; refresh succeeds | Exactly one retried request is sent with the new token; a `401` on that retry throws a typed HTTP error, status `401` — traced to the shared authenticated request client, exercised only indirectly through this state |
 | hub-domain-hooks-032 | sse-token-rides-the-query-string | The live-connection transport opens the DM thread's live connection with a current access token `"tok"` | The constructed live-connection URL ends in `access_token=tok` — no dedicated test; derived directly from the shared live-connection transport |
-| hub-domain-hooks-033 | thread-message-isolation-on-chatid-switch | The send action is called for `chatId = "c1"`; before the POST resolves, `chatId` changes to `"c2"` | See the `thread-message-isolation-on-chatid-switch` edge case below — the resolved message from `"c1"`'s send call merges into whatever `messages` array is current when it settles, with no chatId-generation guard preventing it from landing under `"c2"` |
+| hub-domain-hooks-033 | thread-message-bleed-on-chatid-switch | The send action is called for `chatId = "c1"`; before the POST resolves, `chatId` changes to `"c2"` | See the `thread-message-bleed-on-chatid-switch` edge case below — the resolved message from `"c1"`'s send call merges into whatever `messages` array is current when it settles, with no chatId-generation guard preventing it from landing under `"c2"` |
 
 ## Edge Cases
 
@@ -309,7 +308,7 @@ Not applicable — this is the DM and notification data-and-transport layer, not
   participant during the gap between the history response and the connection opening is still
   delivered once the connection connects.
 - **Concurrent access — send during a thread switch**: see the
-  `thread-message-isolation-on-chatid-switch` edge case below.
+  `thread-message-bleed-on-chatid-switch` edge case below.
 - **Error states — plain HTTP failure**: any plain HTTP call's rejection propagates as a thrown
   typed HTTP error (or a plain error for a non-HTTP failure); each piece of state that exposes an
   `error` field sets it from the error's message, and each direct caller action (send, mark-read,
@@ -328,14 +327,12 @@ Not applicable — this is the DM and notification data-and-transport layer, not
   on a `401`, the single inherited refresh-and-retry); nothing in this recipe retries a network
   failure or a non-401 error status, and no exponential backoff exists anywhere in this recipe —
   the poll fallback is a fixed interval, not a backoff schedule.
-- **thread-message-isolation-on-chatid-switch**: NEEDS REVIEW: Not implemented in source. If the
-  send action (or its returned promise) is still pending when `chatId` changes, the DM thread
-  state's `messages` is a single array not partitioned by chat id, and neither the send action nor
-  the mark-read action carries a generation guard analogous to the history load's own cancellation
-  flag or the DM conversation list's generation counter; the resolved message can merge into
-  whatever thread is displayed when it settles rather than the one it was sent for. Evidence that
-  would settle it: whether product intent tolerates this cross-thread bleed-through during a fast
-  thread switch, or a guard was expected and is simply absent from this checkout.
+- **thread-message-bleed-on-chatid-switch**: if the send action (or its returned promise) is still
+  pending when `chatId` changes, the DM thread state's `messages` is a single array not
+  partitioned by chat id, and neither the send action nor the mark-read action carries a
+  generation guard analogous to the history load's own cancellation flag or the DM conversation
+  list's generation counter; the resolved message MAY merge into whatever thread is displayed when
+  it settles rather than the one it was sent for.
 
 ## Configuration
 
@@ -482,19 +479,25 @@ recipe records that asymmetry (the chats list is essential, presence is decorati
 **Decision**: the DM thread's live connection and the shared notification stream's connection both
 carry their access token in the URL query string instead of a header, unlike every other request
 in this recipe.
-**Applies to**: Web — this is the browser `EventSource`'s own platform limitation (it cannot set
-request headers); a live-connection client on another platform that can set a header need not
-replicate this deviation.
 **Rationale**: both source files say so directly; this recipe documents the resulting exposure
 difference under Security and Privacy rather than treating it as an oversight to silently correct.
+Platform scope: Web — this is the browser `EventSource`'s own platform limitation (it cannot set
+request headers); a live-connection client on another platform that can set a header need not
+replicate this deviation.
 **Approved**: pending
 
 **Decision**: `send` and `markRead` carry no chatId-generation guard, while the thread's own history
 load and `useDmConversations`' window load both do.
 **Rationale**: recorded as observed source behavior, not smoothed over — see the
-`thread-message-isolation-on-chatid-switch` marker; a port MUST decide deliberately whether to add
+`thread-message-bleed-on-chatid-switch` marker; a port MUST decide deliberately whether to add
 a matching guard to these two callbacks or to preserve the current behavior, since the current
 checkout does not settle which is intended.
+**Approved**: pending
+
+**Decision**: a send that settles after a `chatId` switch can merge its message into the newly displayed thread; the send and mark-read actions have no generation guard.
+
+**Rationale**: the thread's `messages` is one array not partitioned by chat id, unlike the history load's cancellation flag and the conversation list's generation counter; closing the gap takes a generation guard (or per-chat partitioning) on send and mark-read, and it is undecided whether product intent tolerates the bleed-through during a fast switch.
+
 **Approved**: pending
 
 ## Compliance
@@ -551,6 +554,8 @@ data — none of the three crashes the hook or blanks the UI.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Design Decisions keep the Decision / Rationale / Approved triple; each decision's platform line is folded into its rationale. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolve open-question markers against the code; restate unimplemented behavior as current behavior with pending Decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/messaging/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

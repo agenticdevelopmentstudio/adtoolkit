@@ -1,0 +1,12 @@
+
+- **Null/empty input**: `ExtensionStatusBarItemRequest.text == ""` MUST be accepted and passed to `putOrUpdateStatusBarItem(_:)` unchanged; the type enforces no minimum length (MUST).
+- **Null/empty input**: `name`, `tooltip`, `color`, `backgroundColor`, `command`, `accessibilityLabel`, and `accessibilityRole` MAY all be `nil` simultaneously on one request; a conformer MUST accept that combination rather than requiring any of them (MUST).
+- **Boundary values**: `priority` MAY carry `Double.infinity` or `-Double.infinity` unchanged — the caller performs no infinity clamping across this seam, because the caller and its presenter share one process and one execution context with no JSON boundary between them (MUST).
+- **Boundary values**: `priority == nil` (undefined) and `priority == 0` (an explicit zero the extension supplied) MUST remain distinguishable on every request; the type never collapses the two (MUST).
+- **Concurrent access**: because both the caller and this contract are confined to a single execution context, calls into one conformer instance MUST be strictly serialized in the order the caller's own method calls and property writes occur; no two calls into the same instance can race (MUST). See **serialized-calls**.
+- **Concurrent access**: `internalID` uniqueness is guaranteed by the caller alone — an ordinal counter incremented only on that single execution context — and this contract does not itself check or enforce that uniqueness; a conformer MUST trust the `internalID` it is given (MUST).
+- **Error states**: not applicable — the contract declares no failure-producing path and no optional failure return on either method; see **void-return-no-failure-channel**.
+- **Offline or disconnected state**: not applicable — this seam has no network dependency; every call is a same-process, same-execution-context method call between the caller and its presenter.
+- **Cancellation and timeouts**: not applicable — both methods complete immediately with no suspension gap, so there is nothing for a caller to cancel or time out; see **synchronous-no-await**.
+- **Repeated removal**: `removeStatusBarItem(internalID:)` MUST remain safe if it is ever called more than once for the same `internalID`, or for an `internalID` already removed, on the same terms as **remove-tolerates-unknown-id** — an already-removed id and a never-shown id are the same case from the conformer's point of view (MUST).
+

@@ -1,0 +1,7 @@
+
+- **SwiftUI**: Hold the record in a view model; expose one `onSave` closure and call it from a `commit` function that compares with the current value first. Title changes flow to the sidebar through the model.
+- **Compose**: Keep the record in a state holder, call `onSave` from a `commit` function that returns early when the new value equals the old, and drive the list item title from the same state.
+- **React/Web**: Keep the record in state; a `commit` handler returns when the edited value deep-equals the current one, otherwise sets state and calls the `onSave` prop. The list row reads the title from the same state.
+- **AppKit / UIKit**: In `RecordDetailPanel.swift`, `RecordDetailPanel<Record>` is an open generic `@MainActor` subclass of `SettingsPanelViewController`, where `Record` conforms to `RecordDetailItem` and `Equatable`. `commit(_:)` guards on `!=`, calls `adopt(_:)` and then `onSave`. `adopt(_:)` sets `descriptor.title` only when different. `nameTextField` is an overridable property that defaults to nil, and `focusName()` calls `makeFirstResponder` and `selectAll`. Its designated initializer takes the record and an icon and builds a `SettingsPanelDescriptor`.
+- **WinUI 3**: Implement the pane as a `UserControl` with a generic or `object` record property and an `EventHandler` or `Action<Record>` save event; `Commit` compares with `Equals` and returns early on equality, then updates the navigation item's `Content` and raises the event. `FocusName` calls `Focus` on the name `TextBox` and `SelectAll`.
+

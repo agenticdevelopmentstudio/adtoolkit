@@ -1,38 +1,34 @@
 ---
 id: 24e1710c-a805-4f6e-b720-fbd869472ca9
-title: Extension Manifest Localization
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization
+title: "Extension Manifest Localization"
+domain: adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Resolves %key% placeholders in a VS Code package.json against package.nls*.json
-  tables beside it; a missing or malformed table never fails the resolve, and leaves
-  unresolved keys visible.
+summary: "Resolves %key% placeholders in a VS Code package.json against package.nls*.json tables beside it; a missing or malformed table never fails the resolve, and leaves unresolved keys visible."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- manifest
-- localization
-- package-json
-- jsonc
+  - extensions
+  - manifest
+  - localization
+  - package-json
+  - jsonc
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifestLocalization.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionManifestLocalizationTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifestLocalization.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionManifestLocalizationTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Manifest Localization

@@ -1,0 +1,3 @@
+
+A thread-safe memo that computes a value once per key and reuses it until it is a configured time-to-live old. It is for a derived figure that is expensive to compute and barely moves, such as a walk over weeks of history that prints tenths of an hour, where a few minutes of staleness changes nothing a reader acts on. Unlike the least-recently-used cache, which bounds by count and never expires, this one expires, and it is bounded too, so a stream of new keys cannot grow it. A clock that goes backwards expires an entry at once, a compute that fails caches nothing, and the compute runs outside the lock so two callers that miss together both compute.
+

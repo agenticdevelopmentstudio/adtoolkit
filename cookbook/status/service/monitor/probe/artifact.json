@@ -1,0 +1,72 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "1094926a-e89e-416d-aa62-8bfd42afa1b4",
+    "title": "Status Server Monitor Probe",
+    "domain": "adtoolkit://cookbook/status/service/monitor/probe",
+    "type": "ingredient",
+    "version": "1.0.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-09-27",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The live DNS-then-HTTP probe for one configured endpoint — bounded-concurrency, capped-body, whole-leg-timeout — that health sync and the no-DB status fallback both use.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "monitor",
+      "probe",
+      "dns",
+      "http",
+      "server"
+    ],
+    "depends-on": [
+      "agenticdevelopercookbook://guidelines/implementing/networking/timeouts",
+      "agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency",
+      "agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience"
+    ],
+    "related": [
+      "adtoolkit://cookbook/status/service/monitor/health",
+      "adtoolkit://cookbook/status/service/monitor/endpoint-kinds"
+    ],
+    "references": [
+      "packages/web/packages/status-server/src/monitor/probe.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/probe.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/endpoint-kinds.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/deploy-platform/src/util/map-limit.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "13642c1d6d550b14",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

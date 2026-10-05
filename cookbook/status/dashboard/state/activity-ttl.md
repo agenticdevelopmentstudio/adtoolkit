@@ -1,26 +1,26 @@
 ---
 id: f97631a6-531f-45c9-98a9-c5a292a2e6ea
-title: Activity TTL
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/activity-ttl
+title: "Activity TTL"
+domain: adtoolkit://cookbook/status/dashboard/state/activity-ttl
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
 created: 2026-09-24
-modified: '2026-09-27'
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Manages user-configured activity retention duration, persisted to durable
-  browser storage.
+summary: "Manages user-configured activity retention duration, persisted to durable browser storage."
 platforms:
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Activity TTL
@@ -43,6 +43,7 @@ This logic manages how long activity items remain in the activity list before au
 - **setTtl-signature**: The `setTtl` callback MUST accept a number from the selectable set or `null`, update in-memory state immediately, and attempt to persist to durable browser storage.
 - **ttlMs-calculation**: This logic MUST convert `ttlMin` to `ttlMs` by multiplying by 60,000 (milliseconds per minute), or return `null` if `ttlMin` is `null`.
 - **ssr-hydration-match**: This logic MUST ensure the initial render (before hydration runs) shows the default, preventing mismatches between a server-rendered first paint and the client (see Platform Notes).
+- **client-only**: Activity TTL MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 
 ## Appearance
 
@@ -69,6 +70,7 @@ Not applicable — this logic manages state, not a visual component.
 | activity-ttl-007 | setTtl-null | The `setTtl` callback is called with no value | Observe the state change and the storage write | `ttlMin` is `null`, `ttlMs` is `null`, durable storage has `"adh-healthy-ttl": null` |
 | activity-ttl-008 | persistence-error-handling | The durable-storage write fails (e.g., quota exceeded) | The `setTtl` callback is called with `30` | State updates to `ttlMin: 30, ttlMs: 1800000`, the failure is caught, in-memory value persists |
 | activity-ttl-009 | ssr-hydration-match | A server-rendered first paint followed by browser hydration | The page is server-rendered and then hydrated in the browser with no stored value | Initial paint matches default (`ttlMin: 60`, `ttlMs: 3600000`), no mismatch warning |
+| activity-ttl-010 | client-only | Activity TTL is loaded in a server-only rendering context | Render it | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -169,6 +171,7 @@ The hook is a narrowly scoped, single-responsibility hook (activity TTL manageme
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

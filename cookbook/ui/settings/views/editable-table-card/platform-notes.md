@@ -1,0 +1,7 @@
+
+- **SwiftUI**: A `Table` with `TableColumn`s and per-kind cell views; editing through `TextField` with `onSubmit`, and the held-reload rule through a pending-state buffer.
+- **Compose**: A `LazyColumn` or a data-grid library with cell editors; hold incoming data in a pending state while an editor has focus.
+- **React/Web**: A `<table>` or ARIA grid with `contenteditable` or input cells, keyed rows, and `aria-sort` on sortable headers; hold incoming data while an input is focused.
+- **AppKit / UIKit (source)**: `ComposableSettings.EditableTableCard` is an `@MainActor` `GroupView` subclass wrapping an `NSTableView`. Types: `EditableTableColumn` with `Kind` (`.text(editable:)`, `.toggle`, `.indicator`, `.day`, `.time`, `.duration(range:)`, `.money(range:allowsBlank:)`), `EditableTableCellValue`, `EditableTableEditValue`, `EditableTableRow` and `EditableTableRowView` (warning wash at alpha 0.18). Callbacks: `onAdd`, `onRemove`, `onSelectionChange`, `onEdit`, `onTypedEdit`, `onRejectedEdit`, `onToggle`, `onSort`. `setRows` is deferred through `EditDeferredValue` while a field editor is live; `EditableTableCellField.Binding` records the row and column a field was filled for. Typed parsing uses strict `yyyy-MM-dd`, `LocalTimeText`, `DurationFormatter` and `MoneyFormatter`. `addFooterButton` and `addFooterMenuButton` extend the `AddRemoveFooterView`.
+- **WinUI 3**: A `DataGrid` (Community Toolkit) with `DataGridTemplateColumn`s, `BeginningEdit` and `CellEditEnded` handlers, and a pending-reload buffer while a cell is in edit mode.
+

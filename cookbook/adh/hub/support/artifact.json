@@ -1,0 +1,72 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "9bec9953-29fb-4184-8bf6-a6c27187c99d",
+    "title": "Support",
+    "domain": "adtoolkit://cookbook/adh/hub/support",
+    "type": "ingredient",
+    "version": "1.1.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The Hub's Support utilities: a form/notice detail-pane factory, ISO-8601 date parsing, error normalization, blank-string trimming, a JSON value type, rail-path lookups, and slug rules shared by every Hub feature module.",
+    "platforms": [
+      "swift",
+      "macos",
+      "ios"
+    ],
+    "tags": [
+      "hub",
+      "support",
+      "forms",
+      "json",
+      "slug",
+      "dates",
+      "error-handling"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/ui/navigation/htdv"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Hub/Features/Support/HubDates.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Hub/Features/Support/HubError+Wrap.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/SupportTests.swift (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "fa3016673e53e045",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

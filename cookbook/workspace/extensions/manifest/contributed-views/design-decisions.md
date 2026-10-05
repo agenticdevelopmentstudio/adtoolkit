@@ -1,0 +1,17 @@
+
+**Decision**: A repeated `containerID` across two different `viewsContainers` locations is resolved to whichever declaration is first in the already-sorted `containers` array (alphabetical by location, then declared order within it) for the purpose of deciding a view's axis — not first in the manifest's raw text, and not deduplicated out of the returned `containers` array itself.
+**Rationale**: The source's own comment states this directly: "First declaration wins for a repeated container id, and `containers` is already sorted, so 'first' is a fact about the manifest's content rather than about a dictionary's hash seed." Deduplicating the returned `containers` array was rejected because nothing currently reads that array for rendering (Ruling FD); only the axis-resolution map (`locationsByContainerID`) needs a single answer per id.
+**Approved**: pending
+
+**Decision**: A dropped duplicate view (the second-or-later declaration of a repeated `id`) contributes only its `duplicateViewID` note and no others — its own `when`, icon, or unreadable-key declarations never produce a `whenNotEvaluated`, `unmappedIcon`, `fileIcon`, or `malformedField` note, because the `continue` after recording the duplicate note skips every later check in the loop body entirely.
+**Rationale**: This follows directly from the control flow in `build(from:manifest:)`: the duplicate check and its `continue` run before the icon, `when`, and unreadable-key handling for that same loop iteration, so a dropped entry's other declarations are never inspected at all. This is stated here because a reader tracing only the duplicate-id branch could otherwise expect a dropped duplicate to still contribute its other notes.
+**Approved**: pending
+
+**Decision**: Codicon name matching is exact-case only; the codicon-to-symbol table's keys are looked up with no normalization.
+**Rationale**: Traceable directly to `CodiconSymbols.symbolName(forCodicon:)`, which is a plain `table[codicon]` dictionary subscript with no `.lowercased()` or other normalization applied to `codicon` first. Every real-world codicon reference VS Code itself emits is already lowercase, so this has no observed cost in the corpus this table was built from, but a manifest that spells a codicon in a different case will see it treated as unmapped.
+**Approved**: pending
+
+**Decision**: `preferredAxisIsVertical` is `true` exactly when a view's resolved location is the literal string `"panel"`, including when a view targets the *built-in* container id `"panel"` directly with no self-declared `viewsContainers` entry at all — even though the enumerated built-in ids are otherwise all `false`.
+**Rationale**: The source's own comment calls this out explicitly as a deliberate departure from a literal reading of the built-in-id enumeration: "`panel`... is the one location that means 'the bottom strip'... Ruling FD says a view's axis follows its container's *location*... `panel` is both: it is the `viewsContainers` key that means the bottom strip **and** a built-in container id... This resolves it to vertical, applying the ruling's reasoning... rather than its enumeration." The `isKnownTarget &&` conjunction in the axis computation is written out for the same reason the comment calls "unreachable today... which is exactly why it needs saying": the only string that satisfies the location-equals-`"panel"` check is `"panel"` itself, which is always a known target, so the conjunction is currently redundant but documents that the code did not silently rely on that coincidence.
+**Approved**: pending
+

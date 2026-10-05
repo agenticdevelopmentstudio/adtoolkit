@@ -1,37 +1,35 @@
 ---
 id: 7ae3de90-35f2-415c-93c7-cf579689e438
-title: Project Checkout
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-checkout
+title: "Project Checkout"
+domain: adtoolkit://cookbook/workspace/projects/project-checkout
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The directory a project opens a tab group in: the repository''s own checkout
-  or a linked worktree, identified by a symlink-resolved path.'
+summary: "The directory a project opens a tab group in: the repository's own checkout or a linked worktree, identified by a symlink-resolved path."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- checkout
-- worktree
-- value-type
+  - git
+  - projects
+  - checkout
+  - worktree
+  - value-type
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller
+  - adtoolkit://cookbook/workspace/projects/branch-controller
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectCheckoutTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitWorktree.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectCheckoutTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitWorktree.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Checkout
@@ -329,7 +327,7 @@ swallowed.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |

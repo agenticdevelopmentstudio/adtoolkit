@@ -1,30 +1,29 @@
 ---
 id: 537cf2a7-6be6-4a09-9a6c-8f8ecc6012da
-title: Conditional View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/conditional-view
+title: "Conditional View"
+domain: adtoolkit://cookbook/ui/settings/layout/conditional-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings container that shows or hides a child view based on an
-  observed setting's live value, collapsing its card row when hidden.
+summary: "A settings container that shows or hides a child view based on an observed setting's live value, collapsing its card row when hidden."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- layout
+  - settings
+  - layout
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view
+  - adtoolkit://cookbook/ui/settings/layout/group-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Conditional View
@@ -80,6 +79,7 @@ has hidden itself, rather than leaving an empty band behind.
 - **requires-full-configuration-at-construction**: Component MUST NOT be
   constructible without a setting, a child view, and a visibility
   predicate; only full construction with all three together is supported.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -129,6 +129,7 @@ automatically.
 | conditional-view-012 | exposes-visibility-change-callback | Assign a callback to the visibility-change property from outside the type, then trigger a visibility change | The assigned callback is the one invoked |
 | conditional-view-013 | requires-full-configuration-at-construction | Attempt to construct the component with only a subset of its required inputs (see Platform Notes for the exact construction paths this blocks) | Construction is refused; no usable instance is produced |
 | conditional-view-014 | reflects-setting-change-asynchronously | Change the observed setting's value, then synchronously — in the same call frame, before the change has had a chance to deliver — read the component's shown/hidden state | The component's shown/hidden state still reflects the pre-change visibility; only after the change delivers, on a following turn, does the state reflect the new value |
+| conditional-view-015 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -257,7 +258,7 @@ Not applicable: the component performs no logging of its own.
   false` on both itself and `child` and pinning `child`'s
   top/leading/trailing/bottom anchors to the container's corresponding
   anchors with the `pinToEdges` helper; `requires-full-configuration-at-construction`
-  (formerly named `restricts-construction-to-designated-initializer`) is
+  is
   implemented by overriding both `init(frame:)` and `init(coder:)` to
   `fatalError`, leaving `observing:child:isVisible:` as the only usable
   initializer — attempting either inherited path traps with a fatal error
@@ -315,7 +316,7 @@ unchanged, doing redundant layout work on every unrelated settings
 interaction.
 **Approved**: pending
 
-**Decision** (AppKit): Force a fatal error from both `init(coder:)` and the
+**Decision**: (AppKit) Force a fatal error from both `init(coder:)` and the
 frame-only `init(frame:)`, leaving the `observing:child:isVisible:`
 initializer as the only usable one.
 **Rationale**: `ConditionalView` has no meaningful default state — it cannot
@@ -338,6 +339,7 @@ container's benefit, not for any need of `ConditionalView`'s own.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | platform-compliance |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
@@ -351,6 +353,8 @@ container's benefit, not for any need of `ConditionalView`'s own.
 manages only visibility, delegating all appearance and accessibility to
 `child`.
 
+`unit-test-coverage` is partial: `EditableTableCardUpdateTests.swift` has one test (`explanationFollowsAConditionalSetting`) that builds a `ConditionalView` around a `UserSetting<Bool>` and asserts the child hides and reopens when the setting flips, but no dedicated `ConditionalViewTests.swift` exists, and the initial-visibility, predicate, constructor-trap and idempotent-visibility paths are untested.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -359,4 +363,6 @@ manages only visibility, delegating all appearance and accessibility to
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: merged AppKit-mechanic requirements into cross-platform behavioral ones and moved the mechanics to the AppKit/UIKit platform note, promoted async setting-change delivery to a named requirement with a vector, fixed onVisibilityChange's transition semantics in States, fixed test-vector observability and run-loop wording, corrected the Compose platform note's composition-membership signal, reformatted Design Decisions to the bold three-line form, trimmed Compliance to applicable checks, collapsed boilerplate Appearance/Accessibility/Privacy/Accessibility-Options sections, added the GroupView cross-reference, removed a source-typo edge case, and added the initial Change History row |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/layout/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage Compliance row |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 </content>

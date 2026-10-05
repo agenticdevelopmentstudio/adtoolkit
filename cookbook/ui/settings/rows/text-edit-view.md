@@ -1,31 +1,30 @@
 ---
 id: c1787e74-2485-4d7b-a219-feb4c07cf97c
-title: Text Edit View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/text-edit-view
+title: "Text Edit View"
+domain: adtoolkit://cookbook/ui/settings/rows/text-edit-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row pairing a label with a plain text field, synced to a
-  string-valued view model and restyled on every theme change.
+summary: "A settings row pairing a label with a plain text field, synced to a string-valued view model and restyled on every theme change."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- form-control
-- text-input
+  - settings
+  - form-control
+  - text-input
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/secure-text-edit-view
+  - adtoolkit://cookbook/ui/settings/rows/secure-text-edit-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Text Edit View
@@ -38,7 +37,7 @@ field through an overridable construction point so a variant can substitute
 a different control type while inheriting everything else — the row layout,
 the theme-driven font/color styling, the edit-completion commit path, and
 the view-model sync. The Secure Text Edit View (documented separately at
-`agenticdevelopertoolkit://cookbook/ui/settings/rows/secure-text-edit-view`) is the
+`adtoolkit://cookbook/ui/settings/rows/secure-text-edit-view`) is the
 one variant that exists today, overriding only that construction point to
 return a secure text-entry control. This recipe documents the Text Edit View
 itself: the behavior every row built from it — plain or secure — inherits.
@@ -90,6 +89,7 @@ itself: the behavior every row built from it — plain or secure — inherits.
   to the view model's change notification during initialization,
   superseding any handler already registered on that view model instance
   (see **overwritten external observer** in Edge Cases).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -157,15 +157,7 @@ itself: the behavior every row built from it — plain or secure — inherits.
   guidance, not a pointer-interface requirement. No explicit control size is
   set on the text field, so it keeps the platform's regular system
   click-target metrics.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented by the
-  component. The label and the text field's typed-text color both resolve
-  to the theme's primary-text role (no minimum contrast computed for this
-  role), and placeholder text resolves to the placeholder-text role, dimmed
-  toward the background with only a `minContrast: 1.6` floor (see Design
-  Decisions) — below WCAG 2.1 SC 1.4.3's 4.5:1 threshold for body text;
-  settling it needs the text-to-background ratio measured for both roles
-  under every shipped theme, or a raised placeholder-text floor in the
-  theme layer.
+- **minimum-contrast-ratio**: The component performs no contrast check of its own. The label and the field's typed text both take the theme's primary-text role, and a placeholder takes the theme's placeholder-text role, which the theme layer derives with only a 1.6 minimum contrast (see Design Decisions); contrast is whatever the active theme resolves for those roles.
 
 ## Conformance Test Vectors
 
@@ -184,6 +176,7 @@ itself: the behavior every row built from it — plain or secure — inherits.
 | text-edit-view-011 | restyles-existing-placeholder | After construction, set the field's placeholder text to "Enter value", then trigger a theme change | The placeholder's color equals the theme's placeholder-text color and its font equals the theme's body-role font |
 | text-edit-view-012 | exposes-constituent-views | Construct the component, then access its label and its text field from outside the component | Both properties are accessible and return the same instances built during construction |
 | text-edit-view-017 | claims-sole-onchange-observer | Register an observer callback on the view model's change notification, then construct a component against that same view model | The view model's change notification now points at the component's own handler; invoking it no longer calls the previously registered callback |
+| text-edit-view-018 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -431,6 +424,9 @@ Not applicable: the component performs no logging.
   other observer, including the secure variant) per view model instance is
   the supported usage (see **claims-sole-onchange-observer**).
   **Approved**: pending
+- **Decision**: The component performs no contrast check of its own: the label and typed-text colors (primary-text role) and the placeholder color (placeholder-text role, derived with only a 1.6 minimum contrast, below the 4.5:1 body-text threshold) resolve from the active theme at runtime, so whether a given theme's resolved pair reaches the 4.5:1 text threshold is not established by this component.
+  **Rationale**: Contrast is a property of the theme's resolved color pairs, which live outside this component; closing the gap would take a theme-level audit (or an enforced minimum in the theme layer) of those roles against the backgrounds a settings row sits on, which no source or test does today.
+  **Approved**: pending
 
 ## Compliance
 
@@ -442,6 +438,7 @@ Not applicable: the component performs no logging.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | Reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `native-controls-preference` and `platform-design-language` rest on
 `textField` being an unmodified `NSTextField` with AppKit's default bezel
@@ -454,6 +451,8 @@ writing to `settingObserver.value`; `separation-of-concerns` rests on the
 view holding no persistence or business logic of its own — commits pass
 straight through to the caller-supplied `settingObserver`.
 
+`unit-test-coverage` is `partial` because `RecordFieldRefreshTests.swift` constructs `TextEditView` rows and asserts that a refresh shows a changed stored value, that a refresh leaves an in-progress edit alone and that a revert discards it, and `ConfigurationContributionPointTests.swift` counts it in the hierarchy; there is no dedicated test file and theming, placeholder restyling and the commit path are not asserted directly.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -463,3 +462,5 @@ straight through to the caller-supplied `settingObserver`.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker against the source: restated as current behavior (no contrast check in the component) and recorded the gap as a pending Design Decision; added separation-of-concerns/unit-test-coverage Compliance rows. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

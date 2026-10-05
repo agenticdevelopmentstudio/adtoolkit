@@ -1,0 +1,10 @@
+
+| Check | Status | Category |
+|-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | passed | Best Practices |
+| [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | passed | Reliability |
+
+`unit-test-coverage` is marked partial: `uptime.ts` has no dedicated `*.test.ts` file of its own inside `status-server` — its only coverage in this package is the indirect assertion in `test/reads.int.test.ts` ("/uptime aggregates daily counts for the configured endpoint," asserting `body.services[0].uptimePercent === 50` through the caller `buildUptime`). The identical formula IS directly and thoroughly unit-tested, but only in the separate `status-web` package's byte-for-byte duplicate (`src/lib/uptime.test.ts`), which this file neither imports nor shares; `dayStatus`'s zero-total fallthrough and `overallUptimePercent`'s null-filtering behavior have no test coverage of any kind written against THIS file. `separation-of-concerns` passes: this file does exactly one thing — turn already-aggregated check counts into a percentage and a verdict, and average per-service percentages into one number — delegating nothing to, and duplicating nothing from, its sibling `health.ts` beyond importing the `HealthStatus` type it returns. `explicit-error-handling` passes: the one arithmetic hazard the module could hit, dividing by a zero or negative `total`, is explicitly guarded by the `c.total <= 0` check in `uptimePercent` before any division runs; no other branch in the file can divide, throw, or reject. `data-integrity` passes: every returned percentage is deterministically derived from its input with no mutation of the caller's `Counts` or `services` objects, and the same input always produces the same rounded output.
+

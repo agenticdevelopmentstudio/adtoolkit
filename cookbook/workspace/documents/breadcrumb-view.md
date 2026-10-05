@@ -1,31 +1,31 @@
 ---
 id: c2417a5c-953b-458e-856b-2c4f7e3a6fde
-title: Breadcrumb View
-domain: agenticdevelopertoolkit://cookbook/workspace/documents/breadcrumb-view
+title: "Breadcrumb View"
+domain: adtoolkit://cookbook/workspace/documents/breadcrumb-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A chevron-separated row of buttons showing the open file's path from the project root, each opening a popover onto its directory's siblings.
+summary: "A chevron-separated row of buttons showing the open file's path from the project root, each opening a popover onto its directory's siblings."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ui
-- chrome
-- navigation
-- breadcrumb
+  - ui
+  - chrome
+  - navigation
+  - breadcrumb
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/documents/breadcrumb-popover-view
+  - adtoolkit://cookbook/workspace/documents/breadcrumb-popover-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Breadcrumb View
@@ -61,6 +61,7 @@ This component is a VS Code-style breadcrumb strip shown above a document editor
 - **ignore-out-of-range-crumb-index**: The component MUST NOT invoke the selection callback, or take any other action, when selecting a crumb by index, or a crumb click, reports an index outside the current crumb range.
 - **no-filesystem-access**: The component MUST NOT read the file system to compute crumb titles or directories; all path arithmetic MUST operate only on the URL values already given to it.
 - **native-keyboard-activation**: The component MUST support the platform's standard keyboard focus and activation on every crumb, because crumbs are rendered as native platform buttons rather than custom-drawn views: when full keyboard access is enabled, Tab moves focus to each crumb button in order, and Space or Return activates the focused button. (The source platform only moves Tab focus to a push button when full keyboard access is on; that is the platform's own system-wide behavior, not something this component controls — see Platform Notes.)
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -124,6 +125,7 @@ This component is a VS Code-style breadcrumb strip shown above a document editor
 | breadcrumb-view-024 | no-filesystem-access | Set the open file/project root to a pair of paths that do not exist on disk | Crumb titles and directories are still computed correctly from the URLs' path components alone; no file-existence check or disk access occurs |
 | breadcrumb-view-025 | native-keyboard-activation | With full keyboard access enabled and the strip showing crumbs, Tab to a crumb button and press Space | The focused crumb's action fires, opening its popover, via the platform's native button keyboard focus and Space-activation handling (not key-equivalent handling) |
 | breadcrumb-view-026 | single-crumb-outside-root | project root = /Users/x/project; open file = /Users/x/project2/other/c.txt (a sibling path that shares a string prefix with the root but not a path component) | crumb titles equals ["c.txt"]; exactly one crumb button renders — component-wise comparison correctly treats project2 as outside project, unlike a naive string-prefix check |
+| breadcrumb-view-027 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -192,6 +194,7 @@ Not applicable: no logging call appears anywhere in source.
 - **React/Web**: A web port renders the strip as a navigation landmark containing an ordered list of button elements, with the chevron marked hidden from assistive technology between list items (matching the decorative chevron's nil accessibility description). Standard CSS text truncation only elides at the end of a line, so the middle-truncation requirement needs a small measurement-based helper rather than a single style property. The popover maps to a positioned panel opened by the clicked crumb's button, and the source's "close any open popover before opening the next" rule needs to be implemented explicitly, since a browser does not close one open custom popover just because a different button was clicked.
 - **AppKit / UIKit**: Source: BreadcrumbView.swift (packages/apple/AgenticToolkit/macOS/UI/ViewControllers/DocumentPane/), built entirely from AppKit — NSView, NSStackView for the horizontal layout, NSButton (inline bezel, borderless, `isBordered = false`) for each crumb, NSImageView with a symbol configuration for the chevrons, and NSPopover with NSPopoverDelegate for the sibling-listing popup; all layout uses Auto Layout constraints, and the path arithmetic (including `titles(for:rootURL:)`, which requires strictly more file path components than root path components) is pure, static functions with no filesystem access. Each crumb button is given a horizontal content compression resistance priority of `.defaultLow` (250) so its text shrinks before the stack is forced to grow. The chevron is `NSImage(systemSymbolName: "chevron.right", accessibilityDescription: nil) ?? NSImage()`, built in a `chevron()` helper, so a failed symbol lookup falls back to a zero-size `NSImage()` instead of crashing or leaving the image view empty; the chevron's `accessibilityDescription` is left `nil` so VoiceOver skips it as a separate stop. A crumb button's accessibility label comes from `NSButton`'s own `title`; its color is the default `NSButton` title color (system label color), and the chevron uses `NSColor.secondaryLabelColor`. Popover presentation and tracking (`presentPopover(for:relativeTo:)`, `activePopover`, `popoverDidClose(_:)`) close any previously tracked popover before opening the next one and clear the tracked reference only when the closing popover matches it, guarding against the async timing of a `.transient` popover's outside-click dismissal. A UIKit port (iOS) would replace NSStackView with UIStackView, NSButton with a plain-style UIButton (UIKit has no inline bezel style), and NSImageView/NSPopover with UIImageView plus a popover presented via a popover presentation controller — noting that on a compact-width iPhone, that presentation adapts to a full-screen or sheet style by default unless the presentation delegate forces it to stay a popover, unlike NSPopover's consistently anchored macOS popover.
 - **WinUI 3**: WinUI 3 ships a native BreadcrumbBar control (Microsoft.UI.Xaml.Controls.BreadcrumbBar, Windows App SDK) that is the direct analogue of this whole component: bind its ItemsSource to the crumb-title list and handle the ItemClicked event, whose event-args Index plays the role of crumbClicked's sender.tag. Reproduce presentPopover's "close any open popover before opening the next" rule (see **single-popover-at-a-time**) by closing a previously opened Flyout before showing a new one anchored to the clicked BreadcrumbBarItem, listing that directory's contents inside it. BreadcrumbBar truncates overflow items into a leading ellipsis drop-down by default, which is a different truncation strategy from the source's per-crumb middle truncation (see **crumb-truncates-middle**); matching the source exactly requires setting each item's text-trimming behavior and providing a custom middle-ellipsis conversion, since WinUI's built-in trimming values only truncate at the end.
+- **confines-to-ui-thread**: On Apple platforms the type is `@MainActor`-isolated, so the compiler enforces the rule.
 
 ## Reference Implementations
 
@@ -227,13 +230,19 @@ Not applicable: no logging call appears anywhere in source.
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | passed | Internationalization |
 | [unicode-support](agenticdevelopercookbook://compliance/internationalization#unicode-support) | passed | Internationalization |
 | [rtl-layout-support](agenticdevelopercookbook://compliance/internationalization#rtl-layout-support) | partial | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 The accessibility statuses are partial because the source sets only an accessibility identifier per crumb and leaves label, dynamic-text, and contrast behavior to AppKit's own defaults (a plain `NSButton` title and `NSColor.secondaryLabelColor`) rather than defining or verifying them itself, and because no accessibility notification accompanies a strip rebuild (see Assistive technology, above). The internationalization statuses for hardcoded strings and Unicode support are passed because the source has no hardcoded user-facing strings and displays crumb titles through `NSButton`'s native Unicode-capable text handling. `rtl-layout-support` is partial rather than passed: the strip's own leading/trailing anchors and `NSStackView` layout mirror automatically for right-to-left locales, but the chevron separator is drawn with the `chevron.right` SF Symbol, which does not mirror to point left in RTL — `chevron.forward` is the symbol that does.
+
+`separation-of-concerns` passes because `BreadcrumbView` only derives crumbs from a file URL and the project root and reports a selected crumb's directory, with the directory listing delegated to `BreadcrumbPopoverViewController`. `unit-test-coverage` is partial: `BreadcrumbViewTests.swift` covers the empty editor, crumbs relative to the root, a file outside the root and selecting a crumb, but not popover presentation or dismissal.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns (passed) and unit-test-coverage (partial) compliance rows. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/documents/. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

@@ -1,34 +1,32 @@
 ---
 id: 15e66a2e-9ee1-4f5f-aeb0-c804078b4f78
-title: Theme Preview View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/theme-preview-view
+title: "Theme Preview View"
+domain: adtoolkit://cookbook/ui/settings/rows/theme-preview-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings view that renders a live sample of a color theme as real
-  app chrome - window, sidebar, controls, status badges, ANSI swatches and a
-  terminal.
+summary: "A settings view that renders a live sample of a color theme as real app chrome - window, sidebar, controls, status badges, ANSI swatches and a terminal."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- theme
-- preview
+  - settings
+  - theme
+  - preview
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/swatch-grid-view
+  - adtoolkit://cookbook/ui/settings/rows/swatch-grid-view
 related:
-- agenticdevelopertoolkit://cookbook/ui/controls/badge
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/controls/badge
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Theme Preview View
@@ -176,6 +174,7 @@ Decisions).
   palette constructed once at the top of the show operation, read through
   its role-based lookup, never a raw, theme-independent color or font
   literal.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -251,7 +250,7 @@ Decisions).
   composition with no interactive element anywhere in source (see
   States/Pressed), so there is no touch target to size. The embedded
   swatch grid's own accessibility posture is documented in its own recipe
-  (`agenticdevelopertoolkit://cookbook/ui/settings/rows/swatch-grid-view`), not
+  (`adtoolkit://cookbook/ui/settings/rows/swatch-grid-view`), not
   repeated here.
 
 ## Conformance Test Vectors
@@ -287,6 +286,7 @@ Decisions).
 | theme-preview-view-028 | cursor-shape | Set the theme's terminal cursor shape to bar and call show(theme) | The caret is 2pt wide, the resolved terminal font's cell height tall (point size plus 3, unchanged by the bar shape), filled with the palette's cursor role color |
 | theme-preview-view-029 | ansi-swatch-grid | Call show(theme) and inspect the 6th item in the container | It is a swatch grid constructed with the palette's 16 ANSI colors and 8 columns |
 | theme-preview-view-030 | semantic-palette-derivation | Call show(themeA) then show(themeB) with two themes differing only in their role overrides | Every sample-card color equals what the palette resolves for themeB's role overrides (roles neither theme overrides may equal the themeA value; only an override-driven mismatch fails the vector) |
+| theme-preview-view-031 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -562,6 +562,7 @@ here.
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | Reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `keyboard-navigable` and `reduced-motion` are omitted: `ThemePreviewView.swift`
 has no `NSControl`, target-action, or interactive element of any kind (see
@@ -577,6 +578,8 @@ and every visible string is a
 literal passed to `NSTextField(labelWithString:)`, never routed through
 `NSLocalizedString` (`no-hardcoded-strings`, failed).
 
+`unit-test-coverage` is `partial` because `ThemeUITests.swift` (`preview`) constructs a `ThemePreviewView` for a built-in theme, calls `show` with another and asserts only that it has subviews; the rendered sample content is not asserted.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -587,3 +590,5 @@ literal passed to `NSTextField(labelWithString:)`, never routed through
 | 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage Compliance row, judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

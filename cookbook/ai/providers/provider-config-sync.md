@@ -1,44 +1,40 @@
 ---
 id: 1d7812e7-28cb-4874-897f-43aab62fe009
-title: Provider Configuration Synchronization
-domain: agenticdevelopertoolkit://cookbook/ai/providers/provider-config-sync
+title: "Provider Configuration Synchronization"
+domain: adtoolkit://cookbook/ai/providers/provider-config-sync
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The serializable app-to-daemon wire contract mirroring the whole AI provider
-  registry (enabled flag, selection pointer, and every resolved configuration) in
-  one payload.
+summary: "The serializable app-to-daemon wire contract mirroring the whole AI provider registry (enabled flag, selection pointer, and every resolved configuration) in one payload."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- value-type
-- provider-config
-- wire-contract
+  - ai-plugin
+  - value-type
+  - provider-config
+  - wire-contract
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/providers/provider-config-keys
+  - adtoolkit://cookbook/ai/providers/provider-config-keys
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigSync.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIProviderConfigSyncTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderConfigStore.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigSync.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIProviderConfigSyncTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderConfigStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Provider Configuration Synchronization
@@ -153,44 +149,23 @@ target, and none decodes or applies one — see the
 - **no-side-effects**: Constructing, encoding, decoding, or reading any
   field of either type MUST NOT perform network access, subprocess
   execution, or notification posting; the source contains no such call.
-- **no-error-domain**: Neither constructor MUST fail, and this component
+- **no-error-domain**: The constructors MUST NOT fail, and this component
   MUST NOT declare an error type; construction always succeeds
   structurally for any argument values supplied, because the source
   performs no content validation (see Edge Cases).
-- **sync-application-unimplemented**: NEEDS REVIEW: Not implemented in
-  source. No function anywhere in this repository decodes an incoming
-  sync-envelope payload and writes its contents into the
-  storage-key-addressed settings/secure-store layout the daemon provider
-  resolver reads back (the configurations key, selected-configuration-id
-  key, enabled key, and the per-configuration field/model/secret-fields/fields
-  keys), and no function constructs and transmits a sync envelope from the
-  app side either — the only place a sync envelope is constructed anywhere
-  in the given sources is this component's own round-trip test. What is
-  missing: the app-side sender that builds this payload from the app's
-  provider-configuration store, and the daemon-side receiver that decodes
-  it and persists each resolved-configuration record under the
-  provider-configuration-keys component's key namespace (honoring
-  `empty-secret-clears-credential`). Evidence that would settle it: the
-  daemon host implementation this component's documented contract
-  attributes the receiving end to (e.g. the daemon provider resolver's
-  documented contract calls it "a headless host"), which is not present in
-  this repository, or confirmation that this wiring has not yet been
-  built.
-- **configs-id-uniqueness-unenforced**: NEEDS REVIEW: Not implemented in
-  source. The sync envelope's `configs` field is a plain list with no
-  check that every entry's identifier is unique, yet this component's own
-  documented contract states its purpose is so "the daemon mirrors the
-  full registry (keyed by configuration identity)" — a keyed mirror cannot
-  hold two different values under one key, so two `configs` entries
-  sharing an identifier would have one silently overwrite the other's
-  values/secrets/model once persisted under the provider-configuration-keys
-  component's namespace, with no error raised anywhere in this component.
-  What is missing: a defined outcome for duplicate identifiers (reject at
-  construction, reject at decode, or a documented "last one wins" rule).
-  Evidence that would settle it: validation in whatever daemon-side
-  receiver eventually decodes this payload (see
-  `sync-application-unimplemented`), which does not exist in this
-  repository today.
+- **sync-application-unimplemented**: This component MUST be treated as the
+  wire shape only: no function in this repository decodes an incoming
+  sync-envelope payload and persists it under the provider-configuration
+  key namespace, and none constructs and transmits an envelope from the
+  app side; the only place an envelope is constructed in this repository is
+  this component's own round-trip test. The sender and receiver are
+  expected to live in the host that owns the transport.
+- **configs-id-uniqueness-unenforced**: The envelope's `configs` field MUST
+  be accepted as a plain list: this component performs no check that every
+  entry's identifier is unique, so two entries sharing an identifier decode
+  without error, and any receiver that persists them under the
+  provider-configuration key namespace would let one silently overwrite the
+  other.
 
 ## Appearance
 
@@ -387,6 +362,14 @@ Not applicable: this component contains no logging call of any kind.
 **Rationale**: not explained in source; recorded here as an observed divergence from the sibling immutability convention rather than corrected, since neither the concurrent-share-safety nor the structural-equality requirement demands immutability and the source gives no indication of an in-place-mutation call site that would justify it. (Apple platform implementation.)
 **Approved**: pending
 
+**Decision**: The sync envelope is only a wire shape: no sender or receiver for it exists in this repository.
+**Rationale**: The daemon host that receives the payload and the app-side sender are not part of this repository, so nothing here builds the envelope from the provider-configuration store or persists a decoded one under the configuration key namespace (honoring empty-secret-clears-credential). Closing the gap takes that sender and receiver being added, or confirmation that they live in the hosting product.
+**Approved**: pending
+
+**Decision**: The envelope's configs list does not enforce unique configuration identifiers.
+**Rationale**: A keyed mirror cannot hold two values under one key, but this component only declares fields, and the source performs no validation at construction or decode. Closing it requires a defined outcome for duplicates (reject at construction, reject at decode, or a documented last-one-wins rule), most naturally in the receiver that persists the payload.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -396,13 +379,17 @@ Not applicable: this component contains no logging call of any kind.
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | partial | Privacy and Data |
 | [input-sanitization](agenticdevelopercookbook://compliance/security#input-sanitization) | failed | Security |
 | [secure-storage](agenticdevelopercookbook://compliance/security#secure-storage) | partial | Security |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `separation-of-concerns` passes because this component performs no storage, no transport, and no business logic of its own; it is only the data shape shared between an app-side sender and a daemon-side receiver, neither of which lives in this file. `idempotent-operations` passes because encoding, decoding, and equality are all deterministic computations of a value's stored properties, with no shared state that could make repeated calls diverge (see `serialized-field-names`, `structural-equality`). `data-minimization` is `partial`: the resolved-configuration record carries a configuration's *entire* resolved value and secret bag in one undifferentiated pair of maps, with no narrower, credential-free view for a caller that only needs identity or model, and no redaction on the type's default description, which prints `secrets` verbatim if ever logged or printed (see `Disclosure safeguard` in Privacy). `input-sanitization` fails because neither `configs`' identifier uniqueness nor `selectedConfigId`'s reference into `configs` is validated at construction or decode time (see `configs-id-uniqueness-unenforced`). `secure-storage` is `partial`: the `values`/`secrets` split gives a future receiver a clean signal for which fields need a secure store, but nothing in this file enforces that a receiver actually routes `secrets` there — that enforcement, like the receiver itself, does not yet exist in this repository (see `sync-application-unimplemented`).
+
+`unit-test-coverage` is partial because `AIProviderConfigSyncTests.swift` (`testRoundTrip`, `testDecodesMissingSelectionAsNil`) covers encode/decode and the absent-selection case, but there is no test for duplicate identifiers, the empty-secret handling, or any sender/receiver, none of which exist in the repository.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restate unimplemented sync behaviors as current behavior with pending decisions; cite unit-test-coverage; reword no-error-domain as a MUST NOT. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/providers/. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

@@ -1,39 +1,36 @@
 ---
 id: a29c23d4-a086-4413-9843-6b319e340646
-title: Activation Event Matcher
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
+title: "Activation Event Matcher"
+domain: adtoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Parses a VS Code extension manifest's activationEvents into typed triggers,
-  resolves workspaceContains globs, and decides whether a trigger activates the extension.
+summary: "Parses a VS Code extension manifest's activationEvents into typed triggers, resolves workspaceContains globs, and decides whether a trigger activates the extension."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- activation-events
-- glob-matching
-- vscode-compatibility
+  - extension-host
+  - activation-events
+  - glob-matching
+  - vscode-compatibility
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/ActivationEventMatcher.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ActivationEventMatcherTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHostInstaller.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/ActivationEventMatcher.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ActivationEventMatcherTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHostInstaller.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Activation Event Matcher

@@ -1,0 +1,9 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: renamed verb-phrase requirements to subject nouns; moved connection-state-in-text into Behavioral Requirements with a new vector; documented start()/stop() lifecycle idempotency with a new vector; made toolbar-item-overridable requirements MUST-default/MAY-override; corrected vector precision (003, 013, 014) and named the real ThemeManager/ThemePaletteObserver mechanism; added the 900×600 start-size floor and a LogController contract table to Configuration; reworded the boundary-values edge case away from an RFC 2119 keyword; replaced "this file"/"in source" phrasing with behavior descriptions outside Design Decisions; reformatted Design Decisions to the bold convention; populated the Compliance table; moved the platform-design-languages reference to related and added log-view to depends-on; swapped the redundant macos tag for streaming. |
+| 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/logs/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the contrast NEEDS REVIEW marker against source: no contrast check exists, restated as current behavior with a pending decision; added separation-of-concerns (passed) and unit-test-coverage (failed, no LogViewController tests). |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

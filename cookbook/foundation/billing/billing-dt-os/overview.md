@@ -1,0 +1,3 @@
+
+The one definition of every billing record and value that crosses between an app and a daemon, so neither side redefines a shape. Records are immutable values with every optional contact field defaulting to an empty string so form bindings never unwrap. Billing status is three states in one direction (unbilled, billed, paid) and anything past unbilled locks an entry. An entry snapshots rate, currency and rounding at write time so a later rate change never rewrites history. The overview never sums across currencies. The same file holds the small shared constants both sides must spell identically: the failure sentinels, the settings keys, the default and clamp ranges for the preference knobs, and the sentences a refused write carries.
+

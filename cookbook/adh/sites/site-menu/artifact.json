@@ -1,0 +1,59 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "f2d56415-ac36-4a27-bee5-b447c4186513",
+    "title": "SiteMenu",
+    "domain": "adtoolkit://cookbook/adh/sites/site-menu",
+    "type": "recipe",
+    "version": "1.1.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-07-05",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The platform navigation menu: an icon+label+description list with inline sub-items, an auth-conditional top section, and a Recents flyout.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "chrome",
+      "navigation",
+      "site-menu",
+      "recents",
+      "ui"
+    ],
+    "ingredients": [
+      "site-wordmark"
+    ],
+    "depends-on": [],
+    "related": [
+      "site-wordmark",
+      "option-menu",
+      "topic-detail"
+    ],
+    "references": [
+      "agenticdeveloperhub://docs/deep-linking-foundation"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "9be0b49eae5a8879",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "ingredients", "heading": "Ingredients"},
+    {"part": "integration-requirements", "heading": "Integration Requirements"},
+    {"part": "layout", "heading": "Layout"},
+    {"part": "shared-state", "heading": "Shared State"},
+    {"part": "integration-test-vectors", "heading": "Integration Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

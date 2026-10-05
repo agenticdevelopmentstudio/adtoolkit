@@ -1,0 +1,6 @@
+
+- **Role/trait**: Not applicable — no explicit accessibility role is set by this component; the on-screen view is a webview, which supplies its own accessibility tree for whatever content it renders.
+- **Label requirements**: Satisfied by `title` — the one label this component owns is the pane's chrome-visible name, which the extension sets and this component re-titles the pane on every change (see `title-change-notifies-listeners`). Labeling of anything *inside* the rendered page is the extension's own HTML, out of this component's scope.
+- **Announce state changes**: Not applicable — the only two changes this component makes to what is on screen are a title update (already surfaced through the standard pane-chrome title mechanism) and a document reload triggered by `html`/`options` changes (a live update inside the webview, which is the webview's own accessibility-tree responsibility, not a native view swap this component performs itself). Unlike a component that swaps between two distinct native view hierarchies with no notification at all, there is no such swap in this component to flag.
+- **Minimum tap target**: Not applicable — this component draws no discrete tappable control of its own; the entire view is the webview's surface, and any interactive element within the rendered page is the extension's own content, out of this component's scope.
+

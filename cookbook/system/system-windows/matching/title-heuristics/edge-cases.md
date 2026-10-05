@@ -1,0 +1,23 @@
+
+- **Empty title**: every built-in returns an absent value for "" before doing any parsing (MUST; `empty-title-nil`).
+- **Whitespace-only title**: Xcode, Brave, VS Code and Terminal trim to empty and return an absent value; Warp returns an absent value because there is no " - " (MUST).
+- **Title with newlines**: trimming uses spaces and tabs only, so a leading or trailing newline stays in the returned pattern (MUST; `trim-spaces-and-tabs-only`).
+- **Both em and en dash present**: only the em dash splits; en-dash text stays inside a component (MUST; `separator-first-match-wins`).
+- **En dash inside content**: a title whose content contains " – " (for example a folder named "App – Prod") with no em dash is split there; the title-parser's own documentation records this as an accepted trade-off (MUST, as documented behavior).
+- **Empty components from a leading or trailing separator**: components are kept in place, empty; Xcode, VS Code and Terminal return an absent value when the component they select is empty rather than falling back to another component (MUST).
+- **Warp title with no " - "**: returns an absent value, with no whole-title fallback (MUST; `warp-requires-hyphen-separator`).
+- **Warp root or slash-only path**: "/" or "//" yields an absent value (MUST; `warp-root-path-nil`).
+- **Warp dirty indicator without a leading space**: "a - proj*" keeps the "*" ("proj*"), because only the two-character " *" suffix is stripped (MUST).
+- **Warp parenthesis without a leading space**: "a - proj(main)" keeps "proj(main)", because only " (" cuts the branch (MUST).
+- **Brave suffix variants**: " - brave" (lowercase) or " - Brave Browser" do not strip; the whole trimmed title is returned (MUST; `brave-suffix-case-sensitive`).
+- **VS Code generic title in the first position**: "Welcome — Visual Studio Code" returns "Welcome" (MUST, as the code behaves); its own documentation claims an absent value — the open question on `vscode-welcome-doc-contract`.
+- **VS Code generic comparison case**: "welcome" (lowercase) is not generic and is returned as-is (MUST).
+- **VS Code dotted names that are not filenames**: "v1.2 — proj" returns "v1.2" because "2" is not a listed extension; ".json" alone is one piece after dropping the empty prefix and does not count as a filename (MUST; `vscode-filename-test`).
+- **VS Code both first and last look like filenames**: the first component is returned (MUST; `vscode-default-first`).
+- **Terminal double dash**: only one leading "-" is removed (MUST; `terminal-strip-one-dash`).
+- **Terminal dimensions only**: "u — 80x24" returns "80x24" as the command, since the second component is taken blindly (MUST).
+- **App-name lookup**: which heuristic runs for a window is decided by the heuristic registry (case-insensitive match against each heuristic's app-names list); an app that no heuristic lists gets no heuristic and the matcher uses the raw title. This lookup belongs to the registry, not to the heuristics (fact).
+- **Null input**: not applicable — the title is a non-optional string, so there is no null case.
+- **Concurrent access**: all five heuristics are stateless, concurrency-safe value types with pure functions; concurrent calls cannot interleave on shared state (MUST; `heuristic-pure`).
+- **Error states, cancellation, timeouts, offline**: not applicable — the heuristics perform no I/O, cannot fail except by returning an absent value, run synchronously in time linear in the title length, and have nothing to cancel or time out.
+

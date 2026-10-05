@@ -1,0 +1,61 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "3f6268b8-410d-4d3c-979c-2a9f9f1534f3",
+    "title": "Single-Instance Window",
+    "domain": "adtoolkit://cookbook/ui/windows/single-window-controller",
+    "type": "ingredient",
+    "version": "1.2.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-23",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "A base window controller that lazily builds a single window from subclass configuration, persists its frame and visibility, and supports quiet presentation and HUD chrome.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "window-controller",
+      "frame-persistence",
+      "hud",
+      "singleton"
+    ],
+    "depends-on": [],
+    "related": [
+      "agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages",
+      "adtoolkit://cookbook/ui/windows/window-controller",
+      "adtoolkit://cookbook/ui/layout/composable-tabs/tabs-window"
+    ],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "3d5defb0970e66ad",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

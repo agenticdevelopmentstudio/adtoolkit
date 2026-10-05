@@ -1,30 +1,29 @@
 ---
 id: f8e734aa-f401-4218-9f1e-56ed98c28d3d
-title: Button View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/button-view
+title: "Button View"
+domain: adtoolkit://cookbook/ui/settings/rows/button-view
 type: ingredient
-version: 1.2.0
+version: 1.2.4
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings-row control wrapping a single button, with three placements
-  (fill, leading, centered) and an optional press callback.
+summary: "A settings-row control wrapping a single button, with three placements (fill, leading, centered) and an optional press callback."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ui
-- button
-- settings
+  - ui
+  - button
+  - settings
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Button View
@@ -96,12 +95,12 @@ in this family, which this component never reads.
 - **takes-no-action-without-callback**: WHEN the button is pressed AND the
   view model's `wasPressedCallback` is unset, the component MUST NOT
   perform any action beyond the button's own native press feedback.
-- **requires-view-model-at-construction**: The component MUST require a
-  view model to construct a usable instance; no construction path may
-  produce a usable instance without one (see Platform Notes for
-  how the source enforces this on this platform).
-- **confines-to-ui-thread**: The component MUST be usable only on the UI
-  thread.
+- **requires-view-model-at-construction**: Component MUST be constructible
+  only with a view model supplied at construction time; construction paths
+  that could produce an instance without one (e.g. a bare/default
+  construction path or a serialization/decoding-based construction path)
+  MUST be rejected (see Platform Notes for the mechanism the source uses).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -178,7 +177,7 @@ in this family, which this component never reads.
 | button-view-015 | takes-no-action-without-callback | The view model's `wasPressedCallback` unset; simulate a press on the button | No exception is thrown; no call is observed on a spy substituted for any other collaborator |
 | button-view-016 | requires-view-model-at-construction | Attempt to construct via a bare/default construction path that supplies no view model | Construction is rejected; no usable instance is produced. Not testable as an ordinary in-process assertion on every platform — where the failure mode is a runtime trap rather than a thrown/returned error, this requires a crash-test harness or a compile-time/unavailable check instead. |
 | button-view-017 | requires-view-model-at-construction | Attempt to construct via a serialization/decoding-based construction path that supplies no view model | Construction is rejected; no usable instance is produced. Same testing caveat as above. |
-| button-view-018 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (compile-time on platforms with static isolation checking such as Swift's `@MainActor`, runtime-checked otherwise) |
+| button-view-018 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (at build time or by a runtime check); the component's state is unchanged |
 | button-view-019 | placement-fixed-at-init | Any initialized instance | The component's public interface exposes no property or method that reads or changes placement; the only code that consults placement runs once, during construction |
 | button-view-020 | reads-title-once-at-init | Any initialized instance | The button's title was set from the view model's title during construction and by no other code path; the view model's title is immutable, so no later value could exist for the component to re-read |
 | button-view-021 | retains-view-model-strongly | Construct the component with a view model carrying a press callback that flips a flag, in a scope where no other strong reference to the view model is kept; after the scope exits (only the component remains reachable), simulate a press on the button | The callback still fires and the flag becomes true, showing the component alone kept the view model (and its callback) alive after every other reference was dropped |
@@ -269,15 +268,15 @@ Not applicable: the source contains no logging calls.
 **Rationale**: Per the source's own comments: the trailing constraint is "less-than, not equal: the row is as wide as the card, and an equal trailing edge is the stretch `.fill` is for," and the `.centered` leading constraint is "greater-than... for the same reason as the trailing one; the centre anchor does the placing."
 **Approved**: pending
 
-**Decision** (AppKit): `init(frame:)` and `init?(coder:)` are overridden only to call `fatalError`, rather than being omitted.
+**Decision**: (AppKit) `init(frame:)` and `init?(coder:)` are overridden only to call `fatalError`, rather than being omitted.
 **Rationale**: `ButtonView` has no valid state without a `ButtonViewModel`. Blocking the two inherited `NSView` initializers this way means a caller who reaches them through generic `NSView`-typed construction code (e.g. Interface Builder decoding) crashes immediately with a diagnosable message, instead of silently producing a `ButtonView` with no view model.
 **Approved**: pending
 
 **Decision**: This recipe calls the component's container a "row" throughout, even though the source's own comments use both "row" (in the `Placement` doc comment: "where the button sits in the row it is given") and "card" (in the `.fill` and `.leading` case comments: "stretched across the whole card"; "the row is as wide as the card").
-**Rationale**: The two words refer to the same concept in this file; "row" is kept as the single term for consistency with how a settings-row view's container is described elsewhere in the cookbook — `agenticdevelopertoolkit://cookbook/ui/settings/layout/header-view` and `agenticdevelopertoolkit://cookbook/ui/settings/layout/horizontal-stack-view` both describe the settings-row-view contract as "the marker protocol every settings-row view in this system adopts" — and the source's own inconsistency is recorded here rather than silently smoothed over.
+**Rationale**: The two words refer to the same concept in this file; "row" is kept as the single term for consistency with how a settings-row view's container is described elsewhere in the cookbook — `adtoolkit://cookbook/ui/settings/layout/header-view` and `adtoolkit://cookbook/ui/settings/layout/horizontal-stack-view` both describe the settings-row-view contract as "the marker protocol every settings-row view in this system adopts" — and the source's own inconsistency is recorded here rather than silently smoothed over.
 **Approved**: pending
 
-**Decision** (AppKit): This recipe describes `Self.pinToEdges(button, of: self)` (used in **fills-view-in-fill-placement**) as pinning all four edges of the button to the corresponding edges of the component.
+**Decision**: (AppKit) This recipe describes `Self.pinToEdges(button, of: self)` (used in **fills-view-in-fill-placement**) as pinning all four edges of the button to the corresponding edges of the component.
 **Rationale**: `pinToEdges` is not defined in `ButtonView.swift`, but its implementation was read directly: `static func pinToEdges(_ view: NSView, of container: NSView)` in `packages/apple/AgenticToolkit/macOS/SystemIntegration/ComposableSettingsWindow/ViewLayout.swift` activates exactly four equal constraints — `view`'s top, leading, trailing, and bottom anchors to `container`'s corresponding anchors — confirming the `.fill` case comment ("Stretched across the whole card") describes the same behavior this recipe asserts.
 **Approved**: pending
 
@@ -291,8 +290,12 @@ Not applicable: the source contains no logging calls.
 | [dynamic-type-support](agenticdevelopercookbook://compliance/accessibility#dynamic-type-support) | failed | Accessibility |
 | [touch-target-size](agenticdevelopercookbook://compliance/accessibility#touch-target-size) | passed | Accessibility |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | passed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 The `passed` statuses rest on `ButtonView` using an unmodified `NSButton` for its role, label, keyboard handling, and system-chrome contrast, and on `ButtonView` defining no string literals of its own. `dynamic-type-support` is `failed` because `button.font` is never set to a text-style-based font (e.g. `NSFont.preferredFont(forTextStyle:)`), so its title does not scale with the system text-size setting. `touch-target-size` is `passed` on macOS: the button keeps the system control metrics (see **Minimum tap target** under Accessibility).
+
+`separation-of-concerns` passes because `ButtonView` only places an `NSButton` in a row according to its `Placement` and forwards the press to the view model's `wasPressedCallback`; what the press does belongs entirely to the caller's `ButtonViewModel`. No test in the repository's test targets constructs `ButtonView`, so `unit-test-coverage` is `failed`: a search of `AgenticToolkitMacOSTests` and the other test targets for the type name finds nothing.
 
 ## Change History
 
@@ -302,3 +305,7 @@ The `passed` statuses rest on `ButtonView` using an unmodified `NSButton` for it
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: verified the `.fill`-placement `pinToEdges` behavior against its actual source and cited it; grounded the "row" vs "card" wording in sibling recipes; added named requirements and test vectors for title-read timing, view-model retention, and placement immutability; reworded the touch-target porting guidance to drop its RFC 2119 keyword; defined `ButtonViewModel`'s shape; tightened test vectors 015 and 018 and marked 018/019 as static checks; and made the Compose `.leading` mapping concrete. |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage Compliance rows, judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.3 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |
+| 1.2.4 | 2026-10-04 | Mike Fullerton | requires-view-model-at-construction uses the one wording its sibling row specs share. |

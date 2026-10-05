@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "7add8e4b-922e-4518-aa45-79bf56cdf8bc",
+    "title": "API Toolkit",
+    "domain": "adtoolkit://cookbook/data/services/api-toolkit",
+    "type": "ingredient",
+    "version": "1.1.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-23",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Same-origin request building, generated-endpoint lookup, schema-derived examples and field descriptions, and generic-CRUD headless logic for API browsing and data-table editing.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "crud",
+      "api",
+      "metadata",
+      "headless"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/ui/crud/crud-table",
+      "adtoolkit://cookbook/ui/crud/crud-record-form"
+    ],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "412b722b108099d5",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

@@ -1,40 +1,38 @@
 ---
 id: 016f5ba0-f4ee-4b39-b1a2-83629768acdd
-title: File System
-domain: agenticdevelopertoolkit://cookbook/foundation/file-system
+title: "File System"
+domain: adtoolkit://cookbook/foundation/file-system
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Seven asynchronous file-system operations served from one serial queue,
-  a typed file-system error outcome, and a file signature's size-and-date change
-  check.
+summary: "Seven asynchronous file-system operations served from one serial queue, a typed file-system error outcome, and a file signature's size-and-date change check."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- filesystem
-- concurrency
+  - filesystem
+  - concurrency
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-host
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/workspace/main-thread-workspace
+  - adtoolkit://cookbook/workspace/extensions/host/extension-host
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/workspace/main-thread-workspace
 references:
-- packages/apple/AgenticToolkit/Core/FileSystem/FileSystemService.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/FileSystem/FileSystemServicing.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/FileSystem/FileSignature.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/FileSystem/FileSystemServiceTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/FileSystem/FileSignatureTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/FileSystem/FileSystemService.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/FileSystem/FileSystemServicing.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/FileSystem/FileSignature.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/FileSystem/FileSystemServiceTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/FileSystem/FileSignatureTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
+
+# File System
 
 ## Overview
 
@@ -615,7 +613,7 @@ at its own call site.
 **Decision**: Give every operation its own fresh `FileManager()` inside its
 queued closure, rather than sharing one `FileManager` instance across calls
 or capturing `FileManager.default`.
-**Rationale** (Swift/Foundation implementation): `FileManager` is not
+**Rationale**: (Swift/Foundation implementation) `FileManager` is not
 `Sendable`; capturing a shared instance across the actor boundary and the
 `DispatchQueue` closure would either not compile under strict concurrency or
 require an unsafe escape, while a fresh, cheap instance per call keeps every
@@ -640,7 +638,7 @@ consulting the overwrite flag (`rename-destination-not-precchecked`,
 remove, move again, guarded to reproduce the underlying move operation's
 own `EISDIR`/`ENOTDIR`/`ENOTEMPTY` refusals, rather than as a single atomic
 replace.
-**Rationale** (Swift/Foundation implementation): Foundation has no API that
+**Rationale**: (Swift/Foundation implementation) Foundation has no API that
 atomically replaces an occupied destination across both files and
 directories. The doc comment records that an earlier hand-rolled version of
 this sequence, without those guards, was strictly more destructive than the
@@ -740,6 +738,7 @@ where it already was (`rename-case-only-and-self-renames-succeed`).
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to foundation/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

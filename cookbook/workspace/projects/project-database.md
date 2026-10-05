@@ -1,39 +1,37 @@
 ---
 id: c212ea39-10e7-4146-89dd-36edb3b3455a
-title: Project Database
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-database
+title: "Project Database"
+domain: adtoolkit://cookbook/workspace/projects/project-database
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: SQLite-backed registry of known git repositories, their settings, and the
-  schema migration chain that keeps one shared database file current.
+summary: "SQLite-backed registry of known git repositories, their settings, and the schema migration chain that keeps one shared database file current."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- database
-- sqlite
-- persistence
-- migrations
+  - git
+  - projects
+  - database
+  - sqlite
+  - persistence
+  - migrations
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo
+  - adtoolkit://cookbook/workspace/projects/git-repo
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Database/AppStorageLocation.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectDatabaseTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Database/AppStorageLocation.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectDatabaseTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Database
@@ -73,8 +71,8 @@ bookkeeping under its own table name so the two chains cannot collide.
 
 - **caller-must-synchronize-cross-thread-access**: This component MUST be
   implemented as a plain reference type with no built-in concurrency-safety
-  guarantee of its own — no actor isolation, no automatic thread
-  confinement, and no compiler-enforced concurrency-safety marker; an
+  guarantee of its own — no serialization of its own, no automatic thread
+  confinement, and no platform-enforced concurrency-safety marker; an
   instance is not safe to share across concurrency domains without the
   caller's own synchronization.
 - **single-connection-per-instance**: Each instance of this component MUST
@@ -281,18 +279,7 @@ bookkeeping under its own table name so the two chains cannot collide.
 
 ### Malformed row handling
 
-- **malformed-row-handling**: NEEDS REVIEW: Not implemented in source. The
-  per-row guard applied when reading repository rows silently omits any
-  row whose id column is not a parseable UUID string or whose path column
-  is null, from every repository-listing and lookup operation alike, with
-  no thrown error, no logged message, and no way for a caller to learn a
-  row was skipped. What is missing: whether a row failing this guard
-  should instead throw an error (surfacing the corrupt row to the caller)
-  or be reported through some other channel is not decided anywhere in
-  this file or its tests. Evidence that would settle it: a test exercising
-  a hand-corrupted `git_repo` row (the way a hand-written v1 fixture
-  already does in this component's own test suite) and an explicit
-  statement of the intended behavior from whoever owns this component.
+- **malformed-row-handling**: the per-row guard applied when reading repository rows MUST silently omit any row whose id column is not a parseable UUID string or whose path column is null, from every repository-listing and lookup operation alike, with no thrown error, no logged message, and no way for a caller to learn a row was skipped (see Design Decisions).
 
 ## Appearance
 
@@ -523,6 +510,7 @@ caller through a thrown error, not written to a log by this file.
   synchronous — this file performs every SQL call synchronously on the
   caller's thread — letting a `Task.Run` at the call site, not inside this
   component, move a call off a UI dispatcher thread.
+- **caller-must-synchronize-cross-thread-access**: On Apple platforms the class carries no actor isolation and no `Sendable` conformance.
 
 ## Reference Implementations
 
@@ -560,6 +548,10 @@ caller through a thrown error, not written to a log by this file.
 **Rationale**: Per the doc comment, collapsing "the query found nothing" and "the query failed to run" into the same `0` would make a read that failed for some other reason look like a fresh database, causing `runMigrations()` to re-run every migration over a database that already has data and possibly already has some of that schema in place — a bug this file avoids by letting `stepRow`'s own error path propagate instead.
 **Approved**: pending
 
+**Decision**: A repository row whose id is not a parseable UUID or whose path is null is silently dropped from every listing and lookup, with no error, log, or signal to the caller (`malformed-row-handling`).
+**Rationale**: The source's row-reading closure returns early from its guard without recording anything, and the tests do not exercise a hand-corrupted repository row. Closing it means deciding whether such a row should throw, be logged, or be reported through another channel, plus a test that corrupts a row.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -570,13 +562,15 @@ caller through a thrown error, not written to a log by this file.
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | Reliability |
 | [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | partial | Reliability |
 
-Notes: separation-of-concerns passes because `ProjectDatabase.swift` holds only schema, migration, and CRUD statements against its own tables — it performs no directory scanning, no reconciliation, and no window or layout business logic beyond storing and returning the rows another component reads and writes. unit-test-coverage is partial: `ProjectDatabaseTests.swift` exercises every public repository and settings method plus five distinct migration scenarios (a fresh database, a v1-to-v4 upgrade, a version row deleted mid-chain, the whole chain rewound, and directory-on-demand creation), but `checkpoint()` has no assertion verifying the WAL file was actually truncated, and the row-dropping path this recipe flags under `malformed-row-handling` has no test anywhere in the given sources. explicit-error-handling is partial for the same reason: every SQL-level failure this file's own statements can produce throws a specific `ProjectDatabaseError` case, but the malformed-row guard in `queryRepos` is the one path in this file that discards a failure signal instead of raising it — see the open question on `malformed-row-handling`. data-integrity is partial: the `UNIQUE` constraint on `git_repo.path`, the `ON DELETE CASCADE` foreign keys, and the transaction-wrapped, idempotency-guarded migration chain are all real, exercised integrity mechanisms, but this file never calls `PRAGMA integrity_check` and has no detection at all for a row that fails to parse on the way out of the database — again, the open question on `malformed-row-handling`.
+Notes: separation-of-concerns passes because `ProjectDatabase.swift` holds only schema, migration, and CRUD statements against its own tables — it performs no directory scanning, no reconciliation, and no window or layout business logic beyond storing and returning the rows another component reads and writes. unit-test-coverage is partial: `ProjectDatabaseTests.swift` exercises every public repository and settings method plus five distinct migration scenarios (a fresh database, a v1-to-v4 upgrade, a version row deleted mid-chain, the whole chain rewound, and directory-on-demand creation), but `checkpoint()` has no assertion verifying the WAL file was actually truncated, and the row-dropping path this recipe flags under `malformed-row-handling` has no test anywhere in the given sources. explicit-error-handling is partial for the same reason: every SQL-level failure this file's own statements can produce throws a specific `ProjectDatabaseError` case, but the malformed-row guard in `queryRepos` is the one path in this file that discards a failure signal instead of raising it — see the pending decision on `malformed-row-handling`. data-integrity is partial: the `UNIQUE` constraint on `git_repo.path`, the `ON DELETE CASCADE` foreign keys, and the transaction-wrapped, idempotency-guarded migration chain are all real, exercised integrity mechanisms, but this file never calls `PRAGMA integrity_check` and has no detection at all for a row that fails to parse on the way out of the database — again, the pending decision on `malformed-row-handling`.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation; documents the migration transaction's crash-safety rationale and the open question on malformed-row handling. |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation; documents the migration transaction's crash-safety rationale and the open question on malformed-row handling. |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the malformed-row NEEDS REVIEW marker against source: the row guard silently drops rows with a bad id or null path; restated as current behavior with a pending decision. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |

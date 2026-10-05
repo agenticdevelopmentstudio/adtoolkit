@@ -1,34 +1,33 @@
 ---
 id: 2cfe57f0-cdd4-4723-a6e0-2ce4f136ce7f
-title: Badge
-domain: agenticdevelopertoolkit://cookbook/ui/controls/badge
+title: "Badge"
+domain: adtoolkit://cookbook/ui/controls/badge
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A small rounded pill label for a status or category chip, in filled or outlined
-  style, with caller-supplied color and automatic black/white contrasting text.
+summary: "A small rounded pill label for a status or category chip, in filled or outlined style, with caller-supplied color and automatic black/white contrasting text."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ui
-- badge
-- status-indicator
+  - ui
+  - badge
+  - status-indicator
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/controls/badge
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/controls/badge
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references:
-- https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html
-- https://developer.apple.com/design/human-interface-guidelines/color
-approved-by: ''
-approved-date: ''
+  - https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html
+  - https://developer.apple.com/design/human-interface-guidelines/color
+approved-by: ""
+approved-date: ""
 ---
 
 # Badge
@@ -91,8 +90,8 @@ changes.
   intrinsic width rather than stretching to fill available horizontal
   space — both the badge and its label carry a required horizontal
   content-hugging priority.
-- **confines-mutation-to-main-actor**: See Platform Notes.
-- **rejects-storyboard-instantiation**: See Platform Notes.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
+- **rejects-storyboard-instantiation**: The control MUST be constructible only in code. Constructing it from a serialized or archived representation (such as a nib or storyboard) MUST be refused as a programmer error that terminates, producing no instance.
 - **prefers-semantic-palette-colors**: Callers SHOULD supply `color` values
   drawn from a `SemanticPalette` rather than arbitrary raw colors, per the
   component's documented intent ("typically drawn from a
@@ -150,14 +149,7 @@ changes.
   target/action, gesture recognizer, or click handling in the source; it
   is a purely visual, non-interactive display element with no tap target
   to size.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. The
-  contrasting-text-color computation picks black/white via a BT.601
-  luminance heuristic (`0.299·R + 0.587·G + 0.114·B` > 0.6) instead of the
-  WCAG contrast-ratio formula, and the outlined style assigns `color`
-  directly to text/border with no contrast check against the host
-  background; whether either meets a specific WCAG ratio (e.g. 4.5:1)
-  depends on each app's actual `SemanticPalette` colors and can't be
-  settled from this component's own source alone.
+- **minimum-contrast-ratio**: The component performs no WCAG contrast-ratio check. In the filled style it picks black or white text with a BT.601 luminance heuristic (`0.299·R + 0.587·G + 0.114·B` > 0.6); in the outlined style it assigns `color` directly to the text and border with no check against the host background. Whether either meets a specific ratio (for example 4.5:1) depends on the caller's colors.
 
 ## Conformance Test Vectors
 
@@ -182,10 +174,11 @@ underlying values under light vs. dark appearance.
 | badge-011 | centers-label-text | Any badge | The label's text is center-aligned |
 | badge-012 | tracks-theme-caption-font | Theme change while a badge is on screen | Label's font updates to the new theme's caption font |
 | badge-013 | sizes-to-fit-content | Badge placed with no explicit width constraint | Badge's fitting width equals the label's intrinsic width plus 12pt (6pt × 2) horizontal padding; badge does not stretch to fill a wider container |
+| badge-014 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
+| badge-015 | rejects-storyboard-instantiation | Attempt to construct the control from a serialized or archived representation | Construction is refused as a programmer error and terminates; no instance is produced. Verified by inspection only, since the refusal cannot be caught. |
+| badge-016 | minimum-contrast-ratio | Outlined badge whose `color` is nearly the same as the host background | Text and border are exactly `color`; no contrast adjustment is applied. |
 
-`confines-mutation-to-main-actor` and `rejects-storyboard-instantiation`
-have no test vectors: see Platform Notes for how
-each is verified.
+`confines-to-ui-thread` is vector badge-014 and `rejects-storyboard-instantiation` is vector badge-015; both are verified by inspection only (see Platform Notes).
 
 `prefers-semantic-palette-colors` has no test vector: it is a SHOULD
 constraining what colors a caller chooses to pass in, not an observable
@@ -316,7 +309,7 @@ Not applicable: the source contains no logging calls.
   `padding: 2px 6px`, background/border/color driven by the equivalent style
   prop, and a `getContrastingTextColor` helper reimplementing the same
   0.299/0.587/0.114 luminance weights and 0.6 threshold. The sibling web
-  Badge recipe (`agenticdevelopertoolkit://cookbook/ui/controls/badge`) already implements
+  Badge recipe (`adtoolkit://cookbook/ui/controls/badge`) already implements
   this on the web; reuse its formula so filled-style contrast decisions agree
   across platforms rather than re-deriving a possibly different threshold.
 - **AppKit / UIKit** (source platform): Source at
@@ -326,7 +319,7 @@ Not applicable: the source contains no logging calls.
   (`layer?.cornerRadius = 5`, `backgroundColor`, `borderWidth`,
   `borderColor`) and `NSColor`. The class and its public API are declared
   `@MainActor`, so construction or mutation from off the main actor fails
-  to compile — this is `confines-mutation-to-main-actor`, a static,
+  to compile — this is `confines-to-ui-thread`, a static,
   compile-time check rather than a vector observed by running the program;
   a port on a platform without an equivalent compile-time enforcement
   should verify this as a build-verification note rather than a runtime
@@ -442,17 +435,24 @@ Not applicable: the source contains no logging calls.
   only pill shape, padding, and text styling and not caller semantics.
   (Applies to the AppKit implementation.)
   **Approved**: pending
+- **Decision**: The badge performs no contrast-ratio check: filled text uses a luminance heuristic and outlined text and border use `color` as given.
+  **Rationale**: The component owns only shape, padding and text styling, and the caller owns the colors; the heuristic makes no ratio guarantee against the chosen color or the host background. Closing the gap means computing a WCAG ratio for the filled text choice and having the outlined style check against the host background, or auditing each app's palette pairings.
+  **Approved**: pending
 
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | best-practices |
 
 This status rests on `Badge.swift`: `contrastingTextColor(on:)` uses an
 unverified perceptual-luminance heuristic rather than a WCAG contrast-ratio
 computation, so a specific minimum ratio cannot be confirmed from the source
 alone (`contrast-ratio`).
+
+`separation-of-concerns` passes because `Badge.swift` owns only the pill shape, padding and text styling and takes its text, color and style from the caller rather than deriving them from a status vocabulary of its own. `unit-test-coverage` is `failed`: a search of the Apple test targets finds no test file for `Badge`, so vectors badge-001 through badge-016 are unpinned by automated tests.
 
 ## Change History
 
@@ -464,3 +464,4 @@ alone (`contrast-ratio`).
 | 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/controls/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Wrote the main-thread confinement and archive-rejection requirements platform-neutrally with vectors badge-014 and badge-015; resolved the minimum-contrast-ratio NEEDS REVIEW marker as current behavior (no ratio check) with vector badge-016 and a pending decision; added separation-of-concerns and unit-test-coverage compliance rows. Renamed the thread-confinement requirement to confines-to-ui-thread with the standard wording. |

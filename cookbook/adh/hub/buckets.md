@@ -1,40 +1,37 @@
 ---
 id: 18ea2506-0cbc-4c6a-880b-e94abcdc55b2
-title: 'Hub Domain: Buckets'
-domain: agenticdevelopertoolkit://cookbook/adh/hub/buckets
+title: "Hub Domain: Buckets"
+domain: adtoolkit://cookbook/adh/hub/buckets
 type: ingredient
-version: 1.0.2
+version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The Hub''s Buckets domain: a data-access protocol and Codable models for
-  storage buckets and their tables, and the topic provider that lists, creates, edits,
-  and deletes them.'
+summary: "The Hub's Buckets domain: a data-access protocol and Codable models for storage buckets and their tables, and the topic provider that lists, creates, edits, and deletes them."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- hub
-- buckets
-- data-source
-- forms
-- crud
+  - hub
+  - buckets
+  - data-source
+  - forms
+  - crud
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/navigation/htdv
+  - adtoolkit://cookbook/ui/navigation/htdv
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Buckets/BucketsDataSource.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Buckets/BucketsModels.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Buckets/BucketsTopic.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/BucketsTopicTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Hub/Features/Buckets/BucketsDataSource.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Buckets/BucketsModels.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Buckets/BucketsTopic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/BucketsTopicTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Hub Domain: Buckets
@@ -50,7 +47,7 @@ The Buckets domain is the Hub's storage-bucket management: buckets (rows of
   update/delete for buckets, and the parallel five for tables.
 - **The data shapes** (`BucketsModels.swift`) — `Bucket`, `BucketMetadata`,
   `BucketCreate`, `BucketUpdate`, `BucketTable`, `BucketTableCreate`, and
-  `BucketTableUpdate`, the `Codable` payloads the data source sends and
+  `BucketTableUpdate`, the serializable payloads the data source sends and
   receives.
 - **`BucketsTopic`** (`BucketsTopic.swift`) — the `EcosystemTopicProvider`
   that renders this domain into the Hub's rail/detail (HTDV) navigation:
@@ -70,11 +67,10 @@ does with them.
 
 ### BucketsDataSource.swift — server data-access contract
 
-- **data-source-contract**: `BucketsDataSource` MUST be a `Sendable`,
-  `AnyObject`-constrained protocol declaring nine `async throws` operations:
-  `list(ecosystemID:)`, `get(id:)`, `create(_:)`, `update(id:_:)`,
-  `delete(id:)`, `tables(ecosystemID:)`, `createTable(_:)`,
-  `updateTable(id:_:)`, and `deleteTable(id:)`.
+- **data-source-contract**: the buckets data source MUST be an asynchronous, fallible interface
+  declaring nine operations: `list(ecosystemID:)`, `get(id:)`, `create(_:)`, `update(id:_:)`,
+  `delete(id:)`, `tables(ecosystemID:)`, `createTable(_:)`, `updateTable(id:_:)`, and
+  `deleteTable(id:)`.
 - **list-is-ecosystem-scoped**: `list(ecosystemID:)` MUST return only the
   buckets belonging to the given ecosystem, per the source's own comment
   "Lists are ecosystem-scoped."
@@ -83,57 +79,43 @@ does with them.
   single call; per the source's own comment, the topic itself is
   responsible for grouping the result "by `bucketId`" rather than the data
   source filtering per bucket.
-- **data-source-is-class-bound**: `BucketsDataSource` MUST be constrained
-  to `AnyObject`, so an implementation is a class or actor, never a value
-  type; per the source's own comment on the concrete equivalent in the
-  HTDV Engine recipe's `HTDVDataSource`, such implementations are typically
-  actors or `@unchecked Sendable` classes wrapping a network client — none
-  of which is among this recipe's three given sources.
+- **data-source-is-reference-semantics**: an implementation of the buckets data source MUST have
+  reference semantics (a shared, stateful client), never be a copied value; per the source's own
+  comment on the concrete equivalent in the HTDV Engine recipe's data source, such implementations
+  typically wrap a network client — none of which is among this recipe's three given sources.
 
 ### BucketsModels.swift — data shapes
 
-- **bucket-metadata-shape**: `BucketMetadata` MUST be a `Codable`,
-  `Hashable`, `Sendable` struct exposing a single optional `description:
-  String?`, defaulting to `nil`.
-- **bucket-shape**: `Bucket` MUST be a `Codable`, `Hashable`, `Sendable`,
-  `Identifiable` struct exposing `id: String`, `ecosystemId: String`,
-  `name: String`, `kind: String`, `metadata: BucketMetadata?`,
-  `createdAt: String?`, and `updatedAt: String?`.
-- **bucket-decoding-tolerates-missing-kind-and-optionals**: `Bucket.init(from:)`
-  MUST decode `kind` via `decodeIfPresent` defaulting to the literal
-  `"custom"` when the key is absent, and MUST decode `metadata`,
-  `createdAt`, and `updatedAt` via `decodeIfPresent` defaulting each to
-  `nil`, so a payload that omits any of these four keys decodes
-  successfully rather than throwing.
-- **bucket-description-derivation**: `Bucket.description` MUST return
-  `metadata?.description ?? ""`, collapsing both an absent `metadata` and a
-  present `metadata` with a `nil` `description` into the empty string.
+- **bucket-metadata-shape**: the bucket metadata record MUST be a serializable, comparable,
+  thread-safe value exposing a single optional `description` string, defaulting to absent.
+- **bucket-shape**: a bucket MUST be a serializable, comparable, identifiable value exposing
+  `id`, `ecosystemId`, `name`, and `kind` strings, an optional `metadata` record, and optional
+  `createdAt` and `updatedAt` strings.
+- **bucket-decoding-tolerates-missing-kind-and-optionals**: decoding a bucket MUST default `kind`
+  to the literal `"custom"` when the key is absent, and MUST default `metadata`, `createdAt`, and
+  `updatedAt` each to absent, so a payload that omits any of these four keys decodes successfully
+  rather than failing.
+- **bucket-description-derivation**: a bucket's derived `description` MUST be its metadata's
+  description, or the empty string when either the metadata or its description is absent.
 - **bucket-is-built-in-derivation**: `Bucket.isBuiltIn` MUST be `true` if
   and only if `kind != "custom"`; any `kind` value other than the literal
   `"custom"` — not only a specific enumerated set — is treated as built-in.
-- **bucket-create-requires-metadata**: `BucketCreate` MUST be a `Codable`,
-  `Hashable`, `Sendable` struct exposing `ecosystemId: String`,
-  `name: String`, and a non-optional `metadata: BucketMetadata` — unlike
-  `Bucket.metadata`, a create payload always carries a metadata value
-  (possibly one whose own `description` is `nil`).
-- **bucket-update-is-a-partial-patch**: `BucketUpdate` MUST be a
-  `Codable`, `Hashable`, `Sendable` struct exposing `name: String?` and
-  `metadata: BucketMetadata?`, both defaulting to `nil`, so an update
-  payload can carry either field independently of the other.
-- **bucket-table-shape**: `BucketTable` MUST be a `Codable`, `Hashable`,
-  `Sendable`, `Identifiable` struct exposing four non-optional fields:
-  `id: String`, `bucketId: String`, `sqlTableName: String`, and
-  `name: String`, with no custom decoding — every field MUST be present in
-  the payload.
-- **bucket-table-create-shape**: `BucketTableCreate` MUST be a `Codable`,
-  `Hashable`, `Sendable` struct exposing `ecosystemId: String`,
-  `bucketId: String`, `sqlTableName: String`, and `name: String`, all
-  non-optional.
-- **bucket-table-update-has-no-sql-name-field**: `BucketTableUpdate` MUST
-  be a `Codable`, `Hashable`, `Sendable` struct exposing only
-  `name: String?`, defaulting to `nil`; it exposes no field for
-  `sqlTableName`, so a table's SQL identifier cannot be changed through
-  this payload once the table exists.
+- **bucket-create-requires-metadata**: the bucket create payload MUST be a serializable,
+  comparable value exposing `ecosystemId`, `name`, and a non-optional `metadata` record — unlike
+  a stored bucket's metadata, a create payload always carries a metadata value (possibly one
+  whose own `description` is absent).
+- **bucket-update-is-a-partial-patch**: the bucket update payload MUST be a serializable,
+  comparable value exposing an optional `name` and an optional `metadata`, both defaulting to
+  absent, so an update can carry either field independently of the other.
+- **bucket-table-shape**: a bucket table MUST be a serializable, comparable, identifiable value
+  exposing four non-optional string fields: `id`, `bucketId`, `sqlTableName`, and `name`, with no
+  custom decoding — every field MUST be present in the payload.
+- **bucket-table-create-shape**: the table create payload MUST be a serializable, comparable
+  value exposing `ecosystemId`, `bucketId`, `sqlTableName`, and `name`, all non-optional strings.
+- **bucket-table-update-has-no-sql-name-field**: the table update payload MUST be a serializable,
+  comparable value exposing only an optional `name`, defaulting to absent; it exposes no field for
+  `sqlTableName`, so a table's SQL identifier cannot be changed through this payload once the
+  table exists.
 
 ### BucketsTopic.swift — navigation, listing, and forms
 
@@ -141,18 +123,16 @@ does with them.
   `EcosystemTopicEntry` with `id: "buckets"`, `label: "Buckets"`,
   `systemImage: "tablecells"`, and `description: "Storage buckets and the
   tables they contain."`.
-- **topic-actor-confinement**: `BucketsTopic` MUST be declared `@MainActor`
-  and `final`, conforming to `EcosystemTopicProvider`, and holds a single
-  stored `dataSource` supplied through its public `init`.
-- **table-name-derivation-is-nonisolated-and-pure**: `BucketsTopic.tableName(from:)`
-  MUST be a `nonisolated static` function so it is callable off the main
-  actor — per the source's own comment, because `createTableSpec`'s save
-  action calls it from inside a `FormAction.perform` closure that runs off
-  the main actor. It MUST lowercase the input, keep every scalar in the
-  ASCII ranges "a" through "z" and "0" through "9" unchanged, and collapse
-  any run of one or more other scalars — including whitespace, punctuation,
-  and any non-ASCII scalar such as a CJK character — into a single `"_"`
-  separator, with no leading or trailing underscore in the result.
+- **topic-single-threaded-state**: the buckets topic MUST be a non-subclassable provider of the
+  ecosystem topic contract, bound to the UI's serial execution context, and holds a single stored
+  data source supplied at construction.
+- **table-name-derivation-is-pure**: the table-name derivation `tableName(from:)` MUST be a pure
+  function callable from any execution context — per the source's own comment, because the
+  create-table save action calls it from inside a form action that runs off the UI context. It
+  MUST lowercase the input, keep every scalar in the ASCII ranges "a" through "z" and "0" through
+  "9" unchanged, and collapse any run of one or more other scalars — including whitespace,
+  punctuation, and any non-ASCII scalar such as a CJK character — into a single `"_"` separator,
+  with no leading or trailing underscore in the result.
 - **table-name-of-unusable-input-is-empty-string**: `tableName(from:)` MUST
   return the empty string both when the input is empty and when the input
   is non-empty but contains no ASCII letter or digit (for example, an
@@ -315,11 +295,11 @@ recipe's given sources; see the related HTDV Engine recipe).
 | ID | Requirements | Input | Expected |
 |----|-------------|-------|----------|
 | hub-domain-buckets-001 | bucket-decoding-tolerates-missing-kind-and-optionals | Decode a JSON bucket payload whose `metadata` is `null` and whose `kind` key is absent (`testDecodesBucketWithMissingKindAndMetadata`). | `bucket.kind == "custom"`, `bucket.isBuiltIn == false`, `bucket.description == ""`. |
-| hub-domain-buckets-002 | table-name-derivation-is-nonisolated-and-pure | `BucketsTopic.tableName(from: "Contact Notes")` (`testTableNameAndCount`). | Returns `"contact_notes"`. |
-| hub-domain-buckets-003 | table-name-derivation-is-nonisolated-and-pure | `BucketsTopic.tableName(from: "  Órders-2 ")` (`testTableNameAndCount`). | Returns `"rders_2"` — the accented "Ó" and the hyphen are both treated as separators, and the accent is dropped rather than transliterated. |
+| hub-domain-buckets-002 | table-name-derivation-is-pure | `BucketsTopic.tableName(from: "Contact Notes")` (`testTableNameAndCount`). | Returns `"contact_notes"`. |
+| hub-domain-buckets-003 | table-name-derivation-is-pure | `BucketsTopic.tableName(from: "  Órders-2 ")` (`testTableNameAndCount`). | Returns `"rders_2"` — the accented "Ó" and the hyphen are both treated as separators, and the accent is dropped rather than transliterated. |
 | hub-domain-buckets-004 | table-name-of-unusable-input-is-empty-string | `BucketsTopic.tableName(from: "")` (`testTableNameAndCount`). | Returns `""`. |
 | hub-domain-buckets-005 | table-name-of-unusable-input-is-empty-string | `BucketsTopic.tableName(from:)` on a two-character all-CJK string (`testTableNameAndCount`). | Returns `""`. |
-| hub-domain-buckets-006 | table-name-derivation-is-nonisolated-and-pure | `BucketsTopic.tableName(from: "  Contact   Notes!  ")` (`testTableNameAndCount`). | Returns `"contact_notes"` — the run of spaces, and the trailing `"!  "`, each collapse without producing a leading or trailing underscore. |
+| hub-domain-buckets-006 | table-name-derivation-is-pure | `BucketsTopic.tableName(from: "  Contact   Notes!  ")` (`testTableNameAndCount`). | Returns `"contact_notes"` — the run of spaces, and the trailing `"!  "`, each collapse without producing a leading or trailing underscore. |
 | hub-domain-buckets-007 | table-count-pluralization | `BucketsTopic.tableCount(0)`, `tableCount(1)`, `tableCount(3)` (`testTableNameAndCount`). | Returns `"0 tables"`, `"1 table"`, `"3 tables"` respectively. |
 | hub-domain-buckets-008 | buckets-list-level-shape | `child([])` against two buckets in the target ecosystem (one with two tables, one with zero) plus a third bucket in a different ecosystem (`testListShowsBucketsWithTableCounts`). | Returns a `.level` with `id == "buckets-list"`, items labeled `["Profile Basics", "Orders"]`, sublabels `["2 tables", "0 tables"]`, and `createAction?.title == "New bucket"`; the other-ecosystem bucket does not appear. |
 | hub-domain-buckets-009 | create-bucket-precheck-rejects-case-insensitive-duplicate | `createSpec(for:)`'s save action with `name` set to `"profile basics"` where a bucket named `"Profile Basics"` already exists (`testCreateFormValidatesAndCreates`). | `save()` returns `false`; `saveError == "A bucket named \"profile basics\" already exists."`; `dataSource.create` is never called. |
@@ -363,10 +343,9 @@ recipe's given sources; see the related HTDV Engine recipe).
   than silently producing an empty `sqlTableName` (MUST, see
   `table-name-of-unusable-input-is-empty-string`,
   `create-table-rejects-a-name-with-no-usable-characters`).
-- **Concurrent access**: `BucketsTopic` is `@MainActor`-confined with no
-  `Sendable` conformance of its own, so its own state (the single stored
-  `dataSource` reference) is not mutated concurrently from another
-  isolation domain. The data it depends on can still race across separate
+- **Concurrent access**: the buckets topic is confined to the UI's serial
+  execution context, so its own state (the single stored data source
+  reference) is not mutated concurrently from another context. The data it depends on can still race across separate
   requests to the server: two overlapping "create bucket" (or "create
   table") calls can both pass this file's client-side duplicate precheck
   before either has landed, because the precheck lists existing state,
@@ -378,8 +357,8 @@ recipe's given sources; see the related HTDV Engine recipe).
   save action runs no precheck at all and depends on this same
   conflict-to-validation mapping alone (MUST, see
   `settings-form-conflict-fallback-without-a-precheck`).
-- **Error states**: Every operation in `BucketsDataSource` is `async
-  throws`; `BucketsTopic` converts every error it does not specifically
+- **Error states**: Every operation in the buckets data source is
+  asynchronous and fallible; `BucketsTopic` converts every error it does not specifically
   remap (`HubError.notFound` on `get(id:)`, `HubError.conflict` on the
   three create/update save actions) into a `HubError` via `HubError.wrap`
   and re-throws it, so no failure is dropped silently (MUST, see
@@ -398,9 +377,18 @@ recipe's given sources; see the related HTDV Engine recipe).
   states above (fact, not a gap — the failure is reported, not lost, just
   with no time bound or automatic retry defined at this layer).
 
-- **table-name-length-bound**: NEEDS REVIEW: Not implemented in source. `tableName(from:)` strips a table name down to its ASCII letters, digits, and single-underscore separators with no maximum length enforced anywhere in either `tableName(from:)` or `createTableSpec`'s save action, even though deriving a valid SQL identifier is the explicit purpose of this function; most SQL engines cap identifier length (for example, 63 bytes on PostgreSQL), so a sufficiently long table name could produce a `sqlTableName` some downstream schema-creation step truncates or rejects unpredictably, and nothing in these three sources says which system is responsible for that bound — resolvable by inspecting whichever `BucketsDataSource` implementation and server-side schema-creation code consume `sqlTableName` (not among the given sources), or by a decision from the Hub team on where the length limit belongs.
+- **table-name-length-unbounded**: deriving a SQL table name from the entered table name MUST strip
+  it to ASCII letters, digits, and single-underscore separators and MUST NOT enforce a maximum
+  length, neither in the derivation nor in the create-table save action; a sufficiently long name
+  therefore yields a SQL table name that a downstream schema-creation step may truncate or reject.
 
-- **bucket-ecosystem-scoping**: NEEDS REVIEW: Not implemented in source. `child(for:path:rail:)` fetches a bucket by `dataSource.get(id: bucketID)` using only the raw bucket id taken from the rail path, and never compares the returned `bucket.ecosystemId` against the `ecosystem` parameter `child` was itself given before proceeding to `get`/`update(id:_:)`/`delete(id:)`/`createTable`/`updateTable(id:_:)`/`deleteTable(id:)`; `list(ecosystemID:)` is documented as ecosystem-scoped in its own doc comment, but none of the id-only operations carries or checks an ecosystem, so nothing in these three sources stops a rail path holding a bucket or table id from a different ecosystem from resolving and mutating it — resolvable by inspecting whether the deployed `BucketsDataSource` implementation enforces this scoping server-side (not among the given sources), or by a decision from the Hub team on whether client-side scoping is also required.
+- **bucket-lookup-not-ecosystem-scoped**: resolving a rail path to a bucket MUST fetch the bucket
+  by its raw id alone and MUST NOT compare the returned bucket's ecosystem against the ecosystem the
+  topic was given before showing, updating, or deleting the bucket or creating tables under it;
+  only the listing operations are ecosystem-scoped, so a rail path holding a bucket id from a
+  different ecosystem still resolves and the bucket can be edited or deleted. Table rows shown in
+  the rail are taken from the ecosystem's own table list, so a table id from another ecosystem does
+  not resolve to a detail.
 
 ## Configuration
 
@@ -551,6 +539,16 @@ happens outside these sources.
   and compare names with `string.Equals(a, b, StringComparison.OrdinalIgnoreCase)`
   in place of `caseInsensitiveCompare`, keeping the same
   precheck-then-server-conflict double guard for both buckets and tables.
+- **Swift types (reference implementation)**: `BucketsDataSource` is a `Sendable`,
+  `AnyObject`-constrained protocol with nine `async throws` operations (an implementation is a class
+  or actor, typically an actor or `@unchecked Sendable` class wrapping a network client).
+  `BucketMetadata`, `Bucket`, `BucketCreate`, `BucketUpdate`, `BucketTable`, `BucketTableCreate`, and
+  `BucketTableUpdate` are `Codable`, `Hashable`, `Sendable` structs (`Bucket` and `BucketTable` also
+  `Identifiable`); `Bucket.init(from:)` uses `decodeIfPresent` for the four tolerated keys and
+  `Bucket.description` is `metadata?.description ?? ""`. `BucketsTopic` is `@MainActor` and `final`,
+  conforming to `EcosystemTopicProvider`, so its single stored `dataSource` is never mutated from
+  another isolation domain; `tableName(from:)` is `nonisolated static` so the create-table
+  `FormAction.perform` closure can call it off the main actor.
 
 ## Reference Implementations
 
@@ -615,6 +613,18 @@ the same derived SQL name or both derive the empty string, depending on
 how many ASCII characters survive.
 **Approved**: pending
 
+**Decision**: the table-name derivation enforces no maximum length on the generated SQL table name, although most SQL engines cap identifier length (63 bytes on PostgreSQL).
+
+**Rationale**: nothing in the component says which system owns that bound; closing the gap takes either a length limit in the derivation and the create-table save action or a decision by the Hub team that the data source or server-side schema creation owns it.
+
+**Approved**: pending
+
+**Decision**: bucket lookups by id are not scoped to the current ecosystem on the client; only the list and table-list operations take an ecosystem (tables shown in the rail come from the ecosystem's own table list).
+
+**Rationale**: the id-only bucket operations carry no ecosystem and nothing compares the fetched bucket's ecosystem to the topic's; closing the gap takes a client-side ecosystem comparison after the fetch, or confirmation that the deployed data source enforces scoping server-side.
+
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -664,13 +674,14 @@ because `tableName(from:)` reduces arbitrary user input to a
 character set restricted to ASCII letters, digits, and single-underscore
 separators before it is ever posted as `sqlTableName`, and every save
 action trims and length-checks (for emptiness) the raw name before use —
-though see the open question on the derived name's maximum length under
+though see the `table-name-length-unbounded` requirement under
 Edge Cases.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Resolve open-question markers against the code; restate unimplemented behavior as current behavior with pending Decisions; make normative text platform-neutral (Swift specifics moved to Platform Notes). |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

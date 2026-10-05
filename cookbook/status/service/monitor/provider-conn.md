@@ -1,46 +1,44 @@
 ---
 id: 4aad9d0a-4984-4021-ad1f-d8aa6a15b066
-title: Status Server Monitor Provider Connection
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/provider-conn
+title: "Status Server Monitor Provider Connection"
+domain: adtoolkit://cookbook/status/service/monitor/provider-conn
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Assembles a ProviderConn from active storage integrations and StatusConfig
-  secrets, then enumerates deploy projects from it — the storage/config-port replacement
-  for deploy-platform's DB-based helpers.
+summary: "Assembles a ProviderConn from active storage integrations and StatusConfig secrets, then enumerates deploy projects from it — the storage/config-port replacement for deploy-platform's DB-based helpers."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- deploy
-- secrets
-- server
+  - monitor
+  - deploy
+  - secrets
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
-- agenticdevelopercookbook://guidelines/implementing/security/secure-storage
+  - agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
+  - agenticdevelopercookbook://guidelines/implementing/security/secure-storage
 related:
-- agenticdevelopertoolkit://cookbook/status/service/config
-- agenticdevelopertoolkit://cookbook/status/service/monitor/enrich-deploy-errors
-- agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-vercel-projects
+  - adtoolkit://cookbook/status/service/config
+  - adtoolkit://cookbook/status/service/monitor/enrich-deploy-errors
+  - adtoolkit://cookbook/status/service/monitor/fetch-vercel-projects
 references:
-- packages/web/packages/status-server/src/monitor/provider-conn.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/conn/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/enumerate/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/refresh-project-meta.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/deploy-logs.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/provider-conn.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/conn/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/enumerate/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/refresh-project-meta.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/deploy-logs.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Provider Connection
@@ -67,7 +65,7 @@ approved-date: ''
 - **enumerate-inputs-from-storage**: `enumerateDeployProjects` MUST build a `DeployEnumerationInputs` value whose `conn` field is the result of `providerConn(storage, config)` and whose `projectMeta` field is the result of `storage.deploy.listProjectMeta()`, and MUST pass that value to `enumerateDeployProjectsFrom` unmodified.
 - **enumerate-sequential-not-concurrent**: `enumerateDeployProjects` MUST resolve `conn` (awaiting `providerConn`) before evaluating `storage.deploy.listProjectMeta()` — the two calls are sequential object-literal property evaluations, not a `Promise.all` — in contrast to `enumerateDeployProjectsVerified(db)` (`@agentic-toolkit/deploy-platform/enumerate`, external), whose analogous pair (`providerConnFromConfig(db)` and the project-meta table read) resolves concurrently via `Promise.all`.
 - **enumerate-delegation-only**: `enumerateDeployProjects` MUST return exactly the `DeployEnumeration` value `enumerateDeployProjectsFrom` resolves to, performing no further filtering, transformation, sorting, or caching of that result itself.
-- **enumerate-no-own-network-calls**: Neither `providerConn` nor `enumerateDeployProjects` MUST issue an HTTP request, open a socket, or otherwise contact a deploy provider directly; every provider-facing network call (Vercel domain lookups, Railway project/domain queries, Cloudflare account and worker-script calls) happens inside `enumerateDeployProjectsFrom`, or, for a caller that uses `providerConn` alone, inside whichever function receives the returned `ProviderConn`.
+- **enumerate-no-own-network-calls**: `providerConn` and `enumerateDeployProjects` MUST NOT issue an HTTP request, open a socket, or otherwise contact a deploy provider directly; every provider-facing network call (Vercel domain lookups, Railway project/domain queries, Cloudflare account and worker-script calls) happens inside `enumerateDeployProjectsFrom`, or, for a caller that uses `providerConn` alone, inside whichever function receives the returned `ProviderConn`.
 
 ### Data Shape Contracts
 
@@ -193,5 +191,6 @@ Neither `providerConn` nor `enumerateDeployProjects` calls `console.*` or any ot
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Restored inverted prohibitions: a 'Neither … MUST' rule now reads 'MUST NOT'. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Retitled; moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |

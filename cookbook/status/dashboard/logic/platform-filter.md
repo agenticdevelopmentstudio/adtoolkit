@@ -1,28 +1,27 @@
 ---
 id: 74380f06-a663-44c7-981d-191301a66b8e
-title: Platform Filter Options
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/platform-filter
+title: "Platform Filter Options"
+domain: adtoolkit://cookbook/status/dashboard/logic/platform-filter
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Pure taxonomy for the Sites config Platform filter: always lists known platforms,
-  then unknown ones present, then a no-platform row'
+summary: "Pure taxonomy for the Sites config Platform filter: always lists known platforms, then unknown ones present, then a no-platform row"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/filter
+  - adtoolkit://cookbook/status/dashboard/logic/filter
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Platform Filter Options

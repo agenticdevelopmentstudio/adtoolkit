@@ -1,68 +1,56 @@
 ---
 id: 33086772-2d36-49f5-8e1d-725163d7ce8f
-title: Project Workspace
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-workspace
+title: "Project Workspace"
+domain: adtoolkit://cookbook/workspace/projects/project-workspace
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The project a window opens: a repository, its persisted tabs, pane state, settings,
-  directories, plus weakly-cached per-directory browser and git-status objects.'
+summary: "The project a window opens: a repository, its persisted tabs, pane state, settings, directories, plus weakly-cached per-directory browser and git-status objects."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- workspace
-- tabs
-- pane-state
-- caching
+  - git
+  - projects
+  - workspace
+  - tabs
+  - pane-state
+  - caching
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-database
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-database-layout
-- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-checkout
-- agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-controller
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
-- agenticdevelopertoolkit://cookbook/foundation/git/git-client
+  - adtoolkit://cookbook/workspace/projects/project-database
+  - adtoolkit://cookbook/workspace/projects/project-database-layout
+  - adtoolkit://cookbook/workspace/projects/git-repo
+  - adtoolkit://cookbook/workspace/projects/project-checkout
+  - adtoolkit://cookbook/workspace/projects/branch-controller
+  - adtoolkit://cookbook/workspace/projects/project-controller
+  - adtoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+  - adtoolkit://cookbook/foundation/git/git-client
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWorkspace.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectWorkspaceTabsTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase+Layout.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTabReconciler.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsLayout.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabLayoutSpec.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/LayoutNode.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileBrowserDirectories.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Git/GitStatusProvider.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Editor/ProjectLanguageServices.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWorkspace.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWorkspace.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectWorkspaceTabsTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase+Layout.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTabReconciler.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsLayout.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabLayoutSpec.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/LayoutNode.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileBrowserDirectories.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Git/GitStatusProvider.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Editor/ProjectLanguageServices.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWorkspace.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Workspace
@@ -87,10 +75,7 @@ every property and method is confined there by that declaration alone.
 
 ## Behavioral Requirements
 
-- **main-thread-confinement**: The workspace MUST be confined to the
-  UI's main execution context, with no thread-safety guarantee of its
-  own, so every stored property and method is confined there by that
-  declaration alone.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **repo-identity**: `id` MUST be computed as the repository's own id,
   `displayName` MUST be computed as the repository's own name, and
   `directoryURL` MUST be computed as the repository's own directory, on
@@ -220,19 +205,7 @@ every property and method is confined there by that declaration alone.
 - **layout-defaults-through-fallback-chain**: Construction MUST resolve
   an absent layout argument as the app-installed layout when one exists,
   or a placeholder-only layout otherwise.
-- **stored-tabs-load-failure-signal**: NEEDS REVIEW: Not implemented in
-  source. Reading stored tabs discards whatever error loading tabs from
-  the database throws, with no log call and no other signal, unlike
-  every other failing database access in this file — reading/writing a
-  setting, reading the project's extra directories, persisting project
-  directories, persisting tabs, and the three pane-state operations all
-  log on their failure path. A database error while loading a project's
-  tabs is therefore indistinguishable from a project that has simply
-  never saved any, with zero diagnostic trail either way. Resolving this
-  needs a decision from whoever owns this file: whether reading stored
-  tabs should log like its siblings do, and whether computing the
-  initial tabs' caller needs a way to tell "nothing stored" apart from
-  "the load failed" at all.
+- **stored-tabs-load-failure-signal**: reading stored tabs discards whatever error loading tabs from the database throws, with no log call and no other signal, unlike every other failing database access in this file (settings, extra directories, persisting directories or tabs, and the three pane-state operations all log on failure); a database error while loading tabs is therefore indistinguishable from a project that has never saved any (see Design Decisions).
 
 ## Appearance
 
@@ -275,7 +248,8 @@ renders itself.
 | git-client-projects-project-workspace-015 | cache-directory-derivation | Build a workspace whose database file lives at a given path; read its cache directory without calling anything else, then check the filesystem. | the cache directory's path is a `caches/<repository id>` subdirectory of the database file's own directory; no directory exists on disk at that path yet, because reading the property performs no filesystem write |
 | git-client-projects-project-workspace-016 | extension-workspace-roots-conformance | View the workspace through the extension-workspace-roots interface and read its display name and workspace root directories after adding one extra directory to the project's own file browser. | the display name equals the workspace's own display name; the workspace root directories equal the project's own file-browser directories, with the project's own directory first |
 | git-client-projects-project-workspace-017 | git-client-defaults-to-shared-injectable, layout-defaults-through-fallback-chain | Construct a workspace with every optional parameter omitted. | its git client is the shared git client; its layout is the app-installed layout when one has been installed process-wide, or otherwise a placeholder-only layout of the same shape |
-| git-client-projects-project-workspace-018 | stored-tabs-load-failure-signal | Not present in the given test suite; demonstrates the open question on stored-tabs-load-failure-signal. Force loading tabs from the database to throw (for example a corrupted database file or a repository id the schema rejects), capture the log for the duration, then read stored tabs. | reading stored tabs returns nothing, exactly as it would for a project that had never saved a tab — and the captured log contains no line attributable to this call, unlike vector -012's pane-state failure, which does log |
+| git-client-projects-project-workspace-018 | stored-tabs-load-failure-signal | Not present in the given test suite; demonstrates the pending decision on stored-tabs-load-failure-signal. Force loading tabs from the database to throw (for example a corrupted database file or a repository id the schema rejects), capture the log for the duration, then read stored tabs. | reading stored tabs returns nothing, exactly as it would for a project that had never saved a tab — and the captured log contains no line attributable to this call, unlike vector -012's pane-state failure, which does log |
+| git-client-projects-project-workspace-019 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -298,7 +272,7 @@ renders itself.
   already filters the empty case out, so the first-tab fallback in
   **active-tab-fallback** never indexes an empty list.
 - **Concurrent access**: Every property and method here is confined to
-  the main execution context (**main-thread-confinement**), so no two
+  the main execution context (**confines-to-ui-thread**), so no two
   calls on one workspace instance can interleave their mutations of the
   repository, the pane-number counter, or either weak cache. Two
   separate workspace instances built over the same repository id (a
@@ -307,7 +281,7 @@ renders itself.
   project directories from one instance are not serialized against
   calls from another — but ordering that race, when it matters, is the
   project controller's job (see
-  `agenticdevelopertoolkit://cookbook/workspace/projects/project-controller`),
+  `adtoolkit://cookbook/workspace/projects/project-controller`),
   not this file's; the workspace itself makes no ordering claim across
   instances.
 - **Error states**: Every database-backed operation except reading
@@ -325,7 +299,7 @@ renders itself.
   git-status-provider lookup hands out an object built on the project's
   git client, but the git subprocess calls that object goes on to make
   are that object's own concern, not this file's (see
-  `agenticdevelopertoolkit://cookbook/foundation/git/git-client`).
+  `adtoolkit://cookbook/foundation/git/git-client`).
 - **Cancellation and timeouts**: No operation on the workspace is
   asynchronous; every operation here is a synchronous database call, a
   synchronous cache lookup, or a pure computation, so there is no
@@ -400,8 +374,8 @@ Not applicable: this file makes no analytics or event-tracking call.
 - **Storage**: Everything persisted here (tabs, pane state, project
   settings, extra directories) is written to the one database this
   project was constructed with, scoped by the repository's id; see
-  `agenticdevelopertoolkit://cookbook/workspace/projects/project-database` and
-  `agenticdevelopertoolkit://cookbook/workspace/projects/project-database-layout`
+  `adtoolkit://cookbook/workspace/projects/project-database` and
+  `adtoolkit://cookbook/workspace/projects/project-database-layout`
   for that store's own durability guarantees. The cache directory names,
   but does not itself populate, a filesystem location beside the
   database.
@@ -432,8 +406,7 @@ component's name.
 | Writing the project's extra directories fails | error | `Failed to save project directories: <error description>` |
 
 Loading tabs from the database throwing inside reading stored tabs
-produces no log line at all — see the open question on
-stored-tabs-load-failure-signal.
+produces no log line at all — see the pending decision on stored-tabs-load-failure-signal.
 
 ## Platform Notes
 
@@ -458,12 +431,12 @@ stored-tabs-load-failure-signal.
   (`storedTabs`, `paneState`, `setting`, `projectDirectories`) through a
   coroutine-based `ProjectDatabase` port that mirrors this file's
   swallow-and-log convention on every path except the one this recipe flags
-  as an open question.
+  as a pending decision.
 - **React/Web**: There is no local filesystem worktree or SQLite file to
   scope this object to on the web; a browser-hosted project workspace would
   keep `repo`/tabs/pane-state/settings as component state populated from and
   persisted through a server-side API standing in for `ProjectDatabase` (see
-  `agenticdevelopertoolkit://cookbook/workspace/projects/project-database`), and would
+  `adtoolkit://cookbook/workspace/projects/project-database`), and would
   reproduce the two weak, directory-keyed caches with a JavaScript `WeakMap`
   (optionally paired with `FinalizationRegistry` to detect eviction) keyed by
   a normalized directory identifier, since JavaScript has no
@@ -474,13 +447,13 @@ stored-tabs-load-failure-signal.
   and directory-cache logic unchanged; it would still need its own
   `FileBrowserDirectories`/`GitStatusProvider`-equivalent collaborators, and,
   per the multi-checkout note in
-  `agenticdevelopertoolkit://cookbook/workspace/projects/project-controller`, iOS
+  `adtoolkit://cookbook/workspace/projects/project-controller`, iOS
   sandboxing makes exposing more than one linked worktree under one project
   an unusual arrangement to design a browser for.
 - **WinUI 3**: Port `ProjectWorkspace` as a plain C# class with no interface
   requiring thread-affinity of its own, touched only from the UI thread
   (`DispatcherQueue`) by convention — the same discipline
-  `agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller`'s WinUI
+  `adtoolkit://cookbook/workspace/projects/branch-controller`'s WinUI
   port assumes for `@MainActor`. Reproduce the two `WeakCache`s with a
   `Dictionary<string, WeakReference<T>>` (or `ConditionalWeakTable`) keyed by
   a normalized, reparse-point-resolved path (`Path.GetFullPath`/
@@ -493,10 +466,11 @@ stored-tabs-load-failure-signal.
   `JSONEncoder`/`JSONDecoder`. Route every persisted accessor
   (`storedTabs`/`saveTabs`, `paneState`/`setPaneState`, `setting`/
   `setSetting`, `loadProjectDirectories`/`saveProjectDirectories`) through
-  the same SQLite-backed port `agenticdevelopertoolkit://cookbook/workspace/projects/project-database`
-  and `agenticdevelopertoolkit://cookbook/workspace/projects/project-database-layout`
+  the same SQLite-backed port `adtoolkit://cookbook/workspace/projects/project-database`
+  and `adtoolkit://cookbook/workspace/projects/project-database-layout`
   describe, keeping this file's swallow-and-log convention on every path
-  except the one flagged as an open question above.
+  except the one flagged as a pending decision above.
+- **confines-to-ui-thread** (scope): The workspace has no thread-safety guarantee of its own; every stored property and method is confined to the UI thread by that declaration alone.
 
 ## Reference Implementations
 
@@ -582,6 +556,10 @@ back to the default' are the same state and neither accumulates"
 (`ProjectWorkspace.swift`).
 **Approved**: pending
 
+**Decision**: Reading stored tabs discards a thrown database error via `try?`, with no log line, so a failed load and a project that never saved any tabs look the same to the caller (`stored-tabs-load-failure-signal`).
+**Rationale**: The source's stored-tabs read collapses a thrown load and an empty result into the same absent value, then falls back to a default tab; every sibling database call logs its failure. Closing it needs a decision on whether the read should log like its siblings and whether the initial-tabs caller needs to tell "nothing stored" from "load failed".
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -610,7 +588,7 @@ guard, for `allocatePaneNumber()`, or for any pane-state/setting failure path
 describe what such tests would assert). explicit-error-handling is partial
 because every failing database call except `storedTabs()` is caught and
 logged; `storedTabs()`'s bare `try?` lets its error vanish with no log line
-at all (the open question on stored-tabs-load-failure-signal).
+at all (the pending decision on stored-tabs-load-failure-signal).
 graceful-degradation passes because every failure path here degrades to a
 safe, documented default — `nil`, `[]`, or the previous cache value — rather
 than crashing or propagating. state-recovery is partial for the same reason
@@ -626,6 +604,8 @@ state is never detected or reported as such, only masked as "unset."
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Spec-local UI-thread confinement ids folded into the shared confines-to-ui-thread requirement, with a test vector; scope detail is in Platform Notes. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the stored-tabs NEEDS REVIEW marker against source: try? discards load errors with no log; restated as current behavior with a pending decision. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

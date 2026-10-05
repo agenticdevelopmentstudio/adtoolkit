@@ -1,0 +1,68 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "0e35ddf2-3e87-4a5a-9fd9-24bafc7325b6",
+    "title": "Theme Engine",
+    "domain": "adtoolkit://cookbook/ui/theme/theme-engine",
+    "type": "ingredient",
+    "version": "1.1.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "This toolkit's own layer of the theme engine: VS Code theme import, per-role syntax-style overrides that travel with a theme, and settings-backed theme storage.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "theming",
+      "color",
+      "persistence",
+      "import",
+      "logic"
+    ],
+    "depends-on": [
+      "agenticdevelopertoolkit://recipes/theme-engine",
+      "adtoolkit://cookbook/foundation/settings-storage",
+      "adtoolkit://cookbook/foundation/formats/jsonc-preprocessor",
+      "adtoolkit://cookbook/workspace/extensions/manifest/extension-resource-path"
+    ],
+    "related": [
+      "adtoolkit://cookbook/ui/settings/rows/theme-picker-view",
+      "adtoolkit://cookbook/ui/settings/rows/theme-preview-view"
+    ],
+    "references": [
+      "https://code.visualstudio.com/api/extension-guides/color-theme"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "0ea4d07aefeabd31",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

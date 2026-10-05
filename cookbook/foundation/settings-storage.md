@@ -1,31 +1,30 @@
 ---
 id: 6363b5ff-f511-4e21-9ba7-6850787dba62
-title: Settings Storage
-domain: agenticdevelopertoolkit://cookbook/foundation/settings-storage
+title: "Settings Storage"
+domain: adtoolkit://cookbook/foundation/settings-storage
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Typed key/value settings contract with in-memory, plain persistent, secure
-  persistent, embedded-database, and cloud-synced backends.
+summary: "Typed key/value settings contract with in-memory, plain persistent, secure persistent, embedded-database, and cloud-synced backends."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- persistence
-- storage
-- logic
+  - settings
+  - persistence
+  - storage
+  - logic
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Settings Storage
@@ -67,7 +66,7 @@ approved-date: ''
 - **plain-provider-native-fast-path**: The plain persistent provider MUST store and read integer, floating-point, boolean, string, binary, URL, and date values through the backing store's native object storage rather than JSON encoding.
 - **plain-provider-json-fallback**: For any value type outside that native set — arrays, dictionaries, and other structured values — the plain persistent provider MUST JSON-encode the value and store it as binary data.
 - **plain-provider-corrupted-decode-fallback**: When previously-stored data for a key fails to decode as the key's value type, get MUST return the default value rather than throwing or crashing.
-- **plain-provider-encode-failure**: NEEDS REVIEW: Not implemented in source. When JSON encoding fails for a non-natively-supported value, set returns without writing, without logging, and without publishing on the change stream, so the caller has no way to learn the write did not happen.
+- **plain-provider-encode-failure**: When JSON encoding fails for a value with no native representation, the plain persistent provider's set MUST return without writing, without logging, and without publishing on the change stream, so the caller cannot learn the write did not happen.
 
 ### Secure persistent provider
 
@@ -97,7 +96,7 @@ approved-date: ''
 - **cloudsync-provider-int-promotion**: For a plain-integer-valued key, set MUST store the value as a 64-bit integer (the backing store has no native plain-integer accessor), and get MUST bridge a stored 64-bit integer back to a plain integer.
 - **cloudsync-provider-explicit-synchronize**: set and remove MUST call the backing store's synchronize operation after mutating it, in addition to publishing on the change stream.
 - **cloudsync-provider-external-change-forwarding**: The provider MUST forward every key named in the backing store's external-change notification payload onto its own change stream, so a change made on another device is observable through the same stream as a local set.
-- **cloudsync-provider-encode-failure**: NEEDS REVIEW: Not implemented in source. When JSON encoding fails for a non-natively-supported value, set returns without writing, without logging, and without publishing on the change stream, identically to the plain persistent provider.
+- **cloudsync-provider-encode-failure**: When JSON encoding fails for a value with no native representation, the cloud-sync provider's set MUST return without writing, without logging, and without publishing on the change stream, so the caller cannot learn the write did not happen.
 
 ### Settings store / shared instance
 
@@ -116,6 +115,10 @@ approved-date: ''
 - **observedsetting-wraps-observer**: An observed-setting wrapper MUST forward its wrapped value get/set to an internally-held setting observer and expose the underlying observable setting as its projected value.
 - **colorsetting-alias**: A color setting MUST be an observable setting whose value type is a color value.
 - **secure-provider-service-override-timing**: A caller SHOULD construct at most one secure persistent provider per process with a non-default service/access-group, or construct every instance with the same override; see Design Decisions.
+
+### Threading
+
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread. This covers the settings store, every setting and observer, every storage provider (including the in-memory, plain persistent, secure persistent, embedded-database, and cloud-synced backends), and the settings-window models, appearance manager, launch-at-login manager, and command-palette types built on them; only the launch-at-login service abstraction (a thin wrapper over the operating system's registration service) and plain value types such as colors and choice descriptors are not confined.
 
 ## Appearance
 
@@ -169,6 +172,7 @@ Not applicable — this is a settings persistence layer, not a visual component.
 | settings-storage-034 | observer-deferred-callback | Construct a setting observer on a setting with a change callback, then write a new value to that setting | The callback has still not fired synchronously after the write, and fires only after the next main-thread turn — traced to the deferred-dispatch implementation |
 | settings-storage-035 | observedsetting-wraps-observer, colorsetting-alias | An observed-setting wrapper around a setting; read its wrapped and projected values; a color setting used as an observable setting over a color value | Wrapped value proxies the observer's value, projected value is the underlying observable setting; the color setting type-checks as an observable setting over a color value — traced to the wrapper and the color-setting alias |
 | settings-storage-036 | usersettings-shared-replacement-timing | Replace the shared settings store instance before constructing any observable setting | Every subsequently-constructed observable setting reads and subscribes against the new instance consistently, contrasting with the open question in Edge Cases — traced to the shared instance's declaration as a mutable, replaceable reference |
+| settings-storage-037 | confines-to-ui-thread | Use a confined part from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -178,7 +182,7 @@ Not applicable — this is a settings persistence layer, not a visual component.
 - **boundary-int64-on-64-bit**: A plain integer and a 64-bit integer share the same width on the platform this component ships to, so the cloud-synced provider's bridge from a stored 64-bit integer back to a plain integer MUST always succeed for a value this component itself ever wrote; the source defines no behavior for a stored 64-bit integer outside a plain integer's range, because nothing here can produce one.
 - **concurrent-inmemory-access**: Concurrent `get`/`set`/`remove`/`contains` calls on one in-memory provider instance MUST NOT corrupt or lose a write: reads run without exclusive access and writes run with it, so readers see a consistent snapshot against any single writer.
 - **concurrent-sqlite-access**: Concurrent calls on one embedded-database provider instance MUST be serialized, so two `set` calls for different keys never interleave their SQL statements against the same handle.
-- **concurrent-system-backed-providers**: The plain persistent, secure persistent, and cloud-synced providers add no locking of their own around the system store each wraps; concurrent access is left to whatever thread-safety the underlying system stores provide, and to these types' isolation to the platform's UI-thread actor (see Platform Notes).
+- **concurrent-system-backed-providers**: The plain persistent, secure persistent, and cloud-synced providers add no locking of their own around the system store each wraps. Because every provider is confined to the UI thread (see `confines-to-ui-thread`), their calls are never concurrent in the first place; the in-memory and embedded-database providers additionally serialize their own internal state as defense in depth.
 - **sqlite-open-failure**: If opening the database or creating the schema fails, constructing the embedded-database provider MUST throw an open error or a schema error respectively, leaving no provider instance constructed.
 - **secure-provider-write-or-delete-failure**: If the underlying secure-store write or delete fails, `set`/`remove` MUST leave the previously-stored value observably unchanged from the caller's perspective on the next `get`/`contains` — the memo is invalidated, forcing a fresh read-through — and MUST NOT publish on the change stream.
 - **usersettings-shared-reassignment**: The shared settings store instance's documentation ("client apps should create and set this") makes setting it at startup the caller's job. Replacing it after an observable setting exists leaves that observable setting subscribed to the old instance's change stream, captured once at construction, while its value accessor and the subscription's re-read target the current shared instance; there is no way to re-subscribe an existing observable setting.
@@ -264,7 +268,8 @@ The in-memory provider, in-memory secure provider, plain persistent provider, an
 - **SwiftUI**: `UserSetting` is already an `ObservableObject`, so a SwiftUI view binds directly to `currentValue` with `@ObservedObject`/`@StateObject` on an instance the view (or its model) holds. The retired `StoredSetting` property wrapper in `StoredSettingPropertyWrapper.swift` sketched a `@propertyWrapper`/`DynamicProperty` alternative, but the whole file is compiled out with `#if false` and is not the live surface.
 - **Compose**: Translate `SettingsStorageProvider` to a small Kotlin interface backed by Jetpack `DataStore<Preferences>` for plain keys and `EncryptedSharedPreferences`/Android Keystore for secure keys; `changes: AnyPublisher<String, Never>` becomes a `SharedFlow<String>`; `UserSetting` becomes a `MutableStateFlow`-backed delegate collected with `collectAsState()`, mirroring the eager, read-on-construction behavior of `UserSetting.init`.
 - **React/Web**: Translate `SettingsStorageProvider` to a small interface backed by `localStorage`/`IndexedDB` for plain keys and a platform credential store (or a server-side secret proxy) for secure keys; `changes` becomes an `EventTarget`, or an observable keyed by name; `UserSetting` becomes a hook built on `useSyncExternalStore` over the same store.
-- **AppKit / UIKit**: This is the source's own consumer story. `AppearanceManager`, `LaunchAtLoginManager`, and the `ComposableSettingsWindow` view models (`ChoiceViewModel`, `ColorViewModel`, `FontViewModel`, `RangeViewModel`) all bind to `UserSetting`/`UserSettingObserver` rather than to any storage provider directly, and `UserSettingObserver` deliberately hops to `DispatchQueue.main` — not `RunLoop.main` — so it still fires while AppKit is running a mouse-tracking loop in `.eventTracking` mode. Every settings-storage type is `@MainActor`-isolated by declaration or by conforming to the `@MainActor` `SettingsStorageProvider`/`StorableSetting` protocols, except `InMemorySettingsStorageProvider` and `UserDefaultsSettingsStorageProvider`, which carry no `@MainActor` annotation of their own and instead serialize their own internal state (a concurrent `DispatchQueue` with a barrier flag on writes, and thread-safe `UserDefaults`, respectively) so they remain safe to call from contexts that are not already on the main actor. `SqliteStorageProvider`'s `database` pointer is declared `nonisolated(unsafe)` so `deinit` — which runs outside actor isolation — can close it synchronously without an `await`. `SqliteStorageProvider` itself serializes access on a private serial `DispatchQueue`; `UserDefaultsSettingsStorageProvider`, `KeychainSecureSettingsStorageProvider`, and `iCloudSettingsStorageProvider` add no locking of their own, relying on `UserDefaults`, the Keychain, and `NSUbiquitousKeyValueStore`'s own thread-safety plus their `@MainActor` isolation. Swift's `Int` is 64 bits wide on every Apple platform this ships to, which is what makes `iCloudSettingsStorageProvider`'s bridge from a stored `Int64` back to `Int` lossless (see `boundary-int64-on-64-bit` in Edge Cases). The Configuration constructor parameters map to `SettingsStore.settingsProvider`/`.secureSettingsProvider`; `InMemorySettingsStorageProvider.initial`/`InMemorySecureSettingsStorageProvider.initial` (`[String: Any]`); `UserDefaultsSettingsStorageProvider.defaults` (`UserDefaults`, default `.standard`); `KeychainSecureSettingsStorageProvider.service`/`.accessGroup` (`String?`); `SqliteStorageProvider.path` (`String`, required); `iCloudSettingsStorageProvider.store` (`NSUbiquitousKeyValueStore`, default `.default`); and `encoder`/`decoder` (`JSONEncoder`/`JSONDecoder`) on every backend with a JSON fallback. Each persisted key in Configuration is exposed as a camelCase static accessor on `UserSettings` (e.g. `editor.show_line_numbers` → `UserSettings.editorShowLineNumbers`).
+- **AppKit / UIKit**: This is the source's own consumer story. `AppearanceManager`, `LaunchAtLoginManager`, and the `ComposableSettingsWindow` view models (`ChoiceViewModel`, `ColorViewModel`, `FontViewModel`, `RangeViewModel`) all bind to `UserSetting`/`UserSettingObserver` rather than to any storage provider directly, and `UserSettingObserver` deliberately hops to `DispatchQueue.main` — not `RunLoop.main` — so it still fires while AppKit is running a mouse-tracking loop in `.eventTracking` mode. Every settings-storage type is `@MainActor`-isolated by declaration or by conforming to the `@MainActor` `SettingsStorageProvider`/`StorableSetting` protocols, including `InMemorySettingsStorageProvider` and `UserDefaultsSettingsStorageProvider`, which carry no annotation of their own but inherit it from the protocol (their internal concurrent `DispatchQueue` with a barrier flag on writes, and `UserDefaults`' own thread-safety, are defense in depth rather than a license to call them off the main actor). The only unconfined types are `LaunchAtLoginServiceProtocol` and plain values such as `RGBAColor` and `ChoiceViewModel.Choice`. `SqliteStorageProvider`'s `database` pointer is declared `nonisolated(unsafe)` so `deinit` — which runs outside actor isolation — can close it synchronously without an `await`. `SqliteStorageProvider` itself serializes access on a private serial `DispatchQueue`; `UserDefaultsSettingsStorageProvider`, `KeychainSecureSettingsStorageProvider`, and `iCloudSettingsStorageProvider` add no locking of their own, relying on `UserDefaults`, the Keychain, and `NSUbiquitousKeyValueStore`'s own thread-safety plus their `@MainActor` isolation. Swift's `Int` is 64 bits wide on every Apple platform this ships to, which is what makes `iCloudSettingsStorageProvider`'s bridge from a stored `Int64` back to `Int` lossless (see `boundary-int64-on-64-bit` in Edge Cases). The Configuration constructor parameters map to `SettingsStore.settingsProvider`/`.secureSettingsProvider`; `InMemorySettingsStorageProvider.initial`/`InMemorySecureSettingsStorageProvider.initial` (`[String: Any]`); `UserDefaultsSettingsStorageProvider.defaults` (`UserDefaults`, default `.standard`); `KeychainSecureSettingsStorageProvider.service`/`.accessGroup` (`String?`); `SqliteStorageProvider.path` (`String`, required); `iCloudSettingsStorageProvider.store` (`NSUbiquitousKeyValueStore`, default `.default`); and `encoder`/`decoder` (`JSONEncoder`/`JSONDecoder`) on every backend with a JSON fallback. Each persisted key in Configuration is exposed as a camelCase static accessor on `UserSettings` (e.g. `editor.show_line_numbers` → `UserSettings.editorShowLineNumbers`).
+- **confines-to-ui-thread**: On Apple platforms the confined types are `@MainActor`-isolated, so the compiler enforces the rule.
 - **WinUI 3**: `StorableSetting`/`SettingsStorageProvider` map to a small C# interface with `Get<T>`/`Set<T>`/`Remove<T>`/`Contains<T>` plus a `changes` event, backed by `Windows.Storage.ApplicationData.Current.LocalSettings` (an `ApplicationDataContainer`, natives stored directly and complex types JSON-encoded via `System.Text.Json`, mirroring the native/JSON split here) for plain keys and the Windows Credential Locker (`Windows.Security.Credentials.PasswordVault`) in place of the Keychain for secure keys. `SqliteStorageProvider`'s hand-rolled `sqlite3` calls map to `Microsoft.Data.Sqlite`. `changes` becomes a plain `event Action<string>` or `IObservable<string>`. `UserSetting<T>` becomes an `ObservableObject`/`INotifyPropertyChanged` wrapper exposing a `T Value` property, and `UserSettingObserver`'s main-queue hop becomes `DispatcherQueue.TryEnqueue` from the setting's change handler, so an update still lands on the UI thread while WinUI is inside a modal input loop — the same reason the source hops to a dispatch queue rather than a run loop.
 
 ## Reference Implementations
@@ -324,6 +329,10 @@ The in-memory provider, in-memory secure provider, plain persistent provider, an
 **Rationale**: the entire file is wrapped in a disabled compile-time condition and does not build into the product; the live property-observation surface for a `UserSetting` is `UserSettingObserver`/`ObservedSetting` in `UserSetting.swift`.
 **Approved**: pending
 
+**Decision**: Both the plain persistent provider and the cloud-sync provider drop a value whose JSON encoding fails, silently: nothing is written, logged, or published.
+**Rationale**: It stands today because `set` has no failure channel and every stored type is expected to encode; closing the gap would mean a logged error or a throwing `set` across every provider, which is an interface change. See `plain-provider-encode-failure` and `cloudsync-provider-encode-failure`.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -341,6 +350,8 @@ The `SettingsStorageProvider` contract cleanly separates the key/value contract 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes; added confines-to-ui-thread and corrected the provider-concurrency claims to match the code. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved NEEDS REVIEW markers as current behavior plus a pending design decision |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to foundation/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | 2026-09-24 | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,0 +1,68 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "9a4aa2a8-c01b-4cec-b789-6c89c100d8d3",
+    "title": "Git Status Provider",
+    "domain": "adtoolkit://cookbook/workspace/files/git-status-provider",
+    "type": "ingredient",
+    "version": "1.1.0",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-09-27",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Broadcasts a repository's git status to registered observers with coalesced refreshes, plus the status-to-color mapping git-status badges use.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "git",
+      "file-browser",
+      "concurrency",
+      "color"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/workspace/files/file-browser-view",
+      "adtoolkit://cookbook/workspace/files/file-tree-view"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Git/GitFileStatus+Color.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Git/GitStatusProvider.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Git/GitFileStatus.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Git/GitClientError.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Git/GitStatus.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/GitStatusProviderRefreshTests.swift (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "ab2a78c64a541c28",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

@@ -1,32 +1,31 @@
 ---
 id: bfc2dcde-d905-4923-bff2-577c85f17d5f
-title: Composable Tabs Arrange Overlay
-domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/arrange-overlay-view
+title: "Composable Tabs Arrange Overlay"
+domain: adtoolkit://cookbook/ui/layout/composable-tabs/arrange-overlay-view
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Toolbar overlay that dims a composable-tabs pane and offers Add, Remove,
-  Move, and Done controls while the window is in arrange mode.
+summary: "Toolbar overlay that dims a composable-tabs pane and offers Add, Remove, Move, and Done controls while the window is in arrange mode."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- composable-tabs
-- arrange-mode
-- overlay
-- toolbar
+  - composable-tabs
+  - arrange-mode
+  - overlay
+  - toolbar
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+  - adtoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Composable Tabs Arrange Overlay
@@ -134,6 +133,7 @@ refreshing availability whenever the tab layout changes.
   scrim's own bounds (outside its buttons) MUST still be able to reach the
   pane's background view above it in the event-handling chain, so clicking a
   dimmed pane still selects it.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -235,6 +235,7 @@ refreshing availability whenever the tab layout changes.
 | composable-tabs-arrange-overlay-030 | done-button-has-no-key-equivalent | Inspect the Done button's key equivalent after construction | Equals none (empty) |
 | composable-tabs-arrange-overlay-031 | scrim-blocks-clicks-to-content | With the overlay installed over a pane's content, click a point over the scrim but off any button | The content underneath receives no pointer or key event for that click |
 | composable-tabs-arrange-overlay-032 | scrim-click-still-reaches-pane-selection | With the overlay installed over an unselected pane, click a point over the scrim but off any button | The pane becomes the selected pane, via the click reaching the pane's background view's selection handling through the event-handling chain |
+| composable-tabs-arrange-overlay-033 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -448,6 +449,7 @@ this file.
   Add/Remove `Button`s to `canAdd`/`canRemove` the same way
   `refreshAvailability()` re-reads them, and leave the Done `Button` with no
   `AccessKey` bound, mirroring `done-button-has-no-key-equivalent`.
+- **UI-thread confinement**: `confines-to-ui-thread` — the view is declared `@MainActor`, so use from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -500,6 +502,8 @@ changes.
 | [focus-management](agenticdevelopercookbook://compliance/accessibility#focus-management) | partial | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 Keyboard-navigable passes because the Add, Remove, Move, and Done controls
 are all standard `NSButton`/`NSPopUpButton` instances that source never
@@ -523,6 +527,8 @@ translations in Platform Notes), and the latter is not a check defined in
 the accessibility compliance catalog, though the same concern is addressed
 directly under **Accessibility Options** below.
 
+`separation-of-concerns` passes because `ComposableTabsArrangeOverlayView` only dims a pane and offers Add, Remove and related buttons that call back into the arranging controller, which performs the actions. `unit-test-coverage` is `failed`: no test file in the Apple test targets references `ComposableTabsArrangeOverlayView`.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -533,3 +539,4 @@ directly under **Accessibility Options** below.
 | 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/composable-tabs/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |

@@ -1,33 +1,32 @@
 ---
 id: c68fd42e-52e5-4129-9a13-2574d13a7a0e
-title: Theme Picker View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/theme-picker-view
+title: "Theme Picker View"
+domain: adtoolkit://cookbook/ui/settings/rows/theme-picker-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row pairing a theme picker with a live preview, kept in
-  sync through the app's theme-change notifications.
+summary: "A settings row pairing a theme picker with a live preview, kept in sync through the app's theme-change notifications."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- form-control
-- theme
+  - settings
+  - form-control
+  - theme
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/theme-preview-view
+  - adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+  - adtoolkit://cookbook/ui/settings/rows/theme-preview-view
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/font-picker-view
+  - adtoolkit://cookbook/ui/settings/rows/font-picker-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Theme Picker View
@@ -106,6 +105,7 @@ notification or the view's own theme scope changes.
   the constructed palette-observing subscription for its own lifetime, so
   the subscription (and the preview refresh it drives) lives exactly as
   long as the view does.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -153,11 +153,11 @@ notification or the view's own theme scope changes.
 - **Role/trait**: Not applicable — the component sets no accessibility
   role of its own; it is a plain container. The interactive control's own
   role is owned by the choice control, which has its own recipe
-  (`agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`).
+  (`adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`).
 - **Label requirements**: Not applicable to this component — linking the
   control's accessible name to its own label happens inside the choice
   control's own concept, out of this component's scope; see
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`.
+  `adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`.
 - **Announce state changes (e.g., loading, disabled)**: Not applicable —
   no loading state exists here. For disabling, see the open question under
   States.
@@ -183,6 +183,7 @@ notification or the view's own theme scope changes.
 | theme-picker-view-012 | decouples-preview-refresh-from-selection-commit | Select a different item in the choice control | No call from the control's selection handler shows anything in the preview directly; the preview is refreshed only by a palette-observing subscription firing |
 | theme-picker-view-013 | keeps-constituent-views-private | Attempt to access the choice control, the preview, or the observer from outside the component | Each access is rejected; no public API exposes any of the three |
 | theme-picker-view-014 | retains-the-palette-observer-for-its-lifetime | Construct the component, retain it, then post the theme-change notification | The preview still re-renders (the subscription has not been released while the view is retained) |
+| theme-picker-view-015 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -191,7 +192,7 @@ notification or the view's own theme scope changes.
   themes were empty, the theme-choice view model's choices would be empty
   and the composed choice control would construct with zero items and no
   selection (its own documented empty-choices behavior, per
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`) —
+  `adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`) —
   this component adds no additional guard of its own around that case.
 - **Boundary values**: Not applicable — the component owns no numeric or
   length-bounded input of its own.
@@ -298,7 +299,7 @@ and is out of scope for this recipe.
 
 - **SwiftUI**: Compose a `VStack(alignment: .leading, spacing: 10)` with a
   `Picker("Theme", selection: $activeThemeID)` built from `store.allThemes`
-  (mirroring `agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`'s own SwiftUI
+  (mirroring `adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`'s own SwiftUI
   note) above a theme-preview view driven by the same `SemanticPalette`
   environment value or `@Observable` theme manager the rest of the app uses.
   Do not wire the picker's `Binding` directly to the preview's input;
@@ -309,7 +310,7 @@ and is out of scope for this recipe.
   **decouples-preview-refresh-from-selection-commit**.
 - **Compose**: A `Column` with an `ExposedDropdownMenuBox`/`DropdownMenu`
   listing available themes (the Compose analog described in
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`) followed by a preview
+  `adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`) followed by a preview
   `Composable` that reads the current theme from a shared
   `CompositionLocal`/`ViewModel` `StateFlow` rather than being called
   directly from the dropdown's `onItemSelected` — collect the flow with
@@ -318,7 +319,7 @@ and is out of scope for this recipe.
   **decouples-preview-refresh-from-selection-commit**.
 - **React/Web**: A flex column (`display: flex; flex-direction: column; gap:
   10px`) with a `<select>` of theme options (per
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`'s web note) above a
+  `adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`'s web note) above a
   preview component. Commit the selected value to global theme state (a
   context provider, a store dispatch) on `onChange`, and have the preview
   subscribe to that same global state independently (a context consumer, a
@@ -348,7 +349,7 @@ and is out of scope for this recipe.
   non-macOS platforms) identically to `NSView`.
 - **WinUI 3**: Build the row as a vertical
   `StackPanel` with `Spacing="10"`: a themed `ComboBox`/`Grid` row at the top
-  matching `agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`'s own WinUI 3
+  matching `adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`'s own WinUI 3
   note (bound to the available themes, writing the picked theme id through a
   settings service), and a preview `UserControl` beneath it. Do not update
   the preview `UserControl` directly from the `ComboBox`'s
@@ -411,6 +412,7 @@ default call site in the app already uses.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | partial | Reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `native-controls-preference` and `platform-design-language` pass because the
 component defers entirely to `PopupMenuChoiceView`'s and `ThemePreviewView`'s
@@ -419,7 +421,7 @@ own native-control choices rather than introducing new UI of its own.
 adds no keyboard or screen-reader behavior of its own, inheriting the
 popup's own inherited `NSPopUpButton` navigation and its already-linked
 accessible name from `PopupMenuChoiceView.swift` (see
-`agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`), but the popup's visible
+`adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view`), but the popup's visible
 title is the unlocalized `"Theme"` default this file cannot override (see
 Localization) and the row itself offers no disable path (see States,
 Disabled), so this file's own compliance can't be called a full pass.
@@ -431,6 +433,8 @@ of anything `ThemePickerView.swift` itself guarantees. `separation-of-concerns`
 passes because the preview refresh path is fully decoupled from the
 selection commit path (see Design Decisions).
 
+`unit-test-coverage` is `partial` because `ThemeUITests.swift` (`picker`) constructs a `ThemePickerView` and asserts only that it has subviews; selection, preview coupling and persistence are not asserted.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -440,3 +444,5 @@ selection commit path (see Design Decisions).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage Compliance row, judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

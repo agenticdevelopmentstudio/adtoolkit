@@ -1,33 +1,32 @@
 ---
 id: ad8ad3fe-e3ba-4c1c-a601-62b1a2c1a3b2
-title: Peer URL
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/peer-url
+title: "Peer URL"
+domain: adtoolkit://cookbook/status/dashboard/logic/peer-url
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The fleet board''s client-side mirror of the backend''s peer base-URL rules:
-  a total normalizer to the canonical stored form and an http(s) validity check.'
+summary: "The fleet board's client-side mirror of the backend's peer base-URL rules: a total normalizer to the canonical stored form and an http(s) validity check."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- peers
-- fleet
-- validation
+  - peers
+  - fleet
+  - validation
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/security/input-validation
+  - agenticdevelopercookbook://guidelines/implementing/security/input-validation
 related:
-- agenticdevelopertoolkit://cookbook/status/service/peers
+  - adtoolkit://cookbook/status/service/peers
 references:
-- https://url.spec.whatwg.org/
-approved-by: ''
-approved-date: ''
+  - https://url.spec.whatwg.org/
+approved-by: ""
+approved-date: ""
 ---
 
 # Peer URL
@@ -40,7 +39,7 @@ This module gives the status board the same peer base-URL rules the backend enfo
 - the validity-check operation reports whether the backend will accept the string: an absolute `http:` or `https:` URL.
 
 Its doc comment calls it "a deliberate mirror" of the backend's own rules: the board cannot import the backend's code because it has its own build, and the backend stays the authority, normalizing and validating every write whatever the UI sends. The mirror only moves feedback earlier. The peer editor runs its dirty check against the value the server will keep, and shows a typo as a sentence under the field instead of a 400 response. See
-[Status Server Peers](agenticdevelopertoolkit://cookbook/status/service/peers) for the
+[Status Server Peers](adtoolkit://cookbook/status/service/peers) for the
 authoritative backend contract.
 
 ## Behavioral Requirements
@@ -219,4 +218,4 @@ backend, not this module, is what actually guarantees one row per monitor.
 |---------|------|--------|---------|
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/logic/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial recipe extracted from `status-web/src/lib/peer-url.ts` and its tests |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe extracted from `status-web/src/lib/peer-url.ts` and its tests |

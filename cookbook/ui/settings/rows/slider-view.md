@@ -1,31 +1,30 @@
 ---
 id: 0cbe1932-5c7e-4546-829d-0294708d499c
-title: Slider View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/slider-view
+title: "Slider View"
+domain: adtoolkit://cookbook/ui/settings/rows/slider-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row pairing a title label with a slider bound to a
-  range view model, syncing value and range from the view model.
+summary: "A settings row pairing a title label with a slider bound to a range view model, syncing value and range from the view model."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- form-control
-- range
+  - settings
+  - form-control
+  - range
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view
+  - adtoolkit://cookbook/ui/settings/rows/captioned-slider-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Slider View
@@ -35,7 +34,7 @@ approved-date: ''
 The Slider View is a settings row: a title label and a slider in one
 horizontal row, with no trailing caption (contrast with the sibling
 captioned slider row
-(agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view), which
+(adtoolkit://cookbook/ui/settings/rows/captioned-slider-view), which
 adds a formatter-derived value label). The row is driven by a range view
 model: the component sets the slider's range and value from the view
 model at construction, writes the user's slider interactions back into
@@ -74,6 +73,8 @@ not re-apply after construction.
 Construction requires a view model; every other construction path is
 rejected, a platform mechanic rather than a normative requirement here — see rejects-coder-initialization and
 rejects-frame-only-initialization under Platform Notes.
+
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -137,13 +138,7 @@ rejects-frame-only-initialization under Platform Notes.
   trackpad-driven control composition (no touch input path in source);
   the 44×44pt minimum is touch guidance, not a pointer-interface
   requirement.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source.
-  The label's text color resolves via the theme's primaryText role, whose
-  floor against the background is a minimum contrast of 3.0 — below the
-  4.5:1 small-text threshold — and the component performs no contrast
-  check of its own; settling whether a given theme's resolved pair
-  actually meets 4.5:1 needs a theme-level contrast audit of primaryText
-  against the backgrounds it sits on.
+- **minimum-contrast-ratio**: The component performs no contrast check of its own. The label's color comes from the theme's primary-text role through the shared row-label factory, and the slider draws in the platform's standard control style, so contrast is whatever the active theme and platform resolve.
 
 ## Conformance Test Vectors
 
@@ -159,6 +154,7 @@ rejects-frame-only-initialization under Platform Notes.
 | slider-view-008 | exposes-constituent-views | Construct the component, then access its label and slider from outside the type | Both properties are accessible and return the same label/slider instances built during construction |
 | slider-view-011 | syncs-on-external-change | Change the value on the backing setting that the view model observes (not by triggering the view model's change notification directly), then await one main-queue turn (the dispatch hop between the setting's storage and the view model's observer) | The label and the slider's minimum, maximum, and value are unchanged immediately after the setting write, and only update to reflect the new state after that main-queue turn elapses |
 | slider-view-012 | sets-slider-range | Construct the component with the view model's minValue = 10, maxValue = 0 (an inverted range; a zero-width case such as minValue = maxValue = 5 is equivalent) | The slider's minimum is 10 and its maximum is 0 — assigned unchanged from the view model, with no clamping, swapping, or correction |
+| slider-view-013 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -334,49 +330,52 @@ logger reference anywhere in source).
 
 ## Design Decisions
 
-- Decision: Re-apply the slider's minimum and maximum (in addition to the
+- **Decision**: Re-apply the slider's minimum and maximum (in addition to the
   label text and the slider's value) inside the external-change handler,
   not just at initialization — unlike the sibling captioned slider row
-  (agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view),
+  (adtoolkit://cookbook/ui/settings/rows/captioned-slider-view),
   whose sync leaves the slider's range untouched after construction.
-  Rationale: Lets a caller mutate the view model's range after the row is
+  **Rationale**: Lets a caller mutate the view model's range after the row is
   built and have the slider reflect the new bounds without recreating the
   view.
-  Approved: pending
-- Decision: Give the slider a low horizontal content-hugging priority
+  **Approved**: pending
+- **Decision**: Give the slider a low horizontal content-hugging priority
   (AppKit/UIKit source: set to `1`).
-  Rationale: The source comment states this priority is set below the
+  **Rationale**: The source comment states this priority is set below the
   row spacer's own low default priority so the slider, not the gap,
   takes the width left over after the label — this makes the slider,
   rather than inter-item spacing, absorb any extra row width.
-  Approved: pending
-- Decision: Guard the view model's value assignment with an equality
+  **Approved**: pending
+- **Decision**: Guard the view model's value assignment with an equality
   check before writing.
-  Rationale: Avoids redundant writes to the view model (and any
+  **Rationale**: Avoids redundant writes to the view model (and any
   observer-driven feedback loop) when the slider reports a value that
   hasn't actually changed.
-  Approved: pending
-- Decision: Force a fatal error from both the coder-based and the
+  **Approved**: pending
+- **Decision**: Force a fatal error from both the coder-based and the
   frame-only initializers (AppKit/UIKit source: `init(coder:)`, the
   frame-only `init(frame:)`), leaving the view-model-taking initializer
   as the only usable one.
-  Rationale: The view has no meaningful default state — it cannot render
+  **Rationale**: The view has no meaningful default state — it cannot render
   a title or range without a view model — so both inherited initializers
   that could construct it without one are intentionally disabled rather
   than left to produce a half-configured row.
-  Approved: pending
-- Decision: Assign the component's change-notification handler
+  **Approved**: pending
+- **Decision**: Assign the component's change-notification handler
   unconditionally at construction, without preserving or chaining any
   handler already registered on the same view-model instance —
   constructing a second instance of this component (or any other
   observer) against the same view model silently drops the earlier
   handler.
-  Rationale: This component owns its view model's re-sync handler for the
+  **Rationale**: This component owns its view model's re-sync handler for the
   view's lifetime; supporting more than one simultaneous observer on a
   single view model would need a multicast mechanism the source does not
   implement, so one view per view model is the stated limit rather than
   an unstated side effect.
-  Approved: pending
+  **Approved**: pending
+- **Decision**: The component performs no contrast check of its own: the label's primary-text color resolve from the active theme at runtime, so whether a given theme's resolved pair reaches the 4.5:1 text threshold is not established by this component.
+  **Rationale**: Contrast is a property of the theme's resolved color pairs, which live outside this component; closing the gap would take a theme-level audit (or an enforced minimum in the theme layer) of those roles against the backgrounds a settings row sits on, which no source or test does today.
+  **Approved**: pending
 
 ## Compliance
 
@@ -388,6 +387,7 @@ logger reference anywhere in source).
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 `keyboard-navigable` and `screen-reader-support` rest on `NSSlider`/`NSTextField`'s
 default AppKit accessibility and focus behavior; `screen-reader-support` is
@@ -396,6 +396,8 @@ linking the slider to the label (see Accessibility, label requirements). The
 other rows rest on source composing only stock
 `NSView`/`NSControl` instances with no custom drawing, network, or persistence
 code of its own.
+
+No test in the repository's test targets constructs `SliderView`, so `unit-test-coverage` is `failed`: a search of `AgenticToolkitMacOSTests` and the other test targets for the type name finds nothing.
 
 ## Change History
 
@@ -406,3 +408,5 @@ code of its own.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker against the source: restated as current behavior (no contrast check in the component) and recorded the gap as a pending Design Decision; added separation-of-concerns/unit-test-coverage Compliance rows. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

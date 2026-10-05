@@ -1,46 +1,40 @@
 ---
 id: 0f65ea61-3b0f-4a9b-842e-912555b7af62
-title: Provider Configuration Keys
-domain: agenticdevelopertoolkit://cookbook/ai/providers/provider-config-keys
+title: "Provider Configuration Keys"
+domain: adtoolkit://cookbook/ai/providers/provider-config-keys
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Deterministic per-configuration storage-key formatters and shared settings-key
-  constants the app and daemon both use to address a provider configuration's fields,
-  model, and secret-credential ledgers.
+summary: "Deterministic per-configuration storage-key formatters and shared settings-key constants the app and daemon both use to address a provider configuration's fields, model, and secret-credential ledgers."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- storage-keys
-- configuration
+  - ai-plugin
+  - storage-keys
+  - configuration
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIProviderConfigKeysTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderConfigStore.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigSync.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatGuardTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/AIChatWindow/AIModelChatConfig.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIProviderConfigKeysTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderConfigStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigSync.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatGuardTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIChatWindow/AIModelChatConfig.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Provider Configuration Keys
@@ -136,30 +130,20 @@ it never fails.
   other restriction on the character set, so a plugin author choosing a
   field-key spelling MAY use any identifier that avoids embedding a
   newline (see field-name-newline-safety, below).
-- **field-name-newline-safety**: NEEDS REVIEW: Not implemented in source.
-  Neither the field-key operation nor the per-field names recorded in the
-  fields-key/secret-fields-key ledgers are validated to exclude the `\n`
-  character, yet those ledgers' documented and observed shape is a
-  newline-joined list of exactly those field names (see
-  fields-ledger-format); a field key containing `\n` would split into two
-  entries when the daemon's chat-completion path parses the ledger by
-  splitting on `\n`, silently corrupting the field lookup for that
-  configuration. What is missing: a defined restriction on a field name's
-  character set (or an escaping scheme) for the ledger-based keys.
-  Evidence that would settle it: the character constraints a plugin's
-  field-descriptor key is meant to honor (not defined in the given
-  sources), or a validating constructor added to this component.
-- **secret-fields-key-consumer**: NEEDS REVIEW: Not implemented in source.
-  The secret-fields-key operation's documented contract declares it exists
-  to "clear exactly those entries when the configuration is removed," but
-  no call site anywhere in the given sources writes or reads the key it
-  returns; the app-side configuration store clears a removed
-  configuration's secrets by iterating the caller-supplied field-descriptor
-  list directly, not via this ledger. What is missing: confirmation of who
-  populates and consumes this ledger, and when. Evidence that would settle
-  it: the daemon-side removal implementation the documented contract
-  attributes this key to ("(Daemon-side.)"), which is not present in this
-  repository, or confirmation that the ledger is currently dead code.
+- **field-name-newline-safety**: The field-key operation and the per-field
+  names recorded in the fields-key/secret-fields-key ledgers MUST be
+  treated as unvalidated: this component performs no check that a field
+  name excludes the `\n` character, and the ledgers' shape is a
+  newline-joined list of those names (see fields-ledger-format), so a field
+  name containing `\n` splits into two entries when a ledger is parsed by
+  splitting on `\n`. Callers MUST NOT pass a field name containing `\n`.
+- **secret-fields-key-consumer**: The secret-fields-key operation returns
+  the address of a newline-joined ledger of a configuration's secret field
+  names, which its documented contract says exists so removal can clear
+  exactly those entries; no code in this repository writes or reads that
+  key. The app-side configuration store clears a removed configuration's
+  secrets by iterating the caller-supplied field-descriptor list directly,
+  not via this ledger.
 
 ## Appearance
 
@@ -184,11 +168,11 @@ Not applicable — this is a storage-key namespace, not a visual component.
 | ai-provider-config-keys-005 | registry-keys-fixed | Read the selected-configuration-id key, configurations key, enabled key, and legacy-cleaned key | `"ai_selected_config_id"`, `"ai_configurations"`, `"ai_summaries_enabled"`, `"ai_legacy_cleaned"` respectively |
 | ai-provider-config-keys-006 | key-namespace-isolation | Call the field-key operation with two different configuration identifiers and the same field name | Two distinct strings, since two distinct configuration identifiers never share the same canonical string form |
 | ai-provider-config-keys-007 | fields-ledger-format | A test double seeds the fields-key ledger with a set of field names joined by `\n`, then the daemon's chat-completion path reads it back by splitting on `\n` | The recovered field-name set equals the original set exactly |
-| ai-provider-config-keys-008 | secret-fields-key-consumer (open question) | Search the given sources for every reference to the secret-fields-key operation | Only its declaration and a format-only check appear; no production writer or reader exists |
+| ai-provider-config-keys-008 | secret-fields-key-consumer | Search the given sources for every reference to the secret-fields-key operation | Only its declaration and a format-only check appear; no production writer or reader exists |
 | ai-provider-config-keys-009 | pure-computation, no-error-domain | Call the field-key operation twice in immediate succession with the same arguments | Both calls return the identical string; no error is raised and no state changes between calls |
 | ai-provider-config-keys-010 | concurrency-isolation | Call the model-key operation from several concurrent execution contexts with no suspension | Every call observes the same result, with no concurrency-safety diagnostic, because the component holds no stored state |
 | ai-provider-config-keys-011 | no-instantiation | Attempt to construct an instance of this component | Fails: the component is a namespace with no instance to construct |
-| ai-provider-config-keys-012 | field-name-newline-safety (open question) | Call the field-key operation with a field name containing `\n`, whose returned key's value is later folded into a fields-key ledger and parsed by splitting on `\n` | The ledger parses as two entries instead of the intended single field key, corrupting the field lookup — demonstrates the unresolved gap; no test in the given suite exercises this because the source implements no guard against it |
+| ai-provider-config-keys-012 | field-name-newline-safety | Call the field-key operation with a field name containing `\n`, whose returned key's value is later folded into a fields-key ledger and parsed by splitting on `\n` | The key is produced without error; the ledger parses as two entries instead of one field key, because the component applies no guard |
 | ai-provider-config-keys-013 | single-source-of-truth-usage (documented deviation) | Search the codebase for the literal `"ai_summaries_enabled"` outside this component | A separate settings-configuration component duplicates the literal independently rather than referencing this component's enabled key — the one known deviation from this SHOULD, documented in Design Decisions |
 
 ## Edge Cases
@@ -200,8 +184,7 @@ Not applicable — this is a storage-key namespace, not a visual component.
 - **Whitespace-only or `.`-containing field name**: the field-key
   operation MUST NOT reject or alter such input; the string is interpolated
   verbatim (see `field-character-permissiveness`).
-- **Field name containing `\n`**: See the open question in
-  `field-name-newline-safety`. The key itself is still produced without
+- **Field name containing `\n`**: See `field-name-newline-safety`. The key itself is still produced without
   error, but a caller that also maintains the fields-key/secret-fields-key
   ledger for that configuration will corrupt the ledger's newline-delimited
   parsing.
@@ -302,7 +285,7 @@ any kind.
   resets non-secret fields and the model to an empty string (clearing the
   effective secure-store entry when the field is marked secure); whether
   the daemon-side secret-fields-key/fields-key ledgers drive an equivalent
-  removal is the open `secret-fields-key-consumer` question above.
+  removal is the gap recorded under `secret-fields-key-consumer` and its Design Decision.
 
 ## Logging
 
@@ -333,7 +316,11 @@ Not applicable: this component contains no logging call of any kind.
 **Approved**: pending
 
 **Decision**: The secret-fields-key operation and its newline-joined ledger shape are documented on this component but never populated or consulted anywhere in this repository.
-**Rationale**: the documented contract attributes the ledger to daemon-side removal logic ("(Daemon-side.)"), which may live outside this repository; rather than assume that consumer exists and behaves correctly, or invent one, this is flagged as the open `secret-fields-key-consumer` question in Behavioral Requirements. (Apple platform implementation.)
+**Rationale**: the documented contract attributes the ledger to daemon-side removal logic ("(Daemon-side.)"), which may live outside this repository; rather than assume that consumer exists and behaves correctly, or invent one, this is recorded as the `secret-fields-key-consumer` behavior in Behavioral Requirements. (Apple platform implementation.)
+**Approved**: pending
+
+**Decision**: Field names are not validated or escaped against the newline character that delimits the fields-key and secret-fields-key ledgers.
+**Rationale**: The field-key operation is a pure string interpolation and the ledger shape is a bare newline-joined list, so a field name containing a newline silently splits into two entries when the daemon's chat-completion path parses the ledger. Closing it would take a defined character set for plugin field-descriptor keys, or an escaping scheme or validating constructor in this component.
 **Approved**: pending
 
 ## Compliance
@@ -345,8 +332,11 @@ Not applicable: this component contains no logging call of any kind.
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | passed | Privacy and Data |
 | [input-sanitization](agenticdevelopercookbook://compliance/security#input-sanitization) | failed | Security |
 | [secure-storage](agenticdevelopercookbook://compliance/security#secure-storage) | partial | Security |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `separation-of-concerns` passes because the file's only responsibility is formatting and naming storage keys; it performs no storage, no secret handling, and no business logic of its own. `idempotent-operations` passes because every function is a deterministic, side-effect-free computation of its arguments (see `pure-computation`). `data-minimization` passes because the file collects, stores, or transmits no data itself (see Privacy). `input-sanitization` fails because `field` — and the field names recorded in the newline-joined ledgers — are accepted with no character restriction, so a field key containing `\n` corrupts the ledger format the type itself documents (see `field-name-newline-safety`). `secure-storage` is partial: the key format gives every field one address shared by the app and daemon, but nothing in this file enforces that a secret field is actually routed to a secure store — that enforcement lives entirely in each caller, so a future caller could store a secret field's value in a non-secure store under the exact same key with no safeguard from this type.
+
+`unit-test-coverage` is partial because `AIProviderConfigKeysTests.swift` (`testFieldKeyFormat`, `testModelAndLedgerKeys`, `testUniqueNameAppendsSuffix`) covers the key formats and ledger keys, but nothing exercises the newline-in-field-name behavior or the app/daemon uppercase-UUID parity beyond the format check.
 
 ## Change History
 
@@ -356,3 +346,4 @@ Not applicable: this component contains no logging call of any kind.
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/providers/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restate unimplemented ledger behaviors as current behavior with pending decision; cite unit-test-coverage. |

@@ -1,46 +1,44 @@
 ---
 id: c7b38706-a6bc-4ad6-852c-425a4ed11a27
-title: Status Server Monitor Fetch Vercel
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-vercel
+title: "Status Server Monitor Fetch Vercel"
+domain: adtoolkit://cookbook/status/service/monitor/fetch-vercel
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Paginates Vercel's deployments API within a bounded budget into ProviderDeploy
-  rows, then composes and fetches one deployment's failure reason and full build
-  log on demand; a no-op absent a token, and cools down after a 429.
+summary: "Paginates Vercel's deployments API within a bounded budget into ProviderDeploy rows, then composes and fetches one deployment's failure reason and full build log on demand; a no-op absent a token, and cools down after a 429."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- vercel
-- deploy
-- fetcher
-- server
+  - monitor
+  - vercel
+  - deploy
+  - fetcher
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
-- agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
-- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
+  - adtoolkit://cookbook/status/service/monitor/alerts
+  - adtoolkit://cookbook/status/service/monitor/deploy-status
 references:
-- packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/format.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/vercel-deploys-pagination.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/provider-cooldown.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/format.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/vercel-deploys-pagination.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/provider-cooldown.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Fetch Vercel

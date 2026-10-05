@@ -1,0 +1,58 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "9ab21212-c31d-4a4a-b563-2a2666eec03d",
+    "title": "Status Web URL Host",
+    "domain": "adtoolkit://cookbook/status/dashboard/logic/url",
+    "type": "ingredient",
+    "version": "1.0.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-09-27",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "hostOf extracts the WHATWG URL host from a string and returns the input unchanged when it does not parse as an absolute URL",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/status/dashboard/session-client",
+      "adtoolkit://cookbook/status/dashboard/logic/row-detail",
+      "adtoolkit://cookbook/status/dashboard/logic/stale-monitors"
+    ],
+    "references": [
+      "https://url.spec.whatwg.org/#dom-url-host"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "a5bbc4dcad2239c3",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

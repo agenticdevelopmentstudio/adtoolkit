@@ -1,31 +1,30 @@
 ---
 id: d1257c76-fb28-47a5-bc2b-d4fb1ef87b53
-title: Multi-Edge Tabbed View
-domain: agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view
+title: "Multi-Edge Tabbed View"
+domain: adtoolkit://cookbook/ui/layout/tabbed-view
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: An IDE-style view hosting up to four independently toggleable edge-docked
-  tab bars sharing one shared content area, with at most one tab active at a time.
+summary: "An IDE-style view hosting up to four independently toggleable edge-docked tab bars sharing one shared content area, with at most one tab active at a time."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- tabs
-- tab-bar
-- view-controller
-- layout
+  - tabs
+  - tab-bar
+  - view-controller
+  - layout
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Multi-Edge Tabbed View
@@ -178,6 +177,7 @@ The multi-edge tabbed view hosts up to four edge-docked tab bars — top, right,
 - **explicit-group-override**: A caller MAY supply an explicit group id when
   creating a tab, differing from its own id, to tie multiple tab instances
   (typically one per edge) together as siblings of one logical tab.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -312,6 +312,7 @@ The multi-edge tabbed view hosts up to four edge-docked tab bars — top, right,
 | multi-tabbed-042 | Null/empty input (Edge Cases) | Query the tabs for an edge with no tabs ever added | Returns an empty list, without trapping |
 | multi-tabbed-043 | Error states (Edge Cases) | Set a delegate, then let it deallocate (no strong reference remains); remove the last tab on an edge | The tab is removed from that edge's tabs (the mutation completes); no crash occurs even though the delegate reference is now empty |
 | multi-tabbed-044 | first-tab-on-enabled-edge-auto-activates | Edge has no tabs and is enabled; insert a tab at index 0 directly (not the append operation) | The inserted tab becomes active |
+| multi-tabbed-045 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -530,6 +531,7 @@ Not applicable: this concept contains no logging call of any kind.
   from each item's index-distance from the selected one, mirroring
   `applyStackOrder()`; a close glyph can use the Segoe Fluent Icons
   `` ("Cancel") glyph sized to match the `14×14pt` hit area.
+- **UI-thread confinement**: `confines-to-ui-thread` — the view controller is declared `@MainActor`, so use from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -580,7 +582,7 @@ id is gone from its own items; tearing it down there too "would rip the
 view out of the new bar's display." (AppKit/UIKit.)
 **Approved**: pending
 
-**Decision** (documented quirk, not a deliberate design choice): the
+**Decision**: (documented quirk, not a deliberate design choice) the
 front-to-back z-reordering and `stackDepth` reporting in
 `TabBarView.applyStackOrder()` only cover `.viewController` items (via
 `hostViews`/`hostedControllers`). A `.title` `TabButton` on a vertical
@@ -604,6 +606,8 @@ here, per source fidelity, rather than smoothed over. (AppKit/UIKit.)
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | failed | Accessibility |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 Keyboard-navigable is failed because `TabButton`/`TabItemHostView` have no
 key-view-loop or `keyDown` wiring (see Accessibility).
@@ -618,6 +622,8 @@ single-active-tab invariant, and the color-only selection cue are true of the
 source (see Behavioral Requirements and Accessibility Options) but are not
 compliance-catalog checks, so they are not listed here.
 
+`separation-of-concerns` passes because `MultiTabbedViewController` only arranges the edge-docked tab groups and their visibility; tab content, persistence and window chrome come from callers. `unit-test-coverage` is `partial`: `MultiTabbed/MultiTabbedActiveTabTests.swift`, `MultiTabbedHostedItemTests.swift`, `TabCardStackTests.swift`, `TabBarAccessibilityTests.swift` and `TabBarStartInsetTests.swift` cover it, but not every edge-docking vector.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -627,3 +633,4 @@ compliance-catalog checks, so they are not listed here.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |

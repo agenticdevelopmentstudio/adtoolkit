@@ -1,0 +1,3 @@
+
+None of the three roles defines a user-facing localized string. Every string surfaced by the host's own errors, the installation/installer log lines, and the ledger's recorded member paths is either a developer-facing diagnostic (hardcoded English, naming an extension identifier, a namespace path, or a file-and-line origin) or extension-authored text passed through verbatim (a `console.*` message, a thrown exception's own message and stack). None of it is routed through a platform localization mechanism or an `.nls.json`-style substitution; that localization pass belongs to the extension manifest's own localization handling for the extension's own manifest strings, not to this layer.
+

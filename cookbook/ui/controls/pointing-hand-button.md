@@ -1,35 +1,33 @@
 ---
 id: 46b9d1b8-8a6e-4b61-98ec-5201be24302f
-title: Pointing Hand Button
-domain: agenticdevelopertoolkit://cookbook/ui/controls/pointing-hand-button
+title: "Pointing Hand Button"
+domain: adtoolkit://cookbook/ui/controls/pointing-hand-button
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A button that shows the pointing-hand cursor over its bounds even when
-  its window does not have focus, via a cursor rect plus an always-active
-  hover-tracking region.
+summary: "A button that shows the pointing-hand cursor over its bounds even when its window does not have focus, via a cursor rect plus an always-active hover-tracking region."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ui
-- button
-- cursor
+  - ui
+  - button
+  - cursor
 depends-on: []
 related: []
 references:
-- https://developer.apple.com/documentation/appkit/nscursor
-- https://developer.apple.com/documentation/appkit/nstrackingarea
-- https://developer.apple.com/documentation/appkit/nsview/resetcursorrects()
-- https://developer.apple.com/documentation/swiftui/view/pointerstyle(_:)
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/documentation/appkit/nscursor
+  - https://developer.apple.com/documentation/appkit/nstrackingarea
+  - https://developer.apple.com/documentation/appkit/nsview/resetcursorrects()
+  - https://developer.apple.com/documentation/swiftui/view/pointerstyle(_:)
+approved-by: ""
+approved-date: ""
 ---
 
 # Pointing Hand Button
@@ -68,6 +66,7 @@ case where the platform resets the cursor on the way out.
   MUST set the current cursor to the pointing-hand cursor.
 - **exit-cursor**: WHEN a pointer-exited event is delivered, the component
   MUST set the current cursor to the default arrow cursor.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -131,6 +130,7 @@ case where the platform resets the cursor on the way out.
 | pointing-hand-button-005 | enter-cursor | Deliver a synthetic pointer-entered event | The current system cursor becomes the pointing-hand cursor |
 | pointing-hand-button-006 | move-cursor | Deliver a synthetic pointer-moved event | The current system cursor becomes the pointing-hand cursor |
 | pointing-hand-button-007 | exit-cursor | Deliver a synthetic pointer-exited event | The current system cursor becomes the default arrow cursor |
+| pointing-hand-button-008 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -251,6 +251,7 @@ Not applicable: the source contains no logging calls.
   `isEnabled`, and no `bezelStyle`, `isBordered`, `attributedTitle`, or
   `controlSize` customization appears anywhere in source.
 - **WinUI 3**: Subclass `Button` and set `ProtectedCursor = InputSystemCursor.Create(InputSystemCursorShape.Hand)` in the constructor. WinUI applies and restores the protected cursor automatically as the pointer enters and exits the control, so no `PointerEntered`/`PointerExited` handlers are needed. `ProtectedCursor` is `protected`, so this must be set from within a `Button` subclass, not from a containing element — a WinUI 3 port needs only this one constructor assignment, not a second, always-active tracking mechanism.
+- **UI-thread confinement**: `confines-to-ui-thread` — the type declares no isolation of its own; it is an `NSButton` subclass and so inherits the main-actor isolation AppKit's view classes carry, which makes construction or mutation from off the main actor a compile-time error under strict concurrency checking.
 
 ## Reference Implementations
 
@@ -299,6 +300,8 @@ implementation.)
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | Accessibility |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | Accessibility |
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | Platform Compliance |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 `keyboard-navigable` and `screen-reader-support` pass because this
 component overrides no keyboard, focus, or accessibility method, leaving
@@ -306,6 +309,8 @@ the platform's default button's own compliant behavior intact.
 `native-controls-preference` passes because the whole implementation is
 the platform's own system pointing-hand and arrow cursors, with no custom
 cursor image.
+
+`separation-of-concerns` passes because `PointingHandButton` adds only the pointing-hand cursor over its bounds and leaves title, action and styling to the ordinary button it subclasses. `unit-test-coverage` is `failed`: a search of the Apple test targets finds no test file for `PointingHandButton`, so the cursor behavior is unpinned by automated tests.
 
 ## Change History
 
@@ -316,3 +321,4 @@ cursor image.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/controls/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |

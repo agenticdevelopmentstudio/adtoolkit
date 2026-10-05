@@ -1,35 +1,33 @@
 ---
 id: fcff7387-19aa-49ab-b75d-f0c7bfcdf27c
-title: Project Reconciler
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-reconciler
+title: "Project Reconciler"
+domain: adtoolkit://cookbook/workspace/projects/project-reconciler
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Matches a directory scan against known repositories and turns the difference
-  into a plan of inserts, moved-and-updated rows, and deletes.
+summary: "Matches a directory scan against known repositories and turns the difference into a plan of inserts, moved-and-updated rows, and deletes."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- reconciliation
-- pure-function
+  - git
+  - projects
+  - reconciliation
+  - pure-function
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectReconciler.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectReconcilerTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectReconciler.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectReconcilerTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Reconciler
@@ -165,19 +163,7 @@ plan to a database is a separate caller's job.
   path-keyed lookup's last-wins behavior: the earlier record can never be
   matched by the exact-path pass and, if its own path still exists on disk,
   never appears in `inserts`, `updates`, or `deletes`.
-- **duplicate-scanned-path-handling**: NEEDS REVIEW: Not implemented in
-  source. The plan operation never validates that the scanned entries hold
-  at most one entry per `path`; two scanned entries sharing one path —
-  plausible when a caller configures overlapping scan roots — are each
-  processed independently through the exact-path pass and the
-  unmatched-scan pass, so they can produce two separate `updates` entries
-  carrying the same existing record's `id`, or two separate `inserts` for
-  what is really one directory. What is missing: whether the directory
-  scanner guarantees unique paths across a whole multi-root scan, or
-  whether the plan operation is expected to deduplicate its own input
-  before matching. What would settle it: a documented precondition on the
-  scanned input, or evidence that overlapping roots are never a supported
-  configuration.
+- **duplicate-scanned-path-handling**: the plan operation does not validate that the scanned entries hold at most one entry per `path`; two scanned entries sharing one path (plausible with overlapping scan roots) are each processed independently through the exact-path pass and the unmatched-scan pass, so they can produce two `updates` entries carrying the same existing record's `id`, or two `inserts` for one directory (see Design Decisions).
 
 ## Appearance
 
@@ -270,7 +256,7 @@ Not applicable — this is a matching algorithm, not a visual component.
   enough to time out.
 - **Duplicate paths in the inputs**: See `duplicate-existing-path-handling`
   (a caller precondition the registry's storage layer enforces) and the
-  open question on `duplicate-scanned-path-handling`; nothing here rejects
+  pending decision on `duplicate-scanned-path-handling`; nothing here rejects
   or normalizes either.
 
 ## Configuration
@@ -467,6 +453,10 @@ for `ProjectScanSummary`'s other counts (`unchanged` never appearing in
 `summaryText`'s parts list, `skipped` displayed as "not scanned").
 **Approved**: pending
 
+**Decision**: Scanned entries sharing one path are not deduplicated before matching: the plan operation treats each independently, so overlapping scan roots can yield duplicate updates for one record or duplicate inserts for one directory (`duplicate-scanned-path-handling`).
+**Rationale**: The source builds a path-keyed lookup of existing records only and iterates every scanned entry, and the directory scanner accumulates multi-root results into one array without deduplicating. Closing it means a documented uniqueness precondition on the scanned input or deduplication by path at the start of the plan operation.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -493,7 +483,7 @@ exhausted-fallback branch has no test at all. idempotent-operations
 passes: the doc comment and `testAnUnchangedRepoProducesNoWrite`'s own name
 tie the exact-path pass's "no update when nothing changed" behavior directly
 to re-running a scan over an unchanged tree producing no database write.
-data-integrity is partial because of the open question on
+data-integrity is partial because of the pending decision on
 duplicate-scanned-path-handling: overlapping scan roots can report one
 directory twice and silently produce two rows for it, with nothing in this
 file detecting it. Duplicate `existing` rows are excluded by the `git_repo`
@@ -503,7 +493,8 @@ table's `UNIQUE` path constraint rather than by this file.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the duplicate-scanned-path NEEDS REVIEW marker against source: no deduplication of scanned entries; restated as current behavior with a pending decision. |

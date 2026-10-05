@@ -1,32 +1,31 @@
 ---
 id: 60b5767d-3cf5-4373-b2fc-074aa6b62fec
-title: Webview Panel
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view
+title: "Webview Panel"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: One extension's sandboxed webview panel, its resource-root containment,
-  and its postMessage/setState bridge.
+summary: "One extension's sandboxed webview panel, its resource-root containment, and its postMessage/setState bridge."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- pane
-- extensions
-- webview
+  - pane
+  - extensions
+  - webview
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-view
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-view
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Webview Panel
@@ -97,6 +96,7 @@ This component is the panel behind one `vscode.window.createWebviewPanel` call, 
 - **pane-title-change-callback-aliases-title-callback**: This app's own pane-title protocol's title-change callback MUST read and write the same storage as the title-change callback used internally, so installing one and triggering a title change fires the other.
 - **teardown-disposes-panel**: This app's own pane-teardown protocol's teardown call MUST dispose the panel.
 - **automation-mode-disables-occlusion-paint-suppression**: In a debug/automation configuration only, when automation mode is enabled, constructing this component's view MUST attempt to disable window-occlusion-based paint suppression on the webview, and MUST silently skip that attempt when the runtime does not support the underlying check; this behavior MUST NOT exist in a production build.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -199,6 +199,7 @@ This component is the panel behind one `vscode.window.createWebviewPanel` call, 
 | wpvc-064 | installing-reveal-listener-replays-deferred-reveal | Request a reveal with `preserveFocus: true` before any listener exists, then dispose the panel, then install a reveal listener | The listener is still invoked once, immediately, with `true`, even though the panel is now disposed |
 | wpvc-065 | panel-title-setter-assigns-through | Set the webview object's title accessor to a new string value | `title` equals that value afterward |
 | wpvc-066 | relay-drops-unrecognized-messages | Deliver a script message whose body is a dictionary with an unrecognized `kind` string | The panel's message handler is never called |
+| wpvc-067 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -320,12 +321,16 @@ Subsystem: `{{bundle_id}}` | Category: `WebviewPanel`
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 | [platform-theming](agenticdevelopercookbook://compliance/platform-compliance#platform-theming) | passed | Platform Compliance |
 | [graceful-degradation](agenticdevelopercookbook://compliance/reliability#graceful-degradation) | passed | Reliability |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | Reliability |
 | [input-sanitization](agenticdevelopercookbook://compliance/security#input-sanitization) | passed | Security |
 
 These all rest on this file's own code: the theme-tracking closure installed in `loadView()` (`platform-theming`), the `responds(to:)` fallback around the private occlusion selector and the drop-not-crash handling of unbridgeable `post`/`setState` values (`graceful-degradation`), the `guard !isDisposed` early return in `dispose()` (`idempotent-operations`), and the postability and JSON-validity checks applied to every value before it reaches WebKit or storage (`input-sanitization`).
+
+`separation-of-concerns` passes because `WebviewPanelViewController.swift` keeps the web-view hosting concerns in separate extensions and helper types, namely message intake (`WebviewMessageReceiving` and the private `WebviewMessageRelay`), navigation policy (`WKNavigationDelegate`), the panel contract (`ExtensionWebviewPanel`) and pane title and teardown (`PaneTitleProviding`, `PaneContentTeardown`), while the host document (`WebviewHostDocument`), panel serialization (`WebviewPanelSerializer`) and resource scheme handling (`WebviewSchemeHandler`) live in their own types. `unit-test-coverage` passes because the real controller is exercised by `WebviewPanelDisposeTests.swift`, `WebviewPanelPostMessageTests.swift`, `WebviewPanelSetStateTests.swift`, `WebviewPanelScriptPolicyTests.swift`, `WebviewPanelLinkPolicyTests.swift`, `WebviewPanelSerializerTests.swift` and `PaneWebviewPresenterTests.swift`, covering dispose idempotence and reentrancy, postable-value rules, state storage and failure, per-navigation script policy, link policy, serialization and reveal wiring.
 
 ## Change History
 
@@ -335,3 +340,5 @@ These all rest on this file's own code: the theme-tracking closure installed in 
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: named the host-document bootstrap contract and CSP floor as requirements, named the private occlusion selector and the relay's accepted message kinds, narrowed dispose-idempotent to avoid overlap with dispose-fires-did-dispose-once, corrected the references/tags/compliance frontmatter, renamed sentence-form requirements to subject-only names, reformatted Design Decisions, removed template residue and a brittle file path, filled in the default state and deferred-reveal edge cases, and fixed test-vector gaps |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/webviews/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

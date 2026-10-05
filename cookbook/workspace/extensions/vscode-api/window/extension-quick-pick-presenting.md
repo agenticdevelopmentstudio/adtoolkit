@@ -1,13 +1,13 @@
 ---
 id: 720cc52e-9567-4643-9639-014403ef0ea7
-title: Extension Quick Pick Presenting
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-presenting
+title: "Extension Quick Pick Presenting"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-presenting
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
@@ -22,8 +22,8 @@ tags:
   - presenting
 depends-on: []
 related:
-  - agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
-  - agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
 references:
   - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionQuickPickPresenting.swift (agenticdevelopertoolkit)
   - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift (agenticdevelopertoolkit)
@@ -84,6 +84,7 @@ on an interface-segregation rationale (see Design Decisions).
 - **presenting-highlight-frequency**: `onHighlight` MAY be invoked any number of times, including zero, over the lifetime of one `presentQuickPick` call.
 - **presenting-highlight-after-return-prohibited**: A conformer MUST NOT invoke `onHighlight` after its `presentQuickPick` call has returned.
 - **presenting-async-return**: `presentQuickPick` MUST be an operation that suspends until the picker session concludes — accepted or dismissed — before completing.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -114,6 +115,7 @@ Not applicable — this is the extension-host contract (two data types and a pre
 | quick-pick-presenting-011 | presenting-async-return | A conformer's `presentQuickPick` call suspends until an external release signal fires | The caller observes no result until that release fires, confirming `presentQuickPick` genuinely suspends rather than polling for a result |
 | quick-pick-presenting-012 | presenting-single-context-execution, presenting-class-only, presenting-single-requirement | An attempt to declare a value type conforming to `ExtensionQuickPickPresenting`, or to call `presentQuickPick` from outside the required single execution context | Both fail — the reference-type-only constraint rejects a value-type conformer, and the single-execution-context requirement requires every call to happen on that context |
 | quick-pick-presenting-013 | item-thread-safe-equatable, request-thread-safe-equatable | A conformer's `presentQuickPick` call receives an `ExtensionQuickPickRequest` inside its isolated asynchronous method and holds onto it across a suspension point | Compiles and runs without a concurrency-safety diagnostic, because both `ExtensionQuickPickItem` and `ExtensionQuickPickRequest` are safe to share across concurrent execution contexts; a type without that guarantee captured this way across a suspension point would fail under the project's strict-concurrency checking |
+| quick-pick-presenting-014 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -226,6 +228,7 @@ Not applicable: this component contains no logging call of its own.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/window/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

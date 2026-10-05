@@ -1,30 +1,29 @@
 ---
 id: 1727e605-6f83-42d7-960f-45fbdf714d94
-title: File Preview
-domain: agenticdevelopertoolkit://cookbook/workspace/files/file-preview
+title: "File Preview"
+domain: adtoolkit://cookbook/workspace/files/file-preview
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A thin wrapper that embeds the platform's native file-preview control in
-  the view hierarchy, showing a system-rendered preview for files the editor can't open.
+summary: "A thin wrapper that embeds the platform's native file-preview control in the view hierarchy, showing a system-rendered preview for files the editor can't open."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ui
-- file-browser
+  - ui
+  - file-browser
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/files/file-editor-view
+  - adtoolkit://cookbook/workspace/files/file-editor-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # File Preview
@@ -178,6 +177,7 @@ Not applicable — the source contains no logging call anywhere in this file.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | Platform Compliance |
 | [platform-design-language](agenticdevelopercookbook://compliance/platform-compliance#platform-design-language) | passed | Platform Compliance |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | Reliability |
@@ -185,6 +185,8 @@ Not applicable — the source contains no logging call anywhere in this file.
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
 
 `native-controls-preference` and `platform-design-language` pass because the component delegates all preview rendering to `QLPreviewView`, Finder's own native QuickLook control, rather than a bespoke per-format viewer. `idempotent-operations` passes because `updateNSView` is a no-op when the incoming `url` already matches the view's current `previewItem` (see **skips-redundant-preview-item-updates**). `graceful-degradation` is `partial`: the source's own doc comment confirms `QLPreviewView` draws its own "no preview available" state for a file type with no generator, but makes no equivalent claim for a file that cannot be read or no longer exists, and that case cannot be confirmed from the source alone (see Edge Cases, **Error states**). `separation-of-concerns` passes because this file contains no per-file-type logic of its own — it only bridges SwiftUI to `QLPreviewView` and defers all format-specific rendering to QuickLook.
+
+`unit-test-coverage` is partial: `FilePreviewLoaderTests.swift` covers the loader that classifies a file before preview (text, empty and the other outcomes), but `QuickLookPreview`, the thin `NSViewRepresentable` over the system preview view, has no test of its own.
 
 ## Change History
 
@@ -194,3 +196,4 @@ Not applicable — the source contains no logging call anywhere in this file.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/files/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added compliance rows for the required checks judged from the source and test targets. |

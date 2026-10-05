@@ -1,42 +1,38 @@
 ---
 id: b360162a-7acb-4354-af85-0f131c84c601
-title: Extension Settings
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-settings
+title: "Extension Settings"
+domain: adtoolkit://cookbook/workspace/extensions/registry/extension-settings
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Declares the extension host''s one persisted setting: which extension identifiers
-  a person has switched off.'
+summary: "Declares the extension host's one persisted setting: which extension identifiers a person has switched off."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- settings
-- storage-keys
+  - extensions
+  - settings
+  - storage-keys
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/contributed-settings
+  - adtoolkit://cookbook/workspace/extensions/manifest/contributed-settings
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionSettings.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/StorableSetting.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStorageProviders/UserDefaultsSettingsStorageProvider.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings+Theme.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionSettingsTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/SettingsStore/UserDefaultsSettingsStoreTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionSettings.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/StorableSetting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStorageProviders/UserDefaultsSettingsStorageProvider.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings+Theme.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionSettingsTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/SettingsStore/UserDefaultsSettingsStoreTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Settings
@@ -62,6 +58,7 @@ This concept declares no logic of its own beyond that one key and default. A gen
 - **change-notification**: A write to the setting's value MUST update any observable projection of its current value synchronously, within the same call, before the write's statement returns.
 - **no-identifier-validation**: The setting MUST accept and store any string as a member of the set. It performs no check that a stored identifier names an installed or known extension; validating and reconciling identifiers against installed extensions is a caller's responsibility, not this setting's.
 - **case-sensitive-storage**: The set MUST store identifier strings exactly as given, applying no case-folding of its own. Membership is exact-string equality, so a differently-cased spelling of the same identifier is a distinct member unless a caller folds it before writing.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -94,6 +91,7 @@ Not applicable — this is a persisted setting declaration, not a visual compone
 | extension-settings-013 | no-identifier-validation | Write `{"not-a-real-extension-id", ""}` (an unregistered identifier and an empty string) | both are accepted and persisted verbatim; a subsequent read returns exactly `{"not-a-real-extension-id", ""}`, with no error and no filtering |
 | extension-settings-014 | case-sensitive-storage | Write `{"Acme.Foo"}`, then check whether the value contains `"acme.foo"` | answers false — the differently-cased spelling is not treated as the same member |
 | extension-settings-015 | thread-confined-access | Attempt to read the setting's value from outside its confined execution context, with no synchronization | is refused (on a platform that enforces this statically, this is a compile-time error) |
+| extension-settings-016 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -167,11 +165,11 @@ Not applicable: this concept makes no logging call of its own.
 **Rationale**: the key is load-bearing — changing it orphans every user's existing choices and needs a migration — the same contract a stored theme-customization key carries elsewhere in this settings layer.
 **Approved**: pending
 
-**Decision** (Swift/AppKit implementation): the setting is constructed with no secure-storage flag, so the identifiers persist through the ordinary settings store, not the Keychain.
+**Decision**: (Swift/AppKit implementation) the setting is constructed with no secure-storage flag, so the identifiers persist through the ordinary settings store, not the Keychain.
 **Rationale**: an extension identifier is a public, non-sensitive string with nothing to gain from Keychain's confidentiality or access-control guarantees; the call site simply omits the flag and takes the setting mechanism's `false` default.
 **Approved**: pending
 
-**Decision** (Swift/AppKit implementation): the setting's observable current value updates synchronously, in the same call that writes the value, rather than on a redispatched queue turn.
+**Decision**: (Swift/AppKit implementation) the setting's observable current value updates synchronously, in the same call that writes the value, rather than on a redispatched queue turn.
 **Rationale**: the setting mechanism's subscription to the store's change publisher applies no scheduling operator, unlike its observer helper's explicit main-queue redispatch. Recorded here so a port does not assume the observer's dispatched-callback delay also applies to the mirrored current value itself, which this setting exposes directly.
 **Approved**: pending
 
@@ -190,6 +188,7 @@ Not applicable: this concept makes no logging call of its own.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/registry/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,0 +1,65 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "ea2dae31-1020-4930-aa12-15f7d04967a5",
+    "title": "Progress View",
+    "domain": "adtoolkit://cookbook/ui/settings/rows/progress-view",
+    "type": "ingredient",
+    "version": "1.2.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-23",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "A settings row wrapping a single progress indicator, switching between a determinate bar and an indeterminate animation as its underlying value changes.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "settings",
+      "status-indicator",
+      "progress"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/ui/settings/rows/checkbox-view",
+      "adtoolkit://cookbook/ui/settings/rows/button-view",
+      "adtoolkit://cookbook/ui/settings/layout/explanation-view"
+    ],
+    "references": [
+      "https://developer.apple.com/documentation/appkit/nsprogressindicator",
+      "https://developer.apple.com/documentation/uikit/uiprogressview",
+      "https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.controls.progressbar.isindeterminate",
+      "https://developer.mozilla.org/en-US/docs/Web/HTML/Element/progress"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "7aa2c2302d0723aa",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

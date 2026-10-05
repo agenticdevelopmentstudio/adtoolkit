@@ -1,31 +1,30 @@
 ---
 id: 5c2d7315-314e-4343-93fd-f3aa1a0c803e
-title: Extension Quick Pick
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
+title: "Extension Quick Pick"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A view for one showQuickPick screen — a live-filtering search field
-  over a checkable or single-select list.
+summary: "A view for one showQuickPick screen — a live-filtering search field over a checkable or single-select list."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- component
-- picker
-- search
-- table
+  - component
+  - picker
+  - search
+  - table
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Quick Pick
@@ -150,6 +149,7 @@ four other pickers in the same module.
 - **shared-keyboard-controller**: The component MUST route all
   keyboard dispatch through the shared keyboard-routing component
   rather than implementing its own key-event handling.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -258,6 +258,7 @@ four other pickers in the same module.
 | extension-quick-pick-view-controller-034 | highlight-selection-sync | `model.highlightedIndex` set to an index with a corresponding row in `model.visibleIndices`, selection re-synced | That row is selected in the table and `onHighlight` is invoked with that index |
 | extension-quick-pick-view-controller-035 | multi-select-checkbox | `canPickMany = true`, a non-separator row is rendered | The row's checkbox is visible; the title label anchors to the checkbox's trailing edge |
 | extension-quick-pick-view-controller-036 | description-and-detail | `item.description = "extra info"`, row rendered | Description label is visible and shows "extra info" |
+| extension-quick-pick-view-controller-037 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -541,6 +542,7 @@ logging call.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | platform-compliance |
 | [platform-design-language](agenticdevelopercookbook://compliance/platform-compliance#platform-design-language) | passed | platform-compliance |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | accessibility |
@@ -558,6 +560,8 @@ Accessibility above); `separation-of-concerns` passes because all
 filtering, selection, and checked-set state lives in the AppKit-free
 `ExtensionQuickPickModel`, not in this view controller.
 
+`unit-test-coverage` passes: the filtering, selection and checked-set logic is covered by `ExtensionQuickPickModelTests.swift`, the controller's row-click behavior (a separator click never accepts or checks, a real row accepts or toggles, a negative row is a no-op) by `ExtensionQuickPickViewControllerTests.swift`, and the `vscode.window` bridge by `MainThreadWindowQuickPickTests.swift`.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -567,3 +571,5 @@ filtering, selection, and checked-set state lives in the AppKit-free
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/window/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added a unit-test-coverage compliance row judged from the test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

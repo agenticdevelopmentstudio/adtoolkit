@@ -1,31 +1,30 @@
 ---
 id: 80df89b9-a1d3-4fb5-b9e3-08bafd2720fb
-title: Provider Type Facet
-domain: agenticdevelopertoolkit://cookbook/ai/providers/provider-type-facet
+title: "Provider Type Facet"
+domain: adtoolkit://cookbook/ai/providers/provider-type-facet
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Buckets a provider's Config Type display string into subscription, apiKey,
-  local, or custom for the picker's Type filter.
+summary: "Buckets a provider's Config Type display string into subscription, apiKey, local, or custom for the picker's Type filter."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- value-type
-- provider-config
+  - ai-plugin
+  - value-type
+  - provider-config
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-descriptor
+  - adtoolkit://cookbook/ai/plugins/plugin-descriptor
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Provider Type Facet
@@ -168,14 +167,18 @@ Not applicable: this concept contains no logging call of any kind.
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | Reliability |
 | [test-pyramid](agenticdevelopercookbook://compliance/best-practices#test-pyramid) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 `separation-of-concerns` passes because `ProviderTypeFacet.swift` performs no file I/O, network access, or persistence of its own — it is a pure enum plus two pure functions over already-resolved data. `no-hardcoded-strings` fails: `title` and `detail` return literal, non-localized English strings (see Localization) that the picker's Type filter displays directly. `idempotent-operations` passes: `init(configType:)` and `matches(type:selected:)` are pure and deterministic — calling either repeatedly with the same input always returns the same result with no side effect. `test-pyramid` passes: every behavior in this file (bucketing, precedence, matching, labels) is covered by `ProviderTypeFacetTests.swift`'s unit-level `@Test` cases, and no integration or end-to-end layer is applicable since the file has no I/O to integrate.
+
+`unit-test-coverage` passes because `ProviderTypeFacetTests.swift` exercises bucketing of shipped config-type strings, loose case-insensitive matching, account-versus-key precedence, the empty-selection and exact-match filter, and that every facet has a title and tooltip.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/providers/. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Cite unit-test-coverage in Compliance. |

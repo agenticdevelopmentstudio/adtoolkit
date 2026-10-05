@@ -1,0 +1,63 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "24e1710c-a805-4f6e-b720-fbd869472ca9",
+    "title": "Extension Manifest Localization",
+    "domain": "adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization",
+    "type": "ingredient",
+    "version": "1.1.0",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-09-27",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Resolves %key% placeholders in a VS Code package.json against package.nls*.json tables beside it; a missing or malformed table never fails the resolve, and leaves unresolved keys visible.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "extensions",
+      "manifest",
+      "localization",
+      "package-json",
+      "jsonc"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifestLocalization.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionManifestLocalizationTests.swift (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "408f18fb55e393af",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

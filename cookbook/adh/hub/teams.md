@@ -1,41 +1,39 @@
 ---
 id: 28581588-68f5-465d-8e8e-3aaaaef00560
-title: Teams
-domain: agenticdevelopertoolkit://cookbook/adh/hub/teams
+title: "Teams"
+domain: adtoolkit://cookbook/adh/hub/teams
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Team domain logic: a generic-CRUD team client scoped to an ecosystem, and a
-  hand-written team-membership client for members added by customer email or by a
-  grant-gated persona key.'
+summary: "Team domain logic: a generic-CRUD team client scoped to an ecosystem, and a hand-written team-membership client for members added by customer email or by a grant-gated persona key."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- hub
-- teams
-- team-members
-- access-control
-- slug
+  - hub
+  - teams
+  - team-members
+  - access-control
+  - slug
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
+  - adtoolkit://cookbook/adh/hub/ecosystems/ecosystems
 references:
-- packages/web/packages/data/src/teams/team-members.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/teams/teams.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/teams/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/teams/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/teams/__tests__/teams.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/teams/team-members.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/teams/teams.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/teams/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/teams/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/teams/__tests__/teams.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Teams
@@ -102,14 +100,10 @@ preserving an explicit `null`.
   MUST resolve to `null` rather than rethrow when the underlying request
   throws — the backend responds 404 with a thrown error; the UI contract
   is null-for-missing.
-- **team-get-swallows-any-error-as-not-found**: NEEDS REVIEW: Not
-  implemented in source. Fetching a single team by id's catch block
-  returns `null` for ANY thrown error, not only the backend's documented
-  404, so a network failure or a server error is indistinguishable from a
-  team that genuinely does not exist, and no signal (a rethrow, a log
-  call) reaches the caller to tell the two apart; settled by narrowing the
-  catch to a 404-status check and rethrowing everything else, or by an
-  operator-visible log of the swallowed error.
+- **team-get-swallows-any-error-as-not-found**: Fetching a single team by id MUST resolve to
+  `null` for ANY thrown error, not only the backend's documented 404, so a network failure or a
+  server error is indistinguishable from a team that genuinely does not exist, and no signal (a
+  rethrow, a log call) reaches the caller to tell the two apart.
 - **team-create-no-pre-read-relies-on-backend-constraint**: Creating a
   team MUST NOT pre-read for a duplicate identifier before submitting the
   create — the backend's unique owner/slug constraint is the sole guard,
@@ -453,6 +447,12 @@ has (file header: "The caller resolves the id with
 `ecosystemsApi.ecosystemIdForSlug(slug)`").
 **Approved**: pending
 
+**Decision**: fetching a team by id catches every error and returns `null`; only the backend's 404 is meant to mean "not found".
+
+**Rationale**: the catch block does not inspect the error's status; closing the gap takes narrowing the catch to a 404-status check and rethrowing everything else, or an operator-visible log of the swallowed error.
+
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -508,6 +508,7 @@ of both `teams.ts` and `team-members.ts`).
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolve open-question markers against the code; restate unimplemented behavior as current behavior with pending Decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe: the Teams domain — team CRUD scoped to an ecosystem, and membership by customer email or grant-gated persona key. |

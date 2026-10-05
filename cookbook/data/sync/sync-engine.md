@@ -1,41 +1,39 @@
 ---
 id: 355a8f54-aee5-45cd-a28d-12c3b7a3085c
-title: Sync Engine
-domain: agenticdevelopertoolkit://cookbook/data/sync/sync-engine
+title: "Sync Engine"
+domain: adtoolkit://cookbook/data/sync/sync-engine
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Offline-sync state machine: pull loop, manifest reconciliation, outbox
-  push with last-write-wins/delete-wins conflict adoption, HTTP 410 resync, and
-  exponential backoff.'
+summary: "Offline-sync state machine: pull loop, manifest reconciliation, outbox push with last-write-wins/delete-wins conflict adoption, HTTP 410 resync, and exponential backoff."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- sync
-- offline
-- engine
+  - sync
+  - offline
+  - engine
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client
+  - adtoolkit://cookbook/data/sync/offline-sync-client
 references:
-- packages/apple/AgenticToolkit/Sync/SyncEngine.swift
-- packages/apple/AgenticToolkit/Sync/SyncEvents.swift
-- packages/apple/AgenticToolkit/Sync/SyncProtocols.swift
-- packages/apple/AgenticToolkit/Sync/SyncWire.swift
-- packages/apple/AgenticToolkit/Sync/JSONValue.swift
-- packages/apple/AgenticToolkit/Sync/SyncID.swift
-- packages/apple/AgenticToolkit/Sync/ADHSyncCatalog.swift
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncTests/SyncEngineTests.swift
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Sync/SyncEngine.swift
+  - packages/apple/AgenticToolkit/Sync/SyncEvents.swift
+  - packages/apple/AgenticToolkit/Sync/SyncProtocols.swift
+  - packages/apple/AgenticToolkit/Sync/SyncWire.swift
+  - packages/apple/AgenticToolkit/Sync/JSONValue.swift
+  - packages/apple/AgenticToolkit/Sync/SyncID.swift
+  - packages/apple/AgenticToolkit/Sync/ADHSyncCatalog.swift
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncTests/SyncEngineTests.swift
+approved-by: ""
+approved-date: ""
 ---
 
 # Sync Engine
@@ -57,7 +55,7 @@ push op, a push request, a push result, a push response), a schema-flexible
 JSON payload type, a UUIDv7 id generator, and a generated resource catalog.
 The product-specific enrollment and backend rules the engine serves are
 specified in
-[Offline Sync Client](agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client).
+[Offline Sync Client](adtoolkit://cookbook/data/sync/offline-sync-client).
 
 Use it when a host (an app or a daemon) keeps a local mirror of server rows,
 lets the user edit offline, and needs those edits pushed later without ever
@@ -74,7 +72,7 @@ being lost.
 - **attach-trigger**: Attaching a trigger source MUST start a background process that calls `kick` once for every value the trigger's kick stream yields, in stream order, and MUST hold the engine weakly, so an attached trigger never keeps the engine alive.
 - **stop-cancels**: `stop` MUST cancel every attached trigger task, cancel any pending retry task, and finish the `events` stream.
 - **stop-in-flight**: `stop` MUST NOT wait for or cancel a cycle already in flight; that cycle continues to call the store and transport until it ends.
-- **stop-during-cycle**: NEEDS REVIEW: Not implemented in source. `stop` sets no stopped flag, so a cycle suspended mid-operation when `stop` runs can still reach the retry scheduler on failure and arm a new retry that later calls `kick` with reason `periodic` after the host stopped the engine, with every event it yields discarded by the finished stream; a stopped-state contract (refuse `kick`/`syncNow`/`scheduleRetry` after `stop`) or a documented statement that `stop` must follow `pause` would settle it.
+- **stop-during-cycle**: `stop` MUST NOT be relied on to prevent later work: it sets no stopped flag, so a cycle suspended mid-operation when `stop` runs can still reach the retry scheduler on failure and arm a new retry that later calls `kick` with reason `periodic` after the host stopped the engine, with every event it yields discarded by the finished stream. A host SHOULD `pause` before `stop`.
 
 ### Entry points and coalescing
 
@@ -141,7 +139,7 @@ being lost.
 - **conflict-no-current**: A conflict result with no current row MUST be counted as rejected and forwarded as rejected with its original reason, with nothing adopted.
 - **conflict-unadoptable**: A conflict result whose current row's `sync_version` cannot be adopted MUST be counted as rejected and forwarded as rejected with its original reason, with nothing adopted.
 - **adopted-version**: A missing `sync_version` MUST adopt as "0"; a numeric value MUST adopt as its decimal integer text only when it converts exactly to a 64-bit integer; a string value MUST adopt verbatim only when it parses as an integer; every other JSON type MUST be unadoptable.
-- **adopted-version-sign**: NEEDS REVIEW: Not implemented in source. The version-adoption logic documents that a change's `syncVersion` expects digits only, but the integer parser used accepts a leading `+` or `-` and negative numbers, so "-5", "+5" or a negative number pass through to `apply`, which could raise an error and re-push the op every cycle (the wedge the fix set out to remove); a non-negative, unsigned check or a store contract that accepts signed text would settle it.
+- **adopted-version-sign**: Version adoption MUST accept whatever the integer parser accepts, including a leading `+` or `-` and negative numbers, although a change's `syncVersion` is documented as digits only: a value such as "-5" or "+5" passes through to `apply`, which could raise an error and re-push the op every cycle (the wedge the adoption fix set out to remove).
 - **conflict-adopt**: An adoptable conflict MUST produce one change record for the op's resource and row id at the adopted version, emit a `conflictResolved` event, and forward the result unchanged.
 - **delete-wins**: The adopted change MUST be a delete with no data when the current row's `deleted_at` is present and not null, and an upsert otherwise; a missing `deleted_at` key counts as not deleted.
 - **strip-bookkeeping**: An adopted upsert MUST carry the current row with the `sync_version` and `sync_stamped_at` keys removed.
@@ -232,8 +230,8 @@ All engine vectors use a configuration with deviceId "test-device", pullLimit 10
 | sync-engine-032 | reached-backend | Each event kind | true for idle, pulledBatch, authRequired; false for the other nine |
 | sync-engine-033 | uuidv7-format, uuidv7-monotonic | 1000 back-to-back id-generator calls | Strictly increasing, no duplicates, 36 characters, character 14 is "7" |
 | sync-engine-034 | catalog-shape | The generated resource catalog | 97 unique names, 44 pull-only, all schemaVersion 1; "social.follows" pull-only, "content.contacts" not |
-
-**stop-during-cycle** and **adopted-version-sign** have no vector: the first is the open question on stop-during-cycle, and the second's intended behavior is the open question on adopted-version-sign.
+| sync-engine-035 | stop-during-cycle | A cycle is suspended mid-operation, the host calls `stop`, then the suspended cycle fails | A retry is still armed and later calls `kick` with reason `periodic`; its events are discarded by the finished stream |
+| sync-engine-036 | adopted-version-sign | A conflict result whose current row carries `sync_version` as the string "-5" (and, separately, the number -5) | The signed value is accepted by the integer parser and adopted as "-5", passed to `apply` rather than the op being treated as unadoptable and rejected |
 
 ## Edge Cases
 
@@ -395,6 +393,14 @@ Not applicable: the sources make no log call; every outcome is reported as an ev
 
 **Approved**: pending
 
+**Decision**: `stop` sets no stopped state, so a cycle in flight when it runs can still arm a retry afterward.
+**Rationale**: The engine has no stopped flag for `kick`, `syncNow` or `scheduleRetry` to check, so the late retry fires into a finished event stream. Closing it takes a stopped-state contract that refuses those calls after `stop`, or a documented rule that `stop` must follow `pause`, plus a test for a failure that lands after `stop`.
+**Approved**: pending
+
+**Decision**: Version adoption accepts signed and negative `syncVersion` text that is documented as digits only.
+**Rationale**: The integer parser used is more permissive than the documented format, so a signed value reaches `apply` and could raise and re-push the op every cycle. Closing it takes a non-negative unsigned check at adoption, or a store contract that accepts signed text, plus a test for "-5" and "+5".
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -419,6 +425,7 @@ The engine depends only on the `SyncStore`, `SyncTransport` and `SyncTriggerSour
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restate stop-during-cycle and adopted-version-sign as current behavior with vectors and pending decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to data/sync/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from the Apple `Sync` sources and `SyncEngineTests` |

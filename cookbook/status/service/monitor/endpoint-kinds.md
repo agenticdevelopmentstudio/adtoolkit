@@ -1,35 +1,33 @@
 ---
 id: 990362d5-9c3a-4263-828f-a174b2dd2134
-title: Monitor Endpoint Kinds
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/endpoint-kinds
+title: "Monitor Endpoint Kinds"
+domain: adtoolkit://cookbook/status/service/monitor/endpoint-kinds
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The canonical six-member endpoint-kind vocabulary and its membership check,
-  sharing the non-deploy kind set with the deploy-platform engine so validation,
-  auto-wire, and the frontend twin agree.
+summary: "The canonical six-member endpoint-kind vocabulary and its membership check, sharing the non-deploy kind set with the deploy-platform engine so validation, auto-wire, and the frontend twin agree."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- server
-- vocabulary
-- validation
+  - monitor
+  - server
+  - vocabulary
+  - validation
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/endpoint-kinds.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/engine/classify.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/engine/classify.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/endpoint-kinds.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/engine/classify.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/engine/classify.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Monitor Endpoint Kinds

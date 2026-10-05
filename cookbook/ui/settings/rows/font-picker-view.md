@@ -1,36 +1,34 @@
 ---
 id: 67a314b9-d324-4d0c-b9c1-86e27c01537d
-title: Font Picker View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/font-picker-view
+title: "Font Picker View"
+domain: adtoolkit://cookbook/ui/settings/rows/font-picker-view
 type: ingredient
-version: 1.2.0
+version: 1.3.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row binding a font view model to a font chooser button - the
-  chosen font, named and drawn in itself, opening the platform's font-selection
-  UI when clicked.
+summary: "A settings row binding a font view model to a font chooser button - the chosen font, named and drawn in itself, opening the platform's font-selection UI when clicked."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- form-control
-- font
+  - settings
+  - form-control
+  - font
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button
+  - adtoolkit://cookbook/ui/settings/rows/font-chooser-button
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/color-picker-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+  - adtoolkit://cookbook/ui/settings/rows/color-picker-view
+  - adtoolkit://cookbook/ui/settings/rows/checkbox-view
+  - adtoolkit://cookbook/ui/settings/rows/number-field-view
+  - adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Font Picker View
@@ -108,18 +106,19 @@ of that button cannot drift apart.
 - **defaults-to-enabled**: Component MUST initialize itself enabled.
 - **exposes-constituent-views**: Component MUST expose the label and the
   button as public, directly-accessible, read-only properties.
-- **requires-view-model-at-construction**: Component MUST support
-  construction only through its designated initializer, which requires a
-  view model; construction via a bare/default construction path or a
-  serialization/decoding-based construction path MUST both trigger a fatal
-  error.
+- **requires-view-model-at-construction**: Component MUST be constructible
+  only with a view model supplied at construction time; construction paths
+  that could produce an instance without one (e.g. a bare/default
+  construction path or a serialization/decoding-based construction path)
+  MUST be rejected (see Platform Notes for the mechanism the source uses).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
 - **Corner radius**: Not applicable - the component adds no custom layer or
   drawing code of its own; it only composes a label and a font chooser
   button into a row (see
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button` for the button's own
+  `adtoolkit://cookbook/ui/settings/rows/font-chooser-button` for the button's own
   corner treatment).
 - **Padding**: The row inserts a flexible spacer between the label and the
   button and sets the row's spacing to the button role's default row
@@ -134,7 +133,7 @@ of that button cannot drift apart.
   active theme's size scale and repainting on a theme change. The button's
   own font is dynamic and drawn at a fixed 12pt sample size regardless of
   the stored font's real size - see the sample-size requirement in
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`.
+  `adtoolkit://cookbook/ui/settings/rows/font-chooser-button`.
 - **Background**: None (transparent) for the label, and neither the
   component nor its row sets a background color of its own. The button's
   chrome is the font chooser button's own concern, not set here.
@@ -151,7 +150,7 @@ of that button cannot drift apart.
   constraint is set in source; sizing is governed entirely by the label
   and button's own intrinsic sizes inside the row (the button's own
   compression/hugging behavior when built without a fixed width is
-  documented in `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`).
+  documented in `adtoolkit://cookbook/ui/settings/rows/font-chooser-button`).
 
 ## States
 
@@ -168,7 +167,7 @@ of that button cannot drift apart.
 - **Role/trait**: Not observable beyond the platform's defaults - no
   custom accessibility role or element grouping call appears in source.
   The button carries its platform's native button role (see
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`); the label is a plain
+  `adtoolkit://cookbook/ui/settings/rows/font-chooser-button`); the label is a plain
   static-text control.
 - **Label requirements**: The label and the button are laid out as sibling
   views in the same row, but source sets no accessibility linkage between
@@ -179,7 +178,7 @@ of that button cannot drift apart.
   linkage. As a result, the screen reader announces only the button's own
   title text (e.g. "Menlo-Regular — 14 pt") when focus lands on it, not
   the row's title (e.g. "Terminal Font").
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. The label's opacity is set to a hardcoded 40% when the row is disabled (**dims-and-disables-the-row**), local to this file (no sibling row control in this system uses this value or a shared "disabled opacity" constant); whether the label's text at 40% opacity against the active theme's surface color still meets a specific contrast ratio (e.g. WCAG 2.1 AA's 4.5:1) cannot be determined from this file alone since it depends on the resolved theme colors, which live outside this source - settled by auditing each shipped theme's resolved foreground/surface pairing at 40% opacity.
+- **minimum-contrast-ratio**: The component performs no contrast check of its own. The row label takes its color from the theme's primary-text role through the shared row-label factory, and when the row is disabled the label is drawn at a fixed 40% opacity (**dims-and-disables-the-row**), a value local to this component; the button keeps the platform's standard control chrome.
 - **Announce state changes (e.g., loading, disabled)**: Source performs no
   explicit accessibility notification when the row's enabled state
   changes; the button's own enabled state is exposed automatically through
@@ -214,6 +213,7 @@ of that button cannot drift apart.
 | font-picker-view-017 | requires-view-model-at-construction | Attempt construction via a bare/default construction path | The call traps with a fatal error; no instance is returned (a platform-level runtime trap, not an ordinary in-process assertion) |
 | font-picker-view-018 | requires-view-model-at-construction | Attempt construction via a serialization/decoding-based construction path | The call traps with a fatal error; no instance is returned (a platform-level runtime trap, not an ordinary in-process assertion) |
 | font-picker-view-019 | delegates-font-resolution-fallback | Construct a view model whose stored font name/size combination is invalid (so the view model's font falls back to a fixed system monospace font), then trigger a resync | The button is given exactly the font that the view model's font property returns (the fallback font); the component performs no validation, clamping, or substitution of its own on this value |
+| font-picker-view-020 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -337,7 +337,7 @@ Not applicable: the source contains no logging call.
 
 - **SwiftUI**: Compose an `HStack` with `Text(viewModel.title)` and a
   trailing font-sample button (an `NSViewRepresentable` wrapping
-  `FontChooserButton`, per `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`'s
+  `FontChooserButton`, per `adtoolkit://cookbook/ui/settings/rows/font-chooser-button`'s
   own SwiftUI note, or an equivalent custom `Button` that opens a font
   picker) bound to a `Binding` that reads and writes through the same
   view-model font, mirroring **commits-picked-font-through-view-model** and
@@ -349,7 +349,7 @@ Not applicable: the source contains no logging call.
   `FontFamily` at a fixed sample size, opening a custom
   `AlertDialog`/`ModalBottomSheet` listing available font families and
   sizes on click (there is no Android system font panel to defer to, per
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`'s Compose note); commit the
+  `adtoolkit://cookbook/ui/settings/rows/font-chooser-button`'s Compose note); commit the
   picked family/size back to the view model unconditionally on selection,
   and gate both children's `enabled`/alpha from one boolean, mirroring
   **dims-and-disables-the-row**.
@@ -377,14 +377,14 @@ Not applicable: the source contains no logging call.
   behind **requires-view-model-at-construction**), leaving the designated
   `init(viewModel:)` as the only surviving construction path. There is no
   UIKit code path in source; a UIKit port has no `NSFontPanel` equivalent to defer to
-  (see `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`'s own AppKit/UIKit
+  (see `adtoolkit://cookbook/ui/settings/rows/font-chooser-button`'s own AppKit/UIKit
   note for the button's side of that gap) and would need its own
   `isEnabled`-driven dimming, since UIKit has no direct `alphaValue`
   analogue on `UILabel` beyond its inherited `UIView.alpha`.
 - **WinUI 3** (the reason this recipe exists): Build the row as a `Grid`
   with column definitions `Auto,*`: a `TextBlock` bound to `viewModel.title`
   in column 0, and in column 1 the font-sample `Button` described in
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button`'s own WinUI 3 note (its
+  `adtoolkit://cookbook/ui/settings/rows/font-chooser-button`'s own WinUI 3 note (its
   `Content` `TextBlock` bound to the selected font's family/size at a fixed
   sample `FontSize`, opening a `ContentDialog`/`Flyout` for selection since
   WinUI ships no system font panel). Wire that dialog's confirm/selection
@@ -416,7 +416,7 @@ Not applicable: the source contains no logging call.
 **Decision**: `viewModel.onChange` is overwritten unconditionally in `init`,
 replacing any handler already registered on that `FontViewModel` instance.
 **Rationale**: Mirrors the same closure-property-assignment pattern
-documented at `agenticdevelopertoolkit://cookbook/ui/settings/rows/color-picker-view#requirements/owns-on-change`;
+documented at `adtoolkit://cookbook/ui/settings/rows/color-picker-view#requirements/owns-on-change`;
 the view provides no way to compose with an existing observer.
 **Approved**: pending
 
@@ -441,6 +441,10 @@ the value as-is rather than inventing a token the source does not use (see
 the open question on minimum-contrast-ratio under Accessibility).
 **Approved**: pending
 
+**Decision**: The component performs no contrast check of its own: the label's color and the surface behind it, further dimmed to a fixed 40% opacity when the row is disabled, resolve from the active theme at runtime, so whether a given theme's resolved pair reaches the 4.5:1 text threshold is not established by this component.
+**Rationale**: Contrast is a property of the theme's resolved color pairs, which live outside this component; closing the gap would take a theme-level audit (or an enforced minimum in the theme layer) of those roles against the backgrounds a settings row sits on, which no source or test does today.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -453,6 +457,7 @@ the open question on minimum-contrast-ratio under Accessibility).
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | internationalization |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 `native-controls-preference` and `platform-design-language` pass because the
 component defers to `FontChooserButton`'s own use of the system font panel
@@ -475,6 +480,8 @@ fallback to `FontViewModel.font` (see **delegates-font-resolution-fallback**).
 builds its output from hardcoded, unlocalized string fragments (see
 Localization).
 
+No test in the repository's test targets constructs `FontPickerView`, so `unit-test-coverage` is `failed`: a search of `AgenticToolkitMacOSTests` and the other test targets for the type name finds nothing. `FontChooserButtonTests.swift` covers only the button this row composes, not the row's binding, resync or dimming.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -484,3 +491,6 @@ Localization).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker against the source: restated as current behavior (no contrast check in the component) and recorded the gap as a pending Design Decision; added separation-of-concerns/unit-test-coverage Compliance rows. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.3.2 | 2026-10-04 | Mike Fullerton | requires-view-model-at-construction uses the one wording its sibling row specs share. |

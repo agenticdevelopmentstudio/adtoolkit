@@ -1,42 +1,41 @@
 ---
 id: 8bdba644-d7ad-45e4-a2f5-0156bfd40e15
-title: Local Provider Model Store
-domain: agenticdevelopertoolkit://cookbook/ai/models/local/local-provider-model-store
+title: "Local Provider Model Store"
+domain: adtoolkit://cookbook/ai/models/local/local-provider-model-store
 type: ingredient
-version: 1.1.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Live model discovery and caching for local (loopback) OpenAI-compatible
-  providers such as Ollama, plus description, size, metadata, and rank enrichment.
+summary: "Live model discovery and caching for local (loopback) OpenAI-compatible providers such as Ollama, plus description, size, metadata, and rank enrichment."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- local-model
-- caching
-- ollama
+  - local-model
+  - caching
+  - ollama
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/models/local/local-model-catalog
-- agenticdevelopertoolkit://cookbook/ai/models/local/local-inference-guard
+  - adtoolkit://cookbook/ai/models/local/local-model-catalog
+  - adtoolkit://cookbook/ai/models/local/local-inference-guard
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/LocalProviderModelStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalModelServer.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/StorableSetting.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/AI/ModelCatalogStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/AI/ArtificialAnalysisStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/AI/OllamaModelPageStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/AI/OllamaModelMetadata.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/LocalProviderModelStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/LocalModelServer.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/StorableSetting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/AI/ModelCatalogStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/AI/ArtificialAnalysisStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/AI/OllamaModelPageStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/AI/OllamaModelMetadata.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Local Provider Model Store
@@ -178,25 +177,12 @@ descriptor catalog," which this component does not touch.
   settings store the shared settings instance routes to (a local key-value
   store by default) and MUST survive process restart for as long as that
   store retains the key.
-- **cache-non-secure-storage**: None of the five cache declarations MUST
-  mark itself secure; all five default to non-secure and are therefore held
+- **cache-non-secure-storage**: The five cache declarations MUST NOT mark themselves secure; all five default to non-secure and are therefore held
   by the non-secure settings provider, never a credential-secured one.
 
-One concern the component's own purpose calls for is left undefined:
+One concern the component's own purpose calls for is not handled; it is stated below as current behavior and recorded as a pending Design Decision:
 
-- **concurrent-fetch-deduplication**: NEEDS REVIEW: Not implemented. The
-  models/sizes/metadata fetch operations each read the current cache, wait
-  on a network call, and only afterward write a new value back; because
-  that wait is reentrant, two concurrent calls for the same base URL (or
-  base URL/model pair) can both observe the same pre-fetch cache state and
-  both issue their own request, and the cached value that survives is
-  whichever call's write statement runs last — determined by network
-  completion order, not by which call was issued most recently. This cannot
-  be resolved from the store's own behavior alone: it requires either an
-  explicit statement that duplicate concurrent fetches for the same key are
-  an accepted cost, or an in-flight-request cache keyed by base URL/model,
-  mirroring the catalog store's own in-flight pattern used elsewhere in
-  this family.
+- **concurrent-fetch-deduplication**: The models, sizes and metadata fetch operations each read the current cache, wait on a network call, and only afterward write a new value back; because that wait is reentrant, two concurrent calls for the same base URL (or base URL and model pair) can both observe the same pre-fetch cache state and both issue their own request, and the cached value that survives is whichever call's write runs last, determined by network completion order rather than issue order. No in-flight-request tracking or coalescing exists.
 
 A related behavior is a fact, not a gap:
 
@@ -207,6 +193,7 @@ A related behavior is a fact, not a gap:
   refreshing has no signal in this component distinguishing "server
   refused the connection" from "timed out" from "returned an undecodable
   body."
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -252,6 +239,7 @@ component.
 | local-provider-model-store-023 | cancellation-as-ordinary-failure | An operation fetching models is cancelled while waiting on the network request. | The fetch returns nothing (the cancellation is caught by the generic failure handling), and the cache entry for that base URL is left exactly as it was before the call. |
 | local-provider-model-store-024 | cache-persistence, cache-non-secure-storage | Fetch models successfully against a real persisted settings store; tear down and reconstruct the settings store against the same underlying storage; then read cached models. | The previously fetched ids are still returned after reconstruction (persisted, not memory-only); a spy secure-storage provider substituted for the settings store's secure provider records zero calls across the whole scenario, since none of the five caches is marked secure. |
 | local-provider-model-store-025 | fetch-error-is-fully-swallowed | Fetch models, sizes, and metadata each invoked against a stub that fails with a distinguishable cause (e.g. a connection failure vs. a timeout). | All three return nothing with no observable difference between the two distinct causes — no log line, thrown error, or return value lets a caller or maintainer tell them apart. |
+| local-provider-model-store-026 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -284,7 +272,7 @@ component.
   (MUST, see serialized-atomic-cache-update). Two *concurrent* calls for
   the *same* key are not deduplicated and race on which one's result is
   cached last (MUST NOT deduplicate, see no-request-coalescing; final value
-  undefined, see the open question on concurrent-fetch-deduplication).
+  undefined, see **concurrent-fetch-deduplication**).
 - **Error states**: Every network failure — a bad URL, a failed request, a
   non-`200` status, an undecodable body, or (for the sizes fetch) a parse
   that yields no entries — is treated identically: the affected operation
@@ -499,10 +487,16 @@ inherent local-only assumption, so baking a loopback check into it would
 narrow a function that is otherwise reusable.
 **Approved**: pending
 
+**Decision**: Concurrent fetches for one key are not coalesced.
+**Rationale**: Duplicate concurrent fetches for the same base URL (or base URL and model) each hit the server and the last write wins; closing the gap takes either an explicit acceptance of that cost or an in-flight-request cache keyed by base URL and model, mirroring the in-flight pattern used elsewhere in this family.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 | [graceful-degradation](agenticdevelopercookbook://compliance/reliability#graceful-degradation) | passed | Reliability |
 | [fault-tolerance](agenticdevelopercookbook://compliance/reliability#fault-tolerance) | failed | Reliability |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | partial | Reliability |
@@ -519,17 +513,22 @@ deliberate freshness-over-load-shedding tradeoff, not an oversight, but it
 does not meet the reliability bar as written. idempotent-operations is
 partial for the same reason as `LocalModelCatalog`: repeated successful
 calls converge on the same result, but concurrent calls for the same key are
-not deduplicated (`no-request-coalescing`; see the open question on
-concurrent-fetch-deduplication). explicit-error-handling fails because every fetch,
+not deduplicated (`no-request-coalescing`; see
+concurrent-fetch-deduplication and its Design Decision). explicit-error-handling fails because every fetch,
 HTTP-status, and parse failure is discarded with zero diagnostic signal
 (`fetch-error-is-fully-swallowed`).
+
+`separation-of-concerns` passes because `LocalProviderModelStore` only fetches and caches model lists, sizes and metadata for a local provider through the shared settings store, leaving URL and size parsing to `LocalModelServer` and gating decisions to the inference guard. `unit-test-coverage` fails because no test file or test mentions `LocalProviderModelStore` under the Apple test targets, so the fetch, cache and failure paths are untested.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.0.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/models/local/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the concurrent-fetch-deduplication NEEDS REVIEW marker as current behavior plus a pending Design Decision; added separation-of-concerns and unit-test-coverage compliance. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |

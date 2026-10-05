@@ -1,30 +1,29 @@
 ---
 id: cfe08d5c-029c-4e19-82ab-daf8329c5972
-title: Status Slug
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/slug
+title: "Status Slug"
+domain: adtoolkit://cookbook/status/dashboard/logic/slug
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The status board''s single slug form for groups and sites: lower-case, hyphenate
-  runs of non-alphanumerics, trim edge hyphens.'
+summary: "The status board's single slug form for groups and sites: lower-case, hyphenate runs of non-alphanumerics, trim edge hyphens."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- slug
-- validation
+  - slug
+  - validation
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/peer-url
+  - adtoolkit://cookbook/status/dashboard/logic/peer-url
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Slug
@@ -193,4 +192,4 @@ empty slug.
 |---------|------|--------|---------|
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/logic/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial recipe extracted from `status-web/src/lib/slug.ts` and its call sites |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe extracted from `status-web/src/lib/slug.ts` and its call sites |

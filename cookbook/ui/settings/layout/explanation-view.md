@@ -1,30 +1,30 @@
 ---
 id: 25046f90-559d-4e32-8516-b5dae5f09c43
-title: Explanation View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view
+title: "Explanation View"
+domain: adtoolkit://cookbook/ui/settings/layout/explanation-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A static, word-wrapping caption label used beneath a setting or panel heading in a settings layout.
+summary: "A static, word-wrapping caption label used beneath a setting or panel heading in a settings layout."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- static-text
+  - settings
+  - static-text
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-heading-view
+  - adtoolkit://cookbook/ui/settings/layout/panel-heading-view
 references:
-- https://www.w3.org/TR/WCAG21/#contrast-minimum
-approved-by: ''
-approved-date: ''
+  - https://www.w3.org/TR/WCAG21/#contrast-minimum
+approved-by: ""
+approved-date: ""
 ---
 
 # Explanation View
@@ -71,6 +71,7 @@ panel by the one policy every settings blurb shares instead of a copy of it.
   to construct a usable instance; no construction path may produce a usable
   instance without one (see Platform Notes for how the source
   enforces this on this platform).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -121,15 +122,14 @@ panel by the one policy every settings blurb shares instead of a copy of it.
 - **Minimum tap target**: Not applicable — the view defines no
   target/action, gesture recognizer, or click handling; this is a purely
   visual, non-interactive display element with no tap target to size.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. The
-  theme's dimming formula enforces only a 3.0 minimum contrast ratio for
-  `.secondaryText`, but the `.caption` role this label uses defaults to
-  11pt regular — small text under WCAG 2.1's size threshold for the relaxed
-  3:1 large-text ratio (WCAG 1.4.3) — so the guaranteed floor of 3.0 does
-  not by itself establish the 4.5:1 the WCAG AA small-text criterion calls
-  for; whether any given theme's actual resolved secondary-text-on-background
-  ratio reaches 4.5:1 depends on each theme's concrete foreground/background
-  color pair and cannot be determined from this component's behavior alone.
+- **minimum-contrast-ratio**: The label's color MUST come from the theme's
+  secondary-text role at the caption text size, and the component MUST NOT
+  perform any contrast check or adjustment of its own. The theme's dimming
+  formula enforces only a 3.0 minimum contrast ratio for that role, while
+  the 11pt caption size falls under WCAG 2.1's small-text criterion (1.4.3)
+  that calls for 4.5:1; whether a given theme's resolved
+  secondary-text-on-background pair reaches 4.5:1 is determined by that
+  theme's colors, not by this component.
 
 ## Conformance Test Vectors
 
@@ -144,6 +144,7 @@ panel by the one policy every settings blurb shares instead of a copy of it.
 | explanation-view-007 | styles-as-secondary-caption | Construct the view | The label's font equals the active theme's `.caption` font; the label's text color equals the active theme's `.secondaryText` color |
 | explanation-view-008 | requires-text-at-construction | Attempt to construct the view via a bare/default construction path that supplies no text | Construction is rejected; no usable instance is produced. Not testable as an ordinary in-process assertion on every platform — where the failure mode is a runtime trap rather than a thrown/returned error, this requires a crash-test harness or a compile-time/unavailable check instead. |
 | explanation-view-009 | requires-text-at-construction | Attempt to construct the view via a serialization/decoding-based construction path that supplies no text | Construction is rejected; no usable instance is produced. Not testable as an ordinary in-process assertion on every platform — where the failure mode is a runtime trap rather than a thrown/returned error, this requires a crash-test harness or a compile-time/unavailable check instead. |
+| explanation-view-010 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -212,7 +213,7 @@ defines no string literal of its own that would need translation.
 | Option | Behavior |
 |--------|----------|
 | Reduce Motion | Not applicable — the view performs no animation or transition; text assignment is a synchronous property set. |
-| Increase Contrast | The view sets no custom color of its own — its coloring comes entirely from the theme's `.secondaryText` role — and nothing in the view or the theme's color derivation observes or reacts to the system's Increase Contrast setting; the color choice is unconditional. Whether the resulting per-theme contrast is sufficient at all is the open question on minimum-contrast-ratio, not duplicated here. |
+| Increase Contrast | The view sets no custom color of its own — its coloring comes entirely from the theme's `.secondaryText` role — and nothing in the view or the theme's color derivation observes or reacts to the system's Increase Contrast setting; the color choice is unconditional. Whether the resulting per-theme contrast is sufficient at all is **minimum-contrast-ratio** and its Design Decision, not duplicated here. |
 | Differentiate Without Color | Not applicable — the view conveys no state through color at all; it renders only the caller-supplied text in a single, fixed secondary-text color, with no color-coded meaning to differentiate. |
 
 ## Feature Flags
@@ -334,7 +335,7 @@ Not applicable: the view contains no logging call.
 
 ## Design Decisions
 
-**Decision** (AppKit/UIKit): The label overrides the shared `ThemedLabel`
+**Decision**: (AppKit/UIKit) The label overrides the shared `ThemedLabel`
 type's default single-line, clipped, non-wrapping configuration
 (`cell?.wraps = true`, `cell?.usesSingleLineMode = false`, `lineBreakMode =
 .byWordWrapping`, `maximumNumberOfLines = 0`) instead of accepting
@@ -347,7 +348,7 @@ while the cell is in single-line mode, and the label would (per the source
 comment) "set its wrap policy and then [run] off the right edge anyway."
 **Approved**: pending
 
-**Decision** (AppKit/UIKit): The label's horizontal content-compression-
+**Decision**: (AppKit/UIKit) The label's horizontal content-compression-
 resistance and content-hugging priorities are both lowered to
 `.defaultLow`.
 **Rationale**: source comments state that "a wrapping label still reports
@@ -357,7 +358,7 @@ settings window) as wide as the text," so the label is deliberately let to
 compress and wrap to the available width instead.
 **Approved**: pending
 
-**Decision** (AppKit): Force a fatal error from both `init(frame:)` and
+**Decision**: (AppKit) Force a fatal error from both `init(frame:)` and
 `init(coder:)`, leaving `init(withText:)` as the only usable initializer.
 **Rationale**: the view has no meaningful default state — it cannot render
 anything without a `text` string — so both inherited `NSView` initializers
@@ -365,7 +366,7 @@ that could construct it without one are intentionally disabled rather than
 left to produce a blank row (`requires-text-at-construction`).
 **Approved**: pending
 
-**Decision** (AppKit): `init(frame frameRect: NSRect)`'s fatal-error
+**Decision**: (AppKit) `init(frame frameRect: NSRect)`'s fatal-error
 message in source is the literal string `"init(frame frameRect: NSRect"`,
 missing a closing parenthesis and not following the `"init(coder:) has not
 been implemented"` sentence form the sibling `init?(coder:)` message uses.
@@ -379,7 +380,7 @@ future fix upstream — SHOULD use one rather than copying this exact
 malformed string.
 **Approved**: pending
 
-**Decision** (AppKit): The view provides no `update`/`setText` method;
+**Decision**: (AppKit) The view provides no `update`/`setText` method;
 callers that need to change the text after construction reassign
 `label.stringValue` directly (see Configuration).
 **Rationale**: every existing call site that updates the view's text after
@@ -389,10 +390,16 @@ invalidation a wrapping label needs — an added `update(text:)` wrapper
 would only duplicate behavior `NSTextField` already provides for free.
 **Approved**: pending
 
+**Decision**: The explanation label's contrast is whatever the theme's secondary-text role resolves to; the view performs no contrast check, and the theme guarantees only a 3.0 floor against WCAG's 4.5:1 for 11pt text.
+**Rationale**: Checked `ExplanationView.swift` and `SettingsLabels.swift` (`makeValueLabel`): the label is a `ThemedLabel` with the `.secondaryText` role and `.caption` text role, and no code in the view measures or raises contrast. Closing the gap would take either a 4.5:1 floor in the secondary-text derivation or a per-theme contrast audit.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [dynamic-type-support](agenticdevelopercookbook://compliance/accessibility#dynamic-type-support) | failed | Accessibility |
 
@@ -405,10 +412,14 @@ fixed-point-size calls (`NSFont.systemFont(ofSize:weight:)` or a named-family
 lookup at an explicit size) rather than `NSFont.preferredFont(forTextStyle:)`
 or any observation of the system's content-size-category setting.
 
+Separation-of-concerns is passed: `ExplanationView` only wraps a themed label and exposes `text`, `isHidden` and the visibility callback, leaving colors to the theme and row layout to its container. Unit-test-coverage is partial: `EditableTableCardUpdateTests.swift` has a test (`an ExplanationView hidden before it is placed reopens its row when shown`) and `ExtensionsSettingsPanelTests.swift` reads the text of explanations, but no dedicated `ExplanationViewTests.swift` exists and wrapping, sizing and constructor-trap behavior are untested.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Restated contrast requirement as current behavior (no contrast check) with a pending decision; added Compliance rows |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/layout/. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

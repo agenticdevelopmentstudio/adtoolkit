@@ -1,30 +1,29 @@
 ---
 id: ba5855cd-bd4c-49be-b7d3-4c3f7f35434e
-title: Overview Projections
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/overview
+title: "Overview Projections"
+domain: adtoolkit://cookbook/status/dashboard/logic/overview
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Pure client projections of the server board: sign indicator, headline, deploy
-  tallies, window caption and real-environment deploy predicate'
+summary: "Pure client projections of the server board: sign indicator, headline, deploy tallies, window caption and real-environment deploy predicate"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on:
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/board-types
+  - adtoolkit://cookbook/status/dashboard/logic/board-types
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/deploy-view
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/portfolio-indicator
+  - adtoolkit://cookbook/status/dashboard/logic/deploy-view
+  - adtoolkit://cookbook/status/dashboard/state/portfolio-indicator
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Overview Projections
@@ -281,4 +280,4 @@ Not applicable: the module makes no log calls.
 |---------|------|--------|---------|
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/logic/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from source |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from source |

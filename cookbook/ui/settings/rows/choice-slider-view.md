@@ -1,32 +1,31 @@
 ---
 id: aebda2fe-b953-4b3c-a65a-93d92c059fe1
-title: Choice Slider View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/choice-slider-view
+title: "Choice Slider View"
+domain: adtoolkit://cookbook/ui/settings/rows/choice-slider-view
 type: ingredient
-version: 1.2.0
+version: 1.2.3
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row pairing a discrete, tick-snapped slider with a trailing
-  label showing the current choice's name, bound to a choice view model.
+summary: "A settings row pairing a discrete, tick-snapped slider with a trailing label showing the current choice's name, bound to a choice view model."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- form-control
-- choice
+  - settings
+  - form-control
+  - choice
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+  - adtoolkit://cookbook/ui/settings/rows/captioned-slider-view
+  - adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Choice Slider View
@@ -98,8 +97,7 @@ over the same view model renders it.
 - **stretches-to-superview-width**: Component MUST, once it is added to a
   container, activate a width constraint pinning itself to that container's
   full width, at a priority just below the strictest available.
-- **confines-to-ui-thread**: Component MUST be usable only on the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -189,7 +187,7 @@ over the same view model renders it.
 | choice-slider-view-013 | requires-view-model-at-construction | Attempt construction via a bare/default construction path | The call traps with a fatal error; no instance is returned (a platform-level runtime trap, not an ordinary in-process assertion) |
 | choice-slider-view-014 | requires-view-model-at-construction | Attempt construction via a serialization/decoding-based construction path | The call traps with a fatal error; no instance is returned (a platform-level runtime trap, not an ordinary in-process assertion) |
 | choice-slider-view-015 | stretches-to-superview-width | Add an initialized component as a subview of a parent container | Once the component is attached to its container, a width constraint equal to the parent's width, at a priority just below the strictest available, is active on the component |
-| choice-slider-view-016 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (compile-time on platforms with static isolation checking such as Swift's `@MainActor`, runtime-checked otherwise) |
+| choice-slider-view-016 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (at build time or by a runtime check); the component's state is unchanged |
 | choice-slider-view-017 | claims-onchange-observer | Register a handler on the view model's external-change notification, then construct the component against that same view model | Triggering the notification afterward no longer calls the previously registered handler; only the component's own handler runs |
 
 Vector choice-slider-view-016 is a static, code-inspection check
@@ -416,7 +414,7 @@ Not applicable: the source contains no logging call.
   width from oscillating as the user drags through shorter/longer choice
   labels (e.g. \"Small\" → \"Extra Small\")."
   **Approved**: pending
-- **Decision** (AppKit): Force the title label's and value label's
+- **Decision**: (AppKit) Force the title label's and value label's
   horizontal content-hugging priority to `.required` and the slider's to
   `1`, rather than leaving the flanking labels at AppKit's default hugging
   priority.
@@ -444,7 +442,7 @@ Not applicable: the source contains no logging call.
   fallback branch in source; the component makes no attempt to represent
   an unrepresentable value, leaving whatever the elements last displayed.
   **Approved**: pending
-- **Decision** (WinUI): Measure the value column's width once, in
+- **Decision**: (WinUI) Measure the value column's width once, in
   code-behind after `Loaded`, from the longest label string, rather than
   re-measuring it if the control's `FontSize` or the active theme changes
   later.
@@ -452,7 +450,7 @@ Not applicable: the source contains no logging call.
   computation (see fixes-value-label-width); this recipe does not introduce
   WinUI-specific staleness handling beyond matching that choice.
   **Approved**: pending
-- **Decision** (AppKit): Both `init(coder:)` and the frame-only
+- **Decision**: (AppKit) Both `init(coder:)` and the frame-only
   `init(frame:)` trigger a fatal error, leaving `init(viewModel:)` as the
   only usable initializer.
   **Rationale**: The view has no meaningful default state — it cannot
@@ -472,6 +470,9 @@ Not applicable: the source contains no logging call.
 | [semantic-markup](agenticdevelopercookbook://compliance/accessibility#semantic-markup) | partial | accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
+
+No test in the repository's test targets constructs `ChoiceSliderView`, so `unit-test-coverage` is `failed`: a search of `AgenticToolkitMacOSTests` and the other test targets for the type name finds nothing.
 
 ## Change History
 
@@ -482,3 +483,6 @@ Not applicable: the source contains no logging call.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage Compliance row, judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.3 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |

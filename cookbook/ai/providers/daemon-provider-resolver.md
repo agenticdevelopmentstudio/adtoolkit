@@ -1,42 +1,39 @@
 ---
 id: ef2a5ca9-04a4-46ab-8fef-3fdc6db2041d
-title: Daemon Provider Resolver
-domain: agenticdevelopertoolkit://cookbook/ai/providers/daemon-provider-resolver
+title: "Daemon Provider Resolver"
+domain: adtoolkit://cookbook/ai/providers/daemon-provider-resolver
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Daemon-side, read-only lookup of the app's synced AI provider registry, the
-  selected configuration, and a configuration's stored model, for headless daemon
-  completions.
+summary: "Daemon-side, read-only lookup of the app's synced AI provider registry, the selected configuration, and a configuration's stored model, for headless daemon completions."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- daemon
-- configuration
-- provider-resolver
+  - ai-plugin
+  - daemon
+  - configuration
+  - provider-resolver
 depends-on:
-- agenticdevelopertoolkit://cookbook/ai/providers/provider-config-keys
+  - adtoolkit://cookbook/ai/providers/provider-config-keys
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigSync.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderResolver.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigSync.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderResolver.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Daemon Provider Resolver
@@ -94,18 +91,13 @@ function returns at the moment of the call.
   the stored JSON string at the configurations key into a list of provider
   configurations and MUST return it in the same element order when
   decoding succeeds.
-- **decode-failure-diagnostics**: NEEDS REVIEW: Not implemented in source.
-  When the settings function returns a non-empty string that fails to
-  decode as a list of provider configurations, the configurations lookup
-  swallows the decode error and returns an empty list with no log call,
-  error return, or other diagnostic signal — indistinguishable from "zero
-  configurations registered." What is missing: whether a corrupt-but-present
-  registry is meant to be silently treated as empty (as a genuinely absent
-  registry is), or whether daemon operators need a signal that the app's
-  provider-configuration sync produced, or synced to, an undecodable value.
-  Evidence that would settle it: a daemon-side logging or telemetry call
-  this repository does not show, or confirmation that a decode failure here
-  is tracked elsewhere.
+- **decode-failure-diagnostics**: When the settings function returns a
+  non-empty string that fails to decode as a list of provider
+  configurations, the configurations lookup MUST swallow the decode error
+  and return an empty list, emitting no log call, error return, or other
+  diagnostic signal; a corrupt-but-present registry is therefore
+  indistinguishable from "zero configurations registered." (See the Design
+  Decision on decode-failure signalling.)
 - **selected-configuration-absent**: The selected-configuration lookup MUST
   return none when the settings function returns none or an empty string
   for the selected-configuration-id key.
@@ -190,7 +182,7 @@ Not applicable — this is a daemon-side registry read API, not a visual compone
 | daemon-provider-resolver-014 | any-thread-invocation | Call the resolver's three operations from several concurrent execution contexts with no suspension and no synchronization | Runs with no concurrency-safety diagnostic, and each call observes a result consistent with what its own settings function returns |
 | daemon-provider-resolver-015 | configurations-empty-when-blank | A settings function that returns an empty string for the configurations key; call the configurations lookup | Returns an empty list — an empty string is treated the same as none |
 | daemon-provider-resolver-016 | configurations-array-poisoning | A registry that is a well-formed array where one element is missing a required field (e.g. its identifier); call the configurations lookup | Returns an empty list, not a partial list of the well-formed elements |
-| daemon-provider-resolver-017 | decode-failure-diagnostics (open question) | Search the resolver and its call sites for a logging or error-reporting call reached when the configurations lookup's decode fails | No such call exists anywhere in the given sources — demonstrates the open question; no test in the given suite exercises a decode-failure diagnostic because the source implements none |
+| daemon-provider-resolver-017 | decode-failure-diagnostics | Search the resolver and its call sites for a logging or error-reporting call reached when the configurations lookup's decode fails | No such call exists in the sources; a decode failure yields an empty list with no diagnostic, matching the requirement as stated |
 | daemon-provider-resolver-018 | model-lookup-independent-of-registry | A settings function that returns an empty list for the configurations key but a value for some identifier's model key, where that identifier is not — and never was — present in that registry; call the model lookup for that identifier | Returns the stored model string unchanged; the model lookup never consults the configurations list |
 
 ## Edge Cases
@@ -317,8 +309,7 @@ any kind.
 ## Logging
 
 Not applicable: the resolver contains no logging call. See
-decode-failure-diagnostics for the one place this absence is a genuine
-open question rather than a settled fact.
+decode-failure-diagnostics for the one place this absence is a recorded gap.
 
 ## Platform Notes
 
@@ -348,6 +339,10 @@ open question rather than a settled fact.
 **Rationale**: configuration-id uniqueness is established when a configuration is created (`AIProviderConfiguration.init(id: UUID = UUID(), …)` and the app-side store's add/rename flow), not re-verified by the daemon-side reader. `DaemonProviderResolver` trusts the registry it is handed, per its role as the mirror of the app's resolver, and duplicating that validation here would be redundant work with no daemon-observable benefit.
 **Approved**: pending
 
+**Decision**: A corrupt-but-present provider registry produces no diagnostic signal in the daemon; it reads as an empty registry.
+**Rationale**: The settings-reader shape cannot carry an error and the resolver has no logging surface, so the daemon treats an undecodable registry the same as an absent one (callers then fall through to the zero-config path). Closing the gap would take either a logging/telemetry hook injected into the resolver or a result type distinguishing absent from corrupt, plus a decision on whether operators need that signal.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -356,13 +351,17 @@ open question rather than a settled fact.
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | Reliability |
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | passed | Privacy and Data |
 | [input-sanitization](agenticdevelopercookbook://compliance/security#input-sanitization) | passed | Security |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 `separation-of-concerns` passes because the file's only responsibility is resolving registry/selection/model reads through a caller-supplied closure; it performs no storage, no secret handling, and no plugin-loading logic of its own (that lives in `DaemonAIChat`). `idempotent-operations` passes because every function is a deterministic read of its arguments and the current closure state (see `stateless-namespace`, `no-caching`). `data-minimization` passes because the file collects, stores, or transmits no data itself (see Privacy). `input-sanitization` passes because every malformed or absent input this type can receive — a missing key, an empty string, invalid JSON, a JSON value of the wrong shape, or a non-UUID id string — is handled by failing closed to `[]`/`nil`/`""` rather than throwing, crashing, or producing a corrupted result (see `configurations-empty-when-malformed`, `selected-configuration-malformed-id`).
+
+`unit-test-coverage` passes because `DaemonAIChatTests.swift` has a `// MARK: - DaemonProviderResolver` group whose tests (`resolverSelectsConfiguration`, `resolverToleratesAbsentOrMalformedRegistry`, `resolverReadsStoredModel`) exercise all three operations, including the absent and malformed-registry paths; the array-poisoning and duplicate-id cases have no dedicated test.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Record decode-failure gap as current behavior with a pending decision; cite unit-test-coverage. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/providers/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation, including the open question about swallowed registry-decode diagnostics |

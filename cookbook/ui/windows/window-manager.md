@@ -1,34 +1,33 @@
 ---
 id: 61c7b509-78d1-4407-9a4e-25b155f06fbb
-title: Window Manager
-domain: agenticdevelopertoolkit://cookbook/ui/windows/window-manager
+title: "Window Manager"
+domain: adtoolkit://cookbook/ui/windows/window-manager
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A coordinator for window frame and visibility persistence, the
-  live window registry, launch restore, and document recents.
+summary: "A coordinator for window frame and visibility persistence, the live window registry, launch restore, and document recents."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-management
-- persistence
-- recents
+  - window-management
+  - persistence
+  - recents
 depends-on:
-- agenticdevelopertoolkit://cookbook/foundation/settings-storage
-- agenticdevelopertoolkit://cookbook/ui/windows/screen-manager
-- agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller
+  - adtoolkit://cookbook/foundation/settings-storage
+  - adtoolkit://cookbook/ui/windows/screen-manager
+  - adtoolkit://cookbook/ui/windows/single-window-controller
 related:
-- agenticdevelopertoolkit://cookbook/ui/windows/window-recents
+  - adtoolkit://cookbook/ui/windows/window-recents
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Window Manager
@@ -40,10 +39,10 @@ infrastructure. It owns:
 
 - a frame manager that persists window frames and visibility and reacts to
   screen changes (specified by the frame-manager and
-  [the screen manager](agenticdevelopertoolkit://cookbook/ui/windows/screen-manager)
+  [the screen manager](adtoolkit://cookbook/ui/windows/screen-manager)
   recipes);
 - a window registry that looks up live instances of
-  [the single-instance window base](agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller)
+  [the single-instance window base](adtoolkit://cookbook/ui/windows/single-window-controller)
   by window id through weak references;
 - the launch-restore pass (registering a restorable id and factory, running
   the launch-restore pass, reopening recents on launch);
@@ -219,11 +218,7 @@ screen manager.
   open every recent URL, not only the documents that were open when the app
   last quit; whether a window spec allows reopening on launch is not
   consulted.
-- **reopen-open-failure**: NEEDS REVIEW: Not implemented in source. The
-  open-recent completion handler is empty, so a recent document that fails
-  to open (moved, deleted, unreadable) produces no log, no user-facing
-  error, and no removal from recents; settling it needs a decision on
-  whether failures are logged, presented, or pruned.
+- **reopen-open-failure**: The open-recent completion handler discards its result, so a recent document that fails to open (moved, deleted, unreadable) produces no log, no user-facing error and no removal from recents (see Design Decisions).
 
 ### Window registry
 
@@ -297,11 +292,7 @@ screen manager.
   does not hold a boolean, the settings-store-backed storage backend's
   load-visibility operation MUST return false (the setting's default),
   whereas the platform-preferences storage backend returns nothing.
-- **storage-codec-failure**: NEEDS REVIEW: Not implemented in source. In
-  both implementations a persisted window state that fails to encode is
-  silently not written, and stored data that fails to decode reads as
-  absent (never saved), with no log or error to the caller; settling it
-  needs a decision on whether codec failures are logged or surfaced.
+- **storage-codec-failure**: In both storage implementations a persisted window state that fails to encode is silently not written, and stored data that fails to decode reads as absent (never saved), with no log or error to the caller (see Design Decisions).
 
 ### Namespace
 
@@ -670,6 +661,14 @@ decisions, document-open failures and screenshot failures are not logged.
 **Rationale**: The source marks this intentional, pending `WindowRecentsTracker` in a follow-up slice.
 **Approved**: pending
 
+**Decision**: A recent document that fails to reopen on launch is neither logged, presented nor pruned from recents.
+**Rationale**: `WindowManager.reopenRecentsOnLaunch()` passes an empty `{ _, _, _ in }` completion handler to `NSDocumentController.openDocument(withContentsOf:display:)`, discarding the error. Closing it means deciding whether failures are logged, shown to the user or removed from the recents list.
+**Approved**: pending
+
+**Decision**: Window-state codec failures are absorbed without a log or a signal to the caller.
+**Rationale**: `UserDefaultsWindowStateStorage` uses `try?` for both decode and encode, and `SettingsStoreWindowStateStorage` delegates to a settings store that absorbs the same failures; neither reports anything. Closing it means deciding whether codec failures are logged or surfaced and then widening the `WindowStateStorage` protocol.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -691,6 +690,7 @@ separation-of-concerns passes because frame persistence (`WindowFrameManager`), 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the reopen-open-failure and storage-codec-failure markers as current behavior (empty open-recent handler, try?-absorbed codec failures) with two pending Design Decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/windows/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from `WindowManager.swift`, `WindowRegistry.swift`, `WindowStateStorage.swift`, `SettingsStoreWindowStateStorage.swift`, `UserDefaultsWindowStateStorage.swift`, `WindowStateNamespace.swift`, `WindowScreenshot.swift` and their tests |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `WindowManager.swift`, `WindowRegistry.swift`, `WindowStateStorage.swift`, `SettingsStoreWindowStateStorage.swift`, `UserDefaultsWindowStateStorage.swift`, `WindowStateNamespace.swift`, `WindowScreenshot.swift` and their tests |

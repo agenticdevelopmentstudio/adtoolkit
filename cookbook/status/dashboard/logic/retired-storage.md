@@ -1,28 +1,27 @@
 ---
 id: ae8d4137-e2fc-495f-9592-46ad4b1ac60f
-title: Retired Storage
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/retired-storage
+title: "Retired Storage"
+domain: adtoolkit://cookbook/status/dashboard/logic/retired-storage
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: One-time, never-throwing purge of localStorage keys the status board no longer
-  reads
+summary: "One-time, never-throwing purge of localStorage keys the status board no longer reads"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/live-snapshot
+  - adtoolkit://cookbook/status/dashboard/state/live-snapshot
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Retired Storage
@@ -193,4 +192,4 @@ Not applicable: the module has no log calls. A storage failure is caught by an e
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from source |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from source |

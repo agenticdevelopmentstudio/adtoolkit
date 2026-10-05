@@ -1,29 +1,31 @@
 ---
 id: ec64b22b-8a25-431d-8866-b7a01acd91fe
-title: CrudTable
-domain: agenticdevelopertoolkit://cookbook/ui/crud/crud-table
+title: "CrudTable"
+domain: adtoolkit://cookbook/ui/crud/crud-table
 type: ingredient
-version: 1.2.3
+version: 1.3.1
 status: review
 language: en
-created: '2026-07-03'
-modified: '2026-09-27'
+created: 2026-07-03
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "Metadata-driven row list from @agentic-toolkit/crud: renders a table's PK + scalar columns from its CrudTableMeta, with per-row Edit/Delete and a New action."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- crud
-- table
-- metadata
-- list
+  - crud
+  - table
+  - metadata
+  - list
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/crud/crud-record-form
+  - adtoolkit://cookbook/ui/crud/crud-record-form
 references: []
+approved-by: ""
+approved-date: ""
 ---
 
 # CrudTable
@@ -36,7 +38,9 @@ spec) plus the current `rows`, it renders a plain table whose columns are chosen
 from the metadata: the primary-key column(s) first, then the remaining **scalar**
 columns (object/array columns are form-only), capped at six. Each row carries
 per-row **Edit** and **Delete** ghost buttons, and a header **New** action sits
-above the table beside a row count.
+above the table beside a row count. When the viewer may not write the table
+(`canWrite` is false) New and Delete are dropped, Edit becomes **View**, and a
+visible "Read-only" badge with an explanatory note replaces New.
 
 It is a **placeholder-grade** list — no sorting, search, or pagination (the
 backend caps lists at 500 rows) — used by the `/all-data` generic table browser
@@ -71,13 +75,24 @@ data-fetching or state: the caller supplies `rows`, `loading`, and `error` (from
   message.
 - **show-empty-state**: When there are zero rows and no error (and not
   loading), the table MUST show a "No rows yet." placeholder instead of a table.
-- **offer-new-action**: The header MUST render a New button that invokes
-  `onNew` when activated.
-- **offer-per-row-edit-delete**: Every data row MUST render Edit and Delete
-  actions that invoke `onEdit(row)` / `onDelete(row)` with that row.
+- **offer-new-action**: When `canWrite` is true, the header MUST render a New
+  button that invokes `onNew` when activated.
+- **offer-per-row-edit-delete**: When `canWrite` is true, every data row MUST
+  render Edit and Delete actions that invoke `onEdit(row)` / `onDelete(row)`
+  with that row.
   `CrudTable` MUST NOT confirm before calling `onDelete`: confirming (or not)
   is the caller's job inside its `onDelete` handler, so implementers don't
   add a second, bespoke confirmation dialog.
+- **read-only-mode**: When `canWrite` is false, the header MUST NOT render New
+  and MUST instead show a visible "Read-only" badge beside a text note giving
+  the reason (`readOnlyNote`, defaulting to "Shared platform data — only an
+  administrator can change it."); each data row MUST render a single **View**
+  action that invokes `onEdit(row)` and MUST NOT render Delete. The reason MUST
+  be visible text, not only a tooltip, so it reaches assistive technology and
+  touch users.
+- **require-write-decision**: `canWrite` MUST be a required input with no
+  default, so a caller that has not decided the viewer's write access cannot
+  silently receive the permissive behavior.
 - **show-row-count**: When not loading, the header MUST show the row count,
   correctly singularized ("1 row" vs "N rows"), including "0 rows" while the
   empty-state placeholder is showing.
@@ -144,7 +159,7 @@ data-fetching or state: the caller supplies `rows`, `loading`, and `error` (from
 - The count line ("N rows" / "Loading…") gives sighted and AT users a sense
   of table size. It is plain text with no `aria-live` region, so an assistive
   technology user does not get an automatic announcement when it changes.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. The header, cell, and muted caption text color resolves from the active theme's apt-* text token roles against the hosting background at runtime; the component performs no contrast check, so whether a given theme's resolved pair meets 4.5:1 cannot be determined from this file. This would be settled by a theme-level contrast audit of apt-* text tokens against the backgrounds it sits on.
+- **minimum-contrast-ratio**: The header, cell and muted caption text colors resolve from the active theme's `apt-*` text token roles against the hosting background at runtime. The component performs no contrast check of its own, so whether a theme's resolved pair meets 4.5:1 depends on that theme's values.
 
 ## Conformance Test Vectors
 
@@ -172,6 +187,10 @@ data-fetching or state: the caller supplies `rows`, `loading`, and `error` (from
 | T20 | label-row-actions-header | header row | The trailing actions `<th>` carries `aria-label="Row actions"` and no visible text |
 | T21 | truncate-long-cells | a cell value exactly 80 characters long | Cell shows all 80 characters with no trailing `…` |
 | T22 | render-pk-then-scalar-columns, cap-columns, format-null-cells, stringify-non-string-cells, truncate-long-cells | import `{ displayColumns, cellText }` directly from the module | Both are callable as pure functions, independent of rendering `CrudTable` |
+| T23 | read-only-mode | `canWrite=false`, `rows` non-empty | No New button and no Delete button render; a "Read-only" badge and the default note render in the header; each row's single action reads "View" and calls `onEdit(row)` |
+| T24 | read-only-mode | `canWrite=false`, `readOnlyNote="Papers are curated."` | The header shows "Papers are curated." instead of the default note |
+| T25 | offer-new-action, offer-per-row-edit-delete | `canWrite=true`, `rows` non-empty | New renders in the header; each row shows Edit and Delete |
+| T26 | minimum-contrast-ratio | Render under a theme whose caption token is close to the host background | Text colors are the theme's `apt-*` token values exactly; no contrast adjustment is applied |
 
 ## Edge Cases
 
@@ -197,13 +216,42 @@ data-fetching or state: the caller supplies `rows`, `loading`, and `error` (from
 | `rows` | `CrudRow[]` | — | The current rows to display (already fetched by the caller). |
 | `loading` | `boolean` | — | Show the spinner + "Loading…" count. |
 | `error` | `string \| null` | — | Error message to surface (null = none). |
+| `canWrite` | `boolean` | — (required) | Whether the viewer may write the table; false drops New and Delete and turns Edit into View. |
 | `onNew` | `() => void` | — | Invoked by the header New button. |
-| `onEdit` | `(row: CrudRow) => void` | — | Invoked by a row's Edit button. |
+| `onEdit` | `(row: CrudRow) => void` | — | Invoked by a row's Edit button, or View when read-only. |
 | `onDelete` | `(row: CrudRow) => void` | — | Invoked by a row's Delete button. |
+| `readOnlyNote` | `string` | "Shared platform data — only an administrator can change it." | Why a read-only table is read-only, shown beside the "Read-only" badge. |
 
 Two pure helpers are also exported for reuse/testing: `displayColumns(meta)` (the
 PK-first, scalar-only, capped column list) and `cellText(row, column)` (the em
 dash / JSON-stringify / 80-char-truncate cell formatter).
+
+## Deep Linking
+
+Not applicable: the table defines no URL scheme, route or navigation destination of its own; the caller decides what `onEdit` and `onNew` open.
+
+## Localization
+
+The component contains user-facing English string literals with no localization lookup: `New`, `Edit`, `View`, `Delete`, `Read-only`, `Loading…`, `No rows yet.`, the default read-only note, the `Row actions` accessible label and the row-count text ("N row" / "N rows"). Column headers are the API's column names, shown verbatim. Cell text is rendered as given, so any Unicode value displays unchanged, and the 80-character truncation counts string length, not rendered glyphs.
+
+## Accessibility Options
+
+Text sizes use `rem`-based classes, so they follow the user's browser font-size setting. The component has no animation of its own beyond the shared spinner, adds no motion that a reduced-motion setting would need to suppress, and carries no color-only meaning: the read-only state is a text badge plus a text note.
+
+## Feature Flags
+
+Not applicable: the component contains no feature-flag or settings-key reference; whether a viewer may write is the caller's `canWrite` input.
+
+## Analytics
+
+Not applicable: the component contains no analytics or event-tracking call; the caller's handlers own any telemetry.
+
+## Privacy
+
+- **Data handled**: Whatever row values the caller passes in `rows`, which MAY include personal or sensitive fields; the component renders them as text and does not inspect them.
+- **Storage**: None; the component holds no state of its own.
+- **Transmission**: None; it performs no network call.
+- **Retention**: None; rows live only as long as the caller's props.
 
 ## Logging
 
@@ -249,6 +297,7 @@ handlers (and `useCrudResource`) own any telemetry or error reporting.
 
 | Platform | Path |
 |----------|------|
+| web | `packages/web/packages/crud/src/CrudTable.tsx` |
 
 ## Design Decisions
 
@@ -283,6 +332,14 @@ trailing `…` keeps rows scannable without mutating the underlying data.
 survives for editing.
 **Approved**: pending
 
+**Decision**: The table performs no contrast check: header, cell and caption colors are the active theme's `apt-*` text tokens as resolved.
+**Rationale**: The component only names tokens and never sees their values, so whether a theme's resolved pair meets 4.5:1 cannot be confirmed from the source. Closing the gap means a theme-level contrast audit of the `apt-*` text tokens against the backgrounds they sit on.
+**Approved**: pending
+
+**Decision**: `canWrite` is required and read-only is shown as visible text (a badge and a note) rather than a tooltip, with Edit relabelled View.
+**Rationale**: A caller that has not decided write access must not silently get the permissive answer, because the backend refuses those writes and offering them is offering a 403; a `title` tooltip reaches neither a screen reader nor a touch device, so the reason is rendered in the page.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -293,6 +350,8 @@ survives for editing.
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [dynamic-type-support](agenticdevelopercookbook://compliance/accessibility#dynamic-type-support) | passed | Accessibility |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `semantic-markup`, `screen-reader-support`, and `keyboard-navigable` rest on the real
 `<table>`/`<thead>`/`<tbody>`/`<th>` markup, the `aria-label="Row actions"` header, and
@@ -306,10 +365,14 @@ is failed because `New`, `Edit`, `Delete`, `Loading…`, `No rows yet.`, and the
 row-count text ("N row"/"N rows") are all literal, unwrapped English strings in
 `CrudTable.tsx`.
 
+`separation-of-concerns` passes because `CrudTable` is presentational: `rows`, `loading`, `error`, `canWrite` and every action callback are props, and fetching, confirmation and permission decisions live in `useCrudResource` and the caller. `unit-test-coverage` is `partial` because `packages/web/packages/crud/src/__tests__/CrudTable.test.tsx` covers `displayColumns`, `cellText`, the loading, empty and error states, the New/Edit/Delete callbacks, and the read-only mode (`drops New and Delete and turns Edit into View when the viewer may not write`), but no test passes `readOnlyNote` or asserts the default note text, and none pins that colors are the theme's token values.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.3.1 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Added the read-only mode and required canWrite requirements, vectors T23-T26 and configuration rows to match the code; resolved the minimum-contrast-ratio NEEDS REVIEW marker as current behavior with a pending decision; added the Deep Linking, Localization, Accessibility Options, Feature Flags, Analytics and Privacy sections; filled Reference Implementations; added separation-of-concerns and unit-test-coverage compliance rows. |
 | 1.2.3 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.2.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

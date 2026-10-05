@@ -1,29 +1,28 @@
 ---
 id: 43d93a67-c469-40d1-8465-076cd782e1b2
-title: Portfolio Indicator
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/portfolio-indicator
+title: "Portfolio Indicator"
+domain: adtoolkit://cookbook/status/dashboard/state/portfolio-indicator
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: State deriving the whole-portfolio status glyph key and problem count,
-  falling back to unknown when feeds are offline, blind or stale.
+summary: "State deriving the whole-portfolio status glyph key and problem count, falling back to unknown when feeds are offline, blind or stale."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/board
+  - adtoolkit://cookbook/status/dashboard/state/board
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/board
+  - adtoolkit://cookbook/status/dashboard/state/board
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Portfolio Indicator

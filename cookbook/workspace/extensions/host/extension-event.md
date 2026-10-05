@@ -1,19 +1,17 @@
 ---
 id: 8e0d1a9d-27a1-4b5b-9a7d-5b9f9a5f7f2e
-title: Extension Event
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
+title: "Extension Event"
+domain: adtoolkit://cookbook/workspace/extensions/host/extension-event
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The extension host''s coalescing pub/sub relay behind every vscode.d.ts
-  callable Event<T>: a fixed, non-trailing-edge window that merges same-window
-  fires, drops fires with no listener, and delivers to each JavaScript context once.'
+summary: "The extension host's coalescing pub/sub relay behind every vscode.d.ts callable Event<T>: a fixed, non-trailing-edge window that merges same-window fires, drops fires with no listener, and delivers to each JavaScript context once."
 platforms:
   - swift
   - macos
@@ -74,6 +72,7 @@ This component is this extension host's port of VS Code's `DebounceEmitter` + `P
 - **immediate-window-synchronous-close**: The immediate window scheduler's open-window operation MUST invoke the close callback synchronously, before the open-window call returns, regardless of the delay value.
 - **window-scheduling-has-no-cancellation**: The window-scheduling seam MUST declare no operation to cancel a scheduled window; once a window is opened, the emitter MUST NOT attempt to prevent or defer that window's eventual close.
 - **logging-conformance**: The emitter MUST conform to the shared logging role used across the extension host, exposing its logger as a type-level property rather than a stored instance property.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -103,6 +102,7 @@ Not applicable — this is the extension host's coalescing event emitter, not a 
 | extension-event-010 | remove-listeners-by-owner | Owner A and owner B each subscribe one listener on the same emitter; remove listeners owned by A; fire with payload "x" and close | The listener count is 1 after the call; only B's listener is invoked — traced directly to the remove-listeners-by-owner operation's filtering logic; no dedicated test exists in the given sources for this emitter, though the same operation is exercised indirectly through a caller's dispose() in a different test file (not among the given sources) |
 | extension-event-011 | mapped-value-cached-per-context | Two listeners subscribed from the same JavaScript context; the map function is instrumented to count its own calls; fire with payload "x" and close | The map function is called exactly once for that window despite two listeners sharing the context, and both listeners receive JavaScript values that are the same object — traced directly to delivery's per-context cache; no dedicated test exists in the given sources |
 | extension-event-012 | window-scheduling-required-no-default, immediate-window-synchronous-close | Construct the emitter with the immediate window scheduler; subscribe a listener; fire with payload "x" with no explicit "close" step | The listener is invoked before the fire call returns, because the immediate window scheduler's open-window operation calls its close callback synchronously — traced directly to that conformer's own body; no dedicated test exists in the given sources for this conformer against the emitter, though its own doc comment states the synchrony explicitly |
+| extension-event-013 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -224,6 +224,7 @@ No other event in this file is logged: subscribing's two refusals (non-function 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/host/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

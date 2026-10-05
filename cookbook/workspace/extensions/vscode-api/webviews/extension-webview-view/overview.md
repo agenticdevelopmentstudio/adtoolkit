@@ -1,0 +1,3 @@
+
+This is the pane a contributed view of kind `.webview` gets. It shows an explanatory placeholder — the view's name, the extension that contributed it, and a sentence saying its webview provider has not run yet — until the extension's `resolveWebviewView` runs and hands back a live webview panel, at which point it swaps the placeholder for that panel's own view. If the panel is later disposed (the extension is unloaded, reloaded, or disabled), it swaps back to a freshly built placeholder. It never becomes the webview itself; it is the seam between the piece that knows what the manifest declared and the piece that knows who is installed and awake.
+

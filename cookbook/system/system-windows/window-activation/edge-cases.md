@@ -1,0 +1,21 @@
+
+- **Empty target list**: Running the harness MUST still clear the log, run the permission check and inventory, and return `(0, 0)` with `Targets: 0`.
+- **Accessibility denied**: The run MUST abort after three log lines and return `(0, 0)`; the host app is not reactivated.
+- **Non-positive PID**: The TTY resolver MUST return `nil` without spawning `ps`, so the iTerm TTY strategy logs "has no TTY" and fails.
+- **Exited process or no controlling TTY**: `ps` output is empty (it prints `??` for a process without a TTY, which is non-empty and is passed through), so an exited PID MUST yield `nil`; a `??` result MUST produce a `/dev/??` search that is not found.
+- **`ps` hangs**: The resolver waits for exit with no timeout; a hung `ps` MUST block the calling thread indefinitely.
+- **Scripting call hangs or iTerm2 not running**: The scripting call has no timeout; if iTerm2 is not running, telling it to perform the walk MAY launch it before returning, and a dialog-blocked target app MUST block the calling thread until the automation event times out on its own.
+- **Automation permission denied**: A refused automation event MUST surface as a runtime failure with its message and error number in the log, and the strategy returns `false`.
+- **Empty `projectName` and `cwd`**: Localized case-insensitive containment of an empty string is false, so an empty `projectName` and empty `cwd` MUST match no window, and the accessibility title-match strategy returns `false`.
+- **Root `cwd`**: A `cwd` of `/` has last path component `/`, so any window whose title contains `/` MUST match.
+- **Broad title match**: Matching is substring-based across every regular app, so a short `projectName` MUST match the first unrelated window whose title contains it (for example a browser tab).
+- **Multiple running instances of one terminal**: The bring-terminal-to-front strategy MUST activate only the first instance the provider returns.
+- **`termProgram` of an uncatalogued terminal**: Only the iTerm strategy (if empty) and the accessibility title-match strategy can apply; the bring-terminal-to-front strategy MUST be skipped as not applicable.
+- **Verification false positive**: Any non-empty frontmost title other than the host app MUST count as PASS even if it is not the target's window.
+- **Host app title literally `Sessions`**: A foreign app whose focused window is titled `Sessions` MUST be counted as FAIL.
+- **Application Support unavailable**: Constructing the log MUST fall back to in-memory-only logging.
+- **Directory creation fails**: The error is ignored; the file URL is still set and every file write MUST silently fail while memory logging continues.
+- **Log file deleted between writes**: The next append MUST recreate the file containing only that line; earlier memory entries are not rewritten.
+- **Concurrent appends**: The in-memory buffer MUST stay consistent; file ordering is the open question on log-file-write-ordering.
+- **Unbounded growth**: Neither the buffer nor the file has a size cap; both grow until cleared or process exit (the file persists across launches until the next clear).
+

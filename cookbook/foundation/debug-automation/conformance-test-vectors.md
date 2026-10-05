@@ -1,0 +1,14 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| foundation-debug-automation-001 | switch-key-identity, release-build-always-off / debug-build-reads-argument-domain | Read the switch's enabled state, keyed by a name never passed as a launch argument, against a settings store with no keys set. | Returns `false`. |
+| foundation-debug-automation-002 | debug-build-reads-argument-domain | Read the switch's enabled state, keyed by a name whose value is set to `true` in the settings store, under a debug build. | Returns `true`. |
+| foundation-debug-automation-003 | debug-switch-fixed-key, defaults-key-alias | Compare the quiet presentation gate's underlying switch key to its exposed settings key. | Both equal the string `"QuietWindowPresentation"`. |
+| foundation-debug-automation-004 | resolve-or-precedence, test-host-short-circuits-defaults-read | Resolve the quiet-presentation decision with the test-host input `true`, against a settings store with the key set to `false`. | Returns `true`, regardless of the stored `false`. |
+| foundation-debug-automation-005 | resolve-or-precedence | Resolve the quiet-presentation decision with the test-host input `false`, against a settings store with the key set to `true`. | Returns `true`. |
+| foundation-debug-automation-006 | resolve-or-precedence | Resolve the quiet-presentation decision with the test-host input `false`, against an empty settings store. | Returns `false`. |
+| foundation-debug-automation-007 | is-enabled-live-read, test-host-detection | Read the quiet presentation gate's enabled state from inside the running automated test process itself. | Returns `true` — the gate reads the live environment (this process is a test host), not merely the resolve step in isolation. |
+| foundation-debug-automation-008 | quiet-order-front, quiet-activation-gate (ordering half) | Evaluate whether front-forcing should be suppressed (the negation of the quiet presentation gate) while running under the automated test framework. | Returns `false`, confirming the gate is enabled for the calling process. |
+| foundation-debug-automation-009 | sink-level-only, quiet-make-key-and-order-front, level-set-before-ordering | Build a fresh window and perform the quiet make-key-and-order-front operation while the quiet presentation gate is enabled. | The window is visible, is attached to a screen, and its level equals the desktop's window level. |
+| foundation-debug-automation-010 | quiet-make-key-and-order-front | Compare the key-window status of a window shown with unconditional make-key-and-order-front against one shown with the quiet make-key-and-order-front operation, both while the gate is enabled. | The two key-window statuses are equal — sinking the level costs no key status a plain call would have given. |
+

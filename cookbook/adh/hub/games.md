@@ -1,40 +1,39 @@
 ---
 id: 5d44b127-7701-4d3f-8d34-fe50084e52b7
-title: 'Hub Domain: Games'
-domain: agenticdevelopertoolkit://cookbook/adh/hub/games
+title: "Hub Domain: Games"
+domain: adtoolkit://cookbook/adh/hub/games
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Games catalog domain logic: the web gamesApi/gameDefinitionsApi/gameEffectsApi/gameMappingsApi
-  CRUD clients over four tables of the game schema.'
+summary: "Games catalog domain logic: the web gamesApi/gameDefinitionsApi/gameEffectsApi/gameMappingsApi CRUD clients over four tables of the game schema."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- games
-- crud
-- ecosystems
-- jsonb
-- web
+  - games
+  - crud
+  - ecosystems
+  - jsonb
+  - web
 depends-on:
-- agenticdevelopertoolkit://cookbook/data/services/auth/auth-client
+  - adtoolkit://cookbook/data/services/auth/auth-client
 related:
-- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
+  - adtoolkit://cookbook/adh/hub/ecosystems/ecosystems
 references:
-- packages/web/packages/data/src/games/games.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/games/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/games/__tests__/games.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/games/games.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/games/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/games/__tests__/games.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Hub Domain: Games
@@ -369,7 +368,7 @@ Not applicable — this is domain logic, not a visual component.
   `character_names`, `status`, `event_log`, `trigger`, `operation`, and
   `event_retention_days`.
 - **Concurrent access**: This module is plain single-threaded JavaScript
-  with no actor, lock, or queue of its own — every exported function is an
+  with no lock, serial queue, or other serialization of its own — every exported function is an
   independent `async` call, and nothing here serializes two calls made at
   once. Two closely-timed `gamesApi.create` calls for the same
   `(ecosystemId, slug)` are not deduplicated client-side; the backend's own
@@ -669,6 +668,7 @@ hidden one.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe: the web `gamesApi`/`gameDefinitionsApi`/`gameEffectsApi`/`gameMappingsApi` contract over the `game` schema's four operator-writable tables. |

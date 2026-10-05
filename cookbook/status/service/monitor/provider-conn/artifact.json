@@ -1,0 +1,74 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "4aad9d0a-4984-4021-ad1f-d8aa6a15b066",
+    "title": "Status Server Monitor Provider Connection",
+    "domain": "adtoolkit://cookbook/status/service/monitor/provider-conn",
+    "type": "ingredient",
+    "version": "1.0.3",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Assembles a ProviderConn from active storage integrations and StatusConfig secrets, then enumerates deploy projects from it — the storage/config-port replacement for deploy-platform's DB-based helpers.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "monitor",
+      "deploy",
+      "secrets",
+      "server"
+    ],
+    "depends-on": [
+      "agenticdevelopercookbook://guidelines/implementing/security/sensitive-data",
+      "agenticdevelopercookbook://guidelines/implementing/security/secure-storage"
+    ],
+    "related": [
+      "adtoolkit://cookbook/status/service/config",
+      "adtoolkit://cookbook/status/service/monitor/enrich-deploy-errors",
+      "adtoolkit://cookbook/status/service/monitor/fetch-vercel-projects"
+    ],
+    "references": [
+      "packages/web/packages/status-server/src/monitor/provider-conn.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/deploy-platform/src/conn/index.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/deploy-platform/src/enumerate/index.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/refresh-project-meta.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/routes/deploy-logs.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "169a5685296979e1",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

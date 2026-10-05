@@ -1,38 +1,34 @@
 ---
 id: 0cb9069f-57c6-4ac2-a952-6b331c4b6889
-title: Webview Resource URL
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-resource-url
+title: "Webview Resource URL"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-resource-url
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Names and gatekeeps every file a webview extension panel may load, deciding
-  from the URL alone whether a request is the panel's own document, an allowed file,
-  or refused.
+summary: "Names and gatekeeps every file a webview extension panel may load, deciding from the URL alone whether a request is the panel's own document, an allowed file, or refused."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- webview
-- path-safety
-- containment
+  - extension-host
+  - webview
+  - path-safety
+  - containment
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewResourceURL.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/WebviewResourceURLTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewSchemeHandler.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/WebviewResourceURL.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/WebviewResourceURLTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewSchemeHandler.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Webview Resource URL

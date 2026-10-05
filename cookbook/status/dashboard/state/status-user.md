@@ -1,28 +1,27 @@
 ---
 id: 5c202bb7-c4b6-4da9-a9b0-9d58f664461f
-title: Status User State
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/status-user
+title: "Status User State"
+domain: adtoolkit://cookbook/status/dashboard/state/status-user
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: State returning the signed-in user object or null, a thin shape adapter
-  over the shared status-auth-me session read.
+summary: "State returning the signed-in user object or null, a thin shape adapter over the shared status-auth-me session read."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/api
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Status User State
@@ -60,6 +59,7 @@ Callers that need only the user object use this state — for example, views tha
 - **api-client-injection**: The state MUST resolve URLs through an injected API client. That is the client from the nearest override provider, or the same-origin default client when there is no provider.
 - **concurrency**: Simultaneous requests MUST be deduplicated and cache updates ordered through the single cache entry for the key, so no concurrent or interleaved access to the session occurs.
 - **no-other-side-effects**: Apart from the `/auth/me` request and the cache entry, the state MUST NOT write storage, log, emit analytics or navigate.
+- **client-only**: Status User State MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 
 ## Appearance
 
@@ -92,6 +92,7 @@ Vectors 001 to 004 come from the shared request function's own test assertions, 
 | use-status-user-011 | ok-null-response | `/auth/me` responds 200 `{}` | Resolves to `null` |
 | use-status-user-012 | query-provider-precondition | Render the state with no shared cache provider available | Render throws a missing-client error |
 | use-status-user-013 | body-not-validated | 200 `{ user: { email: "x@y.z", role: "superuser" } }` | Returns the object as sent, with `role` `"superuser"`; no error |
+| use-status-user-014 | client-only | Load Status User State in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -210,6 +211,7 @@ Not applicable: the source contains no log calls. Failures show up only as throw
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,32 +1,30 @@
 ---
 id: bd0d7595-f186-4aaf-bb45-5c733cfdb03d
-title: RDID Picker
-domain: agenticdevelopertoolkit://cookbook/adh/hub/identifiers/rdid-picker
+title: "RDID Picker"
+domain: adtoolkit://cookbook/adh/hub/identifiers/rdid-picker
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Modal, debounced, keyboard-driven search over the identifier registry that
-  hands the caller one whole matched option, built on a shared modal command-search
-  interaction.
+summary: "Modal, debounced, keyboard-driven search over the identifier registry that hands the caller one whole matched option, built on a shared modal command-search interaction."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- component
-- picker
-- search
-- ui
+  - component
+  - picker
+  - search
+  - ui
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # RDID Picker
@@ -455,6 +453,8 @@ command palette.
 | [error-recovery](agenticdevelopercookbook://compliance/reliability#error-recovery) | failed | Reliability |
 | [graceful-degradation](agenticdevelopercookbook://compliance/reliability#graceful-degradation) | passed | Reliability |
 | [fault-tolerance](agenticdevelopercookbook://compliance/reliability#fault-tolerance) | passed | Reliability |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 Statuses rest on `rdid-picker.tsx`'s composition of `CommandPalette`/`Dialog`
 (confirmed ARIA roles — `combobox`, `listbox`, `group`, `option` —, arrow/Home/End/Enter
@@ -469,6 +469,8 @@ automatic recovery loop, versus its non-crashing handling of malformed
 rejections and whitespace input (grounding `error-recovery` failing while
 `graceful-degradation` and `fault-tolerance` pass).
 
+`separation-of-concerns` passes: `rdid-picker.tsx` composes the shared `CommandPalette` and delegates the actual search to a caller-supplied function, holding only transient query, result, and error state. `unit-test-coverage` passes: `rdidPicker.test.tsx` covers debouncing a burst of keystrokes to one search with the final query, listing results, handing back the whole option, surfacing a failed search, not searching for an empty field, and aborting a search superseded by a newer keystroke.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -477,3 +479,4 @@ rejections and whitespace input (grounding `error-recovery` failing while
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: use "ingredient" consistently instead of "recipe"; rebuild the Compliance table from real catalog checks; add closes-on-pick and trimmed-query-to-search requirements with test vectors; split the superseded-search test vector into pending-timer and in-flight-abort cases and add a reopen-before-elapsed test vector; restate internal-state test vectors as `CommandPalette` props; cite the `rdid-picker.tsx` location for every Design Decision rationale; bold `**Approved**`; record the fixed-string localization surface as a Design Decision. |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/identifiers/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Add separation-of-concerns and unit-test-coverage compliance. |

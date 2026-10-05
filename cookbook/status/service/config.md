@@ -1,44 +1,43 @@
 ---
 id: 31fe479f-e95e-4f03-b957-faa2314a03be
-title: Status Server Config
-domain: agenticdevelopertoolkit://cookbook/status/service/config
+title: "Status Server Config"
+domain: adtoolkit://cookbook/status/service/config
 type: ingredient
-version: 1.0.2
+version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The status backend's configuration contract (StatusConfig), its envConfig
-  environment adapter, and the seed-roster port consumed by POST /config/seed.
+summary: "The status backend's configuration contract (StatusConfig), its envConfig environment adapter, and the seed-roster port consumed by POST /config/seed."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- configuration
-- server
-- security
-- secrets
+  - configuration
+  - server
+  - security
+  - secrets
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
-- agenticdevelopercookbook://guidelines/implementing/security/secure-storage
-- agenticdevelopercookbook://guidelines/implementing/security/cors
+  - agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
+  - agenticdevelopercookbook://guidelines/implementing/security/secure-storage
+  - agenticdevelopercookbook://guidelines/implementing/security/cors
 related:
-- agenticdevelopertoolkit://cookbook/status/service/auth
+  - adtoolkit://cookbook/status/service/auth
 references:
-- packages/web/packages/status-server/src/config/env.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/config/seed.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/config/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/config.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/config-env.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/config-cadence.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/config-clone.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/config.int.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/config/env.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/config/seed.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/config/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/config.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/config-env.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/config-cadence.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/config-clone.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/config.int.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Config
@@ -140,7 +139,7 @@ files depends on them, and specifies their internals nowhere.
   its `Number()` result and a non-numeric string produces `NaN`; this MUST
   NOT be confused with `deploySyncSeconds` and `github.fetchTimeoutMs`,
   which instead require `Number.isFinite(n) && n > 0` via `positiveNumber`.
-- **numeric-env-validation**: NEEDS REVIEW: Not implemented in source. `port` and `probeIntervalSeconds` accept a `NaN` or non-positive `Number(...)` result with no fallback, no thrown error, and no distinguishable signal, unlike `deploySyncSeconds`/`github.fetchTimeoutMs`'s `positiveNumber` guard; whether these two getters should validate the same way, or validation belongs to `envConfig`'s callers (the HTTP listen call, the probe scheduler), needs the team that owns those callers to decide.
+- **numeric-env-validation**: The port and probe interval getters MUST return the numeric conversion of their environment values as given. A NaN or non-positive result is accepted with no fallback, no thrown error and no distinguishable signal, unlike the deploy-sync and fetch-timeout getters, which apply a positive-number guard.
 - **deploy-sync-seconds-validated**: `deploySyncSeconds` MUST be `null`
   unless `env.DEPLOY_SYNC_SECONDS` parses via `Number()` to a value
   satisfying `Number.isFinite(n) && n > 0`; a blank, zero, negative, or
@@ -591,7 +590,7 @@ Not applicable: none of `env.ts`, `port.ts`, or `seed.ts` contains a logging cal
   rather than bundling twenty getters into one compound statement.
   **Approved**: pending
 - **Decision**: this recipe's `related` field links to
-  `agenticdevelopertoolkit://cookbook/status/service/auth` one-directionally; the
+  `adtoolkit://cookbook/status/service/auth` one-directionally; the
   reverse link on `status-server-auth.md` was not added.
   **Rationale**: this recipe was authored under an explicit constraint to
   write only `cookbook/status/service/config.md` and touch no other file;
@@ -599,6 +598,10 @@ Not applicable: none of `env.ts`, `port.ts`, or `seed.ts` contains a logging cal
   ("acceptable but bidirectional is preferred"), so this is a known,
   intentional gap in the preferred state, not an oversight.
   **Approved**: pending
+
+**Decision**: The port and probe-interval getters do not validate their numeric environment values.
+**Rationale**: It stands today because validation is left to the callers (the listen call and the probe scheduler). Closing it needs the teams owning those callers to decide whether the getters should apply the same positive-number guard, and a test for a non-numeric value.
+**Approved**: pending
 
 ## Compliance
 
@@ -645,6 +648,7 @@ credential or an admin email into.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Resolved numeric-env-validation marker as current behavior plus pending decision |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

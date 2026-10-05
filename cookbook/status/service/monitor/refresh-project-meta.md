@@ -1,49 +1,49 @@
 ---
 id: 1c3d8661-12f2-4a84-bef4-7ccd4e3841e7
-title: Status Server Monitor Refresh Project Meta
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/refresh-project-meta
+title: "Status Server Monitor Refresh Project Meta"
+domain: adtoolkit://cookbook/status/service/monitor/refresh-project-meta
 type: ingredient
-version: 1.0.2
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Reconciles the deploy_project_meta table's Vercel rows against a fetched
-  snapshot — upserting what still exists and evicting what does not — so the table
-  stays a mirror of the account instead of an upsert-only ledger.
+summary: "Reconciles the deploy_project_meta table's Vercel rows against a fetched snapshot — upserting what still exists and evicting what does not — so the table stays a mirror of the account instead of an upsert-only ledger."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- vercel
-- deploy
-- persistence
-- server
+  - monitor
+  - vercel
+  - deploy
+  - persistence
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/data/constraints-and-validation
-- agenticdevelopercookbook://guidelines/implementing/data/transactions-and-concurrency
+  - agenticdevelopercookbook://guidelines/implementing/data/constraints-and-validation
+  - agenticdevelopercookbook://guidelines/implementing/data/transactions-and-concurrency
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-vercel-projects
-- agenticdevelopertoolkit://cookbook/status/service/monitor/provider-conn
-- agenticdevelopertoolkit://cookbook/status/service/config
-- agenticdevelopertoolkit://cookbook/status/service/storage/libsql
+  - adtoolkit://cookbook/status/service/monitor/fetch-vercel-projects
+  - adtoolkit://cookbook/status/service/monitor/provider-conn
+  - adtoolkit://cookbook/status/service/config
+  - adtoolkit://cookbook/status/service/storage/libsql
 references:
-- packages/web/packages/status-server/src/monitor/refresh-project-meta.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/refresh-project-meta.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/provider-conn.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/libsql/stores/deploy-store.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/refresh-project-meta.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/refresh-project-meta.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/provider-conn.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/libsql/stores/deploy-store.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
+
+# Status Server Monitor Refresh Project Meta
 
 ## Overview
 
@@ -125,7 +125,7 @@ elsewhere and are never upserted or pruned by this file.
   comment states — the code's real behavior, traced through `provider-conn.ts`,
   is the by-name `secrets` lookup, and that is the contract this recipe
   documents.
-- **concurrent-invocation-not-guarded**: NEEDS REVIEW: Not implemented in source. `syncVercelProjectMeta` performs its reconcile as three separate, unguarded storage calls (the upsert, the `listProjectMetaNames` read, and the conditional delete) with no transaction or lock spanning them, so two overlapping invocations could interleave those steps and evict a name another call's upsert had just restored, or compute a prune list against a set another call is mid-upsert on; this codebase's actual status-server calls this function from more than one independent site with no coordination between them.
+- **concurrent-invocation-not-guarded**: The reconcile is performed as three separate storage calls (the upsert, the name listing and the conditional delete) with no transaction or lock spanning them. Two overlapping invocations can interleave those steps and evict a name another call's upsert had just restored, or compute a prune list against a set another call is mid-upsert on; the status server calls this function from more than one independent site with no coordination.
 
 ## Appearance
 
@@ -143,16 +143,18 @@ Not applicable — this is a server-side data-reconciliation module, not a visua
 
 Traced to `test/refresh-project-meta.int.test.ts`'s own assertions unless noted as source-only.
 
-1. `syncVercelProjectMeta(storage, { meta: [META('live-site','renamed.example.com'), META('new-site')], ok: true, configured: true })` against a table already holding Vercel rows `live-site` and `deleted-site` (plus an untouched Cloudflare row) → `pruned: ['deleted-site']`, `live: {'live-site','new-site'}`; `deleted-site` is gone, `live-site`'s domain is updated to `renamed.example.com`, `new-site` is inserted, and the Cloudflare row is untouched.
-2. `syncVercelProjectMeta(storage, { meta: Array(400 projects), ok: true, configured: true })` → all 400 upserted in chunks and `pruned` covers the two previously-stored names (`deleted-site`, `live-site`) that are absent from the 400; a follow-up call with `meta: []` prunes all 400 in chunks, leaving only the untouched Cloudflare row.
-3. `syncVercelProjectMeta(storage, { meta: [META('new-site')], ok: false, configured: true })` (a partial/budget-truncated read) → `pruned: []`, `live: null`; `new-site` is still upserted, and the previously-stored `live-site`/`deleted-site` rows are both left in place.
-4. `syncVercelProjectMeta(storage, { meta: [], ok: true, configured: false })` (the exact shape `fetchVercelProductionStates` returns with no token) → `pruned: []`, `live: null`; no row is touched.
-5. `syncVercelProjectMeta(storage, { meta: [], ok: true, configured: true })` (an authenticated, complete read reporting zero projects) → every stored Vercel row is pruned (`pruned` sorts to `['deleted-site','live-site']`), leaving only the untouched Cloudflare row.
-6. `refreshVercelProjectMeta(storage, { VERCEL_API_TOKEN: 'tok' })` against a live fetch mock that returns only `live-site` → `{ ok: true, configured: true, pruned: ['deleted-site'] }`, the stored rows reduce to `['live-site']`, and the outgoing `/v9/projects` request URL contains `latestDeployments=1`.
-7. `refreshVercelProjectMeta(storage, {})` (no `VERCEL_API_TOKEN`) against a fetch mock that throws if called at all → `{ ok: false, configured: false, pruned: [] }`, the stored row count is unchanged, and the fetch mock is never invoked.
-8. (source-only) `syncVercelProjectMeta(storage, { meta: [], ok: false, configured: true })` → `pruned: []`, `live: null`, and no upsert call at all, since `meta.length` is `0`; distinguishing this from vector 5 pins that `ok` (not merely `configured`) gates the eviction attempt.
-9. (source-only) `refreshVercelProjectMeta(storage, { VERCEL_API_TOKEN: 'tok' })` against a fetch that returns `{ ok: true, meta: [], states: [], deploys: [] }` → `configured: true` (token present) but the reconcile still runs and evicts every stored Vercel row, exercising the same "last project deleted" path as vector 5 but reached through the full `refreshVercelProjectMeta` fetch-then-sync composition rather than calling `syncVercelProjectMeta` directly.
-10. (source-only) `refreshVercelProjectMetaFromConfig(storage, config)` where `config.secrets.VERCEL_API_TOKEN` is set but `config.credentials.VERCEL_API_TOKEN` is not → the token still resolves and the refresh proceeds, because resolution goes through `providerConn`'s `config.secrets` lookup, not `config.credentials`.
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| status-server-monitor-refresh-project-meta-001 | sole-writer-of-vercel-rows, unconditional-upsert-on-nonempty-meta, eviction-diffs-live-set-against-stored-names, delete-only-when-pruned-nonempty | `syncVercelProjectMeta(storage, { meta: [META('live-site','renamed.example.com'), META('new-site')], ok: true, configured: true })` against a table already holding Vercel rows `live-site` and `deleted-site` (plus an untouched Cloudflare row) | `pruned: ['deleted-site']`, `live: {'live-site','new-site'}`; `deleted-site` is gone, `live-site`'s domain is updated to `renamed.example.com`, `new-site` is inserted, and the Cloudflare row is untouched. |
+| status-server-monitor-refresh-project-meta-002 | unconditional-upsert-on-nonempty-meta, eviction-diffs-live-set-against-stored-names, result-returns-remaining-live-set | `syncVercelProjectMeta(storage, { meta: Array(400 projects), ok: true, configured: true })` | all 400 upserted in chunks and `pruned` covers the two previously-stored names (`deleted-site`, `live-site`) that are absent from the 400; a follow-up call with `meta: []` prunes all 400 in chunks, leaving only the untouched Cloudflare row. |
+| status-server-monitor-refresh-project-meta-003 | no-eviction-attempt-when-not-ok-or-not-configured, live-null-means-no-verdict | `syncVercelProjectMeta(storage, { meta: [META('new-site')], ok: false, configured: true })` (a partial/budget-truncated read) | `pruned: []`, `live: null`; `new-site` is still upserted, and the previously-stored `live-site`/`deleted-site` rows are both left in place. |
+| status-server-monitor-refresh-project-meta-004 | fail-closed-no-network-call-without-token, configured-gate-not-inferred-from-meta-length, live-null-means-no-verdict | `syncVercelProjectMeta(storage, { meta: [], ok: true, configured: false })` (the exact shape `fetchVercelProductionStates` returns with no token) | `pruned: []`, `live: null`; no row is touched. |
+| status-server-monitor-refresh-project-meta-005 | empty-meta-with-ok-and-configured-evicts-everything, configured-gate-not-inferred-from-meta-length | `syncVercelProjectMeta(storage, { meta: [], ok: true, configured: true })` (an authenticated, complete read reporting zero projects) | every stored Vercel row is pruned (`pruned` sorts to `['deleted-site','live-site']`), leaving only the untouched Cloudflare row. |
+| status-server-monitor-refresh-project-meta-006 | meta-only-fetch-mode, refresh-result-ok-mirrors-fetch-ok, eviction-diffs-live-set-against-stored-names | `refreshVercelProjectMeta(storage, { VERCEL_API_TOKEN: 'tok' })` against a live fetch mock that returns only `live-site` | `{ ok: true, configured: true, pruned: ['deleted-site'] }`, the stored rows reduce to `['live-site']`, and the outgoing `/v9/projects` request URL contains `latestDeployments=1`. |
+| status-server-monitor-refresh-project-meta-007 | fail-closed-no-network-call-without-token | `refreshVercelProjectMeta(storage, {})` (no `VERCEL_API_TOKEN`) against a fetch mock that throws if called at all | `{ ok: false, configured: false, pruned: [] }`, the stored row count is unchanged, and the fetch mock is never invoked. |
+| status-server-monitor-refresh-project-meta-008 | no-eviction-attempt-when-not-ok-or-not-configured, live-null-means-no-verdict | (source-only) `syncVercelProjectMeta(storage, { meta: [], ok: false, configured: true })` | `pruned: []`, `live: null`, and no upsert call at all, since `meta.length` is `0`; distinguishing this from vector 5 pins that `ok` (not merely `configured`) gates the eviction attempt. |
+| status-server-monitor-refresh-project-meta-009 | refresh-result-ok-mirrors-fetch-ok, empty-meta-with-ok-and-configured-evicts-everything | (source-only) `refreshVercelProjectMeta(storage, { VERCEL_API_TOKEN: 'tok' })` against a fetch that returns `{ ok: true, meta: [], states: [], deploys: [] }` | `configured: true` (token present) but the reconcile still runs and evicts every stored Vercel row, exercising the same "last project deleted" path as vector 5 but reached through the full `refreshVercelProjectMeta` fetch-then-sync composition rather than calling `syncVercelProjectMeta` directly. |
+| status-server-monitor-refresh-project-meta-010 | config-resolution-delegated-to-provider-conn | (source-only) `refreshVercelProjectMetaFromConfig(storage, config)` where `config.secrets.VERCEL_API_TOKEN` is set but `config.credentials.VERCEL_API_TOKEN` is not | the token still resolves and the refresh proceeds, because resolution goes through `providerConn`'s `config.secrets` lookup, not `config.credentials`. |
 
 ## Edge Cases
 
@@ -334,6 +336,10 @@ itself. No other logger or `console.*` call appears anywhere in this file.
   monitor cycle rather than needing a deliberate hold-back window in this file.
   **Approved**: pending
 
+**Decision**: Concurrent project-metadata syncs are not serialized and can interleave their upsert, listing and prune steps.
+**Rationale**: It stands today because the three storage calls are independent. Closing it needs a transaction or a single-flight guard around the reconcile, and a test with two overlapping invocations.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -379,5 +385,7 @@ and the partial-read test vector pin.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Resolved concurrent-invocation marker; converted test vectors to a 10-row table |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |

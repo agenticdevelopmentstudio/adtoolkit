@@ -1,36 +1,34 @@
 ---
 id: 4d75a371-181e-4d80-a16b-022d37dc0d48
-title: Composable Tabs Leaf Pane
-domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+title: "Composable Tabs Leaf Pane"
+domain: adtoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A leaf pane in a composable-tabs split tree that hosts registry-vended
-  content, draws the active-pane outline, offers an arrange-mode overlay, and
-  provides move/add/remove actions and pane accessibility identifiers.
+summary: "A leaf pane in a composable-tabs split tree that hosts registry-vended content, draws the active-pane outline, offers an arrange-mode overlay, and provides move/add/remove actions and pane accessibility identifiers."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- composable-tabs
-- pane
-- view-controller
-- accessibility
+  - composable-tabs
+  - pane
+  - view-controller
+  - accessibility
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/layout/pane-view
+  - adtoolkit://cookbook/ui/layout/pane-view
 related:
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/arrange-overlay-view
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/active-pane
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/layout/composable-tabs/arrange-overlay-view
+  - adtoolkit://cookbook/ui/layout/composable-tabs/active-pane
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Composable Tabs Leaf Pane
@@ -246,6 +244,7 @@ means.
   implementation; it is not a constraint against adding a secondary cue —
   see Differentiate Without Color in Accessibility Options, which records
   that no such cue is implemented.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -386,6 +385,7 @@ means.
 | ctpvc-050b | focus-check-walks-hierarchy | View loaded; the window's focused element belongs to a different pane | The focus-containment check returns false |
 | ctpvc-051 | title-bar-bottom-constant | Read `titleBarBottom` | Equals 28 (2pt border inset + 26pt title bar height) |
 | ctpvc-052 | active-pane-cue-is-color-only | Compare the backdrop's drawn border for the active pane vs. an inactive one | `borderWidth` is 2 in both; only `borderColor` differs |
+| ctpvc-053 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -509,6 +509,7 @@ or its immediate collaborators (the move menu, the arrange overlay).
 - **React/Web**: A `<div>` pane wrapper with `role="group"`, keyed the same way for a `data-testid` (`pane.<slug>` / `pane.<slug>.<index>`) rather than an ARIA attribute. Track the active pane via a document-level `mousedown`/`focusin` listener registered once per window (mirroring the single local `NSEvent` monitor, not a per-pane listener) and switch a CSS custom property for the border color. Arrange mode is a sibling overlay `<div>` at `position: absolute; inset: 2px;` with its own `keydown` listener scoped to the pane for Escape/Enter/Return, matching the source's "local monitor, not global handler" behavior.
 - **AppKit/UIKit**: This recipe's own platform. `ComposableTabsPaneViewController.swift` is macOS/AppKit-only (`NSViewController`, `NSMenu`, `NSAlert`, `NSEvent` local monitors); nothing in this file targets UIKit/iOS. It also does not support construction via a coder-based initializer — Cocoa's `NSCoder`-driven `init(coder:)` — which this type overrides to trigger a fatal error immediately, since no code path in this app constructs this pane from an archived storyboard/xib. Source encodes the exit and move keys as raw macOS virtual key codes rather than named constants: Return is 36, Enter is 76, and Escape is 53 for **exit-keys-disable-arrange-mode**; Left is 123, Right is 124, Down is 125, and Up is 126 for **arrow-key-moves-active-pane-only**. A UIKit port would replace `NSMenu`/`NSAlert` with `UIMenu`/`UIAlertController`, replace the local `NSEvent` `keyDown` monitor with a `UIKeyCommand` set registered on the responder chain (there is no direct UIKit equivalent of "consume a hardware key before the first responder sees it" outside `UIKeyCommand`), and replace the popover-vs-sheet choice for the add picker with `UIPopoverPresentationController` vs. a `.pageSheet` presentation.
 - **WinUI 3**: Recreate the pane as a `UserControl` wrapping a two-row `Grid` — a fixed-height title-bar row (a `GridLength` matching `PaneTitleBarView.height`, 26px-equivalent) and a content row — surrounded by a 2px `Border` (`BorderThickness="2"`, `BorderBrush` bound to a `SolidColorBrush` resource that swaps between an `ActivePaneAccentBrush` and a `PaneOutlineBrush`, mirroring the AppKit layer border and its color-only state change). Track "the active pane in this window" with a small per-`Window` service (a dictionary keyed by `Window`, mirroring `ComposableTabsActivePane`) updated from `PointerPressed`/`GotFocus` handlers registered once on `Window.Content`'s root rather than per pane. Model arrange mode as a `VisualStateGroup` ("Arranging"/"Normal") that swaps in a scrim `Grid` (`Background` bound to a semi-transparent brush over the window background) hosting a `CommandBar` (or a `StackPanel` of `Button`s) for Add/Remove/Done, with Move as a `DropDownButton` whose flyout `MenuFlyoutItem`s are enabled or disabled per the available-directions set. Bind `AutomationProperties.AutomationId` to the same `pane.<slug>` / `pane.<slug>.<index>` scheme via a converter, and register the Return/Enter/Escape exit keys as `KeyboardAccelerator`s scoped to the arrange scrim's `UIElement`, since WinUI's accelerator system already scopes by focus tree the way the AppKit local monitor does by window.
+- **UI-thread confinement**: `confines-to-ui-thread` — the pane view controller is declared `@MainActor`, so use from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -527,7 +528,7 @@ or its immediate collaborators (the move menu, the arrange overlay).
 **Approved**: pending
 
 **Decision**: Arrow-key handling for arrange mode is implemented as a local `NSEvent` monitor per pane rather than an override of `keyDown(_:)`.
-**Rationale (AppKit)**: The pane's own content (a terminal, an editor) owns first responder and would consume the arrow key before a `keyDown` override on this controller ever saw it; a local monitor sees the event before AppKit's responder chain delivers it.
+**Rationale**: (AppKit) The pane's own content (a terminal, an editor) owns first responder and would consume the arrow key before a `keyDown` override on this controller ever saw it; a local monitor sees the event before AppKit's responder chain delivers it.
 **Approved**: pending
 
 **Decision**: The active/inactive pane cue is color-only; border width stays a constant 2pt in both states.
@@ -546,13 +547,18 @@ or its immediate collaborators (the move menu, the arrange overlay).
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | Internationalization |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
 | [rtl-layout-support](agenticdevelopercookbook://compliance/internationalization#rtl-layout-support) | passed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 Accessibility statuses rest on the explicit `accessibilityDescription` labels alongside the unaddressed VoiceOver-notification and Differentiate-Without-Color gaps recorded in Accessibility and Accessibility Options, the theme-delegated colors and heading-style label recorded in Appearance, and the native `NSAlert` modal/sheet handling in `confirmAndRemove()`; internationalization statuses rest on the hardcoded literals listed in Localization and the `leadingAnchor`/`trailingAnchor` overlay constraints in `installArrangeOverlay()`.
+
+`separation-of-concerns` passes because `ComposableTabsPaneViewController` only hosts registry-vended content and its chrome; the content's behavior, the registry and the split tree are separate components. `unit-test-coverage` is `partial`: `ComposableTabsViewControllerTests.swift`, `ComposableTabsPaneChromeTests.swift` and `ComposableTabsPaneHostTests.swift` exercise leaf panes through the controller, but no test file targets the class alone.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/composable-tabs/. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

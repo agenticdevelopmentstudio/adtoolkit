@@ -1,29 +1,28 @@
 ---
 id: 87d66a8a-5742-4ae0-91c4-8bb1fd09f9e4
-title: Refresh All
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/refresh-all
+title: "Refresh All"
+domain: adtoolkit://cookbook/status/dashboard/state/refresh-all
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: State that refetches every enabled cached read except the live snapshot
-  on one shared interval, and exposes a manual refresh-all operation.
+summary: "State that refetches every enabled cached read except the live snapshot on one shared interval, and exposes a manual refresh-all operation."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/config-status
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/live-snapshot
+  - adtoolkit://cookbook/status/dashboard/state/config-status
+  - adtoolkit://cookbook/status/dashboard/state/live-snapshot
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Refresh All
@@ -82,7 +81,7 @@ Refresh All returns a `refreshAll` function so a caller can trigger the same ref
 
 - **single-threaded**: Refresh All runs on a single execution thread. `refreshAll` calls and timer ticks cannot interleave. Each call finishes selecting and starting its refetches before the next begins.
 - **side-effects**: Refresh All's only side effects MUST be its one timer and the refetches it asks the shared cache to start. It MUST NOT write storage, log, emit analytics or perform network I/O directly. Every network request comes from the refetched entries' own read functions.
-- **client-only**: Refresh All has no server-only or universal-rendering variant; it requires a live client execution context.
+- **client-only**: Refresh All MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 - **cache-context-required**: Refresh All MUST be used only where a shared cache context is available. Accessing the cache context fails when none is available.
 
 ## Appearance
@@ -116,6 +115,7 @@ There is no dedicated test file for this concept. The vectors below are derived 
 | refresh-all-011 | refresh-all-stable, return-object-fresh | Use Refresh All twice with the same cache context | The `refreshAll` reference is the same each time; the wrapper objects are different references |
 | refresh-all-012 | refetch-call | Call `refreshAll` once | The refetch operation is triggered once with one argument, an object whose only key is the filter |
 | refresh-all-013 | one-timer-per-mount | Use Refresh All twice, each with a 1,000 ms interval, sharing one cache context; advance 1,000 ms | The refetch operation is triggered twice |
+| refresh-all-014 | client-only | Load Refresh All in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -176,6 +176,7 @@ Not applicable: the source contains no log calls. Refetch outcomes are recorded 
 - **React/Web**: Source platform. `hooks/use-refresh-all.ts` combines `useQueryClient` from `@tanstack/react-query` v5 (`^5.62.0` in `package.json`) with `useCallback` and a `useEffect` around `setInterval`/`clearInterval`. The only caller is `components/BoardShell.tsx` (`useRefreshAll(60_000)`). The excluded live query is owned by `hooks/use-live-snapshot.ts` (`queryKey: ["live"]`, `refetchInterval: streamConnected ? false : POLL_INTERVAL_MS`). The disabled test is react-query's own `Query.isDisabled()`, which matters for `useConfigStatus({ enabled })` consumers. The in-flight-restart default is react-query v5's `cancelRefetch: true` for `refetchQueries`. Browser timers clamp a zero or negative delay to about 4 ms once nested, and a delay above 2,147,483,647 ms overflows the 32-bit timer representation and fires almost immediately. There is no `use-refresh-all.*test*` file next to the source.
 - **AppKit / UIKit**: Same coordinator as SwiftUI, owned by the window controller or scene delegate. A `Timer.scheduledTimer(withTimeInterval:repeats:)` on the main run loop is the closest match to a repeating interval timer: invalidate it in `deinit` or on window close, and recreate it when the interval changes.
 - **WinUI 3**: Use a `DispatcherQueueTimer` (from `DispatcherQueue.GetForCurrentThread().CreateTimer()`) with `Interval = TimeSpan.FromMilliseconds(intervalMs)` and `IsRepeating = true`. Call `Start()` when the shell page loads and `Stop()` in `Unloaded` to match starting and stopping use. There is no shared query cache, so register each data service (`INotifyPropertyChanged` view models backed by one shared `HttpClient` and `System.Text.Json`) in a DI-held `IRefreshable` list with an `IsEnabled` flag and a key. In the `Tick` handler, filter out the live service and disabled services, then start `_ = service.RefreshAsync()` for each one without awaiting, to match the fire-and-forget behavior. Each service catches its own exceptions and exposes them on an `Error` property, so no unobserved `Task` exception escapes. Unlike the shared cache, nothing cancels an in-flight refresh when the next tick fires: to match the in-flight-restart behavior, keep a `CancellationTokenSource` per service, cancel it, and replace it on each tick. Setting `Interval` to a new value takes effect without recreating the timer, while the source restarts its phase.
+- **client-only**: On the web, the module opens with the `"use client"` directive.
 
 ## Reference Implementations
 
@@ -220,6 +221,7 @@ The hook handles only scheduling and query selection. What each dataset fetches 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

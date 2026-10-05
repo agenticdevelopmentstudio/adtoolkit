@@ -1,35 +1,32 @@
 ---
 id: 68d182dc-3fc0-489c-ab04-ff4da25fc4df
-title: Extension Manifest
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+title: "Extension Manifest"
+domain: adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Model of a VS Code package.json: strict identity, element-isolated lenient
-  decoding of contributes.* entries, typed diagnostics for what one decode attempt
-  had to drop.'
+summary: "Model of a VS Code package.json: strict identity, element-isolated lenient decoding of contributes.* entries, typed diagnostics for what one decode attempt had to drop."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- manifest
-- decoding
-- package-json
+  - extensions
+  - manifest
+  - decoding
+  - package-json
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionManifestTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionManifestTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Manifest

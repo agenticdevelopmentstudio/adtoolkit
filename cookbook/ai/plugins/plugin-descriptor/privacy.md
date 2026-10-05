@@ -1,0 +1,6 @@
+
+- **Data collected**: This concept carries the metadata a plugin declares about its own settings, including which of those settings the plugin considers a credential. A field whose `kind` is `secret` marks a "masked entry, persisted to secure storage (API keys, tokens)"; a field whose `kind` is `text` marks a "plain text entry, persisted to non-secure storage (base URLs, etc.)." The concept itself collects nothing beyond decoding whatever `descriptor.json` and the host's own field values provide.
+- **Storage**: This concept performs no storage of its own. The `secret`/`text` distinction is a contract honored by sibling config-store components, which route a field's `isSecret` value into secure or non-secure storage accordingly.
+- **Transmission**: Not applicable at this layer — this concept contains no networking code; the plugin's own compiled contract contributes only request-building and response-decoding, so any transmission of a resolved secret happens elsewhere.
+- **Retention**: Not applicable at this layer — this concept has no retention policy of its own; how long a securely- or non-securely-stored value survives is governed entirely by whatever store implements the contract this concept only labels.
+

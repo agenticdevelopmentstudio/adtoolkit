@@ -1,0 +1,64 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "95e26bae-21cb-4f99-8d28-724beca8ae1d",
+    "title": "Extension Tree Data Source",
+    "domain": "adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source",
+    "type": "ingredient",
+    "version": "1.1.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The pull-based seam a contributed tree pane calls into a registered TreeDataProvider: asynchronous children, activation, title/message/multi-select chrome, and provider-replacement handover.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "extension-host",
+      "vscode-api",
+      "tree-view",
+      "protocol"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionTreeDataSource.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/Features/Extensions/Tree/ContributedTreeItem.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadTreeViews.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadTreeViewsTests.swift (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "65473e2c4c51b94b",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

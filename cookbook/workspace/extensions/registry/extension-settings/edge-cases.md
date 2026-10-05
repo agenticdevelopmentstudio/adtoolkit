@@ -1,0 +1,8 @@
+
+- **Null and empty input**: writing an explicit empty set and removing the stored value both leave a later read of the value returning the empty set; only the existence check distinguishes "explicitly emptied" from "never written," because a plain read cannot tell the two apart. MUST behave this way.
+- **Null and empty input — the empty string as a member**: writing `{""}` is accepted; the empty string is a member like any other, with no special-case rejection. MUST behave this way.
+- **Boundary values**: no maximum is imposed on the number of identifiers the set may hold; a set with hundreds of entries is encoded and stored as one blob the same way a set with one entry is — no size check is performed on this path. MUST behave this way.
+- **Concurrent access**: every read, write, and removal is confined to a single execution context, so two accesses issued concurrently MUST execute in some serialized order with no interleaving of the underlying write. MUST behave this way.
+- **Error states**: an encoding failure during a write is swallowed — the write simply returns, sending no change notification, if encoding fails. For a set of strings, encoding a collection of ordinary strings does not fail in practice, so this path is unreachable for this specific setting; it is documented here because it is a real behavior of the storage layer this setting depends on, not because it is expected to occur. SHOULD be understood as inherited, unreachable-for-this-type behavior, not a gap in the setting's own declaration.
+- **Offline or disconnected state**: not applicable — this setting performs no network call of any kind; its storage is local, on-device storage with no connectivity dependency.
+

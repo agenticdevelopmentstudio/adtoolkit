@@ -1,0 +1,17 @@
+
+- **zero-or-negative-hours**: Response History with `hours` = 0 or a negative value MUST still fetch, sending `hours=0` or `hours=-5` as-is; how the backend `/response-history` route treats it (empty series, clamping, or an error status) is owned by that route, and Response History MUST surface whichever it returns.
+- **non-finite-hours**: A non-finite `hours` value MUST be sent as whatever text the platform's numeric-to-string conversion produces (for example `hours=NaN` or `hours=Infinity` on the web platform), and cached under a key holding that value; Response History performs no numeric validation, and its one caller only passes the finite constants for the four spans.
+- **large-window**: The largest window the caller uses is 2,160 hours (90 days); Response History applies no upper bound of its own.
+- **empty-points**: A successful response with `points: []` MUST resolve as data; Response History applies no emptiness check (the overview stats view separately hides the card sparkline when fewer than two non-null points exist).
+- **all-null-points**: A series whose every entry is `null` MUST resolve as data unchanged; per its semantics this means no data or all checks down in every bucket.
+- **malformed-body**: A body that is valid JSON but not shaped like `ResponseHistory` (for example missing `points`) MUST resolve as data unchanged; Response History performs no shape validation, and a consumer reading `data.points` receives an undefined value (the caller's fallback-to-empty-array behavior covers that case).
+- **hours-mismatch**: If the backend's `hours` field differs from the requested value, Response History MUST return the body unchanged; it does not compare the two.
+- **204-response**: A `204 No Content` response is `ok`, so Response History MUST attempt to parse the empty body as JSON, which fails and puts the read in its error state.
+- **server-error**: A non-2xx status, including the `401` the route documents, MUST produce an error with message `response-history <status>`; retries follow the host cache context's policy (the shared cache mechanism's own default is 3 retries with exponential backoff when the host sets none).
+- **unreachable-server**: A rejected fetch MUST surface as the read's error with no Response-History-level retry, fallback data, or message rewriting; the 60-second poll continues to attempt refetches while in use.
+- **error-after-success**: When a poll fails after an earlier success, the shared cache MUST keep the previous `data` alongside the new `error`, so the caller keeps drawing the last good series.
+- **hung-request**: With no timeout or abort signal from Response History, a request that never settles MUST leave the read in its fetching state; the shared cache does not start the next interval refetch while one is still in flight.
+- **hours-change-mid-flight**: When `hours` changes while a request is in flight, the new window MUST get its own cache entry and request; the earlier request resolves into its own key and does not overwrite the new window's data.
+- **background-tab**: Because no override is set, the shared cache's default MUST apply: interval refetches pause while the app is in the background.
+- **unmount**: When the last consumer using a given `hours` stops using it, interval polling for that key MUST stop; the cached result remains until the host cache context's retention window elapses.
+

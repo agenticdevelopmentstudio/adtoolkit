@@ -1,0 +1,8 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial extraction from `PaneSpacing.swift`. |
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: add a Design Decision assigning clamping to the settings-control layer and resolve the negative/oversized-input edge case against it; drop the stale "flagged as an open question under Accessibility" claim; move the platform-design-languages reference from `references` to `related` and add the three sibling ComposableTabs recipes to `related`; drop the redundant `macos` tag; reformat Design Decisions into the bold three-line form; correct the WinUI 3 GridSplitter namespace; make three test vectors observable with a recording subclass/bitmap sampling instead of an unobservable claim; remove an unsupported "re-applies insets" claim from Accessibility; note the `Int`→`CGFloat` conversion in two requirements; and rebuild Compliance around checks that exist in the catalog. |
+| 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/composable-tabs/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |

@@ -1,51 +1,49 @@
 ---
 id: ec6e6ca5-8780-4ce2-8b3a-087adc50ed35
-title: Resource Data
-domain: agenticdevelopertoolkit://cookbook/data/services/resource-data
+title: "Resource Data"
+domain: adtoolkit://cookbook/data/services/resource-data
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Cross-cutting data substrate: tenant-scoped resource-list/resource-item
-  caching, last-id/view-mode (FTD) persistence, workspace-preference caching, and
-  workspace listing/slug-availability, built on a shared authenticated request layer.'
+summary: "Cross-cutting data substrate: tenant-scoped resource-list/resource-item caching, last-id/view-mode (FTD) persistence, workspace-preference caching, and workspace listing/slug-availability, built on a shared authenticated request layer."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- data
-- cache
-- tenant
-- persistence
-- workspace
-- http
+  - data
+  - cache
+  - tenant
+  - persistence
+  - workspace
+  - http
 depends-on:
-- agenticdevelopertoolkit://cookbook/data/services/auth/auth-client
+  - adtoolkit://cookbook/data/services/auth/auth-client
 related: []
 references:
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/config.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ftd-storage.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/tenant.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/use-resource-item.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/use-resource-list.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/workspace-prefs.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/workspaces.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/__tests__/ftd-storage.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/__tests__/http.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/__tests__/tenant.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/__tests__/workspace-prefs.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/__tests__/workspaces-changed.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/__tests__/use-resource-item.test.tsx (agenticdevelopertoolkit)
-- packages/web/packages/data/src/__tests__/use-resource-list.test.tsx (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/config.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ftd-storage.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/tenant.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/use-resource-item.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/use-resource-list.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/workspace-prefs.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/workspaces.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/__tests__/ftd-storage.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/__tests__/http.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/__tests__/tenant.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/__tests__/workspace-prefs.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/__tests__/workspaces-changed.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/__tests__/use-resource-item.test.tsx (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/__tests__/use-resource-list.test.tsx (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Resource Data
@@ -87,8 +85,11 @@ app is a consumer of this contract, not part of it.
   workspace slug, MUST return the query string `?workspace=<percent-encoded
   slug>` when a non-empty workspace is supplied, and MUST return an empty
   string when it is absent or empty.
-- **data-config-default**: The data-configuration reader MUST return a
-  storage-key prefix of `'adh'` before any configuration has been set.
+- **data-config-default**: The data-configuration reader MUST return the
+  shipped default storage-key prefix (see Configuration) before any
+  configuration has been set; a host namespaces its stored keys by
+  configuring the prefix, so no key name in this component is fixed to one
+  product.
 - **configure-data-merges**: The data-configuration setter, given a partial
   configuration, MUST shallow-merge it onto the current configuration,
   leaving any field it omits unchanged.
@@ -190,13 +191,12 @@ app is a consumer of this contract, not part of it.
 - **resource-item-error-message-fallback**: The returned error message MUST
   be absent when there is no error, MUST be the error's own message when it
   carries one, and MUST be the literal string `'Failed to load.'` otherwise.
-- **resource-item-reload-null-id-behavior**: NEEDS REVIEW: Not implemented
-  in source. The returned reload operation's own documentation states it is
-  a no-op when there is no item id, but the implementation re-runs the read
-  unconditionally regardless of the id, and the underlying load call is
-  invoked with the id even when it is actually absent, asserted rather than
-  guarded at runtime — evidence needed is whether the documented no-op is
-  authoritative.
+- **resource-item-reload-null-id-behavior**: The returned reload operation
+  MUST re-run the read unconditionally, whether or not there is an item id:
+  its documentation says it is a no-op when there is no id, but the
+  implementation does not guard on the id, so the underlying load call is
+  invoked with the absent id (asserted by a type cast, not checked at
+  runtime). A caller MUST NOT call reload when it has no item id.
 - **resource-item-writer-write-or-evict**: The resource-item cache writer's
   returned function MUST write the given value into the cache when it is
   not null, and MUST evict the cache entry (never writing a null
@@ -278,9 +278,9 @@ app is a consumer of this contract, not part of it.
   they produce.
 - **notify-workspaces-changed-dispatches-event**: The
   workspace-list-changed announcement operation MUST broadcast an event
-  named by the workspaces-changed event name (`'adh:workspaces-changed'`),
-  and MUST be a no-op when no environment capable of receiving it is
-  available.
+  named by the workspaces-changed event name (see Configuration for its
+  shipped default), and MUST be a no-op when no environment capable of
+  receiving it is available.
 - **on-workspaces-changed-subscribe**: The workspace-list-changed
   subscription operation, given a listener, MUST subscribe it to that event
   and MUST return an unsubscribe function; both MUST be no-ops when no
@@ -314,114 +314,114 @@ component.
 
 | ID | Requirements | Input | Expected |
 |----|-------------|-------|----------|
-| hub-domain-data-001 | percent-encodes-uri-components | the string `a b` | `a%20b` |
-| hub-domain-data-002 | compact-drops-undefined-preserves-null | an object with one key set to `1`, one key absent, one key set to `null` | `{ that key: 1, the null key: null }`, the absent key dropped |
-| hub-domain-data-003 | compact-non-mutating | an object with one key left absent, passed through the compacting helper | the original object still carries that key with an absent value afterward |
-| hub-domain-data-004 | narrow-fallback | value `'x'`, allowed values `['a', 'b']`, fallback `'a'` | `'a'` (fallback, since `'x'` is not allowed) |
-| hub-domain-data-005 | scope-by-owner-filters | rows `[{owner:1},{owner:2}]`, owner id `1` | `[{owner:1}]` |
-| hub-domain-data-006 | sort-by-text-non-mutating | rows `[{name:'b'},{name:'a'}]` sorted by name | returned array is `[{name:'a'},{name:'b'}]`; the original array is unchanged |
-| hub-domain-data-007 | workspace-query-encodes | workspace `'a b'` | `'?workspace=a%20b'` |
-| hub-domain-data-008 | workspace-query-encodes | no workspace supplied | `''` |
-| hub-domain-data-009 | data-config-default | the configuration reader called with no prior configuration set | storage-key prefix `'adh'` |
-| hub-domain-data-010 | configure-data-merges | setting the storage-key prefix to `'x'`, then reading configuration | storage-key prefix `'x'` |
-| hub-domain-data-011 | ftd-key-shape | writing last-shown id `'p-1'` for collection `'projects'` with prefix `'adh'` | writes under storage key `'adh:ftd:projects:lastId'` |
-| hub-domain-data-012 | read-last-id-null-safe | reading the last-shown id for `'projects'` with nothing stored | no value |
-| hub-domain-data-013 | read-last-id-null-safe | reading the last-shown id for `'projects'` when reading storage fails | no value, no failure propagates |
-| hub-domain-data-014 | write-last-id-swallow | writing last-shown id `'p-1'` for `'projects'` when writing storage fails | resolves without raising |
-| hub-domain-data-015 | clear-last-id-swallow | clearing the last-shown id for `'projects'` when removing storage fails | resolves without raising |
-| hub-domain-data-016 | read-view-mode-safe-without-storage | reading the view mode for `'projects'`/`'root'` with no persisted-storage environment available | `'cards'` |
-| hub-domain-data-017 | read-view-mode-validates | reading the view mode for `'projects'`/`'root'` with `'grid'` stored | `'cards'` (invalid value rejected) |
-| hub-domain-data-018 | read-view-mode-validates | reading the view mode for `'projects'`/`'root'` with `'list'` stored | `'list'` |
-| hub-domain-data-019 | write-view-mode-swallow | writing view mode `'list'` for `'projects'`/`'root'` when storage fails | resolves without raising |
-| hub-domain-data-020 | http-re-exports-auth | importing the shared authenticated-request operation from this module | resolves to the same operation the Auth Client recipe exports |
-| hub-domain-data-021 | http-status-duck-typed | the status-code extractor given an error carrying status `404` | `404` |
-| hub-domain-data-022 | http-status-duck-typed | the status-code extractor given a plain error with no status | no value |
-| hub-domain-data-023 | client-refusal-shape | the client-refusal constructor given message `'bad input'` | an error with message `'bad input'` and status `400` |
-| hub-domain-data-024 | is-not-found-derivation | the not-found predicate given an error with status `404` | `true` |
-| hub-domain-data-025 | is-conflict-derivation | given status `409` | `true` |
-| hub-domain-data-026 | is-forbidden-derivation | given status `403` | `true` |
-| hub-domain-data-027 | is-service-unavailable-derivation | given status `503` | `true` |
-| hub-domain-data-028 | err-msg-fallback | given an error with message `'boom'`, fallback `'fallback'` | `'boom'` |
-| hub-domain-data-029 | err-msg-fallback | given a non-error value `'not an error'`, fallback `'fallback'` | `'fallback'` |
-| hub-domain-data-030 | rethrow-conflict-friendly | given an error whose message is `'a project with this name already exists'`, friendly message `'Pick another name'` | raises an error with message `'Pick another name'` |
-| hub-domain-data-031 | rethrow-conflict-friendly | given an error with message `'network down'` | rethrows the original error unchanged |
-| hub-domain-data-032 | decode-jwt-claims-shape | decoding the token-claims of `'not-a-jwt'` (no dots) | no value |
-| hub-domain-data-033 | decode-jwt-claims-shape | decoding a well-formed three-part token whose middle part is valid base64url JSON | the decoded claims object |
-| hub-domain-data-034 | decode-jwt-claims-null-safe | decoding a three-part token whose middle part is not valid base64url | no value |
-| hub-domain-data-035 | tenant-id-priority | claims containing both an ecosystem id `'e1'` and a tenant id `'t1'` | `'e1'` |
-| hub-domain-data-036 | tenant-id-priority | claims containing a tenant id `'t1'` and a project id `'p1'` | `'t1'` |
-| hub-domain-data-037 | tenant-id-priority | no token present | no value |
-| hub-domain-data-038 | use-tenant-id-memoized | the tenant-id read state rendered twice against the same underlying token | returns the same tenant id both times without re-decoding |
-| hub-domain-data-039 | resource-item-key-shape | cache key `'projects'`, tenant `'t1'`, item id `'p-1'` | `('resource-item', 't1', 'projects', 'p-1')` |
-| hub-domain-data-040 | revalidate-resource-items-delegates | invalidating every resource-item entry whose cache key matches `'projects'` | every matching entry is invalidated |
-| hub-domain-data-041 | resource-item-cache-key-includes-tenant | the resource-item read state for cache key `'projects'`, item `'p-1'`, under tenant `'t1'` | cache key `('resource-item', 't1', 'projects', 'p-1')` |
-| hub-domain-data-042 | resource-item-enabled-gate | the resource-item read state with no item id supplied | the load operation is never invoked |
-| hub-domain-data-043 | resource-item-error-reporting-gated | the load operation fails with error reporting left at its default | the failure is reported naming the resource-item feature, the load step, and cache key `'projects'`, before the failure propagates |
-| hub-domain-data-044 | resource-item-error-reporting-gated | the load operation fails with error reporting explicitly disabled | the failure is not reported; it still propagates |
-| hub-domain-data-045 | resource-item-no-retry | the load operation fails once | no retry occurs; the error is set after the first failure |
-| hub-domain-data-046 | resource-item-cache-retention | inspecting the read state's resolved cache settings | the retention period equals the configured 30-minute value (1,800,000 ms) |
-| hub-domain-data-047 | resource-item-placeholder-data | a seed value is supplied before the load settles | the seed value is shown and the settled indicator is `false` |
-| hub-domain-data-048 | resource-item-is-settled-sticky | the load resolves, then a background refresh begins for the same item id | the settled indicator remains `true` throughout the refresh |
-| hub-domain-data-049 | resource-item-is-missing-derivation | the load fails with a not-found-shaped error | the missing indicator is `true` |
-| hub-domain-data-050 | resource-item-error-message-fallback | the load fails with a plain string value rather than an error | the error message is `'Failed to load.'` |
-| hub-domain-data-051 | resource-item-reload-null-id-behavior | calling reload with no item id | open question — see Behavioral Requirements; not exercised by the reference tests |
-| hub-domain-data-052 | resource-item-writer-write-or-evict | writing a non-null row through the cache writer | the row is written into the cache |
-| hub-domain-data-053 | resource-item-writer-write-or-evict | writing a null value through the cache writer | the cache entry is evicted, not written as a null placeholder |
-| hub-domain-data-054 | resource-item-prefetch-never-throws | prefetching an item whose load fails | the prefetch call never raises |
-| hub-domain-data-055 | resource-item-prefetch-cleanup-conditional | a prefetch's load fails, then a concurrent mount's load for the same id succeeds before the prefetch's cleanup runs | the entry is left holding the successful data, not removed |
-| hub-domain-data-056 | resource-list-key-shape | cache key `'projects'`, tenant `'t1'` | `('resource-list', 't1', 'projects')` |
-| hub-domain-data-057 | revalidate-resources-delegates | invalidating every resource-list entry whose cache key is `'workspaces'` | every matching entry is invalidated |
-| hub-domain-data-058 | resource-list-error-reporting-gated | the load fails with error reporting left at its default | the failure is reported naming the resource-list feature, the load step, and cache key `'projects'` |
-| hub-domain-data-059 | resource-list-no-retry | the load fails once | no retry occurs |
-| hub-domain-data-060 | resource-list-cache-retention | inspecting the read state's resolved cache settings | the retention period equals the configured 30-minute value |
-| hub-domain-data-061 | resource-list-reload-identity-guard | the same load-function identity passed across two renders | no cancel/refresh occurs |
-| hub-domain-data-062 | resource-list-reload-identity-guard | a new load-function identity passed with the same cache key/tenant | the in-flight request is cancelled and refreshed |
-| hub-domain-data-063 | resource-list-reload-rethrows | calling reload when the underlying refresh resolves with an error | reload's returned outcome carries that same error |
-| hub-domain-data-064 | resource-list-set-items-writes-through | setting new rows through setItems | the rows are written directly into the cache |
-| hub-domain-data-065 | resource-list-is-fetching-derivation | a read state actively fetching and still pending its first result | the loading indicator is `true` |
-| hub-domain-data-066 | resource-list-error-status-derivation | the load fails with a conflict-shaped (409) error | the error status is `409` |
-| hub-domain-data-067 | resource-list-error-message-fallback | the load fails with a plain object rather than an error | the error message is `'Failed to load.'` |
-| hub-domain-data-068 | make-entity-delete-handler-sequence | the delete resolves, and the last-shown id for the base path equals the deleted id | the last-shown id is cleared, then navigation to the base path's `all` view occurs, then a reload is attempted |
-| hub-domain-data-069 | make-entity-delete-handler-sequence | the delete resolves, and the last-shown id differs from the deleted id | the last-shown id is not cleared; navigation and reload still occur |
-| hub-domain-data-070 | make-entity-delete-handler-del-not-caught | the delete itself fails | the handler's outcome carries that failure; navigation never occurs |
-| hub-domain-data-071 | make-entity-delete-handler-del-not-caught | the delete resolves but the subsequent reload fails | the handler's outcome still resolves successfully (the reload failure is swallowed) |
-| hub-domain-data-072 | workspace-prefs-cache-key | caching workspace `'acme'` with prefix `'adh'` | writes under storage key `'adh:home:workspace'` |
-| hub-domain-data-073 | read-cached-workspace-safe-without-storage | reading the cached workspace with no persisted-storage environment available | returns a safe empty result, no failure raised |
-| hub-domain-data-074 | write-cached-workspace-swallow | caching workspace `'acme'` when storage fails | resolves without raising |
-| hub-domain-data-075 | workspace-prefs-get-unwraps | reading workspace preferences when the server reports not-found | resolves to an empty object, never raises |
-| hub-domain-data-076 | workspace-prefs-get-unwraps | reading workspace preferences when the server returns preferences containing slug `'acme'` | resolves to `{ slug: 'acme' }` |
-| hub-domain-data-077 | workspace-prefs-put-full-replace | writing preferences `{ slug: 'acme' }` | issues a PUT request to `/api/me/workspace-prefs` with body `{ slug: 'acme' }` |
-| hub-domain-data-078 | workspace-list-cache-key-constant | the workspace-list cache key | `('workspaces')` |
-| hub-domain-data-079 | notify-workspaces-changed-dual-invalidate | announcing that the workspace list changed | the workspace-list cache entry is invalidated directly, and a matching invalidation accepts a resource-list entry keyed `'workspaces'` while rejecting one keyed `'organizations'` |
-| hub-domain-data-080 | notify-workspaces-changed-swallows | announcing a change when the underlying invalidation fails | does not raise or produce an unhandled failure |
-| hub-domain-data-081 | notify-workspaces-changed-dispatches-event | subscribing a listener, then announcing a change | the listener is called exactly once |
-| hub-domain-data-082 | on-workspaces-changed-subscribe | subscribing, unsubscribing, then announcing a change again | the listener is not called again |
-| hub-domain-data-083 | check-workspace-slug-available | checking availability of slug `'a b'` | issues a GET request to `/api/auth/slug-available/a%20b` |
-| hub-domain-data-084 | workspace-list-drops-team-rows | the workspace list includes one row of type `'team'` | that row is excluded from the result |
-| hub-domain-data-085 | workspace-list-ordering | the workspace list has one individual row and two organization rows named `'Zeta'` and `'Acme'` | order is `[individual, 'Acme', 'Zeta']` |
+| resource-data-001 | percent-encodes-uri-components | the string `a b` | `a%20b` |
+| resource-data-002 | compact-drops-undefined-preserves-null | an object with one key set to `1`, one key absent, one key set to `null` | `{ that key: 1, the null key: null }`, the absent key dropped |
+| resource-data-003 | compact-non-mutating | an object with one key left absent, passed through the compacting helper | the original object still carries that key with an absent value afterward |
+| resource-data-004 | narrow-fallback | value `'x'`, allowed values `['a', 'b']`, fallback `'a'` | `'a'` (fallback, since `'x'` is not allowed) |
+| resource-data-005 | scope-by-owner-filters | rows `[{owner:1},{owner:2}]`, owner id `1` | `[{owner:1}]` |
+| resource-data-006 | sort-by-text-non-mutating | rows `[{name:'b'},{name:'a'}]` sorted by name | returned array is `[{name:'a'},{name:'b'}]`; the original array is unchanged |
+| resource-data-007 | workspace-query-encodes | workspace `'a b'` | `'?workspace=a%20b'` |
+| resource-data-008 | workspace-query-encodes | no workspace supplied | `''` |
+| resource-data-009 | data-config-default | the configuration reader called with no prior configuration set | the shipped default storage-key prefix (see Configuration) |
+| resource-data-010 | configure-data-merges | setting the storage-key prefix to `'x'`, then reading configuration | storage-key prefix `'x'` |
+| resource-data-011 | ftd-key-shape | writing last-shown id `'p-1'` for collection `'projects'` with prefix `'x'` | writes under storage key `'x:ftd:projects:lastId'` |
+| resource-data-012 | read-last-id-null-safe | reading the last-shown id for `'projects'` with nothing stored | no value |
+| resource-data-013 | read-last-id-null-safe | reading the last-shown id for `'projects'` when reading storage fails | no value, no failure propagates |
+| resource-data-014 | write-last-id-swallow | writing last-shown id `'p-1'` for `'projects'` when writing storage fails | resolves without raising |
+| resource-data-015 | clear-last-id-swallow | clearing the last-shown id for `'projects'` when removing storage fails | resolves without raising |
+| resource-data-016 | read-view-mode-safe-without-storage | reading the view mode for `'projects'`/`'root'` with no persisted-storage environment available | `'cards'` |
+| resource-data-017 | read-view-mode-validates | reading the view mode for `'projects'`/`'root'` with `'grid'` stored | `'cards'` (invalid value rejected) |
+| resource-data-018 | read-view-mode-validates | reading the view mode for `'projects'`/`'root'` with `'list'` stored | `'list'` |
+| resource-data-019 | write-view-mode-swallow | writing view mode `'list'` for `'projects'`/`'root'` when storage fails | resolves without raising |
+| resource-data-020 | http-re-exports-auth | importing the shared authenticated-request operation from this module | resolves to the same operation the Auth Client recipe exports |
+| resource-data-021 | http-status-duck-typed | the status-code extractor given an error carrying status `404` | `404` |
+| resource-data-022 | http-status-duck-typed | the status-code extractor given a plain error with no status | no value |
+| resource-data-023 | client-refusal-shape | the client-refusal constructor given message `'bad input'` | an error with message `'bad input'` and status `400` |
+| resource-data-024 | is-not-found-derivation | the not-found predicate given an error with status `404` | `true` |
+| resource-data-025 | is-conflict-derivation | given status `409` | `true` |
+| resource-data-026 | is-forbidden-derivation | given status `403` | `true` |
+| resource-data-027 | is-service-unavailable-derivation | given status `503` | `true` |
+| resource-data-028 | err-msg-fallback | given an error with message `'boom'`, fallback `'fallback'` | `'boom'` |
+| resource-data-029 | err-msg-fallback | given a non-error value `'not an error'`, fallback `'fallback'` | `'fallback'` |
+| resource-data-030 | rethrow-conflict-friendly | given an error whose message is `'a project with this name already exists'`, friendly message `'Pick another name'` | raises an error with message `'Pick another name'` |
+| resource-data-031 | rethrow-conflict-friendly | given an error with message `'network down'` | rethrows the original error unchanged |
+| resource-data-032 | decode-jwt-claims-shape | decoding the token-claims of `'not-a-jwt'` (no dots) | no value |
+| resource-data-033 | decode-jwt-claims-shape | decoding a well-formed three-part token whose middle part is valid base64url JSON | the decoded claims object |
+| resource-data-034 | decode-jwt-claims-null-safe | decoding a three-part token whose middle part is not valid base64url | no value |
+| resource-data-035 | tenant-id-priority | claims containing both an ecosystem id `'e1'` and a tenant id `'t1'` | `'e1'` |
+| resource-data-036 | tenant-id-priority | claims containing a tenant id `'t1'` and a project id `'p1'` | `'t1'` |
+| resource-data-037 | tenant-id-priority | no token present | no value |
+| resource-data-038 | use-tenant-id-memoized | the tenant-id read state rendered twice against the same underlying token | returns the same tenant id both times without re-decoding |
+| resource-data-039 | resource-item-key-shape | cache key `'projects'`, tenant `'t1'`, item id `'p-1'` | `('resource-item', 't1', 'projects', 'p-1')` |
+| resource-data-040 | revalidate-resource-items-delegates | invalidating every resource-item entry whose cache key matches `'projects'` | every matching entry is invalidated |
+| resource-data-041 | resource-item-cache-key-includes-tenant | the resource-item read state for cache key `'projects'`, item `'p-1'`, under tenant `'t1'` | cache key `('resource-item', 't1', 'projects', 'p-1')` |
+| resource-data-042 | resource-item-enabled-gate | the resource-item read state with no item id supplied | the load operation is never invoked |
+| resource-data-043 | resource-item-error-reporting-gated | the load operation fails with error reporting left at its default | the failure is reported naming the resource-item feature, the load step, and cache key `'projects'`, before the failure propagates |
+| resource-data-044 | resource-item-error-reporting-gated | the load operation fails with error reporting explicitly disabled | the failure is not reported; it still propagates |
+| resource-data-045 | resource-item-no-retry | the load operation fails once | no retry occurs; the error is set after the first failure |
+| resource-data-046 | resource-item-cache-retention | inspecting the read state's resolved cache settings | the retention period equals the configured 30-minute value (1,800,000 ms) |
+| resource-data-047 | resource-item-placeholder-data | a seed value is supplied before the load settles | the seed value is shown and the settled indicator is `false` |
+| resource-data-048 | resource-item-is-settled-sticky | the load resolves, then a background refresh begins for the same item id | the settled indicator remains `true` throughout the refresh |
+| resource-data-049 | resource-item-is-missing-derivation | the load fails with a not-found-shaped error | the missing indicator is `true` |
+| resource-data-050 | resource-item-error-message-fallback | the load fails with a plain string value rather than an error | the error message is `'Failed to load.'` |
+| resource-data-051 | resource-item-reload-null-id-behavior | calling reload with no item id | the read is re-run and the load call receives the absent id, as stated in the requirement; not exercised by the reference tests |
+| resource-data-052 | resource-item-writer-write-or-evict | writing a non-null row through the cache writer | the row is written into the cache |
+| resource-data-053 | resource-item-writer-write-or-evict | writing a null value through the cache writer | the cache entry is evicted, not written as a null placeholder |
+| resource-data-054 | resource-item-prefetch-never-throws | prefetching an item whose load fails | the prefetch call never raises |
+| resource-data-055 | resource-item-prefetch-cleanup-conditional | a prefetch's load fails, then a concurrent mount's load for the same id succeeds before the prefetch's cleanup runs | the entry is left holding the successful data, not removed |
+| resource-data-056 | resource-list-key-shape | cache key `'projects'`, tenant `'t1'` | `('resource-list', 't1', 'projects')` |
+| resource-data-057 | revalidate-resources-delegates | invalidating every resource-list entry whose cache key is `'workspaces'` | every matching entry is invalidated |
+| resource-data-058 | resource-list-error-reporting-gated | the load fails with error reporting left at its default | the failure is reported naming the resource-list feature, the load step, and cache key `'projects'` |
+| resource-data-059 | resource-list-no-retry | the load fails once | no retry occurs |
+| resource-data-060 | resource-list-cache-retention | inspecting the read state's resolved cache settings | the retention period equals the configured 30-minute value |
+| resource-data-061 | resource-list-reload-identity-guard | the same load-function identity passed across two renders | no cancel/refresh occurs |
+| resource-data-062 | resource-list-reload-identity-guard | a new load-function identity passed with the same cache key/tenant | the in-flight request is cancelled and refreshed |
+| resource-data-063 | resource-list-reload-rethrows | calling reload when the underlying refresh resolves with an error | reload's returned outcome carries that same error |
+| resource-data-064 | resource-list-set-items-writes-through | setting new rows through setItems | the rows are written directly into the cache |
+| resource-data-065 | resource-list-is-fetching-derivation | a read state actively fetching and still pending its first result | the loading indicator is `true` |
+| resource-data-066 | resource-list-error-status-derivation | the load fails with a conflict-shaped (409) error | the error status is `409` |
+| resource-data-067 | resource-list-error-message-fallback | the load fails with a plain object rather than an error | the error message is `'Failed to load.'` |
+| resource-data-068 | make-entity-delete-handler-sequence | the delete resolves, and the last-shown id for the base path equals the deleted id | the last-shown id is cleared, then navigation to the base path's `all` view occurs, then a reload is attempted |
+| resource-data-069 | make-entity-delete-handler-sequence | the delete resolves, and the last-shown id differs from the deleted id | the last-shown id is not cleared; navigation and reload still occur |
+| resource-data-070 | make-entity-delete-handler-del-not-caught | the delete itself fails | the handler's outcome carries that failure; navigation never occurs |
+| resource-data-071 | make-entity-delete-handler-del-not-caught | the delete resolves but the subsequent reload fails | the handler's outcome still resolves successfully (the reload failure is swallowed) |
+| resource-data-072 | workspace-prefs-cache-key | caching workspace `'acme'` with prefix `'x'` | writes under storage key `'x:home:workspace'` |
+| resource-data-073 | read-cached-workspace-safe-without-storage | reading the cached workspace with no persisted-storage environment available | returns a safe empty result, no failure raised |
+| resource-data-074 | write-cached-workspace-swallow | caching workspace `'acme'` when storage fails | resolves without raising |
+| resource-data-075 | workspace-prefs-get-unwraps | reading workspace preferences when the server reports not-found | resolves to an empty object, never raises |
+| resource-data-076 | workspace-prefs-get-unwraps | reading workspace preferences when the server returns preferences containing slug `'acme'` | resolves to `{ slug: 'acme' }` |
+| resource-data-077 | workspace-prefs-put-full-replace | writing preferences `{ slug: 'acme' }` | issues a PUT request to `/api/me/workspace-prefs` with body `{ slug: 'acme' }` |
+| resource-data-078 | workspace-list-cache-key-constant | the workspace-list cache key | `('workspaces')` |
+| resource-data-079 | notify-workspaces-changed-dual-invalidate | announcing that the workspace list changed | the workspace-list cache entry is invalidated directly, and a matching invalidation accepts a resource-list entry keyed `'workspaces'` while rejecting one keyed `'organizations'` |
+| resource-data-080 | notify-workspaces-changed-swallows | announcing a change when the underlying invalidation fails | does not raise or produce an unhandled failure |
+| resource-data-081 | notify-workspaces-changed-dispatches-event | subscribing a listener, then announcing a change | the listener is called exactly once |
+| resource-data-082 | on-workspaces-changed-subscribe | subscribing, unsubscribing, then announcing a change again | the listener is not called again |
+| resource-data-083 | check-workspace-slug-available | checking availability of slug `'a b'` | issues a GET request to `/api/auth/slug-available/a%20b` |
+| resource-data-084 | workspace-list-drops-team-rows | the workspace list includes one row of type `'team'` | that row is excluded from the result |
+| resource-data-085 | workspace-list-ordering | the workspace list has one individual row and two organization rows named `'Zeta'` and `'Acme'` | order is `[individual, 'Acme', 'Zeta']` |
 
 ## Edge Cases
 
 - **Null/empty input**: The tenant-id derivation and the token-claims
   decoder MUST return no value for an absent token or an empty string,
-  respectively (hub-domain-data-032, hub-domain-data-037). The workspace
+  respectively (resource-data-032, resource-data-037). The workspace
   query-string builder MUST return an empty string when no workspace is
-  supplied (hub-domain-data-008). Reading the last-shown id with nothing
-  stored MUST return no value (hub-domain-data-012).
+  supplied (resource-data-008). Reading the last-shown id with nothing
+  stored MUST return no value (resource-data-012).
 - **Boundary/malformed values**: A token with no dot, one dot, or a payload
   that is not valid base64url/JSON MUST all decode to no value via the
-  token-claims decoder (hub-domain-data-032, hub-domain-data-034), relying
+  token-claims decoder (resource-data-032, resource-data-034), relying
   entirely on the base64url-JSON decoding operation's own contract (see the
   Auth Client recipe) — this component adds no additional payload
   validation of its own. A stored view-mode value that is neither `'cards'`
   nor `'list'` MUST be rejected back to the `'cards'` default rather than
-  passed through (hub-domain-data-017).
+  passed through (resource-data-017).
 - **Concurrent access**: A prefetch racing a mount's own read of the same
   item MUST NOT let the prefetch's failure cleanup remove data a concurrent
-  success has since written (hub-domain-data-055). Two renders of the
+  success has since written (resource-data-055). Two renders of the
   resource-list read state with the same load-function identity MUST NOT
   cancel/refetch, but a changed load-function identity (with cache
-  key/tenant unchanged) MUST (hub-domain-data-061, hub-domain-data-062) —
+  key/tenant unchanged) MUST (resource-data-061, resource-data-062) —
   this guard exists specifically because a naive effect keyed only on mount
   would otherwise refetch on every render.
 - **Error states**: Every read state's underlying load operation MUST
@@ -449,9 +449,9 @@ component.
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| storage-key prefix | `string` (via the data-configuration setter) | `'adh'` | Prefix for every FTD key (`<prefix>:ftd:...`) and the cached-workspace key (`<prefix>:home:workspace`) |
+| storage-key prefix | `string` (via the data-configuration setter) | the host's namespace (the web implementation ships `'adh'`; see Platform Notes) | Prefix for every FTD key (`<prefix>:ftd:...`) and the cached-workspace key (`<prefix>:home:workspace`) |
 | workspace-list cache key | exported constant | `('workspaces')` | Cache key the workspace switcher's own list is cached under |
-| workspace-list-changed event name | exported constant | `'adh:workspaces-changed'` | Name of the event the workspace-list-changed announcement operation broadcasts |
+| workspace-list-changed event name | exported constant | a fixed name, `<namespace>:workspaces-changed` (see Platform Notes) | Name of the event the workspace-list-changed announcement operation broadcasts |
 | resource cache-retention period | imported constant (defined alongside the shared cache, not one of this component's own files) | `1,800,000` ms (30 min) | Retention period every resource-list/resource-item entry this component mints uses |
 | `reportErrors` | caller-supplied option, per call to the resource-item/resource-list read state | `true` | Gates whether a load failure is sent to the failure-reporting sink |
 | `seedFrom` | caller-supplied option, per call to the resource-item read state | `undefined` | Supplies a placeholder value (never treated as settled) while the real read is in flight |
@@ -568,7 +568,7 @@ Auth Client recipe's own Logging section documents, not duplicated here.
   `localStorage` for the FTD (`readLastId`/`writeLastId`/`readViewMode`/
   `writeViewMode`) and cached-workspace-slug values, using the same
   `{prefix}:ftd:{basePath}:{name}` / `{prefix}:home:workspace` key shape so
-  the `storageKeyPrefix` convention (default `"adh"`) still disambiguates
+  the `storageKeyPrefix` convention (see Configuration for the shipped default) still disambiguates
   multiple apps sharing one settings container. A C# `event` (or a
   `WeakEventManager` to avoid the listener-leak `onWorkspacesChanged`'s
   unsubscribe function exists to prevent) replaces the `workspaces-changed`
@@ -578,6 +578,7 @@ Auth Client recipe's own Logging section documents, not duplicated here.
   replaces every inline JSON parse/serialize this component does for its
   own cached values (not the JWT/token parsing itself, which `auth-client`'s
   own Platform Notes already cover).
+- **Host namespace**: The web implementation was extracted from the ADH hub and keeps its names: the storage-key prefix defaults to `'adh'` and the workspace-list-changed event is the fixed constant `'adh:workspaces-changed'`. A host other than ADH sets its own prefix through the data-configuration setter; the event name is not configurable.
 
 ## Reference Implementations
 
@@ -695,6 +696,10 @@ no test in `use-resource-item.test.tsx` exercises `id === null` through
 Requirements.
 **Approved**: pending
 
+**Decision**: The item read state's reload operation does not honor its documented no-op when there is no item id.
+**Rationale**: The implementation hands the reload straight to the underlying query refetch, which ignores the enabled gate, so the load call runs with an absent id that is only asserted by a cast; the documentation says otherwise. Closing it takes either a guard that makes reload a no-op without an id (matching the documentation) or correcting the documentation, plus a test vector for the no-id case.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -706,6 +711,8 @@ Requirements.
 | [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | passed | Reliability |
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | passed | Privacy and Data |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `secure-storage` is **partial**: the FTD last-id/view-mode values and the
 cached workspace slug sit in plaintext `localStorage` with no encryption —
@@ -735,10 +742,14 @@ lookup table or locale parameter anywhere in this component (see
 Localization) — a plain, honestly-reported gap in the source, not a hidden
 one.
 
+`separation-of-concerns` passes because each of the nine source files owns one concern — `http.ts` request helpers, `tenant.ts` the tenant-id read state, `ftd-storage.ts` and `workspace-prefs.ts` browser persistence, `use-resource-item.ts` and `use-resource-list.ts` the read states over the shared cache, `workspaces.ts` the workspace announcements, `config.ts` the host-injectable prefix, `client-helpers.ts` pure list helpers — with no presentation code. `unit-test-coverage` is partial because `use-resource-item.test.tsx`, `use-resource-list.test.tsx`, `ftd-storage.test.ts`, `http.test.ts`, `tenant.test.ts`, `workspace-prefs.test.ts` and `workspaces-changed.test.ts` in the data package's `__tests__` directory cover most behaviors, but `client-helpers.ts`, `config.ts` and the workspace slug-availability check in `workspaces.ts` have no dedicated test file, and the reload-without-id behavior is untested.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Hub framing removed: vector ids take this spec's own name, and the ADH host's default names move to Platform Notes as the web implementation's shipped values. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Key prefixes and event name are configuration; reload-without-id restated as current behavior with pending decision; add separation-of-concerns and unit-test-coverage. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to data/services/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe. |

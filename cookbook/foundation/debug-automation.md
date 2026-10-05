@@ -1,41 +1,39 @@
 ---
 id: a14c4ed2-f380-486b-90da-84a68cbfafc2
-title: Debug Automation
-domain: agenticdevelopertoolkit://cookbook/foundation/debug-automation
+title: "Debug Automation"
+domain: adtoolkit://cookbook/foundation/debug-automation
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'A launch-argument-driven debug switch and the activation/window-presentation
-  gates built on it that keep automated test runs and debug launches from stealing
-  the desktop from the person at the keyboard.'
+summary: "A launch-argument-driven debug switch and the activation/window-presentation gates built on it that keep automated test runs and debug launches from stealing the desktop from the person at the keyboard."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- debug-automation
-- quiet-presentation
-- launch-argument
-- test-host-detection
+  - debug-automation
+  - quiet-presentation
+  - launch-argument
+  - test-host-detection
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller
-- agenticdevelopertoolkit://cookbook/ui/containers/floating-chooser-panel
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-window
+  - adtoolkit://cookbook/ui/windows/single-window-controller
+  - adtoolkit://cookbook/ui/containers/floating-chooser-panel
+  - adtoolkit://cookbook/ui/settings/settings-window
 references:
-- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/DebugLaunchSwitch.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/NSApplication+QuietActivation.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/NSWindow+TestHostVisibility.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/QuietWindowPresentation.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/CoreUI/DebugLaunchSwitchTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/CoreUI/QuietWindowPresentationTests.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/DebugLaunchSwitch.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/NSApplication+QuietActivation.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/NSWindow+TestHostVisibility.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/QuietWindowPresentation.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/CoreUI/DebugLaunchSwitchTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/CoreUI/QuietWindowPresentationTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Debug Automation
@@ -382,7 +380,7 @@ Not applicable: none of the four units contains a logging call.
 
 **Decision**: The debug launch switch is a distinct reusable primitive
 rather than an inline settings-store lookup at each use site.
-**Rationale** (AppKit implementation): Per the type's own doc comment, a
+**Rationale**: (AppKit implementation) Per the type's own doc comment, a
 switch read this way lives only in the launch-argument domain, not a
 written preference — so a stale `defaults write` cannot leave a developer
 wondering later why the app behaves oddly — and the debug/release check is
@@ -394,7 +392,7 @@ evaluated exactly once, in this type, so no call site can forget it
 `level`, leaving ordering, key status, and visibility to the caller, rather
 than hiding the window (`orderOut`, `isVisible = false`) or moving it
 off-screen.
-**Rationale** (AppKit implementation): A test still has to assert
+**Rationale**: (AppKit implementation) A test still has to assert
 `isVisible`, the restored frame, `window.screen`, and first-responder
 changes — all of which a genuinely hidden or off-screen window would fail —
 while a person at the keyboard must not see it "in front of them"; dropping
@@ -406,7 +404,7 @@ and gives the person at the keyboard nothing (`NSWindow+TestHostVisibility.swift
 operations set the window's level *before* calling
 `orderFront`/`makeKeyAndOrderFront`, rather than ordering first and sinking
 afterward.
-**Rationale** (AppKit implementation): Per the doc comment, this ordering
+**Rationale**: (AppKit implementation) Per the doc comment, this ordering
 keeps the window from ever being briefly visible at the normal level on its
 way to the sunk level — a flash a person at the keyboard could otherwise
 catch.
@@ -430,7 +428,7 @@ short-circuit to `true` and the debug-only branch could never be exercised
 application activation the same suppression that window-ordering already
 established, as one shared gate rather than a bare unconditional activation
 call repeated at each call site.
-**Rationale** (AppKit implementation): The doc comment records that eleven
+**Rationale**: (AppKit implementation) The doc comment records that eleven
 call sites previously called `activate(ignoringOtherApps:)` directly, so
 the quiet flag was honored by whichever of them happened to remember it and
 ignored by the rest; centralizing the check in one extension method removes

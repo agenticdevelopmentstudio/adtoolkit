@@ -1,54 +1,53 @@
 ---
 id: 937650ae-ac85-43f4-8aa4-708207e0d745
-title: Status Server Monitor Webhook Events
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/webhook-events
+title: "Status Server Monitor Webhook Events"
+domain: adtoolkit://cookbook/status/service/monitor/webhook-events
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure, synchronous mappers that turn an untrusted Vercel or Railway webhook
-  body into a ProviderDeploy row, or null when the event is not one this monitor ingests.
+summary: "Pure, synchronous mappers that turn an untrusted Vercel or Railway webhook body into a ProviderDeploy row, or null when the event is not one this monitor ingests."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- webhook
-- deploy
-- mapper
-- server
+  - monitor
+  - webhook
+  - deploy
+  - mapper
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/security/input-validation
+  - agenticdevelopercookbook://guidelines/implementing/security/input-validation
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
-- agenticdevelopertoolkit://cookbook/status/service/monitor/format
-- agenticdevelopertoolkit://cookbook/status/service/monitor/provider-deploy
-- agenticdevelopertoolkit://cookbook/status/service/monitor/live-buffer
-- agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-vercel
-- agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-railway
+  - adtoolkit://cookbook/status/service/monitor/deploy-status
+  - adtoolkit://cookbook/status/service/monitor/format
+  - adtoolkit://cookbook/status/service/monitor/provider-deploy
+  - adtoolkit://cookbook/status/service/monitor/live-buffer
+  - adtoolkit://cookbook/status/service/monitor/fetch-vercel
+  - adtoolkit://cookbook/status/service/monitor/fetch-railway
 references:
-- packages/web/packages/status-server/src/monitor/webhook-events.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/format.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/hooks.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/deploy-mappers.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/timestamp-validation.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/hooks.int.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/webhook-events.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/format.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/hooks.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/deploy-mappers.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/timestamp-validation.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/hooks.int.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Webhook Events
 
 ## Overview
 
-`webhook-events.ts` (`packages/web/packages/status-server/src/monitor/webhook-events.ts`) exports two pure, synchronous functions — `mapVercelDeployEvent` and `mapRailwayDeployEvent` — that each translate one already-JSON-parsed provider webhook body into a `ProviderDeploy` row (`./provider-deploy`, external), the same shape the poll fetchers produce, or return `null` when the body is not a deployment event this monitor ingests. Both functions are called exactly once each, by `routes/hooks.ts` (external), after that route has verified the request's signature or shared secret (`webhook-verify.ts`, external) and parsed the raw body as JSON; a non-`null` result is then passed to `storage.deploy.upsertDeployments` for persistence, to `pushDeployEvent` (`live-buffer.ts`, external) for the in-memory live overlay, and into the board's issue-derivation and alerting path — none of which this file performs itself. This file makes no network call, touches no database, and holds no state between calls; its only work is field extraction, a fixed lookup table (Vercel), a small string transform (Railway), and delegation to three sibling pure modules — `vercelPhases`/`railwayPhases` (`./deploy-status`, agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status) for the build/deploy lifecycle, `shortSha`/`commitFullMessage` (`./format`, agenticdevelopertoolkit://cookbook/status/service/monitor/format) for commit display fields, and `toValidDate` (`./provider-deploy`, agenticdevelopertoolkit://cookbook/status/service/monitor/provider-deploy) for the trust-boundary timestamp parse.
+`webhook-events.ts` (`packages/web/packages/status-server/src/monitor/webhook-events.ts`) exports two pure, synchronous functions — `mapVercelDeployEvent` and `mapRailwayDeployEvent` — that each translate one already-JSON-parsed provider webhook body into a `ProviderDeploy` row (`./provider-deploy`, external), the same shape the poll fetchers produce, or return `null` when the body is not a deployment event this monitor ingests. Both functions are called exactly once each, by `routes/hooks.ts` (external), after that route has verified the request's signature or shared secret (`webhook-verify.ts`, external) and parsed the raw body as JSON; a non-`null` result is then passed to `storage.deploy.upsertDeployments` for persistence, to `pushDeployEvent` (`live-buffer.ts`, external) for the in-memory live overlay, and into the board's issue-derivation and alerting path — none of which this file performs itself. This file makes no network call, touches no database, and holds no state between calls; its only work is field extraction, a fixed lookup table (Vercel), a small string transform (Railway), and delegation to three sibling pure modules — `vercelPhases`/`railwayPhases` (`./deploy-status`, adtoolkit://cookbook/status/service/monitor/deploy-status) for the build/deploy lifecycle, `shortSha`/`commitFullMessage` (`./format`, adtoolkit://cookbook/status/service/monitor/format) for commit display fields, and `toValidDate` (`./provider-deploy`, adtoolkit://cookbook/status/service/monitor/provider-deploy) for the trust-boundary timestamp parse.
 
 ## Behavioral Requirements
 
@@ -56,8 +55,8 @@ approved-date: ''
 
 - **map-vercel-signature**: `mapVercelDeployEvent` MUST accept one `event: unknown` argument and MUST return either a `ProviderDeploy` object or `null`, synchronously.
 - **map-railway-signature**: `mapRailwayDeployEvent` MUST accept one `event: unknown` argument and MUST return either a `ProviderDeploy` object or `null`, synchronously.
-- **pure-no-io**: Neither `mapVercelDeployEvent` nor `mapRailwayDeployEvent` MUST perform a network call, a database read or write, or any logging; both functions' only observable effect is their return value.
-- **no-throw**: Neither function MUST throw for any `event` value, including `undefined`, `null`, an empty object `{}`, or a value whose nested fields are the wrong type — each function casts its argument to its own event interface and reads fields through optional chaining, so an absent or mistyped field flows into a `null`/`undefined` local rather than a thrown `TypeError`.
+- **pure-no-io**: `mapVercelDeployEvent` and `mapRailwayDeployEvent` MUST NOT perform a network call, a database read or write, or any logging; both functions' only observable effect is their return value.
+- **no-throw**: Each function MUST NOT throw for any `event` value, including `undefined`, `null`, an empty object `{}`, or a value whose nested fields are the wrong type — each function casts its argument to its own event interface and reads fields through optional chaining, so an absent or mistyped field flows into a `null`/`undefined` local rather than a thrown `TypeError`.
 
 ### Vercel Event-Type Lookup
 
@@ -84,7 +83,7 @@ approved-date: ''
 - **vercel-branch**: A returned Vercel row's `branch` field MUST be `meta.githubCommitRef ?? null`.
 - **vercel-commit-repo**: A returned Vercel row's `commitRepo` field MUST be the string `` <githubCommitOrg>/<githubCommitRepo> `` when both `meta.githubCommitOrg` and `meta.githubCommitRepo` are truthy, otherwise `null`.
 - **vercel-url**: A returned Vercel row's `url` field MUST be `event.payload.links.deployment` when present, otherwise, when `event.payload.deployment.url` is present, MUST be that value prefixed with the literal `` https:// ``, otherwise MUST be `null`.
-- **vercel-created-at**: A returned Vercel row's `createdAt` field MUST be `toValidDate(event.createdAt) ?? new Date()` — the current wall-clock time (the webhook's receipt time) whenever `event.createdAt` is absent or does not parse to a finite `Date` via `toValidDate` (`./provider-deploy`, agenticdevelopertoolkit://cookbook/status/service/monitor/provider-deploy). Per the source's own comment, "a webhook is often the only witness of a terminal state, so approximate time beats a dropped event (and an Invalid Date must never leave this boundary)."
+- **vercel-created-at**: A returned Vercel row's `createdAt` field MUST be `toValidDate(event.createdAt) ?? new Date()` — the current wall-clock time (the webhook's receipt time) whenever `event.createdAt` is absent or does not parse to a finite `Date` via `toValidDate` (`./provider-deploy`, adtoolkit://cookbook/status/service/monitor/provider-deploy). Per the source's own comment, "a webhook is often the only witness of a terminal state, so approximate time beats a dropped event (and an Invalid Date must never leave this boundary)."
 
 ### Railway Status Derivation
 
@@ -228,6 +227,7 @@ Not applicable: this file makes no `console.error`, `console.warn`, or any other
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Restored inverted prohibitions: a 'Neither … MUST' rule now reads 'MUST NOT'. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

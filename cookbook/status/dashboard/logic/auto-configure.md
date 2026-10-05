@@ -1,30 +1,28 @@
 ---
 id: cd71721b-e80e-4525-a7a1-fc1ac2158267
-title: Auto Configure
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/auto-configure
+title: "Auto Configure"
+domain: adtoolkit://cookbook/status/dashboard/logic/auto-configure
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A client-side adapter onto the shared auto-configure engine, running
-  match-only against a port contract mapped onto monitoring configuration,
-  with capped per-project detail blocks for what it left alone or noted.
+summary: "A client-side adapter onto the shared auto-configure engine, running match-only against a port contract mapped onto monitoring configuration, with capped per-project detail blocks for what it left alone or noted."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/config-status
+  - adtoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/state/config-status
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Auto Configure

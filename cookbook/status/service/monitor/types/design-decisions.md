@@ -1,0 +1,17 @@
+
+**Decision**: This recipe documents `HistoryCheck`/`HistoryResponse` as this file's declared contract for a `/history`-shaped response, even though the actual producer, `queryHistory` in `routes/reads.ts` (outside this file), returns a separately-declared inline type shape rather than importing and returning `HistoryResponse` by name.
+**Rationale**: TypeScript's structural typing means the JSON payload the route serves still matches `HistoryResponse`'s shape, as confirmed in **types-005**'s Conformance Test Vector, but the producer's own return type is looser (a plain `status: string` rather than `HealthStatus | "unknown"`), so a future change to that producer could emit a status value this file's own type does not permit, with no compiler error to catch it. Per source fidelity this is stated as an observed fact about the current codebase — an open question — rather than fixed or invented away, since fixing the producer is outside this file's own source.
+**Approved**: pending
+
+**Decision**: `BuildPhase` and `DeployPhase` are imported from `./deploy-status` for use as `DeploymentDTO` field types but are deliberately not re-exported by name, unlike `HealthStatus`, `OverallStatus`, and `DeployStatus`, which are.
+**Rationale**: the source gives no comment explaining this asymmetry, so this recipe states it as an observed fact about the module's export surface rather than inventing a rationale the source does not give: a consumer needing to name a `BuildPhase` or `DeployPhase` value directly MUST import it from `./deploy-status`, per **build-phase-deploy-phase-not-reexported**.
+**Approved**: pending
+
+**Decision**: `providerProjectId` and `tier` are both declared as required, non-optional fields typed `string | null`, rather than optional (`?`) fields the module could instead have left absent when not applicable.
+**Rationale**: per each field's own comment, `providerProjectId`'s absence must be readable because "a board target's identity segment is `providerProjectId ?? projectName`," and `tier` must be readable as `null` — never omitted — to distinguish "not a tiered deployment" from a consumer that simply forgot to check the field; the OpenAPI schema at `src/openapi/paths/reads.ts` independently documents the same required-though-nullable rationale for both fields, corroborating that this is a deliberate wire-contract decision rather than an accident of one file.
+**Approved**: pending
+
+**Decision**: this recipe treats `packages/web/packages/status-web/src/types.ts`'s independently-maintained mirror of these same interfaces as informative context, not as part of this file's own contract — including its currently-observed divergence, where its `phaseConfirmedAt` is declared optional (`phaseConfirmedAt?: string`) against this file's required, non-null `phaseConfirmedAt: string`.
+**Rationale**: the two packages share no build — per `deploy-status-parity.test.ts`'s own comment, "there is no shared package between the backend and its embedded web app" — and that test already exists as a runtime drift guard for `deploy-status.ts`'s enums and functions between the two packages, but no equivalent guard exists for the plain type declarations this file documents, since a type vanishes at compile time and cannot be imported and compared at runtime the way a function or a `const` array can. This asymmetry is stated as an observed fact about the current codebase, not a defect of `types.ts` itself, which fully and correctly declares `phaseConfirmedAt` as required.
+**Approved**: pending
+

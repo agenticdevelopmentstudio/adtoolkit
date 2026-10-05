@@ -1,0 +1,13 @@
+
+- **Null/empty input**: `itemTitles == []` MUST make `presentMessage(_:)` return `nil` unconditionally, per **present-message-empty-items-always-nil** (MUST).
+- **Null/empty input**: `detail == nil` MUST be treated as "no additional detail supplied"; the type does not coerce it to an empty string or otherwise distinguish "no detail" from "empty detail," because `detail` is typed as an optional rather than defaulted (MUST).
+- **Null/empty input**: `message == ""` (an empty string) MUST be accepted unchanged; `ExtensionMessageRequest` performs no non-empty validation on `message`, so a conformer MUST NOT assume it is non-empty (MUST NOT).
+- **Boundary values**: an `itemTitles` array of exactly one entry, with that entry's index present in `closeAffordanceIndices`, is the minimal all-flagged case; **close-affordance-indices-within-item-bounds** MUST still hold for it (MUST).
+- **Boundary values**: `closeAffordanceIndices` MAY name every index in `itemTitles` (every item flagged); the struct places no upper limit on how many indices may be flagged, and **close-affordance-indices-within-item-bounds** MUST hold regardless of count (MUST).
+- **Concurrent access**: `ExtensionMessagePresenting`'s execution MUST be serialized onto a single, consistent execution context, so two `presentMessage(_:)` calls on the same conforming instance MUST be serialized; the protocol requires no additional queuing or coalescing beyond what that guarantees (MUST).
+- **Concurrent access**: because `ExtensionMessageRequest` and `ExtensionMessageSeverity` MUST be safe to pass across concurrent execution contexts, a request value MUST be safely passable to another context before it reaches `presentMessage(_:)`, even though the call itself always resumes on that same single execution context (MUST).
+- **Error states**: `presentMessage(_:)` has no thrown-error path; per **present-message-no-throwing-path**, any inability to present the message MUST resolve as `nil`, indistinguishable to the caller from a user dismissal (MUST).
+- **Cancellation and timeouts**: `ExtensionMessagePresenting` defines no cancellation support and no timeout of its own; the protocol has no mechanism for a caller to signal that the underlying operation was cancelled while `presentMessage(_:)` was still awaiting a user response, and a conformer MUST NOT be assumed to observe or honor cancellation absent its own separate implementation of that (MUST NOT).
+- **Offline or disconnected state**: not applicable — this component performs no network access and has no concept of connectivity.
+- **Missing file or unreachable server**: not applicable — this component opens no file and makes no network or process call of its own.
+

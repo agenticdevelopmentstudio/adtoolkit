@@ -1,29 +1,28 @@
 ---
 id: d79f556c-163b-48aa-82f0-baff52fa9dab
-title: Status Sublabel
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/status-sublabel
+title: "Status Sublabel"
+domain: adtoolkit://cookbook/status/dashboard/logic/status-sublabel
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Pure function that builds the status sublabel: an all-clear endpoint line
-  or a grouped problem breakdown whose parts sum to the problem count'
+summary: "Pure function that builds the status sublabel: an all-clear endpoint line or a grouped problem breakdown whose parts sum to the problem count"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on:
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/row-model
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/overview
+  - adtoolkit://cookbook/status/dashboard/logic/row-model
+  - adtoolkit://cookbook/status/dashboard/logic/overview
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Sublabel
@@ -32,7 +31,7 @@ approved-date: ''
 
 This logic provides one pure, synchronous function, the sublabel-building function, that returns the one-line caption shown under the status headline. When the board is clear it reads like "12/12 endpoints healthy · no failed builds". Otherwise it is a grouped breakdown of the problem rows, such as "2 down · 1 failed build", and the doc comment requires it to account "for EVERY problem so the parts sum to the indicator count".
 
-The doc comment says the function is "Shared by the mobile hero and the desktop top-bar pill". In the current tree its only caller is the overview tab view, which passes the result to the big indicator view as its sublabel. The inputs are typed by the indicator state (specified in [Overview Projections](agenticdevelopertoolkit://cookbook/status/dashboard/logic/overview)) and a row (specified in [Row Model](agenticdevelopertoolkit://cookbook/status/dashboard/logic/row-model)). The function reads only a row's `statusWord`.
+The doc comment says the function is "Shared by the mobile hero and the desktop top-bar pill". In the current tree its only caller is the overview tab view, which passes the result to the big indicator view as its sublabel. The inputs are typed by the indicator state (specified in [Overview Projections](adtoolkit://cookbook/status/dashboard/logic/overview)) and a row (specified in [Row Model](adtoolkit://cookbook/status/dashboard/logic/row-model)). The function reads only a row's `statusWord`.
 
 This logic also holds a private table, the sublabel-phrase table, which maps a problem row's status word to a function that formats a count into a phrase.
 
@@ -239,4 +238,4 @@ Not applicable: this logic makes no log calls.
 |---------|------|--------|---------|
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/logic/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from source |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from source |

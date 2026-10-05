@@ -1,29 +1,28 @@
 ---
 id: f1167221-f233-4b5d-822c-ae26de4634db
-title: Endpoint Kinds
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/endpoint-kinds
+title: "Endpoint Kinds"
+domain: adtoolkit://cookbook/status/dashboard/logic/endpoint-kinds
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The status dashboard's canonical endpoint-kind vocabulary, its type guard,
-  and a re-export of the engine's non-deploy kind set
+summary: "The status dashboard's canonical endpoint-kind vocabulary, its type guard, and a re-export of the engine's non-deploy kind set"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/config-status
+  - adtoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/state/config-status
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Endpoint Kinds
@@ -39,7 +38,7 @@ It exports four things:
 - `isEndpointKind(k)`, a type guard that narrows an arbitrary string to `EndpointKind`.
 - `NON_DEPLOY_KINDS`, re-exported unchanged from `@agentic-toolkit/deploy-platform/engine` (`classify.ts`). The module does not restate its members.
 
-The module has no state, no I/O and no side effects. Inside status-web, `src/api/monitored-sites.ts` re-exports `ENDPOINT_KINDS` so existing imports from `./monitored-sites` keep working ([Status Web API](agenticdevelopertoolkit://cookbook/status/dashboard/api)). The status server keeps its own copy of the same vocabulary in `status-server/src/monitor/endpoint-kinds.ts`, which it says is "kept in step" with this file.
+The module has no state, no I/O and no side effects. Inside status-web, `src/api/monitored-sites.ts` re-exports `ENDPOINT_KINDS` so existing imports from `./monitored-sites` keep working ([Status Web API](adtoolkit://cookbook/status/dashboard/api)). The status server keeps its own copy of the same vocabulary in `status-server/src/monitor/endpoint-kinds.ts`, which it says is "kept in step" with this file.
 
 ## Behavioral Requirements
 
@@ -212,4 +211,4 @@ Not applicable: the module makes no log calls, and `isEndpointKind` reports its 
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from source |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from source |

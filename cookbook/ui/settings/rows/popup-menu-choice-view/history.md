@@ -1,0 +1,10 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: reworded AppKit-specific requirements to platform-neutral behavior with API mechanics moved to Platform Notes; renamed ignores-non-matching-representedObject to ignores-unresolvable-selection; promoted the empty-choices, unmatched-selection, and onChange-overwrite edge cases to named requirements with test vectors; recorded the onChange overwrite as an approved Design Decision; reformatted Design Decisions to the three-line convention and dropped the doc-authoring-only entry and the unsupported-explanation entry; fixed test vectors 001, 016, and 019 and the arranges-row-layout requirement for the row's spacer and construction-time-only item mutation; corrected the false UIKit initializer-split claim and the SwiftUI empty-symbol-name fallback in Platform Notes; softened the Increase Contrast claim to partial; added checkbox-view to related; added the initial Change History row; cleaned up the Compliance table against the catalog; records the unverified theme-token contrast as an open question. |
+| 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker against the source: restated as current behavior (no contrast check in the component) and recorded the gap as a pending Design Decision; added separation-of-concerns/unit-test-coverage Compliance rows. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

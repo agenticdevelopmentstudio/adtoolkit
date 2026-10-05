@@ -1,31 +1,30 @@
 ---
 id: 39de0dff-2b26-4d3d-97a3-ebdbdb38846a
-title: Plugin Descriptor
-domain: agenticdevelopertoolkit://cookbook/ai/plugins/plugin-descriptor
+title: "Plugin Descriptor"
+domain: adtoolkit://cookbook/ai/plugins/plugin-descriptor
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The host-side model of a plugin''s descriptor.json: identity, models, settings
-  fields, and provider templates the host reads at discovery time.'
+summary: "The host-side model of a plugin's descriptor.json: identity, models, settings fields, and provider templates the host reads at discovery time."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- value-type
-- provider-config
+  - ai-plugin
+  - value-type
+  - provider-config
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-context
+  - adtoolkit://cookbook/ai/chat/chat-context
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Plugin Descriptor
@@ -302,12 +301,15 @@ Not applicable: this concept contains no logging call of any kind.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
 | [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | partial | Reliability |
 | [secure-storage](agenticdevelopercookbook://compliance/security#secure-storage) | partial | Security |
 
 `separation-of-concerns` passes because `AIPluginDescriptor.swift` performs no file I/O, network access, or persistence of its own — bundle discovery lives in `AIPluginManager`, and credential/setting storage lives in `PluginConfigStore`/`AIProviderConfigStore`; this file is only the decoded shape and its pure resolution helpers. `no-hardcoded-strings` fails: `resolvedConfigType` returns the literal, non-localized English strings `"API Key"` and `"Local"`, which the provider picker's Config Type column displays directly (see Localization). `data-integrity` is `partial`: `identifier`, `Field.key`, and `ProviderTemplate.id` carry no uniqueness or non-empty validation in this type — duplicates decode and construct successfully, and `AIPluginManager.template(pluginIdentifier:templateId:)` silently resolves to the first match on a colliding `id` (see Edge Cases). `secure-storage` is `partial`: `Field.Kind.secret` correctly signals which values downstream consumers MUST route to the Keychain (confirmed in `PluginConfigStore.swift`/`AIProviderConfigStore.swift`), but this type performs no storage or enforcement of its own — a consumer that ignored `isSecret` would not be caught by anything in this file.
+
+`unit-test-coverage` passes because `AIPluginDescriptorTests.swift` covers decoding identity, models and typed fields, `resolvedDefaultModel` falling back to the first model, explicit version-3 templates, the implicit template when none is declared, and a template overriding the descriptor's fields, with `DescriptorCatalogTests.swift` covering the shipped descriptors.
 
 ## Change History
 
@@ -317,3 +319,4 @@ Not applicable: this concept contains no logging call of any kind.
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/plugins/. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage compliance row. |

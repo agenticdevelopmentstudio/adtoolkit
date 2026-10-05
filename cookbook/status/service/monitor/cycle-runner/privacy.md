@@ -1,0 +1,6 @@
+
+- **Data collected**: this file directly reads two fields of `config` — `alertWebhookUrl` and `heartbeatUrl` — and threads the entire `config` value (including `config.credentials`, the provider API tokens) into `runCycle` and `collectTelemetry`. This file itself never inspects, transforms, or logs any credential value.
+- **Storage**: none. `runMonitorCycle` holds no field and closes over no state between calls; every value it touches is either an argument or a value a collaborator resolved and handed back.
+- **Transmission**: `config.heartbeatUrl` and `config.alertWebhookUrl` — each an opaque, potentially secret-bearing destination URL (a healthchecks.io-style check-in path or a Slack/Discord webhook path) — are the only two outbound destinations this file itself selects, by handing them to `pingHeartbeat`/`flushAlerts`. Neither URL, nor any credential from `config.credentials`, is ever written to this file's own `console.log` line.
+- **Retention**: not applicable to this file directly — it holds no state between calls; retention of the underlying `health_checks`/`metrics_hourly`/`analytics_metrics`/`issues` rows is `runMaintenance`'s concern (external, documented in its own `MaintenanceStore` implementation), and this file only logs the row count that call reports.
+

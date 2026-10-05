@@ -1,44 +1,42 @@
 ---
 id: 6a84b15a-5e4e-4b1c-9d73-0ae8a8b602af
-title: Status Server Monitor Fetch Railway
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-railway
+title: "Status Server Monitor Fetch Railway"
+domain: adtoolkit://cookbook/status/service/monitor/fetch-railway
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Polls every Railway project's deployments with a retrying, bounded fan-out
-  and an 18s budget into ProviderDeploy rows; also fetches Railway build-log tails
-  and full logs for error enrichment and the details pane.
+summary: "Polls every Railway project's deployments with a retrying, bounded fan-out and an 18s budget into ProviderDeploy rows; also fetches Railway build-log tails and full logs for error enrichment and the details pane."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- railway
-- deploy
-- fetcher
-- server
+  - monitor
+  - railway
+  - deploy
+  - fetcher
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
-- agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-cloudflare
-- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
-- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
-- agenticdevelopertoolkit://cookbook/status/service/monitor/enrich-deploy-errors
+  - adtoolkit://cookbook/status/service/monitor/fetch-cloudflare
+  - adtoolkit://cookbook/status/service/monitor/deploy-status
+  - adtoolkit://cookbook/status/service/monitor/alerts
+  - adtoolkit://cookbook/status/service/monitor/enrich-deploy-errors
 references:
-- packages/web/packages/status-server/src/monitor/fetch-railway.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/railway-deployments.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/provider-cooldown.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/fetch-railway.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/railway-deployments.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/provider-cooldown.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Fetch Railway
@@ -156,7 +154,7 @@ Not applicable — this is a server-side Railway deployment-polling and build-lo
 | status-server-monitor-fetch-railway-016 | per-project-retry-on-timeout-only, exhausted-retries-logged-once | One project's `environments` call stalls (honoring the abort signal) on every attempt; called with `callTimeoutMs: 20`, `overallBudgetMs: 2_000` | The `environments` operation is sent exactly twice (capped at `RAILWAY_CALL_ATTEMPTS`), never a third time; `out.ok === false`; `out.deploys` is `[]` — `railway-deployments.test.ts` › "gives up after the second attempt rather than retrying forever" |
 | status-server-monitor-fetch-railway-017 | listing-retry-on-timeout-only, per-project-retry-on-timeout-only | One project's `environments` call answers immediately with `{ errors: [{ message: 'Not Authorized' }] }` (a real answer, not a timeout); called with `callTimeoutMs: 20`, `overallBudgetMs: 2_000` | The `environments` operation is sent exactly once — a real answer is never retried, even though it is an error — `out.ok === false` — `railway-deployments.test.ts` › "does NOT retry an answer, only a timeout" |
 | status-server-monitor-fetch-railway-018 | cooldown-gate-on-entry | Every `fetch` call (including the listing) resolves HTTP 429; `fetchRailwayDeployments({ RAILWAY_API_TOKEN: 'tok' })` is called, then called again immediately | The second call makes no additional `fetch` call beyond the first call's count — the entry-point cooldown gate short-circuits it — `provider-cooldown.test.ts` › "railway: a 429 on the GraphQL endpoint cools the provider down" |
-| status-server-monitor-fetch-railway-019 | build-log-tail-keeps-last-40 | `buildLogTail` called with 100 lines, `'line 0'` through `'line 99'` | Result splits into exactly 40 lines; the first is `'line 60'`, the last is `'line 99'` — `deploy-error-shaping.test.ts` › `buildLogTail` "keeps only the LAST 40 lines (the failure is at the tail)" |
+| status-server-monitor-fetch-railway-019 | build-log-tail-keeps-last-40 | `buildLogTail` called with 100 numbered log lines (indices 0 through 99) | Result splits into exactly 40 lines; the first is the entry at index 60, the last is the entry at index 99 — `deploy-error-shaping.test.ts` › `buildLogTail` "keeps only the LAST 40 lines (the failure is at the tail)" |
 | status-server-monitor-fetch-railway-020 | build-log-tail-caps-chars | `buildLogTail` called with one 10,000-character line | Result length is at most 4,001 characters, starts with `…`, and ends with the original line's last character — `deploy-error-shaping.test.ts` › `buildLogTail` "caps overall length, keeping the END with a leading ellipsis" |
 | status-server-monitor-fetch-railway-021 | build-log-full-keeps-all | `buildLogFull` and `buildLogTail` both called with the same 100 lines | `buildLogFull`'s result splits into exactly 100 lines; `buildLogTail`'s result on the identical input splits into exactly 40 — `deploy-error-shaping.test.ts` › `buildLogFull` "keeps every line, unlike the 40-line tail" |
 | status-server-monitor-fetch-railway-022 | no-build-permanent-sentinel, fetch-build-log-tail-contract | The `buildLogs` query returns `{ errors: [{ message: 'Deployment does not have an associated build' }] }` | `fetchRailwayBuildLogTail(...)` resolves `RAILWAY_NO_BUILD_TEXT` — `deploy-error-shaping.test.ts` › `fetchRailwayBuildLogTail` "a buildless deployment ('no associated build') gets the PERMANENT placeholder, not a retry" |
@@ -303,6 +301,7 @@ A fully successful poll (every project fetched, no 429, budget not exhausted, no
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Replaced source-line-number citations in a test vector with index wording |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

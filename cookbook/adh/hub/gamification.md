@@ -1,40 +1,38 @@
 ---
 id: cef42b4b-e10e-4816-b1f8-0156699bec21
-title: Gamification
-domain: agenticdevelopertoolkit://cookbook/adh/hub/gamification
+title: "Gamification"
+domain: adtoolkit://cookbook/adh/hub/gamification
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Owner/admin-scoped domain logic for one ecosystem's gamification realm
-  — its configuration, effective catalog, badge and event-type management,
-  level-ladder replacement, and replay.
+summary: "Owner/admin-scoped domain logic for one ecosystem's gamification realm — its configuration, effective catalog, badge and event-type management, level-ladder replacement, and replay."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- hub
-- gamification
-- realm-config
-- badges
-- levels
-- event-types
+  - hub
+  - gamification
+  - realm-config
+  - badges
+  - levels
+  - event-types
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystem-config
+  - adtoolkit://cookbook/adh/hub/ecosystems/ecosystem-config
 references:
-- packages/web/packages/data/src/gamification/gamification.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/gamification/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/gamification/gamification.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/gamification/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Gamification
@@ -488,7 +486,7 @@ documented 400/404/409 response into a friendlier, entity-named message
 (`error-propagation-unmodified`).
 **Rationale**: the source does not explain why. This is a notable
 divergence from the sibling component
-[Ecosystems](agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems),
+[Ecosystems](adtoolkit://cookbook/adh/hub/ecosystems/ecosystems),
 whose `ecosystems.ts` and `identifiers.ts` call `rethrowConflict` to
 turn a backend 409 into a friendly, entity-named message before it
 reaches a caller. This recipe records the observed divergence rather
@@ -537,4 +535,4 @@ the raw `AuthHttpError` itself to act on a specific status.
 |---------|------|--------|---------|
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

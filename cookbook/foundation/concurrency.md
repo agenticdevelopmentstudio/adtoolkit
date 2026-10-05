@@ -1,34 +1,33 @@
 ---
 id: 4e06a00e-653a-4d29-81d8-ac6dccfedb6a
-title: Concurrency
-domain: agenticdevelopertoolkit://cookbook/foundation/concurrency
+title: "Concurrency"
+domain: adtoolkit://cookbook/foundation/concurrency
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: An off-pool blocking hop, a per-key debounce-with-retry scheduler, and
-  a drainable teardown tracker.
+summary: "An off-pool blocking hop, a per-key debounce-with-retry scheduler, and a drainable teardown tracker."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- concurrency
-- foundation
-- debounce
-- retry
-- teardown
+  - concurrency
+  - foundation
+  - debounce
+  - retry
+  - teardown
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-registry
-- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/vsix-installer
+  - adtoolkit://cookbook/workspace/extensions/registry/extension-registry
+  - adtoolkit://cookbook/workspace/extensions/registry/vsix-installer
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Concurrency
@@ -227,7 +226,7 @@ Notes: `separation-of-concerns` passes because each of the three types addresses
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to foundation/. |

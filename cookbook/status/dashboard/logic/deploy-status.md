@@ -1,32 +1,31 @@
 ---
 id: 4b068644-9e3a-42bf-bce8-4f3068dea7e3
-title: Status Web Deploy Status
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/deploy-status
+title: "Status Web Deploy Status"
+domain: adtoolkit://cookbook/status/dashboard/logic/deploy-status
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Browser-side hand mirror of the deploy phase vocabulary, per-provider phase
-  mappers and the combined deploy status.
+summary: "Browser-side hand mirror of the deploy phase vocabulary, per-provider phase mappers and the combined deploy status."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- deploy
-- status
-- pure-function
+  - deploy
+  - status
+  - pure-function
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/board-types
+  - adtoolkit://cookbook/status/service/monitor/deploy-status
+  - adtoolkit://cookbook/status/dashboard/logic/board-types
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Web Deploy Status
@@ -35,7 +34,7 @@ approved-date: ''
 
 `deploy-status.ts` (`packages/web/packages/status-web/src/lib/deploy-status.ts`) is the status dashboard's copy of the platform-independent deploy vocabulary. It defines three string unions (`DeployStatus`, `BuildPhase`, `DeployPhase`), the `Phases` pair, the in-flight vocabulary (`IN_FLIGHT_BUILD_PHASES`, `IN_FLIGHT_DEPLOY_PHASE`, `isInFlight`), the in-flight `DeployStatus` values (`IN_FLIGHT_STATUSES`, `deployStatusInFlight`), two provider mappers (`vercelPhases`, `railwayPhases`) and the collapse function `combinedStatus`.
 
-The module's own comment calls it "A HAND MIRROR of the server's deploy-status.ts (there is no shared build between the two packages)". The server original is specified in [Status Server Monitor Deploy Status](agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status). `deploy-status-parity.test.ts` imports both modules and asserts they agree across the full phase space.
+The module's own comment calls it "A HAND MIRROR of the server's deploy-status.ts (there is no shared build between the two packages)". The server original is specified in [Status Server Monitor Deploy Status](adtoolkit://cookbook/status/service/monitor/deploy-status). `deploy-status-parity.test.ts` imports both modules and asserts they agree across the full phase space.
 
 Inside the web app, `types.ts` imports the three unions to type `DeploymentDTO.status`, `buildPhase` and `deployPhase`. `deploy-display.ts` imports `DeployStatus`. `row-model.ts` calls `deployStatusInFlight` in `deployDtoUnconfirmed` to decide whether a `DeploymentDTO` asserts live progress that may need demoting. The module has no state, no I/O and no side effects.
 
@@ -277,4 +276,4 @@ Not applicable: the module makes no log calls. Unrecognized provider values fall
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from source |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from source |

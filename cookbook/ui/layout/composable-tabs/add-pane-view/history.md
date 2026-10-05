@@ -1,0 +1,10 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.0.0 | 2026-09-23 | Claude Sonnet 5 | Initial ingredient recipe for ComposableTabsAddPaneViewController: two-popup Add/Where sheet, fixed direction order and Right default, dismiss-before-invoke confirm ordering, fixed-at-load OK enablement, and one open accessibility question (popup-to-caption label association) for review. |
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: reworded the confirm-dismisses-before-invoking-onadd requirement and its vector to assert that `dismiss(_:)` is invoked rather than completed; added a SHOULD requirement for popup-to-caption accessibility association, cited by the existing open-question marker; reformatted all Design Decisions into the canonical three-line block and trimmed the unreachable-fallback rationale to an observed path; added the ComposableTabsViewController recipe to depends-on; removed the inapplicable touch-target-size compliance row and reconciled the contrast-ratio/Increase Contrast cross-reference; fixed the AppKit / UIKit platform-note label and removed the WinUI 3 aside; clarified the Compose note's empty-choices seeding; relabeled two unreachable boundary-value edge cases as observations; gave literal key-equivalent values for add-pane-012/013; and named the confirm-action selector for add-pane-017. |
+| 1.1.1 | 2026-09-23 | Mike Fullerton | Compliance: removed rows for checks absent from the cookbook catalog, remapped modal-dismissal-and-focus to focus-management |
+| 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/composable-tabs/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |

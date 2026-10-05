@@ -1,31 +1,30 @@
 ---
 id: d5aba939-471d-48cd-9a9c-888ac92adf38
-title: Disclosure Card View
-domain: agenticdevelopertoolkit://cookbook/ui/containers/disclosure-card-view
+title: "Disclosure Card View"
+domain: adtoolkit://cookbook/ui/containers/disclosure-card-view
 type: ingredient
-version: 1.3.0
+version: 1.4.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-10-01'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Foldable card with an elevated titlebar, a native disclosure control, a
-  collapsed summary line, and a corner status badge.
+summary: "Foldable card with an elevated titlebar, a native disclosure control, a collapsed summary line, and a corner status badge."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- card
-- disclosure
-- collapsible
+  - card
+  - disclosure
+  - collapsible
 depends-on: []
 related:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Disclosure Card View
@@ -245,6 +244,7 @@ fold-memory helper that persists the folded set and rebuilds on toggle).
 - **exposes-content-spacing**: Component MUST expose a `contentSpacing`
   property that reads and writes the content area's spacing, and MUST
   re-measure the width floor whenever it is set.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -352,7 +352,7 @@ fold-memory helper that persists the folded set and rebuilds on toggle).
   explicit width/height override, so its click target is whatever the
   platform's system disclosure control natively provides. The 44×44pt
   minimum is touch-interface guidance, not a pointer-interface requirement.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. All colors are drawn from a `SemanticPalette` (`surfaceColor`/`outlineColor`/`primaryTextColor`/etc.), and no numeric contrast check is performed anywhere in this component's implementation; whether any given theme's title-on-titlebar, subtitle-on-surface, or summary-value-on-surface pairing meets a specific ratio (e.g. WCAG 2.1 AA's 4.5:1) cannot be determined from this specification or its palette mapping alone — the actual RGBA values each shipped theme resolves for these roles live outside both, and settling this needs auditing each shipped theme's resolved colors for these role pairings.
+- **minimum-contrast-ratio**: The card draws every color from the active theme's semantic palette (surface, outline, primary text and the like) and performs no contrast check of its own; the contrast of title-on-titlebar, subtitle-on-surface and summary-value-on-surface pairings is whatever the active theme's resolved colors produce.
 
 ## Conformance Test Vectors
 
@@ -406,6 +406,7 @@ fold-memory helper that persists the folded set and rebuilds on toggle).
 | disclosure-card-048 | exposes-title-status-like-badge, colors-status-badge | `titleTrailingStatus: StatusSymbol(symbolName: "xmark.seal.fill", accessibilityLabel: "Out of quota", color: { _ in purple })` | The symbol's opacity `== 1`; it is its own accessibility element; its accessibility label `== "Out of quota"`; its tooltip `== "Out of quota"`; its tint `== purple` |
 | disclosure-card-049 | reserves-placeholder-room-silently | Two cards with a long title and 40pt content, one given the seal of vector 047 and one `.placeholder(sizedLike: "checkmark.seal.fill")` | Both cards' fitting widths are equal (±0.5); the placeholder is as wide as the seal; it is not hidden, its opacity `== 0`, it is no accessibility element, and it has no tooltip |
 | disclosure-card-050 | asks-for-whole-point-title-width, floors-width-to-wider-of-open-or-folded-content | A card with a long title, no `summary`, and 40pt content, hosted at exactly its own fitting width | The title text's laid-out width is at least its own fitting width − 0.5 — it is not truncated |
+| disclosure-card-051 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 The name→role color lookup (`"red"` → `dangerColor`, `"blue"` →
 `accentColor`, and so on) is defined outside this specification — see Platform Notes.
@@ -723,6 +724,7 @@ Not applicable: the source contains no logging call.
   z-order in the `Grid`'s children) set above the `Border` that draws the
   card's own `BorderBrush`/`BorderThickness`, matching
   `draws-badge-above-surface-border`.
+- **UI-thread confinement**: `confines-to-ui-thread` — the type is declared `@MainActor` and is an `NSView` subclass, so construction or mutation from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -804,6 +806,9 @@ Not applicable: the source contains no logging call.
   has no string-catalog or localization call for these two strings, unlike
   every other piece of text on the card, which is entirely caller-supplied.
   **Approved**: pending
+- **Decision**: The card performs no contrast check of its own: title, subtitle and summary colors are the active theme's palette roles as resolved, with no enforced minimum ratio.
+  **Rationale**: The card has no numeric contrast logic anywhere; whether a pairing meets a ratio such as WCAG 2.1 AA's 4.5:1 depends on the RGBA values each shipped theme resolves for those roles, which live outside this component and this specification. Closing the gap means auditing each shipped theme's resolved colors for these role pairings, or adding a contrast floor to the palette resolution the card consumes.
+  **Approved**: pending
 
 ## Compliance
 
@@ -815,6 +820,8 @@ Not applicable: the source contains no logging call.
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | Platform Compliance |
 | [platform-design-language](agenticdevelopercookbook://compliance/platform-compliance#platform-design-language) | passed | Platform Compliance |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `keyboard-navigable`, `native-controls-preference`, and
 `platform-design-language` rest on what the source visibly does (the native
@@ -826,6 +833,8 @@ contrast ratios; `no-hardcoded-strings` is `failed` because
 `"Show details"`/`"Hide details"` are English literals with no
 localization key (see Localization).
 
+`separation-of-concerns` passes because the card is a pure presentation view: it takes its content, title, summary and palette as inputs, reports a click only through `onToggle`, and leaves fold state to a host-owned `CardFoldMemory`, so no persistence or navigation logic lives in the view (see `does-not-self-mutate-on-toggle`). `unit-test-coverage` is `partial`: `UI/DisclosureCardTests.swift` pins the fold-memory contract, the card's width and height rules (`testAFoldedCardIsExactlyAsWideAsAnOpenOne`, `testACardIsNeverNarrowerThanTheContentItIsHiding`), the title status symbol and its palette tint and spoken label (`testTheSymbolAfterTheNameIsSpokenAndTintedFromTheLivePalette`) and the corner badge's spoken label, but nothing there exercises the surface, outline, titlebar and text palette mapping, the toggle callback, or the disclosure control's labels.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -836,3 +845,4 @@ localization key (see Localization).
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-26 | Mike Fullerton | Documented the title status symbol: `titleTrailingStatus` (a `StatusSymbol` drawn right after the title at its size), `StatusSymbol.placeholder(sizedLike:)` and its silent reserved room, the palette-resolving `color` closure with the `colorName` convenience init, the CoreUI `WholePointLabel` title, the text-size-scaled masthead gap, and the width floor for every card; added requirements, vectors 047–050, configuration rows, edge cases, and two design decisions. |
 | 1.3.0 | 2026-10-01 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/containers/. |
+| 1.4.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker as current behavior (no contrast check; theme colors as resolved) with a pending design decision; added separation-of-concerns and unit-test-coverage compliance rows. Corrected the unit-test-coverage rationale to credit the title status symbol and badge tests; added the confines-to-ui-thread requirement and vector. |

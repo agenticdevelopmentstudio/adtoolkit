@@ -1,0 +1,6 @@
+
+- **Role/trait**: Not applicable — this component sets no explicit accessibility role of its own; it is a plain container view with no accessibility role or element assignment of its own. Whichever child is on screen (the placeholder's labeled stack, or the hosted panel's web content) carries whatever accessibility role its own view hierarchy provides.
+- **Label requirements**: Not applicable for the same reason — no accessibility label or identifier is set on the container or when swapping content; labeling belongs entirely to whichever content is being shown.
+- **Announce state changes**: Not implemented in source: swapping content replaces the entire visible content — placeholder to webview panel, or back — by adding and removing views, with no accompanying assistive-technology notification (for example, a layout-changed announcement) anywhere in this component or in the placeholder. A screen-reader user focused on this pane when the extension's page appears, or disappears, gets no announcement that the content changed underneath them.
+- **Minimum tap target**: Not applicable — this component places no tappable control of its own. The placeholder it shows has no buttons or links, only three text labels; any interactive element inside a resolved panel's page is the extension's own responsibility, out of this file's scope.
+

@@ -1,35 +1,34 @@
 ---
 id: 2f1d9160-a055-4aca-8dff-86d39cc0b76a
-title: Chat Transcript Row View
-domain: agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-transcript-row-view
+title: "Chat Transcript Row View"
+domain: adtoolkit://cookbook/ai/chat/chat-window/chat-transcript-row-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: One row of a merged, multi-conversation chat transcript, with a session header
-  line, a message bubble, a timestamp, and a delivery indicator.
+summary: "One row of a merged, multi-conversation chat transcript, with a session header line, a message bubble, a timestamp, and a delivery indicator."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- chat
-- messaging
-- transcript
+  - chat
+  - messaging
+  - transcript
 depends-on:
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/typing-indicator-view
+  - adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
+  - adtoolkit://cookbook/ai/chat/chat-window/typing-indicator-view
 related:
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/typing-indicator-view
-- agenticdevelopertoolkit://recipes/transcript
+  - adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
+  - adtoolkit://cookbook/ai/chat/chat-window/typing-indicator-view
+  - agenticdevelopertoolkit://recipes/transcript
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Chat Transcript Row View
@@ -44,7 +43,7 @@ The component is one row of a *merged* transcript — several conversations inte
 - **shows-icon-only-with-attribution**: The component MUST include the source application's icon in the header only when `message.attribution` is non-nil; a message with no attribution MUST render the header with no icon.
 - **icon-wired-only-when-jump-provided**: The component MUST set the app icon's target/action, tooltip, and accessibility label only when `actions.onJump` is non-nil; when `actions.onJump` is nil the icon MUST render with no target and no tooltip.
 - **jump-invokes-callback**: Clicking the app icon, when wired, MUST invoke `actions.onJump` with the row's message.
-- **renders-bubble-without-inline-timestamp**: The component MUST embed the chat bubble component (see `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view`) with its inline timestamp disabled, so the bubble never draws its own timestamp.
+- **renders-bubble-without-inline-timestamp**: The component MUST embed the chat bubble component (see `adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view`) with its inline timestamp disabled, so the bubble never draws its own timestamp.
 - **renders-own-timestamp**: The component MUST render the message's timestamp in its own label, on its own line below the bubble (or below the delivery indicator, when one is present).
 - **aligns-by-role**: The component MUST align the header, bubble, and timestamp against the trailing edge when `message.role == .user`, and against the leading edge for any other role.
 - **reserves-icon-column**: The component MUST reserve an outer margin of 44pt (8pt inset + 28pt icon + 8pt gap) on both sides for the icon column, regardless of which side's icon is actually filled.
@@ -59,7 +58,7 @@ The component is one row of a *merged* transcript — several conversations inte
 - **hover-fill-clears-on-exit**: When the pointer exits the row, the component MUST clear the hover fill unconditionally.
 - **pointing-cursor-when-pressable**: The component MUST show a pointing-hand cursor covering its full bounds when `actions.onOpen` is set, and MUST show no special cursor otherwise.
 - **selection-frame**: Setting `isSelected` to `true` MUST draw a 2pt border in the theme's `.selection` color around the row; setting it to `false` MUST remove the border (width 0, no color); setting it to its current value MUST be a no-op.
-- **delivery-sending-shows-indicator**: When `message.delivery == .sending`, the component MUST insert an animated instance of the typing indicator component (see `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/typing-indicator-view`) between the bubble and the timestamp, and MUST start its animation.
+- **delivery-sending-shows-indicator**: When `message.delivery == .sending`, the component MUST insert an animated instance of the typing indicator component (see `adtoolkit://cookbook/ai/chat/chat-window/typing-indicator-view`) between the bubble and the timestamp, and MUST start its animation.
 - **delivery-failed-shows-reason**: When `message.delivery == .failed(reason)`, the component MUST insert a word-wrapping label between the bubble and the timestamp showing `reason`, using the theme's caption font and `.danger` color, and MUST NOT show a typing indicator.
 - **delivery-settled-no-extra-view**: When `message.delivery == .settled`, the component MUST insert no view between the bubble and the timestamp, and the timestamp MUST attach directly below the bubble.
 - **remeasure-failure-label-width**: Whenever the row's layout pass runs, the component MUST re-set the failure label's maximum layout width to the label's actual frame width, and invalidate its cached natural size, whenever the two differ and the frame has a non-zero width.
@@ -96,11 +95,11 @@ The component is one row of a *merged* transcript — several conversations inte
 
 ## Accessibility
 
-- **Role**: The row itself sets no explicit accessibility role or element-grouping value; it is a generic container. Its subviews carry their own accessibility: the header (labeled with the attribution's header line, tagged for UI-test identification) and the app icon (tagged for UI-test identification always; a target, tooltip ("Go to this conversation" or "Go to this conversation in {appIdentity}"), and accessibility label ("Go to {attribution's header line}") only when `actions.onJump` is set). The bubble's own accessibility is that component's concern — see `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view`.
+- **Role**: The row itself sets no explicit accessibility role or element-grouping value; it is a generic container. Its subviews carry their own accessibility: the header (labeled with the attribution's header line, tagged for UI-test identification) and the app icon (tagged for UI-test identification always; a target, tooltip ("Go to this conversation" or "Go to this conversation in {appIdentity}"), and accessibility label ("Go to {attribution's header line}") only when `actions.onJump` is set). The bubble's own accessibility is that component's concern — see `adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view`.
 - **Label requirements**: See **icon-wired-only-when-jump-provided** and **renders-header-line** above; both header and (wired) icon carry meaningful labels traceable to `attribution.headerLine`.
 - **Announce state changes**: Theme changes repaint live (**reflect-theme-live**); no other state change in this view posts an accessibility notification.
 - **Minimum tap target**: The app icon is 28×28pt, short of the 44×44pt default this ingredient's touch-target concern is measured against. The source's own comment explains the choice (see Design Decisions); whether 28pt is acceptable for this control is not something the source settles.
-  - **minimum-tap-target**: NEEDS REVIEW: Not implemented in source. Whether the app icon's 28×28pt hit area is an acceptable deviation from the 44×44pt default, given it is a real, always-clickable-when-wired control (not decorative), is a design call the source does not make — the shared session-header component constrains the icon button's width and height to exactly the icon's own size, with no additional hit-area inset around the artwork, and the button classes it uses have a click/cursor target that is just the artwork's own bounds, so there is no existing padding technique in this codebase to reuse (see Platform Notes for the exact types). Resolve by having the accessibility/design owner confirm whether 28pt is acceptable here or whether the icon's tappable area should be padded to 44×44pt independent of its 28×28pt artwork.
+  - **minimum-tap-target**: The app icon's click target is exactly its own 28x28pt artwork: the shared session-header component constrains the icon button to the icon's own size with no additional hit-area inset, so the target stays short of the 44x44pt default whether or not the icon is wired. No padding technique exists in this codebase to reuse; the deviation is recorded in the Design Decision on the icon's hit area.
 - **Keyboard path for the open gesture**: **open-on-double-click** is reachable only via a two-click pointer gesture; there is no keyboard-event handling and no accessibility activation method in this file by which a keyboard or switch-control user can trigger the same action. The source's own doc comment says selecting a row via `onSelect` "gives the arrow keys, Return and Shift-Return something to act on," and the enclosing container confirms it: the hosting transcript view, which owns row selection when enabled, handles key events and, on Return/Enter with a row selected, invokes the same open callback this row's own double click invokes, with Shift-Return invoking the jump callback instead. A keyboard-only user does have an equivalent to **open-on-double-click**, supplied by that container rather than by this file, whenever the host wires row selection on (see Platform Notes for the exact hosting types).
 - **Selection state announcement**: `isSelected` changes the row's visual border but posts no accessibility notification and sets no accessibility "selected" trait; a screen reader user navigating the merged transcript by keyboard has no way to hear which row is currently selected, since selection is communicated only by that visual border.
 - **Color dependence**: The Hovered state (see States) is communicated by a background fill alone, with no accompanying border or icon change; the Selected state adds a border shape in addition to (rather than instead of) color, so selection is not color-only, but hover is.
@@ -199,7 +198,7 @@ None of the three literals — the two app-icon tooltips or the accessibility la
 
 | Option | Behavior |
 |--------|----------|
-| Reduce Motion | Not applicable: this file animates nothing of its own — the hover fill and selection border are set as instantaneous property writes on the row's own background, not as animated transitions. The embedded typing indicator's own animation is that component's concern; see `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/typing-indicator-view`. |
+| Reduce Motion | Not applicable: this file animates nothing of its own — the hover fill and selection border are set as instantaneous property writes on the row's own background, not as animated transitions. The embedded typing indicator's own animation is that component's concern; see `adtoolkit://cookbook/ai/chat/chat-window/typing-indicator-view`. |
 | Increase Contrast | Not implemented in source: this view sets no independent high-contrast styling. All colors (`.selection`, `.timestampText`, `.danger`) are read from the active `SemanticPalette`; whatever contrast increase that palette provides on request is inherited automatically, and this file does nothing further. |
 | Differentiate Without Color | Selection is differentiated by shape (a border), not color alone (see Accessibility, "Color dependence"); hover is differentiated by color alone, with no accompanying shape or icon change — the source provides no alternative cue for hover. |
 
@@ -227,7 +226,7 @@ Not applicable: the component contains no logging calls (no `os_log`, `Logger`, 
 - **SwiftUI**: Compose a custom `View` mirroring this file's structure: a header (the session breadcrumb + icon, built the same way `SessionHeaderView` is used here), the bubble view, and a `Text` timestamp, stacked in a `VStack` whose `HorizontalAlignment` (`.leading`/`.trailing`) is chosen by `message.role`, exactly as `isFromUser` chooses anchors here. Use `.contentShape(Rectangle())` plus `.onTapGesture(count: 2)` for open and a plain `.onTapGesture` for select on the row's own background (SwiftUI, unlike AppKit's `NSEvent.clickCount`-based `mouseUp`, needs the two gesture recognizers arbitrated explicitly, e.g. with `.simultaneousGesture` or `.exclusively(before:)`), and `.onHover`/`.overlay` for the hover fill and selection border this file draws on its `CALayer`. Compute the bubble's max width from `GeometryReader` the way `maxBubbleWidth(forRowWidth:)` does here.
 - **Compose**: Build a `Row`/`Column` composition — a header row (an app icon `Image`, clickable via its own `Modifier.clickable`, plus a breadcrumb `Text`), the bubble composable, and a timestamp `Text` — inside a parent `Box` using `Modifier.combinedClickable(onClick = onSelect, onDoubleClick = onOpen)`, which is Compose's direct equivalent of this file's single-click-select / double-click-open split. Use `Arrangement.End`/`Arrangement.Start` (mirroring `aligns-by-role`) and a `mutableStateOf` for a Compose-desktop hover fill; on Android there is no mouse hover to mirror, so that half of the behavior simply does not arise.
 - **React/Web**: Render a flex column (header row, bubble, timestamp) inside a container `div` with `onClick` (select) and `onDoubleClick` (open) handlers — the DOM natively distinguishes single vs. double click the way this file's `NSEvent.clickCount` check does, so no extra arbitration is needed. Use CSS `:hover` for the fill, gated by a class or `data-` attribute mirroring `isPressable` so an unwired row (no `onOpen`) never shows it, and a `.selected` class applying `box-shadow`/`border` instead of `outline` to keep the "shape, not fill" cue this file uses. Compute the bubble's max width from a `ResizeObserver` on the row, mirroring `maxBubbleWidth(forRowWidth:)`.
-- **AppKit / UIKit** (source platform): `ChatTranscriptRowView.swift`, an `NSView` subclass — this is a macOS/AppKit-only file with no UIKit counterpart in source. The header line reuses `SessionHeaderView`, the same control the Sessions window and Conversations shelf use, so its accessibility and layout are learned once across all three; it constrains its icon button's width/height to exactly `spec.side`, and its `PointingHandButton`/`InertIconButton` classes give the button a cursor rect and tracking area that are both just `bounds` — there is no extra hit-area padding to reuse for the 28pt-vs-44pt open question (see Accessibility). Row padding is tracked with private constants `hInset` (8pt) and `vInset` (6pt, plus 3pt extra above the header). Hover and selection are drawn as raw `CALayer` property writes (`backgroundColor`, `borderWidth`/`borderColor`, and the corner radius set once on `layer.cornerRadius`) rather than `NSVisualEffectView` or a highlight subview. `hitTest(_:)` is overridden so the row remains the primary click target everywhere except over the bubble or the (wired) app-icon button. Press handling overrides `mouseDown`/`mouseUp`: `mouseDown` invokes `actions.onSelect` unconditionally (including on the first press of a double click, which is why select fires before open in vector chat-transcript-row-043) and always calls `super.mouseDown`; `mouseUp`'s `event.clickCount >= 2` check is what separates single-click-select from double-click-open, always forwarding to `super.mouseUp` otherwise — a UIKit port has no `clickCount` on `UIView` touch events, so it would need a `UITapGestureRecognizer(numberOfTapsRequired: 2)` for open and a separate single-tap recognizer with `require(toFail:)` against it for select. Hover is tracked via `mouseEntered`/`mouseExited`, gated in `mouseEntered` by testing `window.contentView?.hitTest(point)` against the row and its descendants, where `point` is the event's `locationInWindow` converted into the content view's coordinate space; the pointing-hand cursor is added in a `resetCursorRects` override. `layout()` is overridden to re-set the failure label's `preferredMaxLayoutWidth` and call `invalidateIntrinsicContentSize()` when needed. The typing indicator is started with `TypingIndicatorView.startAnimating()`. Construction via a coder is foreclosed with `init?(coder:) { fatalError() }`; the view never overrides `acceptsFirstResponder`. The header is labeled via `headerView.setAccessibilityLabel(attribution.headerLine)` and tagged `accessibilityID("chat-row.header")`; the app icon always carries `accessibilityID("chat-row.jump")`, and when `actions.onJump` is non-nil the icon's target, `toolTip`, and `setAccessibilityLabel("Go to \(attribution.headerLine)")` are set (`ChatTranscriptRowView.swift`–`343`) — none of the three literals is routed through `String(localized:)` or `NSLocalizedString`. `isSelected` posts no `NSAccessibility` notification. A caller that wants both callbacks unset constructs an empty `Actions()` value. The keyboard-equivalent path lives in `ChatView.swift` (`packages/apple/AgenticToolkit/macOS/Features/AIChatWindow/ChatView.swift`), which overrides `acceptsFirstResponder`/`keyDown` and, on Return/Enter (`keyCode` 36 or 76) with a row selected, invokes `rowActions.onOpen?(message)`, with Shift-Return invoking `onJump` instead — see Accessibility.
+- **AppKit / UIKit** (source platform): `ChatTranscriptRowView.swift`, an `NSView` subclass — this is a macOS/AppKit-only file with no UIKit counterpart in source. The header line reuses `SessionHeaderView`, the same control the Sessions window and Conversations shelf use, so its accessibility and layout are learned once across all three; it constrains its icon button's width/height to exactly `spec.side`, and its `PointingHandButton`/`InertIconButton` classes give the button a cursor rect and tracking area that are both just `bounds` — there is no extra hit-area padding to reuse for the 28pt-vs-44pt gap (see **minimum-tap-target** and its Design Decision). Row padding is tracked with private constants `hInset` (8pt) and `vInset` (6pt, plus 3pt extra above the header). Hover and selection are drawn as raw `CALayer` property writes (`backgroundColor`, `borderWidth`/`borderColor`, and the corner radius set once on `layer.cornerRadius`) rather than `NSVisualEffectView` or a highlight subview. `hitTest(_:)` is overridden so the row remains the primary click target everywhere except over the bubble or the (wired) app-icon button. Press handling overrides `mouseDown`/`mouseUp`: `mouseDown` invokes `actions.onSelect` unconditionally (including on the first press of a double click, which is why select fires before open in vector chat-transcript-row-043) and always calls `super.mouseDown`; `mouseUp`'s `event.clickCount >= 2` check is what separates single-click-select from double-click-open, always forwarding to `super.mouseUp` otherwise — a UIKit port has no `clickCount` on `UIView` touch events, so it would need a `UITapGestureRecognizer(numberOfTapsRequired: 2)` for open and a separate single-tap recognizer with `require(toFail:)` against it for select. Hover is tracked via `mouseEntered`/`mouseExited`, gated in `mouseEntered` by testing `window.contentView?.hitTest(point)` against the row and its descendants, where `point` is the event's `locationInWindow` converted into the content view's coordinate space; the pointing-hand cursor is added in a `resetCursorRects` override. `layout()` is overridden to re-set the failure label's `preferredMaxLayoutWidth` and call `invalidateIntrinsicContentSize()` when needed. The typing indicator is started with `TypingIndicatorView.startAnimating()`. Construction via a coder is foreclosed with `init?(coder:) { fatalError() }`; the view never overrides `acceptsFirstResponder`. The header is labeled via `headerView.setAccessibilityLabel(attribution.headerLine)` and tagged `accessibilityID("chat-row.header")`; the app icon always carries `accessibilityID("chat-row.jump")`, and when `actions.onJump` is non-nil the icon's target, `toolTip`, and `setAccessibilityLabel("Go to \(attribution.headerLine)")` are set (`ChatTranscriptRowView.swift`–`343`) — none of the three literals is routed through `String(localized:)` or `NSLocalizedString`. `isSelected` posts no `NSAccessibility` notification. A caller that wants both callbacks unset constructs an empty `Actions()` value. The keyboard-equivalent path lives in `ChatView.swift` (`packages/apple/AgenticToolkit/macOS/Features/AIChatWindow/ChatView.swift`), which overrides `acceptsFirstResponder`/`keyDown` and, on Return/Enter (`keyCode` 36 or 76) with a row selected, invokes `rowActions.onOpen?(message)`, with Shift-Return invoking `onJump` instead — see Accessibility.
 - **WinUI 3**: Start from a `UserControl` (or a `DataTemplate` inside a virtualizing `ItemsRepeater`/`ListView`, if the transcript is virtualized) containing a `Grid`: a header `StackPanel` (an `Image` or `PersonPicture` for the app icon, plus a breadcrumb `TextBlock`), the bubble content, and a `TextBlock` for the timestamp. Bind `HorizontalAlignment` between `Right` and `Left` to `message.role`, mirroring `aligns-by-role`. Drive hover and selection through `VisualStateManager` states (`PointerOver`, `Selected`) on the control's `ControlTemplate` rather than manually toggling layer properties — WinUI's built-in template states already express exactly the hover/selected distinction this file hand-codes. WinUI's `Tapped` and `DoubleTapped` events do not carry an AppKit-style `clickCount`; `Tapped` fires before a would-be `DoubleTapped` is recognized, so reconciling single-click-select against double-click-open requires either acting on `Tapped` only after `DoubleTapped`'s recognition window has elapsed, or accepting that select fires once before open also fires — which is in fact what this file itself does: `mouseDown` invokes `onSelect` unconditionally on every press, including the first press of a double click, and only `mouseUp`'s `clickCount >= 2` check decides open, so a double click here also fires select before it fires open (see **select-on-mouse-down**, **open-on-double-click**). The app icon becomes a `Button` (or `HyperlinkButton`) with `AutomationProperties.Name` bound to "Go to {headerLine}", mirroring the AppKit accessibility label, and `ToolTipService.ToolTip` for the hover tooltip. The 2px selection border becomes `BorderThickness="2"` on the template's `Border`, driven by the `Selected` visual state, rather than a manually toggled `CALayer` border.
 
 ## Reference Implementations
@@ -240,36 +239,42 @@ Not applicable: the component contains no logging calls (no `os_log`, `Logger`, 
 
 **Decision**: The app icon is sized 28×28pt — short of the 44pt the Sessions window gives the identical control, but larger than the 24pt symbol it replaces.
 **Rationale**: In the transcript, the icon heads one line of a timeline whose subject is what was said, not the row's whole identity the way it is in the Sessions window; 28pt keeps it recognizable as artwork (a picture to be recognised, not a glyph to be read) without claiming the row.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: The app icon's target, tooltip, and accessibility label are set only when `actions.onJump` is non-nil; an unwired icon renders with no target.
 **Rationale**: The icon promises a link under the pointer wherever it is hovered; a promise kept by nothing is worse than no promise, so the promise is only made where it is actually kept.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: Hover fill and the pointing-hand cursor are gated on `actions.onOpen`, not on `actions.onSelect` or `actions.onJump`.
 **Rationale**: They promise that pressing the row itself means something — specifically, that a press opens the conversation — so they track the row's own primary action rather than any closure being present.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: Selection is drawn as a 2pt border rather than a background fill.
 **Rationale**: The hover fill already means "the mouse is here"; a second fill would leave a reader unable to tell a hovered row from a selected one, and a border leaves the bubble's own color — which encodes who is talking — untouched.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: Opening a row requires a double click; a single click is reserved for selection and for starting a text-selection drag inside the bubble.
 **Rationale**: A single click is worth more where it already is — selecting text to copy it — and opening a conversation is deliberate enough to be worth two clicks instead of contesting that gesture.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: The row is laid out with hand-written `NSLayoutConstraint`s mirrored per role, rather than nested stack views, with the header line as the one exception (it stays a stack).
 **Rationale**: The row mirrors about its own centre line, and "the same layout, flipped" is one set of anchors chosen per side, where stack views would need two separate hierarchies; the header line is the shared control used identically in the Sessions window and Conversations shelf, so it keeps its own internal arrangement regardless of which margin the whole line is pinned to.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: `showsInlineTimestamp: false` is passed to the embedded bubble, and the row draws its own timestamp label on its own line instead.
-**Rationale**: The row's own timestamp is anchored to the same edge as the header's breadcrumb trail — the speaker's column — so it has to be a label this row positions itself; a timestamp the bubble drew inline would be part of the bubble's own shape and could not be pinned independently to that column (see `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view`).
-**Approved: pending**
+**Rationale**: The row's own timestamp is anchored to the same edge as the header's breadcrumb trail — the speaker's column — so it has to be a label this row positions itself; a timestamp the bubble drew inline would be part of the bubble's own shape and could not be pinned independently to that column (see `adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view`).
+**Approved**: pending**
+
+**Decision**: The app icon's 28x28pt hit area is not padded to 44x44pt.
+**Rationale**: The icon is a real, always-clickable-when-wired control, but the shared session-header component sizes the button to its artwork and there is no existing hit-area padding technique to reuse; closing the gap takes the accessibility/design owner either accepting 28pt for this pointer-driven surface or padding the tappable area to 44x44pt independent of the artwork.
+**Approved**: pending
 
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | partial | Accessibility |
 | [dynamic-type-support](agenticdevelopercookbook://compliance/accessibility#dynamic-type-support) | partial | Accessibility |
@@ -278,7 +283,9 @@ Not applicable: the component contains no logging calls (no `os_log`, `Logger`, 
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | passed | Privacy and Data |
 | [no-pii-in-logs](agenticdevelopercookbook://compliance/privacy-and-data#no-pii-in-logs) | passed | Privacy and Data |
 
-`touch-target-size` is omitted: this is a pointer-driven macOS surface with no touch input, so the check's 44×44pt-touch/48×48dp-touch grounds do not transfer directly; the 28×28pt app icon's click-target size is instead the open question on minimum-tap-target, tracked under Accessibility above, not a pass/fail against a touch default. `passed` rows rest on the source directly: the row emits no logging at all, so none can leak PII; and the view holds only the caller-supplied `message`/`attribution` in memory purely to render them, collecting and storing nothing further. `partial` rows reflect what this file alone can't settle, or shares with something else: the header and (wired) icon carry real accessibility labels, but the row's own selection state has no accessibility exposure — `isSelected` posts no `NSAccessibility` notification and sets no accessibility "selected" trait (see Accessibility above) — so screen-reader-support is partial rather than passed; `keyboard-navigable` is partial because this file itself has no keyboard path of its own, but `ChatView.swift`, the container that owns row selection, does supply a Return-to-open and Shift-Return-to-jump equivalent when it wires `isRowSelectionEnabled` (see the keyboard-path note under Accessibility above) — a guarantee that holds only when hosted by that container; `reduced-motion` is partial because this view animates nothing of its own, but it is the one that decides to call `startAnimating()` on the embedded `TypingIndicatorView`, whose own reduced-motion compliance is `failed` (see `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/typing-indicator-view`); text sizing and color contrast are both delegated entirely to the active `SemanticPalette`, which this file neither reads for scaling nor independently verifies.
+`touch-target-size` is omitted: this is a pointer-driven macOS surface with no touch input, so the check's 44×44pt-touch/48×48dp-touch grounds do not transfer directly; the 28×28pt app icon's click-target size is instead recorded as **minimum-tap-target** under Accessibility above and in its Design Decision, not a pass/fail against a touch default. `passed` rows rest on the source directly: the row emits no logging at all, so none can leak PII; and the view holds only the caller-supplied `message`/`attribution` in memory purely to render them, collecting and storing nothing further. `partial` rows reflect what this file alone can't settle, or shares with something else: the header and (wired) icon carry real accessibility labels, but the row's own selection state has no accessibility exposure — `isSelected` posts no `NSAccessibility` notification and sets no accessibility "selected" trait (see Accessibility above) — so screen-reader-support is partial rather than passed; `keyboard-navigable` is partial because this file itself has no keyboard path of its own, but `ChatView.swift`, the container that owns row selection, does supply a Return-to-open and Shift-Return-to-jump equivalent when it wires `isRowSelectionEnabled` (see the keyboard-path note under Accessibility above) — a guarantee that holds only when hosted by that container; `reduced-motion` is partial because this view animates nothing of its own, but it is the one that decides to call `startAnimating()` on the embedded `TypingIndicatorView`, whose own reduced-motion compliance is `failed` (see `adtoolkit://cookbook/ai/chat/chat-window/typing-indicator-view`); text sizing and color contrast are both delegated entirely to the active `SemanticPalette`, which this file neither reads for scaling nor independently verifies.
+
+`separation-of-concerns` passes because `ChatTranscriptRowView` composes the header, icon, bubble and typing indicator for one row from a caller-supplied message and attribution; row selection, scrolling and message grouping stay in `ChatView`, and bubble drawing stays in `AIChatBubbleView`. `unit-test-coverage` is partial: `ConversationFocusTests.swift` constructs the row directly and checks `maxBubbleWidth(forRowWidth:)` and `hitTest(_:)`, and `BubbleTruncationTests.swift` and `ConversationsStatusLineTests.swift` inspect rows built by a chat view, but there is no `ChatTranscriptRowView` test file of its own and header/icon wiring, selection styling and theme repaint are not asserted.
 
 ## Change History
 
@@ -290,3 +297,5 @@ Not applicable: the component contains no logging calls (no `os_log`, `Logger`, 
 | 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/chat/chat-window/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-tap-target NEEDS REVIEW marker as current behavior plus a pending Design Decision; added separation-of-concerns and unit-test-coverage compliance. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |

@@ -1,0 +1,26 @@
+
+- **signature**: The state MUST take no arguments and MUST return either a user object or `null`.
+- **status-user-shape**: The user object MUST have an `email` string, an optional `displayName` that may be a string or `null`, and a `role` that is exactly one of `"pending"`, `"viewer"` or `"admin"`.
+- **user-projection**: The state MUST return the session state's `user` field unchanged and nothing else. The session state's loading flag MUST NOT be part of the return value.
+- **null-when-unknown**: The state MUST return `null` in each of these cases: the first session load is still in flight, the backend reported a definitive signed-out session, or the first load failed with nothing cached. Callers cannot tell these cases apart through this state.
+- **single-query-owner**: The state MUST NOT define its own request or read. It MUST read the session through the one shared session state so every consumer uses the same request function.
+- **shared-cache-key**: The session MUST be cached under the single cache key `status-auth-me`. Every consumer, whether it uses this adapter or the session state directly, MUST read the same cache entry, and concurrent consumers MUST be served by one in-flight request.
+- **session-request**: Loading the session MUST send one `GET` to the `/auth/me` path, resolved to an absolute URL by the injected API client (the default base is `/api`, so the default URL is `/api/auth/me`). The request MUST carry no body and no custom headers.
+- **cookie-session**: The client MUST learn the session only by asking `/auth/me`. The session itself is the `status_auth` httpOnly cookie, which the browser attaches to the same-origin request; the client never reads or stores the cookie. The status backend owns setting and clearing it.
+- **ok-user-response**: When the response is OK (status 200 to 299), the state MUST resolve to the `user` field of the JSON body.
+- **ok-null-response**: When an OK response body has `user: null` or no `user` field, the state MUST resolve to `null`.
+- **non-ok-throws**: When the response is not OK, the request function MUST throw, with a message of `auth/me unavailable (HTTP <status>)`. It MUST NOT treat a non-OK response as signed out. The reason: the backend never answers this route with a 401, so a non-OK status means infrastructure trouble.
+- **network-error-propagates**: When the underlying request rejects, the request function MUST let that rejection propagate unchanged. It MUST NOT convert it to `null`.
+- **keep-last-known-session**: When a refetch fails after a user has already been cached, the state MUST keep returning the cached user. The signed-in session MUST change to `null` only after an OK response with `user: null`.
+- **retry-count**: A failed session load MUST be retried up to 3 times (4 attempts in total) before the read enters its error state. Retries use exponential backoff, starting at 1 s and doubling per attempt, capped at 30 s.
+- **stale-time**: A successfully loaded session MUST be treated as fresh for 60,000 ms. During that window, mounting another consumer MUST NOT trigger a new request.
+- **refetch-triggers**: After the 60,000 ms fresh window, the session MUST be refetched on the platform's default triggers: a new consumer mounting, the application regaining focus, or the network reconnecting. It MUST NOT refetch on a timer, because the source sets no refetch interval.
+- **login-invalidation-contract**: Code that signs a user in (the login and signup flows) MUST invalidate the `status-auth-me` cache entry after the cookie is set. Otherwise the cached `{ user: null }` stays in place for the whole stale time.
+- **body-not-validated**: The request function MUST treat the JSON body as containing a `user` field that is either the user object or `null`, without checking its fields at runtime. The shape of the user object, including the `role` value, is trusted as the backend sent it.
+- **no-error-exposure**: The state MUST NOT expose the read's error, a retry count or a status flag. A failed load is visible to callers only as the value it returns (a kept cached user, or `null`).
+- **query-provider-precondition**: The calling context MUST have a shared cache provider available. Attempting to read with no such provider throws a missing-client error.
+- **api-client-injection**: The state MUST resolve URLs through an injected API client. That is the client from the nearest override provider, or the same-origin default client when there is no provider.
+- **concurrency**: Simultaneous requests MUST be deduplicated and cache updates ordered through the single cache entry for the key, so no concurrent or interleaved access to the session occurs.
+- **no-other-side-effects**: Apart from the `/auth/me` request and the cache entry, the state MUST NOT write storage, log, emit analytics or navigate.
+- **client-only**: Status User State MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
+

@@ -1,32 +1,31 @@
 ---
 id: 9b1b54d5-e514-479f-b9f9-0a03cf4ebbc9
-title: File Editor View
-domain: agenticdevelopertoolkit://cookbook/workspace/files/file-editor-view
+title: "File Editor View"
+domain: adtoolkit://cookbook/workspace/files/file-editor-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Shows the file browser's selection — cached, syntax-highlighted text with
-  per-document undo, a system preview for other files, placeholders otherwise.
+summary: "Shows the file browser's selection — cached, syntax-highlighted text with per-document undo, a system preview for other files, placeholders otherwise."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- file-browser
-- editor
-- autosave
+  - file-browser
+  - editor
+  - autosave
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/documents/document-editor-view
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/workspace/documents/document-editor-view
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # File Editor View
@@ -110,6 +109,7 @@ The debounce window is the injected autosave scheduler's own setting, 1 second b
 
 - **read-failure-shows-placeholder-only**: A file the component cannot read MUST show the "Cannot open this file" placeholder; the component MUST NOT present any additional error dialog, alert, or retry control.
 - **autosave-failure-has-no-visible-indicator**: A failed autosave write MUST NOT be surfaced to the user by this component; the affected document remains marked dirty and MUST NOT be discarded. Retrying the write is the injected autosave scheduler's own responsibility, not this component's — see that component's own documentation for its retry behavior.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -181,6 +181,7 @@ The debounce window is the injected autosave scheduler's own setting, 1 second b
 | file-editor-view-033 | wrap-lines-disabled | Inspect the appearance configuration passed to any mounted editor | Line wrapping is disabled |
 | file-editor-view-034 | read-failure-shows-placeholder-only | Select a file with no read permission | The "Cannot open this file" placeholder is shown; no alert or dialog appears |
 | file-editor-view-035 | autosave-failure-has-no-visible-indicator | Force the injected write function to throw for a dirty document | No error UI appears in this component; the document remains marked dirty and is not discarded |
+| file-editor-view-036 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -290,6 +291,8 @@ An autosave write failure is logged at error level (`Auto-save failed for <uri>:
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [dynamic-type-support](agenticdevelopercookbook://compliance/accessibility#dynamic-type-support) | partial | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
@@ -297,6 +300,8 @@ An autosave write failure is logged at error level (`Auto-save failed for <uri>:
 | [rtl-layout-support](agenticdevelopercookbook://compliance/internationalization#rtl-layout-support) | partial | Internationalization |
 
 `screen-reader-support` is partial because no accessibility notification accompanies a display-state change in this component itself (see **Announce state changes**). `dynamic-type-support` is partial because the placeholder message scales with the theme's own text-size preference while the placeholder icon's literal 48pt size does not. `contrast-ratio` is partial because every color is a semantic theme token resolved at render time, so actual contrast depends on the active theme, which this component does not control. `no-hardcoded-strings` failed because both placeholder strings (see Localization) are unlocalized `String` literals. `rtl-layout-support` is partial because every string in this file is plain Unicode text with no directional layout assumptions, but that is no evidence of mirrored-layout or bidi handling, and the editor itself — where either would actually be exercised — is out of scope for this recipe.
+
+`separation-of-concerns` passes because the editing logic is not in the view: `FileEditorState` (in its own file) owns the display slots, loading and dirty tracking, `FilePreviewLoader` classifies a file, and `FileEditorView.swift` only renders what the state says, using `EditorPlaceholderView`, `FileEditorContentView` and the `CachedEditorStack` bridge that keeps one editor mounted. `unit-test-coverage` is partial: `FileEditorStateTests.swift` (16 tests) and `FilePreviewLoaderTests.swift` cover the state and classification the view is driven by, and `FileEditorHighlightProviderTests.swift` and `FileEditorTriggerCharacterTests.swift` cover editor-adjacent behavior, but no test renders `FileEditorView` or `CachedEditorStackView`.
 
 ## Change History
 
@@ -307,3 +312,5 @@ An autosave write failure is logged at error level (`Auto-save failed for <uri>:
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/files/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added compliance rows for the required checks judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

@@ -1,35 +1,32 @@
 ---
 id: d4b4359e-e9c8-439c-abcf-309fcc419348
-title: Window Context Model
-domain: agenticdevelopertoolkit://cookbook/system/system-windows/window-context-model
+title: "Window Context Model"
+domain: adtoolkit://cookbook/system/system-windows/window-context-model
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The value types that model window contexts — match strategy, window
-  fingerprint, window info, window snapshot and window context — and the
-  operations they support for grouping windows into named workspaces that
-  survive a restart.'
+summary: "The value types that model window contexts — match strategy, window fingerprint, window info, window snapshot and window context — and the operations they support for grouping windows into named workspaces that survive a restart."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-management
-- system-windows
-- window-matching
-- window-contexts
+  - window-management
+  - system-windows
+  - window-matching
+  - window-contexts
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/system/system-windows/window-explorer-view
+  - adtoolkit://cookbook/system/system-windows/window-explorer-view
 references:
-- https://developer.apple.com/documentation/coregraphics/1455137-cgwindowlistcopywindowinfo
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/documentation/coregraphics/1455137-cgwindowlistcopywindowinfo
+approved-by: ""
+approved-date: ""
 ---
 
 # Window Context Model
@@ -58,8 +55,8 @@ Consumers named for orientation: the window matcher builds fingerprints and scor
 - **optional-omitted**: An optional stored field whose value is absent (the window identifier on window snapshot, the last-focused window identifier on window context) MUST be omitted from encoded output, and a missing key MUST decode as absent.
 - **missing-key-throws**: Decoding any of the four record types MUST fail with a decoding error when a required field's key is absent; no field has a decode-time default.
 - **frame-encoding**: Rectangle fields (the frame on window info, the saved frame on window snapshot) MUST encode as a nested array `[[x, y], [width, height]]`.
-- **no-side-effects**: No operation of the five types MUST perform file I/O, network access, logging, process launches or notification posting; every operation is a pure computation or an in-memory mutation of the value itself.
-- **no-errors**: No operation MUST throw or return an error; lookups signal "not found" with an absent value or `false`.
+- **no-side-effects**: The operations of the five types MUST NOT perform file I/O, network access, logging, process launches or notification posting; every operation is a pure computation or an in-memory mutation of the value itself.
+- **no-errors**: An operation MUST NOT throw or return an error; lookups signal "not found" with an absent value or `false`.
 
 ### Match Strategy
 
@@ -284,7 +281,7 @@ Not applicable: none of the five types performs logging; the only related log li
 
 ## Design Decisions
 
-**Decision** (Apple platforms): A snapshot's stable `id` is a `UUID` separate from the CGWindowID, and the CGWindowID is optional.
+**Decision**: (Apple platforms) A snapshot's stable `id` is a `UUID` separate from the CGWindowID, and the CGWindowID is optional.
 **Rationale**: Per the `SystemWindowSnapshot` doc comment, the CGWindowID "may become stale after restart"; a separate stable ID lets a context keep a dormant snapshot and re-attach a new live window to it through the fingerprint.
 **Approved**: pending
 
@@ -300,11 +297,11 @@ Not applicable: none of the five types performs logging; the only related log li
 **Rationale**: The value type stays a plain container; cross-context rules (a window in at most one context) need the whole context list, so `SystemWindowContextManager` enforces them.
 **Approved**: pending
 
-**Decision** (Apple platforms): `MatchStrategy.displayName` lives on the model and returns English literals.
+**Decision**: (Apple platforms) `MatchStrategy.displayName` lives on the model and returns English literals.
 **Rationale**: The doc comment keeps it beside the enum, like `CustomMatchMode.displayName`, so hosts read labels without reaching into the macOS UI layer; the strings are not externalized, which is recorded as a failed check under Compliance.
 **Approved**: pending
 
-**Decision** (Apple platforms): The types rely on synthesized `Codable` with no versioning.
+**Decision**: (Apple platforms) The types rely on synthesized `Codable` with no versioning.
 **Rationale**: Synthesis keeps the wire format equal to the Swift property names; the cost is that a missing key or unknown strategy fails the whole decode, which the store reports as a decode error.
 **Approved**: pending
 
@@ -323,6 +320,7 @@ Not applicable: none of the five types performs logging; the only related log li
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to system/system-windows/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

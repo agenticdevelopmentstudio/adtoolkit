@@ -1,28 +1,30 @@
 ---
 id: 21cbbc1c-38a0-4e7a-8ca0-06e2f29429f5
-title: Site Wordmark
-domain: agenticdevelopertoolkit://cookbook/adh/sites/site-wordmark
+title: "Site Wordmark"
+domain: adtoolkit://cookbook/adh/sites/site-wordmark
 type: ingredient
-version: 1.3.0
+version: 1.4.1
 status: review
 language: en
-created: '2026-06-26'
-modified: '2026-09-27'
+created: 2026-06-26
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "The compact ADH marketing-site brand wordmark: the site's full name with its trailing accent word in gold italic over an optional mono identity line."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- branding
-- wordmark
-- chrome
-- marketing
+  - branding
+  - wordmark
+  - chrome
+  - marketing
 depends-on: []
 related: []
 references: []
+approved-by: ""
+approved-date: ""
 ---
 
 # Site Wordmark
@@ -115,7 +117,7 @@ STORE & REVIEW RESEARCH           <- monospace family, uppercase, letter-spaced,
   the site name).
 - Carries no landmark role of its own — the consumer places it within its own
   heading structure (e.g. above the page's main heading).
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. The wordmark and tagline text color resolves from the active theme's gold/text/dimmed-text roles against the hosting background at runtime; the component performs no contrast check, so whether a given theme's resolved pair meets 4.5:1 cannot be determined from this component alone; this would be settled by a theme-level contrast audit of those roles against the backgrounds they sit on.
+- **theme-owned-contrast**: The wordmark and tagline text colors MUST resolve from the active theme's gold, primary-text and dimmed-text roles against the hosting background at runtime; the component performs no contrast check of its own, so contrast is whatever the active theme's resolved pair provides.
 
 ## Conformance Test Vectors
 
@@ -151,6 +153,35 @@ STORE & REVIEW RESEARCH           <- monospace family, uppercase, letter-spaced,
 | `siteId` | site identifier | — (required) | The marketing site whose brand to render |
 | `tagline` | renderable content | site description | Identity line; set explicitly to null to omit it |
 | `className` | string | — | Extra styling on the root element |
+
+## Deep Linking
+
+Not applicable: the wordmark is a non-interactive display element with no route or navigable identity of its own.
+
+## Localization
+
+The brand name and default identity line come from the shared site registry, and a provided tagline is caller-supplied content; the component defines no string literals of its own. Translating the brand is a registry concern, not this component's.
+
+## Accessibility Options
+
+| Option | Behavior |
+|--------|----------|
+| Reduce Motion | Not applicable: the component performs no animation or transition. |
+| Increase Contrast | Follows the active theme's color roles; the component reads no system contrast setting itself. |
+| Differentiate Without Color | Satisfied: the accent word is the site name itself, so its meaning is carried by text, not color alone. |
+
+## Feature Flags
+
+Not applicable: the component reads no feature flags and renders unconditionally.
+
+## Analytics
+
+Not applicable: the component emits no analytics or tracking events.
+
+## Privacy
+
+- **Data collected**: None. The component renders registry data and a caller-supplied tagline and originates no data of its own.
+- **Storage**: Not applicable; the component persists nothing.
 
 ## Logging
 
@@ -190,12 +221,13 @@ Presentational and static; emits no log events.
   Demoed in `ui-showcase` (Chrome group); first consumer is the research site's
   `AuthorPapersIndex`.
 - **AppKit / UIKit**: Not applicable — web-only shared component.
-- **WinUI 3**: Not applicable — web-only shared component.
+- **WinUI 3**: Build it as a `UserControl` holding a vertical `StackPanel` of two `TextBlock`s. The wordmark line uses `Run` inlines inside one `TextBlock`: a lead `Run` in the primary-text theme brush and an accent `Run` with `FontStyle=Italic` in the accent theme brush (a `ThemeResource`), set in a serif `FontFamily`. The identity line is a second `TextBlock` in a monospace `FontFamily`, uppercased, with `CharacterSpacing` for the letter-spacing and the dimmed-text theme brush, collapsed when its text is null or empty. Resolve the brand string through the same site-registry lookup and title split rather than hard-coding it.
 
 ## Reference Implementations
 
 | Platform | Path |
 |----------|------|
+| web | `packages/web/packages/adh/src/marketing/SiteWordmark.tsx` |
 
 ## Design Decisions
 
@@ -233,24 +265,27 @@ are different intents and get different values. On the web this is a `ReactNode`
 prop with `undefined` vs. `null` distinguished.
 **Approved**: pending
 
+**Decision**: Colors come from the active theme only; the component performs no contrast check of its own.
+**Rationale**: The wordmark and tagline resolve gold, primary-text and dimmed-text roles against whatever background hosts them, so whether a given theme's resolved pair meets 4.5:1 cannot be known here; closing the gap takes a theme-level contrast audit of those roles against the backgrounds they sit on.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
 |---|---|---|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 
-These statuses rest on `SiteWordmark.tsx`: the brand and identity lines are plain
-`<p>`/`<span>` text nodes with no ARIA suppression, read in document order
-(screen-reader-support); `text-apt-gold`/`text-apt-text`/`text-apt-text-dim` resolve to
-runtime Material 3 theme roles (`@agenticdevelopertoolkit/themes`' `tailwind.css`:
-`--color-apt-gold: var(--color-primary)`, …) whose actual rendered contrast is a
-property of the active theme, not measured or asserted by this component (contrast-ratio).
+`separation-of-concerns` passes because `SiteWordmark.tsx` only composes registry lookup, the shared title split and theme tokens into markup, and ships on its own entry point so consumers do not pull in landing-page prose. `unit-test-coverage` fails because no test file exists for `SiteWordmark` anywhere under `packages/web` (the neighbouring `studioWordmark.test.tsx` covers `StudioWordmark`, a different component). These statuses otherwise rest on `SiteWordmark.tsx`: the brand and identity lines are plain text nodes with no ARIA suppression, read in document order (screen-reader-support); `text-apt-gold`/`text-apt-text`/`text-apt-text-dim` resolve to runtime theme roles whose rendered contrast is a property of the active theme, not measured or asserted by this component (contrast-ratio).
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.4.1 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |
+| 1.4.0 | 2026-10-04 | Mike Fullerton | Filled Reference Implementations; completed missing sections; contrast gap restated as current behavior with a pending decision; added separation-of-concerns and unit-test-coverage compliance; WinUI 3 guidance. |
 | 1.3.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/sites/. |
 | 1.2.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

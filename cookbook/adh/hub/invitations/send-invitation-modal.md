@@ -1,13 +1,13 @@
 ---
 id: 633ab7e7-828e-4e7d-b2dc-9ba189536b6e
 title: "Send Invitation Modal"
-domain: agenticdevelopertoolkit://cookbook/adh/hub/invitations/send-invitation-modal
+domain: adtoolkit://cookbook/adh/hub/invitations/send-invitation-modal
 type: recipe
-version: 1.3.0
+version: 1.3.3
 status: review
 language: en
 created: 2026-06-26
-modified: 2026-09-27
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
@@ -26,6 +26,8 @@ ingredients:
 depends-on: []
 related: []
 references: []
+approved-by: ""
+approved-date: ""
 ---
 
 # Send Invitation Modal
@@ -98,6 +100,20 @@ labels), and a button (footer Cancel/Send).
   dialog MUST provide modal semantics with focus trap and restore.
 - **custom-title**: The dialog title MUST render the given title text, defaulting
   to "Send invitation" when it is omitted.
+
+### API
+
+- **Payload delivered to the send callback**: an object with an optional `email`
+  entry and an optional `sms` entry, present only for a rendered section; each
+  entry carries `recipients` (that section's list of recipient strings) and
+  `note` (that section's untrimmed note text, an empty string when empty).
+- **Inputs**: `open` (whether the modal is shown); `emails` (optional list of
+  strings seeding the Email section; the section is hidden when empty or
+  absent); `phones` (optional list of strings seeding the SMS section; the
+  section is hidden when empty or absent); `onSend` (called with the assembled
+  payload); `onClose` (called to close the modal); `busy` (optional; disables
+  Send and blocks dismissal while true); `title` (optional; overrides the
+  dialog heading, defaulting to "Send invitation").
 
 ## Layout
 
@@ -174,20 +190,6 @@ labels), and a button (footer Cancel/Send).
 - State (including notes and the discard confirm) resets on close, so reopening
   via a fresh mount re-seeds from the current inputs.
 
-## API
-
-- **Payload delivered to the send callback**: an object with an optional `email`
-  entry and an optional `sms` entry, present only for a rendered section; each
-  entry carries `recipients` (that section's list of recipient strings) and
-  `note` (that section's untrimmed note text, an empty string when empty).
-- **Inputs**: `open` (whether the modal is shown); `emails` (optional list of
-  strings seeding the Email section; the section is hidden when empty or
-  absent); `phones` (optional list of strings seeding the SMS section; the
-  section is hidden when empty or absent); `onSend` (called with the assembled
-  payload); `onClose` (called to close the modal); `busy` (optional; disables
-  Send and blocks dismissal while true); `title` (optional; overrides the
-  dialog heading, defaulting to "Send invitation").
-
 ## Platform Notes
 
 - **SwiftUI**: Present via a custom modal container (e.g. a `.sheet`) holding the same two conditional sections (SMS, then Email). Because `.interactiveDismissDisabled(busy)` only gates swipe-to-dismiss on `busy`, route the swipe gesture through the same populated check as Cancel (e.g. an intercepted drag on the sheet background) rather than relying on it alone — see **confirm-cancel-when-populated** and **block-dismissal-when-busy**. Recipients render read-only as a wrapping row of non-removable chip `Text`/`Label` views bound to `@State private var emailRecipients: [String]` / `smsRecipients`, seeded once at init; the note is a `TextEditor`. Footer buttons are `Button("Cancel")` (`.buttonStyle(.plain)`, no `.keyboardShortcut`, so Enter never triggers it) and `Button("Send")` (`.buttonStyle(.borderedProminent)`, default tint — no gold; the gold accent is reserved for the dialog title — `.disabled(!canSend || busy)`, also with no `.keyboardShortcut(.defaultAction)` so Enter never triggers Send), with a `ProgressView()` swapped in for the label while busy. The discard confirm uses `.confirmationDialog` with a `.destructive`-role button and no default (Enter-triggered) action — a separate rule from Send's own no-Enter behavior above.
@@ -241,13 +243,20 @@ labels), and a button (footer Cancel/Send).
 | [unicode-support](agenticdevelopercookbook://compliance/internationalization#unicode-support) | passed | Internationalization |
 | [input-sanitization](agenticdevelopercookbook://compliance/security#input-sanitization) | failed | Security |
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | passed | Privacy & Data |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 Statuses rest on: `ariaLabel`'d `RecipientInput`s, text-labeled `Button`s, and the `Dialog` primitive's built-in focus trap/restore for the passed Accessibility checks, against the default theme spacing/typography the source doesn't itself verify for the partial ones and the `animate-spin` busy indicator shown with no `prefers-reduced-motion` gating in source; the hardcoded English strings ("Send invitation", "Cancel", "Send", "Note (optional)", the aria-labels) for the failed Internationalization checks, against the `Textarea`'s unrestricted-Unicode input for the passed one; the `Textarea` note forwarded to `onSend` with no validation or trimming for the failed Security check; and the single optional note field layered on top of the caller-seeded, read-only recipient lists for the passed Privacy & Data check.
+
+`separation-of-concerns` passes: `send-invitation-modal.tsx` composes shared primitives (`Dialog`, `RecipientInput`, `Textarea`, `UnsavedChangesAlert`, `FieldGroup`) and hands the composed payload to a caller-supplied `onSend`; it fetches and persists nothing. `unit-test-coverage` passes: `sendInvitationModal.test.tsx` covers section rendering for email-only, SMS-only, and both, Send disabled with no recipients, the payload including only populated sections, DOM order, read-only recipient chips, and the discard-confirmation flow (confirm once a note exists, Stay keeps the note, closing directly otherwise, nested dialog registration).
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.3.3 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |
+| 1.3.2 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | Add separation-of-concerns and unit-test-coverage compliance. |
 | 1.3.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/invitations/. |
 | 1.2.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-23 | Mike Fullerton | Lint pass: corrected the populated/dirty and recipient-editing claims to match the read-only `RecipientInput` and note-only dirty check in source; added recipients-are-read-only, no-enter-to-send, and custom-title requirements; tightened busy and payload-shape wording; fixed the React/Web block path and dropped app-specific Phase/Pending-Users/sub-project wording, removing the phase-rollout design decision; corrected the Send-button color claim and the WinUI/AppKit/SwiftUI/Compose/iOS Enter-key and swipe-dismiss platform notes; moved the API block into its own section before Platform Notes; reformatted the Design Decisions Approved line and rebuilt Compliance with real Accessibility/Internationalization/Security/Privacy & Data checks; added test vectors for note-per-section, read-only recipients, reset-on-close, label-controls, Esc/backdrop, Discard/Cancel-in-confirm, Enter, and custom-title, and gave T4 a concrete payload. |

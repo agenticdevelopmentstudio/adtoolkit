@@ -1,0 +1,3 @@
+
+# Typing Indicator View
+

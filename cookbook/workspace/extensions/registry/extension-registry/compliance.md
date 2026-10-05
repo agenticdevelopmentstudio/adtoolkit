@@ -1,0 +1,10 @@
+
+| Check | Status | Category |
+|-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
+| [fault-tolerance](agenticdevelopercookbook://compliance/reliability#fault-tolerance) | passed | Reliability |
+| [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | partial | Best Practices |
+
+`separation-of-concerns` passes because `ExtensionRegistry.swift` delegates manifest decoding to `ExtensionManifest`, engine-range parsing to `VSCodeEngineRange`, JSONC tolerance to `JSONCPreprocessor`, and NLS resolution to `ExtensionManifestLocalization`, keeping this file's own responsibility limited to directory enumeration, gating, ordering, and driving registered contribution points. `unit-test-coverage` passes: `ExtensionRegistryTests.swift` exercises discovery, every `ExtensionLoadError` case, duplicate resolution, enablement (including case-migration), uninstall (including the failed-delete path), the `establishedIdentifiers` tri-state contract across every branch that sets it `nil`, JSONC tolerance, ordering, and the observer-notification contract, including the reload-generation race via the `reload(performing:)` test seam. `fault-tolerance` passes because `loadAll()` never throws, isolates each directory's and each contribution point's failure independently (contribution-point-error-isolated, manifest-malformed-failure-with-recovered-identifier), and a bad extension or a refusing contribution point never prevents another extension from loading. `explicit-error-handling` is `partial`: every load-time failure is a typed `ExtensionLoadError` recorded in `failures`, but the two skip branches inside `Scan.scan` that set `readEverything = false` (an unreadable search path, an unresolvable directory-entry type) emit no log line at all, unlike every other skip branch in the file — see the open question under Edge Cases.
+

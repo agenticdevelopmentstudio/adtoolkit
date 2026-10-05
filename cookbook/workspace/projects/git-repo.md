@@ -1,35 +1,32 @@
 ---
 id: 1463e7a2-e290-4b8c-8643-df9462a758e6
-title: Git Repository Record
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/git-repo
+title: "Git Repository Record"
+domain: adtoolkit://cookbook/workspace/projects/git-repo
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The identity-bearing git repository record, its pre-identity scan result,
-  and the scan summary a directory walk produces.
+summary: "The identity-bearing git repository record, its pre-identity scan result, and the scan summary a directory walk produces."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- value-type
+  - git
+  - projects
+  - value-type
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/GitRepoScannerTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectReconcilerTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/GitRepoScannerTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectReconcilerTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Git Repository Record

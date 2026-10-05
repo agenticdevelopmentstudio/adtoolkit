@@ -1,40 +1,37 @@
 ---
 id: f81157d7-766f-42c9-a98a-44df19698bea
-title: 'Hub Domain: Customers'
-domain: agenticdevelopertoolkit://cookbook/adh/hub/customers
+title: "Hub Domain: Customers"
+domain: adtoolkit://cookbook/adh/hub/customers
 type: ingredient
-version: 1.0.2
+version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The Hub''s Customers domain: a data-access protocol and Codable models for
-  an ecosystem''s end users, and the topic provider that lists, creates, edits, and
-  deletes them.'
+summary: "The Hub's Customers domain: a data-access protocol and Codable models for an ecosystem's end users, and the topic provider that lists, creates, edits, and deletes them."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- hub
-- customers
-- data-source
-- forms
-- crud
+  - hub
+  - customers
+  - data-source
+  - forms
+  - crud
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/navigation/htdv
+  - adtoolkit://cookbook/ui/navigation/htdv
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Customers/CustomersDataSource.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Customers/CustomersModels.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Customers/CustomersTopic.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/CustomersTopicTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Hub/Features/Customers/CustomersDataSource.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Customers/CustomersModels.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Customers/CustomersTopic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/CustomersTopicTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Hub Domain: Customers
@@ -48,7 +45,7 @@ The Customers domain is the Hub's management of an ecosystem's end users
   through which the Customers topic reaches the server: list/get/create/
   update/delete, a single flat CRUD surface with no nested child resource.
 - **The data shapes** (`CustomersModels.swift`) — `Customer` and
-  `CustomerInput`, the `Codable` payloads the data source sends and
+  `CustomerInput`, the serializable payloads the data source sends and
   receives.
 - **`CustomersTopic`** (`CustomersTopic.swift`) — the `EcosystemTopicProvider`
   that renders this domain into the Hub's rail/detail (HTDV) navigation: a
@@ -76,10 +73,9 @@ literals themselves say "user."
 
 ### CustomersDataSource.swift — server data-access contract
 
-- **data-source-contract**: `CustomersDataSource` MUST be a `Sendable`,
-  `AnyObject`-constrained protocol declaring five `async throws`
-  operations: `list(ecosystemID:)`, `get(id:)`, `create(_:)`,
-  `update(id:_:)`, and `delete(id:)`.
+- **data-source-contract**: the customers data source MUST be an asynchronous, fallible interface
+  declaring five operations: `list(ecosystemID:)`, `get(id:)`, `create(_:)`, `update(id:_:)`, and
+  `delete(id:)`.
 - **list-is-ecosystem-scoped**: `list(ecosystemID:)` MUST take an
   `ecosystemID` parameter; `create(_:)` instead carries the scope inside
   its `CustomerInput` payload's own `ecosystemId` field (see
@@ -89,36 +85,29 @@ literals themselves say "user."
   `id: String` (plus, for `update`, a `CustomerInput`), with no
   `ecosystemID` parameter of their own — unlike `list(ecosystemID:)` and
   unlike `create(_:)`'s payload, none of these three operations names or
-  carries the ecosystem it is scoped to at the protocol level (see the
-  open question on `get-lacks-ecosystem-scope`).
-- **data-source-is-class-bound**: `CustomersDataSource` MUST be
-  constrained to `AnyObject`, so an implementation is a class or actor,
-  never a value type; none of the given sources supplies a concrete
-  implementation.
+  carries the ecosystem it is scoped to at the protocol level (see
+  `customer-lookup-not-ecosystem-scoped`).
+- **data-source-is-reference-semantics**: an implementation of the customers data source MUST have
+  reference semantics (a shared, stateful client), never be a copied value; none of the given
+  sources supplies a concrete implementation.
 
 ### CustomersModels.swift — data shapes
 
-- **customer-shape**: `Customer` MUST be a `Codable`, `Hashable`,
-  `Sendable`, `Identifiable` struct exposing `id: String`,
-  `ecosystemId: String`, and seven optional `String?` fields — `email`,
-  `displayName`, `externalId`, `slug`, `avatarUrl`, `createdAt`,
-  `updatedAt` — with no custom `init(from:)`/`encode(to:)`, per the
-  source's own doc comment "Every descriptive field is nullable on the
-  wire."
-- **customer-label-derivation**: `Customer.label` MUST return
-  `HubText.nonBlank(displayName) ?? HubText.nonBlank(email) ?? "—"`, per
-  the source's own doc comment: `displayName || email || "—"`, treating
-  blank strings as missing.
-- **customer-sublabel-derivation**: `Customer.sublabel` MUST return
-  `HubText.nonBlank(email) ?? HubText.nonBlank(externalId) ?? "—"`, per
-  the source's own doc comment: `email || externalId || "—"`.
-- **customer-input-shape**: `CustomerInput` MUST be a `Codable`,
-  `Hashable`, `Sendable` struct exposing non-optional `ecosystemId: String`
-  and `email: String`, plus four optional `String?` fields —
-  `displayName`, `externalId`, `slug`, `avatarUrl` — per the source's own
-  doc comment: "Body for `POST /customer/customers` and
-  `PUT /customer/customers/{id}`. Optional fields encode as absent, never
-  `null`."
+- **customer-shape**: a customer MUST be a serializable, comparable, identifiable value exposing
+  `id` and `ecosystemId` strings and seven optional string fields — `email`, `displayName`,
+  `externalId`, `slug`, `avatarUrl`, `createdAt`, `updatedAt` — with no custom decoding or
+  encoding, per the source's own doc comment "Every descriptive field is nullable on the wire."
+- **customer-label-derivation**: a customer's derived `label` MUST be its non-blank `displayName`,
+  else its non-blank `email`, else `"—"`, per the source's own doc comment: `displayName || email ||
+  "—"`; blank strings (empty, or only whitespace and newlines) count as missing.
+- **customer-sublabel-derivation**: a customer's derived `sublabel` MUST be its non-blank `email`,
+  else its non-blank `externalId`, else `"—"`, per the source's own doc comment: `email ||
+  externalId || "—"`.
+- **customer-input-shape**: the customer input MUST be a serializable, comparable value exposing
+  non-optional `ecosystemId` and `email` strings, plus four optional string fields — `displayName`,
+  `externalId`, `slug`, `avatarUrl` — per the source's own doc comment: "Body for
+  `POST /customer/customers` and `PUT /customer/customers/{id}`. Optional fields encode as absent,
+  never `null`."
 - **customer-input-field-asymmetry**: Unlike `Customer`, whose `email` is
   optional, `CustomerInput.email` MUST be non-optional — every input
   payload declares a concrete email string, never `nil` (see, further
@@ -132,10 +121,9 @@ literals themselves say "user."
   `EcosystemTopicEntry` with `id: "users"`, `label: "Users"`,
   `systemImage: "person.2"`, and `description: "The people who sign in to
   this product."`.
-- **topic-actor-confinement**: `CustomersTopic` MUST be declared
-  `@MainActor` and `final`, conforming to `EcosystemTopicProvider`, and
-  holds a single stored `dataSource` supplied through its public
-  `init(dataSource:)`.
+- **topic-single-threaded-state**: the customers topic MUST be a non-subclassable provider of the
+  ecosystem topic contract, bound to the UI's serial execution context, and holds a single stored
+  data source supplied at construction.
 - **email-pattern-and-message-are-shared-constants**:
   `CustomersTopic.emailPattern` MUST be the static string
   `"^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"` and `CustomersTopic.emailMessage` MUST
@@ -178,30 +166,22 @@ literals themselves say "user."
 - **list-level-errors-are-wrapped**: When `dataSource.list(ecosystemID:)`
   throws, `listLevel(for:)` MUST catch it and re-throw via
   `HubError.wrap`, so no raw non-`HubError` failure escapes this call.
-- **input-builder-is-nonisolated-and-pure**: The private
-  `CustomersTopic.input(from:ecosystemID:)` helper MUST be a
-  `nonisolated static` function, so it is callable off the main actor from
-  inside a `FormAction.perform` closure.
-- **email-is-trimmed-and-defaults-to-empty-string**:
-  `input(from:ecosystemID:)` MUST set `CustomerInput.email` to the
-  `"email"` form value trimmed of leading/trailing whitespace and newlines
-  via `.trimmingCharacters(in: .whitespacesAndNewlines)`, or the empty
-  string `""` when the `"email"` key is absent from the given values —
-  never `nil`, since `CustomerInput.email` is non-optional.
-- **other-four-fields-use-nonBlank**: `input(from:ecosystemID:)` MUST set
-  `displayName`, `externalId`, `slug`, and `avatarUrl` each via
-  `HubText.nonBlank(values[key]?.stringValue)`, so a missing key, an empty
-  string, or a whitespace-and-newline-only string all become `nil` on the
-  resulting `CustomerInput` — an asymmetry with `email`'s own trim-only
-  handling (see Design Decisions).
-- **create-spec-precheck-rejects-case-insensitive-duplicate**:
-  `createSpec(for:)`'s save action MUST fetch the ecosystem's current
-  customer list via `list(ecosystemID:)` and throw
-  `HubError.validation("A user with email \"<email>\" already exists.")`
-  when an existing customer's `email` matches the built input's `email`
-  case-insensitively (via `.caseInsensitiveCompare(_:) == .orderedSame`,
-  treating a `nil` existing `email` as `""`) — before calling
-  `dataSource.create(_:)`.
+- **input-builder-is-pure**: the private input-building helper `input(from:ecosystemID:)` MUST be a
+  pure function callable from any execution context, because it is invoked from inside a form
+  action that runs off the UI context.
+- **email-is-trimmed-and-defaults-to-empty-string**: `input(from:ecosystemID:)` MUST set the
+  input's `email` to the `"email"` form value trimmed of leading/trailing whitespace and newlines,
+  or the empty string `""` when the `"email"` key is absent from the given values — never absent,
+  since the input's `email` is non-optional.
+- **other-four-fields-use-nonBlank**: `input(from:ecosystemID:)` MUST set `displayName`,
+  `externalId`, `slug`, and `avatarUrl` each from the form value only when it is non-blank, so a
+  missing key, an empty string, or a whitespace-and-newline-only string all become absent on the
+  resulting input — an asymmetry with `email`'s own trim-only handling (see Design Decisions).
+- **create-spec-precheck-rejects-case-insensitive-duplicate**: `createSpec(for:)`'s save action MUST
+  fetch the ecosystem's current customer list via `list(ecosystemID:)` and throw a validation error
+  `A user with email "<email>" already exists.` when an existing customer's `email` matches the
+  built input's `email` case-insensitively (treating an absent existing `email` as `""`) — before
+  calling `create(_:)`.
 - **create-spec-conflict-fallback**: When the precheck passes but
   `dataSource.create(_:)` itself throws `HubError.conflict` (of any
   associated detail), the save action MUST catch it and throw the
@@ -314,10 +294,9 @@ related HTDV Engine recipe).
   itself (`"^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"`) requires at least one
   non-`@`/non-whitespace character on each side of the `@` and a `.`
   after it, with no length bound of its own.
-- **Concurrent access**: `CustomersTopic` is `@MainActor`-confined with no
-  `Sendable` conformance of its own, so its own state (the single stored
-  `dataSource` reference) is not mutated concurrently from another
-  isolation domain. The data it depends on can still race across separate
+- **Concurrent access**: the customers topic is confined to the UI's serial
+  execution context, so its own state (the single stored data source
+  reference) is not mutated concurrently from another context. The data it depends on can still race across separate
   requests to the server: two overlapping "create user" calls for the
   same email can both pass this file's client-side duplicate precheck
   before either has landed, because the precheck lists existing state,
@@ -328,8 +307,8 @@ related HTDV Engine recipe).
   and Design Decisions). `detail(for:)`'s save action runs no precheck at
   all and depends on this same conflict-to-validation mapping alone (MUST,
   see `detail-save-conflict-fallback`).
-- **Error states**: Every operation in `CustomersDataSource` is `async
-  throws`; `CustomersTopic` converts every error it does not specifically
+- **Error states**: Every operation in the customers data source is
+  asynchronous and fallible; `CustomersTopic` converts every error it does not specifically
   remap (`HubError.notFound` on `get(id:)`, `HubError.conflict` on the two
   save actions) into a `HubError` via `HubError.wrap` and re-throws it, so
   no failure is dropped silently (MUST, see
@@ -350,7 +329,11 @@ related HTDV Engine recipe).
   gap — the failure is reported, not lost, just with no time bound or
   automatic retry defined at this layer).
 
-- **get-lacks-ecosystem-scope**: NEEDS REVIEW: Not implemented in source. `CustomersDataSource.get(id:)` takes no `ecosystemID` parameter, and `CustomersTopic.child(for:path:rail:)` calls it with only the raw customer id taken from the rail path, never comparing the returned `Customer.ecosystemId` against the `ecosystem` parameter `child` was itself given before showing, editing (`update(id:_:)`), or deleting (`delete(id:)`) that customer; `list(ecosystemID:)` is the only one of the five operations that names an ecosystem at all, so nothing in these three sources stops a rail path holding a customer id from a different ecosystem from resolving, being edited, or being deleted — resolvable by inspecting whether the deployed `CustomersDataSource` implementation enforces this scoping server-side (not among the given sources), or by a decision from the Hub team on whether client-side scoping is also required.
+- **customer-lookup-not-ecosystem-scoped**: resolving a rail path to a customer MUST fetch the
+  customer by its raw id alone and MUST NOT compare the returned customer's ecosystem against the
+  ecosystem the topic was given before showing, editing, or deleting that customer; the listing is
+  the only one of the five operations that names an ecosystem, so a rail path holding a customer id
+  from a different ecosystem still resolves and can be edited or deleted.
 
 - **conflict-reason-discarded**: both `createSpec(for:)`'s and `detail(for:)`'s save actions catch `HubError.conflict` by case alone and always re-throw the fixed message `"A user with email \"<email>\" already exists."`, discarding the associated `String` detail of the data source's `HubError.conflict(String)`. A `.conflict` raised for any other reason (for example, a uniqueness constraint on `slug` or `externalId`) is still reported as a failed save, but with the duplicate-email message.
 
@@ -501,6 +484,16 @@ happens outside these sources.
   `string.Equals(a, b, StringComparison.OrdinalIgnoreCase)` in place of
   `caseInsensitiveCompare`, keeping the same
   precheck-then-server-conflict double guard.
+- **Swift types (reference implementation)**: `CustomersDataSource` is a `Sendable`,
+  `AnyObject`-constrained protocol with five `async throws` operations (an implementation is a class or
+  actor). `Customer` is a `Codable`, `Hashable`, `Sendable`, `Identifiable` struct with `String?`
+  descriptive fields and no custom `init(from:)`/`encode(to:)`; `CustomerInput` is a `Codable`,
+  `Hashable`, `Sendable` struct. `Customer.label` is `HubText.nonBlank(displayName) ??
+  HubText.nonBlank(email) ?? "—"`. `CustomersTopic` is `@MainActor` and `final`, conforming to
+  `EcosystemTopicProvider`, with `init(dataSource:)`; its `input(from:ecosystemID:)` is `nonisolated
+  static` so the `FormAction.perform` closure can call it off the main actor; email trimming uses
+  `.trimmingCharacters(in: .whitespacesAndNewlines)` and the duplicate precheck uses
+  `.caseInsensitiveCompare(_:) == .orderedSame`.
 
 ## Reference Implementations
 
@@ -554,6 +547,12 @@ identical between the create dialog and the detail form without a second
 field literal to drift out of sync; the parameter exists as a documented
 seam for a future caller that might need an optional-email variant, even
 though no such caller exists among these three sources today.
+**Approved**: pending
+
+**Decision**: customer get, update, and delete are not scoped to the current ecosystem on the client; only the list operation takes an ecosystem.
+
+**Rationale**: the id-only operations carry no ecosystem and nothing compares the fetched customer's ecosystem to the topic's; closing the gap takes a client-side ecosystem comparison after the fetch, or confirmation that the deployed data source enforces scoping server-side.
+
 **Approved**: pending
 
 ## Compliance
@@ -610,6 +609,7 @@ checked to be a well-formed URL despite its name and placeholder.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Resolve open-question markers against the code; restate unimplemented behavior as current behavior with pending Decisions; make normative text platform-neutral (Swift specifics moved to Platform Notes). |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

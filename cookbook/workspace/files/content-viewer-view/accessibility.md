@@ -1,0 +1,6 @@
+
+- **Role/trait**: Every text element in this view carries the platform's default accessibility behavior for static text — it is exposed as a static text element and its string is spoken verbatim. The placeholder icon and the header icon each carry the platform's automatically generated accessibility label derived from the icon's name; the component neither overrides nor suppresses it.
+- **Label requirements**: Each grid row's label (e.g. "Path:") and its value (e.g. the path string) are two separate text elements, not one composed label, so each is exposed to a screen reader as its own accessibility element rather than a single "Path: /x/y" utterance.
+- **Announce state changes**: Switching the selection from none to a value (or from one item to another) replaces the pane's content, but the component posts no explicit accessibility change notification of its own around that replacement. Whatever a screen-reader user already focused in this pane hears comes entirely from the platform's own automatic change detection, not from an explicit call this component makes.
+- **Minimum tap target**: Not applicable: the component targets pointer input, not touch, and contains no interactive control, so no tap or click target exists to size.
+

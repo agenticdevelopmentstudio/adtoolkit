@@ -1,51 +1,44 @@
 ---
 id: 66759d9a-3884-42e1-acd9-5bad563e1e52
-title: Webview Panel Options
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-options
+title: "Webview Panel Options"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-options
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Derives a webview panel's resolved scripts/forms/resource-root options and
-  its floor Content-Security-Policy from what an extension declared.
+summary: "Derives a webview panel's resolved scripts/forms/resource-root options and its floor Content-Security-Policy from what an extension declared."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- webview
-- content-security-policy
-- resource-roots
-- vscode-compatibility
+  - extensions
+  - webview
+  - content-security-policy
+  - resource-roots
+  - vscode-compatibility
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/security/content-security-policy
+  - agenticdevelopercookbook://guidelines/implementing/security/content-security-policy
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/WebviewPanelOptionsTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelState.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionResourcePath.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewResourceURL.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewPanelViewController.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWebviews.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionWebviewPresenting.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHostInstaller.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/ExtensionsCoordinator.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/WebviewPanelOptionsTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelState.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionResourcePath.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/WebviewResourceURL.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewPanelViewController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWebviews.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionWebviewPresenting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHostInstaller.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/ExtensionsCoordinator.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Webview Panel Options
@@ -54,7 +47,7 @@ approved-date: ''
 
 This component is what `vscode.window.createWebviewPanel`'s `WebviewOptions` argument amounts to once this host's defaults are applied. Upstream's `WebviewOptions` has eight fields; this component carries three — `enableScripts`, `enableForms`, `declaredLocalResourceRoots` — and, per its own documentation, each of the other five is missing for its own distinct reason rather than a shared "not yet": `retainContextWhenHidden` is already permanently true of every pane this host hosts, `enableFindWidget` names a widget that does not exist, `enableCommandUris` and `portMapping` are real, unbuilt capabilities recorded elsewhere (in the shared not-implemented ledger, by the webviews bridge adaptor) rather than carried here as an inert flag, and `iconPath` is answered by the pane's own title rather than by this component.
 
-This component is an immutable value type with no side effects of its own beyond one read-only file-system consultation. It is constructed twice, through two different construction paths with two different jobs: constructing it from as-declared values turns what an extension actually wrote — including three possible states of "absent" — into resolved values, while constructing it from already-resolved values (used both directly and when decoding it) assigns already-resolved values straight through, because a restored panel (the pane-state persistence layer, which stores a copy of this component's value verbatim in the app's pane-state store) must come back with the answer the panel actually had, not a value re-derived from it. Beyond storage, this component does two things a caller relies on: resolving local resource roots turns the declared-or-default root list into the deduplicated list of directories a panel's scheme handler may read from, and building the Content-Security-Policy string composes the floor CSP string every panel's webview is served under, adjusted only by whether forms are enabled. The webview object's `options` property is the one place a webview *view* provider can turn scripts on after the fact — its panel is handed to it already built — and the panel view's own handling of an `options` change is what re-applies a changed value, by re-assigning the scheme handler's policy and reloading the host document; that re-application is a different component's contract (see `agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view`) and is only described here as the reason this component itself needs no mutable state of its own.
+This component is an immutable value type with no side effects of its own beyond one read-only file-system consultation. It is constructed twice, through two different construction paths with two different jobs: constructing it from as-declared values turns what an extension actually wrote — including three possible states of "absent" — into resolved values, while constructing it from already-resolved values (used both directly and when decoding it) assigns already-resolved values straight through, because a restored panel (the pane-state persistence layer, which stores a copy of this component's value verbatim in the app's pane-state store) must come back with the answer the panel actually had, not a value re-derived from it. Beyond storage, this component does two things a caller relies on: resolving local resource roots turns the declared-or-default root list into the deduplicated list of directories a panel's scheme handler may read from, and building the Content-Security-Policy string composes the floor CSP string every panel's webview is served under, adjusted only by whether forms are enabled. The webview object's `options` property is the one place a webview *view* provider can turn scripts on after the fact — its panel is handed to it already built — and the panel view's own handling of an `options` change is what re-applies a changed value, by re-assigning the scheme handler's policy and reloading the host document; that re-application is a different component's contract (see `adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view`) and is only described here as the reason this component itself needs no mutable state of its own.
 
 ## Behavioral Requirements
 
@@ -181,7 +174,7 @@ Not applicable: this component contains no logging call; there is nothing for it
 - **Compose**: model `WebviewPanelOptions` as a Kotlin `data class` with three `val` properties, giving structural equality and immutability for free in place of the hand-written `Equatable`. Serialize with `kotlinx.serialization`'s `@Serializable`, using a custom `Serializer` (or `@Serializable(with = ...)`) to reproduce the two `decodeIfPresent`-style defaulting rules, since `kotlinx.serialization` treats a missing key as a compile-time-declared default rather than a runtime fallback chained off a sibling field's just-decoded value. Compose the CSP string with a plain `buildString`/`joinToString` in the same fixed directive order.
 - **React/Web**: model the type as a plain TypeScript interface (or a small class) mirroring upstream's own `vscode.WebviewOptions` shape, reduced to the same three fields; the defaulting logic (`enableForms` following `enableScripts`, `nil` and `[]` roots meaning different things) has to be hand-written the same way the source hand-writes it, since TypeScript's structural typing gives no default-value mechanism of its own. Compose the CSP string with `Array.prototype.join('; ')` over the same fixed directive order, and, in a browser or Electron host, apply it via a `Content-Security-Policy` response header or `<meta http-equiv="Content-Security-Policy">` tag rather than a native webview configuration object.
 - **AppKit / UIKit**: identical to the SwiftUI note — the component depends on neither AppKit nor UIKit, so a macOS host consumes the same `AgenticToolkitCore` type directly with no translation needed. (No iOS target exists for this component today; every current caller is under `packages/apple/AgenticToolkit/macOS/`.)
-- **WinUI 3**: there is no single .NET or Windows App SDK type that reproduces this three-field, dual-initializer shape; model it as a C# `record` (`enableScripts`/`enableForms`/`declaredLocalResourceRoots`, the latter an `IReadOnlyList<string>?`) with a static factory reproducing the `enableForms`-follows-`enableScripts` default and the `null`-versus-empty-list distinction for roots, plus `System.Text.Json`'s `JsonConverter<T>` for the same two-key-defaulting decode `WebviewPanelOptions.init(from:)` performs — `System.Text.Json`'s own missing-property handling only supports a compile-time-fixed default, not one derived from a sibling property at decode time. There is no `Microsoft.Web.WebView2.Core` equivalent of a per-navigation, editable Content-Security-Policy the way this source's `WKWebViewConfiguration`-independent CSP string is; `CoreWebView2.WebResourceRequested` (adding a `Content-Security-Policy` response header) or a `CoreWebView2Settings.IsScriptEnabled` toggle at initialization are the closest WebView2 primitives, and unlike this source's re-appliable `options` property, `CoreWebView2Settings.IsScriptEnabled` cannot be changed after the first navigation without a full reload, mirroring this source's own reload-on-change design (see `agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view`) rather than avoiding it. Resource-root containment has no WebView2 equivalent either; `SetVirtualHostNameToFolderMapping` maps a single folder to a virtual host and would need to be called once per declared root. `HttpClient`, `Task`/`async`, `ObservableCollection`, and `INotifyPropertyChanged` play no role here: every operation in the source is synchronous, non-networked, and returns a value rather than raising a change notification.
+- **WinUI 3**: there is no single .NET or Windows App SDK type that reproduces this three-field, dual-initializer shape; model it as a C# `record` (`enableScripts`/`enableForms`/`declaredLocalResourceRoots`, the latter an `IReadOnlyList<string>?`) with a static factory reproducing the `enableForms`-follows-`enableScripts` default and the `null`-versus-empty-list distinction for roots, plus `System.Text.Json`'s `JsonConverter<T>` for the same two-key-defaulting decode `WebviewPanelOptions.init(from:)` performs — `System.Text.Json`'s own missing-property handling only supports a compile-time-fixed default, not one derived from a sibling property at decode time. There is no `Microsoft.Web.WebView2.Core` equivalent of a per-navigation, editable Content-Security-Policy the way this source's `WKWebViewConfiguration`-independent CSP string is; `CoreWebView2.WebResourceRequested` (adding a `Content-Security-Policy` response header) or a `CoreWebView2Settings.IsScriptEnabled` toggle at initialization are the closest WebView2 primitives, and unlike this source's re-appliable `options` property, `CoreWebView2Settings.IsScriptEnabled` cannot be changed after the first navigation without a full reload, mirroring this source's own reload-on-change design (see `adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view`) rather than avoiding it. Resource-root containment has no WebView2 equivalent either; `SetVirtualHostNameToFolderMapping` maps a single folder to a virtual host and would need to be called once per declared root. `HttpClient`, `Task`/`async`, `ObservableCollection`, and `INotifyPropertyChanged` play no role here: every operation in the source is synchronous, non-networked, and returns a value rather than raising a change notification.
 
 ## Reference Implementations
 

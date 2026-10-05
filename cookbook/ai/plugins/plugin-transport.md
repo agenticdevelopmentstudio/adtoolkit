@@ -1,37 +1,35 @@
 ---
 id: 7d5c5a1f-30df-460e-b6c4-7cfe9ab42784
-title: Plugin Transport
-domain: agenticdevelopertoolkit://cookbook/ai/plugins/plugin-transport
+title: "Plugin Transport"
+domain: adtoolkit://cookbook/ai/plugins/plugin-transport
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Drives one request specification to completion over HTTP or a local
-  subprocess and streams the decoded stream events, owning all networking and
-  process I/O.
+summary: "Drives one request specification to completion over HTTP or a local subprocess and streams the decoded stream events, owning all networking and process I/O."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- transport
-- streaming
-- subprocess
-- concurrency
+  - ai-plugin
+  - transport
+  - streaming
+  - subprocess
+  - concurrency
 depends-on:
-- agenticdevelopertoolkit://cookbook/ai/plugins/ai-plugin
-- agenticdevelopertoolkit://cookbook/ai/plugins/request-spec
-- agenticdevelopertoolkit://cookbook/ai/plugins/stream-event
+  - adtoolkit://cookbook/ai/plugins/ai-plugin
+  - adtoolkit://cookbook/ai/plugins/request-spec
+  - adtoolkit://cookbook/ai/plugins/stream-event
 related:
-- agenticdevelopertoolkit://cookbook/ai/chat/daemon-ai-chat
+  - adtoolkit://cookbook/ai/chat/daemon-ai-chat
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Plugin Transport
@@ -389,6 +387,7 @@ I/O and control-flow logic with no diagnostic side effects of its own.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
 | [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | passed | Best Practices |
 | [test-pyramid](agenticdevelopercookbook://compliance/best-practices#test-pyramid) | partial | Best Practices |
@@ -400,6 +399,8 @@ I/O and control-flow logic with no diagnostic side effects of its own.
 
 `separation-of-concerns` passes because `PluginTransport` is, by its own doc comment, "the one place in the system that performs networking or spawns a process" — every `AIPlugin` conformer only describes and decodes. `explicit-error-handling` passes because every failure path maps to a named `TransportError` case or is deliberately passed through unwrapped (`raw-error-passthrough`), with no silent catch-and-ignore anywhere in the source. `test-pyramid` is partial because `PluginTransportTests.swift` and `PluginTransportFramingTests.swift` exercise the command transport thoroughly with hermetic `/bin/sh` children, but the given sources contain no equivalent unit test for `runHTTP`. `input-sanitization` is partial because `runHTTP` and `runCommand` forward `headers`, `body`, `executableURL`, `arguments`, and `environment` to `URLRequest`/`Process` without any validation of their own — the open question of whether that should happen here rather than in the plugin or the host is the same one the sibling `AIRequestSpec` recipe records. `fault-tolerance` passes because every defined failure mode (non-2xx status, nonzero exit, invalid response, budget expiry) degrades to a typed, thrown error rather than a hang or a crash. `error-recovery` fails because, per the `single-attempt` Design Decision above, no failure is ever retried or recovered from within this component. `no-pii-in-logs` passes trivially, since the component performs no logging at all. `string-externalization` fails because the four literals under Localization above are hardcoded English with no string-catalog key.
 
+`unit-test-coverage` passes because `PluginTransportTests.swift` covers the wall-clock timeout, a command finishing within budget, stdin delivered byte for byte, a non-zero exit becoming a command failure with stderr, `describeError` receiving stderr, and environment replacement, and `PluginTransportFramingTests.swift` covers newline framing with a trailing fragment.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -408,3 +409,4 @@ I/O and control-flow logic with no diagnostic side effects of its own.
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/plugins/. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage compliance row. |

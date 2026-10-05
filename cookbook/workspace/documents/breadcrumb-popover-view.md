@@ -1,31 +1,30 @@
 ---
 id: c79094d2-1f4b-4c3f-8005-8fb095fb1b40
-title: Breadcrumb Popover
-domain: agenticdevelopertoolkit://cookbook/workspace/documents/breadcrumb-popover-view
+title: "Breadcrumb Popover"
+domain: adtoolkit://cookbook/workspace/documents/breadcrumb-popover-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
 created: 2026-09-23
-modified: '2026-09-27'
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Filterable, keyboard-driven list of a directory's files shown in a breadcrumb's
-  popover; selecting a file returns its URL, directories are inert.
+summary: "Filterable, keyboard-driven list of a directory's files shown in a breadcrumb's popover; selecting a file returns its URL, directories are inert."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- picker
-- filter
-- popover
+  - picker
+  - filter
+  - popover
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/documents/breadcrumb-view
+  - adtoolkit://cookbook/workspace/documents/breadcrumb-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Breadcrumb Popover
@@ -119,6 +118,7 @@ files, it does not browse further down the tree.
 - **no-decoded-initialization**: Component MUST NOT support construction from
   a serialized/decoded representation (such as a saved interface file) and
   MUST fail fast if such construction is attempted.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -215,6 +215,7 @@ files, it does not browse further down the tree.
 | breadcrumb-popover-025 | truncate-row-label-middle | Row label text is longer than the 248pt column width | The label truncates the overflow in the middle |
 | breadcrumb-popover-026 | single-column-table, no-column-header | Inspect the table after it loads | Exactly one column (identifier `"breadcrumb.entry"`) exists and no header is shown |
 | breadcrumb-popover-027 | no-decoded-initialization | Attempt construction from a serialized/decoded representation | The call fails fast (a fatal/trap error); no instance is returned |
+| breadcrumb-popover-028 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -501,6 +502,8 @@ Not applicable: source contains no logging call anywhere in this file.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 Keyboard navigation is fully wired via `PickerKeyboardController` and the
 search field's `doCommandBy:` delegation, hence passed. Screen-reader support
@@ -515,6 +518,8 @@ whose actual contrast values are not stated in this source.
 String-externalization is failed because the search field's `"Filter"`
 placeholder is a hardcoded English literal with no localization key.
 
+`separation-of-concerns` passes because `BreadcrumbPopoverViewController` only lists, filters and reports the choice of directory entries, delegating key handling to `PickerKeyboardController` and leaving presentation and the crumb strip to `BreadcrumbView`. `unit-test-coverage` is partial: `BreadcrumbPopoverViewControllerTests.swift` has two tests, one on the size the controller asks for and one on the content view not collapsing to its subviews, while filtering, keyboard selection and the selection callback have no test.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -525,3 +530,5 @@ placeholder is a hardcoded English literal with no localization key.
 | 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/documents/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns (passed) and unit-test-coverage (partial) compliance rows. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

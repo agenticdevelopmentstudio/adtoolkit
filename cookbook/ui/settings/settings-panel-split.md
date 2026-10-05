@@ -1,34 +1,33 @@
 ---
 id: ba8d9517-2528-4ae9-bc52-16046d68b126
-title: Settings Panel Split
-domain: agenticdevelopertoolkit://cookbook/ui/settings/settings-panel-split
+title: "Settings Panel Split"
+domain: adtoolkit://cookbook/ui/settings/settings-panel-split
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings panel that is itself a nested topic/detail split, so a
-  sub-hierarchy nests inside the outer settings window without a wrapper.
+summary: "A settings panel that is itself a nested topic/detail split, so a sub-hierarchy nests inside the outer settings window without a wrapper."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- split-view
-- view-controller
-- nesting
+  - settings
+  - split-view
+  - view-controller
+  - nesting
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-split-view
+  - adtoolkit://cookbook/ui/settings/settings-split-view
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel-list
+  - adtoolkit://cookbook/ui/settings/settings-panel
+  - adtoolkit://cookbook/ui/settings/settings-panel-list
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Settings Panel Split
@@ -91,6 +90,7 @@ belongs to the panel list's own recipe.
   detail-pane minimum-thickness floor to return `200` points.
 - **fixes-content-sized-sidebar**: The component MUST override its
   content-sized-sidebar flag to return true.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -164,6 +164,7 @@ belongs to the panel list's own recipe.
 | settings-panel-split-view-controller-011 | reports-no-additional-search-keywords | Read search keywords on a plain (non-subclassed) instance | Returns an empty list |
 | settings-panel-split-view-controller-012 | narrows-detail-minimum-thickness | Read the detail-pane minimum-thickness floor | Returns `200` |
 | settings-panel-split-view-controller-013 | fixes-content-sized-sidebar | Read the content-sized-sidebar flag | Returns true |
+| settings-panel-split-view-controller-014 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -351,6 +352,7 @@ overrides reachable.
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | partial | accessibility |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | accessibility |
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | platform-compliance |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | best-practices |
 
 Statuses rest on: this file overriding only the four properties that differ
 from its base class and delegating every other behavior to
@@ -367,6 +369,8 @@ regress, while the rendered role/label surface is likewise
 custom-drawn chrome, composing only inherited AppKit split-view behavior
 (native-controls-preference).
 
+`unit-test-coverage` is failed because no test references `SettingsPanelSplitViewController`; the only split-view tests, `ThemedSplitViewOrientationTests.swift`, build its base class `SplitViewController` and assert nothing about the four properties this type overrides.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -375,3 +379,5 @@ custom-drawn chrome, composing only inherited AppKit split-view behavior
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: reformat Design Decisions to the bold three-line form and cite the specific member behind each quoted claim; move two implicit MUSTs out of Edge Cases into a new named requirement and plain prose; add missing help-chain conformance vectors and drop the untestable main-actor compile-time vector; renumber test vector IDs sequentially; populate depends-on/related with the base class and sibling recipes; de-duplicate the `macos` tag; disambiguate the Overview's dangling class reference; remove editorializing from the WinUI 3 bullet; mark keyboard-navigable/screen-reader-support partial and point to SplitViewController's recipe; clean up Compliance rows to match the catalog |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage compliance row (failed: no SettingsPanelSplitViewController tests). |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

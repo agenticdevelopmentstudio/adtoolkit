@@ -1,0 +1,10 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: cites IntegerFieldView by domain URL instead of file path and drops the out-of-scope, duplicative Design Decision about this recipe's requirement count; reformats Design Decisions to the three-line form and corrects an inaccurate parsing example in the POSIX-first decision; trims tags to five; rewords clamps-to-bounds' guard as a positive cross-reference; drops dangling trailing MUST keywords from Edge Cases; corrects the Concurrent Access edge case's actor-isolation claim; strengthens three test vectors (007, 020, 027, 030) to name a real trigger API or assert only observable outcomes; corrects WinUI 3's NumberBox.Minimum/Maximum defaults and documents its contradictory-bounds and locale-first-parsing divergence from this source; drops the web input's locale-hostile pattern attribute; marks screen-reader-support partial and documents why; backfills the missing 1.0.0 history row; remaps Compliance citations to the catalog; records the unverified theme-token contrast as an open question. |
+| 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker against the source: restated as current behavior (no contrast check in the component) and recorded the gap as a pending Design Decision; added separation-of-concerns/unit-test-coverage Compliance rows. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

@@ -1,43 +1,39 @@
 ---
 id: 9a4aa2a8-c01b-4cec-b789-6c89c100d8d3
-title: Git Status Provider
-domain: agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider
+title: "Git Status Provider"
+domain: adtoolkit://cookbook/workspace/files/git-status-provider
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Broadcasts a repository's git status to registered observers with coalesced
-  refreshes, plus the status-to-color mapping git-status badges use.
+summary: "Broadcasts a repository's git status to registered observers with coalesced refreshes, plus the status-to-color mapping git-status badges use."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- file-browser
-- concurrency
-- color
+  - git
+  - file-browser
+  - concurrency
+  - color
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view
-- agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view
+  - adtoolkit://cookbook/workspace/files/file-browser-view
+  - adtoolkit://cookbook/workspace/files/file-tree-view
 references:
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Git/GitFileStatus+Color.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Git/GitStatusProvider.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitFileStatus.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClientError.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitStatus.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/GitStatusProviderRefreshTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Git/GitFileStatus+Color.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Git/GitStatusProvider.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitFileStatus.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitClientError.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitStatus.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/GitStatusProviderRefreshTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Git Status Provider
@@ -459,7 +455,7 @@ its own. secure-log-output passes because the failure branch is built from
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/files/. |

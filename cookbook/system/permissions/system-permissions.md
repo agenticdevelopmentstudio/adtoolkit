@@ -1,32 +1,31 @@
 ---
 id: b4cfbb31-cacc-4532-97c3-03e53852e8d3
-title: System Permissions
-domain: agenticdevelopertoolkit://cookbook/system/permissions/system-permissions
+title: "System Permissions"
+domain: adtoolkit://cookbook/system/permissions/system-permissions
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A tri-state permission model, status/request contract, and keychain grant
-  ledger for macOS system privacy permissions, safe to link into a UI-free daemon.
+summary: "A tri-state permission model, status/request contract, and keychain grant ledger for macOS system privacy permissions, safe to link into a UI-free daemon."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- permissions
-- async
+  - permissions
+  - async
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/system/permissions/permission-row-view
-- agenticdevelopertoolkit://cookbook/system/permissions/permissions-panel-view
+  - adtoolkit://cookbook/system/permissions/permission-row-view
+  - adtoolkit://cookbook/system/permissions/permissions-panel-view
 references:
-- https://developer.apple.com/documentation/coreservices/1446026-aedeterminepermissiontoautomatetarget
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/documentation/coreservices/1446026-aedeterminepermissiontoautomatetarget
+approved-by: ""
+approved-date: ""
 ---
 
 # System Permissions
@@ -56,9 +55,9 @@ consists of:
 
 Use it wherever an app or daemon has to show or obtain a privacy grant;
 the UI that renders it lives in
-[Permission Row View](agenticdevelopertoolkit://cookbook/system/permissions/permission-row-view)
+[Permission Row View](adtoolkit://cookbook/system/permissions/permission-row-view)
 and
-[Permissions Panel View](agenticdevelopertoolkit://cookbook/system/permissions/permissions-panel-view).
+[Permissions Panel View](adtoolkit://cookbook/system/permissions/permissions-panel-view).
 
 ## Behavioral Requirements
 

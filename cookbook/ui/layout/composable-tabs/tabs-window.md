@@ -1,32 +1,31 @@
 ---
 id: 55a394e6-9934-404b-941d-25bebbf71378
-title: Composable Tabs Window
-domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+title: "Composable Tabs Window"
+domain: adtoolkit://cookbook/ui/layout/composable-tabs/tabs-window
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The top-level window for a project's multi-edge tabbed workspace, owning
-  per-edge tab groups, a toolbar search field, a help drawer, and layout persistence.
+summary: "The top-level window for a project's multi-edge tabbed workspace, owning per-edge tab groups, a toolbar search field, a help drawer, and layout persistence."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- composable-tabs
-- window-controller
-- multi-tab
+  - composable-tabs
+  - window-controller
+  - multi-tab
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs
+  - adtoolkit://cookbook/ui/layout/tabbed-view
+  - adtoolkit://cookbook/ui/layout/composable-tabs
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Composable Tabs Window
@@ -156,6 +155,7 @@ address directly.
   every named edge before disabling any edge that is not named, so that
   reassigning the enabled-edge set never fails the last-enabled-edge
   refusal on an intermediate step.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -275,6 +275,7 @@ address directly.
 | composable-tabs-window-controller-036 | minimum-size | Inspect the window's configured geometry before the window is ever shown | The configured minimum size is 400×300pt, matching what the window itself enforces. |
 | composable-tabs-window-controller-037 | status-footer-content | Project `"Zork"`, active tab's title is `""` (empty), pane title `"main.swift"`, no selection description | Footer reads `"Zork › main.swift"` — the empty tab title contributes no leading `" › "`. |
 | composable-tabs-window-controller-038 | search-target | The active pane changes from pane A to pane B, triggering a recomputation of search availability | The search target becomes pane B, matching the field's newly computed enabled state/placeholder. |
+| composable-tabs-window-controller-039 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -464,6 +465,7 @@ Not applicable: no logging calls appear anywhere in this component.
   `CommandBar`, with the arrange toggle using an `AppBarToggleButton`'s
   `IsChecked` visual state in place of the source's tint-plus-button-state
   combination.
+- **UI-thread confinement**: `confines-to-ui-thread` — the window controller is declared `@MainActor`, so use from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -565,6 +567,8 @@ neither has occurred yet.
 | [data-retention-policy](agenticdevelopercookbook://compliance/privacy-and-data#data-retention-policy) | passed | privacy-and-data |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | internationalization |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | best-practices |
 
 The accessibility passes rest on the explicit accessibility
 descriptions, keyboard-focusable controls, and deliberate focus restoration
@@ -572,6 +576,8 @@ documented in Accessibility above. The privacy-and-data passes rest on the
 Privacy section's inventory of what is collected, locally stored, and its
 defined retention. The internationalization failures rest on the same
 hardcoded-literal inventory in Localization.
+
+`separation-of-concerns` passes because `ComposableTabsWindowController` only owns the window, its toolbar and the hosted tabs controller; pane content, layout persistence and the split tree belong to other components. `unit-test-coverage` is `partial`: `ComposableTabsWorkingDirectoryTests.swift`, `ComposableTabsClosePersistTests.swift`, `ProjectWindowRestoreTests.swift` and `ProjectControllerTests.swift` drive the window controller, but no test file targets its own window chrome rules.
 
 ## Change History
 
@@ -581,3 +587,4 @@ hardcoded-literal inventory in Localization.
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: renamed all requirements to subject-noun form and updated every cross-reference; added a `search-target` requirement to resolve the circular search-target definition; stated the divider-persist debounce timing in `structural-change-persistence`; added `depends-on` entries for the two composed ingredients that have recipes; reformatted Design Decisions to the bold three-line form and added two entries recording hardcoded strings and swallowed persistence errors as accepted debt; corrected Localization from "Not applicable" to applicable-and-unmet; added accessibility, privacy-and-data, and internationalization checks to Compliance and marked `completeness` partial; removed the incorrect UWP `ApplicationView.PreferredLaunchViewSize` reference from the WinUI 3 Platform Note; and extended the Conformance Test Vectors to cover fresh node ids on edge top-up, arrange-button `.state`, the window spec's minimum size, the empty-tab-title footer separator, and the new `search-target` requirement; removed Compliance rows for checks absent from the cookbook catalog |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/composable-tabs/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |

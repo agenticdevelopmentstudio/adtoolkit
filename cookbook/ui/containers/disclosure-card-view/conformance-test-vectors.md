@@ -1,0 +1,56 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| disclosure-card-001 | renders-card-as-rounded-bordered-surface | Any construction | The card surface's rendering layer has a corner radius of 10, a border width of 1, a background color equal to `palette.surfaceColor`, and a border color equal to `palette.outlineColor` |
+| disclosure-card-002 | clips-titlebar-to-card-corners | Any construction | The card surface's rendering layer clips its contents to its own bounds |
+| disclosure-card-003 | renders-titlebar-as-elevated-strip | Any construction | The titlebar strip's background color equals `palette.elevatedSurfaceColor` |
+| disclosure-card-004 | draws-titlebar-rule | Any construction | The titlebar's bottom rule's color equals `palette.dividerColor`; its height constraint equals 1pt and it spans the titlebar's width |
+| disclosure-card-005 | sizes-titlebar-to-header-plus-inset | Card at a given `scaledSize` | The titlebar strip's height equals the header row's fitting height plus `padTitleY` |
+| disclosure-card-006 | draws-badge-above-surface-border | Card constructed with a non-nil `status` | The status badge appears later in the card's view hierarchy than the card surface, and renders visually above the surface's border in a snapshot |
+| disclosure-card-007 | allows-badge-to-render-outside-frame | Any construction | The card does not clip its own contents to its bounds |
+| disclosure-card-008 | displays-title-text | Constructed with `title: "mike@example.com"` | The title text reads `"mike@example.com"` |
+| disclosure-card-009 | truncates-title-in-middle | The title text's truncation behavior, inspected on any instance | Truncates in the middle of the string, not at the head or tail |
+| disclosure-card-010 | yields-title-width-first | Any instance | The title text and title row are the first to shrink under space pressure; the trailing row holds its natural width |
+| disclosure-card-011 | colors-title-by-accent-flag | Constructed with `titleIsAccent: true` vs. `false` | The title text's color `== palette.accentColor` when `true`; `== palette.primaryTextColor` when `false` |
+| disclosure-card-012 | sets-title-font-semibold-body | Theme applied at a given `scaledSize` | The title text's font matches the `.body` style at `scaledSize` with a semibold weight |
+| disclosure-card-013 | places-title-accessory-leading | Constructed with a `titleAccessory` view | The title row's arranged elements equal `[accessory, title text]`; spacing `== 6`; the accessory holds its natural width |
+| disclosure-card-014 | places-titlebar-accessory-before-disclosure | Constructed with a `titlebarAccessory` view | The trailing row's arranged elements equal `[accessory, disclosure control]`; spacing `== 6` |
+| disclosure-card-015 | never-shrinks-trailing-line | Any instance | The trailing row holds its natural width in both directions (never shrinks, never grows) |
+| disclosure-card-016 | maintains-minimum-header-gap | Card at `scaledSize == 16` narrowed until the title and trailing rows compete for space, assuming `baseFontSize == 13` | The gap between the title row's trailing edge and the trailing row's leading edge is never less than `ceil(24 × 16 / 13) == 30`pt; the two rows share a common center-Y |
+| disclosure-card-017 | renders-native-disclosure-control | Any instance | The disclosure control is the platform's native disclosure control |
+| disclosure-card-018 | sets-disclosure-initial-state | Constructed with `isCollapsed: true` vs. `false` | The disclosure control's indicator is closed when `true`; open when `false` |
+| disclosure-card-019 | labels-disclosure-control | Constructed with `isCollapsed: true` vs. `false` | The disclosure control's tooltip and accessibility label equal `"Show details"` when `true`; `"Hide details"` when `false` |
+| disclosure-card-020 | forwards-toggle-state | Activate the disclosure control on a card constructed `isCollapsed: false` | The toggle callback is called once with `true` (the control's indicator becomes closed) |
+| disclosure-card-021 | does-not-self-mutate-on-toggle | Activate the disclosure control on any card, inspect the same instance immediately after | The content area's visibility, the body section's visibility, the subtitle text's visibility, and the disclosure control's tooltip are all unchanged from their pre-activation values |
+| disclosure-card-022 | hides-content-when-collapsed | Constructed with `isCollapsed: true` vs. `false` | The content area is hidden when `true`; shown when `false` |
+| disclosure-card-023 | builds-content-regardless-of-fold-state | Add a content view to a card constructed `isCollapsed: true` | The content area's arranged elements include that view even though the content area is hidden |
+| disclosure-card-024 | forces-subtitle-hidden-when-collapsed | Constructed with `subtitle: "note", isCollapsed: true` | The subtitle text is hidden |
+| disclosure-card-025 | hides-subtitle-when-absent | Constructed with `subtitle: nil, isCollapsed: false` | The subtitle text is hidden |
+| disclosure-card-026 | detaches-empty-body | Constructed with `subtitle: nil, summary: [], isCollapsed: true` | The body section is hidden |
+| disclosure-card-027 | matches-bottom-inset-to-empty-body | Same construction as disclosure-card-026 | The card's bottom constraint constant equals `-padTitleY`, not `-padY` |
+| disclosure-card-028 | shows-summary-only-when-collapsed-and-present | Four combinations of `isCollapsed` × `summary.isEmpty` | The summary line is shown only for `(isCollapsed: true, summary: non-empty)`; hidden for the other three combinations |
+| disclosure-card-029 | right-aligns-and-clips-summary-text | Any instance | The summary line's alignment `== right`; it clips rather than truncates when the reserved width is exceeded; it holds its natural width |
+| disclosure-card-030 | formats-summary-parts | `summary: [SummaryPart(name: "5H", value: "23%", colorName: "red")]` | The summary line's rendered text contains `"5H: "` in caption font/`tertiaryTextColor` followed by `"23%"` in code font/`dangerColor` (via the name→role color lookup, see below) |
+| disclosure-card-031 | separates-summary-parts | `summary` with two `SummaryPart`s | The summary line's rendered text contains exactly one `"  |  "` run, positioned between the two parts, styled like a summary name |
+| disclosure-card-032 | hides-status-badge-when-absent | Constructed with `status: nil` | The status badge is hidden |
+| disclosure-card-033 | renders-status-as-symbol-icon | Constructed with `status: StatusSymbol(symbolName: "exclamationmark.triangle.fill", colorName: "yellow", accessibilityLabel: "Warning")` | The status badge's image is a valid symbol icon named `"exclamationmark.triangle.fill"`; its weight is semibold |
+| disclosure-card-034 | exposes-status-as-own-accessibility-element | Same construction as disclosure-card-033 | The status badge is its own accessibility element; its role is image; its accessibility label `== "Warning"`; its tooltip `== "Warning"` |
+| disclosure-card-035 | colors-status-badge | `status.colorName: nil` vs. `"blue"` | The status badge's tint `== palette.secondaryTextColor` when `nil`; `== palette.accentColor` when `"blue"` (per the name→role color lookup, see below) |
+| disclosure-card-036 | positions-badge-on-visible-corner | Any instance with a non-nil `status` | The status badge's center-X `==` the card's trailing edge minus `cornerPeakInset`; its center-Y `==` the card's top edge plus `cornerPeakInset`, where `cornerPeakInset ≈ 2.93` |
+| disclosure-card-037 | sizes-badge-diameter | `scaledSize == 13` | The status badge's width and height both equal `min(ceil(13 × 1.3), padX × 1.5)`, with `padX` evaluated at `scaledSize == 13` |
+| disclosure-card-038 | dims-whole-card-uniformly | Constructed with `isDimmed: true` vs. `false` | `view.opacity == 0.55` when `true`; `== 1.0` when `false` |
+| disclosure-card-039 | scales-insets-with-text-size | `scaledSize == 26` (2× the 13pt baseline), assuming `baseFontSize == 13` on the host system | `padX == ceil(14 × 26 / 13) == 28`; `padMastheadX == ceil(7 × 26 / 13) == 14`; `padY == ceil(12 × 26 / 13) == 24`; `padTitleY == ceil(6 × 26 / 13) == 12`; `mastheadGap == ceil(24 × 26 / 13) == 48` |
+| disclosure-card-040 | floors-width-to-wider-of-open-or-folded-content | Card with a wide content area and a non-empty `summary`, both open and folded | The width-floor constraint's constant is identical whether `isCollapsed` is `true` or `false`, and equals the wider of the two rows plus the masthead's leading gutter (`padMastheadX`) and trailing gutter (`padX`) |
+| disclosure-card-041 | keeps-width-floor-just-under-required | Any instance | The width-floor constraint's priority equals 999 |
+| disclosure-card-042 | remeasures-width-floor-on-layout | Font/theme change that widens the hidden content area after initial layout, followed by a layout pass | The width-floor constraint's constant updates to the new wider value; a follow-up layout pass with no further change does not reassign the constant (change is `<= 0.5pt`) |
+| disclosure-card-043 | applies-theme-immediately-and-on-change | Construct a card, then trigger a theme change | The theme is applied once synchronously at construction and again after the theme change, updating colors/fonts both times |
+| disclosure-card-046 | exposes-content-spacing | Set the content spacing to 20 | The content area's spacing `== 20`; the width-floor constraint is re-measured against the new spacing |
+| disclosure-card-047 | places-title-status-after-title | Constructed with `titleTrailingStatus: StatusSymbol(symbolName: "checkmark.seal.fill", colorName: "green", accessibilityLabel: "Best")` | The title row holds an image element after the title text; its leading edge is at or after the title's trailing edge and less than 12pt from it |
+| disclosure-card-048 | exposes-title-status-like-badge, colors-status-badge | `titleTrailingStatus: StatusSymbol(symbolName: "xmark.seal.fill", accessibilityLabel: "Out of quota", color: { _ in purple })` | The symbol's opacity `== 1`; it is its own accessibility element; its accessibility label `== "Out of quota"`; its tooltip `== "Out of quota"`; its tint `== purple` |
+| disclosure-card-049 | reserves-placeholder-room-silently | Two cards with a long title and 40pt content, one given the seal of vector 047 and one `.placeholder(sizedLike: "checkmark.seal.fill")` | Both cards' fitting widths are equal (±0.5); the placeholder is as wide as the seal; it is not hidden, its opacity `== 0`, it is no accessibility element, and it has no tooltip |
+| disclosure-card-050 | asks-for-whole-point-title-width, floors-width-to-wider-of-open-or-folded-content | A card with a long title, no `summary`, and 40pt content, hosted at exactly its own fitting width | The title text's laid-out width is at least its own fitting width − 0.5 — it is not truncated |
+| disclosure-card-051 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
+
+The name→role color lookup (`"red"` → `dangerColor`, `"blue"` →
+`accentColor`, and so on) is defined outside this specification — see Platform Notes.
+

@@ -1,41 +1,40 @@
 ---
 id: 70f5dcb1-9d00-445b-a691-0dc1e7dd7a67
-title: Profile
-domain: agenticdevelopertoolkit://cookbook/adh/hub/profile
+title: "Profile"
+domain: adtoolkit://cookbook/adh/hub/profile
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'A data client for a principal''s profile domain: owner-scoped social links
-  and addresses, its privacy audience grants, and its metered usage summary.'
+summary: "A data client for a principal's profile domain: owner-scoped social links and addresses, its privacy audience grants, and its metered usage summary."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- profile
-- privacy
-- usage
-- workspace
-- crud
-- api
+  - profile
+  - privacy
+  - usage
+  - workspace
+  - crud
+  - api
 depends-on: []
 related: []
 references:
-- packages/web/packages/data/src/profile/profile.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/profile/usage.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/profile/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/profile/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/profile/__tests__/profile.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
-- packages/web/packages/adh-api-types/src/data-profile-wire.test-d.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/profile/profile.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/profile/usage.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/profile/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/profile/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/profile/__tests__/profile.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+  - packages/web/packages/adh-api-types/src/data-profile-wire.test-d.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Profile
@@ -402,7 +401,7 @@ target tables.
 refuse a target table the backend later adds; `data-profile-wire.test-d.ts` pins this as a
 permanent, deliberate asymmetry against the generated backend type, not a placeholder meant to be
 narrowed later.
-**Applies to**: Web
+Platform scope: Web
 **Approved**: pending
 
 **Decision**: `SOCIAL_LINKS_KEY`, `ADDRESSES_KEY`, and `USAGE_SUMMARY_KEY` are not exported; only
@@ -411,7 +410,7 @@ their namespaced accessor functions are.
 one owner's list onto another's under prefix-based cache invalidation. Exporting only the accessor
 keeps every consumer going through the one function that produces the owner-namespaced shape,
 rather than risking a second, independently-derived key that silently desyncs from it.
-**Applies to**: Web
+Platform scope: Web
 **Approved**: pending
 
 **Decision**: none of `listSocialLinks`, `listAddresses`, `getPrivacyGrants`, or `getUsageSummary`
@@ -473,6 +472,7 @@ leak through logging here.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Design Decisions keep the Decision / Rationale / Approved triple; each decision's platform line is folded into its rationale. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

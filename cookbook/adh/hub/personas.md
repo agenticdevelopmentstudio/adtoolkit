@@ -1,68 +1,66 @@
 ---
 id: 4af83bb1-0178-462a-b0fc-ae009b63133f
-title: Personas
-domain: agenticdevelopertoolkit://cookbook/adh/hub/personas
+title: "Personas"
+domain: adtoolkit://cookbook/adh/hub/personas
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The Personas domain: persona records and their facet-by-facet editing rail,
-  demo-chat eligibility and preview, chat-status resolution, tool/may-act/approval
-  grants, and special-interest research corpora.'
+summary: "The Personas domain: persona records and their facet-by-facet editing rail, demo-chat eligibility and preview, chat-status resolution, tool/may-act/approval grants, and special-interest research corpora."
 platforms:
-- swift
-- macos
-- ios
-- typescript
-- web
+  - swift
+  - macos
+  - ios
+  - typescript
+  - web
 tags:
-- hub
-- personas
-- data-source
-- forms
-- chat-demo
-- access-control
+  - hub
+  - personas
+  - data-source
+  - forms
+  - chat-demo
+  - access-control
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/navigation/htdv
+  - adtoolkit://cookbook/ui/navigation/htdv
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Personas/PersonasDataSource.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Personas/PersonasModels.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Personas/PersonasModule.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/HubError.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/PersonasModuleTests.swift (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/personas.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/fields.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/canned.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/chat-status.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/demo-preview.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/special-interests.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/interest-documents.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/persona-abilities.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/persona-user-tools.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/__tests__/canned.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/__tests__/chat-status.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/__tests__/demo-preview.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/__tests__/fields.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/__tests__/personas.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/personas/__tests__/special-interests.test.ts (agenticdevelopertoolkit)
-- agenticdevelopercookbook://guidelines/behavioral-requirements
-- agenticdevelopercookbook://guidelines/completeness
-- agenticdevelopercookbook://guidelines/cookbook-compliance
-- agenticdevelopercookbook://guidelines/cross-recipe-consistency
-- agenticdevelopercookbook://guidelines/source-fidelity
-- agenticdevelopercookbook://guidelines/template-conformance
+  - packages/apple/AgenticToolkit/Hub/Features/Personas/PersonasDataSource.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Personas/PersonasModels.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Personas/PersonasModule.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/HubError.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/PersonasModuleTests.swift (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/personas.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/fields.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/canned.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/chat-status.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/demo-preview.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/special-interests.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/interest-documents.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/persona-abilities.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/persona-user-tools.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/__tests__/canned.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/__tests__/chat-status.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/__tests__/demo-preview.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/__tests__/fields.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/__tests__/personas.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/personas/__tests__/special-interests.test.ts (agenticdevelopertoolkit)
+  - agenticdevelopercookbook://guidelines/behavioral-requirements
+  - agenticdevelopercookbook://guidelines/completeness
+  - agenticdevelopercookbook://guidelines/cookbook-compliance
+  - agenticdevelopercookbook://guidelines/cross-recipe-consistency
+  - agenticdevelopercookbook://guidelines/source-fidelity
+  - agenticdevelopercookbook://guidelines/template-conformance
 approved-by: ""
 approved-date: ""
 ---
@@ -413,7 +411,7 @@ confirmed by inspection of every given source file in this domain.
   final class` conforming to `HTDVDataSource` — the navigation data source contract described
   neutrally above resolves here to `rootLevel()`/`child(for:)` returning `.level`/`.detail`/
   `.empty` cases, driving `FormSpec`/`FormSheet`/`FormViewController` from `AgenticToolkitHTDV`
-  (see `agenticdevelopertoolkit://cookbook/ui/navigation/htdv`); shared Hub support types (`HubError`,
+  (see `adtoolkit://cookbook/ui/navigation/htdv`); shared Hub support types (`HubError`,
   `HubText`, `RailPath`, `Slug`, `JSONValue`, `FormDetails`) are reused rather than reimplemented
   per feature. `PersonasDataSource` is `Sendable` and exposes `list()`, `get(id:)`, `create(_:)`,
   `update(id:_:)`, `delete(id:)`, and `listServices()`, all `async throws`; the app repo
@@ -467,11 +465,11 @@ that a naive synthesized `Equatable` would treat as changed when it was not. Pas
 through opaquely (rather than decoding it into `CannedChatConfig`/`ChatStatusConfig` structs, as
 the web does) avoids maintaining a second, potentially-diverging strongly-typed mirror on the
 Apple side for data this module never reads.
-**Approved**: pending
-**Applies to**: Apple/Swift — this decision concerns this platform's own `JSONValue`
+Platform scope: Apple/Swift — this decision concerns this platform's own `JSONValue`
 implementation choice and equality semantics; a port only needs to preserve the observable
 behavior (opaque pass-through, with numeric-type-tolerant equality if it implements equality at
 all).
+**Approved**: pending
 
 **Decision**: `PersonasModule.supportedFacetIDs` implements only 5 of the 13 facets declared in
 `PersonasModule.facets`; the other 8 render a fixed "not available in this version" notice
@@ -479,9 +477,9 @@ instead of a form.
 **Rationale**: the rail's shape (list-then-facets) is stable and worth shipping ahead of every
 facet's editor being ready; showing the full rail with an honest notice on unfinished facets
 avoids either hiding the facet's existence or exposing a half-built form.
-**Approved**: pending
-**Applies to**: Apple — describes the Apple facet rail's current rollout state; a port's own
+Platform scope: Apple — describes the Apple facet rail's current rollout state; a port's own
 facet coverage is a separate rollout decision.
+**Approved**: pending
 
 **Decision**: `resolveChatStatus` resolves `words` as a union (tagged rows plus untagged rows)
 but resolves `icons` exclusively (first matching set only), even though both fields resolve
@@ -499,10 +497,10 @@ follow-up `identifiersApi.rename` call (and its 404-recovery branch) has been re
 **Rationale**: the source's comment records that the follow-up rename was a SECOND rename of a
 handle the update's own cascade had already moved, landing on a now-taken target and reporting a
 successful rename as a 409 failure; a single call has no such half-landed window to recover from.
-**Approved**: pending
-**Applies to**: Web — this decision traces the web client's own evolution away from a
+Platform scope: Web — this decision traces the web client's own evolution away from a
 since-removed follow-up rename call; a port need only ensure its own persona-rename path is a
 single atomic update, not two calls.
+**Approved**: pending
 
 **Decision**: `InterestDocumentRow` declares every column of the backend's `content.markdown`
 row (23 fields), not just the `id`/`title`/`content` this feature reads.
@@ -510,10 +508,10 @@ row (23 fields), not just the `id`/`title`/`content` this feature reads.
 the wire to hide a real envelope bug; declaring the true shape (and true nullability) lets any
 caller reaching for an undeclared field get an honest answer from the type rather than a
 convenient subset that quietly diverges from what the server actually sends.
-**Approved**: pending
-**Applies to**: Web — this decision concerns this platform's own row-type declaration; a port
+Platform scope: Web — this decision concerns this platform's own row-type declaration; a port
 only needs to model the same true nullability of the corpus row, not this specific interface
 name.
+**Approved**: pending
 
 **Decision**: `canDemoChat`'s ink check tests only for a non-blank `source` string and never
 compiles the ink script.
@@ -561,6 +559,7 @@ with what these sources provide.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Design Decisions keep the Decision / Rationale / Approved triple; each decision's platform line is folded into its rationale. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

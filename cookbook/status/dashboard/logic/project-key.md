@@ -1,29 +1,28 @@
 ---
 id: 1ea53189-24d5-4ba3-9d83-507ed2d44cfb
-title: Project Key
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/project-key
+title: "Project Key"
+domain: adtoolkit://cookbook/status/dashboard/logic/project-key
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Stable platform|projectName identity key for deploy projects, plus first-seen
-  de-duplication of per-environment entries to one per project
+summary: "Stable platform|projectName identity key for deploy projects, plus first-seen de-duplication of per-environment entries to one per project"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/auto-configure
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/deploy-projects
+  - adtoolkit://cookbook/status/dashboard/logic/auto-configure
+  - adtoolkit://cookbook/status/dashboard/state/deploy-projects
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Key
@@ -213,4 +212,4 @@ Not applicable: this logic contains no logging calls.
 |---------|------|--------|---------|
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/logic/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from `project-key.ts` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `project-key.ts` |

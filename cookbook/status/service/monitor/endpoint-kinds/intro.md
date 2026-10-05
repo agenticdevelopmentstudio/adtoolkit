@@ -1,0 +1,3 @@
+
+# Monitor Endpoint Kinds
+

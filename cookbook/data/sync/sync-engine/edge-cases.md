@@ -1,0 +1,23 @@
+
+- **Empty outbox**: `pendingOps` returns nothing — the push loop MUST return without calling the transport.
+- **Empty pull page that advances the cursor**: MUST be applied (zero changes), emit a `pulledBatch` event with a change count of 0, and reset the no-progress count.
+- **Same-cursor page with changes**: MUST NOT count as no progress.
+- **Empty manifest on a non-fresh cursor**: every registered resource MUST be disabled — purged and its ops quarantined — because the manifest is read as complete.
+- **Change for an unregistered resource with no host resource list configured**: the engine MUST pass it to `apply` unfiltered; whatever error the store raises (an in-memory store raises an unknownResource error) MUST take the generic-failure path and back off. The server owns sending only manifest resources.
+- **Push result for an op outside the batch**: an applied or rejected result MUST be forwarded to `complete` unchanged; the engine does not check it against the attempted batch, so the store resolves whatever op carries that `opId`.
+- **Conflict for an op outside the batch**: MUST be counted as a conflict and forwarded, with nothing adopted.
+- **Negative or zero consecutive-failure count**: cannot occur — every retry is scheduled after an increment, so the exponent is at least 0 (2^0 × baseBackoff) and is capped at 15 (exponent `min(n,16) - 1`).
+- **Very large failure count**: the delay MUST NOT exceed `maxBackoff` (default 3600 seconds).
+- **Concurrent kicks**: MUST coalesce into the running cycle plus at most one follow-up cycle carrying the first coalesced reason.
+- **Kick while auth-paused**: a kick with reason periodic, and a retry's periodic kick, MUST return without a pull; only a manual or hostSpecific reason resumes.
+- **Pause during a cycle**: the running cycle MUST finish; any reason coalesced before or during the pause MUST be dropped.
+- **Event subscriber absent**: events past 256 MUST drop the oldest; the engine keeps running.
+- **Events after `stop`**: MUST be discarded silently by the finished stream.
+- **Cancellation of an in-flight transport call**: the engine offers none; cancellation reaches the transport only if the host cancels its own call to `syncNow`.
+- **Timeouts**: the engine applies none; any timeout is the transport's and surfaces as a raised error on the generic-failure path.
+- **Offline / unreachable server**: the transport's raised error MUST take the generic-failure path, keep every outbox op, and back off; connectivity-restored wake-ups arrive only through an attached trigger source yielding a connectivity-restored value.
+- **Crash mid-cycle**: the engine holds no durable state; crash safety MUST come from the store's atomic `stage`/`apply` (see **store-atomic**).
+- **Clock moving backwards**: the id generator MUST keep incrementing the counter from the last millisecond rather than reuse an earlier timestamp.
+- **Counter overflow in one millisecond**: the id generator MUST borrow the next millisecond and restart the counter at 0.
+- **Undecodable JSON token**: the JSON value type's decoding MUST raise a decoding error with message "not JSON".
+

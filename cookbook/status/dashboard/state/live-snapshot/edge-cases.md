@@ -1,0 +1,23 @@
+
+- **Nothing received yet**: `snapshot` MUST be null, `blind` false, `offline` false, and `nextPollAt` null until the first poll completes.
+- **Server rendering**: A stream connection MUST NOT open, because no live client execution environment for streaming is present; the server-rendering view returns the fresh view, so a universal-rendering pass shows the pre-anything state.
+- **Stream open before first schedule notification**: `nextPollAt` MUST fall back to the client estimate.
+- **Schedule notification with `nextCheckAt: null`**: `nextCheckAt` MUST become null, and `nextPollAt` falls back to the client estimate.
+- **Schedule notification with an unparseable date string**: The payload parses, but the date does not resolve to a valid timestamp, and `nextPollAt` MUST become that invalid-timestamp value (the fallback applies only to a missing value, not an invalid one); because an invalid timestamp never equals itself, each such notification MUST re-notify listeners.
+- **Snapshot with an unparseable `generatedAt`**: It MUST be ingested, but it cannot resolve a pending check, since an invalid timestamp never compares as greater than or equal to the check's request time; the safety timer clears the spinner.
+- **Malformed snapshot or schedule notification**: MUST be dropped silently, as declared for this concept; recovery comes from the next notification or the poll.
+- **Re-delivered notification**: A notification with the same `generatedAt` as the last ingested MUST be skipped, including a poll result racing a stream push of the same cycle.
+- **Out-of-order notifications**: A snapshot with an older `generatedAt` than the last ingested MUST still replace `snapshot`; only equality is checked.
+- **Backend unreachable (network error)**: The poll MUST set `liveError` to the failure's message after one retry; with the stream down, `disconnected` is true and `offline` is true between probes.
+- **Auth expiry or 5xx on stream connect**: The underlying transport closes the connection; the store MUST reopen it every 3,000 ms for as long as it is referenced, with no backoff growth and no retry limit.
+- **Transient network drop on the stream**: The underlying transport reconnects on its own; the store MUST only mark `streamConnected` false, which re-enables the poll and triggers an immediate re-read.
+- **Last subscriber stops using it during a pending reopen**: The reopen MUST be cancelled and no new connection opened.
+- **Check request fails (network or non-OK)**: The spinner MUST clear at once; no error is surfaced to the caller.
+- **Check request OK with a non-JSON body**: MUST count as started, since there is no body from which to read `ran: false`.
+- **Check started but its snapshot never arrives (stream wedged)**: The spinner MUST clear after 200,000 ms and a re-read MUST be issued.
+- **Two overlapping manual checks**: See the open question on overlapping-check-requests.
+- **Two providers under one shared cache context**: See the open question on per-client-poll-isolation.
+- **Running the test-reset operation with a check in flight**: The in-flight request's continuation is not cancelled; when it completes it MAY patch the fresh view and MAY start a new safety timer that later calls the captured re-read.
+- **Hung `GET /live` or check request**: A client timeout MUST NOT apply; `polling` stays true while the read is in flight.
+- **Concurrent access**: Single execution thread; synchronous store code cannot interleave, and the only asynchronous overlaps are those two open questions.
+

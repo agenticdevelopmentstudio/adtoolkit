@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "93f50554-5ae3-4a43-b8db-539d4d804890",
+    "title": "Help Content View",
+    "domain": "adtoolkit://cookbook/ui/containers/help-content-view",
+    "type": "ingredient",
+    "version": "1.3.0",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-23",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "A fixed \"Help\" heading over an independently scrolling list of help topics, styled in the same row style as the rest of the settings.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "settings",
+      "help"
+    ],
+    "depends-on": [
+      "adtoolkit://cookbook/ui/settings/layout/explanation-view",
+      "adtoolkit://cookbook/ui/settings/layout/group-view",
+      "adtoolkit://cookbook/ui/settings/layout/panel-scroll-view",
+      "adtoolkit://cookbook/ui/settings/layout/panel-view"
+    ],
+    "related": [],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "c5368af791f0f522",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

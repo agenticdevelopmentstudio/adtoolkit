@@ -1,0 +1,7 @@
+
+- **SwiftUI**: Use a `NavigationSplitView` with a `List` of records selected by id, a toolbar or footer with add and remove buttons, and a detail view keyed by the selected id so its state survives reloads.
+- **Compose**: Use a list-detail layout with a lazy list keyed by record id, and remember each record's pane state by that key so it survives list updates.
+- **React/Web**: Render a sidebar list keyed by record id with a detail route, and keep per-record component state by using the id as the React key.
+- **AppKit / UIKit**: In `RecordDetailWindowController.swift`, `RecordDetailWindowController<Record>` is an open generic `@MainActor` subclass of `SettingsWindow`, where `Record` conforms to `RecordDetailItem` (an `Identifiable` with a string id and a `recordTitle`). It exposes `setRecords`, `setFixedPanels`, `selectRecord(id:)`, `selectFixedPanel`, `panel(forRecordID:)`, the callbacks `onAddRecord`, `onRemoveRecord`, `onSelectRecord`, `onConfigurePanel`, the `canRemoveRecord` veto and the `footer` add and remove bar. It sets `sortsPanelsByTitle` to false and rebuilds with one `setPanels` call, reusing panel objects so the split view restores selection by identity.
+- **WinUI 3**: Use a `NavigationView` or a `ListView` plus a content `Frame`, with items bound to an `ObservableCollection` keyed by record id, a footer with add and remove `Button`s, and a dictionary from id to the pane instance so panes are reused. Disable the remove `Button` through its `IsEnabled` property when nothing is selected or the veto answers false.
+

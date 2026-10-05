@@ -1,0 +1,66 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "4d04037c-098f-4ea5-8313-7e0374700a96",
+    "title": "Language Model Message Vocabulary",
+    "domain": "adtoolkit://cookbook/workspace/extensions/vscode-api/language-models/language-model-message-vocabulary",
+    "type": "ingredient",
+    "version": "1.1.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Installs the eight vscode.LanguageModel* value types an extension constructs to talk to a language model, building all eight together in one pass so each can reference the others directly.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "extension-host",
+      "vscode-api",
+      "language-model"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/workspace/extensions/host/extension-host",
+      "adtoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/LanguageModelMessageVocabulary.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/LanguageModelMessageVocabularyTests.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "580395af72ff6b2d",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

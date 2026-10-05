@@ -1,0 +1,65 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "c8438764-89c9-4286-9b58-10c9cd175a97",
+    "title": "Model Catalog",
+    "domain": "adtoolkit://cookbook/ai/models/model-catalog",
+    "type": "ingredient",
+    "version": "1.1.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-23",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The shared model table: canonical model facts, per-gateway pricing/context terms, and curated overrides merged into one lookup.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "ai",
+      "model-catalog",
+      "provider",
+      "engine"
+    ],
+    "depends-on": [],
+    "related": [],
+    "references": [
+      "packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/AIPluginKit/AIPluginDescriptor.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/AIPluginKit/AIPluginManager.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/AIPluginKit/model-catalog.json (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIModelCatalogTests.swift (agenticdevelopertoolkit)",
+      "packages/apple/AIPlugins/tools/generate_model_catalog.py (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "5bbec229fd631470",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

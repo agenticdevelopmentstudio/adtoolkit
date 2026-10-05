@@ -1,0 +1,9 @@
+
+| Check | Status | Rationale |
+|---|---|---|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | Pass | Argument parsing/coercion/validation lives entirely in this adaptor; presenting (rendering a message, a picker, an input box, a status bar item) is fully delegated to four separate injected protocols, and unsupported-shape bookkeeping is delegated to `NotImplementedLedger` rather than folded into this type. |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | Partial | The four message/quick-pick/input-box/status-bar test files exercise argument-shape rejection, coercion, ledger recording, and teardown extensively, but the documented `Infinity`/`-Infinity` priority pass-through has no dedicated test in `MainThreadWindowStatusBarTests.swift` (confirmed by search — no test references `Infinity`), so that specific divergence is source-documented but not test-verified. |
+| [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | Pass | Every argument-shape and coercion failure produces a specific, informative rejection message naming the member and the offending argument; no failure path silently swallows an error or falls through to a default without signaling the extension. |
+| [secure-log-output](agenticdevelopercookbook://compliance/security#secure-log-output) | Pass | This type performs no logging at all (see Logging above), so no user- or extension-authored content — including a password-flagged input box value — can reach a log line through this adaptor. |
+| [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | Fail | Every rejection message is a hardcoded English literal built by string interpolation, with no localization mechanism; see Localization above for the representative set. |
+

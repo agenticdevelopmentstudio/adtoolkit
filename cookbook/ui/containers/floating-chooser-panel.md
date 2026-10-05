@@ -1,32 +1,31 @@
 ---
 id: ba1406b3-bcf8-4580-9d65-daed2311cccf
-title: Floating Chooser Panel
-domain: agenticdevelopertoolkit://cookbook/ui/containers/floating-chooser-panel
+title: "Floating Chooser Panel"
+domain: adtoolkit://cookbook/ui/containers/floating-chooser-panel
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Shared foundation for the app''s floating, titleless chooser panels: shared
-  positioning, activation, focus-loss dismissal, and reentrant-close guarding.'
+summary: "Shared foundation for the app's floating, titleless chooser panels: shared positioning, activation, focus-loss dismissal, and reentrant-close guarding."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- panel-controller
-- floating-panel
-- window-controller
+  - panel-controller
+  - floating-panel
+  - window-controller
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Floating Chooser Panel
@@ -73,7 +72,7 @@ own recipe.
 - **survives-close-without-releasing**: Closing the panel MUST NOT
   release/destroy the underlying window; the same window instance MUST
   remain reusable across repeated close/show cycles.
-- **rejects-coder-initialization**: See Platform Notes.
+- **rejects-coder-initialization**: The controller MUST be constructible only in code, from a hosted content component and a content rect. Constructing it from a serialized or archived representation MUST be refused as a programmer error that terminates, producing no instance.
 - **guards-show-against-missing-window**: Showing the panel MUST return
   immediately, performing no positioning, activation, or focus work, if the
   underlying window does not exist.
@@ -136,6 +135,7 @@ own recipe.
   MUST come entirely from the `contentRect` value an extending component
   supplies at construction; the base implementation MUST NOT compute or
   default a size of its own.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -229,8 +229,11 @@ own recipe.
 | floating-chooser-panel-controller-030 | decides-size-via-subclass-content-rect | Construct two instances with `contentRect` A (200×100) and B (400×300) | Each window's initial frame size matches its own `contentRect`, independent of the other. |
 | floating-chooser-panel-controller-031 | guards-show-against-missing-window | Set the underlying window to absent on a constructed controller, then show it | Positioning, activation, showing, and the initial-focus hook are not invoked; showing returns immediately with no effect. |
 | floating-chooser-panel-controller-032 | falls-back-to-centering-without-visible-frame | No screen's frame contains the pointer location, and there is no main screen either; show the panel | The panel is centered on the screen instead of using the pointer-relative calculation; no crash from the missing screen. |
+| floating-chooser-panel-controller-033 | rejects-coder-initialization | Attempt to construct the controller from a serialized or archived representation | Construction is refused as a programmer error and terminates; no instance is produced. Verified by inspection only, since the refusal cannot be caught. |
+| floating-chooser-panel-controller-034 | position-clamping | Content rect 600pt tall; resolved screen's visible area 500pt tall; show the panel | The panel's top edge sits 100pt below the top of the visible area (20% of 500pt) and its bottom edge is 200pt below the bottom of the visible area; no clamp is applied. |
+| floating-chooser-panel-controller-035 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
-`rejects-coder-initialization` has no test vector: see Platform Notes for how it is verified.
+`rejects-coder-initialization` is vector 033; because the refusal terminates the process, it is verified by inspection rather than by an automated test (see Platform Notes).
 
 ## Edge Cases
 
@@ -244,15 +247,7 @@ own recipe.
 - **Boundary values**: The top-edge offset is a fixed 20% fraction, not a
   configurable input, so there is no boundary range to exercise on it
   directly.
-- **position-clamping**: NEEDS REVIEW: Not implemented in source.
-  Positioning computes the panel's origin from an extending component's
-  `contentRect` and the screen's visible area with no clamp against either
-  edge — if `contentRect` height exceeds the visible area's height reduced
-  by the top-edge offset fraction, the computed vertical origin goes
-  negative and the panel renders partly below the visible area, or off it
-  entirely on a very short screen; resolving it requires the app team to
-  decide whether the clamp belongs here or in each extending component's
-  sizing.
+- **position-clamping**: Positioning MUST compute the panel's origin from the window's own size and the resolved screen's visible area alone, and MUST NOT clamp it against either edge. If the content rect's height exceeds the visible area's height reduced by the top-edge offset fraction, the computed vertical origin goes negative and the panel renders partly below the visible area, or off it entirely on a very short screen.
 - **Concurrent access**: The controller is confined to a single thread of
   execution for its entire lifetime, so there is no defined behavior for
   access from another thread — none is needed because this kind of window
@@ -396,6 +391,7 @@ source.
   reentrancy guard this base class keeps as an owned boolean, since WinUI
   activation events have the same "state hasn't finished updating yet"
   hazard this file's `isDismissing` comment describes.
+- **UI-thread confinement**: `confines-to-ui-thread` — the class is declared `@MainActor` and is an `NSWindowController` subclass, so construction or use from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -453,11 +449,17 @@ to wherever the user's attention is, absent a focused window — carries to
 any platform's port.)
 **Approved**: pending
 
+**Decision**: Positioning does not clamp the panel to the visible area: a content rect taller than the visible height less the 20% top offset yields a negative vertical origin.
+**Rationale**: The origin is computed from the window's frame and the visible frame with no bounds check, and every current extending component sizes itself well inside a normal screen. Closing the gap requires deciding whether the clamp belongs in this base class or in each extending component's sizing.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
 | [focus-management](agenticdevelopercookbook://compliance/accessibility#focus-management) | passed | accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | best-practices |
 
 `focus-management` rests on `show()` calling `showWindow(nil)` then
 `window.makeKeyAndOrderFront(nil)` before `takeInitialFocus()` runs
@@ -469,6 +471,8 @@ applies: the file renders no text, collects or transmits no data, performs
 no moderation-relevant function, and has no user-facing string for
 internationalization to check.
 
+`separation-of-concerns` passes because the base class owns only the shared window chrome, the single dismissal path and the pointer-screen positioning, and leaves size, focus-loss policy, initial focus and teardown to subclasses through `contentRect`, `dismissesOnFocusLoss`, `takeInitialFocus()` and `panelWillClose()`. `unit-test-coverage` is `partial`: no test file targets `FloatingChooserPanelController` by name, but its subclasses are tested. `CommandPalette/CommandPaletteCoordinatorTests.swift` (`CommandPaletteWindowDismissalTests`) pins the single dismissal path and the re-entrancy guard (a resign-key mid-close closes once; a later dismissal still closes), and `Extensions/ExtensionPickerWindowControllerTests.swift` pins the content-rect sizing; nothing tests pointer-screen positioning, the window chrome, or the focus-loss policy.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -478,3 +482,4 @@ internationalization to check.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/containers/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Wrote rejects-coder-initialization as a platform-neutral requirement with vector 033; resolved the position-clamping NEEDS REVIEW marker as current behavior (no clamp) with vector 034 and a pending decision; added separation-of-concerns and unit-test-coverage compliance rows. Corrected unit-test-coverage to partial: the dismissal path and sizing are tested through subclasses; added the confines-to-ui-thread requirement and vector. |

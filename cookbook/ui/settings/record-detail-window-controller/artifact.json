@@ -1,0 +1,59 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "A0D31E57-2B64-4C0E-8F1B-5E7C9D4A3B22",
+    "title": "Record Detail Window Controller",
+    "domain": "adtoolkit://cookbook/ui/settings/record-detail-window-controller",
+    "type": "ingredient",
+    "version": "1.0.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-10-04",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "A settings window whose sidebar lists records instead of destinations, with add and remove controls, per-record panes that survive reloads, and reported selection.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "ui",
+      "settings",
+      "records",
+      "windows"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/ui/settings/record-detail-panel"
+    ],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "e9ebd7c46981ac6f",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

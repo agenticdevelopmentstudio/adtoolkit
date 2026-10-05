@@ -1,30 +1,29 @@
 ---
 id: 613d7a36-d0cd-4415-97be-d983b3d6c644
-title: Chat Context
-domain: agenticdevelopertoolkit://cookbook/ai/chat/chat-context
+title: "Chat Context"
+domain: adtoolkit://cookbook/ai/chat/chat-context
 type: ingredient
-version: 1.1.0
+version: 1.1.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The four immutable value shapes that carry one chat turn's conversation,
-  tools, and resolved configuration into a plugin's request-building step.
+summary: "The four immutable value shapes that carry one chat turn's conversation, tools, and resolved configuration into a plugin's request-building step."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- chat
-- value-type
+  - ai-plugin
+  - chat
+  - value-type
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Chat Context
@@ -98,7 +97,7 @@ data, not an implementation of it.
   (a plugin configuration value) with no default value.
 - **immutability**: the chat message, the tool specification, the plugin
   configuration, and the chat context MUST expose every stored value as
-  unchangeable once constructed; none of the four MUST provide any way to
+  unchangeable once constructed; the four MUST NOT provide any way to
   mutate an existing instance after construction.
 - **sendability**: the chat message, its role, the tool specification, the
   plugin configuration, and the chat context MUST each be safe to pass
@@ -408,6 +407,7 @@ today), so `4096` is a convenience default rather than a validated floor.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | partial | Privacy and Data |
 
@@ -423,6 +423,8 @@ available to a caller that only needs `model` or `baseURL`, and no
 redaction safeguard on the type's default description (see the Privacy
 section).
 
+`unit-test-coverage` is partial: no test file targets `AIChatContext.swift` itself, but the type is constructed as the input of `PluginRequestTests.swift` (request building for each provider plugin) and `PluginTransportTests.swift` / `PluginTransportFramingTests.swift`, so its field shape is exercised indirectly while its defaults and equality are never asserted on their own.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -431,3 +433,5 @@ section).
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/chat/. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage compliance row. |
+| 1.1.2 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |

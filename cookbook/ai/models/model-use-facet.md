@@ -1,42 +1,38 @@
 ---
 id: f628f7f9-9c7b-4820-a4bf-231312a74839
-title: Model Use Facet
-domain: agenticdevelopertoolkit://cookbook/ai/models/model-use-facet
+title: "Model Use Facet"
+domain: adtoolkit://cookbook/ai/models/model-use-facet
 type: ingredient
-version: 1.1.0
+version: 1.1.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A heuristic that derives what a model is good for from its description
-  text and reported capabilities, and filters models against a set of selected uses.
+summary: "A heuristic that derives what a model is good for from its description text and reported capabilities, and filters models against a set of selected uses."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai
-- model-catalog
-- provider
-- engine
+  - ai
+  - model-catalog
+  - provider
+  - engine
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/models/model-catalog
+  - adtoolkit://cookbook/ai/models/model-catalog
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/ModelUseFacet.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelUseFacetTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ModelChooserViewController.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ModelChooserContent.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ProviderPickerViewController.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/ModelUseFacet.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelUseFacetTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ModelChooserViewController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ModelChooserContent.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ProviderPickerViewController.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Model Use Facet
@@ -78,8 +74,7 @@ model details, and a local server's live-fetched blurb).
   MUST insert `agents` when the reported capabilities include `tools`,
   `vision` when they include `vision`, and `problemSolving` when they
   include `reasoning` — regardless of what the text says — because the
-  capability-to-facet mapping covers only those three facets. No other
-  facet MUST be implied by a reported capability.
+  capability-to-facet mapping covers only those three facets. Any other facet MUST NOT be implied by a reported capability.
 - **capability-evidence-checked-first**: For each facet, deriving facets
   from text and capabilities MUST check capability-implied evidence before
   word-prefix evidence, and word-prefix evidence before phrase evidence,
@@ -430,6 +425,7 @@ Not applicable: facet derivation contains no logging call of any kind.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
 | [graceful-degradation](agenticdevelopercookbook://compliance/reliability#graceful-degradation) | passed | Reliability |
 | [test-pyramid](agenticdevelopercookbook://compliance/best-practices#test-pyramid) | passed | Best Practices |
@@ -446,10 +442,14 @@ directly, with no UI, network, or file-system dependency in the test suite.
 no-hardcoded-strings fails because `title` and `detail` return English-only
 `String` literals with no localization mechanism (see Localization).
 
+`unit-test-coverage` passes because `ModelUseFacetTests.swift` covers facet derivation from description prose, word-prefix anchoring, phrase evidence, capabilities implying facets, the any-of filter semantics, an empty selection filtering nothing, an evidence-free model always passing, and every facet having a title and tooltip.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.2 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage compliance row. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/models/. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Compliance links moved to the agenticdevelopercookbook compliance scheme |

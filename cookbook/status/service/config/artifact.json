@@ -1,0 +1,73 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "31fe479f-e95e-4f03-b957-faa2314a03be",
+    "title": "Status Server Config",
+    "domain": "adtoolkit://cookbook/status/service/config",
+    "type": "ingredient",
+    "version": "1.1.0",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The status backend's configuration contract (StatusConfig), its envConfig environment adapter, and the seed-roster port consumed by POST /config/seed.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "configuration",
+      "server",
+      "security",
+      "secrets"
+    ],
+    "depends-on": [
+      "agenticdevelopercookbook://guidelines/implementing/security/sensitive-data",
+      "agenticdevelopercookbook://guidelines/implementing/security/secure-storage",
+      "agenticdevelopercookbook://guidelines/implementing/security/cors"
+    ],
+    "related": [
+      "adtoolkit://cookbook/status/service/auth"
+    ],
+    "references": [
+      "packages/web/packages/status-server/src/config/env.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/config/seed.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/config/index.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/routes/config.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/config-env.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/config-cadence.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/config-clone.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/config.int.test.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "e8b75ec65327391c",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

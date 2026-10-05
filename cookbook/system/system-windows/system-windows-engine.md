@@ -1,31 +1,30 @@
 ---
 id: fcd4bf3d-445d-4f01-99a2-ba6f71ce087b
-title: System Windows Engine
-domain: agenticdevelopertoolkit://cookbook/system/system-windows/system-windows-engine
+title: "System Windows Engine"
+domain: adtoolkit://cookbook/system/system-windows/system-windows-engine
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Engine that enumerates other applications' windows, matches them to accessibility
-  elements, moves, resizes and focuses them, and observes window lifecycle.
+summary: "Engine that enumerates other applications' windows, matches them to accessibility elements, moves, resizes and focuses them, and observes window lifecycle."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-management
-- system-windows
-- accessibility-api
+  - window-management
+  - system-windows
+  - accessibility-api
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/system/system-windows/window-explorer-view
+  - adtoolkit://cookbook/system/system-windows/window-explorer-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # System Windows Engine
@@ -127,7 +126,7 @@ parks, restores or raises third-party windows.
 - **set-frame-partial**: When the size write fails after a successful position write, setting a frame MUST throw the attribute-set-failed error for the size attribute and MUST leave the window at its new position (no rollback).
 - **set-frame-stops**: When the position write fails, setting a frame MUST throw for the position attribute without attempting the size write.
 - **focus-unpark**: Focusing a window MUST first move a window whose frame overlaps no screen horizontally to x = main screen visible-frame minX + 80, keeping its y, when a main screen exists.
-- **focus-unpark-failure**: NEEDS REVIEW: Not implemented in source. Focusing discards the result of the unpark move, so a failed unpark lets focus raise a still-invisible window and return success with no signal; the owner of the window manager needs to decide whether that failure throws the attribute-set-failed error.
+- **focus-unpark-failure**: Focusing a window discards the result of the unpark move: a failed unpark lets focus raise a still-invisible window and return success with no signal.
 - **focus-raise**: Focusing MUST then perform the raise action and throw the attribute-set-failed error (with the raise action name) when it fails.
 - **focus-activate**: Focusing MUST then activate the owning app and throw an activation-failed error (with the app and PID) when no running app has the PID or activation returns false.
 - **axelement-public**: Publicly resolving the accessibility element for a window MUST return the resolved element and its window record, throwing the same resolution errors as the control operations.
@@ -152,7 +151,7 @@ parks, restores or raises third-party windows.
 - **observer-ax-subscriptions**: Each app observer MUST subscribe to window-created and focused-window-changed on the app element, and to element-destroyed and title-changed on each of the app's existing accessibility windows.
 - **observer-one-per-pid**: The observer MUST NOT create a second accessibility observer for a PID that already has one.
 - **observer-create-failure**: When accessibility observer creation fails for an app, the observer MUST skip that app silently.
-- **observer-registration-errors**: NEEDS REVIEW: Not implemented in source. Every accessibility notification registration ignores its result code, so an app whose registrations fail (for example with accessibility trust missing) is counted as monitored yet never reports window events; evidence needed is which registration errors the owner wants logged or surfaced.
+- **observer-registration-errors**: Every accessibility notification registration ignores its result code: an app whose registrations fail (for example with accessibility trust missing) is counted as monitored yet never reports window events.
 - **observer-stop**: Stopping observation MUST do nothing when not observing; otherwise it MUST remove both app-lifecycle observers, remove every accessibility observer's run-loop source, clear all accessibility observers and clear the known-window snapshot.
 - **observer-deinit**: Deallocating the observer MUST stop observation.
 - **observer-refresh**: Refreshing known windows MUST replace the whole known-window snapshot with the ids from the full window list, grouped by PID.
@@ -377,6 +376,14 @@ Interpolated strings (app names, titles) use the system log's default private re
 **Rationale**: `AXObserverCreate` needs a C function pointer; confinement to the main run loop, documented on the type, is what makes the unchecked conformance sound, and `deinit` stops observation before the refcon could dangle.
 **Approved**: pending
 
+**Decision**: A failed unpark during focus is ignored and focus reports success.
+**Rationale**: It stands today because the unpark result is discarded. Closing it needs the window manager owner to decide whether that failure throws the attribute-set-failed error, and a test.
+**Approved**: pending
+
+**Decision**: Observer registration failures are ignored; an app can be counted as monitored while reporting no events.
+**Rationale**: It stands today because registration result codes are not examined. Closing it needs the owner to choose which registration errors are logged or surfaced, and a test with a failing registration.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -397,6 +404,7 @@ separation-of-concerns passes because enumeration, AX bridging, observation, err
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved two NEEDS REVIEW markers as current behavior plus pending decisions |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to system/system-windows/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from `SystemAccessibilityPermission.swift`, `SystemWindowAXHelper.swift`, `SystemWindowControlError.swift`, `SystemWindowControlling.swift`, `SystemWindowManager.swift` and `SystemWindowObserver.swift` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `SystemAccessibilityPermission.swift`, `SystemWindowAXHelper.swift`, `SystemWindowControlError.swift`, `SystemWindowControlling.swift`, `SystemWindowManager.swift` and `SystemWindowObserver.swift` |

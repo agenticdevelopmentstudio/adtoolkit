@@ -1,34 +1,33 @@
 ---
 id: 2e71f72e-88d7-417e-9969-a414e1ab1a10
-title: JSONC Preprocessor
-domain: agenticdevelopertoolkit://cookbook/foundation/formats/jsonc-preprocessor
+title: "JSONC Preprocessor"
+domain: adtoolkit://cookbook/foundation/formats/jsonc-preprocessor
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Reads JSONC (comments, trailing commas, six candidate encodings) into strict
-  JSON an ordinary decoder accepts.
+summary: "Reads JSONC (comments, trailing commas, six candidate encodings) into strict JSON an ordinary decoder accepts."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- jsonc
-- json
-- text-processing
-- encoding-detection
+  - jsonc
+  - json
+  - text-processing
+  - encoding-detection
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization
-- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-registry
-- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/vsix-installer
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization
+  - adtoolkit://cookbook/workspace/extensions/registry/extension-registry
+  - adtoolkit://cookbook/workspace/extensions/registry/vsix-installer
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # JSONC Preprocessor
@@ -359,7 +358,7 @@ kind.
 scalar fragment from any of its parse attempts, but the
 normalize-to-strict-JSON operation's own initial strict-JSON check does
 accept one.
-**Rationale** (Swift/Foundation implementation): This creates an asymmetry
+**Rationale**: (Swift/Foundation implementation) This creates an asymmetry
 a reader would not expect from the two operations' names alone: normalizing
 the bytes for `42` returns those bytes unchanged (the initial check accepts
 a bare top-level number), but parsing the bytes for `42` to an object throws,
@@ -396,7 +395,7 @@ pays the transform cost.
 **Decision**: The trailing-comma scanner blanks a disqualified comma by
 overwriting it with a space character rather than removing it from the
 text.
-**Rationale** (Swift/Foundation implementation): Per the source's own
+**Rationale**: (Swift/Foundation implementation) Per the source's own
 comment, overwriting keeps every remaining character offset valid while the
 single forward scan is still running; deleting the character would shift
 every subsequent index and require either a second pass or index-adjustment
@@ -453,7 +452,7 @@ punctuation.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to foundation/formats/. |

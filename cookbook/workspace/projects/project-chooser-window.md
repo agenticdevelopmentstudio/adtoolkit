@@ -1,37 +1,35 @@
 ---
 id: ae0932d6-572f-4173-ba49-df68f4039ba4
-title: Project Chooser Window
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-chooser-window
+title: "Project Chooser Window"
+domain: adtoolkit://cookbook/workspace/projects/project-chooser-window
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: An app-modal Cancel/Open dialog that hosts a project browser in chooser mode and resolves to at most one repository record from a coordinating component's list.
+summary: "An app-modal Cancel/Open dialog that hosts a project browser in chooser mode and resolves to at most one repository record from a coordinating component's list."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- modal
-- chooser
+  - git
+  - projects
+  - modal
+  - chooser
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectChooserWindow.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectBrowserViewController.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/NSApplication+QuietActivation.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectChooserWindow.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectBrowserViewController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/CoreMacOS/DebugAutomation/NSApplication+QuietActivation.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Chooser Window
@@ -131,6 +129,7 @@ nothing open at all), and a sheet with no parent cannot be dismissed".
   accessibility identifier "project-chooser.window" on its window,
   "project-chooser.cancel" on the Cancel button, and "project-chooser.open"
   on the Open button.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -168,6 +167,7 @@ project list is the project browser's concern, not this file's.
 | git-client-projects-project-chooser-window-009 | runmodal-activation-respects-quiet-presentation | Run the modal session with quiet presentation disabled. | The application is activated before the window is made key. |
 | git-client-projects-project-chooser-window-010 | runmodal-activation-respects-quiet-presentation | Run the modal session with quiet presentation enabled. | The application is not activated; the window is still made key and brought to the front. |
 | git-client-projects-project-chooser-window-011 | accessibility-identifiers-fixed | Inspect the window, the Cancel button, and the Open button after the view loads. | Their accessibility identifiers read "project-chooser.window", "project-chooser.cancel", and "project-chooser.open" respectively. |
+| git-client-projects-project-chooser-window-012 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -444,3 +444,4 @@ the main thread.
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

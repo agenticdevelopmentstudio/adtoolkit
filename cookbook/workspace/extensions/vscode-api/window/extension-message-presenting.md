@@ -1,13 +1,13 @@
 ---
 id: 0aa82a1f-42ed-4585-9f65-bb20aa110712
-title: Extension Message Presenting
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
+title: "Extension Message Presenting"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
@@ -68,6 +68,7 @@ documentation describes an invariant a conformer is required to honor.
 - **present-message-no-throwing-path**: `presentMessage(_:)` MUST NOT throw; the protocol defines no error case, so a conformer that cannot present the message at all MUST resolve the call the same way as a user dismissal, `nil`, rather than signal the failure by any other means.
 - **is-modal-carried-not-enforced**: `isModal` MUST be carried on `ExtensionMessageRequest` exactly as supplied; `ExtensionMessagePresenting` places no requirement on whether, or how, a conformer's presentation honors it.
 - **detail-optional-presentation**: a conformer MAY omit presenting `detail` in its own surface when it is `nil`; the protocol imposes no non-nil or minimum-length constraint on either `message` or `detail`.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -92,6 +93,7 @@ Not applicable — this is a data-and-protocol contract for the extension host, 
 | extension-message-presenting-005 | present-message-return-index, present-message-return-nil-on-dismiss | A request with `itemTitles == ["A", "B"]` presented by a conformer, once with the user choosing `"B"` and once with the user dismissing | `presentMessage(_:)` returns `1` in the first case and `nil` in the second |
 | extension-message-presenting-006 | is-modal-carried-not-enforced | `isModal == false` on an otherwise ordinary request, presented by a conformer that always presents modally | The value is preserved verbatim on the request (`request.isModal == false` remains true of the value itself), while the conformer still presents the message as a modal surface regardless |
 | extension-message-presenting-007 | request-module-private-construction | An attempt to construct an `ExtensionMessageRequest` value from outside the component's own implementation module | Fails — no accessible constructor exists outside that module |
+| extension-message-presenting-008 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -198,6 +200,7 @@ Not applicable: this component contains no logging call of its own. The one rela
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/window/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

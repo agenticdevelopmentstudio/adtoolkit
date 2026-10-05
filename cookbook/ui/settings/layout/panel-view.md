@@ -1,32 +1,31 @@
 ---
 id: 4b1a3eb0-0a8a-4059-b2ac-824013072bd5
-title: Panel View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-view
+title: "Panel View"
+domain: adtoolkit://cookbook/ui/settings/layout/panel-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A view that stacks group cards and panel headings inside a themed
-  panel, matching a settings app's outer layout.
+summary: "A view that stacks group cards and panel headings inside a themed panel, matching a settings app's outer layout."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- layout
+  - settings
+  - layout
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-heading-view
+  - adtoolkit://cookbook/ui/settings/layout/group-view
+  - adtoolkit://cookbook/ui/settings/layout/panel-heading-view
 related:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Panel View
@@ -54,8 +53,7 @@ only reads as a misprint."
 
 ## Behavioral Requirements
 
-- **confines-to-ui-thread**: The component MUST be usable only on the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **vertical-leading-stack-alignment**: The component MUST construct an
   internal vertical stack with leading alignment.
 - **group-spacing**: The component MUST set the internal stack's spacing
@@ -414,7 +412,7 @@ Not applicable: the source contains no logging call.
   not to container" outcome the Group View's sibling recipe gets from
   having no height constraint of its own at all.
   **Approved**: pending
-- **Decision** (AppKit): The designated `init(frame:)` ignores the
+- **Decision**: (AppKit) The designated `init(frame:)` ignores the
   caller-supplied `frameRect` entirely and always forwards `.zero` to
   `super.init(frame:)`.
   **Rationale**: Not explained in source comments; the effect is that no
@@ -423,7 +421,7 @@ Not applicable: the source contains no logging call.
   rather than a deliberate API contract — kept as-is because it is what
   the source does (see the frame edge case above).
   **Approved**: pending
-- **Decision** (AppKit): Resolve the background color through a
+- **Decision**: (AppKit) Resolve the background color through a
   `ThemePaletteObserver(host: self)` rather than reading the unscoped,
   app-wide palette once at construction.
   **Rationale**: Per the source's own comment, this keeps the panel's
@@ -443,7 +441,7 @@ Not applicable: the source contains no logging call.
   heading with nothing above it needs no such signal, so no adjustment is
   made.
   **Approved**: pending
-- **Decision** (AppKit): The deserializing-construction path traps via
+- **Decision**: (AppKit) The deserializing-construction path traps via
   `fatalError`, and its current message text (`not overridden`) is left
   as-is rather than standardized to match the sibling Group
   View/Panel Heading View message (`init(coder:) has not been
@@ -458,6 +456,8 @@ Not applicable: the source contains no logging call.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | Platform Compliance |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | Accessibility |
 
@@ -467,6 +467,8 @@ passes because the component is a transparent layout container with no
 label or control of its own for a screen reader to need; each hosted
 child manages its own accessibility per its own recipe.
 
+Separation-of-concerns is passed: `PanelView` only stacks `GroupView` cards vertically with the group-spacing and panel-inset layout tokens and observes the theme for its own paint, with no knowledge of what the cards contain. Unit-test-coverage is failed: no test in the repository's test targets references `PanelView`.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -475,3 +477,5 @@ child manages its own accessibility per its own recipe.
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: reformatted frontmatter (references moved to related, depends-on populated with GroupView/PanelHeadingView); renamed requirements to subject-noun form and updated every citation; moved the ignored-frame behavior and the coder-initializer message wording into Design Decisions; removed stray MUST labels and a garbled title from Edge Cases; marked test vector 002 as compile-time and fixed vector 004's timing and vectors 017/018 to assert PanelHeadingView's public inputs instead of its private labels; reformatted Design Decisions to the bold convention and dropped a non-decision entry; trimmed Platform Notes editorializing and moved private stack/observer identifiers there; cleaned the Compliance table to catalog-valid checks with Title Case categories. |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/layout/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added Compliance rows for separation-of-concerns and unit-test-coverage |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

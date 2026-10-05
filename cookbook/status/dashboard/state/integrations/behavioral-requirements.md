@@ -1,0 +1,25 @@
+
+- **hook-signature**: Integrations MUST take no arguments.
+- **return-value**: Integrations MUST return the shared cache's query result unchanged (fields such as `data`, `error`, `isLoading`, `isError`, `status`, `refetch`). It MUST NOT add fields of its own.
+- **client-source**: Integrations MUST get its HTTP client from the app's API context. That supplies the status API client from the nearest provider, or the same-origin default client (base path `/api`) when no provider is mounted.
+- **query-key**: The query MUST be cached under the fixed key `["integrations"]`, so every caller under one shared cache shares a single cache entry.
+- **always-enabled**: The query MUST NOT set an enabled gate. It MUST fetch as soon as a consumer that uses Integrations becomes active, following the shared cache's policy.
+- **request-path**: Each fetch MUST call the client's raw request method with the relative path `/integrations`. The client resolves it against its base path, which by default gives `/api/integrations`.
+- **request-init**: Each fetch MUST be issued with no added request options. It is a default GET, and Integrations adds no headers, body, cache mode or cancellation signal.
+- **raw-fetch-not-json-helper**: Integrations MUST use the client's raw request method, not its JSON-body helper. So that helper's `Content-Type` header, its error-detail extraction and its "no-content response becomes an empty result" handling do not apply.
+- **non-ok-error**: When the response is not ok, the query's read step MUST fail with an error whose message is `status <status>` (for example `status 502`), which puts the query in its error state.
+- **error-detail-dropped**: On a non-ok response Integrations MUST NOT read the response body. Any `error` or `message` detail the server returns is left out of the failure.
+- **success-body**: When the response is ok, the query's read step MUST resolve with the parsed response body, typed as `IntegrationsResponse`. There is no runtime schema validation.
+- **parse-failure**: When an ok response's body is not valid JSON, the parse failure MUST propagate as the query's error.
+- **network-failure**: When the request itself fails (a network failure or an unreachable host), the failure MUST propagate unchanged as the query's error.
+- **refetch-on-focus**: The query MUST refresh when the runtime regains focus and the cached data is stale under the shared cache's freshness window.
+- **shared-interval-refresh**: Integrations MUST NOT set its own automatic refresh interval. Periodic refresh comes from the Refresh All state, which refreshes every enabled query except the live snapshot on one shared interval, 60,000 ms by default.
+- **no-hook-level-policy**: Apart from refresh-on-returning-focus, Integrations MUST NOT set its own freshness window, cache retention window, retry count or automatic refresh interval. Staleness, cache lifetime and retry come from the shared cache's host-supplied and library defaults.
+- **integrations-response-shape**: A successful result is declared as `IntegrationsResponse` with fields `generatedAt` (string), `overall` (`CheckState`) and `checks` (an `IntegrationCheck` array). `CheckState` is `"ok" | "warn" | "error"`.
+- **integration-check-shape**: Each `IntegrationCheck` is declared with the required fields `id` (string), `label` (string), `configured` (boolean), `ok` (boolean), `state` (`CheckState`) and `detail` (string).
+- **integration-check-optional-fields**: `IntegrationCheck` also declares three optional fields. `missingEnv` lists expected environment variables found unset. `unreachable` means the probe got no response. `correlated` means the check was confirmed unreachable together with other providers in the same run. Integrations passes all of them through untouched.
+- **no-timeout**: Integrations MUST NOT impose its own request timeout. A request that never settles leaves the query fetching until the client or runtime ends it.
+- **no-persistence**: Integrations MUST NOT write the snapshot to any durable store. Results live only in the in-memory shared cache and are lost on reload.
+- **client-only**: Integration Self-Check MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
+- **single-threaded-ordering**: Integrations runs on a single execution thread. Concurrent callers (the Overview and the dashboard) MUST share the one `["integrations"]` cache entry, and the shared cache, not Integrations, deduplicates their in-flight requests.
+

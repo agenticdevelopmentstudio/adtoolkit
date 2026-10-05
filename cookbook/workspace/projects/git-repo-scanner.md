@@ -1,36 +1,33 @@
 ---
 id: 3bec9b27-a9e3-4716-b516-688cc7f5a1c5
-title: Git Repository Scanner
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/git-repo-scanner
+title: "Git Repository Scanner"
+domain: adtoolkit://cookbook/workspace/projects/git-repo-scanner
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Walks directory trees for git working trees, skipping hidden, pruned, symlinked,
-  and user-configured folders, and reports each repository's path and origin remote.
+summary: "Walks directory trees for git working trees, skipping hidden, pruned, symlinked, and user-configured folders, and reports each repository's path and origin remote."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- file-system
+  - git
+  - projects
+  - file-system
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepoScanner.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/UserSettings+Projects.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/GitRepoScannerTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepoScanner.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/UserSettings+Projects.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/GitRepoScannerTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Git Repository Scanner
@@ -132,19 +129,7 @@ an unchanged tree are byte-identical.
   traversal stack) local to that one call rather than in any shared state
   of the scanner itself; the reported progress value MUST likewise be
   safely usable across concurrent contexts.
-- **unreadable-directory-error-visibility**: NEEDS REVIEW: Not implemented.
-  When reading a directory's contents fails — permission denied, or a root
-  that does not exist on disk — the scan catches the error and moves on
-  with no log call, no distinct field on the reported progress, and no
-  entry in the returned array or any other value the scan produces; the
-  failure is not surfaced to the caller in any observable form. What is
-  missing: whether "skip silently" is the intended contract for every
-  unreadable directory including a wholly missing scan root, or whether
-  such directories should be counted, logged, or otherwise distinguished
-  from a directory that was simply empty. What would settle it: a
-  doc-comment statement of the intended observability, or evidence from a
-  caller that a missing or unreadable root is surfaced to the user through
-  some other path.
+- **unreadable-directory-error-visibility**: when reading a directory's contents fails (permission denied, or a scan root that does not exist), the scan MUST skip that directory and continue the walk; the failure is not surfaced in any observable form: no log call, no field on the reported progress, and no entry in the returned array (see Design Decisions).
 
 ## Appearance
 
@@ -208,7 +193,7 @@ Not applicable — this is a directory-tree scanner, not a visual component.
 - **Error states**: Reading a directory's contents failing for any reason —
   permission denied, the directory disappearing mid-walk — is caught and
   skipped identically, with no distinction made between error causes and
-  no signal returned to the caller; see the open question on
+  no signal returned to the caller; see the pending decision on
   `unreadable-directory-error-visibility`. A malformed or non-UTF-8
   `.git/config` is handled the same way as a config with no origin
   section: reading the origin remote returns no value in both cases, with
@@ -304,7 +289,7 @@ Not applicable: this component makes no analytics or event-tracking call.
 
 Not applicable: this component makes no logging call of any kind; its only
 failure path (reading a directory's contents failing) is caught and
-discarded with no log output — see the open question on
+discarded with no log output — see the pending decision on
 `unreadable-directory-error-visibility`.
 
 ## Platform Notes
@@ -420,8 +405,12 @@ remaining directories rather than aborting the whole scan.
 unreadable directory is not a reason to abandon the walk — `~` has plenty of
 them" (`GitRepoScanner.swift`). This decision explains why the
 walk continues; it does not settle whether the resulting silence about
-*which* directories were skipped is also intended — that is the open
-question on `unreadable-directory-error-visibility`.
+*which* directories were skipped is also intended — that is the pending
+decision below on `unreadable-directory-error-visibility`.
+**Approved**: pending
+
+**Decision**: An unreadable directory, including a wholly missing scan root, is skipped with no log, no progress field, and no returned entry, so it is indistinguishable from a directory that was simply empty (`unreadable-directory-error-visibility`).
+**Rationale**: The source's catch around the directory read does only `continue`; skipping is intended for the walk, but whether the silence about which directories were skipped is also intended is undecided. Closing it means counting skipped directories in the progress value, logging them, or documenting silence as the contract.
 **Approved**: pending
 
 ## Compliance
@@ -463,7 +452,8 @@ observed as "no remote."
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the unreadable-directory NEEDS REVIEW marker against source: the directory-read catch only continues, with no log or signal; restated as current behavior with a pending decision. |

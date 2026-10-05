@@ -1,31 +1,30 @@
 ---
 id: ab6d7655-9476-4318-8c36-f431686e2d23
-title: File Browser
-domain: agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view
+title: "File Browser"
+domain: adtoolkit://cookbook/workspace/files/file-browser-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'A directory tree plus an add/remove footer for extra root directories,
-  managing one file tree manager per root, watched only while visible.'
+summary: "A directory tree plus an add/remove footer for extra root directories, managing one file tree manager per root, watched only while visible."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- file-browser
-- tree-view
+  - file-browser
+  - tree-view
 depends-on:
-- agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view
+  - adtoolkit://cookbook/workspace/files/file-tree-view
 related:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # File Browser
@@ -150,6 +149,7 @@ what hosts it.
 - **single-root-convenience-init**: The component MAY be constructed with a
   single-root convenience form, which builds the directories state with that
   location as the sole primary root and no additional roots.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -255,6 +255,7 @@ what hosts it.
 | file-browser-034 | remove-button-tooltip | Set the selected root to none. | The remove control's tooltip reads `Select an added directory to remove it`. |
 | file-browser-035 | add-directory-selects-last-added | Invoke the add-directory action, choose three new directories in a single picker response and confirm. | The selected root equals only the last of the three chosen directories, not the first two. |
 | file-browser-036 | git-status-provider-reuse | Inject a git status provider whose repository root (symlink-resolved) matches an *additional* root added via the add-directory action, not the primary root. | That additional root's manager is built with that provider, matched by resolving symlinks rather than a lexical comparison. |
+| file-browser-037 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -521,6 +522,8 @@ over it with a manager nothing else expects to exist.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | Accessibility |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | Internationalization |
@@ -541,6 +544,8 @@ automatically for right-to-left locales. `data-minimization` passes because
 `directories`/`selection` change only in response to an explicit user action
 (the open panel, or a click in the tree), never automatically (see Privacy).
 
+`separation-of-concerns` passes because `FileBrowserViewController` composes the browser from separate parts, with per-root tree state in `FileTreeManager`, the outline in `FileTreeOutlineViewController`, the roots list in the `FileBrowserRootsModel` observable object, and pane teardown and selection description in the `PaneContentTeardown` and `PaneSelectionDescribing` extensions. `unit-test-coverage` is partial: `FileTreeManagerInjectedProviderTests.swift` constructs the real controller to check provider injection and per-root scoping, and `FileBrowserRestorationStateTests.swift` and `SelectionSyncTests.swift` cover the restoration state and selection sync it relies on, but no test drives its layout, multi-root header, or teardown.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -550,3 +555,5 @@ automatically for right-to-left locales. `data-minimization` passes because
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/files/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added compliance rows for the required checks judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

@@ -1,49 +1,44 @@
 ---
 id: f6acc431-0443-4b14-8ae4-e1f2dc227c0c
-title: Extension Resource Path
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
+title: "Extension Resource Path"
+domain: adtoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Resolves an extension-declared path against its own directory, refusing any
-  escape, and derives where user-installed extensions and plugins live.
+summary: "Resolves an extension-declared path against its own directory, refusing any escape, and derives where user-installed extensions and plugins live."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- path-safety
-- containment
-- installed-content-location
+  - extension-host
+  - path-safety
+  - containment
+  - installed-content-location
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
-- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-manager
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+  - adtoolkit://cookbook/ai/plugins/plugin-manager
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionResourcePath.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionResourcePathTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/ThemeContributionPoint.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHostInstaller.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Theme/VSCodeThemeImporter.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Language/Snippets/SnippetStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIPluginManager.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewResourceURL.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionResourcePath.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionResourcePathTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/ThemeContributionPoint.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHostInstaller.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Theme/VSCodeThemeImporter.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Language/Snippets/SnippetStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIPluginManager.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/WebviewResourceURL.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Resource Path

@@ -1,37 +1,34 @@
 ---
 id: 14abf162-be65-4a58-9ffd-31f2145a50d3
-title: Bounded Body Loader
-domain: agenticdevelopertoolkit://cookbook/foundation/networking/bounded-body-loader
+title: "Bounded Body Loader"
+domain: adtoolkit://cookbook/foundation/networking/bounded-body-loader
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A bounded, per-chunk-checked HTTP body reader that refuses a response
-  past a caller-set byte ceiling, used by an extension-registry client for
-  downloads and metadata reads.
+summary: "A bounded, per-chunk-checked HTTP body reader that refuses a response past a caller-set byte ceiling, used by an extension-registry client for downloads and metadata reads."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- networking
-- http
-- streaming
-- concurrency
-- memory-safety
+  - networking
+  - http
+  - streaming
+  - concurrency
+  - memory-safety
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Networking/BoundedBodyLoader.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/OpenVSXClientLimitsTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Networking/BoundedBodyLoader.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/OpenVSXClientLimitsTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Bounded Body Loader
@@ -326,7 +323,7 @@ line.
 
 **Decision**: The transfer is driven by a delegate-style callback on a
 dedicated data task rather than by an async byte-stream API.
-**Rationale** (Swift/Foundation implementation): `URLSession.bytes(from:)`'s
+**Rationale**: (Swift/Foundation implementation) `URLSession.bytes(from:)`'s
 `AsyncBytes` yields one `UInt8` per `await`, measured at 23.8 MB/s against
 an in-process stub where `data(from:)` — which cannot be bounded — measures
 2.5 GB/s. A delegate on a data task gets whole chunks at the system's rate
@@ -339,7 +336,7 @@ the metadata read behind every keystroke of a search field.
 **Decision**: The session's callback object is a separate object that
 holds only the shared state, rather than the loader being its own
 delegate.
-**Rationale** (Swift implementation): `URLSession` retains its delegate for
+**Rationale**: (Swift implementation) `URLSession` retains its delegate for
 as long as the session is not invalidated. A loader that were its own
 delegate would be retained by its own session and could never be
 deallocated, so it could never reach its own teardown to invalidate that
@@ -373,7 +370,7 @@ keeps that window from costing any additional retained memory.
 **Decision**: All per-transfer state across every concurrent call on one
 loader instance is guarded by a single lock, rather than one lock per
 transfer or an actor.
-**Rationale** (Swift implementation): The writes arrive from the session's
+**Rationale**: (Swift implementation) The writes arrive from the session's
 delegate queue, which is not an async context, ruling out an `actor`
 without a bridging layer. A single lock over a dictionary keyed by the
 transfer's identifier is the simplest construction that still keeps every

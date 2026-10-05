@@ -1,0 +1,11 @@
+
+| Check | Status | Category |
+|-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
+| [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | passed | Best Practices |
+| [secure-log-output](agenticdevelopercookbook://compliance/security#secure-log-output) | passed | Security |
+| [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
+
+`separation-of-concerns` passes because `HostDiagnosticSink` does exactly one thing — log, then forward to the emitter — and delegates every other concern (windowing, merging, mapping, JavaScript delivery) to the injected `ExtensionEventEmitter<[URL]>` rather than reimplementing any of it. `unit-test-coverage` is partial: no test in the given sources calls `HostDiagnosticSink.diagnosticsChanged(for:)` directly and asserts on it in isolation (the way `RecordingDiagnosticSink` is asserted on for the mutation-count suite); the given `MainThreadDiagnosticsTests.swift` "onDidChangeDiagnostics wiring" suite exercises the real `HostDiagnosticSink` only end to end, through `MainThreadDiagnostics`'s mutating methods and a subscribed JavaScript listener, and no given test asserts on the debug log message at all. `explicit-error-handling` passes, trivially: `diagnosticsChanged(for:)` has no failure path — it counts an array, logs, and calls `emitter.fire(uris)`, none of which can throw, return an error, or produce an optional — so there is nothing in this file for the open question of swallowed errors to apply to. `secure-log-output` passes because the only value logged is `uris.count`, a bare integer; no file path, URL, credential, or other potentially sensitive value is ever written to the log. `no-hardcoded-strings` fails because `"diagnostics changed for \(uris.count) uri(s)"` is an English string literal with no localization key, `String(localized:)` call, or String Catalog entry (see Localization).
+

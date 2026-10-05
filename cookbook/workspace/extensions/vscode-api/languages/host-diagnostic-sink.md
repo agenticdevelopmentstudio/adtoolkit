@@ -1,43 +1,37 @@
 ---
 id: 6a7598bd-afe0-4ae9-af93-237908b767f8
-title: Host Diagnostic Sink
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/host-diagnostic-sink
+title: "Host Diagnostic Sink"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/languages/host-diagnostic-sink
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The production diagnostic sink and write side of vscode.languages.onDidChangeDiagnostics:
-  logs each mutation''s affected URLs, then fires the shared debounced event emitter.'
+summary: "The production diagnostic sink and write side of vscode.languages.onDidChangeDiagnostics: logs each mutation's affected URLs, then fires the shared debounced event emitter."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- diagnostics
-- event-emitter
+  - extension-host
+  - vscode-api
+  - diagnostics
+  - event-emitter
 depends-on:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
+  - adtoolkit://cookbook/workspace/extensions/host/extension-event
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/HostDiagnosticSink.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionEvent.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHostInstaller.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadDiagnosticsTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/HostDiagnosticSink.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionEvent.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHostInstaller.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadDiagnosticsTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Host Diagnostic Sink
@@ -57,6 +51,7 @@ This component is the production conformer of the diagnostic-sink protocol (decl
 - **fire-called-unconditionally**: `diagnosticsChanged(for:)` MUST fire the emitter exactly once per call, with no guard on the list's count; it MUST fire even when the list is empty.
 - **one-emitter-shared-across-adaptors**: The emitter instance passed to the sink's constructor MUST be the same instance passed to every diagnostics-bridge instance constructed for the same extension host; the extension host's own installer MUST construct exactly one such emitter and share it between the two.
 - **loggable-conformance**: This component MUST conform to the shared logging convention, giving it the host application's own subsystem and a category named after this component, per that convention's own defaults.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -80,6 +75,7 @@ Not applicable — this is the extension host's diagnostic-change notifier, not 
 | host-diagnostic-sink-004 | one-emitter-shared-across-adaptors, fire-forwards-uris-unchanged | Build a sink and a diagnostics bridge sharing one emitter; install an `onDidChangeDiagnostics` listener; call `c.set(vscode.Uri.file('/a.txt'), d)` then `c.delete(vscode.Uri.file('/b.txt'))` inside one window, then close the window | The listener receives one event whose URLs are `["/a.txt", "/b.txt"]` — `MainThreadDiagnosticsTests.twoMutationsInOneWindowArriveAsOneEventCarryingBothUris`, which exercises `diagnosticsChanged(for:)` twice and the shared emitter's coalescing once |
 | host-diagnostic-sink-005 | emitter-required-no-default | Attempt to construct the sink with no arguments | Fails to compile: the constructor declares no default for the emitter parameter |
 | host-diagnostic-sink-007 | protocol-conformance, loggable-conformance | Inspect the sink's declared conformances | Declares exactly the diagnostic-sink protocol (in the primary declaration) and the shared logging convention (in its own extension), satisfied by `diagnosticsChanged(for:)` and the shared logger property respectively |
+| host-diagnostic-sink-008 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -180,5 +176,6 @@ No other event in this component is logged: `diagnosticsChanged(for:)` has exact
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/languages/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |

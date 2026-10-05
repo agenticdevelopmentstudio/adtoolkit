@@ -1,0 +1,5 @@
+
+`colors.ts` is the status board's palette module. It exports constant lookup tables that map status vocabularies (service health, overall board status, deploy status, environment) to CSS color strings, a set of named UI roles (`PALETTE`, `COLORS`) and semi-transparent tints (`TINT`), plus two pure helpers: `envColor` and `envBadgeLabel`. Every theme-dependent value is a CSS `var(--color-apt-*)` reference or a `color-mix(in srgb, …)` expression over one; the actual color values are owned by `@agenticdevelopertoolkit/themes`, not by this module ("No hard-coded hex: a token's value is owned by @agenticdevelopertoolkit/themes, not copied here"). The module is re-exported from the package entry point (`export * from "./lib/colors"` in `src/index.ts`) and is consumed by the board's components (for example `UptimeBar`, `ChecksStrip`, `ActivityPanel`, `Dashboard`) and by `deployStatusColor` in `deploy-display.ts`.
+
+Use it whenever a status-board view needs a color for a status value, an environment tag, or a surface/text/tint role, so the board tracks the suite theme.
+

@@ -1,0 +1,76 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "7e0508b5-cf96-42da-9902-51fbe31b432f",
+    "title": "Hub Domain: Invitations",
+    "domain": "adtoolkit://cookbook/adh/hub/invitations/invitations",
+    "type": "ingredient",
+    "version": "1.1.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The Hub's Invitations domain: three admin-facing topic providers (requests, pending users, sent invites) sharing one admin-notes sub-rail, plus the web client a recipient uses to preview, verify, accept, and register from an invite.",
+    "platforms": [
+      "swift",
+      "macos",
+      "ios",
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "hub",
+      "invitations",
+      "data-source",
+      "forms",
+      "crud",
+      "notes"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/ui/navigation/htdv",
+      "adtoolkit://cookbook/adh/hub/ecosystems/ecosystems",
+      "adtoolkit://cookbook/adh/hub/customers",
+      "adtoolkit://cookbook/adh/hub/security/authentication-client"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/Hub/Features/Invitations/AdminNotesRail.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Hub/Features/Invitations/InvitationsModels.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Hub/Features/Invitations/InvitesTopic.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Hub/Features/Invitations/PendingUsersTopic.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Hub/Features/Invitations/RequestsTopic.swift (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/invitations/invitations.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/invitations/wire.ts (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/InvitationsTopicsTests.swift (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "bc30e0e38768ffc1",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

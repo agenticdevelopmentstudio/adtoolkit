@@ -1,0 +1,3 @@
+
+`ExtensionRegistry.swift` defines no user-facing string of its own; every string it carries into its `ExtensionLoadError` cases and log lines is either a manifest-derived identifier/path or a developer-facing diagnostic. It does, however, drive manifest localization for the extension's own declared strings: every `package.json` decode is routed through `ExtensionManifestLocalization.localize(_:forManifestIn:)` (manifest-localization-applied-before-decode) before the JSONC preprocessor and the `ExtensionManifest` decode, so an extension's own `%configuration.title%`-style placeholder resolves against its `package.nls.json` before any downstream caller ever sees the manifest's strings.
+

@@ -1,27 +1,26 @@
 ---
 id: b0a16326-b88d-426d-a879-080284e541b4
-title: Follow New Items
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/follow-new-items
+title: "Follow New Items"
+domain: adtoolkit://cookbook/status/dashboard/state/follow-new-items
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Behavior that keeps a scrolling list pinned to its newest edge while the
-  reader rests there, and holds their row in place once they scroll away.
+summary: "Behavior that keeps a scrolling list pinned to its newest edge while the reader rests there, and holds their row in place once they scroll away."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Follow New Items
@@ -96,6 +95,7 @@ The concept also defines an at-edge predicate: a pure function that decides whet
 - **single-thread**: All reads and writes MUST happen on a single execution thread; scroll changes, resize notifications and the list-change pass cannot interleave, so their ordering is the order the runtime dispatches them.
 - **no-persistence**: Follow New Items MUST keep pinned state, anchor, previous head key and previous content size in memory for the behavior's lifetime only, and MUST NOT persist any of them.
 - **no-network**: Follow New Items MUST NOT perform network, storage, logging or timer side effects.
+- **client-only**: Follow New Items MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 
 ## Appearance
 
@@ -139,6 +139,7 @@ Vectors 001–008 exercise the at-edge predicate; 009–020 exercise the full be
 | follow-022 | fallback-first-pass, pass-bookkeeping | `"top"`, no children, `newest "a"`, content size 1000; after attach report a scroll at offset 500, then update with the same keys and `count` | Scroll offset stays 500: the head key equals the one recorded on the first pass, so no growth is added |
 | follow-023 | count-insert-trigger | Pinned `"bottom"`, update with same keys and `count` 3 to 4 after content size grows to 1200 | Scroll offset is 1200 |
 | follow-024 | listener-cleanup | Remove the behavior | Scroll listener removed; resize observation disconnected; later scroll reports do not change pinned state |
+| follow-025 | client-only | Load Follow New Items in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -284,6 +285,7 @@ The hook owns one concern, scroll following, and splits the pure edge test (`atE
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

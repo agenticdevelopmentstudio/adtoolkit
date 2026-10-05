@@ -1,40 +1,35 @@
 ---
 id: 84292002-9039-4f8b-9bfb-69f9b4832e4f
-title: Extension Status Bar Presenting
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-status-bar-presenting
+title: "Extension Status Bar Presenting"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-status-bar-presenting
 type: ingredient
-version: 1.1.0
+version: 1.1.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The presenter seam behind vscode.window.createStatusBarItem: two
-  synchronous operations to put up or refresh, and to remove, one status bar item.'
+summary: "The presenter seam behind vscode.window.createStatusBarItem: two synchronous operations to put up or refresh, and to remove, one status bar item."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- status-bar
-- presenter
+  - extension-host
+  - vscode-api
+  - status-bar
+  - presenter
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionStatusBarPresenting.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/UI/WindowFooterStatusBarPresenter.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowStatusBarTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionStatusBarPresenting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/UI/WindowFooterStatusBarPresenter.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowStatusBarTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Status Bar Presenting
@@ -62,7 +57,7 @@ exercises the contract through a recording double.
 - **single-context-execution**: The contract MUST require every conforming type's implementations of `putOrUpdateStatusBarItem(_:)` and `removeStatusBarItem(internalID:)` to execute on a single, consistent execution context, matching every other presenter contract in this module.
 - **class-bound-conformance**: The contract MUST constrain conformers to reference types; a value type MUST NOT be able to conform to it as declared.
 - **two-operation-contract**: A conforming type MUST implement exactly two members, `putOrUpdateStatusBarItem(_:)` and `removeStatusBarItem(internalID:)`; the contract MUST NOT declare separate members mirroring VS Code's upstream `show()`, `hide()`, a debounced `update()`, and `dispose()`, because `hide()` and `dispose()` resolve to the same removal effect upstream and nothing here replicates `update()`'s debounce.
-- **synchronous-no-await**: Both `putOrUpdateStatusBarItem(_:)` and `removeStatusBarItem(internalID:)` MUST be operations that complete immediately and return no result; neither MUST suspend to await an outcome, unlike the sibling quick-pick presenting contract's accept operation, which suspends until the user's choice is known.
+- **synchronous-no-await**: Both `putOrUpdateStatusBarItem(_:)` and `removeStatusBarItem(internalID:)` MUST be operations that complete immediately and return no result; each MUST NOT suspend to await an outcome, unlike the sibling quick-pick presenting contract's accept operation, which suspends until the user's choice is known.
 - **put-or-refresh-semantics**: `putOrUpdateStatusBarItem(_:)` MUST put `request` up as a new item when `request.internalID` is not currently shown by the conformer, and MUST refresh the already-shown item in place when `request.internalID` is already up; one method MUST serve both the initial "add" and every subsequent "update".
 - **caller-commits-once-per-change**: The caller MUST invoke `putOrUpdateStatusBarItem(_:)` exactly once for every committed change to a shown item's state; the caller MUST NOT batch two or more property changes into a single call.
 - **no-debounce-assumed**: A conforming presenter MUST NOT assume any minimum interval, coalescing, or debounce between successive `putOrUpdateStatusBarItem(_:)` calls for the same `internalID`; none is performed on its behalf.
@@ -81,6 +76,7 @@ exercises the contract through a recording double.
 - **explicit-field-initializer**: `ExtensionStatusBarItemRequest` MUST be constructed via an explicit initializer that takes every field; the type MUST NOT rely on a synthesized memberwise initializer, since a generated one is not usable from the test module that also constructs this type.
 - **void-return-no-failure-channel**: `putOrUpdateStatusBarItem(_:)` and `removeStatusBarItem(internalID:)` MUST both return no result; the contract provides no channel through which a conformer can report a presentation failure back to the caller.
 - **serialized-calls**: Because both the caller and the contract are confined to a single execution context, every call into one conformer instance MUST be strictly serialized in the order the caller's method calls and property writes occur; no two calls into the same conformer instance can overlap.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -108,6 +104,7 @@ Not applicable — this is a presenter contract and its two associated data type
 | status-bar-presenting-008 | remove-tolerates-unknown-id | `show()`, `dispose()`, `dispose()` again | `removeStatusBarItem` is invoked exactly once total; the second `dispose()` is a no-op at the caller's own idempotence guard and never reaches the presenter a second time |
 | status-bar-presenting-009 | fixed-identity-fields, priority-nil-means-undefined | `createStatusBarItem('x', 2, 7)`, then `show()` | Every `putOrUpdateStatusBarItem` request for that item carries `id == "x"`, `alignment == .right`, and `priority == 7`, unchanged across calls |
 | status-bar-presenting-010 | color-flat-string | `color` set to a `ThemeColor`-shaped object `{ id: 'myTheme.color' }`, then `show()` | The `putOrUpdateStatusBarItem` request's `color == "myTheme.color"` — the flat id string, never the original object shape |
+| status-bar-presenting-011 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -213,6 +210,8 @@ Not applicable: the source contains no logging call of any kind.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.2 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/window/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

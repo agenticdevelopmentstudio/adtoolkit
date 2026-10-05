@@ -1,0 +1,12 @@
+
+| Check | Status | Category |
+| --- | --- | --- |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
+| [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | passed | Best Practices |
+| [secure-log-output](agenticdevelopercookbook://compliance/security#secure-log-output) | passed | Security |
+| [input-sanitization](agenticdevelopercookbook://compliance/security#input-sanitization) | passed | Security |
+| [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
+
+`VSCodeAPI` is exactly the ceremony every `vscode.*` adaptor needs and nothing an adaptor's own domain logic — command lookup, diagnostic storage, tree data — should be doing itself, so separation-of-concerns passes. `VSCodeAPISettlementTests.swift`, `VSCodeAPIDisposableTests.swift`, and `VSCodeAPISubNamespaceTests.swift` cover `settlement(of:in:)`, `disposable(in:onDispose:)`, and `subNamespace(path:members:in:recordMiss:recordProbe:)` in real depth, but `arrayLength(of:)`, `raise(_:in:)`, the promise builders, `call(_:thisArg:arguments:)`, `canDispatch(in:)`, `observeRejection(of:in:_:)`, and `member(_:of:whenTornDown:body:)` have no dedicated test in those suites — they are exercised only indirectly through adaptors such as `MainThreadCommands` — so unit-test-coverage is partial. Every failure path answers an explicit `.unavailable`/`.threw`/`.rejected` case, a raised exception, or a logged error rather than silently swallowing anything, so explicit-error-handling passes. Nothing this file logs is a secret, token, or credential — only member paths, counts, and diagnostic error text — so secure-log-output passes. `arrayLength(of:)`'s hard ceiling on decodable array length, and its refusal to trust `toInt32()`'s wraparound-prone conversion, are exactly the kind of untrusted-input bound input-sanitization asks for, so it passes. Every user-facing string this file produces — the dispatch-unavailable message, the `NotImplementedError` message, and the read-only `TypeError` messages — is a hardcoded English literal with no localization key, so no-hardcoded-strings fails.
+

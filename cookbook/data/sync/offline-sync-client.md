@@ -1,21 +1,21 @@
 ---
 id: d3a0b65f-92c0-43c1-b04c-77638eb72044
-title: Offline Sync Client
-domain: agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client
+title: "Offline Sync Client"
+domain: adtoolkit://cookbook/data/sync/offline-sync-client
 type: ingredient
 category: engine
-version: 1.2.0
-status: draft
+version: 1.3.2
+status: review
 language: en
-created: '2026-07-22'
-modified: '2026-09-27'
+created: 2026-07-22
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "The offline-sync client contract: an enrollment-driven manifest lifecycle, a cohort cursor, push modes, tombstones, and purge rules that keep a local mirror consistent with a server-authoritative backend."
 platforms:
   - swift
-  - apple
+  - macos
 tags:
   - sync
   - offline
@@ -30,6 +30,8 @@ references:
   - src/adh/docs/architecture/sync.md (adhbackend)
   - packages/apple/AgenticToolkit/Sync (agenticdevelopertoolkit)
   - packages/apple/AgenticToolkit/SyncGRDB (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Offline Sync Client
@@ -126,6 +128,10 @@ adopting new versions on apply.
   behavior (registration lists, pull-only refusal) but the server's manifest and
   push results remain authoritative when they disagree.
 
+## Appearance
+
+Not applicable — this is a sync state machine, not a visual component.
+
 ## States
 
 The engine runs one cycle at a time; a coalesced kick runs a follow-up cycle
@@ -141,6 +147,10 @@ these are logical phases of a single cycle, not concurrent states.
 | Pushing | The pull phase finished; the push phase drains the outbox in configured batches, resolving each result (applied/conflict/rejected) and looping until the outbox is empty. |
 | AuthRequired | The transport returned an HTTP 401 (unauthorized); the engine pauses (`authRequired`) and only a manual kick resumes it. |
 | Backing-off | A transport/5xx failure, a bounded-guard trip (`pushMadeNoProgress`, `pullMadeNoProgress`, `manifestUnstable`), or a repeated HTTP 410 scheduled an exponential-backoff retry (`failed`, then a `periodic` kick after `min(baseBackoff · 2^(n−1), maxBackoff)` for the n-th consecutive failure). |
+
+## Accessibility
+
+Not applicable — this is a sync state machine, not a visual component.
 
 ## Conformance Test Vectors
 
@@ -243,6 +253,33 @@ to a backend revision. They were 79 and 27 when this was first written
 against adh main `64825b107`; the generated file is the live number, so
 count there rather than trusting this paragraph.
 
+## Deep Linking
+
+Not applicable: the client defines no URL scheme, route, or navigation destination; it exchanges data with the backend and a local store only.
+
+## Localization
+
+Not applicable: the client contains no user-facing string. Its only text is developer-facing (event payloads and error descriptions) and is not meant for display.
+
+## Accessibility Options
+
+Not applicable: the client presents no UI, so it has no Reduce Motion, Increase Contrast, or Differentiate Without Color behavior.
+
+## Feature Flags
+
+Not applicable: the client contains no feature-flag or settings-key reference; which resources sync is decided by the server's manifest and the host's registered set, not by a flag in the client.
+
+## Analytics
+
+Not applicable: the client contains no analytics or event-tracking call. Its observability is the sync event stream a host MAY drain (see Logging), which is not itself an analytics sink.
+
+## Privacy
+
+- **Data handled**: The mirrored rows of every enrolled resource (arbitrary host data, MAY include personal data), the single opaque cohort cursor, the outbox of locally originated mutations, a conflicts audit, and the host-supplied device identifier.
+- **Storage**: Rows, cursor, outbox and conflicts audit persist in the on-device store only; the client holds no credentials, which belong to the transport.
+- **Transmission**: Pull requests and push ops (including the device identifier) leave the device only through the injected transport to the server-authoritative backend; an op for a resource outside the effective set is quarantined and never pushed, so data does not cross an enrollment boundary.
+- **Retention**: Rows of a resource that leaves the effective set are purged; a resync resets the mirror and cursor but preserves the outbox; rejected and unadoptable ops are quarantined, never silently dropped.
+
 ## Logging
 
 The engine emits an ordered stream of sync events that hosts drain to drive
@@ -275,10 +312,11 @@ purpose, so a new event forces a decision at this call site.
 
 ## Platform Notes
 
+- **WinUI 3**: No WinUI 3 implementation exists in this repository. A .NET port would implement the same store, transport and trigger-source contracts, hosting the engine as a single-reader task loop, using `Task.Delay` with the same backoff math, a SQLite-backed store for the mirror and outbox, and `NetworkChange` availability events as the connectivity trigger; the wire fixtures are the conformance contract.
 - **Core (`AgenticToolkitSync`):** `packages/apple/AgenticToolkit/Sync/*` —
   `SyncEngine.swift`, `SyncEvents.swift`, `SyncWire.swift`, `SyncProtocols.swift`,
   `ADHSyncCatalog.swift`, `JSONValue.swift`, `SyncID.swift`, the `Triggers/*`
-  trigger sources, and `Testing/*` (`InMemorySyncStore`, `ScriptedSyncTransport`).
+  trigger sources. The `Testing/*` fakes (`InMemorySyncStore`, `ScriptedSyncTransport`) are specified separately in `data/sync/sync-testing`.
 - **On-disk store (`AgenticToolkitSyncGRDB`):**
   `packages/apple/AgenticToolkit/SyncGRDB/GRDBSyncStore.swift` — the SQLite/GRDB
   `SyncStore` on a `BoundedDatabase` WAL pool.
@@ -295,35 +333,25 @@ purpose, so a new event forces a decision at this call site.
 
 | Platform | Path |
 |----------|------|
+| apple | `packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncGRDBTests/SyncEngineGRDBIntegrationTests.swift` |
 
 ## Design Decisions
 
-- **Server is the source of truth.** The backend owns the manifest, the single
-  cohort cursor, and every push outcome. The client mirrors and queues; it never
-  fabricates a cursor, re-derives enrollment, or overrides a push result. This is
-  what makes the client replaceable per platform without forking the contract.
-- **Appearance ⇒ full resync (single cursor stream, no version touch on enable).**
-  The server keeps *one* cursor stream per cohort and does **not** bump row
-  versions or re-serve rows when a resource is enrolled-enabled
-  (`adhbackend/src/adh/docs/architecture/sync.md`). So a resource that enters the effective set on a
-  non-fresh cursor has rows that changed while it was outside the set sitting
-  permanently behind the cursor — an incremental pull would never see them. The
-  only correct recovery is to reset the mirror + cursor and re-pull from scratch.
-  A fresh (nil) cursor is exempt: the initial pull already covers everything.
-- **Quarantine over drop or indefinite hold (privacy vs data loss).** A local op
-  for a resource that left the effective set can neither be pushed (the server
-  would reject it) nor kept live (the host must stop serving that resource). It
-  is moved to quarantine — surfaced to the host, never silently dropped (that
-  would lose the user's edit) and never silently pushed (that would leak data
-  across an enrollment boundary). A fixed retry re-`stage`s for a fresh opId,
-  because the server ledgers results immutably per opId.
-- **The catalog lives client-side, not on the manifest wire.** Push mode
-  (`route` vs generic) and the registration list are client knowledge:
-  `ADHSyncCatalog` lets a host register the right tables and refuse a pull-only
-  write *before* a round trip. Encoding that on the pull manifest would bloat
-  every response with data the server already enforces authoritatively (it
-  answers a mis-push with `rejected/route_only`). The catalog is an optimization
-  that can go stale; the manifest and push results remain the backstop.
+**Decision**: The server is the source of truth: the backend owns the manifest, the single cohort cursor, and every push outcome, and the client mirrors and queues without fabricating a cursor, re-deriving enrollment, or overriding a push result.
+**Rationale**: This is what makes the client replaceable per platform without forking the contract.
+**Approved**: pending
+
+**Decision**: A resource that appears in the effective set on a non-fresh cursor triggers a full resync (reset the mirror and cursor, then re-pull); a fresh (nil) cursor is exempt.
+**Rationale**: The server keeps one cursor stream per cohort and does not bump row versions or re-serve rows when a resource is enrolled-enabled (see the backend sync architecture document), so rows that changed while the resource was outside the set sit permanently behind the cursor and an incremental pull would never see them; the initial pull already covers everything on a fresh cursor.
+**Approved**: pending
+
+**Decision**: A local op for a resource that left the effective set is quarantined, neither dropped nor pushed nor held live.
+**Rationale**: It can neither be pushed (the server would reject it) nor kept live (the host must stop serving that resource); dropping it would lose the user's edit and pushing it would leak data across an enrollment boundary. A fixed retry re-stages for a fresh op id, because the server ledgers results immutably per op id.
+**Approved**: pending
+
+**Decision**: The client-side sync catalog lives in the client, not on the manifest wire.
+**Rationale**: Push mode (route versus generic) and the registration list are client knowledge: the catalog lets a host register the right tables and refuse a pull-only write before a round trip. Encoding that on the pull manifest would bloat every response with data the server already enforces authoritatively (it answers a mis-push with `rejected/route_only`); the catalog is an optimization that can go stale, and the manifest and push results remain the backstop.
+**Approved**: pending
 
 ## Compliance
 
@@ -355,3 +383,6 @@ Notes: separation-of-concerns passes because the pull, reconcile, and push phase
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Compliance section rewritten as linked checks against the compliance catalog |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to data/sync/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Fill Reference Implementations with the engine-over-store integration test that exercises the composed contract (the component code is owned by sync-engine, sync-triggers and sql-sync-store); add missing sections, WinUI 3 note, decision triples; move to review. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |
+| 1.3.2 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |

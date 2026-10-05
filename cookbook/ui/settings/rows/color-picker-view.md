@@ -1,34 +1,33 @@
 ---
 id: c0e95399-ddab-4445-a22a-566d07339f9b
-title: Color Picker View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/color-picker-view
+title: "Color Picker View"
+domain: adtoolkit://cookbook/ui/settings/rows/color-picker-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row pairing a title label with a color-well control, syncing
-  a caller-supplied color view model's color two-way.
+summary: "A settings row pairing a title label with a color-well control, syncing a caller-supplied color view model's color two-way."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- form-control
-- color
+  - settings
+  - form-control
+  - color
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+  - adtoolkit://cookbook/ui/settings/rows/captioned-slider-view
+  - adtoolkit://cookbook/ui/settings/rows/checkbox-view
+  - adtoolkit://cookbook/ui/settings/rows/number-field-view
+  - adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Color Picker View
@@ -76,6 +75,7 @@ color.
   that could produce an instance without one (e.g. a bare/default
   construction path or a serialization/decoding-based construction path)
   MUST be rejected (see Platform Notes for the mechanism the source uses).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -158,6 +158,7 @@ color.
 | color-picker-view-008 | requires-view-model-at-construction | Attempt construction via a serialization/decoding-based construction path | The call traps with a fatal error; no instance is returned (a platform-level runtime trap, not an ordinary in-process assertion) |
 | color-picker-view-009 | owns-on-change | Construct two instances of this component in turn against the same view model instance, then trigger an external-change notification | Only the second instance's label/color-well update; the first instance's handler was silently replaced and is never invoked |
 | color-picker-view-010 | delegates-color-clamping | Set the color well to an out-of-gamut color and activate it | The component writes the reported color into the view model's color unchanged — no clamping call appears in source; any normalization happens inside the color storage type's initializer, one layer below |
+| color-picker-view-011 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -344,6 +345,7 @@ Not applicable: the source contains no logging call.
 | [semantic-markup](agenticdevelopercookbook://compliance/accessibility#semantic-markup) | partial | accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 `native-controls-preference`, `platform-design-language`, `idempotent-operations`,
 and `separation-of-concerns` rest on the source review of
@@ -355,6 +357,8 @@ own — it relies entirely on `NSColorWell`/`NSTextField`'s built-in AppKit
 accessibility and focus behavior, unconfirmed by any recorded keyboard or
 VoiceOver pass.
 
+No test in the repository's test targets constructs `ColorPickerView`, so `unit-test-coverage` is `failed`: a search of `AgenticToolkitMacOSTests` and the other test targets for the type name finds nothing.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -364,3 +368,5 @@ VoiceOver pass.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage Compliance row, judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

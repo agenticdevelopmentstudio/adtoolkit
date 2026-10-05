@@ -1,0 +1,10 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial recipe — extracted from the Apple `Badge` (AppKit, macOS) source. |
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: qualify the luminance-based contrasting-text-color and update-style-reset requirements against their open questions; fix `**Approved**:` formatting and edge-case `(MUST, per …)` tags to `#requirements/<name>` citations; correct badge-005/005b RGB values and add a luminance-0.6 boundary vector; note fixed-appearance test assumption and mark badge-014 as a compile-time check; fix the SwiftUI `.background`/`.clipShape` note; move the cookbook guideline citation from `references` to `related` and add external WCAG/HIG references; set `contrast-ratio` compliance status to `partial`; add Design Decisions for the luminance-heuristic choice and the lack of a distinguishing accessibility role. |
+| 1.1.1 | 2026-09-23 | Mike Fullerton | Compliance: removed rows for checks absent from the cookbook catalog |
+| 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/controls/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Wrote the main-thread confinement and archive-rejection requirements platform-neutrally with vectors badge-014 and badge-015; resolved the minimum-contrast-ratio NEEDS REVIEW marker as current behavior (no ratio check) with vector badge-016 and a pending decision; added separation-of-concerns and unit-test-coverage compliance rows. Renamed the thread-confinement requirement to confines-to-ui-thread with the standard wording. |

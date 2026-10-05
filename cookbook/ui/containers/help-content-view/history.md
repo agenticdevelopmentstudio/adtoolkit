@@ -1,0 +1,9 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial recipe — extracted from the Apple `HelpContentView` (AppKit, macOS) source. |
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: renamed requirements to subject-only kebab-case; strengthened window-background to MUST and merged its duplicate test vector into theme-application's; moved AppKit anchor equations out of requirements into the Platform Notes bullet; cited the SplitViewController call site for the wholesale-rebuild rationale instead of asserting it as fact; fixed the WinUI grid background to the window's own brush; rewrote the coder-init test vector as a compile-time/non-automatable check; corrected invalid `needs-review` compliance statuses to `partial`/`failed`; added group-view, panel-scroll-view, and panel-view to depends-on; flagged the missing heading accessibility role as an open gap; and remapped/removed Compliance rows that cited checks outside the compliance catalog. |
+| 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/containers/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Wrote coder-init-unavailable as a platform-neutral requirement with vector 010; resolved the minimum-contrast-ratio NEEDS REVIEW marker as current behavior (no contrast floor) with vector 011 and a pending decision; added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |

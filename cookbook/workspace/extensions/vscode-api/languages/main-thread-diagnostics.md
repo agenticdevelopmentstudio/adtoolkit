@@ -1,49 +1,40 @@
 ---
 id: f5432726-5b0f-47c5-b0f6-c0b19a9db5bb
-title: VS Code Diagnostics Bridge
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-diagnostics
+title: "VS Code Diagnostics Bridge"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-diagnostics
 type: ingredient
-version: 1.1.0
+version: 1.1.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The vscode.languages diagnostics slice — createDiagnosticCollection, getDiagnostics,
-  and the debounced onDidChangeDiagnostics event — bridging an in-memory diagnostic
-  store to extension code.
+summary: "The vscode.languages diagnostics slice — createDiagnosticCollection, getDiagnostics, and the debounced onDidChangeDiagnostics event — bridging an in-memory diagnostic store to extension code."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- diagnostics
-- event-emitter
+  - extension-host
+  - vscode-api
+  - diagnostics
+  - event-emitter
 depends-on:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/diagnostic-types
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/languages/diagnostic-types
+  - adtoolkit://cookbook/workspace/extensions/host/extension-event
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadDiagnosticsTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/DiagnosticTypes.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/HostDiagnosticSink.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionEvent.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadDiagnosticsTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/DiagnosticTypes.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/HostDiagnosticSink.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionEvent.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # VS Code Diagnostics Bridge
@@ -175,7 +166,7 @@ status-bar-item handling.
   collection's disposal flag is set, its `set`, `delete`, `clear`, and
   `forEach` methods MUST return `undefined` and perform no mutation and
   no sink notification; `get` MUST return `undefined`; `has` MUST return
-  `false` — none of the seven methods MUST throw, diverging from upstream
+  `false` — the seven methods MUST NOT throw, diverging from upstream
   VS Code, which throws on every method call of a disposed collection;
   precedent for quiet inertness over inventing a throw is this codebase's
   own "a disposed item ignores this call" handling for status bar items.
@@ -347,12 +338,12 @@ status-bar-item handling.
   shared) emitter, never another adaptor's.
 - **weak-capture-of-adaptor-strong-capture-of-disposal-flag**: every
   method installed on a `DiagnosticCollection` object MUST hold this
-  component only weakly and MUST hold its disposal flag strongly; none of
-  the installed methods MUST hold the extension-visible collection object
+  component only weakly and MUST hold its disposal flag strongly; the installed methods MUST NOT hold the extension-visible collection object
   itself, not even weakly.
 - **loggable-conformance**: this component MUST publish log messages
   through the same shared logging seam every other extension-bridge
   component uses.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -393,6 +384,7 @@ Not applicable — this is a script-engine bridge and in-memory store, not a vis
 | main-thread-diagnostics-021 | ondidchangediagnostics-dedups-by-uri-identity-not-object-identity | Two distinct `Uri` objects built from the same path, each touched within one window | Delivered `uris` array contains exactly one entry for that path — `MainThreadDiagnosticsTests.twoDistinctUriObjectsForOnePathArriveAsOneEntry` |
 | main-thread-diagnostics-022 | ondidchangediagnostics-preserves-first-insertion-order | Mutations touching `uriB` then `uriA` then `uriB` again within one window | Delivered `uris` array is `[uriB, uriA]` — first-insertion order, not sorted or last-touched order — `MainThreadDiagnosticsTests.firstInsertionOrderIsPreservedAcrossTheMergedWindow` |
 | main-thread-diagnostics-023 | ondidchangediagnostics-uris-array-is-frozen | Receive one delivered event, attempt `event.uris.push(extraUri)` or `event.uris[0] = other`, then trigger a second event | The mutation attempt has no effect; the next delivered event's `uris` array is unaffected by the tampering attempt — `MainThreadDiagnosticsTests.theDeliveredUrisArrayIsFrozenAndTamperingDoesNotAffectTheNextEvent` |
+| main-thread-diagnostics-024 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -525,6 +517,8 @@ No other event in this component is logged: this component itself contains no di
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.2 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/languages/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

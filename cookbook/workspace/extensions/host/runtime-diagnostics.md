@@ -1,43 +1,40 @@
 ---
 id: 639bf7b5-011e-4dc0-9c4e-bc704957cf97
-title: Extension Runtime Diagnostics
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/host/runtime-diagnostics
+title: "Extension Runtime Diagnostics"
+domain: adtoolkit://cookbook/workspace/extensions/host/runtime-diagnostics
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: JIT-entitlement diagnosis read from the process code signature, plus a catalogue
-  and thread-safe ledger of deliberate VS Code behavior narrowings.
+summary: "JIT-entitlement diagnosis read from the process code signature, plus a catalogue and thread-safe ledger of deliberate VS Code behavior narrowings."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- diagnostics
-- code-signing
-- entitlements
-- singleton
-- logging
+  - diagnostics
+  - code-signing
+  - entitlements
+  - singleton
+  - logging
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/observability/logging
-- agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
+  - agenticdevelopercookbook://guidelines/implementing/observability/logging
+  - agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-host
+  - adtoolkit://cookbook/workspace/extensions/host/extension-host
 references:
-- packages/apple/AgenticToolkit/Core/Diagnostics/JITAvailability.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Diagnostics/UpstreamDivergence.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Diagnostics/UpstreamDivergenceLedger.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Diagnostics/JITAvailabilityTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Diagnostics/UpstreamDivergenceLedgerTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Diagnostics/JITAvailability.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Diagnostics/UpstreamDivergence.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Diagnostics/UpstreamDivergenceLedger.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Diagnostics/JITAvailabilityTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Diagnostics/UpstreamDivergenceLedgerTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Runtime Diagnostics

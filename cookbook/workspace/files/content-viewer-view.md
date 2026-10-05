@@ -1,35 +1,33 @@
 ---
 id: 081703b7-036f-4fff-b580-d5dc9e5342d2
-title: File Content Viewer
-domain: agenticdevelopertoolkit://cookbook/workspace/files/content-viewer-view
+title: "File Content Viewer"
+domain: adtoolkit://cookbook/workspace/files/content-viewer-view
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A read-only detail pane that shows a placeholder when nothing is selected,
-  and a selected file or directory's icon, name, path, size, modification date,
-  type, and item count when one is.
+summary: "A read-only detail pane that shows a placeholder when nothing is selected, and a selected file or directory's icon, name, path, size, modification date, type, and item count when one is."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ui
-- file-browser
-- detail-panel
-- metadata
-- placeholder
+  - ui
+  - file-browser
+  - detail-panel
+  - metadata
+  - placeholder
 depends-on:
-- agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view
-- agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view
+  - adtoolkit://cookbook/workspace/files/file-tree-view
+  - adtoolkit://cookbook/workspace/files/file-browser-view
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # File Content Viewer
@@ -158,8 +156,8 @@ This component is the detail pane of a file browser: it renders a placeholder me
 - **Null input — no selection**: `selectedNode == nil` renders the placeholder only; no grid, header, or divider appears. MUST (see `show-placeholder-without-selection`).
 - **Null input — no file size**: `node.fileSize == nil` (always true for directories, and possible for a file whose attributes read failed upstream) omits the "Size:" row entirely rather than showing a placeholder value. MUST (see `grid-size-row-conditional`).
 - **Null input — no modification date**: `node.modificationDate == nil` omits the "Modified:" row entirely. MUST (see `grid-modified-row-conditional`).
-- **Null input — no children**: `node.children == nil` omits the "Items:" row entirely. Per `agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view`'s Design Decision on `FileTreeNode`'s children semantics, `nil` covers every file, every package, and any directory that has already been read and found to have no children; `FileTreeNode` deliberately reserves an empty array (`[]`) for a directory whose children have not been read yet (see the next edge case). MUST (see `grid-items-row-conditional`).
-- **Boundary — children not yet loaded**: `node.children == []` (an empty, non-`nil` array — per `agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view`, a directory whose children have not been read yet) still satisfies `node.children != nil`, so the "Items:" row is shown with value "0" — indistinguishable, from this view alone, from a directory that was read and genuinely has zero children. MUST (see `grid-items-row-conditional`).
+- **Null input — no children**: `node.children == nil` omits the "Items:" row entirely. Per `adtoolkit://cookbook/workspace/files/file-tree-view`'s Design Decision on `FileTreeNode`'s children semantics, `nil` covers every file, every package, and any directory that has already been read and found to have no children; `FileTreeNode` deliberately reserves an empty array (`[]`) for a directory whose children have not been read yet (see the next edge case). MUST (see `grid-items-row-conditional`).
+- **Boundary — children not yet loaded**: `node.children == []` (an empty, non-`nil` array — per `adtoolkit://cookbook/workspace/files/file-tree-view`, a directory whose children have not been read yet) still satisfies `node.children != nil`, so the "Items:" row is shown with value "0" — indistinguishable, from this view alone, from a directory that was read and genuinely has zero children. MUST (see `grid-items-row-conditional`).
 - **Empty input — no extension**: A file with an empty `pathExtension` omits the "Extension:" row and reports the type description as the literal "File" rather than "` File"` with a blank extension. MUST (see `grid-extension-row-conditional`, `type-description-fallback-extension`).
 - **Boundary — very long name**: `node.name` longer than fits two lines is clipped to 2 lines with default (tail) truncation, since no other truncation mode is set — unlike this pane's own Path row, which allows 3 lines before truncating, also with the default tail mode. MUST.
 - **Boundary — very long path**: `node.url.path` longer than fits 3 lines is clipped to 3 lines with default tail truncation, but because that value's text remains selectable, the full untruncated string remains selectable and copyable regardless of what is visually clipped. MUST (see `grid-path-line-limit`, `grid-path-value-selectable`).
@@ -271,6 +269,8 @@ Not applicable: no logging call appears anywhere in this component.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [dynamic-type-support](agenticdevelopercookbook://compliance/accessibility#dynamic-type-support) | partial | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
@@ -279,6 +279,8 @@ Not applicable: no logging call appears anywhere in this component.
 | [rtl-layout-support](agenticdevelopercookbook://compliance/internationalization#rtl-layout-support) | passed | Internationalization |
 
 The accessibility statuses are partial because this view relies entirely on SwiftUI's default `Text`/`Image` accessibility behavior — it sets no custom label, trait, or accessibility notification of its own, including no explicit notification when the selection changes (see the Accessibility section's Announce state changes item). Dynamic-type-support is partial because text scales with the theme's own `sizeScale` preference rather than the system's native Dynamic Type category, and the two icon sizes do not scale with either. `no-hardcoded-strings` failed because the computed type description strings (`Directory`, `Package`, the per-extension names, and the `<EXTENSION> File` fallback — see Localization) are `String` values passed to `Text(_:)` with no localization lookup; the seven fixed grid/placeholder labels are literals passed directly to `Text("…")`, which SwiftUI does look up as a `LocalizedStringKey`. The internationalization passes hold because every string is plain Unicode `Text`, and the grid's leading/trailing alignment mirrors automatically for right-to-left locales.
+
+`separation-of-concerns` passes because `ContentViewerView.swift` only presents a node it is handed: a placeholder view when nothing is selected and `FileDetailView` for a selected `FileTreeNode`, with the byte-count and date formatting and theme lookups kept inside the view and no file reading, selection tracking or tree state of its own. `unit-test-coverage` fails because no test in the repo's test targets constructs `ContentViewerView`, its placeholder, or `FileDetailView`; the nearby `FileBrowser` tests exercise the tree controller, editor state and preview loader instead.
 
 ## Change History
 
@@ -289,3 +291,4 @@ The accessibility statuses are partial because this view relies entirely on Swif
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/files/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added compliance rows for the required checks judged from the source and test targets. |

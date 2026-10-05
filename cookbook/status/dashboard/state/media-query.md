@@ -1,27 +1,26 @@
 ---
 id: 6b796310-ff12-4d38-a1a9-1d3af3f1e87f
-title: Media Query
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/media-query
+title: "Media Query"
+domain: adtoolkit://cookbook/status/dashboard/state/media-query
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: State that tracks whether a CSS media query matches, returning false during
-  a server-rendering pass and first paint and updating on change.
+summary: "State that tracks whether a CSS media query matches, returning false during a server-rendering pass and first paint and updating on change."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Media Query
@@ -35,7 +34,7 @@ Media Query is client-only state that reports whether a CSS media query currentl
 - **signature**: Media Query MUST accept one input, a CSS media query string, and MUST return a single boolean value.
 - **initial-value**: Media Query MUST return `false` on the first evaluation, before any subscription is established, regardless of whether the query would match.
 - **ssr-value**: Media Query MUST return `false` during a server-rendering pass, where no viewport exists to measure.
-- **client-only-directive**: Media Query has no server-only or universal-rendering variant; it requires a live client execution context.
+- **client-only**: Media Query MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 - **mount-sync**: Once its subscription is established, Media Query MUST evaluate the query against the current viewport and MUST update its returned value to that match result.
 - **change-subscription**: Once subscribed, Media Query MUST listen for change notifications for the query and MUST update its returned value to the match value carried by each notification.
 - **unsubscribe-on-unmount**: When the caller stops using it, Media Query MUST remove the change listener it registered.
@@ -74,6 +73,7 @@ Not applicable — this is state over a media-query subscription, not a visual c
 | media-query-008 | stable-query-no-resubscribe | Re-evaluate with the same query string | The media-query facility is not asked again; the subscribe count is unchanged |
 | media-query-009 | stale-value-on-query-change | Subscribed with query A (matches); the query input changes to query B (no match) | Immediately after the change it still returns `true`, then `false` once the subscription updates |
 | media-query-010 | no-environment-guard | The media-query facility is absent; establish the subscription | Evaluation fails with an error; Media Query does not return a fallback |
+| media-query-011 | client-only | Load Media Query in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -176,6 +176,7 @@ The hook isolates viewport measurement from the components that consume it, retu
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

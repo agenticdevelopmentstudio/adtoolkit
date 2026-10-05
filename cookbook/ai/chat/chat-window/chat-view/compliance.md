@@ -1,0 +1,20 @@
+
+| Check | Status | Category |
+|-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | partial | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
+| [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
+| [semantic-markup](agenticdevelopercookbook://compliance/accessibility#semantic-markup) | partial | Accessibility |
+| [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
+| [dynamic-type-support](agenticdevelopercookbook://compliance/accessibility#dynamic-type-support) | partial | Accessibility |
+| [locale-aware-formatting](agenticdevelopercookbook://compliance/internationalization#locale-aware-formatting) | passed | Internationalization |
+| [unicode-support](agenticdevelopercookbook://compliance/internationalization#unicode-support) | passed | Internationalization |
+| [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
+| [text-expansion-tolerance](agenticdevelopercookbook://compliance/internationalization#text-expansion-tolerance) | partial | Internationalization |
+| [rtl-layout-support](agenticdevelopercookbook://compliance/internationalization#rtl-layout-support) | passed | Internationalization |
+| [platform-theming](agenticdevelopercookbook://compliance/platform-compliance#platform-theming) | passed | Platform Compliance |
+
+Statuses rest on: the accessibility identifiers present throughout but the two source-confirmed gaps noted under Accessibility — no explicit label on the composer field and no assistive-technology announcement of a row-selection change (screen-reader-support, semantic-markup); every color being resolved from the active `SemanticPalette`, which this source neither defines nor can verify for contrast or Dynamic Type scaling (contrast-ratio, dynamic-type-support); the day banner's date text and the message timestamps deferring to `Calendar`/formatter machinery outside this file, which is locale-aware by construction (locale-aware-formatting); message text flowing through `NSTextField`/the bubble views without special-casing, so arbitrary Unicode renders normally (unicode-support); two literal, unlocalized English strings hardcoded in this file — the composer placeholder `"Type a message..."` and the send button's accessibility description `"Send"` — with no string-catalog key for either (no-hardcoded-strings); the status label's single-line, truncating configuration (`lineBreakMode = .byTruncatingTail`) tolerating overflow gracefully, while the prompt label's required compression-resistance priority could push a very long localized prompt into crowding the composer field instead of wrapping or truncating (text-expansion-tolerance); the layout using `leadingAnchor`/`trailingAnchor` throughout rather than fixed left/right anchors (rtl-layout-support); and the `observeTheme` registrations on every color-bearing subview plus the view's own background fill, all re-applied on every theme change (platform-theming).
+
+`separation-of-concerns` is partial: `ChatView.swift` is a single view class that owns layout, transcript rebuilding, rebuild-surviving state, row selection, bubble expansion, scrolling and the input field, though it delegates drawing of rows to `ChatTranscriptRowView` and `AIChatBubbleView` and message data to the chat session. `unit-test-coverage` passes because `ChatViewRebuildTests.swift` (scroll position and text selection surviving a rebuild, keyboard versus clicked picks), `ChatViewScrollTests.swift` (opening and reloading on the newest message), `ChatViewFocusTests.swift` (input focus), `ConversationsStatusLineTests.swift`, `BubbleTruncationTests.swift` (expansion) and `AIChatViewModelTests.swift` together exercise each of those responsibilities directly.
+

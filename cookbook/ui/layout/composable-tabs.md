@@ -1,33 +1,32 @@
 ---
 id: 0640ca96-95c5-4234-925e-386425cc4435
-title: Composable Tabs
-domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs
+title: "Composable Tabs"
+domain: adtoolkit://cookbook/ui/layout/composable-tabs
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A recursive split node that composes a tab's panes into a binary tree,
-  with persisted sizing, spec-gated split/remove/move, and pane zoom/minimize.
+summary: "A recursive split node that composes a tab's panes into a binary tree, with persisted sizing, spec-gated split/remove/move, and pane zoom/minimize."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- composable-tabs
-- split-view
-- layout
-- tabs
+  - composable-tabs
+  - split-view
+  - layout
+  - tabs
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/pane-spacing
+  - adtoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+  - adtoolkit://cookbook/ui/layout/composable-tabs/pane-spacing
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Composable Tabs
@@ -349,6 +348,7 @@ resolves those requests against the layout spec and the live split items.
   inherited-slot arranger, to redistribute thickness fractions along the
   arrangement axis differently than "leave what a split/remove already
   assigned."
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -412,15 +412,7 @@ resolves those requests against the layout spec and the live split items.
   screen-reader-readable message. A screen reader user is not told a pane
   appeared, disappeared, or changed size, and hears nothing until navigating
   back into the split.
-- **non-pointer-resize**: NEEDS REVIEW: Not implemented in source. A
-  divider's thickness changes only via a pointer drag (plus the widened
-  hit-test area from `widen-divider-grab-area`); no method here lets a
-  keyboard-only or switch-control user change a thickness fraction without a
-  pointer, and whether the platform's own default keyboard-accessibility
-  behavior (if any) is sufficient, or a keyboard resize command should be
-  added, needs a keyboard-only/screen-reader pass over a live project window
-  to settle. Touch tap-target minimum guidance does not apply here: this is a
-  pointer-driven, not touch-driven, control.
+- **non-pointer-resize**: A divider's thickness fraction changes only through a pointer drag (plus the widened hit-test area from `widen-divider-grab-area`). The component provides no method or command that lets a keyboard-only or switch-control user change a thickness fraction without a pointer, and it does not add keyboard behavior beyond what the platform's split view supplies by default. Touch tap-target minimum guidance does not apply: this is a pointer-driven control.
 
 ## Conformance Test Vectors
 
@@ -522,6 +514,8 @@ resolves those requests against the layout spec and the live split items.
 | composable-tabs-095 | vertical-split-set-from-axis | Construct with a vertical axis, then load | The divider is drawn horizontally |
 | composable-tabs-096 | reassign-identifiers-on-root-load | Construct a non-root split with two panes of the same pane type, then load | Neither pane's index is assigned by loading (reassignment does not run on a non-root instance) |
 | composable-tabs-097 | persisted-state-applies-once | Leaf X has a persisted minimize edge and lies off the path to leaf Y, the persisted zoomed leaf; persisted pane state is applied | X's split item ends up both pinned (minimum thickness equal to maximum thickness) and collapsed — minimize pinned it before zoom collapsed it, so neither effect is lost |
+| composable-tabs-098 | non-pointer-resize | Attempt to change a divider's thickness fraction with the keyboard alone | No thickness change occurs; only a pointer drag changes a divider's thickness. |
+| composable-tabs-099 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -748,6 +742,7 @@ Not applicable: source contains no logging call anywhere in this component.
   (`Default`/`Minimized`/`Zoomed`) on the pane's own container is a reasonable
   way to drive the chrome changes that accompany each transition, mirroring
   the mutual exclusivity in `minimize-clears-zoom-first`/`zoom-toggles-and-excludes-minimize`.
+- **UI-thread confinement**: `confines-to-ui-thread` — the controller is declared `@MainActor`, so use from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -760,7 +755,7 @@ Not applicable: source contains no logging call anywhere in this component.
 - **Decision**: One-shot `hasAppliedPreferredThicknesses` guard, reset
   explicitly by every mutation that changes the arrangement (split, remove,
   rebuild, `applySizes`) rather than on every `layoutChildren` assignment.
-  **Rationale (AppKit)**: Per the `viewDidLayout` doc comment, "after the first real
+  **Rationale**: (AppKit) Per the `viewDidLayout` doc comment, "after the first real
   layout the user owns the dividers, and re-imposing a fraction on every
   layout pass would fight them"; resetting only where the arrangement actually
   changes keeps a plain window resize from re-snapping dividers back to their
@@ -769,7 +764,7 @@ Not applicable: source contains no logging call anywhere in this component.
 - **Decision**: `captureThicknessFractions()` refuses to run over a zoomed
   tree, and skips a whole split (not just its pinned item) when any item in it
   shows a rail.
-  **Rationale (AppKit)**: Per the method's own doc comment, a zoom or a rail is "an
+  **Rationale**: (AppKit) Per the method's own doc comment, a zoom or a rail is "an
   arrangement of the screen rather than a decision about sizes," and reading
   either back would silently corrupt the persisted layout — a saved layout
   while zoomed would "restore unzoomed and wrong," and a captured rail
@@ -778,7 +773,7 @@ Not applicable: source contains no logging call anywhere in this component.
   **Approved**: pending
 - **Decision**: Thickness persistence is debounced 300ms and deduplicated by a
   rounded signature, rather than writing on every `splitViewDidResizeSubviews`.
-  **Rationale (AppKit)**: A drag posts a resize notification per pointer event and a
+  **Rationale**: (AppKit) A drag posts a resize notification per pointer event and a
   window resize posts one per frame; per the method's doc comment, writing on
   each "would put the database in the middle of a gesture," and the signature
   check drops writes "that changed nothing" — a resize that ends where it
@@ -786,7 +781,7 @@ Not applicable: source contains no logging call anywhere in this component.
   **Approved**: pending
 - **Decision**: `restoreSizing(of:)` clears `maximumThickness` before it
   lowers `minimumThickness`/`holdingPriority`, rather than the reverse order.
-  **Rationale (AppKit)**: Per the method's doc comment, raising the minimum first would
+  **Rationale**: (AppKit) Per the method's doc comment, raising the minimum first would
   briefly ask the platform to satisfy a minimum at or above the still-pinned
   maximum — a pair the platform "cannot satisfy, logs, and recovers from by
   breaking one of them." Lifting the ceiling first keeps every intermediate
@@ -794,18 +789,21 @@ Not applicable: source contains no logging call anywhere in this component.
   **Approved**: pending
 - **Decision**: A non-root split with one remaining child collapses itself out
   of the tree instead of being left in place holding a single child.
-  **Rationale (AppKit)**: Per `remove(_:)`'s doc comment, "a non-root split left with
+  **Rationale**: (AppKit) Per `remove(_:)`'s doc comment, "a non-root split left with
   one child is a degenerate split" that should collapse into its parent; the
   *root* is allowed to hold a single child, because that legitimately
   represents "a tab reduced to one full-size pane."
   **Approved**: pending
 - **Decision**: `zoomedLeaf` and `onLastPaneCloseRequest` are stored on the
   root and read through `rootSplit()`, never on an intermediate split.
-  **Rationale (AppKit)**: Per their doc comments, a zoom "is a fact about the tab
+  **Rationale**: (AppKit) Per their doc comments, a zoom "is a fact about the tab
   rather than about one split," and the last-pane-close override is "the
   right answer for a window's own tree" but has to be installed per tab
   (root) since which container "has somewhere else for the request to go"
   differs by container.
+  **Approved**: pending
+- **Decision**: Divider thickness can be changed only by pointer drag; the component adds no keyboard or switch-control resize path.
+  **Rationale**: No method in the component changes a thickness fraction without a pointer, and whether the platform's default keyboard behavior is sufficient or a keyboard resize command should be added needs a keyboard-only and screen-reader pass over a live project window to settle.
   **Approved**: pending
 
 ## Compliance
@@ -814,10 +812,12 @@ Not applicable: source contains no logging call anywhere in this component.
 |-------|--------|----------|
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | failed | Accessibility |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | failed | Accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 Keyboard-navigable is failed because no keyboard path exists in
-source for resizing a divider (see the open question on non-pointer-resize
-in Accessibility) — arrow-key pane *movement* is a real
+source for resizing a divider (see the non-pointer-resize
+requirement and its pending decision) — arrow-key pane *movement* is a real
 feature, but it is dispatched from elsewhere (out of this source) into
 `move(_:_:)`, not implemented here. Screen-reader-support is failed because
 no accessibility role, label, or announcement is set anywhere in this source;
@@ -829,6 +829,8 @@ category's checks apply: this is a pointer/keyboard-driven macOS desktop
 control, not a touch surface, drawing no user-facing text and performing no
 networking, telemetry, or logging of its own.
 
+`separation-of-concerns` passes because `ComposableTabsViewController` owns only the split tree and its divider, zoom, minimize, split, remove and move mechanics; pane content comes from the view registry, each pane is a separately hosted child component, and persistence and window chrome belong to other components. `unit-test-coverage` is `partial`: `ComposableTabsViewControllerTests.swift`, `ComposableTabsArrangementTests.swift`, `ComposableTabsMoveTests.swift`, `ComposableTabsPaneChromeTests.swift`, `ComposableTabsClosePersistTests.swift` and `ComposableTabsPaneHostTests.swift` exercise the controller, and `ComposableTabs/LayoutNodeThicknessTests.swift` and `PaneContainerClampTests.swift` pin how stored thickness fractions survive moves and reconciliation and how a clamped split sizes its container, but divider drag, hit-test widening and the construction-trap vectors are not pinned by a test.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -839,3 +841,4 @@ networking, telemetry, or logging of its own.
 | 1.1.2 | 2026-09-24 | Mike Fullerton | Renamed `may-supply-custom-arranger` to the subject-only `custom-arranger`. |
 | 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the non-pointer-resize NEEDS REVIEW marker as current behavior (pointer-only divider resize) with a vector and a pending decision; added separation-of-concerns (passed) and unit-test-coverage (partial) compliance rows. Added the confines-to-ui-thread requirement and vector. Compliance rationale credits the thickness and clamp tests. |

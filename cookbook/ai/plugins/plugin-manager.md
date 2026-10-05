@@ -1,33 +1,32 @@
 ---
 id: 0a729d47-fc2d-427c-b474-26072dc8b336
-title: Plugin Manager
-domain: agenticdevelopertoolkit://cookbook/ai/plugins/plugin-manager
+title: "Plugin Manager"
+domain: adtoolkit://cookbook/ai/plugins/plugin-manager
 type: ingredient
-version: 1.1.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Discovers plugin bundles from disk, reads each one's descriptor without
-  loading its code, and lazily loads and instantiates the plugin on demand.
+summary: "Discovers plugin bundles from disk, reads each one's descriptor without loading its code, and lazily loads and instantiates the plugin on demand."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- plugin-manager
-- discovery
-- dynamic-loading
-- bundle-loading
+  - ai-plugin
+  - plugin-manager
+  - discovery
+  - dynamic-loading
+  - bundle-loading
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-context
+  - adtoolkit://cookbook/ai/chat/chat-context
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Plugin Manager
@@ -83,10 +82,11 @@ secret-storage component respectively.
 - **additional-search-paths-optional**: Creating a manager with an app name MAY receive additional search paths; when omitted (default: none), the manager MUST scan only the three default locations.
 - **search-path-order-fixed**: Creating a manager with an app name MUST build the search paths in this order: the running app's own built-in plugins location (only when the platform resolves one), then the user's home dotfolder location, then the app's Application Support location (only when resolvable), then any additional search paths appended in the order given.
 - **testing-initializer-explicit**: Creating a manager with explicit search paths MUST use exactly the given search paths, with no default-location derivation, defaulting the app name to `"AgenticPlugins"` when omitted.
-- **in-memory-state-only**: The manager's records, loaded plugins, and loaded bundles MUST exist only in memory for the manager's lifetime; none of this state MUST be persisted to disk, and a newly created manager MUST report empty discovered descriptors, empty available templates, and no loaded plugins until discovery has run at least once.
+- **in-memory-state-only**: The manager's records, loaded plugins, and loaded bundles MUST exist only in memory for the manager's lifetime; this state MUST NOT be persisted to disk, and a newly created manager MUST report empty discovered descriptors, empty available templates, and no loaded plugins until discovery has run at least once.
 
-- **search-path-enumeration-failure**: NEEDS REVIEW: Not implemented in source. Discovery swallows the error when a search-path entry exists but cannot be enumerated (e.g. a permissions failure, or a path that exists as a non-directory file) — that skip produces no log line and no way for a caller to distinguish "this path had nothing in it" from "this path could not be read." Every other skip branch in the same discovery pass (an unreadable descriptor, an incompatible schema) logs a warning; this one does not. What is missing: whether an enumeration failure should be logged, surfaced through a return value, or left silent as it is today. This could not be determined from the source alone because the asymmetry with the sibling skip branches gives no signal of intent. It can be resolved by whoever owns this manager's callers confirming whether silent operation here is acceptable or whether it should log like the other skip paths.
-- **empty-app-name-unvalidated**: NEEDS REVIEW: Not implemented in source. Creating a manager with an app name never validates that the app name is non-empty before using it to build the Application Support search path. The helper this relies on documents that an empty app-name component "collapses the path onto the *shared* Application Support/<subdirectory> and silently widens the search to every app's content of that kind" — for this manager, the shared Plugins location. What is missing: whether an empty app name should be rejected (an assertion), defaulted, or is simply never expected to occur in practice. This could not be determined from the manager alone, since the risk is documented only in the helper it calls, not enforced at this call site. It can be resolved by whoever owns the manager's call sites confirming whether the app name can ever be empty before app metadata is configured.
+- **search-path-enumeration-failure**: Discovery swallows the error when a search-path entry exists but cannot be enumerated (for example a permissions failure, or a path that exists as a non-directory file): the entry is skipped with no log line and no way for a caller to distinguish a path with nothing in it from one that could not be read. Every other skip branch in the same discovery pass (an unreadable descriptor, an incompatible schema) logs a warning; this one does not.
+- **empty-app-name-unvalidated**: Creating a manager with an app name never validates that the name is non-empty before using it to build the Application Support search path. The helper it relies on documents that an empty app-name component collapses the path onto the shared Application Support subdirectory and silently widens the search to every app's content of that kind, which for this manager is the shared plugins location.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -128,12 +128,13 @@ Not applicable — this is a plugin discovery and loading manager, not a visual 
 | ai-plugin-manager-022 | testing-registration-debug-only | Test registration called (in a build with testing support enabled) with a hand-built descriptor | The discovered descriptors contain the injected descriptor; loading it fails with a load-failed error |
 | ai-plugin-manager-023 | single-context-confinement | Attempting to access the manager's state from outside its designated execution context, with no explicit hand-off | Rejected by the platform's concurrency enforcement (e.g. a compile-time diagnostic) rather than allowed to run concurrently |
 | ai-plugin-manager-024 | load-result-context-confined | A load result value passed to or read from a separate concurrent execution context | Rejected by the platform's concurrency enforcement (e.g. a compile-time diagnostic), since a load result carries no cross-context sharing guarantee |
+| ai-plugin-manager-025 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
 - Empty search paths (no locations to scan): discovery MUST leave the discovered descriptors and available templates empty; no error is raised.
 - A search-path entry that does not exist on disk: MUST be skipped silently by `existing-search-paths-only`; no log, no error.
-- A search-path entry that exists but cannot be enumerated (permissions failure, or a non-directory file at that path): silently skipped with no log — see the open question on `search-path-enumeration-failure`.
+- A search-path entry that exists but cannot be enumerated (permissions failure, or a non-directory file at that path): silently skipped with no log — see `search-path-enumeration-failure` and its Design Decision.
 - A directory entry with the plugin extension that is not a valid bundle: caught by `unreadable-candidate-skip` (the bundle cannot be opened), logged and skipped, MUST NOT throw.
 - The descriptor file absent, unreadable, or not valid JSON for the declared descriptor shape: caught by `unreadable-candidate-skip`, logged and skipped, MUST NOT throw. This is also how a pre-descriptor plugin (no descriptor file at all) is ignored, per the source's own documentation.
 - The schema version below the minimum or above the current maximum: caught by `schema-version-filter`, logged and skipped, MUST NOT throw.
@@ -150,7 +151,7 @@ Not applicable — this is a plugin discovery and loading manager, not a visual 
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| App name | text | none — required | Names the Application Support search location for this app; not validated for emptiness (see the open question on `empty-app-name-unvalidated`) |
+| App name | text | none — required | Names the Application Support search location for this app; not validated for emptiness (see `empty-app-name-unvalidated` and its Design Decision) |
 | Additional search paths | list of locations | empty | Extra directories appended after the three default locations, in the order given |
 | Explicit search paths | list of locations | none — required | Replaces all default-location derivation entirely; used by tests |
 | App name (explicit-search-paths form) | text | `"AgenticPlugins"` | Retained alongside explicit search paths, but not consulted to derive any path in this form |
@@ -210,7 +211,7 @@ Subsystem: the app's bundle identifier (falls back to a fixed placeholder if uns
 - **SwiftUI**: The manager is a plain, main-actor-confined Foundation/`os` type with no view-layer dependency, so a SwiftUI host observes it the same way an AppKit host does — typically by wrapping it in an `@Observable`/`ObservableObject` adapter that calls discovery once and republishes the discovered descriptors/available templates after mutating calls, since the manager itself is not observable.
 - **Compose**: Kotlin has no `dlopen`/principal-class equivalent for loading arbitrary on-disk bundles into a running process; the nearest analog is Android's `PackageManager`/`DexClassLoader` (loading code from an installed package or a `.dex`/`.jar` at a known path) — a much more restricted and permission-gated model than macOS's own-account file-system scan. Descriptor decoding maps to `kotlinx.serialization` or `Moshi`; the discovery scan maps to `java.io.File.listFiles()`; the single-context confinement maps to a single-threaded `CoroutineDispatcher` (e.g. `Dispatchers.Main`) that every call is confined to.
 - **React/Web**: There is no on-disk bundle-loading equivalent in a browser; the closest analog for "discover a descriptor cheaply, load code lazily" is dynamic `import()` (or a plugin registry fetched as JSON) gated behind a manifest file resembling the descriptor, with the actual module fetched and evaluated only when first requested. The manager's error cases map to a small discriminated-union error type; the single-threaded JS event loop gives the same "no real concurrency" guarantee the single-context confinement gives here, without needing an explicit isolation keyword.
-- **AppKit / UIKit**: `AIPluginManager.swift` (`packages/apple/AgenticToolkit/AIPluginKit/AIPluginManager.swift`) defines `AIPluginManager`, a `@MainActor` class — this is the source for `single-context-confinement` — with no AppKit/UIKit dependency at all (only `Foundation`, `os`/`OSLog`, and `AgenticToolkitCore` for `Loggable`). A plugin bundle's `NSPrincipalClass` conforms to `AIPluginKit.AIPlugin`. "Opening the candidate as a bundle" is `Bundle(url:)`; "loading its code" is `bundle.load()` (skipped when `bundle.isLoaded` is already `true`), which is macOS's `dlopen` underneath; the file-extension and existing-path checks use `pathExtension` and `FileManager.fileExists(atPath:)`; enumeration uses `FileManager.contentsOfDirectory(at:includingPropertiesForKeys:options:)`. `PluginLoadResult` declares no `Sendable` conformance, which is the source of `load-result-context-confined` — the Swift compiler rejects sending a `PluginLoadResult` value across a `Sendable` boundary even though its members (`[any AIPlugin]`, `[PluginLoadFailure]`) are individually `Sendable`-eligible. Two initializers exist: `init(appName:additionalSearchPaths:)` builds the three default locations (`Bundle.main.builtInPlugInsURL`, `~/.agenticplugins` via `NSHomeDirectory()`, and `~/Library/Application Support/<appName>/Plugins` via `FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask)`) and appends any additional paths; `init(searchPaths:appName:)` is a test-only escape hatch that skips default-location derivation entirely. Test registration is `registerForTesting(_:)`, compiled only under `#if DEBUG`. `.aiplugin` bundle loading via `Bundle`/`NSPrincipalClass` is macOS-only (UIKit/iOS sandboxes forbid loading arbitrary on-disk executable bundles), which is why this recipe's `platforms` list `macos` and not `ios`. The empty-app-name open question traces to `InstalledContentLocation.applicationSupport(appName:subdirectory:)` in `packages/apple/AgenticToolkit/Core/Extensions/ExtensionResourcePath.swift`.
+- **AppKit / UIKit**: `AIPluginManager.swift` (`packages/apple/AgenticToolkit/AIPluginKit/AIPluginManager.swift`) defines `AIPluginManager`, a `@MainActor` class — this is the source for `single-context-confinement` — with no AppKit/UIKit dependency at all (only `Foundation`, `os`/`OSLog`, and `AgenticToolkitCore` for `Loggable`). A plugin bundle's `NSPrincipalClass` conforms to `AIPluginKit.AIPlugin`. "Opening the candidate as a bundle" is `Bundle(url:)`; "loading its code" is `bundle.load()` (skipped when `bundle.isLoaded` is already `true`), which is macOS's `dlopen` underneath; the file-extension and existing-path checks use `pathExtension` and `FileManager.fileExists(atPath:)`; enumeration uses `FileManager.contentsOfDirectory(at:includingPropertiesForKeys:options:)`. `PluginLoadResult` declares no `Sendable` conformance, which is the source of `load-result-context-confined` — the Swift compiler rejects sending a `PluginLoadResult` value across a `Sendable` boundary even though its members (`[any AIPlugin]`, `[PluginLoadFailure]`) are individually `Sendable`-eligible. Two initializers exist: `init(appName:additionalSearchPaths:)` builds the three default locations (`Bundle.main.builtInPlugInsURL`, `~/.agenticplugins` via `NSHomeDirectory()`, and `~/Library/Application Support/<appName>/Plugins` via `FileManager.default.urls(for:.applicationSupportDirectory,in:.userDomainMask)`) and appends any additional paths; `init(searchPaths:appName:)` is a test-only escape hatch that skips default-location derivation entirely. Test registration is `registerForTesting(_:)`, compiled only under `#if DEBUG`. `.aiplugin` bundle loading via `Bundle`/`NSPrincipalClass` is macOS-only (UIKit/iOS sandboxes forbid loading arbitrary on-disk executable bundles), which is why this recipe's `platforms` list `macos` and not `ios`. The empty-app-name gap (`empty-app-name-unvalidated`) traces to `InstalledContentLocation.applicationSupport(appName:subdirectory:)` in `packages/apple/AgenticToolkit/Core/Extensions/ExtensionResourcePath.swift`.
 - **WinUI 3**: There is no direct principal-class/`dlopen` counterpart on .NET; the nearest equivalent is `System.Reflection.Assembly.LoadFrom`/`AssemblyLoadContext` to load a plugin `.dll` on demand and `Activator.CreateInstance` (against an interface analogous to the plugin protocol) to instantiate its principal type, with `System.IO.Directory.Exists`/`Directory.EnumerateFiles` for the discovery scan and `System.Text.Json` for decoding the descriptor. Unlike a macOS bundle, `AssemblyLoadContext` *can* be unloaded (a collectible `AssemblyLoadContext`), so a WinUI 3 port has a real choice this manager does not: whether unloading a plugin should actually unload the assembly rather than only dropping the cached instance (`unload-retains-bundle` is a macOS constraint, not a requirement to carry over literally). Exposing the discovered descriptors/available templates to bound UI should go through an `ObservableCollection<T>` (or a view model implementing `INotifyPropertyChanged`) refreshed after discovery/load/unload, since WinUI 3 has no built-in reactivity for a plain `List<T>`. The manager's single-context confinement maps to confining all calls to the UI thread (`DispatcherQueue.TryEnqueue` for any call originating off it).
 
 ## Reference Implementations
@@ -233,22 +234,37 @@ Subsystem: the app's bundle identifier (falls back to a fixed placeholder if uns
 **Rationale**: The source's own comment states "the bundle remains loaded in memory (macOS does not support unloading bundles)" — since the OS will not release the mapped binary regardless, removing the bundle reference would only lose the manager's own bookkeeping for no memory benefit. (Apple platform implementation.)
 **Approved**: pending
 
+**Decision**: A search-path entry that cannot be enumerated is skipped silently.
+**Rationale**: Unlike every other skip branch in discovery, no warning is logged and nothing is surfaced to the caller; closing the gap takes whoever owns the manager's callers deciding whether an enumeration failure should log, be surfaced through a return value, or stay silent.
+**Approved**: pending
+
+**Decision**: An empty app name is not validated.
+**Rationale**: An empty app name widens the search to the shared plugins location, a risk documented only in the helper the manager calls and not enforced at this call site; closing the gap takes confirming whether the app name can ever be empty before app metadata is configured, and if so rejecting it (an assertion) or defaulting it.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | partial | Best Practices |
 | [fault-tolerance](agenticdevelopercookbook://compliance/reliability#fault-tolerance) | passed | Reliability |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
 | [no-pii-in-logs](agenticdevelopercookbook://compliance/privacy-and-data#no-pii-in-logs) | passed | Privacy And Data |
 
-Explicit-error-handling is `partial`: loading a plugin (individually or via "load all") reports every failure as a typed error, but discovery's directory-enumeration failure is swallowed with no log and no thrown error (see the open question on `search-path-enumeration-failure`). Fault-tolerance passes because "load all plugins" isolates each plugin's failure into its failures list and keeps loading the rest. No-hardcoded-strings fails because every error message is an unlocalized English literal (see Localization). No-pii-in-logs passes because every logged value is a plugin identifier, display name, schema number, or bundle filename — never a credential or user-content value.
+Explicit-error-handling is `partial`: loading a plugin (individually or via "load all") reports every failure as a typed error, but discovery's directory-enumeration failure is swallowed with no log and no thrown error (see `search-path-enumeration-failure` and its Design Decision). Fault-tolerance passes because "load all plugins" isolates each plugin's failure into its failures list and keeps loading the rest. No-hardcoded-strings fails because every error message is an unlocalized English literal (see Localization). No-pii-in-logs passes because every logged value is a plugin identifier, display name, schema number, or bundle filename — never a credential or user-content value.
+
+`separation-of-concerns` passes because `AIPluginManager` only discovers plugin bundles, caches descriptors and loaded plugin instances, and reports load failures; descriptor decoding lives in `AIPluginDescriptor` and driving a plugin's request lives in the transport. `unit-test-coverage` is partial: `AIPluginManagerTests.swift` covers empty and missing directories, a valid bundle, incompatible schema and missing descriptor skips, unknown identifiers, unloading, and `loadAllPlugins` failure isolation, but nothing exercises an unenumerable search-path entry or an empty app name.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/plugins/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved two NEEDS REVIEW markers as current behavior plus pending Design Decisions; added separation-of-concerns and unit-test-coverage compliance. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |

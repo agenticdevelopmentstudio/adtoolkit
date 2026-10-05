@@ -1,0 +1,16 @@
+
+- **Missing system key**: the keep-windows-on-quit preference absent from every searched domain — system-default MUST return `false`, so `useSystem` MUST resolve to "do not reopen" (system-default-absent).
+- **App-domain override of the system key**: the app writes its own value for the keep-windows-on-quit preference in its own preference domain — system-default MUST return the app-domain value, because the lookup searches the app's own domain before the platform-global domain.
+- **Empty settings store**: first launch with nothing stored — recent-window-count MUST read `10` and the reopen-on-launch preference MUST read `useSystem`.
+- **Undecodable stored policy**: data under `"reopenOnLaunchPolicy"` that is not a JSON string matching a raw value (a removed state, corrupt data) — reading MUST return `useSystem` with no error surfaced (policy-setting-decode-fallback). The fallback is deliberate in the storage layer, and the policy degrades to the platform setting.
+- **Policy written as a plain string**: a value written outside the store as a plain string rather than JSON-encoded data — reading MUST return `useSystem`, because the store reads the key as encoded data and a plain string is not that (see Platform Notes for a concrete example).
+- **Zero recent count**: recent-window-count of `0` (the settings UI's minimum) — the mirror MUST write `0` to the platform's recent-documents limit; how the platform renders an Open Recent list capped at zero belongs to the platform, not to this component.
+- **Negative or oversize recent count**: a programmatic write of `-1` or `1000` — the preference MUST store it unchanged and the mirror MUST write it unchanged; nothing in this concept clamps it (see recent-count-range).
+- **Limit takes effect lazily**: the mirror writes only the platform's recent-documents limit and does not force the platform to trim the existing list, so lowering the count SHOULD NOT be expected to take visible effect until the platform's own recents mechanism next updates one (see Platform Notes).
+- **Store replaced after first access**: the app assigns a new shared preference store after either preference was first read — each preference MUST keep observing the store it bound to at first access (settings-lazy-binding); hosts are expected to set the shared preference store before either preference is first touched.
+- **Concurrent access**: both preferences are restricted to a single execution context, so reads and writes are serialized and cannot interleave; policy values are immutable and safe to share across contexts; system-default is a read of the thread-safe platform preference store, independent of that context.
+- **Headless launch**: no running application shell (for example, a unit-test host) — launch reopen MUST return before reading the reopen-on-launch preference, so the policy is never evaluated.
+- **Error states**: none of the operations can fail; every read returns a stored value or the default, and writes go through the store without a return value.
+- **Offline or disconnected state**: not applicable; the component performs no network access.
+- **Cancellation and timeouts**: not applicable; every operation is a synchronous preference-store read or write, with no timeout and nothing to cancel.
+

@@ -1,36 +1,35 @@
 ---
 id: 1918570c-bf2e-4cd5-99a4-2df3d7038428
-title: Status Server Monitor URL
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/url
+title: "Status Server Monitor URL"
+domain: adtoolkit://cookbook/status/service/monitor/url
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Two exception-guarded URL helpers — hostOf extracts a display host, projectPageUrl
-  collapses a Vercel deploy-inspector URL to its stable project page.
+summary: "Two exception-guarded URL helpers — hostOf extracts a display host, projectPageUrl collapses a Vercel deploy-inspector URL to its stable project page."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- deploy
-- vercel
-- pure-function
-- server
+  - monitor
+  - deploy
+  - vercel
+  - pure-function
+  - server
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/url.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-view.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/url.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/deploy-view.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor URL
@@ -96,7 +95,7 @@ dedicated test file in the given source tree.
 - **pure-synchronous**: `hostOf` and `projectPageUrl` MUST each execute synchronously and
   MUST perform no I/O, network call, logging, or persistence of any kind; each is a pure
   function of its single argument with no dependency on module-level or external state.
-- **no-throw**: neither function MUST throw for any input within its declared parameter type
+- **no-throw**: each function MUST NOT throw for any input within its declared parameter type
   (`string` for `hostOf`; `string | null | undefined` for `projectPageUrl`) — every branch,
   including the `URL` constructor's thrown error, is caught and converted to a return value.
 
@@ -318,6 +317,7 @@ object is discarded, but the fallback it triggers is a deliberate, documented pa
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 |  |  | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

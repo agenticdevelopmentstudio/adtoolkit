@@ -1,0 +1,74 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "92f11498-2cb2-4b04-92b9-560d9f2de6ee",
+    "title": "Branch Management",
+    "domain": "adtoolkit://cookbook/workspace/projects/branch-controller",
+    "type": "ingredient",
+    "version": "1.2.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Owns one project checkout: its live branch, its per-(tab, edge) tab panes, and the three checkout-namespaced commands a command palette and context menu act on it through.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "git",
+      "tabs",
+      "checkout",
+      "branch",
+      "command-palette"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/workspace/files/git-status-provider",
+      "adtoolkit://cookbook/ui/layout/tabbed-view/tab-pane"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/macOS/Features/Projects/BranchController.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabPane/TabPaneDataSource.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabPane/TabPaneDelegate.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabPane/TabPaneStatusSymbol.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/UI/AppShell/ClosureMenuItemTarget.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/BranchControllerTests.swift (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "names_hosts": "The pane's agent name is the literal string `Claude` the source returns; the spec states that value.",
+  "synced": "e3af4d876769f126",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

@@ -1,37 +1,36 @@
 ---
 id: e6326b0e-cba1-44ee-bf1d-7b033e25e39a
-title: Integration Self-Check
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/integrations
+title: "Integration Self-Check"
+domain: adtoolkit://cookbook/status/dashboard/state/integrations
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Cached state that fetches the monitor's integration self-check snapshot
-  from the status API and refreshes on returning focus.
+summary: "Cached state that fetches the monitor's integration self-check snapshot from the status API and refreshes on returning focus."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/api
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/history
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/config-status
+  - adtoolkit://cookbook/status/dashboard/state/history
+  - adtoolkit://cookbook/status/dashboard/state/config-status
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Integration Self-Check
 
 ## Overview
 
-Integrations is state in the status dashboard that loads the monitor's integration self-check snapshot: one entry per provider integration, saying whether it is configured, reachable and healthy. It wraps one cached read under the fixed key `["integrations"]`. It requests `/integrations` through the dashboard's status API client (see [status-web-api](agenticdevelopertoolkit://cookbook/status/dashboard/api)) and returns the query result typed as `IntegrationsResponse`. Integrations turns on refresh-on-returning-focus. It takes no arguments and is always enabled.
+Integrations is state in the status dashboard that loads the monitor's integration self-check snapshot: one entry per provider integration, saying whether it is configured, reachable and healthy. It wraps one cached read under the fixed key `["integrations"]`. It requests `/integrations` through the dashboard's status API client (see [status-web-api](adtoolkit://cookbook/status/dashboard/api)) and returns the query result typed as `IntegrationsResponse`. Integrations turns on refresh-on-returning-focus. It takes no arguments and is always enabled.
 
 It has two callers. The Overview passes `data` to the self-check banner, so a failed or degraded self-check shows on the default wallboard. The dashboard passes `data` to the self-check computation for the header self-check pill. Both callers read only `data`.
 
@@ -58,7 +57,7 @@ It has two callers. The Overview passes `data` to the self-check banner, so a fa
 - **integration-check-optional-fields**: `IntegrationCheck` also declares three optional fields. `missingEnv` lists expected environment variables found unset. `unreachable` means the probe got no response. `correlated` means the check was confirmed unreachable together with other providers in the same run. Integrations passes all of them through untouched.
 - **no-timeout**: Integrations MUST NOT impose its own request timeout. A request that never settles leaves the query fetching until the client or runtime ends it.
 - **no-persistence**: Integrations MUST NOT write the snapshot to any durable store. Results live only in the in-memory shared cache and are lost on reload.
-- **client-only-module**: Integrations has no server-only or universal-rendering variant; it requires a live client execution context.
+- **client-only**: Integration Self-Check MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 - **single-threaded-ordering**: Integrations runs on a single execution thread. Concurrent callers (the Overview and the dashboard) MUST share the one `["integrations"]` cache entry, and the shared cache, not Integrations, deduplicates their in-flight requests.
 
 ## Appearance
@@ -89,6 +88,7 @@ There is no test file for the source directly. Companion component tests mock th
 | use-integrations-008 | shared-interval-refresh | Use Integrations alongside Refresh All (interval 1000 ms) with simulated time; advance 1000 ms | A second request to `/api/integrations` is made |
 | use-integrations-009 | raw-fetch-not-json-helper | Inspect the request | Integrations adds no `Content-Type` header |
 | use-integrations-010 | integration-check-optional-fields, success-body | The stub returns a check carrying `"missingEnv":["CLOUDFLARE_ACCOUNT_ID"],"unreachable":true,"correlated":true` | `data.checks[0]` keeps all three fields exactly as sent |
+| use-integrations-011 | client-only | Load Integration Self-Check in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -204,7 +204,8 @@ Not applicable: Integrations makes no log calls. Failures reach the caller only 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial recipe extracted from `use-integrations.ts` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe extracted from `use-integrations.ts` |
 </content>

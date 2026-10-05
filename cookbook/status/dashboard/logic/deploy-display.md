@@ -1,28 +1,27 @@
 ---
 id: 691f84ba-242a-40bc-a164-c95e535bb387
-title: Deploy Display
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/deploy-display
+title: "Deploy Display"
+domain: adtoolkit://cookbook/status/dashboard/logic/deploy-display
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure lookups mapping a deploy platform or deploy status string to its
-  glyph, theme color role and badge label.
+summary: "Pure lookups mapping a deploy platform or deploy status string to its glyph, theme color role and badge label."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
+  - adtoolkit://cookbook/status/service/monitor/deploy-status
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Deploy Display
@@ -51,7 +50,7 @@ status vocabulary and its color-role map from two sibling modules. The
 callers are dashboard components and views that render deploy or platform
 badges; they render the returned strings and never branch on them. The
 server-side status vocabulary is specified in [Monitor Deploy
-Status](agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status).
+Status](adtoolkit://cookbook/status/service/monitor/deploy-status).
 
 ## Behavioral Requirements
 
@@ -298,4 +297,4 @@ Not applicable: the module has no logging calls. Unknown inputs fall back silent
 |---------|------|--------|---------|
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/logic/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from source |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from source |

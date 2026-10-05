@@ -1,46 +1,39 @@
 ---
 id: 1b64553a-ab58-4154-b9d5-30f34eb33caf
-title: File Tree Model
-domain: agenticdevelopertoolkit://cookbook/workspace/files/file-tree-model
+title: "File Tree Model"
+domain: adtoolkit://cookbook/workspace/files/file-tree-model
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A file-tree model layer — lazy, one-level directory reads, identity-preserving
-  merges, and a file-system watcher that keeps the tree in sync with on-disk changes.
+summary: "A file-tree model layer — lazy, one-level directory reads, identity-preserving merges, and a file-system watcher that keeps the tree in sync with on-disk changes."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- file-browser
-- file-system
-- model
-- concurrency
+  - file-browser
+  - file-system
+  - model
+  - concurrency
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
+  - agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
 related:
-- agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view
-- agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view
+  - adtoolkit://cookbook/workspace/files/file-tree-view
+  - adtoolkit://cookbook/workspace/files/file-browser-view
 references:
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileSystem/DirectoryWatchCoordinator.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileSystem/FileSystemWatcher.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileSystem/FileTreeConfig.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileSystem/FileTreeNode.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/DirectoryWatchCoordinatorTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/FileTreeNodeTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileSystem/DirectoryWatchCoordinator.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileSystem/FileSystemWatcher.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileSystem/FileTreeConfig.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileSystem/FileTreeNode.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/DirectoryWatchCoordinatorTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/FileTreeNodeTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # File Tree Model
@@ -70,9 +63,9 @@ reference to) alive across a re-sync rather than being silently replaced by
 structurally-equal-but-distinct objects. The direct consumer of this model
 is a file tree manager (out of scope for this recipe), which in turn feeds
 the file tree view — see
-[File Tree View](agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view)
+[File Tree View](adtoolkit://cookbook/workspace/files/file-tree-view)
 and
-[File Browser](agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view)
+[File Browser](adtoolkit://cookbook/workspace/files/file-browser-view)
 for how this model's `nil`-vs-empty-array `children` distinction and its
 swallowed directory-read failures are consumed one layer up.
 
@@ -326,20 +319,16 @@ swallowed directory-read failures are consumed one layer up.
   routine MUST set `isSyncing = false` and invoke the registered change
   callback on the UI thread only after every affected directory's merge
   has been applied.
-- **concurrent-sync-reentrancy**: NEEDS REVIEW: Not implemented in source.
-  Neither a full sync nor the change-handling routine guards against being
-  invoked again while a previous invocation's background read is still in
-  flight — both set `isSyncing = true` unconditionally rather than
-  checking it first, unlike the lazy children-load operation's explicit
-  `childrenLoaded`-set-before-dispatch guard for the analogous per-node
-  race — so two overlapping calls each independently dispatch their own
-  background read and later apply the merge operation on the UI thread in
-  whichever order their background work happens to finish, not the order
-  the calls (or the underlying file-system events) occurred in; this would
-  be settled by either a source change that coalesces or serializes
-  overlapping syncs, or a test demonstrating the current
-  last-completion-wins ordering is acceptable, and neither exists in the
-  given sources.
+- **concurrent-sync-reentrancy**: Neither a full sync nor the
+  change-handling routine guards against being invoked again while a previous
+  invocation's background read is still in flight: both set `isSyncing = true`
+  unconditionally rather than checking it first, unlike the lazy children-load
+  operation's explicit set-the-loaded-flag-before-dispatch guard for the
+  analogous per-node race. Two overlapping calls therefore each dispatch their
+  own background read and apply the merge operation on the UI thread in
+  whichever order their background work finishes, not the order the calls (or
+  the underlying file-system events) occurred in (see the pending design
+  decision on overlapping syncs).
 
 ## Appearance
 
@@ -441,8 +430,8 @@ visual component.
   (`node-load-children-if-needed-flag-before-read`).
 - **Overlapping syncs or change batches.** A full sync and the
   change-handling routine MUST NOT be assumed serialized against themselves
-  or each other — see the open question on `concurrent-sync-reentrancy` in
-  Behavioral Requirements.
+  or each other — see `concurrent-sync-reentrancy` in
+  Behavioral Requirements and its pending design decision.
 - **Changes coalesced within the watcher's latency window.** Multiple
   filesystem changes occurring within the watcher's configured
   `0.5`-second latency MUST be delivered to the coordinator as a single
@@ -570,7 +559,7 @@ type's own name.
   to `rootNode`'s `children`, calling `loadChildrenIfNeeded()` from
   `.onAppear` or the row's disclosure action, in place of the AppKit
   `NSOutlineView` consumer described in
-  [File Tree View](agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view).
+  [File Tree View](adtoolkit://cookbook/workspace/files/file-tree-view).
 - **Compose**: Model `@Published var children`/`isSyncing` as
   `mutableStateOf`/`StateFlow` fields observed from a `ViewModel`; run
   `fullSync()`/`handleChanges`'s background reads on
@@ -594,7 +583,7 @@ type's own name.
   for `FSEvents`, which has no iOS counterpart, and lives under a
   `macOS`-specific source directory with no `#if os(iOS)` branch. The direct
   AppKit consumer is `FileTreeOutlineViewController`
-  (see [File Tree View](agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view)).
+  (see [File Tree View](adtoolkit://cookbook/workspace/files/file-tree-view)).
   An iOS port needs a different watch mechanism entirely — a
   `DispatchSource` file-descriptor watch or a polling timer — since
   `FSEventStreamCreate` is unavailable there.
@@ -729,10 +718,10 @@ type's own name.
   deliberate choice given `os.log` otherwise redacts interpolated strings by
   default.
   **Approved**: pending
-- The open question on `concurrent-sync-reentrancy` (Behavioral
-  Requirements) is a source-fidelity gap, not a resolved design decision:
-  no rationale for the current last-completion-wins behavior exists in the
-  given sources.
+
+**Decision**: Overlapping full syncs and change batches are not coalesced or serialized; the merge order is last-completion-wins.
+**Rationale**: `DirectoryWatchCoordinator.fullSync()` and `handleChanges(_:)` each set `isSyncing = true`, dispatch a background read and merge on the main queue with no in-flight check or sequence number, so an older read finishing later overwrites a newer one's result. No source rationale or test exists for the current ordering; closing it would take coalescing or serializing overlapping runs, or a test showing last-completion-wins is acceptable.
+**Approved**: pending
 
 ## Compliance
 
@@ -774,6 +763,7 @@ rather than propagating a fatal error.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restated the concurrent-sync-reentrancy open question as current behavior and recorded it as a pending design decision. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/files/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,17 +1,17 @@
 ---
 id: 8f3c2a6e-9d41-4b8a-9c2e-7a1d5f6b3e90
-title: Language Services Editor
-domain: agenticdevelopertoolkit://cookbook/workspace/language/language-services-editor
+title: "Language Services Editor"
+domain: adtoolkit://cookbook/workspace/language/language-services-editor
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Non-UI logic that wires a project's text documents to one or more language servers for completion, hover, jump-to-definition, diagnostics annotation, and semantic-token highlighting, and keeps their caches, marks, and watchers consistent under concurrent edits.
+summary: "Non-UI logic that wires a project's text documents to one or more language servers for completion, hover, jump-to-definition, diagnostics annotation, and semantic-token highlighting, and keeps their caches, marks, and watchers consistent under concurrent edits."
 platforms:
   - swift
   - macos
@@ -50,8 +50,8 @@ references:
   - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/SemanticTokenCaptureMappingTests.swift (agenticdevelopertoolkit)
   - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/SemanticTokenHighlightProviderTests.swift (agenticdevelopertoolkit)
   - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Editor/TextDocumentStorageTests.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Language Services Editor
@@ -145,8 +145,8 @@ Every entry point that touches the host editor's UI state is confined to the app
 - **storage-external-change-full-rewrite-not-partial-replay**: the external-change handler MUST rewrite the backing string wholesale from the document's current text rather than replaying the incoming change's own range, since by the time it fires the document has already applied every change in that batch.
 - **storage-main-thread-only-primitives-fail-loudly**: the storage bridge's string accessor, attribute accessor, and character-replacement operation MUST each assert that they are running on the primary execution context before touching the backing store.
 - **storage-external-change-application-count-testable**: the external-change application counter MUST increment exactly once per call that actually rewrites the backing store, and MUST NOT increment for a call turned away by the local-edit guard or carrying no change.
-- **lsp-request-failure-unsignaled**: NEEDS REVIEW: Not implemented in source. Every catch around a language-server request in this family discards the thrown error with no logging call at all — the completion delegate's completion-request catch, the hover controller's hover-request catch, the jump-to-definition delegate's definition-request catch, and the semantic-highlight provider's semantic-tokens-request catch — even though the completion delegate and the semantic-highlight provider both log elsewhere through the shared logging protocol, while the hover controller and the jump-to-definition delegate conform to that protocol nowhere in either file; what is missing is a log call, or a comment stating the silence is intentional because the user-visible fallback (no completions, no hover, no jump target, no highlights) is itself considered sufficient signal, and either would settle it.
-- **document-read-failure-unsignaled**: NEEDS REVIEW: Not implemented in source. The reloader's catch around its injected file reader discards the thrown read error with no logging call, unlike the dirty-conflict path in the very same component, which logs; what is missing is a log call on the caught path, or a comment saying why a transient read failure between the stat and the read needs no signal beyond the next event's retry, and either would settle it.
+- **lsp-request-failure-unsignaled**: a failed language-server request (completion, hover, definition, semantic tokens) MUST degrade to the empty answer: no completions, no hover, no jump target, and an empty highlight list stored for a failed semantic-tokens fetch. The current implementation discards the thrown error without any log call (see Design Decisions).
+- **document-read-failure-unsignaled**: when the reloader's injected file read fails between the stat and the read, it MUST leave the buffer untouched and drop the tracked signature so the next event retries. The current implementation emits no log call for the caught read error (see Design Decisions).
 
 ## Appearance
 
@@ -295,11 +295,33 @@ The hover controller and the jump-to-definition delegate conform to that logging
 
 ## Design Decisions
 
-- Watching directories rather than individual files (`OpenDocumentReloader`, on Apple platforms via FSEvents) lets one filesystem-event stream serve every open document in that directory and survives file replacement (a common editor and version-control save pattern), which a per-file watch on some platforms would not.
-- Distinguishing "not yet known" from "known and empty" for semantic-token highlights, rather than defaulting to empty, lets a query correctly park and wait for the first fetch instead of momentarily painting a document as having no semantic highlights at all.
-- Declining to map lexical token types (keyword, string, number, comment, operator) in `SemanticTokenCaptureMapping` keeps the existing tree-sitter highlighter as the source of truth for those, avoiding two highlighters disagreeing about the same span.
-- Applying completion's additional edits back-to-front, by descending start offset, avoids the alternative of recomputing every subsequent edit's range after each application, which would require the same information the server's own offsets already encode.
-- Routing every LSP capability check (`hoverProvider`, `definitionProvider`, the semantic-tokens full-request option) through the same bare-false-or-absent-means-unsupported rule keeps that judgment call in one place conceptually, even though each type implements its own copy, rather than risking the three checks drifting apart.
+**Decision**: Watch directories rather than individual files (OpenDocumentReloader).
+**Rationale**: One filesystem-event stream serves every open document in a directory and survives file replacement (a common editor and version-control save pattern), which a per-file watch on some platforms would not.
+**Approved**: pending
+
+**Decision**: Distinguish "not yet known" from "known and empty" for semantic-token highlights.
+**Rationale**: Lets a query correctly park and wait for the first fetch instead of momentarily painting a document as having no semantic highlights at all.
+**Approved**: pending
+
+**Decision**: Decline to map lexical token types (keyword, string, number, comment, operator) in SemanticTokenCaptureMapping.
+**Rationale**: Keeps the existing tree-sitter highlighter the source of truth for those, avoiding two highlighters disagreeing about the same span.
+**Approved**: pending
+
+**Decision**: Apply completion's additional edits back-to-front, by descending start offset.
+**Rationale**: Avoids recomputing every subsequent edit's range after each application, which would need the same information the server's own offsets already encode.
+**Approved**: pending
+
+**Decision**: Route every LSP capability check (hoverProvider, definitionProvider, the semantic-tokens full-request option) through the same bare-false-or-absent-means-unsupported rule.
+**Rationale**: Keeps that judgment call in one place conceptually, even though each type implements its own copy, rather than risking the three checks drifting apart.
+**Approved**: pending
+
+**Decision**: Language-server request failures (completion, hover, jump-to-definition, semantic tokens) are caught and discarded with no log call; the hover controller and the jump-to-definition delegate do not conform to the shared logging protocol at all.
+**Rationale**: The user-visible fallback (no completions, hover, jump target, or highlights) is the only signal today. Closing the gap means adding a log call to each catch, or a comment stating the silence is intentional.
+**Approved**: pending
+
+**Decision**: The reloader's catch around its injected file reader discards the read error without logging, unlike its dirty-conflict path, which logs.
+**Rationale**: A transient read failure between the stat and the read is retried by the next event, so nothing is lost. Closing the gap means a log call on the caught path, or a comment explaining why none is needed.
+**Approved**: pending
 
 ## Compliance
 
@@ -326,3 +348,4 @@ Notes: Separation of concerns holds across all twelve types — each owns exactl
 | 1.0.1 | 2026-09-24 | Claude | Add WinUI 3 translation guidance. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/language/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved two NEEDS REVIEW markers against source: LSP request failures and reloader read failures are caught and discarded without logging; recorded as pending decisions; Design Decisions converted to Decision/Rationale/Approved triples. |

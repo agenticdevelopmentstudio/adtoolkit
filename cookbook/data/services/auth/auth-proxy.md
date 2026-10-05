@@ -1,34 +1,33 @@
 ---
 id: 4a345333-b18d-48f1-806d-453c15155dfa
-title: Authentication Proxy
-domain: agenticdevelopertoolkit://cookbook/data/services/auth/auth-proxy
+title: "Authentication Proxy"
+domain: adtoolkit://cookbook/data/services/auth/auth-proxy
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Server-side BFF proxy forwarding /api and /auth requests to the backend,
-  preserving redirects and Set-Cookie verbatim.
+summary: "Server-side BFF proxy forwarding /api and /auth requests to the backend, preserving redirects and Set-Cookie verbatim."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- auth
-- proxy
-- server
-- bff
+  - auth
+  - proxy
+  - server
+  - bff
 depends-on: []
 related: []
 references:
-- packages/web/packages/auth/src/server/proxy.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/server/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/__tests__/proxy.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/auth/src/server/proxy.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/server/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/__tests__/proxy.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Authentication Proxy
@@ -405,11 +404,14 @@ writes to a log at any level.
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
 | [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | passed | Reliability |
 | [no-pii-in-logs](agenticdevelopercookbook://compliance/privacy-and-data#no-pii-in-logs) | passed | Privacy and Data |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 The `explicit-error-handling` failure reflects facts recorded in Edge Cases:
 a path segment that is invalid in a URL makes `fetch` throw a `TypeError`
 that neither `proxyToBackend` nor `makeProxyHandlers` catches. The proxy
 also sets no outbound timeout and does not forward cancellation.
+
+`unit-test-coverage` is partial because `proxy.test.ts` in the auth package's `__tests__` directory exercises backend-URL resolution (explicit setting, production default, development default) and the forced `identity` Accept-Encoding on the forwarded request, but the invalid-path-segment `TypeError`, the missing outbound timeout and the cancellation non-forwarding recorded in Edge Cases have no test.
 
 ## Change History
 
@@ -419,3 +421,4 @@ also sets no outbound timeout and does not forward cancellation.
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to data/services/auth/. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Cite unit-test-coverage in Compliance. |

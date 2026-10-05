@@ -1,0 +1,73 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "e029def6-7d5d-4e52-b565-e2a6612179bb",
+    "title": "Status Server Monitor Enrich Deploy Errors",
+    "domain": "adtoolkit://cookbook/status/service/monitor/enrich-deploy-errors",
+    "type": "ingredient",
+    "version": "1.0.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-09-27",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Fetches and persists the provider failure reason for recent failed Vercel/Railway deploys lacking one, bounded per cycle with cooldown-aware fail-soft dispatch.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "monitor",
+      "deploy",
+      "vercel",
+      "railway",
+      "rate-limiting",
+      "server"
+    ],
+    "depends-on": [
+      "agenticdevelopercookbook://guidelines/implementing/networking/timeouts",
+      "agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience",
+      "agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting"
+    ],
+    "related": [],
+    "references": [
+      "packages/web/packages/status-server/src/monitor/enrich-deploy-errors.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/fetch-railway.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/deploy-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/deploy-platform/src/conn/index.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/deploy-platform/src/util/map-limit.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "014b584323ba3467",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

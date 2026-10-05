@@ -1,45 +1,42 @@
 ---
 id: 77587f0b-5a27-44d9-a507-46bb90c9046a
-title: Status Server Routes
-domain: agenticdevelopertoolkit://cookbook/status/service/routes
+title: "Status Server Routes"
+domain: adtoolkit://cookbook/status/service/routes
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The 17 Hono/OpenAPIHono route modules under status-server/src/routes — activity
-  feed, auth, auto-configure, badge, board, config, cron, deploy-logs, device authorization,
-  fleet, deploy webhooks, the shared body-validation helper, the read-side snapshot/live/history
-  API, SSE streaming, telemetry, API tokens, and user administration.
+summary: "The 17 Hono/OpenAPIHono route modules under status-server/src/routes — activity feed, auth, auto-configure, badge, board, config, cron, deploy-logs, device authorization, fleet, deploy webhooks, the shared body-validation helper, the read-side snapshot/live/history API, SSE streaming, telemetry, API tokens, and user administration."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- routing
-- http-api
-- authentication
-- authorization
-- webhooks
-- server-sent-events
-- rate-limiting
-- validation
-- device-flow
-- pagination
+  - routing
+  - http-api
+  - authentication
+  - authorization
+  - webhooks
+  - server-sent-events
+  - rate-limiting
+  - validation
+  - device-flow
+  - pagination
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/pagination
-- agenticdevelopercookbook://guidelines/implementing/networking/real-time-communication
-- agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
-- agenticdevelopercookbook://guidelines/implementing/security/authentication
-- agenticdevelopercookbook://guidelines/implementing/security/token-handling
-- agenticdevelopercookbook://guidelines/implementing/testing/testing
+  - agenticdevelopercookbook://guidelines/implementing/networking/pagination
+  - agenticdevelopercookbook://guidelines/implementing/networking/real-time-communication
+  - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
+  - agenticdevelopercookbook://guidelines/implementing/security/authentication
+  - agenticdevelopercookbook://guidelines/implementing/security/token-handling
+  - agenticdevelopercookbook://guidelines/implementing/testing/testing
 related:
-- agenticdevelopertoolkit://cookbook/status/service/board
-approved-by: ''
-approved-date: ''
+  - adtoolkit://cookbook/status/service/board
+approved-by: ""
+approved-date: ""
 references: []
 ---
 
@@ -508,7 +505,7 @@ where its error/edge-case behavior is and isn't defined.
 - **telemetry-analytics-latest-reduction**: `GET /analytics` MUST reduce the
   stored rows to the latest value per `(metric, window, scope)` triple before
   responding.
-- **telemetry-peer-token-excluded**: none of this file's routes MUST accept
+- **telemetry-peer-token-excluded**: this file's routes MUST NOT accept
   `PEER_TOKEN` as a valid credential — peers exchange health snapshots
   (`/snapshot`), not telemetry, and this file is explicitly excluded from
   that exchange.
@@ -894,6 +891,7 @@ Several routes log on failure via `console.error`, and one notably does not:
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

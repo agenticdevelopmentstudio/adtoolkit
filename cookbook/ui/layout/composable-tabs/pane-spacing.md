@@ -1,35 +1,34 @@
 ---
 id: 4c528e38-b70a-4ed3-bedc-9009292ad908
-title: Pane Spacing
-domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/pane-spacing
+title: "Pane Spacing"
+domain: adtoolkit://cookbook/ui/layout/composable-tabs/pane-spacing
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: App-wide, user-configurable spacing around and between composable-tabs panes,
-  and the pane divider that paints and redraws to reflect it.
+summary: "App-wide, user-configurable spacing around and between composable-tabs panes, and the pane divider that paints and redraws to reflect it."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- composable-tabs
-- spacing
-- split-view
-- settings
+  - composable-tabs
+  - spacing
+  - split-view
+  - settings
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/settings-view
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/layout/composable-tabs
+  - adtoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+  - adtoolkit://cookbook/ui/layout/composable-tabs/settings-view
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Pane Spacing
@@ -70,6 +69,7 @@ Use this ingredient wherever a split-view-based pane layout needs consistent, us
 
 - **spacing-shared-across-windows**: The spacing values and their underlying settings MUST be process-wide, not held per window, per project, or per pane instance, so every pane split view and every reader of the content insets observes the same six values.
 - **setting-changes-persist-via-shared-store**: Assigning a new value to any of the six settings MUST write through the shared settings store, persisting to whatever storage provider backs it rather than to an in-memory cache local to the setting object.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -119,6 +119,7 @@ Use this ingredient wherever a split-view-based pane layout needs consistent, us
 | pane-spacing-013 | spacing-change-requests-redraw | The view is not currently marked for redraw; notify that spacing changed | The view becomes marked for redraw |
 | pane-spacing-014 | spacing-shared-across-windows | Two split-view instances, each arranged with panes side by side, in two different windows; change the between-columns gutter setting once | Both instances' divider thickness reflect the new value |
 | pane-spacing-015 | setting-changes-persist-via-shared-store | Set the top edge inset setting to `5`, then read it back directly from the shared settings store | Returns `5`, showing the write reached the shared store rather than only a local cached value |
+| pane-spacing-016 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -183,6 +184,7 @@ Not applicable: no logging call of any kind appears anywhere in this component.
 - **React/Web**: Represent the four insets as CSS custom properties (`--pane-spacing-top`, etc.) applied as padding on the pane container, and each gutter as a resizable divider element (`cursor: col-resize` / `row-resize`) whose background is the app's panel-backdrop CSS variable rather than a hardcoded color — reproducing the "backdrop, not a stripe" choice this component makes. Give the divider element a `min-width`/`min-height` matching the minimum divider grab width so a zero-width gutter stays draggable, and persist the six values to `localStorage`, observed with a `storage` event listener for cross-tab updates.
 - **AppKit / UIKit**: This is the source. `PaneSpacing.swift` defines the enum, the `UserSettings` extension, and `PaneSplitView : ThemedSplitView : NSSplitView`; specific to AppKit here are `NSEdgeInsets`, the `dividerThickness`/`drawDivider(in:)` overrides, and using `NSSplitView.DividerStyle`'s stock `.thin`/`.paneSplitter` cases purely as a nudge — reassigning `dividerStyle` off and back is what makes AppKit discard the constraint constants an `NSSplitViewController` built from the old `dividerThickness`. `PaneSpacing`, `PaneSplitView`, and `UserSetting` are all `@MainActor`-isolated. Each of the six settings converts its underlying `Int` value to `CGFloat` when building `NSEdgeInsets`/`dividerThickness`. Settings default to `UserDefaultsSettingsStorageProvider` (`UserDefaults`) unless the host app configures `UserSettings.shared` with a different provider. macOS's HIG has no published minimum divider/gutter width, so this component's own drawn thickness has no declared minimum or maximum of its own. UIKit has no direct analog to this per-pixel divider-drawing hook; `UISplitViewController`'s separator styling would be the nearest translation target, relevant only if this component is ever asked to run on iOS (`platforms` here lists macOS only).
 - **WinUI 3**: Represent the four insets as `Margin`/`Padding` on the content `Border`, and each gutter as a `GridSplitter` (from `CommunityToolkit.WinUI.Controls` — the Windows Community Toolkit's Sizers package, not `Microsoft.UI.Xaml.Controls`; the app takes a package dependency on the toolkit to get it) sitting in its own zero-content `ColumnDefinition`/`RowDefinition` between panes — `GridSplitter.Width`/`Height` plays the role `betweenColumns`/`betweenRows` play here. `GridSplitter.Background` swaps between the theme's default thin divider brush and an explicit pane-backdrop `ThemeResource` brush depending on whether the configured width is `<= 1` or greater, reproducing the hairline-vs-fill choice in the divider-drawing hook. Unlike AppKit's constraint-cached `NSSplitViewController`, WinUI's `Grid` recomputes column/row sizes as soon as a `ColumnDefinition.Width`/`RowDefinition.Height` changes, so no "toggle a style off and back" nudge is needed — binding the `GridSplitter`'s governing `GridLength` to the setting is enough. Persist the six values with `ApplicationDataContainer.LocalSettings`, the closest analog to `UserDefaultsSettingsStorageProvider`. `GridSplitter`'s built-in `Thumb` already exposes a wider drag/hover hit area than its visual thickness, which is the WinUI equivalent of the minimum divider grab width.
+- **UI-thread confinement**: `confines-to-ui-thread` — `PaneSpacing` and `PaneSplitView` are both declared `@MainActor`, so use from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -224,8 +226,12 @@ Not applicable: no logging call of any kind appears anywhere in this component.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | partial | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 Data-minimization passes because the six `pane_spacing_*` settings are window-chrome layout integers only — not personal or sensitive data, and nothing beyond what the layout needs is collected. Screen-reader-support and keyboard-navigable are partial because `PaneSplitView` overrides no accessibility or key-handling API for its divider and inherits whatever `NSSplitView` provides by default; the source cannot say whether that inherited behavior meets either check. Contrast-ratio is partial for the same reason: the divider fill always resolves through `currentPalette.projectPaneBackdrop`, a theme token, but the token's actual rendered color — and so its contrast against neighboring panes — is decided by `SemanticPalette`, outside this file. Touch-target-size and string-externalization are not listed: dragging a divider is mouse-driven on macOS, which has no touch-target concept, and this file defines no user-facing string for string-externalization to check.
+
+`separation-of-concerns` passes because `PaneSpacing` only reads and writes the app-wide spacing settings and `PaneSplitView` only applies them; per-pane overrides live in a separate model. `unit-test-coverage` is `partial`: `Panes/PaneSpacingOverrideTests.swift` pins the override model that resolves against the global spacing, but no test file targets `PaneSpacing` or `PaneSplitView` directly.
 
 ## Change History
 
@@ -235,3 +241,4 @@ Data-minimization passes because the six `pane_spacing_*` settings are window-ch
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: add a Design Decision assigning clamping to the settings-control layer and resolve the negative/oversized-input edge case against it; drop the stale "flagged as an open question under Accessibility" claim; move the platform-design-languages reference from `references` to `related` and add the three sibling ComposableTabs recipes to `related`; drop the redundant `macos` tag; reformat Design Decisions into the bold three-line form; correct the WinUI 3 GridSplitter namespace; make three test vectors observable with a recording subclass/bitmap sampling instead of an unobservable claim; remove an unsupported "re-applies insets" claim from Accessibility; note the `Int`→`CGFloat` conversion in two requirements; and rebuild Compliance around checks that exist in the catalog. |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/composable-tabs/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |

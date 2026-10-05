@@ -1,32 +1,31 @@
 ---
 id: 54413e61-d82d-4526-b496-5daf917ce877
-title: Window Activation
-domain: agenticdevelopertoolkit://cookbook/system/system-windows/window-activation
+title: "Window Activation"
+domain: adtoolkit://cookbook/system/system-windows/window-activation
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Diagnostic harness that brings a target terminal window to the front
-  via a cascade of activation strategies and logs every step.
+summary: "Diagnostic harness that brings a target terminal window to the front via a cascade of activation strategies and logs every step."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-management
-- terminals
-- diagnostics
+  - window-management
+  - terminals
+  - diagnostics
 depends-on:
-- agenticdevelopertoolkit://cookbook/system/scripting
+  - adtoolkit://cookbook/system/scripting
 related:
-- agenticdevelopertoolkit://cookbook/ui/windows/screen-manager
+  - adtoolkit://cookbook/ui/windows/screen-manager
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Window Activation
@@ -90,7 +89,7 @@ terminal window that owns a session and wants a written trace of each attempt.
 - **ax-match-rule**: A window MUST match when its title contains, by localized case-insensitive comparison, any one of: `projectName`, the last path component of `cwd`, or the full `cwd`.
 - **ax-match-log**: On a match the strategy MUST append `  AX match: "<title>" in <app name>`, using `?` when the application has no localized name.
 - **ax-activation-sequence**: On a match the strategy MUST activate the owning application, block the calling thread for 0.15 seconds, perform the raise action on the window through the accessibility layer, and then set the window's main attribute to true, in that order.
-- **ax-raise-result**: NEEDS REVIEW: Not implemented in source. The accessibility title-match strategy returns `true` on a title match without checking the results of the application activate call, the raise action or the set-main call, so an accessibility failure is reported as success, contradicting the contract's "Return `true` if the front window now belongs to the target"; whether a failed raise should return `false` needs a decision from the toolkit owner.
+- **ax-raise-result**: The accessibility title-match strategy returns true on a title match without checking the results of the application activate call, the raise action or the set-main call, so an accessibility failure is reported as success, short of the contract "Return true if the front window now belongs to the target".
 - **ax-no-match**: When no window in any regular application matches, the strategy MUST return `false` without appending a log line.
 - **ax-injected-apps**: The strategy MUST read the running-application list only through its injected running-applications provider, defaulting to the real provider.
 
@@ -101,7 +100,7 @@ terminal window that owns a session and wants a written trace of each attempt.
 - **front-catalog-default**: The strategy's catalog MUST default to the full terminal catalog and MUST accept a caller-supplied catalog at construction.
 - **front-not-running**: When no catalog entry matches or no running application has the entry's bundle identifier, the strategy MUST return `false` without appending a log line.
 - **front-activate-first**: When at least one running instance exists, the strategy MUST activate the first instance returned by the provider and does not select any specific window.
-- **front-activate-result**: NEEDS REVIEW: Not implemented in source. The bring-terminal-to-front strategy returns `true` after calling the application activate method without checking its boolean result, so a refused activation is reported as success, contradicting the contract's "Return `true` if the front window now belongs to the target"; whether that result should gate the return value needs a decision from the toolkit owner.
+- **front-activate-result**: The bring-terminal-to-front strategy returns true after calling the application activate method without checking its boolean result, so a refused activation is reported as success, short of the contract "Return true if the front window now belongs to the target".
 
 ### The terminal catalog
 
@@ -133,7 +132,7 @@ terminal window that owns a session and wants a written trace of each attempt.
 - **log-text-format**: Reading the log's text MUST return every entry followed by a single newline, concatenated, or the empty string when there are no entries.
 - **log-file-create**: On the first append to a file that does not exist, the log MUST create it by writing the entry and a newline atomically.
 - **log-file-append-only**: When the file exists, the log MUST append the entry and a newline at the end and MUST NOT truncate existing content; if the file cannot be opened for writing, or the seek or write fails, the line MUST be dropped from the file (it remains in memory), per its documentation.
-- **log-file-write-ordering**: NEEDS REVIEW: Not implemented in source. Appending serializes only the in-memory append on its queue and writes to the file outside that queue, so concurrent appends can reach the file in a different order than the buffer and two first appends can both see a missing file and each write it atomically, losing a line, which breaks the declared guarantee that the text and the file are byte-identical; whether file writes must move onto the queue needs a decision from the toolkit owner.
+- **log-file-write-ordering**: Appending to the log serializes only the in-memory append on its queue; the file write happens outside that queue. Concurrent appends can reach the file in a different order than the buffer, and two first appends can both see a missing file and each write it atomically, losing a line, so the text and the file are not guaranteed byte-identical.
 - **log-clear**: Clearing MUST empty the in-memory buffer and, when a file URL exists, overwrite the file with an empty string atomically, ignoring any write error.
 - **log-path**: Reading the log path MUST return the file-system path of the log file, or `nil` for an in-memory-only log.
 - **log-shared-instance**: One process-wide shared instance MUST be created with the application-support subdirectory `Whippet`.
@@ -321,6 +320,18 @@ Levels are descriptive only; the log has no level field.
 **Rationale**: Testability of strategies was the goal of the abstraction; the inventory is diagnostic output and was not parameterized by catalog.
 **Approved**: pending
 
+**Decision**: The accessibility raise strategy reports success without checking its activate, raise and set-main results.
+**Rationale**: It stands today because only the title match gates the return. Closing it needs a toolkit-owner decision on whether a failed raise returns false, and a test.
+**Approved**: pending
+
+**Decision**: The bring-to-front strategy reports success regardless of the activate result.
+**Rationale**: It stands today because the activate result is not read. Closing it needs a toolkit-owner decision on whether that result gates the return value, and a test.
+**Approved**: pending
+
+**Decision**: Log file writes are not serialized with the in-memory buffer, so the file can diverge from the text.
+**Rationale**: It stands today because only the in-memory append is queued. Closing it needs a toolkit-owner decision to move file writes onto the queue, and a concurrent-append test.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -341,6 +352,7 @@ separation-of-concerns passes because the target value, each strategy, the termi
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved three NEEDS REVIEW markers as current behavior plus pending decisions |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to system/system-windows/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from `ActivationTestLog.swift`, `BuiltInActivationStrategies.swift`, `KnownTerminals.swift`, `RunningAppsProvider.swift`, `TTYResolver.swift`, `WindowActivationStrategy.swift`, `WindowActivationTarget.swift` and `WindowActivationTester.swift` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `ActivationTestLog.swift`, `BuiltInActivationStrategies.swift`, `KnownTerminals.swift`, `RunningAppsProvider.swift`, `TTYResolver.swift`, `WindowActivationStrategy.swift`, `WindowActivationTarget.swift` and `WindowActivationTester.swift` |

@@ -1,54 +1,48 @@
 ---
 id: 3b310d80-e18d-4f45-9041-10a278f775c1
-domain: agenticdevelopertoolkit://cookbook/ai/providers/provider-runtime
+domain: adtoolkit://cookbook/ai/providers/provider-runtime
 type: ingredient
-title: Provider Runtime
-version: 1.1.0
+title: "Provider Runtime"
+version: 1.2.0
 status: review
 language: en
-summary: Provider metadata, HTTP request building, and network-backed catalog stores
-  for AI chat dispatch and model discovery.
+summary: "Provider metadata, HTTP request building, and network-backed catalog stores for AI chat dispatch and model discovery."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai
-- provider
-- networking
-- model-catalog
-- caching
-- concurrency
-- subprocess
-- cli
-- security
-created: '2026-09-23'
-modified: '2026-09-27'
+  - ai
+  - provider
+  - networking
+  - model-catalog
+  - caching
+  - concurrency
+  - subprocess
+  - cli
+  - security
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
-approved-by: null
-approved-date: null
+approved-by:
+approved-date:
 copyright: 2026 Mike Fullerton
 license: MIT
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/AI/AIProvider.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/AI/AIRequestBuilder.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/AI/ArtificialAnalysisStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/AI/ClaudeCLI.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/AI/ModelCatalogStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/AI/OllamaModelMetadata.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/AI/OllamaModelPageStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/AI/OpenAIModelCatalog.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/ModelCatalogStoreTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/ArtificialAnalysisStoreTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/OllamaModelPageStoreTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/OllamaModelMetadataTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/OpenAIModelCatalogTests.swift
-  (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/AI/AIProvider.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/AI/AIRequestBuilder.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/AI/ArtificialAnalysisStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/AI/ClaudeCLI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/AI/ModelCatalogStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/AI/OllamaModelMetadata.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/AI/OllamaModelPageStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/AI/OpenAIModelCatalog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/ModelCatalogStoreTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/ArtificialAnalysisStoreTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/OllamaModelPageStoreTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/OllamaModelMetadataTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/OpenAIModelCatalogTests.swift (agenticdevelopertoolkit)
 ---
 
 # Provider Runtime
@@ -90,7 +84,7 @@ All eight parts are pure logic with no rendering of their own and no dependency 
 - **google-request-shape**: The Google builder MUST target `https://generativelanguage.googleapis.com/v1beta/models/<model>:generateContent?key=<apiKey>`, default an empty model to `"gemini-2.0-flash"`, remap any message whose role is `"assistant"` to Gemini's `"model"` role, and include `systemInstruction` in the body only when the system prompt is non-empty.
 - **reply-parsing-by-provider**: Reply parsing MUST return `"(Unable to parse response)"` when the response body is not a JSON object, and otherwise MUST extract `content[0].text` for `anthropic`, `choices[0].message.content` for `openai` and `custom`, and `candidates[0].content.parts[0].text` for `google`.
 - **reply-parsing-empty-fallback**: Reply parsing MUST return `"(Empty response)"` whenever the provider-specific shape is not found in an otherwise-parseable JSON object.
-- **claude-cli-reply-parsing**: NEEDS REVIEW: Not implemented. Reply parsing for the CLI provider is an unfinished stub — flagged in the source with a `// todo: fix this` comment before it falls through — so a CLI reply is never actually extracted from the response body; it always falls through to the generic `"(Empty response)"` fallback regardless of what the CLI actually returned.
+- **claude-cli-reply-parsing**: Reply parsing for the CLI provider MUST fall through to the generic `"(Empty response)"` fallback regardless of the response body: the source's CLI branch is an unfinished stub (marked with a `// todo: fix this` comment) that extracts nothing, so a CLI reply is never extracted by this parser.
 - **error-message-extraction**: Error message extraction MUST prefer an `error.message` field, then a top-level `message` field, from a parseable JSON error body, and MUST fall back to `"HTTP <statusCode>"` when the body is not JSON or carries neither field.
 - **request-builder-statelessness**: The builder holds no state of its own; none of its operations require confinement to a particular execution context, and it MAY be called from any context.
 
@@ -174,7 +168,7 @@ All eight parts are pure logic with no rendering of their own and no dependency 
 - **api-key-in-memory-only-scope**: The API key and custom base URL held by the request configuration MUST be understood as caller-supplied, in-memory values for the duration of one request — this component itself performs no persistence of them; responsibility for how they were obtained and stored belongs to the caller (a chat view model, a terminal summarizer, or a settings view model).
 - **artificial-analysis-key-storage**: The API key and rank cache backing the model ranking store MUST be persisted via the plain settings store rather than the secure credential store — this is a genuine, unmitigated plaintext-storage fact about the shipped code, not a hypothetical (see Platform Notes for the storage mechanism this maps to).
 - **google-key-in-url**: The Google request builder MUST place the configured API key directly in the request URL's query string (`?key=<apiKey>`) per the Gemini API's documented contract — callers and any request-logging infrastructure downstream of this component MUST treat that URL as key-bearing.
-- **custom-endpoint-scheme-validation**: NEEDS REVIEW: Not implemented. Neither the request builder's OpenAI-compatible path (for the custom provider's base URL), nor the model listing store's fetch, nor the local model metadata store's fetch validates a URL scheme before use — an operator-supplied `http://` endpoint carries its `Authorization: Bearer <apiKey>` header in plaintext with no guard anywhere in this component.
+- **custom-endpoint-scheme-validation**: The request builder's OpenAI-compatible path (for the custom provider's base URL), the model listing store's fetch, and the local model metadata store's fetch MUST use the supplied base URL as given, performing no URL scheme validation; an operator-supplied `http://` endpoint therefore carries its `Authorization: Bearer <apiKey>` header in plaintext, with no guard anywhere in this component.
 
 ## Appearance
 
@@ -328,12 +322,22 @@ Not applicable: none of the 8 parts call a logger of any kind — every failure 
 **Rationale**: the source doc comment states the adh catalog's descriptions are operator-authored and curated, and therefore authoritative where present, with OpenRouter/models.dev retained only as the fallback pair.
 **Approved**: pending
 
+**Decision**: CLI reply parsing is an unfinished stub: the CLI provider's reply is never extracted and always reads as the empty-response fallback.
+**Rationale**: The CLI branch of reply parsing is a placeholder in the source (a `// todo: fix this` comment followed by a fall-through), so only the HTTP providers' response shapes are parsed. Closing it takes defining the CLI response shape and extracting the reply text from it, with a test vector for that shape.
+**Approved**: pending
+
+**Decision**: Custom and OpenAI-compatible endpoint base URLs are not scheme-validated.
+**Rationale**: The builder and the two fetching stores take the caller's base URL verbatim, so a plain-http endpoint sends the bearer key in cleartext; the four built-in provider URLs are fixed HTTPS literals and are unaffected. Closing it would take rejecting or warning on non-https schemes (allowing loopback for local servers such as Ollama) at the point the URL is accepted.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Notes |
 |-------|--------|-------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | partial | Request building (`AIRequestBuilder`), the CLI wrapper (`ClaudeCLI`), and each catalog/metadata store sit in separate types with one concern each, but `ArtificialAnalysisStore` also owns its API-key and rank-cache persistence settings alongside its network fetch. |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | `AIRequestBuilderTests.swift`, `ModelCatalogStoreTests.swift`, `ArtificialAnalysisStoreTests.swift`, `OllamaModelMetadataTests.swift` and `OllamaModelPageStoreTests.swift` exercise the builder and the stores; `ClaudeCLI` has no dedicated test file and the CLI reply-parsing branch is an untested stub. |
 | [secure-storage](agenticdevelopercookbook://compliance/security#secure-storage) | failed | `ArtificialAnalysisStore.apiKey` and `.rankCache` are constructed via `UserSetting` without `isSecure: true`, which routes them through plain (non-Keychain) storage rather than the secure provider this codebase already offers for exactly this purpose. |
-| [input-sanitization](agenticdevelopercookbook://compliance/security#input-sanitization) | partial | The four hardcoded provider base URLs are fixed HTTPS literals, but `customBaseURL`/`baseURL`/`openAIBaseURL` accepted from a caller for `.custom` and OpenAI-compatible/Ollama routes carry no scheme validation before an API key is attached to a request against them (see the open question on custom-endpoint-scheme-validation). |
+| [input-sanitization](agenticdevelopercookbook://compliance/security#input-sanitization) | partial | The four hardcoded provider base URLs are fixed HTTPS literals, but `customBaseURL`/`baseURL`/`openAIBaseURL` accepted from a caller for `.custom` and OpenAI-compatible/Ollama routes carry no scheme validation before an API key is attached to a request against them (see custom-endpoint-scheme-validation and its Design Decision). |
 | [graceful-degradation](agenticdevelopercookbook://compliance/reliability#graceful-degradation) | passed | Every fetch function across `ArtificialAnalysisStore`, `ModelCatalogStore`, `LocalModelMetadataStore`, `OllamaModelPageStore`, and `OpenAIModelCatalog` degrades to `nil`/`[:]`/`[]` on any failure rather than throwing, with `ArtificialAnalysisStore`/`ModelCatalogStore` additionally falling back to their last good data. |
 | [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | partial | `ClaudeCLI.CLIError` and `AIRequestError` are typed, `LocalizedError`-conforming enums with a description for every case, but `parseAssistantReply`'s `.claudeCLI` branch silently falls through to a generic fallback string instead of surfacing its known-incomplete state as an error. |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Every user-facing string in `AIProvider`, `AIRequestError`, `ClaudeCLI.CLIError`, and `AIRequestBuilder`'s fallback strings is a hardcoded English literal; no localization mechanism appears in any of the 8 files. |
@@ -342,7 +346,8 @@ Not applicable: none of the 8 parts call a logger of any kind — every failure 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/providers/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restate unimplemented CLI reply parsing and endpoint scheme validation as current behavior with pending decisions; add separation-of-concerns and unit-test-coverage. |

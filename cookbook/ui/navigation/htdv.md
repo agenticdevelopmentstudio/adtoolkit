@@ -1,56 +1,48 @@
 ---
 id: faa2c3f3-1ff7-45fb-b6da-efed3cc1d451
-title: Hierarchical Topic Detail View
-domain: agenticdevelopertoolkit://cookbook/ui/navigation/htdv
+title: "Hierarchical Topic Detail View"
+domain: adtoolkit://cookbook/ui/navigation/htdv
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The non-UI logic behind the hierarchical topic detail view: the rail/detail
-  navigation state machine, the rails-vs-stack layout decision, the data model,
-  and the declarative forms subsystem.'
+summary: "The non-UI logic behind the hierarchical topic detail view: the rail/detail navigation state machine, the rails-vs-stack layout decision, the data model, and the declarative forms subsystem."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- htdv
-- engine
-- navigation
-- forms
-- validation
+  - htdv
+  - engine
+  - navigation
+  - forms
+  - validation
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/HTDV/Controller/HTDVController.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/HTDV/Model/HTDVModel.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/HTDV/Model/HTDVCellContent.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/HTDV/Layout/HTDVLayoutEngine.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/HTDV/Forms/FormSpec.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/HTDV/Forms/FormValue.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/HTDV/Forms/FormState.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/HTDV/Forms/FormValidator.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/HTDV/Markdown/MarkdownEditing.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/HTDVControllerTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/HTDVLayoutEngineTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/HTDVModelTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/FormStateTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/FormValidatorTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/PlainTextMarkdownEditingTests.swift
-  (agenticdevelopertoolkit)
-- docs/architecture/htdv.md (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/HTDV/Controller/HTDVController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/HTDV/Model/HTDVModel.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/HTDV/Model/HTDVCellContent.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/HTDV/Layout/HTDVLayoutEngine.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/HTDV/Forms/FormSpec.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/HTDV/Forms/FormValue.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/HTDV/Forms/FormState.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/HTDV/Forms/FormValidator.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/HTDV/Markdown/MarkdownEditing.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/HTDVControllerTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/HTDVLayoutEngineTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/HTDVModelTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/FormStateTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/FormValidatorTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHTDVTests/PlainTextMarkdownEditingTests.swift (agenticdevelopertoolkit)
+  - docs/architecture/htdv.md (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Hierarchical Topic Detail View
@@ -205,8 +197,7 @@ what the presentation layer is responsible for.
   a value carrying the failing level index and a user-facing message
   derived from the error, MUST record the failed request so retrying can
   reissue it, and MUST clear the loading level index - unless the failure
-  is itself stale (see stale-response-dropped), in which case none of this
-  MUST happen.
+  is itself stale (see stale-response-dropped), in which case this MUST NOT happen.
 - **pop-to-level-contract**: Jumping back to a level MUST no-op when the
   target index is below `-1` or at/beyond the current deepest level;
   otherwise it MUST invalidate any in-flight deeper load, truncate the
@@ -866,7 +857,7 @@ or a trapping `Int` conversion at the point the value is used, rather than
 only at construction.
 **Approved**: pending
 
-**Decision (AppKit/UIKit)**: `MarkdownEditing.swift` defines the
+**Decision**: (AppKit/UIKit) `MarkdownEditing.swift` defines the
 `MarkdownEditing` protocol and ships a concrete default implementation
 (`PlainTextMarkdownEditing`, with AppKit and UIKit view controllers) in
 the same file, unlike the other eight given sources, which hold no
@@ -928,6 +919,7 @@ localization key, per Localization above.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/navigation/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,50 +1,44 @@
 ---
 id: cf3a3dc9-6fed-47ba-a699-71ff806dcedd
-title: Core Utilities
-domain: agenticdevelopertoolkit://cookbook/foundation/core-utilities
+title: "Core Utilities"
+domain: adtoolkit://cookbook/foundation/core-utilities
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Six foundation-tier utilities: secret storage in the system credential
-  store, an encoding-skip wrapper, a structured-logging factory, floating-point
-  clamping, semantic-version parsing, and text folding.'
+summary: "Six foundation-tier utilities: secret storage in the system credential store, an encoding-skip wrapper, a structured-logging factory, floating-point clamping, semantic-version parsing, and text folding."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- credential-storage
-- secrets
-- semantic-versioning
-- logging
-- text-normalization
-- value-types
+  - credential-storage
+  - secrets
+  - semantic-versioning
+  - logging
+  - text-normalization
+  - value-types
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/plugins/secret-storing
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range
+  - adtoolkit://cookbook/ai/plugins/secret-storing
+  - adtoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range
 references:
-- packages/apple/AgenticToolkit/Core/CodableIgnored.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/KeychainHelper.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/MathUtils.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/TextFolding.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/KeychainHelperTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/SemanticVersionTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/TextFoldingTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/CGFloatClampedTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/CodableIgnored.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/KeychainHelper.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/MathUtils.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/TextFolding.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/KeychainHelperTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/SemanticVersionTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/TextFoldingTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/CGFloatClampedTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Core Utilities
@@ -126,7 +120,7 @@ anything, holds view state, or performs networking.
   built with a non-nothing access group, it MUST additionally scope to that
   group (`kSecAttrAccessGroup`) and require data-protection-keychain
   semantics (`kSecUseDataProtectionKeychain` = true); when the access group
-  is nothing, neither key MUST be present.
+  is nothing, both keys MUST be absent.
 - **keychain-set-overwrites**: setting a value that hits a duplicate-item
   status on its first attempt MUST fall back to an update for the same
   query, so a second `set` call for the same key MUST overwrite the first
@@ -640,6 +634,7 @@ scope, never the secret string itself.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to foundation/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | 2026-09-24 | | Initial recipe covering `CodableIgnored`, `KeychainHelper`, `Loggable`, `MathUtils` (`CGFloat.clamped(to:)`), `SemanticVersion`, and `TextFolding`. |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe covering `CodableIgnored`, `KeychainHelper`, `Loggable`, `MathUtils` (`CGFloat.clamped(to:)`), `SemanticVersion`, and `TextFolding`. |

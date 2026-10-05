@@ -1,30 +1,29 @@
 ---
 id: 0ab38622-b4a9-424c-89e2-5d27073680c7
-title: Window Discovery
-domain: agenticdevelopertoolkit://cookbook/system/system-windows/window-discovery
+title: "Window Discovery"
+domain: adtoolkit://cookbook/system/system-windows/window-discovery
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Lists every titled window of regular apps grouped by app, flags windows
-  matching a session project, and focuses one.
+summary: "Lists every titled window of regular apps grouped by app, flags windows matching a session project, and focuses one."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-management
-- window-matching
+  - window-management
+  - window-matching
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/system/system-windows/window-explorer-view
+  - adtoolkit://cookbook/system/system-windows/window-explorer-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Window Discovery
@@ -76,7 +75,7 @@ is observable; the host binds to its three published properties.
 - **results-published-on-main**: The grouped result MUST be assigned to `apps`, and `isLoading` set to `false`, on the main queue in a single main-queue block, `apps` first.
 - **weak-owner**: The background work MUST hold the model weakly; when the model has been deallocated before the work starts, nothing MUST be enumerated or published.
 - **no-cancellation-or-timeout**: Discovery MUST NOT offer cancellation or a timeout; once dispatched, the enumeration runs to completion and publishes.
-- **overlapping-discovery-order**: NEEDS REVIEW: Not implemented in source. Two overlapping discovery calls each dispatch independent background work and each publish on completion, so `apps` ends with whichever enumeration finishes last (not the last one started) and `isLoading` turns `false` when the first finishes; the source has no generation token or serialisation. Settling it needs an owner decision on whether the latest call must win.
+- **overlapping-discovery-order**: Two overlapping discovery calls each dispatch independent background work and each publish on completion, so the app list ends with whichever enumeration finishes last (not last started) and the loading flag turns false when the first finishes; there is no generation token or serialisation.
 
 ### Enumeration and grouping
 
@@ -264,8 +263,12 @@ Discovery itself logs nothing, including the permission-denied path, which is si
 **Rationale**: The activation doc comment: "on failure it logs and leaves the panel open so the user can retry or pick another window, rather than silently closing as if it worked."
 **Approved**: pending
 
-**Decision** (Apple platforms): Snapshot running apps on the calling thread, enumerate windows in the background.
+**Decision**: (Apple platforms) Snapshot running apps on the calling thread, enumerate windows in the background.
 **Rationale**: The source comment names `NSWorkspace`/`NSRunningApplication` as main-thread APIs; the window list and Accessibility backfill can be slow, so they run off the main thread.
+**Approved**: pending
+
+**Decision**: Overlapping discovery calls publish in completion order, not start order.
+**Rationale**: It stands today because no generation token exists. Closing it needs an owner decision that the latest call must win, and a test with overlapping calls.
 **Approved**: pending
 
 ## Compliance
@@ -289,6 +292,7 @@ separation-of-concerns passes because enumeration and focus live in the window-m
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved overlapping-discovery-order marker as current behavior plus pending decision |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to system/system-windows/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from `WindowDiscoveryViewModel.swift` and `WindowDiscoveryMatchingTests.swift` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `WindowDiscoveryViewModel.swift` and `WindowDiscoveryMatchingTests.swift` |

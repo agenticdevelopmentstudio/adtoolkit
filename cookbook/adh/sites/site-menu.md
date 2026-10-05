@@ -1,35 +1,37 @@
 ---
 id: f2d56415-ac36-4a27-bee5-b447c4186513
-title: SiteMenu
-domain: agenticdevelopertoolkit://cookbook/adh/sites/site-menu
+title: "SiteMenu"
+domain: adtoolkit://cookbook/adh/sites/site-menu
 type: recipe
-version: 1.0.3
-status: draft
+version: 1.1.1
+status: review
 language: en
-created: '2026-07-05'
-modified: '2026-09-27'
+created: 2026-07-05
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "The platform navigation menu: an icon+label+description list with inline sub-items, an auth-conditional top section, and a Recents flyout."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- chrome
-- navigation
-- site-menu
-- recents
-- ui
+  - chrome
+  - navigation
+  - site-menu
+  - recents
+  - ui
 ingredients:
-- site-wordmark
+  - site-wordmark
 depends-on: []
 related:
-- site-wordmark
-- option-menu
-- topic-detail
+  - site-wordmark
+  - option-menu
+  - topic-detail
 references:
-- agenticdeveloperhub://docs/deep-linking-foundation
+  - agenticdeveloperhub://docs/deep-linking-foundation
+approved-by: ""
+approved-date: ""
 ---
 
 # SiteMenu
@@ -59,7 +61,7 @@ the user actually landed on and deep-links back to each.
 | Name | Domain | Role | Required | Configuration |
 |---|---|---|---|---|
 | NavigationPopover | `@agentic-toolkit/adh/header` | Popover surface, search box, keyboard navigation, row rendering, flyout submenus | yes | Consumes `PopoverEntry[]` with icon + inline-subitem support |
-| SiteWordmark | agenticdevelopertoolkit://cookbook/adh/sites/site-wordmark | The header trigger that opens the menu | yes | Unchanged |
+| SiteWordmark | adtoolkit://cookbook/adh/sites/site-wordmark | The header trigger that opens the menu | yes | Unchanged |
 | menu-icons map | `@agentic-toolkit/adh/header` `menu-icons.ts` (ADH vocabulary — it is keyed by `SiteId`) | Single source of truth for every row's icon — keyed by SiteId, in-hub route path, or chrome key | yes | `MENU_ICONS` record + `menuIcon(key)` resolver |
 | lucide-react icons | (library) | The icon glyphs | yes | Only icons already used elsewhere on the platform are reused where one exists |
 | `useWorkspaces` | `@/api/workspaces` (hub) | Supplies the Workspaces flyout entries | yes (logged-in) | react-query; `{ slug, name, type }[]` |
@@ -221,38 +223,40 @@ LOGGED OUT (marketing)               LOGGED IN (/home + workspace)
 - Responsive: verify via Playwright at 375 / 768 / 1440; keyboard + pointer.
 - Tailwind sources: no new package boundary; icons are lucide (already a dependency
   of `@agentic-toolkit/adh` and externalized by it, so the host supplies the one copy).
+- **WinUI 3**: Build the menu from a `Flyout`/`MenuFlyout` anchored to the wordmark button, with a `NavigationViewItem`-style row template of icon (`FontIcon`/`SymbolIcon` from a single `MenuIcons` dictionary keyed by site id, route, or chrome key), label and description `TextBlock`s. Inline sub-items map to a nested `ItemsRepeater` with a left margin; the Workspaces and Recents flyouts map to `MenuFlyoutSubItem`. Port Recents as a class holding a capped `List<Place>` persisted through `ApplicationData.Current.LocalSettings`, with a `DispatcherTimer` as the settle debounce; keyboard navigation comes from `MenuFlyout`'s built-in arrow, Escape and focus-return behavior.
 
 ## Reference Implementations
 
 | Platform | Path |
 |----------|------|
+| web | `packages/web/packages/adh/src/header/SiteMenu.tsx` |
+| web | `packages/web/packages/adh/src/header/SiteMenuSwitcher.tsx` |
+| web | `packages/web/packages/adh/src/header/MarketingSiteMenu.tsx` |
+| web | `packages/web/packages/adh/src/header/WorkspaceSiteMenu.tsx` |
+| web | `packages/web/packages/adh/src/header/menu-icons.ts` |
+| web | `packages/web/packages/adh/src/header/recents.ts` |
 
 ## Design Decisions
 
-- **One shared core, two configs.** The menu is already `SiteMenu` →
-  `NavigationPopover` driven by two `MenuGroup[]` arrays; "duplicate the layout"
-  means extracting the shared Hub core so both configs reuse it and only the top
-  section diverges. Avoids the copy-paste drift the two configs risk today.
-- **Icons live in one `menu-icons` map.** A single co-located map
-  (`header/menu-icons.ts`) keyed by SiteId / route path / chrome key is the one
-  authoritative icon per entry — none inline in JSX. Chosen over hanging an `icon`
-  field on `SiteDef`: the registry is consumed by ~40 sites, so an added field is a
-  higher-blast public-shape change for no current non-menu consumer (YAGNI); the
-  map is a small-reversible-decision that can be promoted to `SiteDef` later if a
-  card/launcher ever needs the same glyphs. It still satisfies the single-source
-  requirement — every row, site or chrome, resolves through `menuIcon(key)`.
-- **Inline sub-items are a new row kind, not the existing flyout.** The existing
-  `topic` group discloses a side flyout; inline sub-items are always-visible
-  indented leaves. They are distinct kinds so Hub can nest visibly while Workspaces
-  and Recents still use flyouts.
-- **Settle-based Recents, not per-view instrumentation.** Recording after the
-  selection stack settles (~1.5s) coalesces drill-through into the final
-  destination with one observer and no per-page hooks — see
-  `adh/docs/ui/deep-linking-foundation.md`. Records "the eventual destination, not each
-  click."
-- **localStorage, not a backend.** Recents is inherently ephemeral and per-device;
-  the `ftd-storage` pattern already exists for exactly this. No table, no migration
-  (YAGNI); a cross-device sync can be added later behind the same store API.
+**Decision**: One shared core, two configs.
+**Rationale**: The menu is already `SiteMenu` -> `NavigationPopover` driven by two `MenuGroup[]` arrays; "duplicate the layout" means extracting the shared Hub core so both configs reuse it and only the top section diverges, which avoids the copy-paste drift the two configs risk today.
+**Approved**: pending
+
+**Decision**: Icons live in one `menu-icons` map.
+**Rationale**: A single co-located map (`header/menu-icons.ts`) keyed by SiteId / route path / chrome key is the one authoritative icon per entry, none inline in JSX. Chosen over hanging an `icon` field on `SiteDef`: the registry is consumed by roughly 40 sites, so an added field is a higher-blast public-shape change for no current non-menu consumer; the map can be promoted to `SiteDef` later if a card or launcher needs the same glyphs, and every row still resolves through `menuIcon(key)`.
+**Approved**: pending
+
+**Decision**: Inline sub-items are a new row kind, not the existing flyout.
+**Rationale**: The existing `topic` group discloses a side flyout; inline sub-items are always-visible indented leaves. They are distinct kinds so Hub can nest visibly while Workspaces and Recents still use flyouts.
+**Approved**: pending
+
+**Decision**: Settle-based Recents, not per-view instrumentation.
+**Rationale**: Recording after the selection stack settles (about 1.5s) coalesces drill-through into the final destination with one observer and no per-page hooks (see `adh/docs/ui/deep-linking-foundation.md`); it records the eventual destination, not each click.
+**Approved**: pending
+
+**Decision**: Recents persist in local storage, not a backend.
+**Rationale**: Recents is inherently ephemeral and per-device and the `ftd-storage` pattern already exists for exactly this, so there is no table or migration; a cross-device sync can be added later behind the same store API.
+**Approved**: pending
 
 ## Compliance
 
@@ -282,7 +286,7 @@ LOGGED OUT (marketing)               LOGGED IN (/home + workspace)
 | [data-retention-policy](agenticdevelopercookbook://compliance/privacy-and-data#data-retention-policy) | passed | Privacy and Data |
 | [progress-indication](agenticdevelopercookbook://compliance/performance#progress-indication) | passed | Performance |
 
-Notes: separation-of-concerns passes because the recipe composes a generic, registry-free `NavigationPopover` with an ADH-specific `MenuGroup[]` config, keeping the reusable chrome and the ADH vocabulary (`SiteMenu`, `menu-icons`) apart. unit-test-coverage is partial: `recents.test.ts`, `navigationPopover.test.tsx`, and `useSiteMenu.test.tsx` cover the recents store, the keyboard/flyout mechanics, and row resolution, but no test file exists for `SiteMenu.tsx`, `MarketingSiteMenu.tsx`, `WorkspaceSiteMenu.tsx`, or `menu-icons.ts`, so the auth-conditional top section and the Hub inline-subitem inventory go untested. explicit-error-handling passes because the recorder's localStorage access is documented as try/catch-swallowed (recents-persist-local) and a Recents entry pointing at a deleted entity is routed to the destination feature's own not-found state rather than thrown. test-pyramid is partial because the Integration Test Vectors (T1-T12) are defined exclusively at the rendering/integration level — full-menu composition, flyouts, keyboard flows — with no unit-level vectors for isolated pieces like the icon resolver or the settle-debounce timer. screen-reader-support and semantic-markup pass because keyboard-accessible requires retaining `NavigationPopover`'s full keyboard/ARIA model, including menu roles, unchanged. keyboard-navigable passes because the enhanced menu is required to retain arrow navigation, flyout entry/exit, and Escape-to-close (T12). focus-management passes because keyboard-accessible and T12 both require focus to return to the trigger once the menu or a flyout closes. string-externalization and no-hardcoded-strings fail because every visible label (Login, Sign up, Home, Workspaces, Recents, Hub, BitBag, Community, and the rest of the Hub inventory) appears as a literal string in this recipe with no localization resource, key, or i18n library named anywhere in Overview, Ingredients, or Platform Notes. rtl-layout-support fails because nothing in the recipe addresses right-to-left mirroring for the menu's flyouts or row layout. text-expansion-tolerance fails because Edge Cases states long labels and descriptions truncate via ellipsis rather than accommodating expansion. platform-design-language and native-controls-preference pass because the menu reuses the existing `NavigationPopover` chrome rather than a bespoke implementation, per the "One shared core, two configs" Design Decision. deep-linking-support is partial because recents-deep-link requires linking to the recorded view's deep URL, but Edge Cases notes a not-yet-URL-addressable view falls back to its feature route — an explicitly open gap ("As deep-linking lands, the same place records a precise URL"). graceful-degradation passes because a localStorage failure leaves Recents empty and hidden rather than crashing, and a loading or empty Workspaces flyout shows a Spinner or EmptyState instead of blocking. data-integrity and idempotent-operations pass because recents-dedupe-cap requires re-recording an existing place to move it to the front rather than duplicate it, with the store capped at exactly 10 and oldest-eviction on overflow. state-recovery passes because recents-persist-local requires recents to survive a reload (T11). fault-tolerance passes because a recent referencing a deleted entity still navigates and lets the destination feature render its own not-found state rather than erroring. data-minimization and data-retention-policy pass because Recents is scoped to place labels and URLs only, with a fixed cap of 10 and oldest-eviction as its retention rule. progress-indication passes because the Workspaces flyout is required to show a Spinner while its data loads.
+Notes: separation-of-concerns passes because the recipe composes a generic, registry-free `NavigationPopover` with an ADH-specific `MenuGroup[]` config, keeping the reusable chrome and the ADH vocabulary (`SiteMenu`, `menu-icons`) apart. unit-test-coverage is partial: `siteMenu.test.tsx` covers the Workspaces flyout (listed once loaded, absent while loading, absent on failure or empty), `recents.test.ts`, `navigationPopover.test.tsx`, and `useSiteMenu.test.tsx` cover the recents store, the keyboard/flyout mechanics, and row resolution, `useSiteMenu.test.tsx` also pins the `menu-icons` resolution, but no test file targets `MarketingSiteMenu.tsx` or `WorkspaceSiteMenu.tsx` directly (`siteMenuSwitcher.dispatch.test.tsx` mocks them), so the auth-conditional top section and the Hub inline-subitem inventory are only partly exercised. explicit-error-handling passes because the recorder's localStorage access is documented as try/catch-swallowed (recents-persist-local) and a Recents entry pointing at a deleted entity is routed to the destination feature's own not-found state rather than thrown. test-pyramid is partial because the Integration Test Vectors (T1-T12) are defined exclusively at the rendering/integration level — full-menu composition, flyouts, keyboard flows — with no unit-level vectors for isolated pieces like the icon resolver or the settle-debounce timer. screen-reader-support and semantic-markup pass because keyboard-accessible requires retaining `NavigationPopover`'s full keyboard/ARIA model, including menu roles, unchanged. keyboard-navigable passes because the enhanced menu is required to retain arrow navigation, flyout entry/exit, and Escape-to-close (T12). focus-management passes because keyboard-accessible and T12 both require focus to return to the trigger once the menu or a flyout closes. string-externalization and no-hardcoded-strings fail because every visible label (Login, Sign up, Home, Workspaces, Recents, Hub, BitBag, Community, and the rest of the Hub inventory) appears as a literal string in this recipe with no localization resource, key, or i18n library named anywhere in Overview, Ingredients, or Platform Notes. rtl-layout-support fails because nothing in the recipe addresses right-to-left mirroring for the menu's flyouts or row layout. text-expansion-tolerance fails because Edge Cases states long labels and descriptions truncate via ellipsis rather than accommodating expansion. platform-design-language and native-controls-preference pass because the menu reuses the existing `NavigationPopover` chrome rather than a bespoke implementation, per the "One shared core, two configs" Design Decision. deep-linking-support is partial because recents-deep-link requires linking to the recorded view's deep URL, but Edge Cases notes a not-yet-URL-addressable view falls back to its feature route — an explicitly open gap ("As deep-linking lands, the same place records a precise URL"). graceful-degradation passes because a localStorage failure leaves Recents empty and hidden rather than crashing, and a loading or empty Workspaces flyout shows a Spinner or EmptyState instead of blocking. data-integrity and idempotent-operations pass because recents-dedupe-cap requires re-recording an existing place to move it to the front rather than duplicate it, with the store capped at exactly 10 and oldest-eviction on overflow. state-recovery passes because recents-persist-local requires recents to survive a reload (T11). fault-tolerance passes because a recent referencing a deleted entity still navigates and lets the destination feature render its own not-found state rather than erroring. data-minimization and data-retention-policy pass because Recents is scoped to place labels and URLs only, with a fixed cap of 10 and oldest-eviction as its retention rule. progress-indication passes because the Workspaces flyout is required to show a Spinner while its data loads.
 
 ## Change History
 
@@ -292,3 +296,5 @@ Notes: separation-of-concerns passes because the recipe composes a generic, regi
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Compliance section rewritten as linked checks against the compliance catalog |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.3 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Status review; Design Decisions in triple form; WinUI 3 guidance; Reference Implementations filled; unit-test-coverage note updated for siteMenu.test.tsx. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |

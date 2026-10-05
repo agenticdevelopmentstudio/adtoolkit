@@ -1,34 +1,33 @@
 ---
 id: 92d66361-a16d-4c35-a0d3-4c1c8bbd5f52
-title: Composable Tabs Settings View
-domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/settings-view
+title: "Composable Tabs Settings View"
+domain: adtoolkit://cookbook/ui/layout/composable-tabs/settings-view
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A project-specific settings sheet composing a split view with Tabs (per-edge
-  toggles) and Spacing (frame/divider) panels; edits apply live.
+summary: "A project-specific settings sheet composing a split view with Tabs (per-edge toggles) and Spacing (frame/divider) panels; edits apply live."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- composable-tabs
-- settings
-- split-view
-- sheet
+  - composable-tabs
+  - settings
+  - split-view
+  - sheet
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-split-view
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view
-- agenticdevelopertoolkit://cookbook/ui/controls/spacing-control
+  - adtoolkit://cookbook/ui/settings/settings-split-view
+  - adtoolkit://cookbook/ui/settings/layout/group-view
+  - adtoolkit://cookbook/ui/controls/spacing-control
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Composable Tabs Settings View
@@ -138,12 +137,13 @@ staged state, no commit, and no cancel.
   forward from the divider-spacing control's last field returns to the
   frame-spacing control's first field, so Tab cycles between the two
   controls without leaving the panel.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
 - **Corner radius**: The shared settings layout's card-corner-radius token,
   inherited by composing the group component's themed card — see
-  agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view#appearance for the
+  adtoolkit://cookbook/ui/settings/layout/group-view#appearance for the
   current value. This file sets no corner radius of its own.
 - **Padding**: The sheet itself contributes 0pt of padding around the topic
   list (pinned flush to the root view's top/leading/trailing) and fixed
@@ -159,7 +159,7 @@ staged state, no commit, and no cancel.
   card-horizontal-inset and card-vertical-inset tokens pad each row's
   content, and its caption-spacing token separates each group's caption
   from its card — see
-  agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view#appearance for the
+  adtoolkit://cookbook/ui/settings/layout/group-view#appearance for the
   current values, since the group component is what consumes them.
 - **Font**: Each group's caption ("Tab Bars", "Frame Spacing", "Pane Divider
   Spacing") renders with a caption text role (the group component's own
@@ -169,7 +169,7 @@ staged state, no commit, and no cancel.
   implementation, not to this component.
 - **Background**: The sheet's root view paints the `.windowBackground`
   theme role. Each group's card paints the theme's `.elevatedSurface` role
-  — see agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view#appearance
+  — see adtoolkit://cookbook/ui/settings/layout/group-view#appearance
   for its exact construction. The topic list's own panel body additionally
   paints the window-background color behind the cards (composed by the
   panel component, not set directly by this component).
@@ -181,7 +181,7 @@ staged state, no commit, and no cancel.
 - **Border**: Each card has no border stroke of its own, and a hairline
   divider separates a card row from the row above it — both are the group
   component's construction, not this component's; see
-  agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view#appearance for the
+  adtoolkit://cookbook/ui/settings/layout/group-view#appearance for the
   current values (the shared layout's divider-thickness token, drawn as a
   themed divider).
 - **Shadow**: Not applicable — no shadow property is set anywhere in this
@@ -272,6 +272,7 @@ staged state, no commit, and no cancel.
 | cts-settings-vc-031 | binds-frame-spacing-to-settings | Change the top frame-spacing setting externally after loading | The frame-spacing control's displayed top value updates to match |
 | cts-settings-vc-032 | closes-tab-loop-between-spacing-controls | Focus the frame-spacing control's last number field, press Tab | Focus moves to the divider-spacing control's first number field (and Tab from its last field returns focus to the frame-spacing control's first field) |
 | cts-settings-vc-033 | binds-divider-spacing-to-settings | Change the between-columns gutter setting externally after loading | The divider-spacing control's displayed value updates to match |
+| cts-settings-vc-034 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -496,6 +497,7 @@ Not applicable: this component contains no logging call.
   in visual, not intended, order. Present help from a `Button` with a
   `Flyout` (WinUI's analog of the popover-based help presenter), since a
   `ContentDialog` has no free window edge for a docked help drawer either.
+- **UI-thread confinement**: `confines-to-ui-thread` — the view controller and its helper views are declared `@MainActor`, so use from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -505,61 +507,61 @@ Not applicable: this component contains no logging call.
 
 ## Design Decisions
 
-- Decision: Apply every setting change immediately, with no commit or
+- **Decision**: Apply every setting change immediately, with no commit or
   cancel action anywhere in the sheet.
-  Rationale: Per the source's own comment, "the edges toggle live behind
+  **Rationale**: Per the source's own comment, "the edges toggle live behind
   the sheet — so there is nothing to commit and nothing to cancel"; the
   Done button only dismisses the sheet, it does not persist anything that
   was not already persisted.
-  Approved: pending
-- Decision: Re-read each checkbox's displayed state from `isEdgeEnabled`
+  **Approved**: pending
+- **Decision**: Re-read each checkbox's displayed state from `isEdgeEnabled`
   immediately after calling `setEdgeEnabled`, rather than trusting the
   click that triggered the handler.
-  Rationale: Per the source's own comment, "the window refuses to turn off
+  **Rationale**: Per the source's own comment, "the window refuses to turn off
   its last tab bar, so the checkbox is re-read rather than left showing a
   state the window does not have" — this file has no rule of its own about
   a minimum number of enabled edges; it only ever reflects what the
   injected closure reports.
-  Approved: pending
-- Decision: Override `contentSizedSidebar` to `true` instead of the base
+  **Approved**: pending
+- **Decision**: Override `contentSizedSidebar` to `true` instead of the base
   class's draggable default. (AppKit/UIKit.)
-  Rationale: Per the source's own comment, "a sheet has no remembered
+  **Rationale**: Per the source's own comment, "a sheet has no remembered
   geometry to restore, and a divider the user drags in a transient dialog
   is a setting they never asked to keep."
-  Approved: pending
-- Decision: Present help through a `HelpPopoverController` instead of the
+  **Approved**: pending
+- **Decision**: Present help through a `HelpPopoverController` instead of the
   base class's drawer-style presenter. (AppKit/UIKit.)
-  Rationale: Per the source's own comment, "a sheet has no free edge for a
+  **Rationale**: Per the source's own comment, "a sheet has no free edge for a
   drawer to slide out of, so this split presents its help in a popover off
   the help button instead."
-  Approved: pending
-- Decision: Fix `detailMinimumThickness` at 420pt. (AppKit/UIKit.)
-  Rationale: Per the source's own comment, this is "wide enough for the
+  **Approved**: pending
+- **Decision**: Fix `detailMinimumThickness` at 420pt. (AppKit/UIKit.)
+  **Rationale**: Per the source's own comment, this is "wide enough for the
   Spacing panel's diagram, which is the widest thing either topic puts in
   the detail pane" — the value is driven by the Spacing panel's content,
   not the Tabs panel's.
-  Approved: pending
-- Decision: Close the Tab key-view loop between the frame-spacing and
+  **Approved**: pending
+- **Decision**: Close the Tab key-view loop between the frame-spacing and
   divider-spacing controls onto themselves, rather than letting it trail
   into the Done button or the sidebar.
-  Rationale: Per the source's own comment, the controls are "placed by
+  **Rationale**: Per the source's own comment, the controls are "placed by
   frame, so left to itself Tab out of the bottom number went somewhere
   that looked like nowhere," and "the sheet holds nothing else to type in,
   so the loop closes on itself rather than trailing off into the sheet's
   buttons." The comment also notes this mirrors the key-view loop of "the
   Projects settings panel," so the same pair of controls owes the user a
   consistent Tab order wherever it appears.
-  Approved: pending
-- Decision: Scope tab-bar edge enablement to the current project (via the
+  **Approved**: pending
+- **Decision**: Scope tab-bar edge enablement to the current project (via the
   injected closures) while scoping frame/divider spacing to every window
   in the app (via the app-wide spacing settings).
-  Rationale: Both panels' own help text states this split explicitly — the
+  **Rationale**: Both panels' own help text states this split explicitly — the
   Tabs panel's: "these edges belong to this project, not to the app...
   Spacing... is the opposite: it belongs to every window"; the Spacing
   panel's: "Spacing belongs to the app, not to this project — every
   project window is spaced the same way." The two panels deliberately use
   two different persistence scopes side by side in the same sheet.
-  Approved: pending
+  **Approved**: pending
 
 ## Compliance
 
@@ -572,6 +574,7 @@ Not applicable: this component contains no logging call.
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | internationalization |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | best-practices |
 
 `keyboard-navigable` and `screen-reader-support` are `partial` because the
 Done button and the four checkboxes rely on AppKit's default key-view loop
@@ -579,6 +582,8 @@ and default accessibility roles, which this file never overrides or
 verifies (see **Accessibility**); `string-externalization` is `failed`
 because every user-facing string in this file is a hardcoded English
 literal (see **Localization**).
+
+`unit-test-coverage` is `failed`: no test file in the Apple test targets references `ComposableTabsSettingsViewController`.
 
 ## Change History
 
@@ -589,3 +594,4 @@ literal (see **Localization**).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/composable-tabs/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage (failed) compliance row. Added the confines-to-ui-thread requirement and vector. |

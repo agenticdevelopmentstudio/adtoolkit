@@ -1,28 +1,27 @@
 ---
 id: 63f8a602-58f8-4fdc-9461-b959be427a4d
-title: Status Web Colors
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/colors
+title: "Status Web Colors"
+domain: adtoolkit://cookbook/status/dashboard/logic/colors
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Status-board color tables mapping health, overall, deploy and env values
-  to shared theme CSS tokens, plus env badge helpers
+summary: "Status-board color tables mapping health, overall, deploy and env values to shared theme CSS tokens, plus env badge helpers"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/session-client
+  - adtoolkit://cookbook/status/dashboard/session-client
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Web Colors
@@ -253,4 +252,4 @@ Not applicable: the module contains no logging calls.
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from `status-web/src/lib/colors.ts` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `status-web/src/lib/colors.ts` |

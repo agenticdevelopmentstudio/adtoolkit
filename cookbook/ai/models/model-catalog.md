@@ -1,38 +1,37 @@
 ---
 id: c8438764-89c9-4286-9b58-10c9cd175a97
-title: Model Catalog
-domain: agenticdevelopertoolkit://cookbook/ai/models/model-catalog
+title: "Model Catalog"
+domain: adtoolkit://cookbook/ai/models/model-catalog
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The shared model table: canonical model facts, per-gateway pricing/context
-  terms, and curated overrides merged into one lookup.'
+summary: "The shared model table: canonical model facts, per-gateway pricing/context terms, and curated overrides merged into one lookup."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai
-- model-catalog
-- provider
-- engine
+  - ai
+  - model-catalog
+  - provider
+  - engine
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIPluginDescriptor.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIPluginManager.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/model-catalog.json (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIModelCatalogTests.swift (agenticdevelopertoolkit)
-- packages/apple/AIPlugins/tools/generate_model_catalog.py (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIPluginDescriptor.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIPluginManager.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/model-catalog.json (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIModelCatalogTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AIPlugins/tools/generate_model_catalog.py (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Model Catalog
@@ -423,6 +422,8 @@ Behavioral Requirements).
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [graceful-degradation](agenticdevelopercookbook://compliance/reliability#graceful-degradation) | passed | Reliability |
 | [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | partial | Best Practices |
 | [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | partial | Reliability |
@@ -439,11 +440,14 @@ overwrite in the index with no validation (see
 `Model.description` and curated `ModelDetail.goodFor` ship as English-only
 prose with no localization mechanism (see Localization).
 
+`separation-of-concerns` passes because `AIModelCatalog` is a decodable data model with lookup, offering and canonical-id resolution only; facet and capability derivation live in `ModelUseFacet` and `ModelCapability`, and loading of plugin bundles belongs to the plugin manager. `unit-test-coverage` is partial: `AIModelCatalogTests.swift` covers canonical-id suffixes, resolution by id, alias and unseen spellings, per-gateway terms, curated details winning, absent fields decoding to empty, the shipped catalog loading and a missing resource yielding an empty catalog, but no test asserts the id and alias collision behavior (last writer wins) or a corrupt catalog being swallowed.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/models/. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. |

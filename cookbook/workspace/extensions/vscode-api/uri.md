@@ -1,43 +1,39 @@
 ---
 id: b0e815fd-22cc-4d58-a0c6-001c21bad468
-title: VS Code URI
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/uri
+title: "VS Code URI"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/uri
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The frozen vscode.Uri JavaScript class this bridge installs, together
-  with the two-way conversion between it and a native URL value.
+summary: "The frozen vscode.Uri JavaScript class this bridge installs, together with the two-way conversion between it and a native URL value."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- uri
+  - extension-host
+  - vscode-api
+  - uri
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/js-value-bridge
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-diagnostics
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/language-model-message-vocabulary
+  - adtoolkit://cookbook/workspace/extensions/host/js-value-bridge
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-diagnostics
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/language-models/language-model-message-vocabulary
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/Uri.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/UriTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/Uri.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/UriTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # VS Code URI
@@ -227,7 +223,7 @@ This is the one logging call this component makes (**class-install-failure-retur
 **Rationale**: the pattern needs an unescaped `/` inside its own text to match a URI's own path separators, and a `/…/` literal's delimiter would end early on the first unescaped `/` inside it; building the string directly means nothing in the pattern needs escaping in either JavaScript's or Swift's string-literal reader, which the source's own comment calls "the property worth having when this source cannot be compiled and exercised before it ships." See **parse-splits-components**.
 **Approved**: pending
 
-**Decision** (AppKit/UIKit): `url(from:in:)` reads `value`'s `toString` property and calls it through `VSCodeAPI.call(_:thisArg:arguments:)` rather than `JSValue.invokeMethod(_:withArguments:)`, while `uriValue(for:in:)` calls `Uri.parse` directly via `JSValue.call(withArguments:)`, unguarded.
+**Decision**: (AppKit/UIKit) `url(from:in:)` reads `value`'s `toString` property and calls it through `VSCodeAPI.call(_:thisArg:arguments:)` rather than `JSValue.invokeMethod(_:withArguments:)`, while `uriValue(for:in:)` calls `Uri.parse` directly via `JSValue.call(withArguments:)`, unguarded.
 **Rationale**: `url(from:in:)` accepts a `value` the bridge does not control — an extension could subclass `vscode.Uri` and shadow `toString` — so a throwing `toString` must be caught the same way a hostile `.then` getter is, rather than landing in `ExtensionHost.pendingException`. `uriValue(for:in:)` calls the constructor's *own* `Uri.parse` (never `strict`), which is safe unguarded only when `installUriClass(in:)` returned the genuinely frozen class `uriClassSource` builds — the residual risk when it did not is recorded under **lazy-adoption-race**. See **url-from-uri-instance** and **uri-value-builds-via-parse**.
 **Approved**: pending
 

@@ -1,48 +1,45 @@
 ---
 id: 7e0508b5-cf96-42da-9902-51fbe31b432f
-title: 'Hub Domain: Invitations'
-domain: agenticdevelopertoolkit://cookbook/adh/hub/invitations/invitations
+title: "Hub Domain: Invitations"
+domain: adtoolkit://cookbook/adh/hub/invitations/invitations
 type: ingredient
-version: 1.0.2
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The Hub''s Invitations domain: three admin-facing topic providers (requests,
-  pending users, sent invites) sharing one admin-notes sub-rail, plus the web
-  client a recipient uses to preview, verify, accept, and register from an
-  invite.'
+summary: "The Hub's Invitations domain: three admin-facing topic providers (requests, pending users, sent invites) sharing one admin-notes sub-rail, plus the web client a recipient uses to preview, verify, accept, and register from an invite."
 platforms:
-- swift
-- macos
-- ios
-- typescript
-- web
+  - swift
+  - macos
+  - ios
+  - typescript
+  - web
 tags:
-- hub
-- invitations
-- data-source
-- forms
-- crud
-- notes
+  - hub
+  - invitations
+  - data-source
+  - forms
+  - crud
+  - notes
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/navigation/htdv
-- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
-- agenticdevelopertoolkit://cookbook/adh/hub/customers
-- agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client
+  - adtoolkit://cookbook/ui/navigation/htdv
+  - adtoolkit://cookbook/adh/hub/ecosystems/ecosystems
+  - adtoolkit://cookbook/adh/hub/customers
+  - adtoolkit://cookbook/adh/hub/security/authentication-client
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Invitations/AdminNotesRail.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Invitations/InvitationsModels.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Invitations/InvitesTopic.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Invitations/PendingUsersTopic.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Invitations/RequestsTopic.swift (agenticdevelopertoolkit)
-- packages/web/packages/data/src/invitations/invitations.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/invitations/wire.ts (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/InvitationsTopicsTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Invitations/AdminNotesRail.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Invitations/InvitationsModels.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Invitations/InvitesTopic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Invitations/PendingUsersTopic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Invitations/RequestsTopic.swift (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/invitations/invitations.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/invitations/wire.ts (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/InvitationsTopicsTests.swift (agenticdevelopertoolkit)
 approved-by: ""
 approved-date: ""
 ---
@@ -58,7 +55,7 @@ registering recipient uses. The two sides describe two different actors
 looking at the same domain, not two ports of one feature:
 
 - **Apple (admin side)**: `RequestsTopic`, `PendingUsersTopic`, and
-  `InvitesTopic` are `@MainActor` `EcosystemTopicProvider`s that let a Hub
+  `InvitesTopic` are UI-thread-confined `EcosystemTopicProvider`s that let a Hub
   admin browse and act on `InvitationRequest`s (a prospective user asking to
   join), `PendingUser`s (an admin-created draft awaiting an invite send), and
   `Invite`s (an invite that has already been sent). All three attach the same
@@ -77,25 +74,21 @@ looking at the same domain, not two ports of one feature:
 
 ### Cross-cutting
 
-- **main-actor-confinement**: `RequestsTopic`, `PendingUsersTopic`,
-  `InvitesTopic` are `@MainActor final class` types, and `AdminNotesRail` is
-  a `@MainActor public struct`; every method on all four runs on the main
-  actor, and none of the four is `Sendable`, so the compiler keeps every
-  instance confined to that actor's isolation domain.
-- **data-source-is-class-bound**: `InvitationsDataSource` is declared
-  `AnyObject`-constrained (a class-bound protocol), so an injected
-  implementation is a reference type; all three topics and `AdminNotesRail`
-  hold it as a `let` reference, never copy it.
+- **ui-context-confinement**: the three topic providers and the notes rail are bound to the UI's
+  serial execution context; every method on all four runs there, and none is shared across
+  execution contexts, so every instance stays confined to that context.
+- **data-source-is-reference-semantics**: the invitations data source has reference semantics, so
+  an injected implementation is a shared, stateful client; all three topics and the notes rail hold
+  it by reference and never copy it.
 - **missing-row-yields-empty**: For every one of the three topics, when
   `path.last` (via `RailPath.last`) does not match any row currently held by
   the topic's own last-loaded list, `detail(for:in:)` (or, for
   `PendingUsersTopic`, `inviteDetail(for:in:)`) returns `.empty` rather than
   throwing.
-- **errors-wrap-through-hub-error**: Every `async throws` entry point on all
-  three topics and on `AdminNotesRail` wraps a caught error with
-  `HubError.wrap` before rethrowing or surfacing it as a form's save error,
-  so a caller only ever observes `HubError` cases from this domain, never the
-  underlying `InvitationsDataSource` error type directly.
+- **errors-wrap-through-hub-error**: Every asynchronous, fallible entry point on all three topics
+  and on the notes rail wraps a caught error with `HubError.wrap` before rethrowing or surfacing it
+  as a form's save error, so a caller only ever observes `HubError` cases from this domain, never the
+  underlying data source error type directly.
 - **notes-rail-shared-across-subjects**: `AdminNotesRail` is not itself an
   `EcosystemTopicProvider` — it is a value type each of the three topics
   constructs identically (same `dataSource`, same `ecosystemID`) and attaches
@@ -158,11 +151,10 @@ looking at the same domain, not two ports of one feature:
   `.pendingUser`, or `.invite` case used to scope every `InvitationsDataSource`
   notes/history call and every `AdminNotesRail` HTDV path segment to the
   correct subject kind and id.
-- **data-source-contract**: `InvitationsDataSource` declares eleven `async
-  throws` methods: `requests`, `deleteRequest`, `pendingUsers`,
-  `addPendingUsers`, `deletePendingUser`, `sendInvitation`, `invites`,
-  `deleteInvite`, `notes`, `replaceNotes`, `history` — every one scoped by
-  `ecosystemID` and, where applicable, by `AdminNoteSubject` and a subject id.
+- **data-source-contract**: the invitations data source declares eleven asynchronous, fallible
+  operations: `requests`, `deleteRequest`, `pendingUsers`, `addPendingUsers`, `deletePendingUser`,
+  `sendInvitation`, `invites`, `deleteInvite`, `notes`, `replaceNotes`, `history` — every one scoped
+  by `ecosystemID` and, where applicable, by `AdminNoteSubject` and a subject id.
 
 ### AdminNotesRail.swift — shared admin-notes sub-rail
 
@@ -189,14 +181,12 @@ looking at the same domain, not two ports of one feature:
   effect); saving maps every one of the subject's current notes through
   `rewrite`, replacing only the entry whose `id == note.id` with the edited
   content, and its delete action filters that one note out by id.
-- **notes-rewrite-is-read-then-overwrite**: `AdminNotesRail.rewrite` is
-  `nonisolated private static`, taking the data source, ecosystem id, subject,
-  subject id, and a `@Sendable` transform closure as explicit parameters
-  rather than capturing `self`; it fetches the subject's current notes
-  (`dataSource.notes(...).map(\.input)`), applies the transform to build the
-  full replacement list, and calls `dataSource.replaceNotes(...)` with that
-  entire list — every write replaces the whole note collection for that
-  subject, not just the one changed note.
+- **notes-rewrite-is-read-then-overwrite**: the notes rail's `rewrite` is a pure-static helper
+  taking the data source, ecosystem id, subject, subject id, and a transform function as explicit
+  parameters rather than capturing the rail; it fetches the subject's current notes (projected to
+  note inputs), applies the transform to build the full replacement list, and calls
+  `dataSource.replaceNotes(...)` with that entire list — every write replaces the whole note
+  collection for that subject, not just the one changed note.
 - **notes-errors-wrapped**: Every `AdminNotesRail` entry point that can throw
   wraps the underlying error with `HubError.wrap` before it reaches the
   caller, per **errors-wrap-through-hub-error**.
@@ -309,7 +299,11 @@ looking at the same domain, not two ports of one feature:
   ecosystemName: null, maskedDestination: null }` rather than rejecting;
   only on a `res.ok` response does it parse and return the body as an
   `InvitePreview`.
-- **preview-network-failure-handling**: NEEDS REVIEW: Not implemented in source. `preview`'s own doc comment declares it "Never throws," but the `fetch` call itself is not wrapped in a try/catch, so a network-level failure (offline, DNS failure, request timeout) rejects the returned promise instead of resolving to the documented `invalid` state; missing is either a catch that folds a network exception into the same `{ state: "invalid", ... }` result, or a narrower doc comment scoping "Never throws" to HTTP-status failures only. The open question is whether "Never throws" was meant to cover network failures or only HTTP-status failures.
+- **preview-network-failure-rejects**: `preview`'s own doc comment declares it "Never throws," but
+  the `fetch` call itself is not wrapped in a try/catch, so a network-level failure (offline, DNS
+  failure, request timeout) MUST be understood to reject the returned promise instead of resolving
+  to the documented `invalid` state; only HTTP-status failures (`!res.ok`) fold into the `invalid`
+  result.
 - **verify-is-anonymous-and-throws-status-code**: `verify` issues an
   unauthenticated `fetch` POSTing `{ code }` to a token-scoped verify route;
   on `!res.ok` it throws `Error(String(res.status))` — the thrown message is
@@ -318,7 +312,7 @@ looking at the same domain, not two ports of one feature:
 - **accept-is-authenticated**: `accept` calls `authedJson` to POST `{
   token }` to an accept route as the signed-in caller, so its authentication,
   one-refresh-then-retry-on-401, and `AuthHttpError` behavior on failure are
-  entirely `authedJson`'s (documented in `agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client`),
+  entirely `authedJson`'s (documented in `adtoolkit://cookbook/adh/hub/security/authentication-client`),
   not redefined here.
 - **register-with-invite-extracts-message**: `registerWithInvite` issues an
   unauthenticated `fetch` POSTing the full `RegisterWithInviteInput` (`email`,
@@ -388,7 +382,7 @@ a shared notes sub-rail, and a web HTTP client, not a visual component.
 | invitations-018 | missing-row-yields-empty | Detail lookup for an invite id not present in the loaded list | Returns `.empty` (per `testUnknownRowIsEmpty`) |
 | invitations-019 | invite-channel-title-derivation | `Invite.channel == "push"` | `channelTitle` returns the raw string `"push"` unchanged (traced to `Invite.channelTitle`'s default case; no test covers an unrecognized channel) |
 | invitations-020 | preview-is-anonymous-and-folds-failure | `preview(token)` where the backend responds non-2xx | Promise resolves to `{ state: "invalid", ecosystemName: null, maskedDestination: null }`, does not reject (traced to `invitations.ts`; no test file exists for this component) |
-| invitations-021 | preview-network-failure-handling | `preview(token)` where the underlying `fetch` call itself rejects (e.g. offline) | Promise rejects with the network error rather than resolving to `{ state: "invalid", ... }` — the open question this recipe records (traced to `invitations.ts`) |
+| invitations-021 | preview-network-failure-rejects | `preview(token)` where the underlying `fetch` call itself rejects (e.g. offline) | Promise rejects with the network error rather than resolving to `{ state: "invalid", ... }` — the gap this recipe records (traced to `invitations.ts`) |
 | invitations-022 | verify-is-anonymous-and-throws-status-code | `verify(token, code)` where the backend responds `410` | Throws `Error("410")` (traced to `invitations.ts`) |
 | invitations-023 | register-with-invite-extracts-message | `registerWithInvite(token, input)` where the backend responds `403` with a body containing no recognizable `error`/`message`/`detail` field | Throws `Error("Registration failed (403)")` (traced to `invitations.ts`) |
 | invitations-024 | register-with-invite-extracts-message | `registerWithInvite(token, input)` where the backend responds `409` with body `{ "error": "Email already registered" }` | Throws `Error("Email already registered")` (traced to `extractErrorMessage` in `client.ts`, applied by `invitations.ts`) |
@@ -426,11 +420,11 @@ a shared notes sub-rail, and a web HTTP client, not a visual component.
   recipe: nothing here is silently swallowed and no declared contract is
   violated — `rewrite`'s own doc comment describes exactly this
   read-then-overwrite shape — so it is recorded as a fact rather than as
-  the open question this recipe raises elsewhere. All three topics and `AdminNotesRail` are
-  `@MainActor`-confined (per **main-actor-confinement**), so within one
+  the gap this recipe records elsewhere. All three topics and `AdminNotesRail` are
+  confined to the UI execution context (per **ui-context-confinement**), so within one
   process their own method calls cannot interleave; the race above is only
   across two separate calls (e.g. two devices, or two overlapping requests
-  to the same backend), not within one actor's own serialized execution. The
+  to the same backend), not within one serialized execution context. The
   web client's four methods share no in-memory state across calls, so
   concurrent calls to `preview`/`verify`/`accept`/`registerWithInvite` from
   the same caller raise no concurrency concern within `invitations.ts`
@@ -450,7 +444,7 @@ a shared notes sub-rail, and a web HTTP client, not a visual component.
   `authedJson` throws, including its own `AuthHttpError`. This is a genuine
   cross-method inconsistency in how failure is surfaced, but each behavior
   is individually deliberate and documented in its own source, so it is
-  recorded here and in Compliance as a fact, not as an open question.
+  recorded here and in Compliance as a fact, not as a gap.
 - **Offline/disconnected state**: None of the seven given sources implement
   a timeout, retry, or backoff of their own. On the Apple side, a network
   failure surfaces as whatever `HubError` case the injected
@@ -459,10 +453,10 @@ a shared notes sub-rail, and a web HTTP client, not a visual component.
   `registerWithInvite` each make exactly one unauthenticated `fetch` call
   with no retry; `accept` inherits `authedJson`'s one-refresh-then-retry
   behavior on a `401` only (documented in
-  `agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client`), not a general
+  `adtoolkit://cookbook/adh/hub/security/authentication-client`), not a general
   offline retry. `preview`'s specific gap for a raw network failure (as
   opposed to an HTTP-status failure) is recorded under
-  **preview-network-failure-handling**.
+  **preview-network-failure-rejects**.
 
 ## Configuration
 
@@ -603,6 +597,13 @@ Not applicable: none of the seven given sources contains a logging,
   through `PasswordBox`/`Windows.Storage` conventions for the password field
   specifically, never a plain bound string, mirroring the same "never store
   the password" boundary this recipe records in **Privacy**.
+- **Swift types (reference implementation)**: `RequestsTopic`, `PendingUsersTopic`, and `InvitesTopic`
+  are `@MainActor final class` types and `AdminNotesRail` is a `@MainActor public struct`; none is
+  `Sendable`, so the compiler keeps every instance confined to the main actor's isolation domain.
+  `InvitationsDataSource` is `AnyObject`-constrained with eleven `async throws` methods, held as a
+  `let` reference. `AdminNotesRail.rewrite` is `nonisolated private static`, taking its transform as
+  a `@Sendable` closure parameter so `FormAction.perform` (which requires a `@Sendable` closure) can
+  call it without making `AdminNotesRail` itself `Sendable`.
 
 ## Reference Implementations
 
@@ -658,6 +659,12 @@ reviewer deciding whether to unify these four methods' error handling is a
 product/API decision outside the scope of describing the code as it is.
 **Approved**: pending
 
+**Decision**: `preview` does not fold a network-level failure into the `invalid` result; it rejects, contradicting its own "Never throws" doc comment.
+
+**Rationale**: it is undecided whether "Never throws" was meant to cover network failures or only HTTP-status failures; closing the gap takes either a catch that folds a network exception into the same `{ state: "invalid", ... }` result or a narrower doc comment scoping "Never throws" to HTTP-status failures.
+
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -685,8 +692,8 @@ own consumer, and any tests for it, live outside this repo.
 uniformly through `HubError.wrap`, and three of the web side's four methods
 handle their own failure path explicitly, but `preview`'s bare `fetch` call
 is not guarded against a network-level failure despite the source's own
-"Never throws" doc comment — the open question on
-**preview-network-failure-handling**. **secure-storage** passes: neither
+"Never throws" doc comment — the
+**preview-network-failure-rejects** requirement. **secure-storage** passes: neither
 `invitations.ts` nor `wire.ts` stores the `password`, `token`, or
 `refreshToken` values they handle — they are forwarded and returned only,
 per **token-and-password-handling** — so this component itself never needs,
@@ -710,6 +717,8 @@ four methods.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Resolve open-question markers against the code; restate unimplemented behavior as current behavior with pending Decisions; make normative text platform-neutral. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

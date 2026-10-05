@@ -54,7 +54,8 @@ def main() -> int:
     buckets: dict[str, dict[str, list[str]]] = {"clean": {}, "unmoved": {}, "carve-out": {}}
     for path in files:
         bucket, why = classify(path)
-        buckets[bucket][path.name] = why
+        # Keyed by path under the root: two specs in different topics can share a basename.
+        buckets[bucket][path.relative_to(args.root).as_posix()] = why
 
     if args.bucket:
         for name in buckets[args.bucket]:

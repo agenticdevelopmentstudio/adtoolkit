@@ -1,41 +1,40 @@
 ---
 id: 48ddd102-b78c-4198-b71d-25801082a5b2
-title: Docs Client
-domain: agenticdevelopertoolkit://cookbook/adh/hub/content/docs-client
+title: "Docs Client"
+domain: adtoolkit://cookbook/adh/hub/content/docs-client
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Thin corpus-marker lens over the shared markdown-document client: stamps/filters
-  the docs bucket marker, re-exports shared category/tag taxonomy.'
+summary: "Thin corpus-marker lens over the shared markdown-document client: stamps/filters the docs bucket marker, re-exports shared category/tag taxonomy."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- docs
-- markdown
-- taxonomy
-- crud
-- web
+  - docs
+  - markdown
+  - taxonomy
+  - crud
+  - web
 depends-on: []
 related: []
 references:
-- packages/web/packages/data/src/docs/docs.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/docs/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/markdown.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/taxonomy.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/notes/notes.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/__tests__/markdown.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/docs/docs.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/docs/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/markdown.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/taxonomy.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/notes/notes.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/__tests__/markdown.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Docs Client
@@ -229,7 +228,7 @@ functions over HTTP), not a visual component.
 - **Concurrent access: two `docsApi.create` calls fired without awaiting
   between them.** Per `stateless-client` and `create-not-idempotent`, each
   call MUST independently POST and MUST resolve to a distinct document with
-  its own id; neither call MUST observe or be blocked by the other.
+  its own id; each call MUST NOT observe or be blocked by the other.
 - **Concurrent access: `taxonomyApi.removeCategoryParent` racing
   `taxonomyApi.addCategoryParent` on the same category.**
   `removeCategoryParent` reads the category's current parent edges, then
@@ -481,6 +480,7 @@ marker; no additional data is collected or appended.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

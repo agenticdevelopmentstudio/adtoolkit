@@ -1,45 +1,43 @@
 ---
 id: 9bec9953-29fb-4184-8bf6-a6c27187c99d
-title: Support
-domain: agenticdevelopertoolkit://cookbook/adh/hub/support
+title: "Support"
+domain: adtoolkit://cookbook/adh/hub/support
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The Hub''s Support utilities: a form/notice detail-pane factory, ISO-8601
-  date parsing, error normalization, blank-string trimming, a JSON value type, rail-path
-  lookups, and slug rules shared by every Hub feature module.'
+summary: "The Hub's Support utilities: a form/notice detail-pane factory, ISO-8601 date parsing, error normalization, blank-string trimming, a JSON value type, rail-path lookups, and slug rules shared by every Hub feature module."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- hub
-- support
-- forms
-- json
-- slug
-- dates
-- error-handling
+  - hub
+  - support
+  - forms
+  - json
+  - slug
+  - dates
+  - error-handling
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/navigation/htdv
+  - adtoolkit://cookbook/ui/navigation/htdv
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubDates.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubError+Wrap.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/SupportTests.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/HubDates.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/HubError+Wrap.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/SupportTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Support
@@ -493,22 +491,19 @@ prompts.
 
 **Decision**: The date helper builds its four ISO-8601 formatters as
 constants instead of constructing one per call.
-**Platform**: Swift/Apple platforms — `private static let` values
-(`Date.ISO8601FormatStyle`/`DateFormatter`); any port should use the
-equivalent shared-immutable-instance idiom for its own platform's date
-formatter type.
 **Rationale**: The source's own comment states construction is expensive
 enough to show up when a rail formats a few hundred rows; both formatter
 types are safe to share as immutable singletons once built and never
 mutated afterward.
+Platform scope: Swift/Apple platforms — `private static let` values
+(`Date.ISO8601FormatStyle`/`DateFormatter`); any port should use the
+equivalent shared-immutable-instance idiom for its own platform's date
+formatter type.
 **Approved**: pending
 
 **Decision**: The closure-taking error normalizer declares an isolation
 parameter (`isolated (any Actor)? = #isolation`) rather than leaving the
 closure's isolation to the language's default inference.
-**Platform**: Swift/Apple platforms — actor isolation is a Swift
-concurrency concept with no direct analog on this recipe's other platforms
-(see the WinUI 3 Platform Note).
 **Rationale**: Without this parameter, Swift 6 strict concurrency would
 force the closure `nonisolated`, breaking a `@MainActor` caller whose
 closure reads and writes main-actor state without an explicit
@@ -516,6 +511,9 @@ closure reads and writes main-actor state without an explicit
 compile-time regression is what the parameter guards against, and three of
 `SupportTests.swift`'s test methods exist solely to fail to build if it
 regresses.
+Platform scope: Swift/Apple platforms — actor isolation is a Swift
+concurrency concept with no direct analog on this recipe's other platforms
+(see the WinUI 3 Platform Note).
 **Approved**: pending
 
 **Decision**: The slug-projection operation tracks a pending-hyphen flag
@@ -570,6 +568,7 @@ literal with no localization key, per Localization above.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Design Decisions keep the Decision / Rationale / Approved triple; each decision's platform line is folded into its rationale. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

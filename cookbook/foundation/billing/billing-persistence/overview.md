@@ -1,0 +1,3 @@
+
+The host supplies storage; every billing rule (who claims a repo, how runs roll into entries, what a locked entry refuses) lives in the shared tier and runs against this contract. It declares the operations over settings and transactions, clients, projects, repos, segments, derivation, entries, assignment and overview, and the small value types they exchange: the session row derivation needs, the context a derived run is attributed to, the guard that decides which existing entry row an upsert may overwrite, and an entry paired with whether its description was hand edited. The store, rollup, timer and preferences logic all take an implementation of this contract.
+

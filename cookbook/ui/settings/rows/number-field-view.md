@@ -1,32 +1,31 @@
 ---
 id: acd561ca-90a4-4303-a411-cfe23410b42a
-title: Number Field View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view
+title: "Number Field View"
+domain: adtoolkit://cookbook/ui/settings/rows/number-field-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row generic over a number value contract — a title
-  label paired with an optionally bounded, locale-aware number field.
+summary: "A settings row generic over a number value contract — a title label paired with an optionally bounded, locale-aware number field."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- form-control
-- range
-- numeric
+  - settings
+  - form-control
+  - range
+  - numeric
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/integer-field-view
+  - adtoolkit://cookbook/ui/settings/rows/integer-field-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Number Field View
@@ -44,7 +43,7 @@ text box. The concept also defines the number value contract itself — the
 interface a number type implements so a field can display it, read it back,
 and compare it — with two built-in conformances, integer and floating-point,
 each supplying its own locale-aware parsing and canonical text form. The
-Integer Field View (`agenticdevelopertoolkit://cookbook/ui/settings/rows/integer-field-view`)
+Integer Field View (`adtoolkit://cookbook/ui/settings/rows/integer-field-view`)
 is a thin, forwarding wrapper around this component specialized for
 integers; this recipe documents the field itself, including the parsing
 contract that wrapper delegates to.
@@ -84,8 +83,7 @@ contract that wrapper delegates to.
 - **exposes-constituent-properties**: Component MUST expose the label, the
   field, `minimum`, and `maximum` as public, directly-accessible
   properties.
-- **confines-to-ui-thread**: Component MUST be usable only from the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **commits-on-field-action**: Component MUST commit the field's text
   whenever the field's own change action fires.
 - **commits-on-editing-end**: Component MUST commit the field's text
@@ -228,13 +226,7 @@ contract that wrapper delegates to.
   guidance is touch-specific. The field keeps its platform's regular
   control metrics; its clickable width is the fixed `fieldWidth` (72pt
   default) set by **fixes-field-width**.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. The
-  label and field text colors resolve from the active theme's
-  `.primaryText` role against the hosting background at runtime, and the
-  component performs no contrast check, so whether a given theme's resolved
-  pair meets 4.5:1 cannot be determined from this file; settling it needs a
-  theme-level contrast audit of `.primaryText` against the settings-row
-  backgrounds it sits on.
+- **minimum-contrast-ratio**: The component performs no contrast check of its own. The row label and the field's typed text both take their color from the theme's primary-text role (the field applies it in its theme observer), so contrast is whatever the active theme resolves against the settings-row background.
 
 ## Conformance Test Vectors
 
@@ -562,6 +554,9 @@ logger reference anywhere in source).
   form of `20.0` is `"20.0"`, and a field that turns the `20` a caller wrote
   into `20.0` the moment it is shown has edited a setting nobody touched.
   **Approved**: pending
+- **Decision**: The component performs no contrast check of its own: the label and field text colors (the theme's primary-text role) resolve from the active theme at runtime, so whether a given theme's resolved pair reaches the 4.5:1 text threshold is not established by this component.
+  **Rationale**: Contrast is a property of the theme's resolved color pairs, which live outside this component; closing the gap would take a theme-level audit (or an enforced minimum in the theme layer) of those roles against the backgrounds a settings row sits on, which no source or test does today.
+  **Approved**: pending
 
 ## Compliance
 
@@ -573,6 +568,7 @@ logger reference anywhere in source).
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `native-controls-preference`, `platform-design-language`, `keyboard-navigable`,
 `idempotent-operations`, and `separation-of-concerns` rest on the source's use
@@ -585,6 +581,8 @@ changes `textField.stringValue` with no explicit `NSAccessibility` announcement
 in source, so whether VoiceOver notices the reverted value while the field is
 focused is left to AppKit's own, unverified-in-source, default behavior.
 
+`unit-test-coverage` is `partial` because `ConfigurationContributionPointTests.swift` constructs `NumberFieldView` for both `Int` and `Double`, commits typed text, asserts a `maximum` clamp with the field text rewritten to the clamped value, and asserts that non-numeric text reverts the field; there is no dedicated test file and layout, theming and external-change resync are not asserted.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -594,3 +592,5 @@ focused is left to AppKit's own, unverified-in-source, default behavior.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker against the source: restated as current behavior (no contrast check in the component) and recorded the gap as a pending Design Decision; added separation-of-concerns/unit-test-coverage Compliance rows. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

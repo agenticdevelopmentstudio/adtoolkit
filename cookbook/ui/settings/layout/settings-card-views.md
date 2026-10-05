@@ -1,33 +1,31 @@
 ---
 id: afa90dd0-0ee6-435b-8cac-f5c6065e7496
-title: Settings Card Views
-domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/settings-card-views
+title: "Settings Card Views"
+domain: adtoolkit://cookbook/ui/settings/layout/settings-card-views
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A caption, card, row, divider, and native-search-field vocabulary
-  composing a settings panel, sharing layout metrics with the sibling group
-  view component.
+summary: "A caption, card, row, divider, and native-search-field vocabulary composing a settings panel, sharing layout metrics with the sibling group view component."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- card
-- settings
-- group
+  - card
+  - settings
+  - group
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/header-view
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/settings/layout/header-view
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Settings Card Views
@@ -102,6 +100,7 @@ empty state without the container needing to know which is which.
 - **search-field-placeholder-not-auto-localized**: The search field MUST
   render its placeholder text exactly as the caller supplied it, with no
   automatic localization applied.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -147,8 +146,8 @@ empty state without the container needing to know which is which.
 - **Role/trait**: The group container's caption sets no explicit heading
   trait; it reuses the sibling header component's exact role assignment
   (secondary-text color, caption text role — see Design Decisions), and
-  the same open question about exposing it as a heading is tracked in that
-  component's own recipe rather than re-raised here. The card, card row,
+  like that component's label it is therefore not exposed as a heading, which
+  is recorded in that component's own recipe rather than repeated here. The card, card row,
   and divider set no accessibility role of their own; they are pure
   layout/paint containers, and the platform applies its own default
   container/decoration behavior. The search field wraps a genuine native
@@ -171,15 +170,13 @@ empty state without the container needing to know which is which.
   search field's tappable target (text bezel, clear button) is entirely
   the wrapped native control's own sizing, not a size this vocabulary
   computes.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented. The divider
-  fills with the divider role, derived as the background blended only 10%
-  toward the foreground, with no check that blend against the 3:1
-  non-text contrast ratio a meaningful UI boundary is expected to meet.
-  What is missing is a minimum-contrast floor on the divider role (as the
-  secondary-text role has) or a per-theme contrast measurement. Settling
-  it needs the divider-to-elevated-surface ratio measured under every
-  shipped theme, or a decision that the divider is decorative and exempt
-  from that guidance.
+- **minimum-contrast-ratio**: The card divider MUST fill with the theme's
+  divider role, and the component MUST NOT perform any contrast check or
+  adjustment of its own on that fill. The divider role is derived as the
+  background blended only 10% toward the foreground with no stated
+  minimum-contrast floor (unlike the secondary-text role), so the 3:1
+  non-text contrast ratio expected of a meaningful UI boundary is met only
+  to the extent a given theme's colors happen to provide it.
 
 ## Conformance Test Vectors
 
@@ -203,6 +200,7 @@ empty state without the container needing to know which is which.
 | settings-card-views-016 | search-field-avoids-cursor-jump | Place the insertion point mid-string in the field, then update it with a text value equal to the field's current text | The field's text is not reassigned and the insertion point does not move |
 | settings-card-views-018 | search-field-sizes-to-fitting-height | Ask the search field to size itself with a proposed width of 200 and no proposed height | The returned height equals the wrapped control's own natural height, and the returned width is 200 |
 | settings-card-views-019 | search-field-placeholder-not-auto-localized | Add a string-catalog entry mapping the literal string passed as the placeholder to a different translation, then construct the search field with that same text held in a variable | The field's placeholder shows the original untranslated string |
+| settings-card-views-020 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 One requirement from the source implementation — keeping a rebindable
 write-back target in sync across repeated re-renders of the surrounding
@@ -268,7 +266,7 @@ before it reaches either parameter is the caller's responsibility.
 | Option | Behavior |
 |--------|----------|
 | Reduce Motion | Not applicable: none of the six pieces applies an animation, transition, or motion effect of its own — every one is built once from static layout, with no looping effect anywhere. |
-| Increase Contrast | Applies, but is not handled here: the group container's caption reuses the secondary-text role (3.0 minimum-contrast floor) and 11pt caption size that the sibling header component's caption also uses — the open question about raising that floor for Increase Contrast is tracked in that component's own recipe and not re-raised here. The divider's own role (10% blend, no stated minimum-contrast floor) raises the same open question independently — see the open question on minimum-contrast-ratio. |
+| Increase Contrast | Applies, but is not handled here: the group container's caption reuses the secondary-text role (3.0 minimum-contrast floor) and 11pt caption size that the sibling header component's caption also uses — the open question about raising that floor for Increase Contrast is tracked in that component's own recipe and not re-raised here. The divider's own role (10% blend, no stated minimum-contrast floor) raises the same open question independently — see **minimum-contrast-ratio** and its Design Decision. |
 | Differentiate Without Color | Not applicable: none of the six pieces conveys state or meaning through color alone — each renders exactly one presentation, with no color-coded distinction for an alternate cue to replace. |
 
 ## Feature Flags
@@ -343,7 +341,7 @@ Not applicable: this vocabulary contains no logging calls anywhere.
   control buys over a hand-rolled text field.
 - **React/Web**: A `<section>` for the group with a labelled `<span>`
   caption above it — matching the source, which gives its caption no
-  heading trait (see the open question under Accessibility) — a `<div>`
+  heading trait (see Accessibility) — a `<div>`
   styled `border-radius: 10px` and a background CSS custom property for
   the card, `padding: 9px 14px` per row, and a 1px `<hr>`/bordered `<div>`
   inset `margin-left: 14px` for the divider. Use `<input type="search">`
@@ -388,6 +386,7 @@ Not applicable: this vocabulary contains no logging calls anywhere.
   magnifying-glass `FontIcon` prefix if `AutoSuggestBox`'s suggestion
   popup is not wanted. Apply the panel-level inset with `Padding="20"` on
   the panel's root container.
+- **confines-to-ui-thread**: On Apple platforms the type is `@MainActor`-isolated, so the compiler enforces the rule.
 
 ## Reference Implementations
 
@@ -397,7 +396,7 @@ Not applicable: this vocabulary contains no logging calls anywhere.
 
 ## Design Decisions
 
-**Decision** (Swift): The card is declared with no access modifier
+**Decision**: (Swift) The card is declared with no access modifier
 (internal), while the group container, card row, and divider are given
 public access.
 **Rationale**: The source's own doc comment states it directly:
@@ -407,7 +406,7 @@ only because they were written together." The card is an implementation
 detail of the group, not a sanctioned standalone entry point.
 **Approved**: pending
 
-**Decision** (SwiftUI / AppKit): The card clips its content with a
+**Decision**: (SwiftUI / AppKit) The card clips its content with a
 continuous ("squircle") corner curve, while the AppKit sibling's
 equivalent card sets a layer corner radius using that framework's default
 (circular) corner curve.
@@ -438,17 +437,25 @@ parameter is reached (see the SwiftUI Platform Note for how the source
 avoids automatic-localization resolution).
 **Approved**: pending
 
+**Decision**: The card divider's contrast against the elevated surface is whatever the theme's divider role resolves to; the vocabulary performs no contrast check, and the divider role has no minimum-contrast floor.
+**Rationale**: Checked `SettingsCardViews.swift`: `SettingsCardDivider` draws `theme.divider` at the divider thickness with a leading inset and nothing measures the result. Closing the gap would take a floor on the divider role's derivation or a per-theme measurement of divider-to-surface ratio, or a decision that the divider is decorative and exempt from the 3:1 guidance.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | Accessibility |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | Accessibility |
 | [dynamic-type-support](agenticdevelopercookbook://compliance/accessibility#dynamic-type-support) | partial | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | passed | Internationalization |
 
-`screen-reader-support` passes because `SettingsSearchField`'s only interactive control is a genuine `NSSearchField` (`ThemedSearchField`), which carries its own search-field accessibility role and description; the four pure layout views (`SettingsGroup`, `SettingsCard`, `SettingsCardRow`, `SettingsCardDivider`) render no interactive elements of their own. `keyboard-navigable` passes for the same reason — `NSSearchField`'s native focus, typing, and Escape-to-clear behavior come for free from wrapping the real control (see Focused in States). `dynamic-type-support` is partial because the caption's `.caption` style is scaled by the active theme's `sizeScale` (`ThemeTypography.defaultStyle(.caption)`), and whether that tracks the system's text-size preference depends on the active theme, which this file cannot determine on its own. `contrast-ratio` is partial because the `secondaryText` and `divider` roles each guarantee only a fixed minimum-contrast floor (3.0 and unstated, respectively) from their derivation formula, not a guarantee that any specific active theme clears WCAG's 4.5:1 (text) or 3:1 (non-text UI) thresholds — see the open question on minimum-contrast-ratio. `no-hardcoded-strings` passes because the file's only user-facing text, `title` and `placeholder`, are caller-supplied parameters with no literal string of this file's own baked in (see Localization).
+`screen-reader-support` passes because `SettingsSearchField`'s only interactive control is a genuine `NSSearchField` (`ThemedSearchField`), which carries its own search-field accessibility role and description; the four pure layout views (`SettingsGroup`, `SettingsCard`, `SettingsCardRow`, `SettingsCardDivider`) render no interactive elements of their own. `keyboard-navigable` passes for the same reason — `NSSearchField`'s native focus, typing, and Escape-to-clear behavior come for free from wrapping the real control (see Focused in States). `dynamic-type-support` is partial because the caption's `.caption` style is scaled by the active theme's `sizeScale` (`ThemeTypography.defaultStyle(.caption)`), and whether that tracks the system's text-size preference depends on the active theme, which this file cannot determine on its own. `contrast-ratio` is partial because the `secondaryText` and `divider` roles each guarantee only a fixed minimum-contrast floor (3.0 and unstated, respectively) from their derivation formula, not a guarantee that any specific active theme clears WCAG's 4.5:1 (text) or 3:1 (non-text UI) thresholds — see **minimum-contrast-ratio** and its Design Decision. `no-hardcoded-strings` passes because the file's only user-facing text, `title` and `placeholder`, are caller-supplied parameters with no literal string of this file's own baked in (see Localization).
+
+Separation-of-concerns is passed: the group container, card, card row, card divider and search field each draw one piece of the settings-card vocabulary from theme and layout tokens, and the search field wraps the system search control rather than reimplementing it. Unit-test-coverage is partial: `SettingsCardViewsTests.swift` has three tests (the vocabulary builds with a real intrinsic height, a hosted panel carries no size constraints, and the search field is the native one), but the group, card row and divider have no direct assertions and nothing tests the search field's text binding.
 
 ## Change History
 
@@ -459,3 +466,5 @@ avoids automatic-localization resolution).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/layout/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Restated divider contrast requirement as current behavior with a pending decision; added Compliance rows |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

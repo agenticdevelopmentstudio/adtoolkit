@@ -1,36 +1,34 @@
 ---
 id: da441eaa-795d-4447-99b1-356186855921
-title: Transfer Ownership Section
-domain: agenticdevelopertoolkit://cookbook/adh/hub/admin/transfer-ownership-section
+title: "Transfer Ownership Section"
+domain: adtoolkit://cookbook/adh/hub/admin/transfer-ownership-section
 type: ingredient
-version: 1.2.0
+version: 1.2.3
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Disclosure-gated destination picker (with nested workspace submenus) that
-  runs a server preflight and gates a type-to-confirm dialog before transferring ownership
-  of an object.
+summary: "Disclosure-gated destination picker (with nested workspace submenus) that runs a server preflight and gates a type-to-confirm dialog before transferring ownership of an object."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- confirmation
-- disclosure
-- settings
-- transfer
+  - confirmation
+  - disclosure
+  - settings
+  - transfer
 depends-on:
-- agenticdevelopertoolkit://recipes/disclosure
-- agenticdevelopertoolkit://recipes/button
-- agenticdevelopertoolkit://recipes/dialog
+  - agenticdevelopertoolkit://recipes/disclosure
+  - agenticdevelopertoolkit://recipes/button
+  - agenticdevelopertoolkit://recipes/dialog
 related:
-- agenticdevelopertoolkit://cookbook/adh/hub/admin/delete-entity-section
+  - adtoolkit://cookbook/adh/hub/admin/delete-entity-section
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Transfer Ownership Section
@@ -453,16 +451,16 @@ reserved for what cannot be undone.
 
 **Decision**: Guard the async preflight race with a monotonically incrementing `previewSeq` ref
 rather than cancelling the `onPreview` promise itself.
-**Platform**: React/Web.
 **Rationale**: `onPreview` is a caller-supplied `Promise` with no cancellation contract; a sequence
 number lets a late resolution be detected and ignored without requiring the caller to support
 `AbortController`-style cancellation.
+Platform scope: React/Web.
 **Approved**: pending
 
 **Decision**: Widen the confirmation dialog to `max-w-xl`.
-**Platform**: React/Web.
 **Rationale**: every load-bearing line of text in the dialog is an identifier, and at the platform's
 default `max-w-md` a mid-length one wraps confusingly inside itself.
+Platform scope: React/Web.
 **Approved**: pending
 
 ## Compliance
@@ -470,13 +468,20 @@ default `max-w-md` a mid-length one wraps confusingly inside itself.
 | Check | Status | Category |
 |-------|--------|----------|
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 `partial` because the source both satisfies and falls short of this check: the root `<section aria-label>`, the distinct Disclosure/dropdown trigger labels (`trigger-button-labeled-distinctly`), and the `Label htmlFor` on the confirm `Input` give screen-reader users meaningful, unambiguous labels, but the dialog's "Checking…"-to-preview transition has no live region (see the Accessibility section above), so a screen-reader user who already opened the dialog is not told when its content changes.
+
+`separation-of-concerns` passes: `transfer-ownership-section.tsx` imports only shared UI primitives and performs no fetching of its own; the preflight, the workspace list, and the transfer itself arrive as caller-supplied callbacks and props. `unit-test-coverage` passes: `transferOwnershipSection.test.tsx` covers the preview naming who loses access, arming Transfer only when the identifier is typed back exactly (including trimmed and empty labels), the bucket access-group loss, disabling the current owner, same-slug workspaces kept apart by kind, nested targets never being destinations, cancelling while the preflight runs, and never showing a stale preflight.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.2.3 | 2026-10-04 | Mike Fullerton | Design Decisions keep the Decision / Rationale / Approved triple; each decision's platform line is folded into its rationale. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Add separation-of-concerns and unit-test-coverage compliance. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/admin/. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

@@ -1,33 +1,32 @@
 ---
 id: ce1cec62-6244-4d1c-89db-cf31dea0f0be
-title: Chat Day Banner View
-domain: agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-day-banner-view
+title: "Chat Day Banner View"
+domain: adtoolkit://cookbook/ai/chat/chat-window/chat-day-banner-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Displays the calendar day once, centered above that day's first chat message,
-  flanked by two horizontal rule lines.
+summary: "Displays the calendar day once, centered above that day's first chat message, flanked by two horizontal rule lines."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- chat
-- messaging
-- ui-component
-- banner
+  - chat
+  - messaging
+  - ui-component
+  - banner
 depends-on:
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
+  - adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
 related:
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
+  - adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Chat Day Banner View
@@ -51,6 +50,7 @@ The component announces a calendar day once, centered above the first message of
 - **theme-responsive-styling**: The component MUST update the label's font, the label's text color, and both rules' colors whenever the active theme's palette changes, without being re-created.
 - **day-and-title-exposed**: The component MUST expose the normalized day and the label's current rendered string as read-only public properties (`day` and `title` respectively).
 - **coder-init-unavailable**: The component MUST NOT support construction through platform-archival deserialization (e.g. storyboard/XIB unarchiving); attempting that construction path MUST be a compile-time error, and MUST terminate the process if reached at runtime regardless (see Platform Notes for the concrete mechanism).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -94,6 +94,7 @@ Not applicable: the component is a static, non-interactive display element — a
 | chat-day-banner-013 | day-and-title-exposed | `day` = an instant on June 3, 2026, `calendar` pinned to a fixed time zone (e.g. UTC) | `banner.day` equals the normalized start-of-day date; `banner.title` equals the label's current string value |
 | chat-day-banner-014 | coder-init-unavailable | Attempt to construct the component through platform-archival deserialization (e.g. storyboard/XIB unarchiving) | Calling it is a compile-time error; if reached at runtime regardless, the process terminates immediately |
 | chat-day-banner-015 | rules-equal-width | A `day`/locale combination producing an unusually long formatted date string, in a narrow view | Label stays on one line (no wrap); both rules narrow together to absorb the remaining width, staying equal to each other for as long as their combined required width is non-negative |
+| chat-day-banner-016 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -102,8 +103,8 @@ Not applicable: the component is a static, non-interactive display element — a
 - **Concurrent access**: Not applicable — the view is confined to the main thread; the platform's concurrency model prevents `day`, the label, and the rules from being read or mutated off the main thread, so there is no concurrent-access case to define.
 - **Error states**: Not applicable — construction and theme application are synchronous with no throwing or failable call in either; there is nothing in this source that can fail.
 - **Offline/disconnected state**: Not applicable — the component performs no networking; its only inputs are the `day`/`calendar` constructor parameters and the current theme palette.
-- **Very long formatted date text**: The label has no explicit line-wrap or truncation configured — it uses the default behavior of a single-line, non-wrapping label control (see Platform Notes). A very long localized date string stays on one line and instead narrows the two rule lines, since the rules (not the label) absorb the remaining horizontal space (see **rules-equal-width**, vector chat-day-banner-015); see the open question on **rule-width-priority**.
-- **rule-width-priority**: NEEDS REVIEW: Not implemented in source. No constraint priority is set on the rules' equal-width, leading-gap, or trailing-gap constraints (all default to the maximum priority — see Platform Notes), so a formatted date long enough to force `leadingRule`/`trailingRule` toward negative width has no defined outcome — the layout system will break one of several equal-priority required constraints without a specified winner; settling it needs either an explicit priority decision on the rule-width/gap constraints, or a guaranteed maximum width from the shared day-formatter's output.
+- **Very long formatted date text**: The label has no explicit line-wrap or truncation configured — it uses the default behavior of a single-line, non-wrapping label control (see Platform Notes). A very long localized date string stays on one line and instead narrows the two rule lines, since the rules (not the label) absorb the remaining horizontal space (see **rules-equal-width**, vector chat-day-banner-015); see **rule-width-priority** and its Design Decision.
+- **rule-width-priority**: No constraint priority is set on the rules' equal-width, leading-gap or trailing-gap constraints (all at the layout system's default required priority), so a formatted date long enough to force a rule toward negative width has no defined outcome: the layout system breaks one of the equal-priority required constraints without a specified winner.
 - **Theme change while visible**: Recolors in place (see **theme-responsive-styling**); the day text itself is unaffected, since only font and color change on a theme update, not the label's string value.
 - **Multiple messages on the same day**: The view itself does not deduplicate or decide when a new day boundary has been reached across a transcript — each instance simply displays the `day` it was constructed with. Per the component's own documentation ("it is said where it changes and nowhere else"), avoiding duplicate banners for messages that share a day is the caller's responsibility, not this component's.
 
@@ -150,13 +151,13 @@ Not applicable: the source contains no logging calls (no `os_log`, `Logger`, or 
 
 ## Platform Notes
 
-- **SwiftUI**: Build an `HStack` with a `Rectangle().frame(height: 1)` divider on each side of a centered `Text`, using `.frame(maxWidth: .infinity)` on each divider so they share remaining width equally, matching **rules-equal-width**. Apply `.padding(.top, 16)`/`.padding(.bottom, 8)` for **vertical-insets**. Render the date with a `DateFormatter` using the full-weekday/full-month pattern (`EEEE, MMMM d yyyy`, matching **day-text-rendered**). Observe palette changes the way `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view#platforms/swiftui` does (a `ThemePaletteObserver`, since SwiftUI has no `@Themeable` attribute) and drive divider/text colors and caption font from it. Expose `day`/`title` as `let` properties on the wrapping view struct or its view model.
+- **SwiftUI**: Build an `HStack` with a `Rectangle().frame(height: 1)` divider on each side of a centered `Text`, using `.frame(maxWidth: .infinity)` on each divider so they share remaining width equally, matching **rules-equal-width**. Apply `.padding(.top, 16)`/`.padding(.bottom, 8)` for **vertical-insets**. Render the date with a `DateFormatter` using the full-weekday/full-month pattern (`EEEE, MMMM d yyyy`, matching **day-text-rendered**). Observe palette changes the way `adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view#platforms/swiftui` does (a `ThemePaletteObserver`, since SwiftUI has no `@Themeable` attribute) and drive divider/text colors and caption font from it. Expose `day`/`title` as `let` properties on the wrapping view struct or its view model.
 
-- **Compose**: Build a `Row` with two `Divider()`/`HorizontalDivider`-style composables, each with `Modifier.weight(1f)` so they share remaining width equally (the Compose analogue of **rules-equal-width**), flanking a `Text` with `Modifier.padding(horizontal = 10.dp)`. Apply `Modifier.padding(top = 16.dp, bottom = 8.dp)` on the row for **vertical-insets**. Format the date with `java.time.format.DateTimeFormatter` using the equivalent full-weekday/full-month pattern (matching **day-text-rendered**). Source divider and caption-text colors from the same custom `CompositionLocal` palette holder documented at `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view#platforms/compose`, not Material 3's own color roles.
+- **Compose**: Build a `Row` with two `Divider()`/`HorizontalDivider`-style composables, each with `Modifier.weight(1f)` so they share remaining width equally (the Compose analogue of **rules-equal-width**), flanking a `Text` with `Modifier.padding(horizontal = 10.dp)`. Apply `Modifier.padding(top = 16.dp, bottom = 8.dp)` on the row for **vertical-insets**. Format the date with `java.time.format.DateTimeFormatter` using the equivalent full-weekday/full-month pattern (matching **day-text-rendered**). Source divider and caption-text colors from the same custom `CompositionLocal` palette holder documented at `adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view#platforms/compose`, not Material 3's own color roles.
 
 - **React/Web**: Render a flex container (`display: flex; align-items: center`) with two `<div>` "rule" elements using `flex: 1` (so they share remaining width equally) around a centered `<span>` for the date text, each rule separated from the text by `margin: 0 10px`. Apply `padding-top: 16px; padding-bottom: 8px` on the container. Format the date string with `Intl.DateTimeFormat(locale, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })`, the web equivalent of the shared day-format pattern in **day-text-rendered**, and drive the rule/text colors from CSS custom properties tied to the active theme, updating on a theme-class change on the root element.
 
-- **AppKit / UIKit**: Source: `packages/apple/AgenticToolkit/macOS/Features/AIChatWindow/ChatDayBannerView.swift`. Implemented as a `@MainActor`, `final` `NSView` subclass using `NSTextField(labelWithString:)` for the label and two plain `NSView`s (`wantsLayer = true`) as the rule lines — no target-action, tracking area, button, or other control subview is present, consistent with it being a static display element. Layout is entirely `NSLayoutConstraint.activate` (no explicit priorities — all constraints default to `.required`/1000 — see Design Decisions and the unresolved gap noted under Edge Cases), centering the label by pinning `label.centerXAnchor` to the view's own `centerXAnchor` (see **label-centered**). `day` is normalized in `init` via `calendar.startOfDay(for: day)` (see **day-normalized-to-start-of-day**). The accessibility role is set via `setAccessibilityRole(.staticText)` (see **static-text-role**), and the label's accessibility label is set via `label.setAccessibilityLabel(label.stringValue)` — redundant given `NSTextField(labelWithString:)`'s own default exposure, and present without a `setAccessibilityElement(false)` call, which is the source of the open screen-reader-support/semantic-markup question (see Accessibility, Compliance). Construction via a coder is foreclosed with `init(coder:) { fatalError() }` under `@available(*, unavailable)` (see **coder-init-unavailable**). The label's text comes from the private `AIChatBubbleView.dayFormatter` (`EEEE, MMMM d yyyy`), shared with that view's inline-timestamp banner — see **day-text-rendered**. Theme changes are observed via `observeTheme { banner, palette in banner.apply(palette) }`, the same pattern documented at `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view#platforms/appkit-uikit`. Construction and theme application are synchronous — `init` and `apply(_:)` — with no throwing or failable call in either. This file targets macOS only — it lives under `macOS/Features` and uses `NSView`/`NSTextField`, which have no direct UIKit equivalent in this source; an iOS port would substitute `UILabel` and two plain `UIView`s for the rules, driven by the equivalent `NSLayoutConstraint` (UIKit) relationships, and would need its own theme-observation hook (iOS message bubbles use `MobileMessageBubbleView` for that role).
+- **AppKit / UIKit**: Source: `packages/apple/AgenticToolkit/macOS/Features/AIChatWindow/ChatDayBannerView.swift`. Implemented as a `@MainActor`, `final` `NSView` subclass using `NSTextField(labelWithString:)` for the label and two plain `NSView`s (`wantsLayer = true`) as the rule lines — no target-action, tracking area, button, or other control subview is present, consistent with it being a static display element. Layout is entirely `NSLayoutConstraint.activate` (no explicit priorities — all constraints default to `.required`/1000 — see Design Decisions and the unresolved gap noted under Edge Cases), centering the label by pinning `label.centerXAnchor` to the view's own `centerXAnchor` (see **label-centered**). `day` is normalized in `init` via `calendar.startOfDay(for: day)` (see **day-normalized-to-start-of-day**). The accessibility role is set via `setAccessibilityRole(.staticText)` (see **static-text-role**), and the label's accessibility label is set via `label.setAccessibilityLabel(label.stringValue)` — redundant given `NSTextField(labelWithString:)`'s own default exposure, and present without a `setAccessibilityElement(false)` call, which is the source of the open screen-reader-support/semantic-markup question (see Accessibility, Compliance). Construction via a coder is foreclosed with `init(coder:) { fatalError() }` under `@available(*, unavailable)` (see **coder-init-unavailable**). The label's text comes from the private `AIChatBubbleView.dayFormatter` (`EEEE, MMMM d yyyy`), shared with that view's inline-timestamp banner — see **day-text-rendered**. Theme changes are observed via `observeTheme { banner, palette in banner.apply(palette) }`, the same pattern documented at `adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view#platforms/appkit-uikit`. Construction and theme application are synchronous — `init` and `apply(_:)` — with no throwing or failable call in either. This file targets macOS only — it lives under `macOS/Features` and uses `NSView`/`NSTextField`, which have no direct UIKit equivalent in this source; an iOS port would substitute `UILabel` and two plain `UIView`s for the rules, driven by the equivalent `NSLayoutConstraint` (UIKit) relationships, and would need its own theme-observation hook (iOS message bubbles use `MobileMessageBubbleView` for that role).
 
 - **WinUI 3**: Use a `Grid` with three columns defined `*, Auto, *` so the two flanking columns share remaining width equally — the WinUI analogue of **rules-equal-width** — placing a `Rectangle` (or a `Border` with `Height="1"`, `VerticalAlignment="Center"`) in column 0 and column 2, and a `TextBlock` in column 1 with `Margin="10,0,10,0"` for the 10pt gap on each side. Set `Margin="0,16,0,8"` on the root `Grid` for **vertical-insets**. Bind `TextBlock.Text` to a day-formatted string using the equivalent long-weekday/long-month pattern (matching **day-text-rendered**), and bind `Rectangle.Fill`/`TextBlock.Foreground` to theme resource-dictionary entries for the divider and timestamp-text roles, updating them when the app's theme dictionary swaps (WinUI has no live palette-observer callback, so this typically means re-evaluating `ThemeResource` bindings on a theme-changed event). Set `AutomationProperties.Name` on the root `Grid` to the date text (or mark the two `Rectangle`s `AutomationProperties.AccessibilityView="Raw"`) so Narrator reaches a single static-text element, mirroring **static-text-role**.
 
@@ -170,28 +171,34 @@ Not applicable: the source contains no logging calls (no `os_log`, `Logger`, or 
 
 **Decision**: The date banner renders its text using `AIChatBubbleView.dayFormatter` rather than owning its own `DateFormatter`.
 **Rationale**: Keeps the date shown at the top of each day consistent with whatever format the message-timestamp UI uses elsewhere in the chat transcript, and centralizes locale/calendar formatting policy in one place. This recipe therefore does not itself define the exact format pattern, locale rules, or calendar system used beyond the pattern `EEEE, MMMM d yyyy` — the only evidence available is the class's own doc-comment example, which itself misstates the weekday for June 3, 2026 as "Saturday" (June 3, 2026 is in fact a Wednesday); this recipe corrects the example to "Wednesday, June 3 2026" everywhere it is quoted.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: The `day` value is normalized to `calendar.startOfDay(for:)` at construction time, rather than stored as the raw `Date` the caller passed in.
 **Rationale**: Two messages posted at different times on the same calendar day must produce the same banner. Normalizing once at init — using an injectable `calendar` that defaults to `.current` — keeps the day-boundary decision testable, letting a test pin the time zone that decides which side of midnight an instant falls on, per the initializer's own doc comment.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: The two rule lines are constrained to equal width to each other, rather than each being pinned with a fixed margin from the view's own edges.
 **Rationale**: Keeps the date label on the view's horizontal center line regardless of how wide the formatted date string is — per the source comment, the rules are "equal to each other rather than each pinned to a margin, which is what keeps the date itself on the centre line whatever it says." No priority is set on this constraint pair, which is the source of the open question on **rule-width-priority** for very long date text.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: Vertical spacing around the label is asymmetric — 16pt above, 8pt below.
 **Rationale**: Per the source's doc comment, "the gap is what separates yesterday's last message from today's first, and it belongs to the break, not to the day it opens" — more space is reserved above the banner than below it so the visual break reads as belonging to the transition between days, not to the day being announced.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: `init(coder:)` is marked `@available(*, unavailable)` and calls `fatalError()` if reached.
 **Rationale**: The view is only ever meant to be constructed programmatically with a `day` (and optional `calendar`); Interface Builder/storyboard unarchiving has no way to supply those parameters, so the source forecloses that construction path entirely rather than leaving it partially working.
-**Approved: pending**
+**Approved**: pending**
+
+**Decision**: Rule width against a very long date is left to the layout system's default conflict resolution.
+**Rationale**: No priority is set on the rule-width and gap constraints, so an over-long formatted date breaks an arbitrary required constraint; closing the gap takes either an explicit priority on those constraints or a guaranteed maximum width from the shared day formatter's output.
+**Approved**: pending
 
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [semantic-markup](agenticdevelopercookbook://compliance/accessibility#semantic-markup) | partial | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
@@ -203,7 +210,9 @@ Not applicable: the source contains no logging calls (no `os_log`, `Logger`, or 
 | [rtl-layout-support](agenticdevelopercookbook://compliance/internationalization#rtl-layout-support) | passed | Internationalization |
 | [platform-theming](agenticdevelopercookbook://compliance/platform-compliance#platform-theming) | passed | Platform Compliance |
 
-Statuses rest on: the explicit `.staticText` accessibility role and accessibility label on the container, though the child `NSTextField` is never excluded from the accessibility tree (no `setAccessibilityElement(false)` call in source) and carries its own accessibility label too, so whether VoiceOver announces the banner as one merged element or as the container plus a separate label is not resolved by this source (screen-reader-support, semantic-markup); the label's font and color being resolved entirely from the active `SemanticPalette`, which this source neither defines nor can verify for contrast or Dynamic Type scaling (contrast-ratio, dynamic-type-support); the rendered date string being fully delegated to the shared day-formatting pattern named in **day-text-rendered** (see the AppKit/UIKit Platform Note), whose locale/calendar behavior is not in this source (locale-aware-formatting); the component rendering arbitrary caller-provided Unicode text (via the formatter's output) without special-casing (unicode-support); the absence of any literal user-facing string in this file — the accessibility identifier `chat-day-banner` is an internal test hook, not user-facing text (no-hardcoded-strings); the label's single-line, non-wrapping default with no truncation configured, which narrows the rule lines for a long date but has an undefined limit (text-expansion-tolerance, see the open question on rule-width-priority); the layout using `leadingAnchor`/`trailingAnchor` (logical, RTL-aware) throughout rather than fixed left/right anchors (rtl-layout-support); and the `observeTheme` registration that recolors the label and rules on every theme change (platform-theming).
+Statuses rest on: the explicit `.staticText` accessibility role and accessibility label on the container, though the child `NSTextField` is never excluded from the accessibility tree (no `setAccessibilityElement(false)` call in source) and carries its own accessibility label too, so whether VoiceOver announces the banner as one merged element or as the container plus a separate label is not resolved by this source (screen-reader-support, semantic-markup); the label's font and color being resolved entirely from the active `SemanticPalette`, which this source neither defines nor can verify for contrast or Dynamic Type scaling (contrast-ratio, dynamic-type-support); the rendered date string being fully delegated to the shared day-formatting pattern named in **day-text-rendered** (see the AppKit/UIKit Platform Note), whose locale/calendar behavior is not in this source (locale-aware-formatting); the component rendering arbitrary caller-provided Unicode text (via the formatter's output) without special-casing (unicode-support); the absence of any literal user-facing string in this file — the accessibility identifier `chat-day-banner` is an internal test hook, not user-facing text (no-hardcoded-strings); the label's single-line, non-wrapping default with no truncation configured, which narrows the rule lines for a long date but has an undefined limit (text-expansion-tolerance, see **rule-width-priority** and its Design Decision); the layout using `leadingAnchor`/`trailingAnchor` (logical, RTL-aware) throughout rather than fixed left/right anchors (rtl-layout-support); and the `observeTheme` registration that recolors the label and rules on every theme change (platform-theming).
+
+`separation-of-concerns` passes because `ChatDayBannerView` only normalizes its day, formats it through the shared day formatter and lays out a label between two rules; grouping messages into days is the transcript's concern, not the banner's. `unit-test-coverage` is partial: `TranscriptDateTests.swift` exercises the banner through `testTheBannerNamesTheWholeDay`, `testTwoTimesOnOneDayBelongToOneBanner` and the transcript test that heads each day with one banner, but no test covers the rule layout or the theme colors.
 
 ## Change History
 
@@ -214,3 +223,5 @@ Statuses rest on: the explicit `.staticText` accessibility role and accessibilit
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/chat/chat-window/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the rule-width-priority NEEDS REVIEW marker as current behavior plus a pending Design Decision; added separation-of-concerns and unit-test-coverage compliance. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

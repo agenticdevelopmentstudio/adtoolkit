@@ -1,36 +1,35 @@
 ---
 id: 08bfb299-851b-4b01-a84a-6a2a13e07c12
-title: Composable Tabs Active Pane
-domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/active-pane
+title: "Composable Tabs Active Pane"
+domain: adtoolkit://cookbook/ui/layout/composable-tabs/active-pane
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
 created: 2026-09-23
-modified: '2026-09-27'
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Per-window tracker of which composable-tabs pane the user is working in,
-  plus the pane backdrop view that draws its outline.
+summary: "Per-window tracker of which composable-tabs pane the user is working in, plus the pane backdrop view that draws its outline."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- composable-tabs
-- active-pane
-- focus
+  - composable-tabs
+  - active-pane
+  - focus
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+  - adtoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
 related:
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/arrange-overlay-view
+  - adtoolkit://cookbook/ui/layout/composable-tabs/arrange-overlay-view
 references:
-- https://developer.apple.com/documentation/appkit/nsevent/addlocalmonitorforevents(matching:handler:)
-- https://developer.apple.com/documentation/appkit/nswindow/makefirstresponder(_:)
-- https://developer.apple.com/documentation/foundation/runloop/mode-swift.struct/eventtracking
-- https://www.w3.org/WAI/WCAG21/Understanding/non-text-contrast.html
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/documentation/appkit/nsevent/addlocalmonitorforevents(matching:handler:)
+  - https://developer.apple.com/documentation/appkit/nswindow/makefirstresponder(_:)
+  - https://developer.apple.com/documentation/foundation/runloop/mode-swift.struct/eventtracking
+  - https://www.w3.org/WAI/WCAG21/Understanding/non-text-contrast.html
+approved-by: ""
+approved-date: ""
 ---
 
 # Composable Tabs Active Pane
@@ -229,6 +228,7 @@ controller, not to this component, and is out of scope for this ingredient.
   own.
 - **the-backdrop-repaints-on-a-highlight-setting-change**: The backdrop MUST
   reapply its theme when the highlight setting changes.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -287,14 +287,7 @@ controller, not to this component, and is out of scope for this ingredient.
   backdrop sized by its enclosing pane's own layout; it is not a discrete
   tappable control with an independently sized hit target, and the source
   treats it as neither a button nor a control.
-- **contrast**: NEEDS REVIEW: Not implemented in source. The pane-backdrop,
-  pane-outline, and active-pane-outline colors are theme-overridable roles
-  whose actual values are chosen per theme (see the Theme Editor's Project
-  topic), not fixed in this component, so the contrast between the active
-  border and its adjacent backdrop cannot be computed from this component
-  alone; resolvable only by whoever audits each shipped theme's actual token
-  values against a numeric contrast threshold (e.g. WCAG 1.4.11 non-text
-  contrast, 3:1) for this border-against-backdrop pairing.
+- **contrast**: The component performs no contrast check of its own. The pane-backdrop, pane-outline and active-pane-outline colors are theme-overridable roles whose values are chosen per theme, so the contrast between the active border and its adjacent backdrop (for example the 3:1 non-text contrast of WCAG 1.4.11) depends on each shipped theme's token values.
 
 ## Conformance Test Vectors
 
@@ -352,6 +345,8 @@ controller, not to this component, and is out of scope for this ingredient.
 | CTA-50 | event-monitor-is-local-to-the-apps-own-windows | A pointer event delivered to a window belonging to a different application | The monitor never observes it; no pane in this app is affected |
 | CTA-51 | close-and-highlight-changes-dispatch-through-the-main-queue | The window closes, or the highlight setting changes, while the platform is tracking a pointer-down gesture | The active-id removal or backdrop repaint still applies before the tracking gesture ends, because the handler is queued on the main work queue rather than a mechanism that pauses during the gesture |
 | CTA-52 | the-active-pane-uses-the-accent-outline-color | No pane in a window has claimed the active id; applying the theme runs for any pane in it | The border color equals the theme's pane-outline color for every pane in the window, not the accent, even though checking membership reports `true` for a view in any of them |
+| CTA-53 | contrast | Theme whose active-pane outline color is close to its pane backdrop color | The active pane's border is drawn in the theme's active-pane-outline color; no contrast adjustment is applied. |
+| CTA-54 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -531,6 +526,7 @@ this file.
   a neutral outline brush via a view-model boolean exactly like `isActive`
   here, and inset the pane's own background `Border`/`Grid` by 2px from that
   outer `Border`'s edge to reproduce `borderInset`.
+- **UI-thread confinement**: `confines-to-ui-thread` — the tracker and the pane backdrop are both declared `@MainActor`, so use from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -549,7 +545,7 @@ this file.
   **Approved**: pending
 - **Decision**: A click activates the hit pane directly and never itself
   calls `takeFocus`; only a pointer move calls it.
-  **Rationale (AppKit)**: A click already carries its own focus through
+  **Rationale**: (AppKit) A click already carries its own focus through
   AppKit's ordinary hit-test-to-first-responder path, so calling `takeFocus`
   for a click would be redundant. A move carries no such focus of its own, so
   without an explicit call the outline could move to a pane the keyboard
@@ -558,7 +554,7 @@ this file.
 - **Decision**: For a pointer move, focus is taken before the pane is
   activated, and a refusal from the outgoing responder blocks the activation
   entirely — nothing is left half-changed.
-  **Rationale (AppKit)**: The source notes that a text field failing
+  **Rationale**: (AppKit) The source notes that a text field failing
   validation in `resignFirstResponder` is AppKit's ordinary way of saying
   "finish this first"; outlining the new pane anyway would point at a pane
   the keyboard is not actually in.
@@ -572,14 +568,14 @@ this file.
   **Approved**: pending
 - **Decision**: `isInActivePane(_:)` is deliberately blind to whether the
   window is key.
-  **Rationale (AppKit)**: The source states this is deliberate: which pane
+  **Rationale**: (AppKit) The source states this is deliberate: which pane
   the user is working in does not change because a settings window came
   forward, and a pane that dimmed itself every time Settings opened would be
   reporting the wrong thing exactly when the user was looking at it.
   **Approved**: pending
 - **Decision**: The `NSEvent` monitor is local to the app's own windows, not
   global.
-  **Rationale (AppKit)**: This app only needs to know about the pointer
+  **Rationale**: (AppKit) This app only needs to know about the pointer
   inside its own windows, and a local monitor sees events before the
   responder chain does without requiring the accessibility permission a
   global monitor would need.
@@ -587,7 +583,7 @@ this file.
 - **Decision**: `NSWindow.willCloseNotification` handling and the
   `highlightActivePane` settings-change handling are both explicitly
   dispatched onto `DispatchQueue.main`, not `RunLoop.main`.
-  **Rationale (AppKit)**: `RunLoop.main` enqueues only in `.default` mode, so
+  **Rationale**: (AppKit) `RunLoop.main` enqueues only in `.default` mode, so
   anything posted while AppKit tracks a mouse-down in `.eventTracking` mode
   (for example, a checkbox being clicked) would not run until the tracking
   loop ended. `DispatchQueue.main` is drained in every mode.
@@ -611,10 +607,13 @@ this file.
   **Approved**: pending
 - **Decision**: `paneWindows` and `paneViews` are weak `NSHashTable`
   collections rather than strong references.
-  **Rationale (AppKit)**: Per the source's own comments, both are
+  **Rationale**: (AppKit) Per the source's own comments, both are
   convenience lists, never owners; a closed window or a pane that has left
   its window needs to be able to go away without this component being told
   twice.
+  **Approved**: pending
+- **Decision**: The active-pane border is drawn in the theme's outline color with no contrast check against the pane backdrop.
+  **Rationale**: The color values are chosen per theme outside this component, so the pairing cannot be computed here; closing the gap means auditing each shipped theme's active-pane-outline and pane-backdrop tokens against a numeric threshold such as 3:1.
   **Approved**: pending
 
 ## Compliance
@@ -623,13 +622,17 @@ this file.
 |-------|--------|----------|
 | [focus-management](agenticdevelopercookbook://compliance/accessibility#focus-management) | passed | accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | best-practices |
 
 `focus-management` passes because every pointer-driven activation is
 paired with a standard `NSResponder` focus change, with no private
 accessibility-bypassing mechanism. `contrast-ratio` is `partial` because
 the actual color values behind `projectPaneBackdrop`, `projectPaneOutline`,
 and `projectActivePaneOutline` are chosen per theme, outside this file, per
-the open question on contrast.
+the contrast requirement and its pending decision.
+
+`separation-of-concerns` passes because `ComposableTabsActivePane` only tracks which pane is active and draws the pane backdrop and outline from theme roles; what a pane contains and what activation means to the content belong to the panes and the controller. `unit-test-coverage` is `partial`: no test file references `ComposableTabsActivePane`, so activation, event routing and the focus walk are unpinned, but `ComposableTabs/ComposableTabsPaneChromeTests.swift` tests the pane backdrop that file also defines, `ComposableTabsPaneBackgroundView` (`testTheContainerIsStillTheBackgroundThatDrawsTheFocusOutline`, `testTheTrackAroundAPaneIsTheWorkspaceBackdrop`, `testThePaneItselfIsFilledInsideThatTrack`), which pins the backdrop color, the 2-point fill inset and the fill being the first subview; nothing tests the outline colors.
 
 ## Change History
 
@@ -641,3 +644,4 @@ the open question on contrast.
 | 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/composable-tabs/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the contrast NEEDS REVIEW marker as current behavior (no contrast check) with a vector and a pending decision; added separation-of-concerns (passed) and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. Corrected unit-test-coverage to partial: the pane backdrop's fill and backdrop color are tested in ComposableTabsPaneChromeTests. |

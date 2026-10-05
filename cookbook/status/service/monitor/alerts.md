@@ -1,35 +1,34 @@
 ---
 id: 1d3c4f89-f2d5-4cf1-b5c2-879ec0e594a9
-title: Monitor Alerts
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
+title: "Monitor Alerts"
+domain: adtoolkit://cookbook/status/service/monitor/alerts
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Queues monitor issue open, resolve, and retire transitions and batches them
-  into one fail-soft webhook POST per flush; a no-op when the URL is unset.
+summary: "Queues monitor issue open, resolve, and retire transitions and batches them into one fail-soft webhook POST per flush; a no-op when the URL is unset."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- alerting
-- webhook
-- server
+  - monitor
+  - alerting
+  - webhook
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/alerts.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/alerts.int.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/alerts.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/alerts.int.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Monitor Alerts
@@ -60,7 +59,7 @@ This module is the status backend's outbound alerting queue and webhook dispatch
 - **flush-request-shape**: The POST MUST set header `Content-Type: application/json` and a JSON body with exactly three top-level keys: `text` (the drained alerts' rendered lines, joined; see Rendering), `content` (the identical string as `text`), and `alerts` (the drained alert list, unmodified).
 - **flush-timeout-5000ms**: The POST MUST carry a deadline of 5,000 milliseconds (`ALERT_TIMEOUT_MS`), enforced by aborting the request if no response arrives in time.
 - **flush-fail-soft**: When the POST call fails (a network failure or the 5,000ms abort), the flush operation MUST catch the failure, log it with the message `[alerts] webhook delivery failed (<n> alerts): <error message>` (`<n>` the count of alerts in that batch), and resolve normally; it MUST NOT re-queue the already-drained alerts and MUST NOT throw or reject.
-- **webhook-non-2xx-response**: NEEDS REVIEW: Not implemented in source. The flush operation never inspects the response status of the POST — no success/failure check of any kind — so a webhook receiver that answers with a 4xx or 5xx status is treated identically to a successful delivery: no log line is written, nothing is retried, and the batch was already drained from the queue before the request was even sent, so this failure mode leaves no signal anywhere for an operator to notice a broken or rejecting destination URL. Settled by confirming whether checking the response status and logging a non-2xx the same way the catch path logs a thrown error is the intended fix, or whether webhook receivers are trusted to never reject a well-formed payload.
+- **webhook-non-2xx-response**: The flush operation MUST post the drained batch to the webhook and log a thrown error. It does not inspect the response status: a receiver answering with a 4xx or 5xx status is treated as a successful delivery, with no log line and no retry, and the batch was already drained from the queue before the request was sent.
 
 ### Rendering
 
@@ -203,6 +202,10 @@ This is the only log line this module emits — a successful flush produces no l
   **Rationale**: the function's own doc comment calls it a "Test hook — drop queued alerts." Production code has no path that clears the queue other than a successful `flushAlerts` drain, which is consistent with the queue being expected to fully empty via `flushAlerts` every cycle rather than ever needing an out-of-band reset.
   **Approved**: pending
 
+**Decision**: A non-2xx webhook response is not detected, logged or retried.
+**Rationale**: It stands today because only the thrown-error path is handled. Closing it needs confirmation that checking the response status and logging a non-2xx the way the catch path logs a thrown error is the intended fix, rather than trusting receivers to accept well-formed payloads, and a test with a rejecting receiver.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -220,6 +223,7 @@ This is the only log line this module emits — a successful flush produces no l
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved webhook-non-2xx-response marker as current behavior plus pending decision |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/service/monitor/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

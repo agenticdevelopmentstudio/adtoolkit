@@ -1,0 +1,6 @@
+
+- **Data collected**: this bridge and its registrations collect no data of their own; the element, command, parent, and child-handle tables hold, for the lifetime of each registration, values and identifiers the extension itself supplied (and, indirectly through them, the extension's own script environment and everything its module graph captured). The not-implemented ledger (out of this component's scope) retains the extension identifier and member path of every not-implemented member reached for.
+- **Storage**: this bridge performs no storage of its own; every table here is in-memory only and exists for the registration's lifetime.
+- **Transmission**: nothing here leaves the process; every call is an in-process round trip between the host and the extension's own script environment, which the same process owns.
+- **Retention**: a registration's own values (elements, the provider, the change subscription) are retained until it is invalidated — via a superseding registration (**provider-replacement-ordering**), an explicit `Disposable` call, the tree view object's `dispose` member, or disposing the whole bridge — per **invalidate-is-idempotent-and-releases-the-change-subscription**.
+

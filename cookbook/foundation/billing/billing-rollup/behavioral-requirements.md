@@ -1,0 +1,23 @@
+
+- **rollup-pass**: `run` MUST roll every eligible candidate segment into entries, then recompute the entries the rollup owns (all, or only a given set), and return how many entries were created, recomputed or removed.
+- **promote-subset**: `promoteSegments(ids)` MUST roll only the named segments and return 0 for an empty list.
+- **slot-grouping**: Candidates MUST group by project, local day (from the segment start and its own zone) and group key; segments without a project MUST be skipped.
+- **group-key**: At day granularity the group key MUST be the rate itself (`rate:<cents>`); at run granularity it MUST be the run's stable identity: `<sessionId>|<startedAt>` for an auto segment and the segment id for a manual one.
+- **rate-per-segment**: Each segment's rate MUST be resolved by the shared rate ladder with the repo row, project and the global default, and MUST be part of the slot, so one entry never mixes two rates.
+- **apply-atomic**: Re-reading the segments, finding the owner, summing what it holds and writing MUST happen in one transaction, and only segments still unattached, billable and where they were grouped (same project, repo, start and zone) MUST be rolled.
+- **frozen-owner-supplement**: If the slot's owner is locked or has origin `user`, new time MUST go to that entry's open supplement (created if none) and the owner MUST NOT change.
+- **legacy-slot**: A day entry stored with an empty group key MUST still own time at its own rate and be re-keyed when next written.
+- **snapshot-figures**: A new entry MUST snapshot the rate, rounding minutes (default 15), rounding mode (default `up`) and currency; an existing entry MUST keep its own snapshot. Currency MUST come from the project's client when set, else the global currency.
+- **figures**: Raw seconds MUST be the sum of segment seconds; billed seconds MUST be rounded once over that total; the amount MUST be the shared money arithmetic over billed seconds and rate; start MUST be the earliest segment start and end the latest segment end.
+- **description**: The description MUST join session titles, distinct trimmed notes, and `on <branches>` with `; `, unless the description was hand edited, in which case it MUST be kept.
+- **rollup-owned-only**: Recompute MUST touch only entries that are unlocked with origin `auto`; each MUST be re-read and rewritten in one transaction and written only when figures or description changed.
+- **empty-entry-removed**: A recomputed entry left with no segments MUST be deleted unless a supplement still points at it (the persistence layer then keeps it at zero).
+- **save-entry-origin**: `saveEntry` MUST store a new entry, or an edit that changes a figure (project, day, times, seconds, rate, currency, amount, rounding), with origin `user`; a description-only edit MUST keep the origin and mark the description edited.
+- **save-entry-refusals**: `saveEntry` MUST refuse a locked entry (`entryIsLocked`), a changed status (`statusChangeNotAllowed`), and a stale save whose `updatedAt` or raw seconds differ from the stored row (`entryChanged`).
+- **set-description**: `setDescription` MUST trim the text, change only the description, refuse a missing entry (`unknownEntry`) or a locked one (`entryIsLocked`), and return the stored row.
+- **delete-entry**: `deleteEntry` MUST refuse a missing entry, a locked entry, and an entry with a billed, paid or hand-edited supplement (`entryHasFrozenSupplements`).
+- **set-status**: `setStatus` MUST be the only way status changes, MUST lock the entry for billed and paid states, MUST write an audit row (field `status`, old, new, source) for every actual change including moves backward, and MUST return the existing row unchanged when the status is already that value.
+- **assign-repository**: `assignRepository` MUST return 0 for an empty root; otherwise move every unassigned segment of that root into the project and promote them, returning how many moved.
+- **overview**: `overview` MUST return one row per currency with unbilled, billed and paid buckets (empty buckets when absent), MUST never sum across currencies, and MUST set the top-level figures from the first row (default currency `USD` when there are none).
+- **money**: `amountCents` MUST be whole cents, rounded half-up, by the shared money arithmetic.
+

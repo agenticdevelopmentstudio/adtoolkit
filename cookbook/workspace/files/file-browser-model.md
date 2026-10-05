@@ -1,34 +1,34 @@
 ---
 id: fa6a7094-40c2-4302-8cf3-742a072f5bb3
-title: File System File Browser
-domain: agenticdevelopertoolkit://cookbook/workspace/files/file-browser-model
+title: "File System File Browser"
+domain: adtoolkit://cookbook/workspace/files/file-browser-model
 type: ingredient
-version: 1.1.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "The file-browser model layer: root-set management, expand/select restoration, and per-root scan/watch/git-status/IDE-detection orchestration."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- file-browser
-- git-status
-- restoration
+  - file-browser
+  - git-status
+  - restoration
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view
-- agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view
+  - adtoolkit://cookbook/workspace/files/file-browser-view
+  - adtoolkit://cookbook/workspace/files/file-tree-view
 references:
-- https://developer.apple.com/documentation/combine/observableobject
-- https://developer.apple.com/documentation/foundation/url/resolvingsymlinksinpath()
-- https://developer.apple.com/documentation/swift/mainactor
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/documentation/combine/observableobject
+  - https://developer.apple.com/documentation/foundation/url/resolvingsymlinksinpath()
+  - https://developer.apple.com/documentation/swift/mainactor
+approved-by: ""
+approved-date: ""
 ---
 
 # File System File Browser
@@ -140,7 +140,7 @@ outline view observes and drives.
   then call `coordinator.fullSync()`.
 - **load-initial-starts-three-independent-operations**: `loadInitial()` MUST
   call `coordinator.fullSync()`, `refreshGitStatus()`, and
-  `ideDetector.detect()`; none of the three MUST wait for another to
+  `ideDetector.detect()`; each of the three MUST NOT wait for another to
   complete before starting.
 - **start-watching-delegates-to-coordinator**: `startWatching()` MUST call
   `coordinator.startWatching(onChange:)` with a callback that invokes this
@@ -192,8 +192,9 @@ outline view observes and drives.
   consistent execution context; none of the three MAY be accessed
   concurrently from multiple threads, and none MAY be handed to another
   execution context without first returning to that context.
-- **git-status-may-be-dropped-before-first-sync**: NEEDS REVIEW: Not implemented in source. `loadInitial()` starts `coordinator.fullSync()` and `refreshGitStatus()` independently, and `apply(_:)` silently discards a `.status(_:)` result that arrives while `rootNode` is still `nil` (`apply-requires-root-node`); nothing caches that discarded result or re-applies it once `rootNode` is later set, so if the git status broadcast resolves before the coordinator's first full sync publishes a tree, the freshly drawn tree shows no git-status badges until the next FS-triggered debounce or an explicit `refreshGitStatus()` call. This would be settled by caching the most recent `GitStatusRefreshResult` and re-applying it whenever `rootNode` changes from `nil` to non-`nil`, or by confirming with the author that some other ordering guarantee makes this unreachable in practice.
-- **overlapping-directory-syncs-race**: NEEDS REVIEW: Not implemented in source. `DirectoryWatchCoordinator.fullSync()` has no reentrancy guard (unlike `IDEDetector.detect()`'s `guard !isDetecting`), so calling `updateIgnorePatterns(_:)` — or a second `loadInitial()` — while an earlier `fullSync()` is still reading the directory in the background starts a second, overlapping read; each read captures its own `ignorePatterns` snapshot at call time and merges its result into `rootNode` on completion, so whichever call's background read finishes last wins, with no signal to the caller when that is not the most recently requested one. This would be settled by giving each `fullSync()`/`handleChanges()` run a sequence number and discarding a stale run's merge, or by confirming with the author that these two methods are never called close enough together in practice for the order to matter.
+- **git-status-may-be-dropped-before-first-sync**: Loading the initial state starts the first full directory sync and the first git status refresh independently, and applying a status result while the tree has no root node discards it (**apply-requires-root-node**); the manager does not cache the discarded result or re-apply it when a root node is later published. If the git status broadcast resolves before the first sync publishes a tree, the freshly drawn tree shows no git-status badges until the next debounced change-triggered refresh or an explicit refresh (see the pending design decision on dropped early git status).
+- **overlapping-directory-syncs-race**: The directory watch coordinator's full sync has no reentrancy guard (unlike the IDE detector's detect, which refuses to start while one is running), so updating the ignore patterns, or loading the initial state a second time, while an earlier full sync is still reading the directory starts a second, overlapping read. Each read captures its own ignore-pattern snapshot when it starts and merges its result into the root node on completion, so whichever read finishes last wins, with no signal to the caller when that is not the most recently requested one (see the pending design decision on overlapping syncs).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -252,8 +253,9 @@ visual component.
 | file-system-file-browser-033 | apply-keys-by-repo-relative-path | With `repoRootURL: /repo`, deliver a status whose `files` map contains `"src/a.swift": .modified`. | The node at `/repo/src/a.swift` receives `gitStatus == .modified`; the root node itself (relative path `""`) is looked up in `directories[""]`, which is never populated by `GitStatus.parse`, so it receives `nil`. |
 | file-system-file-browser-034 | apply-branches-on-node-directory-flag | Deliver a status whose `directories` map contains `"src": .modified` and whose `files` map contains `"src": .added` (a contrived collision). | The directory node at repo-relative path `"src"` receives `.modified` (looked up in `directories`), not `.added`. |
 | file-system-file-browser-035 | serialized-access-across-all-three-types | Attempt to call methods on the same instance of `FileBrowserDirectories`, `FileBrowserRestorationState`, or `FileTreeManager` concurrently from two different threads. | None of the three provides its own thread-safety mechanism; correct behavior requires every call to be confined to one consistent execution context, matching the requirement. |
-| file-system-file-browser-036 | git-status-may-be-dropped-before-first-sync | Call `loadInitial()` on a manager whose `gitStatusProvider.refresh()` resolves before `coordinator.fullSync()` publishes `rootNode`. | The git-status result is dropped (per `apply-requires-root-node`); once `rootNode` is later published, no node shows a git-status badge until the next debounced or explicit refresh — the open question this marker records. |
-| file-system-file-browser-037 | overlapping-directory-syncs-race | Call `updateIgnorePatterns(["*.a"])` immediately followed by `updateIgnorePatterns(["*.b"])`, arranging for the first call's background read to finish after the second's. | The final `rootNode` reflects the first call's `*.a` pattern rather than the more recently requested `*.b` pattern — the open question this marker records. |
+| file-system-file-browser-036 | git-status-may-be-dropped-before-first-sync | Call `loadInitial()` on a manager whose `gitStatusProvider.refresh()` resolves before `coordinator.fullSync()` publishes `rootNode`. | The git-status result is dropped (per `apply-requires-root-node`); once `rootNode` is later published, no node shows a git-status badge until the next debounced or explicit refresh — the behavior recorded by the pending design decision on dropped early git status. |
+| file-system-file-browser-037 | overlapping-directory-syncs-race | Call `updateIgnorePatterns(["*.a"])` immediately followed by `updateIgnorePatterns(["*.b"])`, arranging for the first call's background read to finish after the second's. | The final `rootNode` reflects the first call's `*.a` pattern rather than the more recently requested `*.b` pattern — the behavior recorded by the pending design decision on overlapping syncs. |
+| file-system-file-browser-038 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -278,8 +280,8 @@ visual component.
   any one of them can race against each other from different threads. Two
   genuine ordering gaps remain even under that isolation — a delayed git
   status broadcast racing the tree's first sync, and two overlapping
-  directory syncs racing each other — both left open above (see the open question on `git-status-may-be-dropped-before-first-sync`
-  and the open question on `overlapping-directory-syncs-race`). A single
+  directory syncs racing each other — both recorded above as pending design decisions (see `git-status-may-be-dropped-before-first-sync`
+  and `overlapping-directory-syncs-race`). A single
   `GitStatusProvider` MAY be shared across multiple `FileTreeManager`
   instances (confirmed by `FileTreeManagerInjectedProviderTests`); each
   manager's own `GitStatusObservation` is independent, so one manager being
@@ -466,6 +468,14 @@ times out, or a request is cancelled — the source's own comment on
 `GitStatusRefreshResult` calls this out directly.
 **Approved**: pending.
 
+**Decision**: A git status result that arrives before the tree has a root node is discarded and not re-applied when the root later appears.
+**Rationale**: `FileTreeManager.apply(_:)` returns early when `rootNode` is nil and nothing caches the last `GitStatusRefreshResult`, while `loadInitial()` starts the sync and the git refresh independently. Closing it would take caching the most recent result and re-applying it when `rootNode` first becomes non-nil, or confirmation that an ordering guarantee makes the case unreachable; the change-triggered debounced refresh heals it only once watching has started.
+**Approved**: pending
+
+**Decision**: Overlapping full directory syncs are not serialized; whichever background read finishes last wins.
+**Rationale**: `DirectoryWatchCoordinator.fullSync()` snapshots `ignorePatterns` at call time, reads on a background queue and merges on the main queue with no sequence number or in-flight guard, so a second call from `updateIgnorePatterns` or a repeated `loadInitial()` can be overtaken by an older read. Closing it would take a sequence number per run with a stale run's merge discarded, or confirmation that the two are never called close enough together for the order to matter.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -486,8 +496,7 @@ covers `FileTreeManager`'s dependency-injection behavior, but no test file
 exercises `FileBrowserDirectories`' `add`/`remove`/`normalize`/
 `root(containing:)` methods directly, nor `FileTreeManager`'s debounce or
 `apply(_:)` behavior. `explicit-error-handling` is partial: `GitStatusRefreshResult.unavailable`
-is an explicit, named failure case, but the two races recorded as `NEEDS
-REVIEW` above show that a dropped or superseded result currently produces no
+is an explicit, named failure case, but the two races recorded above as pending decisions show that a dropped or superseded result currently produces no
 signal of any kind. `state-recovery` passes: `FileBrowserRestorationState`
 exists specifically so a host can persist and restore disclosure/selection
 across a relaunch. `idempotent-operations` passes: `FileBrowserRestorationState.setExpanded`/
@@ -498,6 +507,9 @@ all guard against reporting or reassigning when nothing actually changed.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.2 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restated two open-question requirements (dropped early git status, overlapping directory syncs) as current behavior with pending design decisions; vectors now point at the decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/files/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,54 +1,45 @@
 ---
 id: aa828b9b-925a-4f73-9073-12aab359aba6
-title: VS Code Webviews Bridge
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/main-thread-webviews
+title: "VS Code Webviews Bridge"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/main-thread-webviews
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The extension host's vscode.window adaptor for webview panels and
-  contributed webview views — createWebviewPanel, registerWebviewPanelSerializer,
-  registerWebviewViewProvider, restore and resolveWebviewView — owning the
-  sole strong reference that keeps each panel's JavaScript surface alive.
+summary: "The extension host's vscode.window adaptor for webview panels and contributed webview views — createWebviewPanel, registerWebviewPanelSerializer, registerWebviewViewProvider, restore and resolveWebviewView — owning the sole strong reference that keeps each panel's JavaScript surface alive."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- webviews
-- disposable
+  - extension-host
+  - vscode-api
+  - webviews
+  - disposable
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-options
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-resource-url
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
+  - adtoolkit://cookbook/workspace/extensions/host/extension-event
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-options
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-resource-url
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWebviews.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionWebviewPresenting.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewResourceURL.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionEvent.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWebviewsTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWebviews.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionWebviewPresenting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/WebviewResourceURL.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionEvent.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWebviewsTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # VS Code Webviews Bridge
@@ -464,14 +455,15 @@ above).
   VS Code's own reload-through-serializer behavior for that case.
 - **logging-conformance**: The adaptor MUST participate in the host's
   logging convention, exposing a logger built from its own name.
-- **restored-state-parse-failure-signal**: NEEDS REVIEW: Not implemented in
-  source. Parsing the restored state value parses a non-absent saved state
-  string as JSON with a best-effort decode, and a parse failure falls into
-  the same branch as an absent state, so a corrupt saved-state string
-  reaches `deserializeWebviewPanel` as `undefined` with no log line and no
-  error, indistinguishable from a panel that never called `setState`. What
-  is missing: whether an unparseable saved state must be logged, surfaced
-  to the extension, or deliberately treated as absent.
+- **restored-state-parse-failure-signal**: A saved state string that is
+  absent, or that does not parse as JSON, MUST be handed to the extension's
+  `deserializeWebviewPanel` as `undefined`, the same answer a panel that never
+  called `setState` receives; a fragment such as a bare number MUST parse. The
+  adaptor performs the parse itself rather than leaving it to the script so
+  that a corrupt entry cannot leave an exception pending on the context. An
+  unparseable saved state is not logged and not surfaced to the extension
+  (see the pending design decision on corrupt saved state).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -509,6 +501,7 @@ Not applicable — this is the extension host's `vscode.window` webview adaptor,
 | main-thread-webviews-018 | resolve-view-returns-true-on-successful-resolve | `resolveWebviewView(livePanel, viewID: "acme.view")` where the provider assigns `webviewView.webview.html = '<p>...</p>'` | `resolveWebviewView` returns `true` and the live test panel's `html` equals the assigned string |
 | main-thread-webviews-019 | create-panel-raises-on-torn-down-adaptor | Tear the adaptor down, then `createWebviewPanel('t', 'T', {})` on the same, now-torn-down adaptor | The call throws synchronously and the presenter records no request |
 | main-thread-webviews-020 | init-requires-every-collaborator-with-no-default, create-panel-resolves-roots-before-presenting | Resolve local resource roots directly with undeclared roots, and again with an explicit empty declaration | Undeclared answers `[extensionDirectory.path, workspace.path]`; explicit `[]` answers an empty list |
+| main-thread-webviews-021 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -637,6 +630,10 @@ No other event in this file is logged: every `createWebviewPanel`, `registerWebv
 **Rationale**: the two failure shapes carry opposite security consequences. A value that is not a list at all (an extension bug, or a nullish assignment) refusing outright keeps the panel's current, working roots in place; substituting an empty list instead would silently revoke file access the extension never asked to give up. A list that is mostly valid dropping only its bad entries keeps as much of the extension's explicit declaration intact as can be honored, which is the opposite risk (granting less than declared, never more).
 **Approved**: pending
 
+**Decision**: A corrupt saved-state string is treated as absent: it reaches `deserializeWebviewPanel` as `undefined` with no log line and no error.
+**Rationale**: `restoredStateValue` collapses the nil-state case and the failed-decode case into one branch that returns `undefined`, which keeps the extension's `state === undefined` handling working but makes corruption indistinguishable from a panel that never called `setState`. Closing it would take a log line in the failure branch (and possibly a signal to the extension), once the owner decides whether an unparseable saved state is worth surfacing.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -654,6 +651,8 @@ No other event in this file is logged: every `createWebviewPanel`, `registerWebv
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the restored-state parse-failure NEEDS REVIEW marker as current behavior (corrupt state treated as absent, unlogged) with a pending design decision. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/webviews/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

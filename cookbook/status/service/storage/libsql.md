@@ -1,45 +1,43 @@
 ---
 id: 6bf27f64-59d0-4b2a-8715-92dba2856814
-title: SQL Storage Layer
-domain: agenticdevelopertoolkit://cookbook/status/service/storage/libsql
+title: "SQL Storage Layer"
+domain: adtoolkit://cookbook/status/service/storage/libsql
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The status backend's SQLite/libSQL storage layer — connection open/tune/checkpoint
-  operations and the persisted schema for health checks, deployments, issues, monitoring
-  configuration, platform/peer state, errors, analytics, and authentication tables.
+summary: "The status backend's SQLite/libSQL storage layer — connection open/tune/checkpoint operations and the persisted schema for health checks, deployments, issues, monitoring configuration, platform/peer state, errors, analytics, and authentication tables."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- database
-- sqlite
-- persistence
-- migrations
-- server
+  - database
+  - sqlite
+  - persistence
+  - migrations
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/data/database
-- agenticdevelopercookbook://guidelines/implementing/data/transactions-and-concurrency
-- agenticdevelopercookbook://guidelines/implementing/data/foreign-keys
-- agenticdevelopercookbook://guidelines/implementing/data/schema-evolution
-- agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
+  - agenticdevelopercookbook://guidelines/implementing/data/database
+  - agenticdevelopercookbook://guidelines/implementing/data/transactions-and-concurrency
+  - agenticdevelopercookbook://guidelines/implementing/data/foreign-keys
+  - agenticdevelopercookbook://guidelines/implementing/data/schema-evolution
+  - agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
 related:
-- agenticdevelopertoolkit://cookbook/status/service/auth
+  - adtoolkit://cookbook/status/service/auth
 references:
-- packages/web/packages/status-server/src/libsql/client.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/libsql/schema.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/schema/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/migrate-idempotent.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/migrations-immutable.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/libsql/client.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/libsql/schema.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/schema/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/migrate-idempotent.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/migrations-immutable.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # SQL Storage Layer

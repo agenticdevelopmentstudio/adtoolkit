@@ -1,47 +1,39 @@
 ---
 id: bda54815-6dd8-4a7c-abfe-8cb0065824b2
-title: VS Code Languages Bridge
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-languages
+title: "VS Code Languages Bridge"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-languages
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The vscode.languages adaptor validating, translating, storing and disposing
-  setLanguageConfiguration calls, and answering getLanguages from an injected vocabulary.
+summary: "The vscode.languages adaptor validating, translating, storing and disposing setLanguageConfiguration calls, and answering getLanguages from an injected vocabulary."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- languages
-- language-configuration
+  - extension-host
+  - vscode-api
+  - languages
+  - language-configuration
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguages.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadLanguagesTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadLanguagesVocabularyTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/HostLanguageVocabulary.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/LanguageContributionPoint.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguages.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadLanguagesTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadLanguagesVocabularyTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/HostLanguageVocabulary.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/LanguageContributionPoint.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # VS Code Languages Bridge
@@ -94,6 +86,7 @@ This component is the `vscode.languages` namespace adaptor's shell and, so far, 
 - **dispose-removes-only-owned-handles**: disposing this component MUST remove from the store every handle in this instance's own owned handles and MUST clear that set, and MUST NOT remove any registration added by a different instance of this component sharing the same store.
 - **extension-language-vocabulary-contract**: the language vocabulary MUST expose a `languageIdentifiers` list of strings, deduplicated and in a deterministic order, per the vocabulary's own documented contract.
 - **languages-member-not-tracked-as-unimplemented**: `setLanguageConfiguration` and `getLanguages` MUST NOT be routed through the shared ledger that records unimplemented API members, because both members answer every call rather than being absent.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -130,6 +123,7 @@ Not applicable — this is a script-engine bridge for the `vscode.languages` nam
 | main-thread-languages-017 | get-languages-answers-fresh-from-vocabulary | `vocabulary.languageIdentifiers == ["gamma", "alpha", "beta"]`; call `getLanguages()` and await its resolution | Resolves with exactly `["gamma", "alpha", "beta"]`, in that order — `MainThreadLanguagesGetLanguagesTests.getLanguagesResolvesWithTheVocabularysIdentifiersInOrder` |
 | main-thread-languages-018 | get-languages-answer-is-independent-per-call | Call `getLanguages()`, `.push('intruder')` and `.sort()` the resolved array, then call `getLanguages()` again | The second call's resolved array equals the original `vocabulary.languageIdentifiers` (`["zeta", "alpha", "mu"]`), unaffected by the first array's mutation — `MainThreadLanguagesGetLanguagesTests.mutatingOneCallsAnswerDoesNotAffectTheNextCall` |
 | main-thread-languages-019 | get-languages-rejects-when-torn-down | Drop the only strong reference to an instance of this component, then call `getLanguages()` on the still-installed member | The returned `Thenable` rejects with message `vscode.languages.getLanguages is unavailable: this extension's host has been torn down.` — `MainThreadLanguagesGetLanguagesTests.aTornDownAdaptorRejectsGetLanguagesRatherThanAnsweringOrRaising` |
+| main-thread-languages-020 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -255,6 +249,7 @@ No other event in this file is logged: a non-string `languageId`, an empty-match
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/languages/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

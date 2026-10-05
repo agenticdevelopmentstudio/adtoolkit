@@ -1,32 +1,30 @@
 ---
 id: 28fc5136-e1bf-4672-b783-ed2f3a8983f5
-title: Extension Tree View
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view
+title: "Extension Tree View"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'A pane for a contributed tree view: a placeholder until an extension
-  registers a tree data provider, then a lazily-loaded, identity-preserving tree
-  bound to it.'
+summary: "A pane for a contributed tree view: a placeholder until an extension registers a tree data provider, then a lazily-loaded, identity-preserving tree bound to it."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- tree-view
-- accessibility
+  - extensions
+  - tree-view
+  - accessibility
 depends-on: []
 related:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Tree View
@@ -139,6 +137,7 @@ This recipe also covers the internal component that actually draws the tree once
 - **outline-pane-title-source-or-fallback**: The tree component's pane title MUST be the data source's title when it is non-nil and non-empty, and MUST fall back to the contributed view's manifest name otherwise.
 - **outline-teardown-idempotent**: Teardown MUST have no additional effect when invoked more than once on the same instance.
 - **outline-teardown-releases-callbacks-only-if-owner**: Teardown MUST clear the tree-data-change, chrome-change and provider-replacement callbacks on the data source, and MUST report visibility `false`, only when this pane is still that data source's recorded callback owner at teardown time; a superseded pane's teardown MUST NOT touch a data source it no longer owns.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -247,6 +246,7 @@ This recipe also covers the internal component that actually draws the tree once
 | etvc-066 | outline-teardown-idempotent | Invoke teardown twice | The second call has no additional effect (e.g. the visibility-false notification is not sent twice) |
 | etvc-067 | outline-teardown-releases-callbacks-only-if-owner | Tree component B has superseded tree component A for the same data source (etvc-026); invoke teardown on A | The data source's callbacks (still pointing at B) are left untouched; the visibility callback is not called by A |
 | etvc-068 | alternate-return-path-activates-selection | A row is selected; deliver Return through the alternate text-editing-command path directly | The data source's activation callback is called with the selected row's item |
+| etvc-069 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -322,7 +322,7 @@ Subsystem: the app's own bundle identifier | Category: this component's tree-ren
 
 ## Design Decisions
 
-**Decision** (AppKit/UIKit): `resolve` is invoked from `viewDidLoad()` rather than `loadView()`.
+**Decision**: (AppKit/UIKit) `resolve` is invoked from `viewDidLoad()` rather than `loadView()`.
 **Rationale**: An already-awake extension answers synchronously; swapping displayed content while `view` is still being assigned inside `loadView()` would have the view controller ask for its own view before it exists.
 **Approved**: pending
 
@@ -342,7 +342,7 @@ Subsystem: the app's own bundle identifier | Category: this component's tree-ren
 **Rationale**: This mirrors the source's own upstream contract (`TreeItemCollapsibleState`) rather than inferring expandability from data, which means an item declared `.expanded`/`.collapsed` that turns out to have zero real children still shows a disclosure triangle opening onto an empty list — documented here as a known consequence of following the declared contract, not smoothed into "expandable only when non-empty."
 **Approved**: pending
 
-**Decision** (AppKit/UIKit): Rows and their background views are drawn through recycled, pooled view instances rather than a fresh view hierarchy per row.
+**Decision**: (AppKit/UIKit) Rows and their background views are drawn through recycled, pooled view instances rather than a fresh view hierarchy per row.
 **Rationale**: The source's own comment notes this is what every other outline/table in the framework already does; a tree is the shape where skipping it costs the most, since a branch with a few hundred children previously rebuilt a few hundred view hierarchies on every scroll pass.
 **Approved**: pending
 
@@ -350,11 +350,15 @@ Subsystem: the app's own bundle identifier | Category: this component's tree-ren
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | Accessibility |
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | Platform Compliance |
 | [no-pii-in-logs](agenticdevelopercookbook://compliance/privacy-and-data#no-pii-in-logs) | passed | Privacy and Data |
 
 `outline-allows-empty-selection`/`return-key-activates-selection`/`alternate-return-path-activates-selection`, this file's exclusive use of `ThemedOutlineView`/`NSOutlineView`/`ThemedLabel`/`NSTableRowView`, and the absence of any logged `ContributedTreeItem` field or user string in `timeout-logged`'s one log line ground the `passed` rows. The missing state-change announcements described under **Announce state changes** have no dedicated check in the catalog.
+
+`separation-of-concerns` passes because `ExtensionTreeViewController.swift` splits the work across distinct types: the `ExtensionTreeViewController` wrapper only resolves the provider and swaps placeholder for outline, `ExtensionTreeOutlineViewController` owns the outline and its data-source/delegate callbacks, `ExtensionTreeRow` is the identity-stable row model, and all data and activation come from the `ExtensionTreeDataSource` protocol rather than from the extension host directly. `unit-test-coverage` is partial: `ExtensionTreePaneLoadingTests.swift` (budgeted and cached child asks, a branch claimed by a second parent, a superseded pane's teardown), `ExtensionTreeRowTableTests.swift` (row identity, orphan holding and pruning, one-shot auto-expansion) and `ViewsContributionPointTests.swift` (the placeholder-then-resolved wrapper) exercise the loading and row-table logic, but no test drives the outline's keyboard activation (`insertNewline`/`keyDown`), chrome updates, visibility reporting, or selection restoration.
 
 ## Change History
 
@@ -365,3 +369,5 @@ Subsystem: the app's own bundle identifier | Category: this component's tree-ren
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/tree-views/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

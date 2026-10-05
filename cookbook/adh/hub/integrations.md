@@ -1,42 +1,41 @@
 ---
 id: 45c318d7-dd3e-491c-8811-eb2a3d79bca9
-title: Integrations
-domain: agenticdevelopertoolkit://cookbook/adh/hub/integrations
+title: "Integrations"
+domain: adtoolkit://cookbook/adh/hub/integrations
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Client for /api/integrations: the provider catalog, ecosystem provider
-  configs and connections, OAuth/install/link-token endpoints, and OAuth state claims.'
+summary: "Client for /api/integrations: the provider catalog, ecosystem provider configs and connections, OAuth/install/link-token endpoints, and OAuth state claims."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- hub
-- integrations
-- oauth
-- connections
-- providers
-- webhooks
+  - hub
+  - integrations
+  - oauth
+  - connections
+  - providers
+  - webhooks
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/adh/hub/access
-- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystem-config
+  - adtoolkit://cookbook/adh/hub/access
+  - adtoolkit://cookbook/adh/hub/ecosystems/ecosystem-config
 references:
-- packages/web/packages/data/src/integrations/integrations.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/integrations/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/integrations/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/integrations/integrations.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/integrations/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/integrations/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Integrations

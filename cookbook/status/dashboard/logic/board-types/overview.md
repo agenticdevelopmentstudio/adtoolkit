@@ -1,0 +1,7 @@
+
+`packages/web/packages/status-web/src/lib/board-types.ts` is the status dashboard's wire contract for `GET /api/board` and for the activity feed's paging protocol (`/api/activity`). Per its header comment it is "hand-mirrored from src/board/types.ts (the server tree, which the web app cannot import at runtime)" and is "Pinned by board-types-parity.test.ts's mutual-assignability check; keep the two in lockstep."
+
+The module is type-only: it exports three string unions (`ActivityKind`, `ActivityTone`, `Indicator`) and five interfaces (`Problem`, `ActivityRow`, `Board`, `ActivityCursor`, `ActivityPage`) and emits no runtime code. It re-uses `IssueSource` from `./issue-sources`. It mirrors only the wire shapes: the server file additionally declares its input facts (`RosterEntry`, `DeployFact`, `BoardFacts`, and others) and constants (`ACTIVITY_WINDOW_MS`, `MAX_ACTIVITY_ROWS`, `DEGRADED_CONFIRM_MS`), none of which cross the wire and none of which appear here.
+
+Use it wherever client code reads a board or an activity page: `useBoard` types the `/board` response as `Board`, `useActivityHistory` reads `/api/activity` as `ActivityPage` and builds its query from `ActivityCursor`, and `overview.ts`, `row-model.ts`, `KpiStrip`, `GlobalPanel` and `OverviewTab` consume `Problem`, `ActivityRow` and `Indicator`. A port reproduces these shapes exactly, because the server is the owner of every value in them.
+

@@ -1,30 +1,29 @@
 ---
 id: 15c61cfc-543c-493d-b686-c605b773be83
-title: Board Wire Types
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/board-types
+title: "Board Wire Types"
+domain: adtoolkit://cookbook/status/dashboard/logic/board-types
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Type-only wire contract for GET /api/board and the activity paging protocol,
-  hand-mirrored from the status server's board types.
+summary: "Type-only wire contract for GET /api/board and the activity paging protocol, hand-mirrored from the status server's board types."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/board
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/activity-history
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/state/board
+  - adtoolkit://cookbook/status/dashboard/state/activity-history
+  - adtoolkit://cookbook/status/dashboard/api
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Board Wire Types
@@ -140,7 +139,7 @@ Not applicable — this is a type-only wire contract, not a visual component.
 - **Corrected deploy metadata**: When `deployments.created_at`, `project_name` or `branch` is corrected after first render, the row `id` MUST NOT change. MUST.
 - **Exhausted history**: `nextCursor: null` MUST mean no older page exists. MUST.
 - **Drift under test runs**: `pnpm test` transpiles without typechecking, so drift is caught only by `pnpm typecheck` in this package and by the dashboard host's `web` typecheck, which names the parity test under `files`. SHOULD run both in CI; a test-only run cannot detect drift.
-- **Malformed payload**: A response that does not match `Board` is not detected by this module; behavior is owned by the consumer that parses it (see [useBoard](agenticdevelopertoolkit://cookbook/status/dashboard/state/board)). MUST (fact of the contract).
+- **Malformed payload**: A response that does not match `Board` is not detected by this module; behavior is owned by the consumer that parses it (see [useBoard](adtoolkit://cookbook/status/dashboard/state/board)). MUST (fact of the contract).
 - **Concurrency, network, offline, cancellation, timeouts**: Not applicable; the module has no runtime behavior.
 
 ## Configuration
@@ -233,4 +232,4 @@ The module contains only the wire contract, with fetching, derivation and render
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial recipe extracted from `board-types.ts` and `board-types-parity.test.ts` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe extracted from `board-types.ts` and `board-types-parity.test.ts` |

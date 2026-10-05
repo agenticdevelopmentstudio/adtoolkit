@@ -1,42 +1,40 @@
 ---
 id: 11f7a665-60e9-42df-853c-fe4de3af0fd8
-title: Markdown Store
-domain: agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store
+title: "Markdown Store"
+domain: adtoolkit://cookbook/adh/hub/content/markdown-store
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The local relational-database mirror and outbox for the content.markdown
-  resource family — schema, sync projection, document lifecycle, taxonomy, and
-  timestamp normalization.
+summary: "The local relational-database mirror and outbox for the content.markdown resource family — schema, sync projection, document lifecycle, taxonomy, and timestamp normalization."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- markdown
-- sqlite
-- sync
-- offline
-- taxonomy
-- persistence
+  - markdown
+  - sqlite
+  - sync
+  - offline
+  - taxonomy
+  - persistence
 depends-on:
-- agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client
+  - adtoolkit://cookbook/data/sync/offline-sync-client
 related: []
 references:
-- packages/apple/AgenticToolkit/Markdown/MarkdownSchema.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Markdown/MarkdownProjection.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Markdown/MarkdownStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Markdown/MarkdownTaxonomy.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Markdown/MarkdownTimestamp.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Markdown/MarkdownRemoteWriter.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Markdown/MarkdownSchema.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Markdown/MarkdownProjection.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Markdown/MarkdownStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Markdown/MarkdownTaxonomy.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Markdown/MarkdownTimestamp.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Markdown/MarkdownRemoteWriter.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Markdown Store

@@ -1,41 +1,36 @@
 ---
 id: d5812249-f235-43df-9cd7-504220da1a7d
-title: Scripting Support
-domain: agenticdevelopertoolkit://cookbook/system/scripting
+title: "Scripting Support"
+domain: adtoolkit://cookbook/system/scripting
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Three primitives that add AppleScript execution and Cocoa Scripting command
-  support to a macOS app — a script runner that returns a structured result, a
-  command base that serializes command handling onto one execution context, and
-  a helper that builds a scripting locator for an application-level element.
+summary: "Three primitives that add AppleScript execution and Cocoa Scripting command support to a macOS app — a script runner that returns a structured result, a command base that serializes command handling onto one execution context, and a helper that builds a scripting locator for an application-level element."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- scripting
-- applescript
-- cocoa-scripting
+  - scripting
+  - applescript
+  - cocoa-scripting
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
-- agenticdevelopercookbook://principles/fail-fast
+  - agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
+  - agenticdevelopercookbook://principles/fail-fast
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Scripting/AppleScriptRunner.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Scripting/MainActorScriptCommand.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/SystemIntegration/ScriptingReExports.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Scripting/AppleScriptRunnerTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Scripting/MainActorScriptCommandTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Scripting/AppleScriptRunner.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Scripting/MainActorScriptCommand.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/SystemIntegration/ScriptingReExports.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Scripting/AppleScriptRunnerTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Scripting/MainActorScriptCommandTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Scripting Support

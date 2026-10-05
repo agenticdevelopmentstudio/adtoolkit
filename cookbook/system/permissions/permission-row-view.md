@@ -1,32 +1,30 @@
 ---
 id: c3269cfa-a8ec-4ba9-bc68-9cdf98e7e1fc
-title: Permission Row View
-domain: agenticdevelopertoolkit://cookbook/system/permissions/permission-row-view
+title: "Permission Row View"
+domain: adtoolkit://cookbook/system/permissions/permission-row-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A card row that shows one permission's live grant status, with a trailing
-  action button that opens the platform's permission settings or triggers an in-app
-  consent prompt.
+summary: "A card row that shows one permission's live grant status, with a trailing action button that opens the platform's permission settings or triggers an in-app consent prompt."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ui
-- permissions
-- async
+  - ui
+  - permissions
+  - async
 depends-on:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Permission Row View
@@ -121,6 +119,7 @@ reactivation, and after an action completes.
 - **card-appearance**: The component MUST render with a backing layer, an
   8pt corner radius, a background of white at 3% opacity, and a 0.5pt
   border of white at 6% opacity.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -183,7 +182,7 @@ reactivation, and after an action completes.
   guidance does not apply here. The action button's compact sizing is the
   platform's own system-determined click target, not measured or floored
   by this component.
-- **contrast**: NEEDS REVIEW: Not implemented in source. Title, description, and status text sit over the card's near-transparent white overlay (3%/6% alpha), which is itself composited over whatever background the host window supplies; whether that combination meets a 4.5:1 (or 3:1 large-text) contrast ratio per `agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages` cannot be determined from source alone, since the effective background color is not fixed, and it needs an accessibility audit against the actual host background.
+- **contrast**: Title, description and status text sit over the card's near-transparent white overlay (3%/6% alpha), composited over whatever background the host window supplies. The component performs no contrast check of its own, and the effective background is not fixed, so whether the combination meets 4.5:1 (3:1 for large text) per `agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages` is unverified.
 
 ## Conformance Test Vectors
 
@@ -210,6 +209,7 @@ reactivation, and after an action completes.
 | permission-row-019 | card-appearance | Construct any row | The row is rendered with a backing layer; its corner radius is `8`; its border width is `0.5`; its background color is white at 3% opacity; its border color is white at 6% opacity. |
 | permission-row-020 | keyboard-activates-action | Construct any row, move keyboard focus to the action button, then perform its primary activation key (Space/Return) | The action handler is invoked the same way it is by the test-only trigger or a pointer click, since the action control is an unmodified standard button. |
 | permission-row-021 | pre-refresh-action-enabled | Construct a row, do not refresh it, then trigger the action via its test-only trigger | The action button remains enabled throughout, and the action handler is invoked with the permission and undetermined. |
+| permission-row-022 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -468,6 +468,10 @@ Not applicable: this component contains no logging call at any level.
   semantic replacement the source does not have.
   **Approved**: pending
 
+**Decision**: Text contrast over the translucent card is not verified against the host background.
+**Rationale**: It stands today because the effective background is supplied by the host window. Closing it needs an accessibility audit against the actual host background.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -476,6 +480,8 @@ Not applicable: this component contains no logging call at any level.
 | [platform-design-language](agenticdevelopercookbook://compliance/platform-compliance#platform-design-language) | partial | Platform Compliance |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 `native-controls-preference` is `passed` because every element is a stock
 `NSButton`/`NSTextField`/`NSImageView`/`NSStackView`; `platform-design-language`
@@ -488,6 +494,8 @@ background; `keyboard-navigable` is `passed` because the action button is an
 unmodified `NSButton`, which keeps AppKit's native keyboard focus and
 activation (see **keyboard-activates-action**).
 
+`separation-of-concerns` is `passed` because `PermissionRowView` only renders one card and reports the action; the status read goes through the injected `PermissionChecking` and the grant flow through the `onAction` callback, so neither is decided inside the view. `unit-test-coverage` is `passed` because `Tests/AgenticToolkitPermissionsUITests/PermissionRowViewTests.swift` exercises the row with a stub checker: the Granted, Not Granted and Unknown labels, the action offered for granted and non-granted rows, the status the action reports, and a refresh cancelled mid-read.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -497,3 +505,5 @@ activation (see **keyboard-activates-action**).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to system/permissions/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved contrast marker as current behavior plus pending decision; cited required Compliance checks |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

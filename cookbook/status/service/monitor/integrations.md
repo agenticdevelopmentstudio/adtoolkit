@@ -1,48 +1,45 @@
 ---
 id: da0c6c07-d0f4-4c6c-a1ef-51b696910c72
-title: Status Server Monitor Integrations
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/integrations
+title: "Status Server Monitor Integrations"
+domain: adtoolkit://cookbook/status/service/monitor/integrations
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Runs seven self-checks in parallel — stats-store freshness plus Vercel,
-  Cloudflare, Railway, GlitchTip, and PostHog reachability — with one bounded retry
-  each, then debounces and correlates unreachable-kind failures across runs before
-  the /integrations route serves them.
+summary: "Runs seven self-checks in parallel — stats-store freshness plus Vercel, Cloudflare, Railway, GlitchTip, and PostHog reachability — with one bounded retry each, then debounces and correlates unreachable-kind failures across runs before the /integrations route serves them."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- integrations
-- self-check
-- retry
-- server
+  - monitor
+  - integrations
+  - self-check
+  - retry
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
-- agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
-- agenticdevelopercookbook://guidelines/implementing/observability/logging
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
+  - agenticdevelopercookbook://guidelines/implementing/observability/logging
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-cloudflare
-- agenticdevelopertoolkit://cookbook/status/service/config
-- agenticdevelopertoolkit://cookbook/status/service/auth
+  - adtoolkit://cookbook/status/service/monitor/fetch-cloudflare
+  - adtoolkit://cookbook/status/service/config
+  - adtoolkit://cookbook/status/service/auth
 references:
-- packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/self-check-stability.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/time-ago.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/integrations-retry.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/integrations-missing-env.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/integrations-telemetry.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/self-check-stability.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/time-ago.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/integrations-retry.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/integrations-missing-env.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/integrations-telemetry.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Integrations

@@ -1,40 +1,38 @@
 ---
 id: 96009fcc-e32e-4a40-9b3c-8b4f83f1cfec
-title: Monitor Deploy Status
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
+title: "Monitor Deploy Status"
+domain: adtoolkit://cookbook/status/service/monitor/deploy-status
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Platform-independent build/deploy phase vocabulary, per-provider phase mappers,
-  and the SQL predicate fragments that keep the storage layer's in-flight/webhook-ordering
-  rules from drifting apart.
+summary: "Platform-independent build/deploy phase vocabulary, per-provider phase mappers, and the SQL predicate fragments that keep the storage layer's in-flight/webhook-ordering rules from drifting apart."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- deploy
-- status
-- pure-function
-- server
+  - monitor
+  - deploy
+  - status
+  - pure-function
+  - server
 depends-on:
-- agenticdevelopercookbook://principles/idempotency
+  - agenticdevelopercookbook://principles/idempotency
 related:
-- agenticdevelopertoolkit://cookbook/status/service/board
-- agenticdevelopertoolkit://cookbook/status/service/storage/libsql
+  - adtoolkit://cookbook/status/service/board
+  - adtoolkit://cookbook/status/service/storage/libsql
 references:
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/deploy-status.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/reconcile-stuck-deploys.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/lib/deploy-status-parity.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/deploy-status.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/reconcile-stuck-deploys.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/lib/deploy-status-parity.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Monitor Deploy Status

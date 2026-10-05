@@ -1,0 +1,3 @@
+
+An amount of money held as an integer count of hundredths of the currency's major unit, plus an ISO-4217 currency code, with no floating-point number anywhere. A rate of $0.10 per hour applied to three minutes is exactly half a cent, and a binary float cannot hold the tenths it takes to get there. The unit is always hundredths whatever the currency's own minor unit is, so every currency shares one scale with the formatter. It is for code that wants the currency carried alongside the amount and mixed currencies refused; callers that already hold a bare integer can use the seconds-times-rate helper and the formatter without constructing one. Addition, subtraction, comparison and summing refuse to mix currencies, and no conversion exists anywhere.
+

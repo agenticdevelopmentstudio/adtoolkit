@@ -1,27 +1,26 @@
 ---
 id: 564c6102-e100-41ad-9c92-14606a33c394
-title: Display Format
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/format
+title: "Display Format"
+domain: adtoolkit://cookbook/status/dashboard/logic/format
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Pure string helpers for the status dashboard: a count with a pluralized
-  noun, a 7-char short commit sha, and a capped commit subject line.'
+summary: "Pure string helpers for the status dashboard: a count with a pluralized noun, a 7-char short commit sha, and a capped commit subject line."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Display Format
@@ -224,4 +223,4 @@ The module is pure, import-free and separate from the components that display it
 |---------|------|--------|---------|
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/logic/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from `packages/web/packages/status-web/src/lib/format.ts` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `packages/web/packages/status-web/src/lib/format.ts` |

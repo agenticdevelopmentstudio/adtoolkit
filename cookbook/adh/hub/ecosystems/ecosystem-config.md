@@ -1,78 +1,65 @@
 ---
 id: 87ca0139-6cd0-46dd-a9fb-40ad3406f175
-title: Ecosystem Config
-domain: agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystem-config
+title: "Ecosystem Config"
+domain: adtoolkit://cookbook/adh/hub/ecosystems/ecosystem-config
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Five product-rail topics (User Auth, Sign-in apps, Feature flags, Server
-  bags, Storage Access Tokens) that let a hub caller view and edit one ecosystem's
-  configuration, plus their shared data models and matching client-side data layer.
+summary: "Five product-rail topics (User Auth, Sign-in apps, Feature flags, Server bags, Storage Access Tokens) that let a hub caller view and edit one ecosystem's configuration, plus their shared data models and matching client-side data layer."
 platforms:
-- swift
-- macos
-- ios
-- typescript
-- web
+  - swift
+  - macos
+  - ios
+  - typescript
+  - web
 tags:
-- hub
-- ecosystem-config
-- configuration
-- feature-flags
-- server-bags
-- oauth
-- storage-tokens
+  - hub
+  - ecosystem-config
+  - configuration
+  - feature-flags
+  - server-bags
+  - oauth
+  - storage-tokens
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client
-- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
+  - adtoolkit://cookbook/adh/hub/security/authentication-client
+  - adtoolkit://cookbook/adh/hub/ecosystems/ecosystems
 references:
-- packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/AuthSettingsTopic.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/EcosystemConfigModels.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/FeatureFlagsTopic.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/ServerBagsTopic.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/SigninAppsTopic.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/StorageTokensRail.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/StorageTokensTopic.swift
-  (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystem-config/feature-flags.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystem-config/server-bags.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystem-config/client-auth.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystem-config/storage-tokens.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystem-config/wire.ts (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/EcosystemConfigTopicsTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/HubError.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemTopic.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsModels.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubDates.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Applications/ApplicationsTopic.swift
-  (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-- packages/web/packages/features/ecosystem-config/src/dialog-state/bag-dialog-state.ts
-  (agenticdevelopertoolkit)
-- packages/web/packages/features/ecosystem-config/src/dialog-state/flag-dialog-state.ts
-  (agenticdevelopertoolkit)
-- packages/web/packages/features/ecosystem-config/src/ApplicationClientAuthSection.tsx (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/AuthSettingsTopic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/EcosystemConfigModels.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/FeatureFlagsTopic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/ServerBagsTopic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/SigninAppsTopic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/StorageTokensRail.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/StorageTokensTopic.swift (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystem-config/feature-flags.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystem-config/server-bags.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystem-config/client-auth.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystem-config/storage-tokens.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystem-config/wire.ts (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/EcosystemConfigTopicsTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/HubError.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemTopic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsModels.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/HubDates.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/HubText.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/JSONValue.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Applications/ApplicationsTopic.swift (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+  - packages/web/packages/features/ecosystem-config/src/dialog-state/bag-dialog-state.ts (agenticdevelopertoolkit)
+  - packages/web/packages/features/ecosystem-config/src/dialog-state/flag-dialog-state.ts (agenticdevelopertoolkit)
+  - packages/web/packages/features/ecosystem-config/src/ApplicationClientAuthSection.tsx (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Ecosystem Config
@@ -241,19 +228,12 @@ fetch-based operations with no view code of its own.
   falls back to its default.`.
 - **flags-detail-id-format**: the detail id MUST be
   `feature-flag:<ecosystem.id>:<flag.key>`.
-- **flags-key-charset**: NEEDS REVIEW: Not implemented in source. Neither the
-  create form's `key` field in the primary implementation nor the alternate
-  client's create operation/dialog state enforce any character-set restriction on a
-  feature-flag key — only non-blank and non-duplicate are checked — yet the key is
-  later embedded unescaped in the colon-delimited composite id
-  `feature-flag:<ecosystem.id>:<flag.key>` and used directly as a navigation-item
-  id; a key containing a colon could collide with another item's composite id. What
-  is missing: a defined character-set restriction for flag keys, matching the
-  slug-pattern restriction already applied to the sign-in-app `clientId` field and
-  the storage-token `name` field. Evidence that would settle it: confirmation from
-  the composite-id format's other consumers on whether a colon or other reserved
-  character in a key can actually cause a collision, or a validating pattern added
-  to the key field.
+- **flags-key-charset-unrestricted**: neither the create form's `key` field in the primary
+  implementation nor the alternate client's create operation/dialog state enforces any
+  character-set restriction on a feature-flag key — only non-blank and non-duplicate are checked —
+  yet the key is later embedded unescaped in the colon-delimited composite id
+  `feature-flag:<ecosystem.id>:<flag.key>` and used directly as a navigation-item id, so a key
+  containing a colon could collide with another item's composite id.
 - **flag-key-immutable-in-path**: the alternate client's update/delete operations
   MUST address a flag by embedding its `key` in the request path, never in the
   body — the key is immutable once created, matching the primary implementation's
@@ -440,7 +420,7 @@ component not among these given sources.
   error-wrapping step's usual behavior of preserving as much detail as possible (see
   Design Decisions).
 - **A feature-flag key containing a reserved character (e.g. `:`)**: see the open
-  question on **flags-key-charset** — no given implementation rejects it, but it is
+  question on **flags-key-charset-unrestricted** — no given implementation rejects it, but it is
   later embedded unescaped in a colon-delimited composite id.
 - **Path segments containing special characters**: the alternate client's
   path-encoding step MUST percent-encode every ecosystem id, flag key, bag key, and
@@ -661,23 +641,29 @@ kind.
 **Approved**: pending
 
 **Decision**: the storage-tokens create form's save action uses a three-way catch (a conflict error → friendly message; any other shared error kind → rethrown as-is; anything else → a generic unexpected error) instead of the shared error-wrapping convention every other create/update/delete call in this component uses.
-**Platform**: Swift implementation (the alternate client has no equivalent create-error taxonomy to diverge from).
 **Rationale**: the conflict case needs its own friendly text rather than whatever detail the backend's conflict response carries, and the source chooses to discard a non-shared-error-kind failure's own message in favor of a generic one rather than risk surfacing raw transport detail from a mint request specifically. This is documented here as an observed, intentional divergence rather than corrected to match the shared error-wrapping convention, since changing it would alter the exact error text this component's tests assert.
+Platform scope: Swift implementation (the alternate client has no equivalent create-error taxonomy to diverge from).
 **Approved**: pending
 
 **Decision**: the storage-tokens detail sources its post-reveal notice text from a constant declared in a sibling Applications module (Applications' own token-reveal notice), rather than declaring its own copy.
-**Platform**: Swift implementation — this is a cross-module source-file coupling specific to that codebase's module layout.
-**Rationale**: the source's own comment states this directly — the reveal-once behavior exists specifically because that sibling constant's promise ("you won't be able to see it again") must actually hold; the same lifecycle and constant are documented as canonical in the sibling recipe `agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client`, which this recipe treats as the complete reference for that shared behavior rather than re-deriving it here. The coupling means a future rename of that constant would need to be tracked across both modules with no compiler-enforced link beyond the direct reference.
+**Rationale**: the source's own comment states this directly — the reveal-once behavior exists specifically because that sibling constant's promise ("you won't be able to see it again") must actually hold; the same lifecycle and constant are documented as canonical in the sibling recipe `adtoolkit://cookbook/adh/hub/security/authentication-client`, which this recipe treats as the complete reference for that shared behavior rather than re-deriving it here. The coupling means a future rename of that constant would need to be tracked across both modules with no compiler-enforced link beyond the direct reference.
+Platform scope: Swift implementation — this is a cross-module source-file coupling specific to that codebase's module layout.
 **Approved**: pending
 
 **Decision**: JSON-shape validation for a server bag's value lives inside the value-parsing step on the Swift implementation, combining transport-adjacent orchestration with domain validation in one type; on the web implementation, the equivalent validation is not in the given data client at all — it lives in a sibling `features/ecosystem-config` package's dialog-state module.
-**Platform**: applies differently to each of the two reference implementations, by design.
 **Rationale**: the two platforms split responsibilities differently: the Swift topic types are the single place that both talk to the data source and build the declarative form, so validation naturally lives there too; the web implementation keeps its data-client layer free of any dependency on UI-adjacent validation state, pushing that concern into the package that owns the dialog. Both are internally consistent with their own layering; this recipe documents the divergence rather than treating either as a gap.
+Platform scope: applies differently to each of the two reference implementations, by design.
 **Approved**: pending
 
 **Decision**: on the web implementation, origin-format validation for a sign-in app's `allowedReturnOrigins` (mirroring the Swift implementation's origin-validation/canonicalization steps) is not present in the given data client — it lives in a UI-pane file's own validation helpers, outside this component's given sources.
-**Platform**: web implementation.
 **Rationale**: this follows the same data-client/features-package split as the server-bag JSON validation above, and was confirmed by reading the actual caller rather than assumed, per this recipe's requirement to resolve an apparent gap against the real codebase before marking it unresolved.
+Platform scope: web implementation.
+**Approved**: pending
+
+**Decision**: feature-flag keys have no character-set restriction, unlike the slug-pattern restriction applied to the sign-in-app `clientId` field and the storage-token `name` field.
+
+**Rationale**: the key is embedded unescaped in a colon-delimited composite id, so a colon in a key could collide with another item's id; closing the gap takes a validating pattern on the key field, or confirmation from the composite-id format's other consumers that a reserved character cannot collide.
+
 **Approved**: pending
 
 ## Compliance
@@ -690,12 +676,14 @@ kind.
 | [input-sanitization](agenticdevelopercookbook://compliance/security#input-sanitization) | partial | Security |
 | [secure-storage](agenticdevelopercookbook://compliance/security#secure-storage) | partial | Security |
 
-`separation-of-concerns` is partial: transport is cleanly isolated behind five single-purpose protocols (`AuthSettingsDataSource`, `SigninAppsDataSource`, `FeatureFlagsDataSource`, `ServerBagsDataSource`, `StorageTokensDataSource`), and none of the twelve given files import a UI-rendering framework — but each Topic still combines data-source orchestration, domain validation (origin/JSON/duplicate-key checks), and declarative `FormSpec`/`HTDVLevel` construction with hardcoded user-facing strings in one type; this follows from the HTDV framework's declarative-model design rather than a UI-rendering leak, but it is still multiple responsibilities sharing one file. `unit-test-coverage` is partial: `EcosystemConfigTopicsTests.swift` exercises every Apple sub-component with fakes and concrete assertions, but none of the five given web files (`feature-flags.ts`, `server-bags.ts`, `signin-apps.ts`, `storage-tokens.ts`, `wire.ts`) has any adjacent test anywhere in the repository. `explicit-error-handling` passes: every Apple call site wraps its data-source call in `HubError.wrap` or an explicit `catch` (including `StorageTokensRail`'s three-way catch, which is still explicit, never silent), and every web call either lets `authedJson`'s thrown rejection propagate or maps it through `rethrowConflict`; no given source catches and discards an error. `input-sanitization` is partial: `SigninAppsTopic.validateOrigin`/`canonicalOrigin`, `ServerBagsTopic.parsedValue`, and the `Slug.pattern`-constrained `clientId`/token-`name` fields validate before any network call on Apple, but the parallel web data clients (`signin-apps.ts`, `server-bags.ts`) forward `allowedReturnOrigins`/`value` with no validation of their own (that validation lives in sibling UI-layer files outside this component's given sources — see Design Decisions), and neither platform restricts a feature-flag key's character set at all (see the open question on `flags-key-charset`). `secure-storage` is partial: the one genuinely sensitive value, the storage-token secret, is deliberately never written to the Keychain, `UserDefaults`, or any persistent store by this component — it lives only in `StorageTokensRail.revealedSecrets`'s in-memory dictionary and is dropped on navigation-away or revoke — which avoids insecure persistence entirely rather than routing through a platform secure-storage API, so the check's literal Keychain/DPAPI expectation does not apply the way it would to a persisted credential.
+`separation-of-concerns` is partial: transport is cleanly isolated behind five single-purpose protocols (`AuthSettingsDataSource`, `SigninAppsDataSource`, `FeatureFlagsDataSource`, `ServerBagsDataSource`, `StorageTokensDataSource`), and none of the twelve given files import a UI-rendering framework — but each Topic still combines data-source orchestration, domain validation (origin/JSON/duplicate-key checks), and declarative `FormSpec`/`HTDVLevel` construction with hardcoded user-facing strings in one type; this follows from the HTDV framework's declarative-model design rather than a UI-rendering leak, but it is still multiple responsibilities sharing one file. `unit-test-coverage` is partial: `EcosystemConfigTopicsTests.swift` exercises every Apple sub-component with fakes and concrete assertions, but none of the five given web files (`feature-flags.ts`, `server-bags.ts`, `signin-apps.ts`, `storage-tokens.ts`, `wire.ts`) has any adjacent test anywhere in the repository. `explicit-error-handling` passes: every Apple call site wraps its data-source call in `HubError.wrap` or an explicit `catch` (including `StorageTokensRail`'s three-way catch, which is still explicit, never silent), and every web call either lets `authedJson`'s thrown rejection propagate or maps it through `rethrowConflict`; no given source catches and discards an error. `input-sanitization` is partial: `SigninAppsTopic.validateOrigin`/`canonicalOrigin`, `ServerBagsTopic.parsedValue`, and the `Slug.pattern`-constrained `clientId`/token-`name` fields validate before any network call on Apple, but the parallel web data clients (`signin-apps.ts`, `server-bags.ts`) forward `allowedReturnOrigins`/`value` with no validation of their own (that validation lives in sibling UI-layer files outside this component's given sources — see Design Decisions), and neither platform restricts a feature-flag key's character set at all (see the `flags-key-charset-unrestricted` requirement). `secure-storage` is partial: the one genuinely sensitive value, the storage-token secret, is deliberately never written to the Keychain, `UserDefaults`, or any persistent store by this component — it lives only in `StorageTokensRail.revealedSecrets`'s in-memory dictionary and is dropped on navigation-away or revoke — which avoids insecure persistence entirely rather than routing through a platform secure-storage API, so the check's literal Keychain/DPAPI expectation does not apply the way it would to a persisted credential.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Design Decisions keep the Decision / Rationale / Approved triple; each decision's platform line is folded into its rationale. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolve open-question markers against the code; restate unimplemented behavior as current behavior with pending Decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/ecosystems/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | 2026-09-24 | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

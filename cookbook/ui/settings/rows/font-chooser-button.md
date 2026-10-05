@@ -1,32 +1,31 @@
 ---
 id: 3e548aa3-1103-4b3f-96ff-d2e7ff564810
-title: Font Chooser Button
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/font-chooser-button
+title: "Font Chooser Button"
+domain: adtoolkit://cookbook/ui/settings/rows/font-chooser-button
 type: ingredient
-version: 1.2.0
+version: 1.2.3
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A button that draws a chosen font's name in that font at a fixed sample
-  size and opens the platform's font-selection UI to pick a new one.
+summary: "A button that draws a chosen font's name in that font at a fixed sample size and opens the platform's font-selection UI to pick a new one."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- font
-- picker
+  - settings
+  - font
+  - picker
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/color-picker-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/button-view
+  - adtoolkit://cookbook/ui/settings/rows/color-picker-view
+  - adtoolkit://cookbook/ui/settings/rows/button-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Font Chooser Button
@@ -103,8 +102,7 @@ including a clamped size or an edit a locked theme refused outright.
 - **releases-picker-registration-on-removal**: WHEN the component is
   removed from its window and it is still the active recipient of
   font-picker selections, it MUST release that registration.
-- **confines-to-ui-thread**: The component MUST be usable only on the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **selected-font-access**: The component MUST expose the selected font as
   a public, externally-read-only property.
 - **change-callback-access**: The component MUST expose the change
@@ -199,7 +197,7 @@ including a clamped size or an edit a locked theme refused outright.
 | font-chooser-button-018 | font-change-forwarding | Give the button a Menlo font at 48pt, activate it, then simulate the platform reporting a size change to 60pt picked in the font-selection UI | The change callback is invoked with the button's own selected font (Menlo at 48pt) carrying the newly-picked 60pt size, not a value substituted directly from the platform's own picker state |
 | font-chooser-button-019 | nil-sender | Set the change callback to a closure that flips a flag; simulate the platform reporting a font-selection change with no accompanying context | The flag remains unflipped; no crash |
 | font-chooser-button-020 | releases-picker-registration-on-removal | Add the button to a window, register it as the active recipient of font-picker selections, then remove it from its window | It is no longer registered as the active recipient afterward |
-| font-chooser-button-021 | confines-to-ui-thread | Attempt to construct or mutate the button from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (compile-time on platforms with static isolation checking such as Swift's `@MainActor`, runtime-checked otherwise) |
+| font-chooser-button-021 | confines-to-ui-thread | Attempt to construct or mutate the button from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (at build time or by a runtime check); the component's state is unchanged |
 | font-chooser-button-022 | selected-font-access | Construct the button, give it a font and title, then read the selected font from outside the type | The property is externally readable and reflects the last font given to it; it has no externally-accessible setter |
 | font-chooser-button-023 | change-callback-access | Assign a closure to the change callback from outside the type | The assignment succeeds and the closure is the one invoked in font-chooser-button-018 |
 
@@ -395,7 +393,7 @@ Not applicable: the source contains no logging call.
 
 ## Design Decisions
 
-**Decision (AppKit)**: `init(frame:)` is a fully working initializer (it calls
+**Decision**: (AppKit) `init(frame:)` is a fully working initializer (it calls
 `show(nil, title: "System")` and configures the button), rather than the
 `fatalError` trap that sibling row views in this directory carry on their
 frame-only initializer.
@@ -416,14 +414,14 @@ always displays exactly what its owner tells it to, including a clamped
 size or an edit a locked theme refused outright.
 **Approved**: pending
 
-**Decision (AppKit)**: `validModesForFontPanel(_:)` restricts the font panel to
+**Decision**: (AppKit) `validModesForFontPanel(_:)` restricts the font panel to
 `.collection`, `.face`, and `.size`, excluding color and text-effect modes.
 **Rationale**: Per the source's own comment: "Only the parts of the panel
 that pick a font — the color and underline effects would write nothing
 anyone reads back."
 **Approved**: pending
 
-**Decision (AppKit)**: `viewDidMoveToWindow()` clears `NSFontManager.shared.target`
+**Decision**: (AppKit) `viewDidMoveToWindow()` clears `NSFontManager.shared.target`
 when the button leaves its window and still owns that target.
 **Rationale**: `NSFontManager.target` is `unowned(unsafe)` (confirmed by
 the component's own test suite comment); leaving it pointing at a
@@ -432,7 +430,7 @@ memory rather than fail safely. This is a workaround for that unsafe
 AppKit API, not a feature of the component's own design.
 **Approved**: pending
 
-**Decision (AppKit)**: The component accepts the residual risk that
+**Decision**: (AppKit) The component accepts the residual risk that
 `NSFontManager.shared.target` can be left pointing at freed memory if a
 `FontChooserButton` is deallocated together with its entire window (rather
 than first removed from it): `viewDidMoveToWindow()` (see
@@ -466,6 +464,7 @@ file left unlocalized (see Localization).
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | internationalization |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 The `native-controls-preference` and `platform-design-language` checks pass
 because the component defers to macOS's own `NSFontPanel` rather than
@@ -485,6 +484,8 @@ stores no font of its own beyond the in-memory `selectedFont` (see
 the built-in `"System"` initial title is a hardcoded literal with no
 localization key (see Localization).
 
+`unit-test-coverage` passes because `FontChooserButtonTests.swift` exercises the button directly: the chosen font drawn at the sample size, the chosen size surviving a small draw, the no-font case drawing the system font and recording nothing, the panel offering only font-picking parts, and the button handing back the font manager's target when its window is left.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -494,3 +495,6 @@ localization key (see Localization).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage Compliance row, judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.3 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |

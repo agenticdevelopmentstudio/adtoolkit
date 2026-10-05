@@ -1,0 +1,65 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "b1a34260-3966-4309-ac58-6249752c95fb",
+    "title": "Webview Panel State",
+    "domain": "adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-state",
+    "type": "ingredient",
+    "version": "1.2.0",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The single string a webview panel's viewType, title, page state, and options survive a quit as.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "extensions",
+      "webview",
+      "pane",
+      "persistence"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelState.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/WebviewPanelStateTests.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewPanelViewController.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewPanelSerializer.swift (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "373f2c09ed53ec63",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "a602608c-c061-44b6-a7ab-829e798d6b0c",
+    "title": "AI Plugin Language Model Provider",
+    "domain": "adtoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider",
+    "type": "ingredient",
+    "version": "1.1.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The production ExtensionLanguageModelProviding conformer: lists every configured AI-plugin model as a vscode.lm chat model and streams sendRequest through the existing AIPlugin/PluginTransport path.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "extension-host",
+      "vscode-api",
+      "ai-plugin",
+      "language-model",
+      "streaming"
+    ],
+    "depends-on": [
+      "adtoolkit://cookbook/ai/providers/provider-configuration",
+      "adtoolkit://cookbook/ai/plugins/plugin-manager",
+      "adtoolkit://cookbook/ai/plugins/plugin-descriptor",
+      "adtoolkit://cookbook/ai/chat/chat-context",
+      "adtoolkit://cookbook/ai/models/model-catalog",
+      "adtoolkit://cookbook/ai/plugins/plugin-transport",
+      "adtoolkit://cookbook/ai/plugins/stream-event",
+      "adtoolkit://cookbook/ai/plugins/ai-plugin"
+    ],
+    "related": [],
+    "references": [
+      "packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/AIPluginLanguageModelProvider.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguageModels.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/AIPluginLanguageModelProviderTests.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderResolver.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderConfiguration.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/AIPluginKit/AIPluginManager.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/AIPluginKit/AIPluginDescriptor.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/AIPluginKit/AIChatContext.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/AIPluginKit/AIStreamEvent.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/AIPluginKit/PluginTransport.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "6c19177107bf0998",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

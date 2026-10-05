@@ -1,0 +1,12 @@
+
+- **Empty `name`, `pluginIdentifier`, or `templateId`**: MUST be accepted without error (see `no-content-validation`); an empty `name` displays as a blank label wherever it is shown, but the record performs no rejection.
+- **Taken set is empty**: deriving a unique name MUST return the candidate unchanged (see `unique-name-unchanged-when-free`) — an empty set is a valid, ordinary input, not a special case.
+- **Candidate already ends in a numeric suffix**: deriving a unique name for "Groq 2" against a taken set containing "Groq 2" MUST return "Groq 2 2", because the suffix is appended unconditionally with no check for whether the candidate already looks like a suffixed name; this is a documented quirk of the naming scheme, not a bug the concept guards against.
+- **Extremely large taken sets**: the suffix search has no iteration cap; for any finite taken set — the only kind a caller can construct — the search MUST terminate at the first untaken `"<candidate> <suffix>"`. There is no overflow guard on the suffix counter, but exhausting it would require a caller to have first supplied an unrealistic number of already-taken names for a list of a user's own configurations.
+- **Concurrent access**: the record declares no shared mutable state of its own (see `value-semantics`); two threads or tasks each holding their own copy MUST NOT be able to race on the record's own storage. Concurrent mutation of a shared collection of configurations (e.g. a list read and written from two threads at once) is the concern of that collection's own synchronization, not of this record.
+- **Error states from a dependency**: Not applicable — the record has no dependency (no network, database, or file-system call) that could fail; per `no-persistence`, it never touches a store.
+- **Offline or disconnected state**: Not applicable — the record performs no network access of its own.
+- **Cancellation and timeouts**: Not applicable — every operation is synchronous and non-throwing; there is nothing to cancel and no operation that can time out.
+- **Missing file or unreachable server**: Not applicable — the record opens no file and makes no server call.
+- **Orphaned `pluginIdentifier`/`templateId`**: a configuration whose plugin has since been uninstalled, or whose template id no longer resolves in that plugin's descriptor, MUST still decode, compare, and hash normally; the record performs no liveness check against the current plugin registry (see `no-registry-validation` and Design Decisions).
+

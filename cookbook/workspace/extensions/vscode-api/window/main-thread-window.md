@@ -1,62 +1,62 @@
 ---
 id: 7fc91996-6f04-415c-9119-fc6f9fccccd4
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/main-thread-window
-title: MainThreadWindow
-summary: The vscode.window adaptor for show*Message, showQuickPick, showInputBox and
-  createStatusBarItem, dispatching each to an injected presenter and recording unimplemented
-  member shapes to NotImplementedLedger.
-version: 1.0.2
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/window/main-thread-window
+title: "MainThreadWindow"
+summary: "The vscode.window adaptor for show*Message, showQuickPick, showInputBox and createStatusBarItem, dispatching each to an injected presenter and recording unimplemented member shapes to NotImplementedLedger."
+version: 1.0.4
 status: review
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- window
-- message-presenting
-- quick-pick
-- input-box
-- status-bar
-- javascriptcore
-- mainactor
+  - extension-host
+  - vscode-api
+  - window
+  - message-presenting
+  - quick-pick
+  - input-box
+  - status-bar
+  - javascriptcore
+  - mainactor
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-presenting
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-presenting
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-status-bar-presenting
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/js-value-bridge
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-presenting
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-presenting
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-status-bar-presenting
+  - adtoolkit://cookbook/workspace/extensions/host/js-value-bridge
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionMessagePresenting.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionQuickPickPresenting.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionInputBoxPresenting.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionStatusBarPresenting.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/JSValueBridge.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowQuickPickTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowInputBoxTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowStatusBarTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-created: '2026-09-24'
-modified: '2026-09-27'
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionMessagePresenting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionQuickPickPresenting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionInputBoxPresenting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionStatusBarPresenting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/JSValueBridge.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowQuickPickTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowInputBoxTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowStatusBarTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 type: ingredient
 language: en
 depends-on: []
 ---
 
+# MainThreadWindow
+
 ## Overview
 
-`MainThreadWindow` is the `@MainActor`-isolated adaptor that answers everything
+`MainThreadWindow` is the adaptor, confined to the UI thread, that answers everything
 an extension reaches for on `vscode.window`'s message, quick-pick, input-box
 and status-bar surface: `showInformationMessage`, `showWarningMessage`,
 `showErrorMessage`, `showQuickPick`, `showInputBox` and
@@ -74,9 +74,9 @@ receives a record whenever a status-bar item's `tooltip` or `command` is set
 to a shape this host does not project (a `MarkdownString`-typed tooltip or a
 `Command`-object-typed command).
 
-The type is non-`Sendable` and `@MainActor`-isolated by design: every member
-it exposes is called from JavaScriptCore's synchronous bridge, which itself
-only ever calls in from the main actor, so there is no cross-actor hop to
+The type is not safe to share across threads and is confined to the UI thread by design: every member
+it exposes is called from the script engine's synchronous bridge, which itself
+only ever calls in from the UI thread, so there is no cross-thread hop to
 document. It conforms to `Loggable` but, as of this source, none of its
 members call through the logger — every failure this adaptor detects is
 reported to the extension itself, by rejecting or never settling the promise
@@ -118,9 +118,9 @@ it returned, not by a log line.
 - Setting the returned item's `color` or `backgroundColor` MUST accept a string (a named/hex color) or a `ThemeColor`-shaped object and MUST forward whichever was set to the presenter without filtering one against a fixed allow-list of accepted theme color IDs; this adaptor MUST NOT cross-check `color` against `backgroundColor` or reject a combination upstream VS Code itself would reject.
 - Calling the returned item's `show()` MUST forward to the presenter's show call for that item's internal identifier; calling `hide()` MUST forward to the presenter's hide call for that identifier unconditionally, even when the item was never shown, rather than checking a local shown/hidden flag first.
 - Calling the returned item's `dispose()` MUST forward to the presenter's dispose call for that identifier and MUST remove any bookkeeping this adaptor keeps for that identifier (so a later mutation of a disposed item's properties does not resurrect it in the presenter), and MUST perform the presenter-facing dispose call before discarding this adaptor's own bookkeeping for that identifier, not after.
-- Every property mutation on a returned status bar item MUST be applied to the presenter immediately, synchronously, on the calling `@MainActor` context, with no debouncing or coalescing of rapid repeated writes (e.g. setting `text` many times in a tight loop) into a single presenter call.
+- Every property mutation on a returned status bar item MUST be applied to the presenter immediately, synchronously, on the calling UI-thread context, with no debouncing or coalescing of rapid repeated writes (e.g. setting `text` many times in a tight loop) into a single presenter call.
 - `MainThreadWindow`'s own `dispose()` (or equivalent teardown entry point) MUST mark every `PromiseSettlementBox` this instance still holds as disposed, so that any `show*Message`, `showQuickPick` or `showInputBox` promise still pending at teardown is left permanently unsettled rather than rejected or resolved after disposal.
-- Every promise-returning member MUST run on the `@MainActor` and MUST NOT suspend across an actor boundary other than the single `await` of the corresponding presenter call.
+- Every promise-returning member MUST run on the UI thread and MUST NOT suspend across a thread or execution-context boundary other than the single wait for the corresponding presenter call.
 
 ## Appearance
 
@@ -169,7 +169,7 @@ Not applicable — this is not a visual component. The one accessibility-shaped 
 - `showInputBox`'s `valueSelection` offsets that are equal to each other (an empty selection) MUST be accepted as long as both individual checks (non-negative, not past the end, not inside a character) pass; an empty selection is not itself an error.
 - `showInputBox`'s `validateInput` rejecting (throwing, or returning a rejected thenable) MUST be treated as the input being reported invalid using the extension's own rejection reason as the message, not as an adaptor-level failure that rejects the whole `showInputBox` promise.
 - `createStatusBarItem`'s first argument being a number rather than a string or an alignment enum value MUST be interpreted as the two-argument `(alignment, priority)` overload with `id` omitted, not rejected as a type error.
-- Two concurrent `createStatusBarItem` calls on the same instance MUST never receive the same internal identifier, because the ordinal counter is drawn synchronously on the `@MainActor` inside the same call that reads it; there is no window in which two calls can observe the same ordinal.
+- Two concurrent `createStatusBarItem` calls on the same instance MUST never receive the same internal identifier, because the ordinal counter is drawn synchronously on the UI thread inside the same call that reads it; there is no window in which two calls can observe the same ordinal.
 - A `showQuickPick` or `showInputBox` promise still pending when `MainThreadWindow.dispose()` runs MUST NOT be rejected with a "disposed" error; it is left permanently unsettled, which is a deliberate divergence from a pattern that would reject outstanding work on teardown — an extension awaiting that promise will simply never resume.
 - This adaptor makes no network calls and holds no connection to lose; an "offline" or "disconnected" edge case does not apply to any member here — every failure path is a local argument-shape rejection, a presenter-reported invalidity, or a permanently unsettled promise, never a connectivity error.
 
@@ -235,6 +235,7 @@ This adaptor does not persist or transmit anything itself, but it is a conduit f
 - **Compose (Android/Kotlin)**: A Kotlin port would model this as a class implementing the JS-engine bridge callbacks (e.g. via a J2V8/QuickJS binding) that dispatches to Kotlin interfaces mirroring the four presenter protocols, with the same argument-shape validation performed before any dispatch, and the same permanently-unsettled-on-dispose behavior for a `Deferred`/`CompletableDeferred` standing in for the pending promise.
 - **React/Web**: A web-hosted equivalent would run the extension in a Web Worker or sandboxed iframe and marshal these same calls over `postMessage`, replacing the synchronous JavaScriptCore bridge with an asynchronous message protocol; the argument-shape validation, the last-wins close-affordance rule, and the unclamped-`Infinity`-priority behavior would all need to be reproduced explicitly, since none of them fall out of `postMessage`'s own semantics.
 - **WinUI 3**: A .NET port would implement this as a class exposing the same members to a `ClearScript` or `Jint` JavaScript engine instance, using `TaskCompletionSource<object>` in place of `PromiseSettlementBox` (with `TrySetResult`/`TrySetCanceled` guarded the same way `isDisposed` is checked here, since `TaskCompletionSource` has no built-in "leave pending forever" state — a disposed instance would need to hold the `TaskCompletionSource` without ever completing it), `ObservableCollection<T>`/`INotifyPropertyChanged` for a status bar item's live-mutable properties surfaced back to the engine, `DispatcherQueue.TryEnqueue` to guarantee the same single-thread affinity `@MainActor` guarantees here, and a `System.Text.Json`-based decoder for the same options-object shape checks (`valueSelection`, `canPickMany`, etc.) this file performs by hand against `JSValue`.
+- **ui-thread-confinement**: On Apple platforms `MainThreadWindow` is `@MainActor`-isolated and non-`Sendable`; the script engine is JavaScriptCore, and its bridge calls in from the main actor. Promise-returning members `await` the presenter call.
 
 ## Reference Implementations
 
@@ -286,6 +287,8 @@ This adaptor does not persist or transmit anything itself, but it is a conduit f
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.0.4 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

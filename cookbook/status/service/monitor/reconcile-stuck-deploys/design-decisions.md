@@ -1,0 +1,29 @@
+
+- **Decision**: run `reconcileVanishedDeploys` on both the fast probe-only tick and the full sync cycle, while `expireUnconfirmedDeploys` and `enrichDeployErrors` run only on the full cycle.
+  **Rationale**: stated directly in the source's own header comment and echoed in `sync.ts`'s comment on the `opts.skipDeploys` branch — the deploy poll only terminalizes a finished build at its 5-minute cadence, so a burst of deploys leaving the poll's recent-deployments window read as `building` for up to that whole interval; running this specific, cheap, indexed-candidate-query healer at the probe cadence (RECONCILE_STALE_MS is deliberately shorter than the poll interval) closes that gap without paying the cost of the full provider poll on every tick.
+  **Approved**: pending
+- **Decision**: make `RECONCILE_STALE_MS` (2 minutes) shorter than the deploy poll's default interval (5 minutes) rather than longer.
+  **Rationale**: stated directly in the source comment on `RECONCILE_STALE_MS` — gating the healer at longer than the poll interval made the poll the only thing that could terminalize a finished build, so any row the poll missed read `building` for the poll gap plus the threshold (observed as roughly 15 minutes after a 45-project rebuild); shorter than the poll means the fast tick re-confirms in-flight rows between polls instead of trusting a phase nothing has checked.
+  **Approved**: pending
+- **Decision**: exclude parked (backed-off) row ids in the `listInFlightCandidates` SQL `WHERE` clause rather than querying unfiltered and filtering in JavaScript after the fact.
+  **Rationale**: stated directly in the source comment on `parkedIds` — a JS filter applied after a newest-first `LIMIT` let a cluster of permanently-failing rows fill the whole batch and starve older stale rows, requiring an over-select fudge factor that still broke down past roughly cap-times-factor parked rows; excluding parked ids in the `WHERE` clause means the `LIMIT` always returns that many retryable rows, however many are currently parked.
+  **Approved**: pending
+- **Decision**: use exponential backoff (`RECONCILE_BACKOFF_BASE_MS` doubling per consecutive failure, capped at `RECONCILE_BACKOFF_MAX_MS`) for a failing row rather than a flat retry delay.
+  **Rationale**: stated directly in the source comment on the backoff constants — a flat delay forces one bad tradeoff: short enough to retry a transient blip promptly means a permanently-failing row keeps burning provider quota at that same cadence forever, while long enough to rate-limit a permanent failure means a row with one transient blip waits the full delay before its next real check; escalating from a short base lets a transient failure retry soon while a persistently-failing row backs off toward the cap.
+  **Approved**: pending
+- **Decision**: remember a lapsed backoff's escalation count for `RECONCILE_BACKOFF_MEMORY_MS` (10 minutes) past its expiry rather than resetting to the base delay on every failure.
+  **Rationale**: stated directly in the source comment on `RECONCILE_BACKOFF_MEMORY_MS` — a row that fails again shortly after being retried should resume escalating rather than restarting at the base delay every time; past the memory window the entry is pruned and the next failure starts fresh.
+  **Approved**: pending
+- **Decision**: `expireUnconfirmedDeploys`'s `expireStaleInFlight` predicate is windowed only by `fetchedAt`, deliberately not also by `createdAt`/`RECONCILE_WINDOW_DAYS`.
+  **Rationale**: stated directly in the source comment on `expireUnconfirmedDeploys` — rows older than the reconcile window are exactly the zombies this operation exists to clear, since they can no longer be re-fetched by id at all; windowing by `createdAt` would exempt the very rows most in need of a terminal verdict.
+  **Approved**: pending
+- **Decision**: `markDeployGone` and `expireStaleInFlight` collapse only the currently-in-flight lifecycle column(s) via a per-column `CASE`, evaluated against each row's current stored state, rather than overwriting both `buildPhase` and `deployPhase` unconditionally.
+  **Rationale**: stated directly in the source comments on both call sites — a blanket overwrite would erase a settled verdict on one lifecycle (e.g., a finished `built` build) when only the sibling lifecycle (its `deploying` rollout) is the one that vanished or expired; the per-column `CASE` also makes the update race-safe against a concurrent write between the candidate select and the update itself, since it re-checks the row's current state at write time rather than trusting a stale in-memory snapshot.
+  **Approved**: pending
+- **Decision**: pass the Railway deployment id to `gqlPost` as a bound GraphQL variable (`{ id }`) rather than interpolating it into the query string.
+  **Rationale**: not spelled out on this call site directly, but stated on `gqlPost`'s own declaration in `providers/railway.ts` (cited here as external evidence, not invented) — a bound variable is the shared choke point every by-id GraphQL caller in the codebase goes through so no caller can drift into building an injectable, string-interpolated query.
+  **Approved**: pending
+- **Decision**: keep `retryAfterFailure` as unpersisted, worker-thread-local module state rather than backing it with the shared cross-thread `SharedArrayBuffer` the provider cooldown module uses.
+  **Rationale**: stated directly in the source comment on the `retryAfterFailure` declaration — a process restart simply retries a parked row sooner, which is an acceptable cost, and the registry is bounded by the number of in-flight rows a cycle can even see; unlike the provider-level cooldown (which two different threads must observe identically to avoid both independently exhausting the same rate limit), a per-row backoff miss on a restart or thread boundary only means one extra fetch attempt, not a repeated throttle violation.
+  **Approved**: pending
+

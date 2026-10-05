@@ -1,34 +1,33 @@
 ---
 id: 46e79f87-0dbb-4bd5-b11c-bd65ae0087a9
-title: Project Scan Progress Window
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-scan-progress-window
+title: "Project Scan Progress Window"
+domain: adtoolkit://cookbook/workspace/projects/project-scan-progress-window
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Floating, non-modal panel that shows an indeterminate progress indicator
-  while a project scan runs, then completes and closes itself a second later.
+summary: "Floating, non-modal panel that shows an indeterminate progress indicator while a project scan runs, then completes and closes itself a second later."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- window-controller
-- progress
+  - git
+  - projects
+  - window-controller
+  - progress
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo-scanner
+  - adtoolkit://cookbook/workspace/projects/git-repo-scanner
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectScanProgressWindow.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectScanProgressWindow.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Scan Progress Window
@@ -47,9 +46,7 @@ instance immediately after finishing it.
 
 ## Behavioral Requirements
 
-- **main-thread-confined**: the progress window's construction, its present
-  and finish operations, and its headline and progress-indicator state MUST
-  only be accessed from the UI's main execution context.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **fixed-panel-geometry-and-style**: construction MUST give the panel a
   content size of 240 by 72 points and a chrome style of a titled,
   utility-style window.
@@ -107,7 +104,7 @@ Not applicable — this is a window controller, not a visual component.
 
 | ID | Requirements | Input | Expected |
 |----|-------------|-------|----------|
-| git-client-projects-project-scan-progress-window-001 | main-thread-confined | Call present or finish from code that is not on the UI's main execution context and does not hand off to it. | The call is rejected before it can run, since the progress window is confined to the main execution context and neither operation offers an off-context path. |
+| git-client-projects-project-scan-progress-window-001 | confines-to-ui-thread | Call present or finish from code that is not on the UI's main execution context and does not hand off to it. | The call is rejected before it can run, since the progress window is confined to the main execution context and neither operation offers an off-context path. |
 | git-client-projects-project-scan-progress-window-002 | fixed-panel-geometry-and-style | Construct the progress window. | The instance's window has an initial content size of 240×72 points and a titled, utility-style chrome. |
 | git-client-projects-project-scan-progress-window-003 | panel-title | Construct the progress window. | The window's title equals "Scanning". |
 | git-client-projects-project-scan-progress-window-004 | floating-non-modal-presentation | Construct the progress window. | The window is a floating panel; the component exposes no modal-presentation operation to call instead. |
@@ -138,7 +135,7 @@ Not applicable — this is a window controller, not a visual component.
   MUST (this is the component's actual, unparameterized behavior).
 - **Concurrent access**: all access to the headline, progress indicator,
   and window state is confined to the UI's main execution context (see
-  `main-thread-confined`). Calling finish a second time before the first
+  `confines-to-ui-thread`). Calling finish a second time before the first
   call's scheduled close fires MUST queue a second delayed close that also
   closes the panel; the second call lands on an already-closing or
   already-closed window, which is a harmless no-op. MUST.
@@ -300,6 +297,7 @@ progress indicator.
   in `finish()`; a weak reference here would let the window be
   garbage-collected before `Close()` runs, leaving it on screen exactly as
   the source's inline comment warns.
+- **confines-to-ui-thread** (scope): The rule covers the window's construction, its present and finish operations, and its headline and progress-indicator state.
 
 ## Reference Implementations
 
@@ -389,7 +387,8 @@ progress indicator or window chrome.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Spec-local UI-thread confinement ids folded into the shared confines-to-ui-thread requirement, with a test vector; scope detail is in Platform Notes. |

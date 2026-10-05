@@ -1,39 +1,39 @@
 ---
 id: dddf0162-9d32-45a4-86a8-7e2d1b313d41
-title: Status Server Monitor Heartbeat
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/heartbeat
+title: "Status Server Monitor Heartbeat"
+domain: adtoolkit://cookbook/status/service/monitor/heartbeat
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "Dead-man's-switch check-in: GETs an external monitor URL after every successful full sync, fail-soft and bounded, so a dead container is caught by an outside watcher."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- heartbeat
-- server
+  - monitor
+  - heartbeat
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
-- agenticdevelopercookbook://guidelines/implementing/observability/logging
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/observability/logging
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner
-- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
+  - adtoolkit://cookbook/status/service/monitor/cycle-runner
+  - adtoolkit://cookbook/status/service/monitor/alerts
 references:
-- packages/web/packages/status-server/src/monitor/heartbeat.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/config/env.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/heartbeat.int.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/heartbeat.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/config/env.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/heartbeat.int.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Heartbeat

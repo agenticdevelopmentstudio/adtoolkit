@@ -1,0 +1,19 @@
+
+| Check | Status | Category |
+|-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
+| [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
+| [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | partial | Accessibility |
+| [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
+| [dynamic-type-support](agenticdevelopercookbook://compliance/accessibility#dynamic-type-support) | failed | Accessibility |
+| [locale-aware-formatting](agenticdevelopercookbook://compliance/internationalization#locale-aware-formatting) | failed | Internationalization |
+| [unicode-support](agenticdevelopercookbook://compliance/internationalization#unicode-support) | passed | Internationalization |
+| [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | Internationalization |
+| [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
+| [text-expansion-tolerance](agenticdevelopercookbook://compliance/internationalization#text-expansion-tolerance) | passed | Internationalization |
+
+Statuses rest on: the expand toggle's explicit accessibility label versus the bubble container having no label or grouping of its own (screen-reader-support); the bubble itself having no `keyDown`/`acceptsFirstResponder`, with the equivalent path supplied only by its host `ChatView`'s row-selection keyboard handling, which this recipe traces but which this component alone does not provide (keyboard-navigable — see Accessibility); the palette's dimmed text roles (`secondaryText`, `timestampText`) enforcing a minimum contrast floor against the window background while nothing verifies contrast between a role's own paired fill and text color, e.g. `userText` against `userBubble` (contrast-ratio); the message text being pinned to the separate Terminal font-size setting rather than the app's general typography scale (`SemanticPalette.size(_:)`/`scaled(by:)`) that the "Text Size" reader control and other UI use — increasing that control changes nothing in this bubble's message text (dynamic-type-support); the fixed `h:mm a` pattern ignoring the user's locale hour-cycle preference, unlike `AgenticDeveloperToolkit`'s `MessageBubbleView` (locale-aware-formatting); the component rendering arbitrary caller-provided Unicode text via `NSAttributedString`/`NSTextView` without special-casing (unicode-support); the "Show the whole message" / "Show less" / "…" strings being Swift string literals in `AIChatBubbleView.swift` rather than sourced from a resource table (string-externalization, no-hardcoded-strings); and the bubble measuring and sizing to whatever text it is given, up to `maxWidth`, rather than assuming a fixed width for a fixed string length (text-expansion-tolerance).
+
+`separation-of-concerns` passes because `AIChatBubbleView` only draws one message bubble (text, timestamp, truncation and its expand toggle) from a message and the active `SemanticPalette`; row layout, selection and transcript ordering live in `ChatTranscriptRowView` and `ChatView`. `unit-test-coverage` is partial: `BubbleTruncationTests.swift` covers the line limit, ellipsis, wrapped-line counting and when the toggle is offered, and `BubbleStyleTests.swift` covers muted work output and the terminal bubble style, and `TranscriptDateTests.swift` pins the twelve-hour timestamp format through the bubble's time formatter, but nothing asserts the toggle's accessibility label or theme repaint.
+

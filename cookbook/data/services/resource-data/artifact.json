@@ -1,0 +1,78 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "ec6e6ca5-8780-4ce2-8b3a-087adc50ed35",
+    "title": "Resource Data",
+    "domain": "adtoolkit://cookbook/data/services/resource-data",
+    "type": "ingredient",
+    "version": "1.2.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Cross-cutting data substrate: tenant-scoped resource-list/resource-item caching, last-id/view-mode (FTD) persistence, workspace-preference caching, and workspace listing/slug-availability, built on a shared authenticated request layer.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "data",
+      "cache",
+      "tenant",
+      "persistence",
+      "workspace",
+      "http"
+    ],
+    "depends-on": [
+      "adtoolkit://cookbook/data/services/auth/auth-client"
+    ],
+    "related": [],
+    "references": [
+      "packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/config.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/ftd-storage.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/tenant.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/use-resource-item.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/use-resource-list.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/workspace-prefs.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/workspaces.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/__tests__/ftd-storage.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/__tests__/http.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/__tests__/tenant.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/__tests__/workspace-prefs.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/__tests__/workspaces-changed.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/__tests__/use-resource-item.test.tsx (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/__tests__/use-resource-list.test.tsx (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "c20e14a167cbe506",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

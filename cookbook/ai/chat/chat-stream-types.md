@@ -1,35 +1,33 @@
 ---
 id: f305da79-fa03-493e-9c08-7186530943c6
-title: Chat Stream Types
-domain: agenticdevelopertoolkit://cookbook/ai/chat/chat-stream-types
+title: "Chat Stream Types"
+domain: adtoolkit://cookbook/ai/chat/chat-stream-types
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The three immutable value shapes — a stream event, a tool definition,
-  and a tool result — that carry chat tool-calling data across a chat backend
-  and a tool source.
+summary: "The three immutable value shapes — a stream event, a tool definition, and a tool result — that carry chat tool-calling data across a chat backend and a tool source."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- chat
-- tool-calling
-- streaming
-- value-type
+  - ai-plugin
+  - chat
+  - tool-calling
+  - streaming
+  - value-type
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/plugins/stream-event
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-context
+  - adtoolkit://cookbook/ai/plugins/stream-event
+  - adtoolkit://cookbook/ai/chat/chat-context
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Chat Stream Types
@@ -441,6 +439,7 @@ parameter-schema bytes.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
 | [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | passed | Best Practices |
 
@@ -454,10 +453,13 @@ throwing, swallowing, or logging the failure silently — the same
 explicit-outcome shape `ChatToolSource.callTool`'s return tuple already
 uses.
 
+`unit-test-coverage` fails because no Swift test references `ChatStreamEvent`, `ToolDefinition` or `ToolResult` under the Apple test targets; the web-side `adhChatBackend.test.ts` and `visitorChatSse.test.ts` exercise a different TypeScript event type, not these shapes.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage compliance row. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/chat/. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |

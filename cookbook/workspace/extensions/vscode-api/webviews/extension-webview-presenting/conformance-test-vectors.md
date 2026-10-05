@@ -1,0 +1,14 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| extension-webview-presenting-001 | presenter-wired-before-revealed, request-value-semantics | A request with given `viewType`/`title`/`options`/`localResourceRoots`, and a placement step that succeeds; present the webview panel. | The built panel mirrors the request's `viewType`, `title`, `options`, and `localResourceRoots` — `PaneWebviewPresenterTests.thePanelIsBuiltFromTheRequest` |
+| extension-webview-presenting-002 | presenter-single-panel-per-call | A placement step that succeeds; present the webview panel. | The panel the placement step was given is the same panel instance presenting returns — `PaneWebviewPresenterTests.thePanelPlacedIsThePanelReturned` |
+| extension-webview-presenting-003 | presenter-nil-on-no-placement | A placement step that fails (no project window open); present the webview panel. | Returns nothing — `PaneWebviewPresenterTests.aPlacementThatFailsAnswersNil` |
+| extension-webview-presenting-004 | presenter-failed-placement-reveals-nothing | Same failing placement step; present the webview panel. | `reveal` is never called on any panel — `PaneWebviewPresenterTests.aPlacementThatFailsRevealsNothing` |
+| extension-webview-presenting-005 | presenter-reveals-once, panel-reveal-preserve-focus | A request with `preserveFocus` set to a given value, and a placement step that succeeds; present the webview panel. | `reveal(preserveFocus:)` is called exactly once, carrying that same `preserveFocus` value, as part of the same presenting call — `PaneWebviewPresenterTests.theCreateCallRevealsOnceCarryingPreserveFocus` |
+| extension-webview-presenting-006 | presenter-wired-before-revealed | A placement step that succeeds; present the webview panel. | The placement's `reveal`/`remove` callbacks are installed on the panel before `reveal` is called — `PaneWebviewPresenterTests.thePanelIsWiredBeforeItIsRevealed` |
+| extension-webview-presenting-007 | panel-dispose-idempotent | `dispose()` called twice on the same panel | The removal callback fires only once; the second call is a no-op — `PaneWebviewPresenterTests.aSecondDisposeDoesNotRemoveTwice` |
+| extension-webview-presenting-008 | panel-disposed-flag | A panel handle already marked disposed (`isDisposed == true`), handed to the restore-after-relaunch path | The hand-over is refused rather than adopted — `MainThreadWebviewsTests.restoringAPanelThatWasAlreadyClosedIsRefused` |
+| extension-webview-presenting-009 | panel-disposed-flag | A panel handle that is not disposed (`isDisposed == false`), handed to `resolveWebviewView` | The hand-over succeeds and the live panel is adopted — `MainThreadWebviewsTests.resolvingAContributedViewHandsOverTheLivePanel` |
+| extension-webview-presenting-010 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
+

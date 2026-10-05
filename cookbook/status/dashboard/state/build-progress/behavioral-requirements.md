@@ -1,0 +1,30 @@
+
+- **signature**: This logic MUST accept one argument, the activity rows, and return a build-progress result on every evaluation.
+- **return-shape**: The build-progress result MUST carry exactly five fields: `visible` (boolean), `completed` (number), `total` (number), `pct` (number), `complete` (boolean).
+- **in-flight-predicate**: A row MUST be treated as an in-flight build if and only if `kind === "deploy"` AND `step === "build"` AND `tone === "progress"`.
+- **deploy-step-excluded**: A row with `step === "deploy"` MUST NOT enter the cohort, whatever its tone.
+- **non-deploy-kind-excluded**: A row whose `kind` is `"probe"` or `"platform"` MUST NOT enter the cohort, whatever its tone or step.
+- **no-client-clock**: The in-flight predicate MUST NOT consult the row's `at` timestamp or any wall-clock time; a build the board still tones `"progress"` MUST remain in flight regardless of its age.
+- **identity-by-id**: Cohort membership MUST be keyed by the row's `id` field; rows sharing an `id` MUST count as one build.
+- **cohort-accumulation**: Every `id` observed in flight MUST be added to the cohort and MUST stay in it until the cohort resets, even after its row leaves the feed.
+- **cohort-no-op-when-idle**: When the current snapshot contains no in-flight builds, the accumulation step MUST NOT modify the cohort.
+- **cohort-stable-identity**: When every in-flight `id` is already in the cohort, the accumulation step MUST keep the existing cohort set instead of storing a new one, so no unnecessary change notification is triggered.
+- **accumulation-trigger**: Accumulation MUST re-run only when the sorted, `|`-joined list of in-flight ids changes between evaluations (see Platform Notes).
+- **total-definition**: `total` MUST equal the number of distinct ids in the cohort.
+- **completed-definition**: `completed` MUST equal the number of cohort ids not in flight in the current activity snapshot, counting settled, server-expired (`"stale"`) and absent rows alike.
+- **pct-definition**: `pct` MUST be `0` when `total` is `0`, and otherwise the nearest integer to `(completed / total) * 100`, an integer from 0 to 100 (see Platform Notes).
+- **visible-definition**: `visible` MUST be `true` exactly when `total > 0`.
+- **complete-definition**: `complete` MUST be `true` exactly when `total > 0` and `completed === total`.
+- **complete-hold**: When `complete` becomes `true`, this logic MUST schedule a single timer of 2000 ms that clears the cohort to an empty set.
+- **hold-visible**: During the 2000 ms hold this logic MUST keep returning `visible: true`, `pct: 100`, `complete: true`.
+- **hold-cancel**: If `complete` becomes `false` before the timer fires (a new build enters the cohort, or a cohort build is toned `"progress"` again), the pending timer MUST be cleared and the cohort MUST NOT be reset.
+- **reset-effect**: After the timer fires, this logic MUST return `visible: false`, `total: 0`, `completed: 0`, `pct: 0`, `complete: false` until another in-flight build is observed.
+- **unmount-cleanup**: Teardown while a hold timer is pending MUST clear that timer.
+- **one-render-lag**: A build first observed in flight MUST be absent from `total` in the evaluation that first observes it, and MUST appear only after the accumulation step commits and the result is recomputed; the cohort is updated as a side effect rather than derived synchronously during that first evaluation (see Platform Notes).
+- **input-not-mutated**: This logic MUST NOT mutate the given activity rows or their contents.
+- **no-side-effects**: This logic MUST perform no network, storage, logging or UI side effects; its only side effect is the hold timer.
+- **caller-filters**: This logic MUST track exactly the rows it is given; filtering by environment is the caller's responsibility, and display-only narrowing (ttl, clear, search) MUST NOT be applied to its input.
+- **server-owns-demotion**: This logic MUST NOT demote an in-flight build itself; expiry of a wedged build is owned by the server (`reconcile-stuck-deploys` sets tone to `"stale"`, `deployIsStuck` raises a Problem), and until that happens the bar stays visible below 100%.
+- **client-only**: Build Progress MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
+- **threading**: All reads and state updates MUST run without concurrent execution; no two evaluations of this logic interleave, so cohort updates are ordered by evaluation order (see Platform Notes).
+

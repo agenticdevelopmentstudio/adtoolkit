@@ -1,34 +1,34 @@
 ---
 id: 7cac2263-94fe-47ec-ab1d-6cf5a12baf14
-title: Settings Window
-domain: agenticdevelopertoolkit://cookbook/ui/settings/settings-window
+title: "Settings Window"
+domain: adtoolkit://cookbook/ui/settings/settings-window
 type: ingredient
-version: 1.2.0
+version: 1.3.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "A reusable window for an app's Settings surface: an alphabetically sorted topic sidebar with search, a unified header bar with back/forward navigation and help, and quiet-presentation-aware activation."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- composable-settings
-- window-controller
-- settings
-- split-view
+  - composable-settings
+  - window-controller
+  - settings
+  - split-view
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-split-view
-- agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller
+  - adtoolkit://cookbook/ui/settings/settings-split-view
+  - adtoolkit://cookbook/ui/windows/single-window-controller
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+  - adtoolkit://cookbook/ui/settings/settings-panel
+  - adtoolkit://cookbook/ui/layout/composable-tabs/tabs-window
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Settings Window
@@ -162,6 +162,7 @@ way.
 - **returns-nil-for-unknown-toolbar-identifier**: Requesting an item for any
   identifier outside the fixed list in **fixes-toolbar-item-order** MUST
   return nothing.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -243,7 +244,7 @@ way.
   theme palette; contrast is a design-system-level concern this file does
   not decide, per
   `agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages`.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. The panel-title item draws its text in the primary-text role and the help control tints itself with the secondary-text/accent roles, each against whichever theme surface renders behind it under the transparent, unified header bar (see Appearance, Background); no contrast ratio between those roles and their background is computed or asserted anywhere in this file. Settling this needs a theme-level contrast audit of the palette's roles against the surfaces they are drawn over, not a change to this file itself.
+- **minimum-contrast-ratio**: The window MUST draw the panel-title item's text in the theme's primary-text role and tint the help control from the theme's secondary-text/accent roles, each against whichever theme surface renders behind the transparent, unified header bar. The window performs no contrast-ratio check of its own between those roles and their background; contrast is whatever the active theme's palette provides.
 
 ## Conformance Test Vectors
 
@@ -286,13 +287,13 @@ way.
 | settings-window-035 | builds-tracking-separator-from-splitview | The hosted split view does not exist; request the sidebar tracking separator | Returns nothing. |
 | settings-window-036 | assigns-high-visibility-to-primary-items | Inspect the navigation, panel-title, and help items | Each has high visibility priority. |
 | settings-window-037 | returns-nil-for-unknown-toolbar-identifier | Request an item for an identifier outside the fixed list | Returns nothing. |
+| settings-window-038 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
 - **Null/empty input**: No current panel title MUST result in the
   panel-title item showing the empty string, not a placeholder (MUST, see
-  **shows-current-panel-title**). No selection on the navigation control
-  MUST trigger neither navigate-back nor navigate-forward (MUST, see
+  **shows-current-panel-title**). With no selection on the navigation control, the control MUST NOT trigger navigate-back or navigate-forward (MUST, see
   **routes-segment-selection-to-navigation**). A request for the sidebar
   tracking separator when the hosted split view does not exist MUST return
   nothing rather than a partially-configured item (MUST, see
@@ -512,7 +513,7 @@ Not applicable: no logging call appears anywhere in this file.
   window's trailing edge as the WinUI substitute for the AppKit help
   drawer — WinUI has no drawer primitive of its own, so `SplitView` is the
   standard stand-in, matching the pattern
-  `agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window` already uses
+  `adtoolkit://cookbook/ui/layout/composable-tabs/tabs-window` already uses
   for its own drawer translation.
 
 ## Reference Implementations
@@ -591,6 +592,10 @@ source, not a behavior this recipe can decide on its own; it belongs to
 whoever maintains `SettingsWindow.swift`.
 **Approved**: pending
 
+**Decision**: The window computes and asserts no contrast ratio between the header-bar text and tint roles and the surface behind them.
+**Rationale**: The title and help colors come straight from the theme palette (`ThemedLabel` with the primary-text role; the help button reads its tint from the palette on demand), and `SettingsWindow.swift` contains no contrast computation. Closing the gap takes a theme-level contrast audit of the palette's roles against the surfaces they are drawn over, not a change to the window.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -601,6 +606,8 @@ whoever maintains `SettingsWindow.swift`.
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 `screen-reader-support` and `keyboard-navigable` rest on the Accessibility
 section's Label requirements and Keyboard/focus bullets (explicit
@@ -614,10 +621,15 @@ minimum-contrast-ratio).
 every user-facing string this file passes to AppKit is a literal, not a
 localization key (see Localization).
 
+`separation-of-concerns` passes because `SettingsWindow` owns only window chrome (the toolbar with its back/forward control, panel-title item and help button, and activation) and hands every content concern to `SplitViewController`, the panel list and the panels, with navigation history held in `SettingsNavigationHistory` rather than in the window. `unit-test-coverage` is failed because no test file exercises `SettingsWindow`: the only test that mentions it, `ThemedSplitViewOrientationTests.swift`, builds a `SplitViewController` and never the window controller, and the toolbar, navigation-change callback and activation behavior are untested.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.3.2 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio marker as current behavior (theme palette roles, no contrast check in SettingsWindow) with a pending Design Decision; added separation-of-concerns (passed) and unit-test-coverage (failed, no SettingsWindow tests) compliance rows. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

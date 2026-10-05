@@ -1,0 +1,27 @@
+
+- **Empty root directory**: first launch — loading state MUST yield no contexts and no active context; the model then seeds `defaultContexts` unless in a test environment.
+- **Missing context file referenced by state**: loading all contexts MUST skip it with an error log; the ID drops out of `contextIDs` on the next persist, and the orphan never reappears.
+- **Orphan context file not referenced by state**: it MUST stay on disk untouched; the manager never reads the context-file listing.
+- **Active ID points at a skipped context**: `activeContextID` MUST keep the dangling ID and looking up the active context MUST return no value; switching to the next context then switches to the first context.
+- **Corrupt `state.json`**: loading state MUST throw `decodingFailed`; the model sets `lastError` and does not seed defaults, so existing context files are not overwritten on that launch.
+- **Empty or duplicate context names**: accepted (create-context); custom-rule auto-assignment picks the first context in display order whose name matches case-insensitively.
+- **Malformed color string**: stored unchanged; a `#`-prefixed hex string is only the caller's documented precondition.
+- **Owning app mid-launch at load**: a persisted window ID whose app has zero live windows MUST be kept, so the window is not orphaned; re-matching reconciles it later.
+- **Recycled window ID**: a persisted ID now owned by another app MUST be cleared on load (reconcile-stale-recycled).
+- **No screens**: no displays are available — the parking x MUST be −30000, and no frame is captured because nothing overlaps a screen.
+- **Window already off-screen when its context is deactivated**: its saved frame MUST NOT be overwritten (frame-capture-guard).
+- **Window-controller failure**: move, set-frame, and focus errors are discarded; parking failures are declared best-effort, and the open question on restore-failure-silent covers restores.
+- **Persistence failure**: throwing operations MUST throw `persistenceFailed` with memory left ahead of disk; event operations and batch assignment MUST log and continue. A mid-save-all failure leaves disk partially updated (the open question on save-all-not-atomic).
+- **Lock contention**: a second process writing the same root MUST block on the file lock until the first finishes; there is no timeout.
+- **Reads during a write**: unlocked reads MUST see either the old or the new version of each file, because each file is replaced with an atomic write; they MAY see a new context file alongside an old `state.json` mid-save-all.
+- **Same window assigned twice**: the batch and single assignment APIs do not reject it (the open question on assignment-window-unvalidated).
+- **Assign to a window that is no longer live**: the snapshot MUST still receive the ID and an empty title.
+- **Case mismatch in app names**: marking an app's windows dormant compares exactly, while re-matching an app's dormant windows, load-time invalidation, and custom rules compare case-insensitively.
+- **Unknown rule ID on update**: silent no-op (rules-update-unknown).
+- **Notification authorization denied**: no notification is posted and nothing is logged; the Reconcile window flag is still set.
+- **Running outside an app bundle**: the notification step MUST return before touching the system notification center, which crashes without a bundle identifier.
+- **`reconcileBehavior` set to `ignore` or `auto`**: launch reconciliation still runs the `prompt` behavior (reconcile-behavior-not-consumed).
+- **Concurrent access**: the manager and model are confined to a single coordination context, so their operations are serialized and cannot interleave; the store is safe to use from any thread, with writes serialized by an inter-process file lock. Observer events arrive as independent units of work on that same coordination context (the open question on observer-event-ordering).
+- **Cancellation and timeouts**: no operation supports cancellation or has a timeout; all work is synchronous on the calling coordination context except the notification authorization callback.
+- **Offline or disconnected state**: not applicable; the component performs no network access.
+

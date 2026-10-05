@@ -1,0 +1,73 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "6bf27f64-59d0-4b2a-8715-92dba2856814",
+    "title": "SQL Storage Layer",
+    "domain": "adtoolkit://cookbook/status/service/storage/libsql",
+    "type": "ingredient",
+    "version": "1.1.0",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-09-27",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The status backend's SQLite/libSQL storage layer — connection open/tune/checkpoint operations and the persisted schema for health checks, deployments, issues, monitoring configuration, platform/peer state, errors, analytics, and authentication tables.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "database",
+      "sqlite",
+      "persistence",
+      "migrations",
+      "server"
+    ],
+    "depends-on": [
+      "agenticdevelopercookbook://guidelines/implementing/data/database",
+      "agenticdevelopercookbook://guidelines/implementing/data/transactions-and-concurrency",
+      "agenticdevelopercookbook://guidelines/implementing/data/foreign-keys",
+      "agenticdevelopercookbook://guidelines/implementing/data/schema-evolution",
+      "agenticdevelopercookbook://guidelines/implementing/security/sensitive-data"
+    ],
+    "related": [
+      "adtoolkit://cookbook/status/service/auth"
+    ],
+    "references": [
+      "packages/web/packages/status-server/src/libsql/client.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/schema.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/deploy-platform/src/schema/index.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/migrate-idempotent.int.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/migrations-immutable.test.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "dec93d7d636c43b9",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

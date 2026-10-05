@@ -1,44 +1,41 @@
 ---
 id: a3e87176-5845-43ff-9041-af53437d605d
-title: Monitored Sites
-domain: agenticdevelopertoolkit://cookbook/adh/hub/monitored-sites
+title: "Monitored Sites"
+domain: adtoolkit://cookbook/adh/hub/monitored-sites
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'A data client for the Status Sites monitoring domain: generic-CRUD groups,
-  sites, and endpoints over /api/monitoring/*, the 1:M group-to-site-to-endpoint model,
-  owner/workspace scoping, and the field renames each mapper performs.'
+summary: "A data client for the Status Sites monitoring domain: generic-CRUD groups, sites, and endpoints over /api/monitoring/*, the 1:M group-to-site-to-endpoint model, owner/workspace scoping, and the field renames each mapper performs."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- hub
-- monitoring
-- site-groups
-- sites
-- endpoints
-- workspace
-- crud
-- api
+  - hub
+  - monitoring
+  - site-groups
+  - sites
+  - endpoints
+  - workspace
+  - crud
+  - api
 depends-on: []
 related: []
 references:
-- packages/web/packages/data/src/monitored-sites/monitored-sites.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/monitored-sites/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/monitored-sites/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/monitored-sites/__tests__/monitored-sites.test.ts
-  (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/monitored-sites/monitored-sites.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/monitored-sites/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/monitored-sites/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/monitored-sites/__tests__/monitored-sites.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Monitored Sites
@@ -144,15 +141,11 @@ Behavioral Requirements, per the non-UI component guidance this recipe was autho
 - **endpoint-delete-request**: the delete-endpoint operation MUST send `DELETE
   /api/monitoring/endpoints/<encoded id>` (plus the workspace query), discarding the body, and MUST
   resolve with no value.
-- **endpoint-kind-validation**: NEEDS REVIEW: Not implemented in source. The fixed set of valid
-  endpoint kinds declares the three valid endpoint kinds (`http`, `tcp`, `icmp`), but the create- and
-  update-endpoint bodies' `kind` field is typed as an unconstrained string, and neither the
-  create-endpoint nor the update-endpoint operation narrows the caller's value against that fixed set
-  (a shared value-narrowing helper exists for exactly this and is never called here) before sending it
-  to the backend; a caller can create an endpoint with `kind: "ssh"` with no client-side signal that it
-  will never be checked. Evidence that would settle it: whether `POST
-  /api/monitoring/endpoints`/`PUT /api/monitoring/endpoints/:id` validates `kind` server-side, which is
-  not present in this checkout.
+- **endpoint-kind-passthrough**: the create- and update-endpoint operations MUST send the
+  caller's `kind` value to the backend as given; the body's `kind` field is typed as an
+  unconstrained string and neither operation narrows it against the fixed set of valid endpoint
+  kinds (`http`, `tcp`, `icmp`), so a caller can submit an unknown kind such as `ssh` with no
+  client-side signal.
 
 **Cross-cutting**
 
@@ -164,7 +157,7 @@ Behavioral Requirements, per the non-UI component guidance this recipe was autho
   from a write body before it is serialized, preserving any explicit `null` a caller supplies — `null`
   is preserved, as an explicit "clear this column" — though no create/update body field in this module
   accepts `null` itself, so this only matters if a caller bypasses the declared shapes.
-- **no-client-side-cache**: none of the twelve operations MUST cache or memoize a response; every call
+- **no-client-side-cache**: the twelve operations MUST NOT cache or memoize a response; every call
   issues exactly one HTTP request (aside from the inherited `401` refresh-and-retry described below).
 - **module-holds-no-mutable-state**: the only persistent values this logic holds are the three
   fixed path-string constants and the fixed set of valid endpoint kinds, all read-only; no shared
@@ -236,7 +229,7 @@ component.
 | hub-domain-monitored-sites-018 | endpoint-create-request | The create-endpoint operation called with site id `"s1"` and `{ url: "https://x", kind: "http" }` | `POST /api/monitoring/endpoints` body is `{"siteId":"s1","url":"https://x","kind":"http"}` (no `expectedStatus`/`checkIntervalSeconds`/`isActive` keys) |
 | hub-domain-monitored-sites-019 | endpoint-update-request | The update-endpoint operation called with id `"e1"` and `{ isActive: false }` | `PUT /api/monitoring/endpoints/e1` body is `{"isActive":false}` only, and never includes a `siteId` key regardless of what the caller passes |
 | hub-domain-monitored-sites-020 | endpoint-delete-request | The delete-endpoint operation called with id `"e1"` | `DELETE /api/monitoring/endpoints/e1`; resolves to no value |
-| hub-domain-monitored-sites-021 | endpoint-kind-validation | The create-endpoint operation called with site id `"s1"` and `{ url: "https://x", kind: "ssh" }` | The call resolves normally (the request is sent with `kind: "ssh"` verbatim); no client-side error is thrown despite `"ssh"` not being one of the valid kinds |
+| hub-domain-monitored-sites-021 | endpoint-kind-passthrough | The create-endpoint operation called with site id `"s1"` and `{ url: "https://x", kind: "ssh" }` | The call resolves normally (the request is sent with `kind: "ssh"` verbatim); no client-side error is thrown despite `"ssh"` not being one of the valid kinds |
 | hub-domain-monitored-sites-022 | session-refresh-waterfall | Any operation's first response is `401`; the token-refresh step resolves a new token | The request is retried once with the new token; a `401` on that retry throws a typed HTTP error with `status: 401` |
 | hub-domain-monitored-sites-023 | errors-carry-status-and-code | Backend responds `409` to the create-group operation with body `{ error: { message: "slug already exists", code: "duplicate_slug" } }` | The thrown error has `status: 409` and `code: "duplicate_slug"`, with the conflict-friendly-error helper never invoked, so the message is exactly the backend's |
 | hub-domain-monitored-sites-024 | no-client-side-cache | Two sequential calls to the list-groups operation with `{ workspace: "acme" }` | Two separate HTTP requests are issued; the second call does not reuse the first response |
@@ -309,7 +302,7 @@ component.
 | `siteId` (list-endpoints, create-endpoint) | string (caller parameter, required) | none | Identifies the parent site; sent as a query parameter on the list-endpoints operation and as a body field on the create-endpoint operation. |
 | body (create-endpoint) | `{ url, kind, expectedStatus?, checkIntervalSeconds?, isActive? }` | none — `url`/`kind` required, rest optional | Sent through the body-compaction helper as the `POST` body, with `siteId` added from the operation's own parameter. |
 | body (update-endpoint) | all fields optional | none — required argument, fields individually optional | Sent through the body-compaction helper as the `PUT` body; carries no `siteId` field. |
-| valid endpoint kinds | fixed set (`"http"`, `"tcp"`, `"icmp"`) | fixed | The declared set of valid `kind` values; not consulted by the create-endpoint/update-endpoint operations (`endpoint-kind-validation`). |
+| valid endpoint kinds | fixed set (`"http"`, `"tcp"`, `"icmp"`) | fixed | The declared set of valid `kind` values; not consulted by the create-endpoint/update-endpoint operations (`endpoint-kind-passthrough`). |
 | the three route paths | fixed path strings | fixed | `/api/monitoring/site-groups`, `/api/monitoring/sites`, `/api/monitoring/endpoints`; not injectable or configurable. |
 
 ## Deep Linking
@@ -370,7 +363,7 @@ Not applicable: this logic contains no logging call of any kind.
   twelve functions as `async throws` calls on an `actor` or `@MainActor final class`, with a dedicated
   error type carrying the HTTP status and optional machine code in place of `AuthHttpError`. `ENDPOINT_KINDS`
   becomes a `CaseIterable` `enum` — and, unlike the TypeScript source, a Swift port SHOULD use that enum as
-  the `kind` parameter's type rather than a bare `String`, which would close the `endpoint-kind-validation`
+  the `kind` parameter's type rather than a bare `String`, which would close the `endpoint-kind-passthrough`
   gap at compile time rather than reproducing it.
 - **AppKit / UIKit**: no direct UI dependency exists in this module; a macOS/iOS Dashboards feature would
   consume the ported client through an injected data-source protocol, the same pattern other Hub domain
@@ -405,7 +398,7 @@ body.groupId }`) rather than passing it through `compact()`, even though `create
 **Rationale**: `CreateSiteBody`'s three fields are all required (unlike `CreateGroupBody.retentionDays`
 or `CreateEndpointBody`'s optional fields), so `compact()` would be a no-op here; the source omits the
 call rather than applying it unconditionally for consistency.
-**Applies to**: Web — this is a detail of this platform's own implementation of the body-compaction
+Platform scope: Web — this is a detail of this platform's own implementation of the body-compaction
 helper, not a behavior a port needs to reproduce beyond the observable request body.
 **Approved**: pending
 
@@ -427,8 +420,14 @@ shared `workspaceQuery` helper every other function in this file uses.
 so appending `workspace` to that same object avoids constructing a second query-string fragment and
 concatenating it; the resulting request is equivalent to what `workspaceQuery` would have produced, but
 the code path is not shared.
-**Applies to**: Web — `URLSearchParams` and the shared `workspaceQuery` helper are both artifacts of
+Platform scope: Web — `URLSearchParams` and the shared `workspaceQuery` helper are both artifacts of
 this platform's implementation; a port only needs to reproduce the resulting query string.
+**Approved**: pending
+
+**Decision**: endpoint `kind` is not validated client-side against the fixed set of valid endpoint kinds before create or update; an unknown kind is sent to the backend as given.
+
+**Rationale**: a shared value-narrowing helper exists for exactly this purpose but neither operation calls it, and whether the backend rejects an unknown kind is not visible in this checkout; closing the gap would take narrowing `kind` through that helper (or a union type) in both operations.
+
 **Approved**: pending
 
 ## Compliance
@@ -465,6 +464,8 @@ when a call fails — every failure is an unhandled rejection with no degraded-b
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Design Decisions keep the Decision / Rationale / Approved triple; each decision's platform line is folded into its rationale. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolve open-question markers against the code; restate unimplemented behavior as current behavior with pending Decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

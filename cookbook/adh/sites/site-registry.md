@@ -1,33 +1,32 @@
 ---
 id: 9069ccf9-0357-4311-9671-91ee2793adae
-title: Site Registry
-domain: agenticdevelopertoolkit://cookbook/adh/sites/site-registry
+title: "Site Registry"
+domain: adtoolkit://cookbook/adh/sites/site-registry
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: "Single source of truth for the ADH site family: every site's identity, hosts,\
-  \ environments, workspace/hub routing, build-side data, reserved slugs, generated\
-  \ route map, and brand-story graph."
+summary: "Single source of truth for the ADH site family: every site's identity, hosts, environments, workspace/hub routing, build-side data, reserved slugs, generated route map, and brand-story graph."
 platforms:
-- web
+  - typescript
+  - web
 tags:
-- site-registry
-- adh-registry
-- multi-site
-- routing
-- sso
-- brand-story
+  - site-registry
+  - adh-registry
+  - multi-site
+  - routing
+  - sso
+  - brand-story
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Site Registry
@@ -308,7 +307,7 @@ router, and a downstream OAuth-return-origin sync process.
   route shares MUST be a valid site identifier that is a member of the main-family
   roster or the marketing-family roster; a route map MUST NOT name a site outside
   that union.
-- **route-shares-are-pairwise-disjoint**: No site identifier MUST appear as a key in
+- **route-shares-are-pairwise-disjoint**: A site identifier MUST NOT appear as a key in
   more than one route share; each site's routes are owned by exactly one region's
   generator.
 - **route-list-per-site-is-normalized**: Every non-empty route list inside a share
@@ -324,7 +323,7 @@ router, and a downstream OAuth-return-origin sync process.
   silent gap.
 - **exactly-one-masterbrand**: Exactly one brand-story entry MUST have
   `tier: 'masterbrand'`, and it MUST be `hub`.
-- **next-step-never-self-referential**: No brand-story entry's `nextStep` MUST equal
+- **next-step-never-self-referential**: A brand-story entry's `nextStep` MUST NOT equal
   its own site identifier.
 - **next-step-chains-converge-on-hub**: Following any site's `nextStep` chain
   repeatedly MUST eventually reach `hub`, for every site in the brand-story map —
@@ -680,6 +679,7 @@ second copy that could drift.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/sites/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

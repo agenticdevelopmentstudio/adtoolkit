@@ -1,34 +1,32 @@
 ---
 id: a380ec4a-df3f-42ee-8b07-3a8838d753e9
-title: Webview Host Document
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-host-document
+title: "Webview Host Document"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-host-document
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Wraps an extension's webview HTML with an injected acquireVsCodeApi/postMessage/setState
-  bootstrap, escaped against script and comment breakout.
+summary: "Wraps an extension's webview HTML with an injected acquireVsCodeApi/postMessage/setState bootstrap, escaped against script and comment breakout."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- webview
-- script-bridge
-- html-injection-prevention
+  - extensions
+  - webview
+  - script-bridge
+  - html-injection-prevention
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewHostDocument.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/WebviewHostDocumentTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/WebviewHostDocument.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/WebviewHostDocumentTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Webview Host Document
@@ -145,7 +143,7 @@ embedding it is a security boundary against that state breaking out of the
   network, or process I/O, and MUST NOT raise or throw an error; it MUST
   return the same document text for repeated calls given identical
   arguments.
-- **initial-state-json-validity**: NEEDS REVIEW: Not implemented in source. Building the host document's own documentation names the initial state as "The JSON text of whatever the panel last passed to `setState`", but neither building the host document nor escaping a value for script-element embedding validates that a present initial state is syntactically valid JSON before wrapping it in a `JSON.parse` call; a present value that is not valid JSON (an empty string, or state corrupted wherever it was persisted) makes the generated immediately-invoked function expression throw a `SyntaxError` at page-load time — uncaught inside that expression and never reaching the native host — so the page loads with no `window.acquireVsCodeApi` and no signal that this happened. What is missing: whether building the host document should validate the initial state before embedding it, or fall back to `undefined` on invalid input. Evidence that would settle it: confirmation from whoever owns the pane-state persistence layer that it can only ever produce syntactically valid JSON text and never an empty string, or a decision on the fallback behavior here.
+- **initial-state-json-validity**: A present initial state MUST be embedded as the argument of a JSON parse call after script-element escaping; the document builder does not check that the text is syntactically valid JSON. A present value that is not valid JSON (an empty string, or state corrupted where it was persisted) makes the generated bootstrap throw at page-load time, uncaught inside that bootstrap and never reaching the native host, so the page loads without the webview API and with no signal that this happened (see the pending design decision on initial-state validation).
 
 ## Appearance
 
@@ -206,8 +204,7 @@ Not applicable — this is an HTML-document assembler, not a visual component.
   so the real `<head>` — if one follows — is still found (MUST;
   **head-vs-header-disambiguation**; webview-host-document-015).
 - **Initial state carries a script- or comment-breakout payload
-  (`</script>`, `<!--`, `-->`, mixed-case `</SCRIPT >`)**: none of these
-  sequences MUST appear literally in the rendered document (MUST;
+  (`</script>`, `<!--`, `-->`, mixed-case `</SCRIPT >`)**: these sequences MUST NOT appear literally in the rendered document (MUST;
   webview-host-document-009, webview-host-document-010).
 - **Concurrent access**: building the host document reads no shared mutable
   state and allocates every local value fresh per call; concurrent,
@@ -400,6 +397,10 @@ The function does not additionally verify that the escaped text parses as
 JSON — that gap is **initial-state-json-validity**.
 **Approved**: pending
 
+**Decision**: The initial state is embedded without checking that it is valid JSON; an invalid value breaks the page bootstrap silently.
+**Rationale**: `WebviewHostDocument.html(wrapping:initialState:)` only escapes the text for the script element (`escapedForScriptElement`) and wraps it in a JSON parse call; neither step validates it. Closing it would take either a validity check that falls back to `undefined`, or confirmation from the owner of pane-state persistence that it can only ever produce valid JSON text and never an empty string.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -443,3 +444,5 @@ honestly-reported gap in the source, not a hidden one.
 | 1.0.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/webviews/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the NEEDS REVIEW marker as current behavior and recorded it as a pending design decision. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |

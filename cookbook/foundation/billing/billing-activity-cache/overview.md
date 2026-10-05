@@ -1,0 +1,3 @@
+
+Derivation is a pure function over a session's whole activity history, but re-reading that history from the event store every pass is unaffordable for long sessions. This cache keeps, per session, the parsed history (sorted, de-duplicated epoch seconds) and the event-row cursor it was read up to. Each pass reads only the tail past the cursor, merges it in, and hands the full history to derivation. The cache is in memory only: after a restart the first pass per session reads in full once, and nothing on disk can drift out of step with the event store. It is shared by every copy of the billing task, so it is a reference type, and its bounding and locking are those of the shared LRU cache.
+

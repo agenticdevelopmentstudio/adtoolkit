@@ -1,0 +1,9 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: renamed requirements to subject-only names and fragment-form cross-references, replaced the unfounded HIG reference with cited SwiftTerm sources, softened the unsourced WinUI 3 TermControl claim and dropped its false key-window analogy, folded the composable-tabs edge case and design decision into a single dependency citation, rewrote the Compliance table to real catalog checks (`platform-theming` in place of `no-raw-hex`, dropped `main-actor-confined`/`differentiate-without-color`, `keyboard-navigable`/`screen-reader-support` marked `partial`), reworded the `NSColor.white` design decision as an unexamined default rather than unexplained "technical debt", demoted `caret-subview-cache` to SHOULD, rewrote the private-state test vectors in observable terms, moved the compile-time vector out of the conformance table, and removed trailing "MUST." noise from edge cases |
+| 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/terminal/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the contrast-ratio NEEDS REVIEW marker against source: no contrast computation exists, restated as current behavior with a pending decision; added separation-of-concerns (passed) and unit-test-coverage (failed, no tests). |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

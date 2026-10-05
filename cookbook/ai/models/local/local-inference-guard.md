@@ -1,39 +1,37 @@
 ---
 id: 8d827e9d-3638-4eaf-b04b-223b29b53389
-title: Local Inference Guard
-domain: agenticdevelopertoolkit://cookbook/ai/models/local/local-inference-guard
+title: "Local Inference Guard"
+domain: adtoolkit://cookbook/ai/models/local/local-inference-guard
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'A guard for local-model inference: verdicts requests against RAM/pressure
-  and serializes runs behind a FIFO mutex with a deadline.'
+summary: "A guard for local-model inference: verdicts requests against RAM/pressure and serializes runs behind a FIFO mutex with a deadline."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- memory-guard
-- local-inference
-- concurrency
+  - ai-plugin
+  - memory-guard
+  - local-inference
+  - concurrency
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/ModelFitPolicy.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalModelCatalog.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/SystemMemoryMonitor.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/LocalInferenceGuardTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/ModelFitPolicy.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/LocalModelCatalog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/SystemMemoryMonitor.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/DaemonProviderResolver.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/LocalInferenceGuardTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Local Inference Guard

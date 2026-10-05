@@ -1,28 +1,27 @@
 ---
 id: 4bd200d7-f9d2-4348-af53-95ea02272c79
-title: Configuration Status State
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/config-status
+title: "Configuration Status State"
+domain: adtoolkit://cookbook/status/dashboard/state/config-status
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: State that assembles the shared configuration-status model from two
-  cached queries — local config rosters and the server's deploy-project partition.
+summary: "State that assembles the shared configuration-status model from two cached queries — local config rosters and the server's deploy-project partition."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/activity-ttl
+  - adtoolkit://cookbook/status/dashboard/state/activity-ttl
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Configuration Status State
@@ -98,7 +97,7 @@ A comment on the roster query records why the two are separate: the classificati
 - **shared-cache**: Multiple consumers reading Config Status under one shared cache MUST share the two cached queries; additional consumers MUST NOT cause additional fetches beyond the cache's own deduplication.
 - **side-effects**: Config Status's only side effects MUST be the network reads made through the status API client (four roster reads and one classification read per query run); it MUST NOT write storage, log, or mutate server state.
 - **no-timeout-no-cancel**: Config Status MUST NOT impose its own timeout, retry policy or cancellation on either query; those come from the host cache's defaults and from the status API client.
-- **client-only**: Config Status has no server-only or universal-rendering variant; it requires a live client execution context.
+- **client-only**: Configuration Status State MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 
 ## Appearance
 
@@ -132,6 +131,7 @@ Not applicable — this is a data-assembly concept, not a visual component.
 | config-status-014 | refetch-both | Call `refetch()` after both queries loaded | One more run of the four roster reads and one more classification read; the call resolves with both results |
 | config-status-015 | classification-fetch | Classification query runs | The classification read is issued with no extra options; the request path is `/deploy-projects/unconfigured` (no `?fresh=1`) |
 | config-status-016 | configure-data-key, classification-key | Read the exported constants | `CONFIGURE_DATA_KEY` deep-equals `["configure-data"]`; `CONFIGURE_CLASSIFICATION_KEY` deep-equals `["configure-classification"]` |
+| config-status-017 | client-only | Load Configuration Status State in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -241,6 +241,7 @@ The hook separates fetching (two private query hooks), classification (the engin
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

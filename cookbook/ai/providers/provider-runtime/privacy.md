@@ -1,0 +1,9 @@
+
+**Data collected**: user-entered API keys for Anthropic, OpenAI/custom, Google, and the model ranking store (via the request configuration's API key / the ranking store's stored key); chat message and system-prompt content passed to the request builder and the CLI runner; model id strings passed to the catalog/matching functions.
+
+**Storage**: the model ranking store's API key and rank cache persist via the plain settings store, not the secure credential store (see Security). The request configuration's API key/custom base URL are held only in memory by this component for the lifetime of one request; this component does not persist them itself. The model catalog store's and model ranking store's last-good/in-flight state is process-lifetime, in-memory only, and is lost on relaunch.
+
+**Transmission**: prompt/message content is sent over HTTPS to whichever provider is configured (Anthropic, OpenAI, Google, or a `custom` OpenAI-compatible endpoint) or, for the CLI provider, is passed only as local subprocess input/arguments (no network). The Anthropic and model-ranking calls send the API key in an `x-api-key` header; the OpenAI-compatible calls send it in an `Authorization: Bearer` header; the Google call places it directly in the request URL's query string. The model catalog store, model page store, and model listing store send only model-id strings or scrape requests (no prompt content) to OpenRouter, models.dev, the adh endpoint, ollama.com, and the caller-supplied OpenAI-compatible `/models` route (which can carry a Bearer API key header — see Security for the missing scheme check on that route).
+
+**Retention**: the rank cache and the model-ranking API key persist indefinitely until a caller overwrites or clears them; none of the 8 parts implement a TTL or expiry for that persisted data.
+

@@ -1,49 +1,49 @@
 ---
 id: 5cb60b95-0a8b-43c8-a747-cb5ca7353f09
-title: Status Server Monitor Worker
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/worker
+title: "Status Server Monitor Worker"
+domain: adtoolkit://cookbook/status/service/monitor/worker
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Thread entry for the monitor worker: boots one DB connection and cooldown registry, then relays each CycleRequest to runMonitorCycle.'
+summary: "Thread entry for the monitor worker: boots one DB connection and cooldown registry, then relays each CycleRequest to runMonitorCycle."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- worker
-- concurrency
-- database
-- server
+  - monitor
+  - worker
+  - concurrency
+  - database
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
-- agenticdevelopercookbook://guidelines/implementing/data/database
-- agenticdevelopercookbook://guidelines/implementing/data/transactions-and-concurrency
-- agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
-- agenticdevelopercookbook://guidelines/implementing/observability/logging
-- agenticdevelopercookbook://guidelines/implementing/code-quality/dependency-injection
+  - agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
+  - agenticdevelopercookbook://guidelines/implementing/data/database
+  - agenticdevelopercookbook://guidelines/implementing/data/transactions-and-concurrency
+  - agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
+  - agenticdevelopercookbook://guidelines/implementing/observability/logging
+  - agenticdevelopercookbook://guidelines/implementing/code-quality/dependency-injection
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner
-- agenticdevelopertoolkit://cookbook/status/service/storage/libsql
+  - adtoolkit://cookbook/status/service/monitor/cycle-runner
+  - adtoolkit://cookbook/status/service/storage/libsql
 references:
-- packages/web/packages/status-server/src/monitor/worker.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/worker-client.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/libsql/client.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/libsql/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/worker-boot.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/helpers/worker-boot-driver.mjs (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/provider-cooldown-shared.int.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/worker.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/worker-client.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/libsql/client.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/libsql/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/worker-boot.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/helpers/worker-boot-driver.mjs (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/provider-cooldown-shared.int.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Worker

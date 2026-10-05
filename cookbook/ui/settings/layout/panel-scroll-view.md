@@ -1,31 +1,30 @@
 ---
 id: 45b6d470-4e58-4035-b1c7-e65dbe7716b9
-title: Panel Scroll View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-scroll-view
+title: "Panel Scroll View"
+domain: adtoolkit://cookbook/ui/settings/layout/panel-scroll-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings scroll host that top-anchors panel content, pins it to
-  the viewport width, and grows or scrolls to fit its height.
+summary: "A settings scroll host that top-anchors panel content, pins it to the viewport width, and grows or scrolls to fit its height."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- layout
-- scroll-view
+  - settings
+  - layout
+  - scroll-view
 depends-on: []
 related:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Panel Scroll View
@@ -86,8 +85,7 @@ divider.
   indicators.
 - **background-transparent**: The scroll view MUST NOT draw its own
   background.
-- **confines-to-ui-thread**: The component MUST be usable only on the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **programmatic-instantiation-only**: The component MUST NOT support
   construction through a deserializing/decoding-based construction path;
   any such call MUST be rejected (compile-time on platforms with static
@@ -395,7 +393,7 @@ even though content-width-matches-viewport pins installed content's width
 exactly to the viewport width, which means content added through the
 set-content operation alone can never actually trigger horizontal
 scrolling.
-**Rationale** (AppKit): Source sets `hasHorizontalScroller = true`
+**Rationale**: (AppKit) Source sets `hasHorizontalScroller = true`
 unconditionally in `init`, before any content exists; it is not gated on
 content width. Because the document view is private, callers have no path
 to add subviews outside `setContent(_:)`, so the horizontal scroller is
@@ -403,7 +401,7 @@ incidental configuration rather than support for any caller-reachable
 overflow case.
 **Approved**: pending
 
-**Decision** (AppKit): Use a private `FlippedDocumentView` with
+**Decision**: (AppKit) Use a private `FlippedDocumentView` with
 `isFlipped == true` rather than the platform's default (unflipped)
 document view.
 **Rationale**: Per the source's own doc comment, settings content reads
@@ -412,7 +410,7 @@ bottom-left, which would anchor new content at the bottom of the
 scrollable area instead of the top.
 **Approved**: pending
 
-**Decision** (AppKit): Disable `init(coder:)` with
+**Decision**: (AppKit) Disable `init(coder:)` with
 `@available(*, unavailable)` and a `fatalError`, leaving the parameterless
 `init()` as the only usable initializer.
 **Rationale**: The component has no archive-restorable state — it is
@@ -427,6 +425,8 @@ unavailable, any call is rejected by the compiler rather than reaching the
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | Accessibility |
 
 `keyboard-navigable` passes because the component overrides no
@@ -434,10 +434,14 @@ keyboard-handling behavior of the platform's default; keyboard scrolling
 and screen-reader navigation are both provided, unmodified, by the
 inherited scroll-container behavior (see Accessibility).
 
+Separation-of-concerns is passed: `PanelScrollView` is only the scroll host, pinning its flipped document's width to the viewport and leaving all content to the panels it hosts. Unit-test-coverage is failed: no test in the repository's test targets references `PanelScrollView`.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added Compliance rows for separation-of-concerns and unit-test-coverage |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/layout/. |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: downgrade content-replacement-resets-scroll-position and horizontal-scroller-enabled from MUST to SHOULD/MAY with corrected rationale; move the internal `agenticdevelopercookbook://` link from `references` to `related`; strip RFC 2119 keywords from non-requirement Edge Cases prose; fix "recipe"/"ingredient" wording in the WinUI 3 note; correct programmatic-instantiation-only and its test vector to describe compile-time rejection instead of a runtime trap; add an integration test vector for split-view divider stability; fix the WinUI 3 MinHeight binding to `SizeChanged` only; reformat Design Decisions to the canonical three-line form; replace invented Compliance citations with a real catalog check |

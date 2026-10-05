@@ -1,0 +1,12 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| extension-message-presenting-001 | present-message-empty-items-always-nil | A request with severity `information`, message `"m"`, no detail, `isModal` true, and no items, presented via a conformer | `presentMessage(_:)` returns `nil` |
+| extension-message-presenting-002 | close-affordance-indices-are-a-list, close-affordance-indices-empty-default | Three warning-severity requests built with, respectively, no item flagged as a close affordance, only the second item flagged, and the first and third items both flagged | `closeAffordanceIndices` is `[]`, `[1]`, and `[0, 2]` respectively |
+| extension-message-presenting-003 | close-affordance-indices-are-a-list | `closeAffordanceIndices == [0, 2]` on `itemTitles == ["A", "B", "C"]` | A conformer honoring the request's own invariant renders ordinary buttons only for the un-flagged index (`1`, i.e. `"B"`) and puts the *last* flagged index (`2`) in the single cancel/close slot |
+| extension-message-presenting-004 | close-affordance-indices-are-a-list, close-affordance-indices-within-item-bounds | `closeAffordanceIndices == [0, 1, 2]` on `itemTitles == ["A", "B", "C"]` (every item flagged) | The cancel slot alone carries the *last* flagged index (`2`); no ordinary button remains |
+| extension-message-presenting-005 | present-message-return-index, present-message-return-nil-on-dismiss | A request with `itemTitles == ["A", "B"]` presented by a conformer, once with the user choosing `"B"` and once with the user dismissing | `presentMessage(_:)` returns `1` in the first case and `nil` in the second |
+| extension-message-presenting-006 | is-modal-carried-not-enforced | `isModal == false` on an otherwise ordinary request, presented by a conformer that always presents modally | The value is preserved verbatim on the request (`request.isModal == false` remains true of the value itself), while the conformer still presents the message as a modal surface regardless |
+| extension-message-presenting-007 | request-module-private-construction | An attempt to construct an `ExtensionMessageRequest` value from outside the component's own implementation module | Fails — no accessible constructor exists outside that module |
+| extension-message-presenting-008 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
+

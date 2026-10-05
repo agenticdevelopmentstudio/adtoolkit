@@ -1,35 +1,33 @@
 ---
 id: ff1089d7-170c-4658-91c6-e3946710b29f
-title: Local Model Server
-domain: agenticdevelopertoolkit://cookbook/ai/models/local/local-model-server
+title: "Local Model Server"
+domain: adtoolkit://cookbook/ai/models/local/local-model-server
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A stateless helper for loopback-host detection, Ollama's native /api/tags
-  URL derivation, and tolerant model-size parsing.
+summary: "A stateless helper for loopback-host detection, Ollama's native /api/tags URL derivation, and tolerant model-size parsing."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- local-model
-- ollama
+  - local-model
+  - ollama
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/LocalModelServer.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/LocalModelServerTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalModelCatalog.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalProviderModelStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/LocalModelServer.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/LocalModelServerTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/LocalModelCatalog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/LocalProviderModelStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Local Model Server
@@ -439,6 +437,8 @@ omission.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 | [graceful-degradation](agenticdevelopercookbook://compliance/reliability#graceful-degradation) | passed | Reliability |
 | [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | partial | Best Practices |
 | [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | partial | Reliability |
@@ -460,10 +460,13 @@ hardcode — its only string literals are the fixed `loopbackHosts` set, the
 `"/v1"` and `"/api/tags"` path fragments, and JSON key names, none of which
 is displayed to a user (see Localization).
 
+`separation-of-concerns` passes because `LocalModelServer` holds only pure helpers (loopback detection, tags URL derivation, size parsing and lookup) with no I/O or cache of its own; fetching and caching live in `LocalModelCatalog` and `LocalProviderModelStore`. `unit-test-coverage` passes because `LocalModelServerTests.swift` covers loopback versus remote hosts, stripping the `/v1` suffix from the tags URL, indexing both name and model keys with `:latest` tolerance, garbage input, and a malformed entry not discarding the rest of the listing.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/models/local/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |

@@ -1,33 +1,31 @@
 ---
 id: e71918a5-9874-48eb-927a-cea5e9b51cdc
-title: Window Management Recents
-domain: agenticdevelopertoolkit://cookbook/ui/windows/window-recents
+title: "Window Management Recents"
+domain: adtoolkit://cookbook/ui/windows/window-recents
 type: ingredient
-version: 1.1.0
+version: 1.1.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A reopen-on-launch policy with three states, plus the two persisted preferences
-  (a maximum recent-document count and the policy itself) that govern an app's Open
-  Recent list and whether windows reopen at launch.
+summary: "A reopen-on-launch policy with three states, plus the two persisted preferences (a maximum recent-document count and the policy itself) that govern an app's Open Recent list and whether windows reopen at launch."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-management
-- recents
-- user-settings
-- preferences
+  - window-management
+  - recents
+  - user-settings
+  - preferences
 depends-on: []
 related: []
 references:
-- https://developer.apple.com/documentation/appkit/nsdocumentcontroller/maximumrecentdocumentcount
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/documentation/appkit/nsdocumentcontroller/maximumrecentdocumentcount
+approved-by: ""
+approved-date: ""
 ---
 
 # Window Management Recents
@@ -83,8 +81,8 @@ This concept holds the policy model and the stored preferences only. Behavior th
 - **recent-count-mirror**: Applying the recent-window-count preference to the platform MUST write its current value to the platform's own recent-documents limit.
 - **recent-count-mirror-live**: After the window manager is constructed, a change to the recent-window-count preference MUST be mirrored to the platform's recent-documents limit on a later turn of the main run loop with no explicit call; the manager subscribes to the preference's value changes.
 - **policy-consumed-for-documents-only**: The reopen-on-launch preference MUST govern only the reopen of recent document windows; project (workspace) windows MUST NOT consult it.
-- **no-network-no-files**: Neither the policy nor the preferences MUST perform network access, file I/O beyond the preference-store reads and writes described above, process launches, or notification posting.
-- **no-errors**: No operation described above MUST throw or return an error; every read yields a value (stored, or the default).
+- **no-network-no-files**: The policy and the preferences MUST NOT perform network access, file I/O beyond the preference-store reads and writes described above, process launches, or notification posting.
+- **no-errors**: An operation described above MUST NOT throw or return an error; every read yields a value (stored, or the default).
 
 ## Appearance
 
@@ -244,6 +242,8 @@ Not applicable: the policy and preferences perform no logging, and the decode fa
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.2 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Restored inverted prohibitions: a 'Neither … MUST' rule now reads 'MUST NOT'. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/windows/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

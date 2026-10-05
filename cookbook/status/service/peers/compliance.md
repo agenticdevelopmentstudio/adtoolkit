@@ -1,0 +1,16 @@
+
+| Check | Status | Category |
+|-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
+| [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | passed | Best Practices |
+| [timeout-configuration](agenticdevelopercookbook://compliance/access-patterns#timeout-configuration) | passed | Access Patterns |
+| [retry-with-backoff](agenticdevelopercookbook://compliance/access-patterns#retry-with-backoff) | failed | Access Patterns |
+| [error-response-handling](agenticdevelopercookbook://compliance/access-patterns#error-response-handling) | passed | Access Patterns |
+| [graceful-degradation](agenticdevelopercookbook://compliance/reliability#graceful-degradation) | passed | Reliability |
+| [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | partial | Reliability |
+| [no-pii-in-logs](agenticdevelopercookbook://compliance/privacy-and-data#no-pii-in-logs) | passed | Privacy and Data |
+| [secure-transport](agenticdevelopercookbook://compliance/security#secure-transport) | partial | Security |
+
+`separation-of-concerns` passes: all three files depend only on the `Storage`/`PeerStore` port and `StatusConfig`, never on the libSQL/drizzle implementation directly. `unit-test-coverage` is `partial`: `base-url.ts`'s and `fetch.ts`'s success and failure paths are directly tested (`peer-base-url.test.ts`, `peers-fetch.int.test.ts`), but `fleet.ts`/`assembleFleet` and `isSelfPeerUrl` have no dedicated test among the given sources. `explicit-error-handling` passes: every peer's failure (non-`ok`, thrown, unparseable JSON) is caught per-peer and turned into a stored `error` string; no failure is swallowed silently. `timeout-configuration` passes: every peer request is bounded by `AbortSignal.timeout(10_000)`. `retry-with-backoff` fails as written: `fetchPeers` makes exactly one attempt per peer per call, with no retry or backoff; a failed poll is only retried by the next full-sync cycle, external to these files (see the retry Design Decision). `error-response-handling` passes: an HTTP error response, a thrown request, and a JSON-parse failure are all normalized to the same `reachable: false` shape. `graceful-degradation` passes: one peer's failure never prevents any other peer's snapshot from being attempted or stored, and never causes `fetchPeers` itself to reject. `data-integrity` is `partial`: snapshot storage is keyed and idempotent (`upsertSnapshot`'s `peerId` conflict target, external), but the open question on `peer-snapshot-payload-unvalidated` means a malformed `overall`/`payload` from a peer is stored and read back unchecked. `no-pii-in-logs` passes: none of the three files logs anything at all; no `token`, `baseUrl`, or snapshot `payload` is ever written to a log line. `secure-transport` is `partial`: a peer's `token` is sent only via the `Authorization: Bearer` header, never in a URL or body, but neither `isValidPeerBaseUrl` nor `fetchPeers` requires `https://` — an `http://` peer base URL is accepted and polled the same as an `https://` one.
+

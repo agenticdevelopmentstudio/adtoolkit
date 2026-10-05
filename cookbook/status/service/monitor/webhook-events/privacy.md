@@ -1,0 +1,6 @@
+
+- **Data collected**: this file reads, but does not itself request, whatever the provider's webhook body already contains: a deployment id, project id and name, environment/target, and commit metadata (`githubCommitSha`, `githubCommitMessage`, `githubCommitRef`, `githubCommitOrg`/`githubCommitRepo` for Vercel; `commitHash`, `commitMessage`, `branch`, `repo` for Railway) that the provider itself already recorded from the monitored project's own deploys. It collects no data from, and about, an end user of the monitored product.
+- **Storage**: none in this file — it holds every field only in local variables for the duration of one synchronous call and returns a plain object; persisting the returned row (`storage.deploy.upsertDeployments`) and buffering it for live reads (`pushDeployEvent`) are both the caller's responsibility, external to this file.
+- **Transmission**: none — this file makes no outbound call of any kind; it only reads an already-received, already-parsed request body handed to it by its caller.
+- **Retention**: not applicable to this file directly — it retains nothing after either function returns; how long a persisted row survives is governed entirely by the caller's storage layer, external to this file.
+

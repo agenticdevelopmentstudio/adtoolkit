@@ -1,45 +1,42 @@
 ---
 id: 4d7ed9a3-c6d8-491b-911a-cf257fde1c38
-title: Daemon AI Chat
-domain: agenticdevelopertoolkit://cookbook/ai/chat/daemon-ai-chat
+title: "Daemon AI Chat"
+domain: adtoolkit://cookbook/ai/chat/daemon-ai-chat
 type: ingredient
-version: 1.1.0
+version: 1.1.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Headless one-shot completion entry point that resolves the host's selected
-  AI provider, dispatches to its .aiplugin (gated by a local-inference RAM guard for
-  loopback models) or falls back to a zero-config claude -p CLI call, and returns
-  one accumulated reply string.
+summary: "Headless one-shot completion entry point that resolves the host's selected AI provider, dispatches to its .aiplugin (gated by a local-inference RAM guard for loopback models) or falls back to a zero-config claude -p CLI call, and returns one accumulated reply string."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- ai-plugin-runtime
-- daemon
-- headless-completion
-- inference-guard
-- cli-fallback
+  - ai-plugin
+  - ai-plugin-runtime
+  - daemon
+  - headless-completion
+  - inference-guard
+  - cli-fallback
 depends-on:
-- agenticdevelopertoolkit://cookbook/ai/plugins/ai-plugin
-- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-descriptor
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-context
-- agenticdevelopertoolkit://cookbook/ai/plugins/request-spec
-- agenticdevelopertoolkit://cookbook/ai/plugins/stream-event
-- agenticdevelopertoolkit://cookbook/ai/providers/provider-configuration
-- agenticdevelopertoolkit://cookbook/ai/providers/provider-config-keys
-- agenticdevelopertoolkit://cookbook/ai/providers/daemon-provider-resolver
-- agenticdevelopertoolkit://cookbook/ai/models/local/local-inference-guard
+  - adtoolkit://cookbook/ai/plugins/ai-plugin
+  - adtoolkit://cookbook/ai/plugins/plugin-descriptor
+  - adtoolkit://cookbook/ai/chat/chat-context
+  - adtoolkit://cookbook/ai/plugins/request-spec
+  - adtoolkit://cookbook/ai/plugins/stream-event
+  - adtoolkit://cookbook/ai/providers/provider-configuration
+  - adtoolkit://cookbook/ai/providers/provider-config-keys
+  - adtoolkit://cookbook/ai/providers/daemon-provider-resolver
+  - adtoolkit://cookbook/ai/models/local/local-inference-guard
 related:
-- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-manager
+  - adtoolkit://cookbook/ai/plugins/plugin-manager
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Daemon AI Chat
@@ -101,6 +98,7 @@ Every collaborator the entry point touches — the plugin runtime (plugin load +
 - **cache-unknown-identifier**: the live plugin cache's `load` MUST throw the completion error type's provider-error case with the message `"AI plugin not installed: <identifier>"` when the manager has no descriptor for that identifier.
 - **cache-instance-reuse**: the live plugin cache's `load` MUST return an already-cached plugin instance for the identifier without loading it again; otherwise it MUST load it, cache the result, and return it.
 - **cli-foreign-error-passthrough**: an error other than a `ClaudeCLI.CLIError` thrown by an injected CLI runner MUST propagate out of the CLI path and the entry point unchanged, not wrapped as a completion error; unlike the plugin path, whose failure handling wraps every failure as a provider-error, the CLI path catches only `ClaudeCLI.CLIError`. The CLI runner interface's documentation names `ClaudeCLI.CLIError` as the only error a runner throws.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -138,6 +136,7 @@ Not applicable — this is a headless one-shot AI-completion orchestrator, not a
 | daemon-ai-chat-018 | guard-recheck-in-lock | A loopback configuration with stored model `"small:latest"` under `.normal` pressure; a second task holds the guard's exclusive section while pressure is raised to `.critical` before releasing it (`pressureRecheckInsideCriticalSectionDefers`) | The parked `complete` call — whose pre-park verdict already passed under `.normal` — throws `AIGuardError.deferred` once it enters the critical section and the in-lock pressure re-check runs |
 | daemon-ai-chat-019 | guard-opt-out | A loopback configuration with stored model `"big:latest"` (over budget) but `inferenceGuard: nil`; a plugin runtime emitting `.textDelta("unguarded"), .end(stopReason: nil)` (`nilGuardOptsOut`) | Returns `"unguarded"` — the guard is skipped entirely despite a model that would otherwise be blocked |
 | daemon-ai-chat-020 | guard-error-not-chaterror | Any of vectors 013, 014, 017, or 018 | The thrown value in every case is `AIGuardError`, never `DaemonAIChat.ChatError` — a caller pattern-matching on `ChatError` alone does not catch a guard refusal |
+| daemon-ai-chat-021 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -257,6 +256,8 @@ Not applicable: this component contains no logging call; it is orchestration log
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 | [secure-storage](agenticdevelopercookbook://compliance/security#secure-storage) | passed | Security |
 | [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | partial | Best Practices |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
@@ -264,10 +265,14 @@ Not applicable: this component contains no logging call; it is orchestration log
 
 Secure-storage passes because `DaemonAIChat.swift` never persists a credential itself — it only reads through the injected `SecretStoring` abstraction (Keychain-backed by default) and forwards the resolved value in memory for the duration of one call, per the Privacy section. Explicit-error-handling is `partial`: every plugin-path failure (load, `buildRequest`, streaming, empty reply) and every guard refusal is a typed, thrown error, but the CLI path passes an error other than `ClaudeCLI.CLIError` through unwrapped (see `cli-foreign-error-passthrough`). No-hardcoded-strings fails because every `ChatError.errorDescription` and every constructed `providerError` message this file authors is an unlocalized English literal (see Localization). Graceful-degradation is `partial`: the CLI path IS a designed fallback for the "no provider configured yet" case, but a CONFIGURED provider's own failure (a guard refusal, a network error, an empty stream) never falls back to the CLI path — it hard-fails with a thrown `ChatError`/`AIGuardError` instead.
 
+`separation-of-concerns` passes because `DaemonAIChat` is a one-shot completion path that delegates configuration lookup to `DaemonProviderResolver`, request description to the plugin, streaming to `PluginTransport` and local-model gating to the inference guard, with the plugin runtime behind an injectable `PluginRuntime` seam. `unit-test-coverage` passes because `DaemonAIChatTests.swift` covers the plugin path (config resolution, ledger values and secrets, stream accumulation, empty reply, transport errors) and the CLI fallback error mapping through that seam, `DaemonAIChatGuardTests.swift` covers the inference guard, and `DaemonLivePluginRuntimeTests.swift` covers the production `.live` runtime's discovery, not-installed, schema-version and unloadable-bundle paths (the successful load of a real plugin binary is deliberately not unit-tested).
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/chat/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |

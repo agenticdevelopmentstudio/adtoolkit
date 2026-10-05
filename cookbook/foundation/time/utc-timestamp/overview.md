@@ -1,0 +1,3 @@
+
+The wire instant (`yyyy-MM-dd'T'HH:mm:ss'Z'`, whole seconds, UTC) and the `yyyy-MM-dd` day keys derived from it, written and read without a formatter. It is one owner for a cross-process format: a daemon that compares instants as fixed-width strings (sorting, run bounds, interval walks) is only chronological while every writer produces the same width, so every writer goes through here. Parsing tries a hand-written fixed-width fast path first, because a formatter costs tens of microseconds to build and a daemon parsing every activity stamp of a long session spent most of its CPU building them, and falls back to the shared timestamp parser for every other shape, so what is accepted is exactly what the shared parser accepts plus SQLite's millisecond form.
+

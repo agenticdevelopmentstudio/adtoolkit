@@ -1,36 +1,36 @@
 ---
 id: 2df97a02-a680-45c4-8763-f07c7f470f84
-title: Status Server Monitor Webhook Verify
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/webhook-verify
+title: "Status Server Monitor Webhook Verify"
+domain: adtoolkit://cookbook/status/service/monitor/webhook-verify
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "Constant-time verification of a Vercel HMAC-SHA1 webhook signature and a Railway shared-secret webhook header; both fail closed on any missing piece."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- webhook
-- security
-- server
+  - monitor
+  - webhook
+  - security
+  - server
 depends-on:
-- agenticdevelopercookbook://principles/separation-of-concerns
-- agenticdevelopercookbook://principles/fail-fast
+  - agenticdevelopercookbook://principles/separation-of-concerns
+  - agenticdevelopercookbook://principles/fail-fast
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/webhook-events
+  - adtoolkit://cookbook/status/service/monitor/webhook-events
 references:
-- packages/web/packages/status-server/src/monitor/webhook-verify.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/hooks.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/webhook-verify.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/webhook-verify.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/hooks.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/webhook-verify.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Webhook Verify
@@ -64,7 +64,7 @@ approved-date: ''
 ### Cross-Cutting Contract
 
 - **pure-synchronous-no-side-effects**: Both `verifyVercelSignature` and `verifySharedSecret` MUST be synchronous, MUST return a plain `boolean` (never a `Promise`), and MUST perform no I/O, no logging, and no mutation of any shared or module-level state.
-- **no-throw-contract**: Neither exported function MUST throw for any combination of its documented parameter types (`string`, `string | null | undefined`); every failure path returns `false` rather than raising an exception.
+- **no-throw-contract**: Each exported function MUST NOT throw for any combination of its documented parameter types (`string`, `string | null | undefined`); every failure path returns `false` rather than raising an exception.
 - **independent-calls-no-shared-state**: The module declares no module-level mutable state; concurrent or repeated calls to either exported function MUST NOT interact with, block, or influence one another's outcome, since each call reads only its own parameters.
 
 ## Appearance
@@ -186,6 +186,7 @@ Not applicable: this file contains no log call of any kind, `console.error` or o
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Restored inverted prohibitions: a 'Neither … MUST' rule now reads 'MUST NOT'. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

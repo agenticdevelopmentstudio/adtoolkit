@@ -1,51 +1,42 @@
 ---
 id: 2beaca09-67b4-4e19-b4a4-f66f048687b8
-title: VS Code Language Models Bridge
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/main-thread-language-models
+title: "VS Code Language Models Bridge"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/language-models/main-thread-language-models
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Installs vscode.lm.selectChatModels, the LanguageModelChat handback, sendRequest's
-  teed stream/text response, and onDidChangeChatModels for the extension host.
+summary: "Installs vscode.lm.selectChatModels, the LanguageModelChat handback, sendRequest's teed stream/text response, and onDidChangeChatModels for the extension host."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- language-model
-- streaming
+  - extension-host
+  - vscode-api
+  - language-model
+  - streaming
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
+  - adtoolkit://cookbook/workspace/extensions/host/extension-event
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguageModels.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadLanguageModelsTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/JSValueBridge.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguageModels.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadLanguageModelsTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/JSValueBridge.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # VS Code Language Models Bridge
@@ -119,6 +110,7 @@ This component is the `vscode.lm` namespace's bridge: it installs `vscode.lm.sel
 - **reorder-does-not-fire**: A republish of the available models that reorders the same set of ids MUST NOT fire `onDidChangeChatModels`.
 - **removal-fires**: A republish of the available models that removes an id MUST fire `onDidChangeChatModels`.
 - **available-chat-models-did-change-guarded-on-disposed**: Change detection MUST return immediately, without recomputing the snapshot or firing, when the component is already disposed.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -180,6 +172,7 @@ Not applicable — this is a script-context bridge for the `vscode.lm` namespace
 | main-thread-language-models-042 | removal-fires | The available chat models republish with one id removed, then change detection runs | `onDidChangeChatModels` fires — `MainThreadLanguageModelsTests.removalIsAlsoAChange` |
 | main-thread-language-models-043 | on-did-change-chat-models-torn-down-response | `vscode.lm.onDidChangeChatModels(listener)` called after the owning component has been torn down | The call raises an exception with the torn-down wording — `MainThreadLanguageModelsTests.aTornDownAdaptorRaisesRatherThanAnsweringOrRejecting` |
 | main-thread-language-models-044 | dispose-removes-event-listener | A listener registered via `vscode.lm.onDidChangeChatModels`, then disposal runs, then change detection fires a changed set | The listener registered before disposal receives nothing after it — `MainThreadLanguageModelsTests.disposeStopsDeliveryToAnAlreadyRegisteredListener` |
+| main-thread-language-models-045 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -318,6 +311,7 @@ No other event in this component is logged: a rejected `selectChatModels`/`sendR
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/language-models/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,34 +1,32 @@
 ---
 id: 432e8d4b-43c3-49fd-b481-036a759e7c55
-title: Settings Panel
-domain: agenticdevelopertoolkit://cookbook/ui/settings/settings-panel
+title: "Settings Panel"
+domain: adtoolkit://cookbook/ui/settings/settings-panel
 type: ingredient
-version: 1.2.0
+version: 1.2.3
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The base component every settings panel is built from, combining
-  descriptor metadata, a composed content view, and a helper for hosting
-  differently-sized content without letting it resize the settings window.
+summary: "The base component every settings panel is built from, combining descriptor metadata, a composed content view, and a helper for hosting differently-sized content without letting it resize the settings window."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- panel-controller
-- view-controller
+  - settings
+  - panel-controller
+  - view-controller
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-view
+  - adtoolkit://cookbook/ui/settings/layout/panel-view
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/settings/layout/group-view
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Settings Panel
@@ -89,17 +87,18 @@ in.
   MUST advertise the hosted content's size to its container as a sizing
   preference, not a required min/max size constraint. See Design
   Decisions for why.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
 - **Corner radius**: Not set by this component; it draws nothing of its
   own. Any corner radius on screen belongs to whatever group view cards a
   subclass adds (10pt corner radius by default; see
-  `agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view`).
+  `adtoolkit://cookbook/ui/settings/layout/group-view`).
 - **Padding**: Not set by this component. The panel inset and inter-group
   spacing (20pt each, by default) belong to its own content view, hosted
   unchanged; see
-  `agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-view`.
+  `adtoolkit://cookbook/ui/settings/layout/panel-view`.
 - **Font**: Not applicable — this component sets no font of its own; any
   text rendered comes from the group views a subclass composes, or from
   content hosted through the hosting helper, whose fonts are the
@@ -107,7 +106,7 @@ in.
 - **Background**: Not set by this component. Its content view paints the
   theme's window-background role behind the group stack, reactively,
   through its own theme-change subscription; see
-  `agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-view`.
+  `adtoolkit://cookbook/ui/settings/layout/panel-view`.
 - **Foreground/Text**: Not applicable — this component renders no text of
   its own.
 - **Border**: Not applicable — no border is set anywhere in this
@@ -136,7 +135,7 @@ in.
   a transparent container whose view is its own content view, with no
   label, icon, or control of its own to expose. Each group view a
   subclass adds manages its own accessibility per its own recipe
-  (`agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view`).
+  (`adtoolkit://cookbook/ui/settings/layout/group-view`).
 - **Label requirements**: Not applicable — this component sets no
   accessibility label on its own view. The descriptor's title becomes the
   sidebar row's accessible name only through the sidebar list component,
@@ -167,6 +166,7 @@ in.
 | spvc-013 | subclass-default-override-visibility | Subclass the component, override the hosts-own-scroll default to return true, then access the instance through the generic panel interface the hosting split holds | The generic reference's hosts-own-scroll reads true (the subclass override), not the shared default's false |
 | spvc-014 | hosting-view-helper | Call the component's hosting helper with some content | Returns a wrapper view containing the given content |
 | spvc-015 | hosting-view-sizing-options | Call the hosting helper with some content, inspect the returned wrapper's sizing behavior | The wrapper advertises the content's size as a preference, not a required min/max constraint |
+| spvc-016 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -177,7 +177,7 @@ in.
 - Boundary values: Not applicable — this component takes no numeric or
   range-constrained input; the descriptor is a reference type with no
   bounds.
-- Concurrent access: see **main-actor-isolation** in Platform Notes — the
+- Concurrent access: see **confines-to-ui-thread** (the Swift mechanism is in Platform Notes) — the
   component is confined to a single, serialized execution context, so
   every construction, read, and mutation is serialized; this component
   itself has no concurrency hazard.
@@ -200,7 +200,7 @@ in.
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `descriptor` | Descriptor (optional) | none | Passed at construction. When supplied, retained as-is (spvc-005); when omitted, a default descriptor (empty title) is constructed instead (spvc-004). |
+| `descriptor` | Descriptor (optional) | none | Passed at construction. When supplied, retained as-is (see **descriptor-retention**); when omitted, a default descriptor (empty title) is constructed instead (see **default-descriptor**). |
 
 ## Deep Linking
 
@@ -387,6 +387,8 @@ entries, which point back here rather than repeating this rationale.)
 |-------|--------|----------|
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | Platform Compliance |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 Statuses rest on `SettingsPanelViewController.swift` itself: it composes
 only native `NSViewController`/`NSHostingView` APIs, never reimplementing
@@ -394,6 +396,8 @@ their layout (`native-controls-preference`: passed), but it sets no
 accessibility role or label of its own — that responsibility belongs to the
 `GroupView`s and SwiftUI content a subclass hosts — so `screen-reader-support`
 is only `partial` here, not exercised or violated by this file.
+
+`separation-of-concerns` passes because `SettingsPanelViewController` only holds a descriptor, exposes its panel-view content, forwards groups to it, and offers overridable help/search/scroll defaults; layout, scrolling and help chrome live in the panel view, panel host and split view. `unit-test-coverage` is partial because there is no test file for `SettingsPanelViewController` itself: its `searchKeywords` and help-content overrides are exercised through the `TestPanel` subclass in `SettingsSearchIndexTests.swift`, and `SettingsCardViewsTests.swift` calls its `hostingView(for:)` helper, but the descriptor-immutability, default-descriptor, add-group and hosts-own-scroll defaults have no test.
 
 ## Change History
 
@@ -403,3 +407,6 @@ is only `partial` here, not exercised or violated by this file.
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: renamed requirements to subject-only kebab-case and updated every citation; reformatted Design Decisions to the bold form; corrected the WinUI 3 hosting-size note (no `SizeToContent` in WinUI 3) and split its bullet; marked screen-reader-support and differentiate-without-color partial instead of passed; deduplicated the `.standardBounds`/`.intrinsicContentSize` rationale into Design Decisions; made spvc-001/003 compile-time checks and gave spvc-008 a concrete expected result; rewrote bare Edge Cases MUSTs as requirement citations; moved the platform-design-languages reference into `related` and added `panel-view` to `depends-on`; removed template-residue text; title-cased Compliance categories; ran the compliance-catalog cleanup. |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Replaced stale spvc-NNN citations in Configuration with requirement names; added separation-of-concerns (passed) and unit-test-coverage (partial) compliance rows. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.3 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |

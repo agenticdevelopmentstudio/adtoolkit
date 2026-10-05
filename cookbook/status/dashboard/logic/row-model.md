@@ -1,32 +1,31 @@
 ---
 id: a0ae2ae1-7d51-4639-8f3b-062dcf750b66
-title: Status Row Model
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/row-model
+title: "Status Row Model"
+domain: adtoolkit://cookbook/status/dashboard/logic/row-model
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The one row shape every status-dashboard pane renders: builders from problems
-  and activity rows, the status-row adapter, search text, clipboard text, deploy demotion.'
+summary: "The one row shape every status-dashboard pane renders: builders from problems and activity rows, the status-row adapter, search text, clipboard text, deploy demotion."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on:
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/board-types
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/format
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/deploy-status
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/colors
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/issue-sources
+  - adtoolkit://cookbook/status/dashboard/logic/board-types
+  - adtoolkit://cookbook/status/dashboard/logic/format
+  - adtoolkit://cookbook/status/dashboard/logic/deploy-status
+  - adtoolkit://cookbook/status/dashboard/logic/colors
+  - adtoolkit://cookbook/status/dashboard/logic/issue-sources
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Row Model
@@ -114,7 +113,7 @@ Every export is pure and synchronous. This logic performs no I/O, holds no state
 - **text-status**: The status column MUST be the row's `statusWord` verbatim.
 - **text-commit-precedence**: The commit column MUST be the non-empty values of `sha` and `message` joined by one space when at least one is non-empty, else `detail` when non-empty, else the empty string.
 - **text-url**: The URL column MUST be `liveUrl`, else `sourceUrl`, else the empty string; the column MUST be present even when empty.
-- **text-field-escaping**: NEEDS REVIEW: Not implemented. The row-text function declares that "every row has the same number of tab-separated fields", but it neither escapes nor strips tab and newline characters inside `name`, `detail`, `statusWord`, `environment` or the URLs; one such character silently adds a column or splits the row. Settling it needs an owner decision on whether fields are sanitized, quoted (tab/comma-separated-value style) or guaranteed tab-free by the server.
+- **text-field-escaping**: Row text MUST be produced with the same number of tab-separated fields on every row, taking `name`, `detail`, `statusWord`, `environment` and the URLs as given. The serializer neither escapes nor strips tab or newline characters inside a field, so such a character adds a column or splits the row; callers rely on the server supplying tab-free values.
 - **rows-text**: The rows-text function MUST return each row's row-text joined by a single line feed, in input order, with no trailing line feed; an empty list MUST yield the empty string.
 
 ### Deploy demotion clock
@@ -294,6 +293,10 @@ Not applicable: this logic contains no logging calls.
 **Rationale**: The source does this unconditionally; `row-detail.ts` reads `downSince ?? at`, and both hold the same value on problem rows, so the display is unaffected even though the field's doc comment describes it as endpoint-specific.
 **Approved**: pending
 
+**Decision**: Row text serialization does not escape or strip tab and newline characters inside fields; the same-column-count promise holds only when the server supplies tab-free values.
+**Rationale**: It stands today because the server-supplied fields are not expected to contain control characters. Closing it needs an owner decision on whether fields are sanitized, quoted (tab/comma-separated-value style) or guaranteed tab-free by the server, plus a test for a field containing a tab.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -311,6 +314,7 @@ The module separates row shaping from rendering (`StatusRow`) and from the serve
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved text-field-escaping marker as current behavior plus pending decision |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/logic/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from `packages/web/packages/status-web/src/lib/row-model.ts` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `packages/web/packages/status-web/src/lib/row-model.ts` |

@@ -1,29 +1,28 @@
 ---
 id: 4ed891c0-4e4f-4955-8314-d143c45490ec
-title: Health Classification (status-web)
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/health
+title: "Health Classification (status-web)"
+domain: adtoolkit://cookbook/status/dashboard/logic/health
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure rule mapping one HTTP probe result to healthy, degraded or down, plus
-  the probe timeout and latency threshold constants
+summary: "Pure rule mapping one HTTP probe result to healthy, degraded or down, plus the probe timeout and latency threshold constants"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/health
-- agenticdevelopertoolkit://cookbook/status/service/monitor/probe
+  - adtoolkit://cookbook/status/service/monitor/health
+  - adtoolkit://cookbook/status/service/monitor/probe
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Health Classification (status-web)
@@ -37,7 +36,7 @@ approved-date: ''
 - `ClassifyInput`, the facts one HTTP probe observed.
 - `classify(input)`, a pure function that maps a `ClassifyInput` to a `HealthStatus`.
 
-The file is a byte-identical copy of `packages/web/packages/status-server/src/monitor/health.ts` ([status-server health](agenticdevelopertoolkit://cookbook/status/service/monitor/health)). There the probe ([status-server probe](agenticdevelopertoolkit://cookbook/status/service/monitor/probe)) calls `classify` with every endpoint result. Inside status-web only the `HealthStatus` type is imported: by `src/types.ts` (which re-exports it and uses it for endpoint `status` fields), `src/lib/uptime.ts` (`dayStatus`) and `src/lib/overall.ts` (`computeOverall`). No status-web runtime code calls `classify` or reads either constant. They are exercised only by `health.test.ts`. The module has no state, no I/O and no side effects.
+The file is a byte-identical copy of `packages/web/packages/status-server/src/monitor/health.ts` ([status-server health](adtoolkit://cookbook/status/service/monitor/health)). There the probe ([status-server probe](adtoolkit://cookbook/status/service/monitor/probe)) calls `classify` with every endpoint result. Inside status-web only the `HealthStatus` type is imported: by `src/types.ts` (which re-exports it and uses it for endpoint `status` fields), `src/lib/uptime.ts` (`dayStatus`) and `src/lib/overall.ts` (`computeOverall`). No status-web runtime code calls `classify` or reads either constant. They are exercised only by `health.test.ts`. The module has no state, no I/O and no side effects.
 
 ## Behavioral Requirements
 
@@ -243,4 +242,4 @@ Not applicable: the module makes no log calls. The discarded `JSON.parse` failur
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from source |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from source |

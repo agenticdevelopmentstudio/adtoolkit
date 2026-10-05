@@ -1,36 +1,36 @@
 ---
 id: 8f0a3e2b-4d61-4a2f-9e4d-6c1a7b3f0d92
-title: Project Tree
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-tree
+title: "Project Tree"
+domain: adtoolkit://cookbook/workspace/projects/project-tree
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Arranges a flat registry of repository rows into the folder-then-project tree the project chooser displays, home-relative and alphabetically sorted.
+summary: "Arranges a flat registry of repository rows into the folder-then-project tree the project chooser displays, home-relative and alphabetically sorted."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- tree
-- value-type
+  - git
+  - projects
+  - tree
+  - value-type
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-filter
+  - adtoolkit://cookbook/workspace/projects/git-repo
+  - adtoolkit://cookbook/workspace/projects/project-filter
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTree.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectBrowserViewController.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectTreeTests.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTree.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectBrowserViewController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectTreeTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Tree
@@ -134,42 +134,12 @@ as its data source.
   MUST recursively apply the same sort so every node's `children`, at
   every depth of the resulting forest, is sorted by the same
   folders-first, case-insensitive-alphabetical rule.
-- **main-thread-confinement**: a tree node and the tree-building operation
-  MUST both be confined to the UI's main execution context; a caller on
-  any other execution context MUST cross through that context to call the
-  build operation or to read or mutate a tree node's `children`.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **build-empty-input-yields-empty-tree**: building the tree from an empty
   registry MUST return an empty array; nothing in the build loop runs
   when the registry is empty, so the roots MUST stay empty.
-- **project-tree-leaf-path-collision**: NEEDS REVIEW: Not implemented in
-  source. When a repository's leaf path was already registered as a
-  folder node (created earlier as another repository's ancestor step),
-  the reuse guard does not match, so building the tree falls through and
-  constructs a second, project-flavored tree node at that same path,
-  overwrites the registration to point at it, and appends it to the
-  parent (or roots) without ever removing the earlier folder node, which
-  is still present in that same parent's children from when it was
-  created; the two sibling nodes (one folder, one project) at the
-  identical path are both rendered by the project browser's outline view,
-  contradicting the file's own stated intent that a path "must not
-  duplicate" — missing is a rule for whether the folder should be
-  replaced, merged, or kept alongside the project, and the evidence that
-  would settle it is a test exercising a repository whose path equals
-  another repository's ancestor folder path, or the authors' intended
-  precedence between a folder and a project claiming the same path.
-- **project-tree-degenerate-path-dropped**: NEEDS REVIEW: Not implemented
-  in source. Computing a path's trail returns an empty list for any path
-  whose standardized form splits into zero components (for example the
-  root path `/`, which the standardization step leaves unchanged because
-  its length is not greater than 1); building the tree then silently
-  drops that repository from the tree entirely, appearing in no root, no
-  folder, and no count, with no error, no log call, and no signal of any
-  kind reaching the caller — missing is whether such a repository should
-  be surfaced some other way (an error row, a log line) rather than
-  vanishing, and the evidence that would settle it is a test constructing
-  a repository with a degenerate path and asserting on the intended
-  outcome, or a product decision on how the project chooser should
-  represent it.
+- **project-tree-leaf-path-collision**: when a repository's leaf path was already registered as a folder node (created earlier as another repository's ancestor step), building the tree constructs a second, project-flavored node at the same path, re-points the path registration at it, and appends it to the parent (or roots) without removing the earlier folder node; both sibling nodes (one folder, one project) at the identical path appear in the result (see Design Decisions).
+- **project-tree-degenerate-path-dropped**: a repository whose standardized path splits into zero components (for example the root path `/`) yields an empty trail, and building the tree silently omits that repository: it appears in no root, no folder, and no count, with no error, log call, or other signal to the caller (see Design Decisions).
 
 ## Appearance
 
@@ -205,6 +175,7 @@ accessibility surface, not given in these sources.
 | PT-008 | build-empty-input-yields-empty-tree | Build the tree from an empty registry, with home directory `/Users/someone`. | the result is empty — ProjectTreeTests.swift › testAnEmptyRegistryBuildsAnEmptyTree |
 | PT-009 | build-duplicate-leaf-path-dropped | Build the tree from two repositories that both resolve to the identical path `/Users/someone/dev/alpha`, named `Alpha` and `Alpha Copy` respectively, with home directory `/Users/someone`. | the `dev` folder has exactly one child, named `Alpha` — the second repository at the identical path is dropped (no dedicated test in the given suite) |
 | PT-010 | project-tree-leaf-path-collision | Build the tree from two repositories at `/Users/someone/dev/sub/nested` and `/Users/someone/dev/sub`, with home directory `/Users/someone`. | the `dev` folder's children contain two entries named `sub` — one folder (created as the ancestor of `nested`) and one project (the second repository, whose own path equals that ancestor's) — the open question this recipe flags; no test in the given suite exercises this input |
+| PT-011 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -213,8 +184,7 @@ accessibility surface, not given in these sources.
   path that standardizes to a string with zero `"/"`-separated components
   (for example `"/"`) makes the trail computation return an empty list,
   and building the tree silently omits that repository from the tree (see
-  `project-tree-degenerate-path-dropped` — the open question on this
-  behavior).
+  `project-tree-degenerate-path-dropped` — the pending decision on this behavior).
 - **Boundary values**: A path exactly equal to home (not longer than it)
   is, by `trail-under-home-detection`, NOT treated as under home, so it is
   shown with its full absolute component list rather than collapsed to
@@ -224,7 +194,7 @@ accessibility surface, not given in these sources.
   empty string (MUST).
 - **Concurrent access**: a tree node and the tree-building operation are
   both confined to a single execution context (MUST, see
-  `main-thread-confinement`), and a tree node offers no cross-context
+  `confines-to-ui-thread`), and a tree node offers no cross-context
   sharing guarantee of its own (see the concurrency note in Platform
   Notes), so cross-context access must go through that confinement; this
   file defines no lock, no queue, and no other concurrency primitive of
@@ -257,8 +227,7 @@ accessibility surface, not given in these sources.
   `build-duplicate-leaf-path-dropped`, PT-009), but a repository whose
   path equals a different repository's ancestor folder path produces two
   sibling nodes at that path — one folder, one project (see
-  `project-tree-leaf-path-collision` — the open question on this
-  behavior, PT-010). Which of the two repositories in the registry is
+  `project-tree-leaf-path-collision` — the pending decision on this behavior, PT-010). Which of the two repositories in the registry is
   processed first determines which node (folder or project) is created
   at a shared ancestor path first, since building the tree iterates the
   registry in the order given and never reorders it before building.
@@ -389,6 +358,7 @@ including on the path where a degenerate repository is silently dropped
   call from a background context with `DispatcherQueue.TryEnqueue` rather
   than relying on a compiler-enforced actor, since C# has no `@MainActor`
   equivalent.
+- **confines-to-ui-thread** (scope): The rule covers a tree node and the tree-building operation; a caller on any other execution context crosses to the UI thread to call the build operation or to read or mutate a node's `children`.
 
 ## Reference Implementations
 
@@ -428,8 +398,16 @@ one-node-per-path intent stated for the leaf case ("this must not
 duplicate"); because the check is not repeated for the ancestor
 case, a path that is simultaneously an ancestor for one repo and the leaf
 for another can end up represented inconsistently — see
-`project-tree-leaf-path-collision`, the open question this recipe raises
+`project-tree-leaf-path-collision`, the pending decision this recipe records
 rather than resolves.
+**Approved**: pending
+
+**Decision**: A repository whose path equals another repository's ancestor folder path produces two sibling nodes at that path, one folder and one project, because the duplicate-leaf guard only matches an existing project node (`project-tree-leaf-path-collision`).
+**Rationale**: The source's reuse guard checks `existing.repo != nil`, so a folder registered earlier at the same path falls through and a second node is added; which repository is processed first decides which node is created first, and PT-010 records the current outcome. Closing it needs a rule for whether the folder is replaced, merged, or kept beside the project.
+**Approved**: pending
+
+**Decision**: A repository whose path standardizes to no components (such as `/`) is silently dropped from the tree with no error, log, or signal (`project-tree-degenerate-path-dropped`).
+**Rationale**: The source's trail computation returns an empty list for such a path and the build loop skips the repository with `continue`; no test constructs a degenerate path. Closing it needs a product decision on how the project chooser should represent such a repository (an error row or a log line) plus a test asserting it.
 **Approved**: pending
 
 ## Compliance
@@ -460,6 +438,8 @@ no shared fixture, no I/O, and no ordering dependency between tests.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Spec-local UI-thread confinement ids folded into the shared confines-to-ui-thread requirement, with a test vector; scope detail is in Platform Notes. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved two NEEDS REVIEW markers against source: folder/project path collision yields two nodes and degenerate paths are silently dropped; restated as current behavior with pending decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation; documents the leaf-path collision and degenerate-path open questions. |

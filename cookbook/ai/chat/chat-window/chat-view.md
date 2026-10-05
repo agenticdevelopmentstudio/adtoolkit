@@ -1,35 +1,35 @@
 ---
 id: 4d0c6859-ed34-46ca-bfe4-ca87234ad684
-title: Chat View
-domain: agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-view
+title: "Chat View"
+domain: adtoolkit://cookbook/ai/chat/chat-window/chat-view
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'A chat view combining a scrollable transcript with day banners and a typing indicator, and a composer footer with a send button and optional row selection.'
+summary: "A chat view combining a scrollable transcript with day banners and a typing indicator, and a composer footer with a send button and optional row selection."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- chat
-- messaging
-- ui-component
-- composer
-- transcript
+  - chat
+  - messaging
+  - ui-component
+  - composer
+  - transcript
 depends-on:
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-day-banner-view
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-transcript-row-view
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/typing-indicator-view
+  - adtoolkit://cookbook/ai/chat/chat-window/chat-day-banner-view
+  - adtoolkit://cookbook/ai/chat/chat-window/chat-transcript-row-view
+  - adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
+  - adtoolkit://cookbook/ai/chat/chat-window/typing-indicator-view
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Chat View
@@ -234,7 +234,7 @@ Both listed strings are plain literals in source — the composer placeholder `"
 
 | Option | Behavior |
 |--------|----------|
-| Reduce Motion | Delegated: this component's only motion is the typing indicator, which it starts animating while the session state is `.responding` and stops otherwise. Whether that pulse honors Reduce Motion is the typing indicator's own behavior and is specified in agenticdevelopertoolkit://cookbook/ai/chat/chat-window/typing-indicator-view; this component adds no animation of its own. |
+| Reduce Motion | Delegated: this component's only motion is the typing indicator, which it starts animating while the session state is `.responding` and stops otherwise. Whether that pulse honors Reduce Motion is the typing indicator's own behavior and is specified in adtoolkit://cookbook/ai/chat/chat-window/typing-indicator-view; this component adds no animation of its own. |
 | Increase Contrast | Not applicable in this file: every color comes from the active theme palette (`.primaryText`, `.secondaryText`, `.placeholderText`, `.accent`, `.divider`, `.chatSurface`); if Increase Contrast should raise these colors' contrast, that is the palette's responsibility, not this component's. |
 | Differentiate Without Color | Supported: a message's role is conveyed by horizontal position — right-aligned for `.user`, left-aligned for `.assistant`/`.error`, centered for `.notice` (see **role-differentiated-by-position**) — in addition to whatever color the bubble fill itself uses, so role remains legible without relying on color alone. |
 
@@ -259,11 +259,11 @@ Not applicable: the source contains no logging calls in this file. (The view mod
 
 ## Platform Notes
 
-- **SwiftUI**: Compose a `VStack` of a `ScrollViewReader`-wrapped `ScrollView` (transcript) over a footer `VStack` (status line, a `Divider()`, and an `HStack` for prompt/`TextField`/send `Button`). Drive the day-banner insertion and role-based alignment (`.frame(maxWidth: ..., alignment: .trailing/.leading)`, or a centered `HStack` with two `Spacer()`s for `.notice`) from a view model computed property rather than from view-layer state, since SwiftUI already diffs its own tree — the equality-guarded rebuild-skip and scroll-anchor bookkeeping this AppKit source hand-rolls are largely what SwiftUI's own diffing and `ScrollViewReader.scrollTo(_:anchor:)` replace. Reproduce row selection with a `List`/`ForEach` selection binding and `.onMoveCommand`/`.onKeyPress` for the arrow/Return/letter shortcuts, and a Reduce-Motion check via `@Environment(\.accessibilityReduceMotion)` before animating the typing indicator (the indicator's own concern, delegated per Accessibility Options; see agenticdevelopertoolkit://cookbook/ai/chat/chat-window/typing-indicator-view).
+- **SwiftUI**: Compose a `VStack` of a `ScrollViewReader`-wrapped `ScrollView` (transcript) over a footer `VStack` (status line, a `Divider()`, and an `HStack` for prompt/`TextField`/send `Button`). Drive the day-banner insertion and role-based alignment (`.frame(maxWidth: ..., alignment: .trailing/.leading)`, or a centered `HStack` with two `Spacer()`s for `.notice`) from a view model computed property rather than from view-layer state, since SwiftUI already diffs its own tree — the equality-guarded rebuild-skip and scroll-anchor bookkeeping this AppKit source hand-rolls are largely what SwiftUI's own diffing and `ScrollViewReader.scrollTo(_:anchor:)` replace. Reproduce row selection with a `List`/`ForEach` selection binding and `.onMoveCommand`/`.onKeyPress` for the arrow/Return/letter shortcuts, and a Reduce-Motion check via `@Environment(\.accessibilityReduceMotion)` before animating the typing indicator (the indicator's own concern, delegated per Accessibility Options; see adtoolkit://cookbook/ai/chat/chat-window/typing-indicator-view).
 - **Compose**: Use a `Column` of a `LazyColumn` (transcript, driven by a single `LazyListState` that plays the role of `isAtBottom`/`scrollAnchor`) over a footer `Column` (status `Text`, a `HorizontalDivider`, and a `Row` for prompt/`TextField`/send `IconButton`). Alignment by role maps to `Arrangement.End`/`Arrangement.Start`/`Arrangement.Center` on each message's row. Coalesce transcript updates the way this source's equality-guarded rebuild-skip does, using `derivedStateOf` or a `distinctUntilChanged()` flow operator, so a merged feed's frequent polling does not force a recomposition (and a blink) on every unchanged emission. `LocalAccessibilityManager` has no reduce-motion property of its own; read the system animator duration scale (`Settings.Global.ANIMATOR_DURATION_SCALE`) or an app-level reduce-motion setting before starting the typing indicator's pulse.
-- **React/Web**: Render a flex column: a scrollable transcript `<div>` (tracking its own "at bottom" scroll-distance threshold, mirroring the 30pt constant) over a footer containing a status line, an `<hr>`-style divider, and a composer row (prompt span, `<input>`, send `<button>`). Role alignment maps to `justify-content: flex-end/flex-start/center` per message row. Implement the "defer rebuild while the reader is selecting text" rule with the `Selection` API (`document.getSelection()`) guarding a re-render, and gate the typing indicator's CSS animation behind `@media (prefers-reduced-motion: reduce)` — mirroring how `TypingIndicatorView` itself should honor Reduce Motion (see agenticdevelopertoolkit://cookbook/ai/chat/chat-window/typing-indicator-view), not a gap in this view's own behavior.
+- **React/Web**: Render a flex column: a scrollable transcript `<div>` (tracking its own "at bottom" scroll-distance threshold, mirroring the 30pt constant) over a footer containing a status line, an `<hr>`-style divider, and a composer row (prompt span, `<input>`, send `<button>`). Role alignment maps to `justify-content: flex-end/flex-start/center` per message row. Implement the "defer rebuild while the reader is selecting text" rule with the `Selection` API (`document.getSelection()`) guarding a re-render, and gate the typing indicator's CSS animation behind `@media (prefers-reduced-motion: reduce)` — mirroring how `TypingIndicatorView` itself should honor Reduce Motion (see adtoolkit://cookbook/ai/chat/chat-window/typing-indicator-view), not a gap in this view's own behavior.
 - **AppKit / UIKit**: Source: `packages/apple/AgenticToolkit/macOS/Features/AIChatWindow/ChatView.swift`. Implemented as a `final` `NSView` subclass (no explicit `@MainActor`) composing an `NSScrollView`/`NSStackView` transcript with an `NSStackView` footer, using `NSTextFieldDelegate` for the composer and manual `keyDown(with:)` handling for row navigation — see Design Decisions for why the transcript's width is set as an explicit constant rather than an equality constraint. This file is macOS-only (`NSView`, `NSTextField`, `NSScrollView`); an iOS port has no direct equivalent here and would need its own composition of `UIScrollView`/`UIStackView`, `UITextField`/`UITextView`, and `UIKeyCommand`-based row navigation, plus its own Reduce-Motion check (`UIAccessibility.isReduceMotionEnabled`). `ChatView(coder:)` is marked `@available(*, unavailable)`, a compile-time error at any call site; if reached at runtime regardless (e.g. via storyboard/XIB unarchiving), it terminates the process with `fatalError`, since this view is always constructed programmatically with a view model. The send button's icon is the SF Symbol `arrow.up.circle.fill`, and its tint reflects enablement via `contentTintColor`. The unmodified-letter-shortcut guard checks for the Command, Control, or Option modifier specifically (any of the three suppresses the shortcut); an unhandled key event falls through to `super.keyDown(with:)`. "Keyboard focus" and "focusable" in the normative text above are AppKit's first-responder mechanism: `focusInput()` and row selection make the composer field or the chat view itself `window.firstResponder`, and `acceptsFirstResponder` is the property queried by **focusable-only-when-selectable**.
-- **WinUI 3**: Compose a root `Grid` with two `RowDefinition`s (`*` for the transcript, `Auto` for the footer). The transcript is a `ScrollViewer` wrapping an `ItemsRepeater` (or `ListView` with `SelectionMode="Single"` if row selection is wanted, giving `arrow-key-selection` and `return-opens-shift-return-jumps` almost for free via `ListView`'s own keyboard handling) bound to the message collection, with a `DataTemplateSelector` choosing a plain bubble template vs. a "feed row" template per **inflight-or-attributed-uses-row**, and a day-banner header inserted via `CollectionViewSource.IsSourceGrouped="True"` grouped by calendar day (WinUI's native analogue of **day-banner-per-calendar-day**, replacing this source's manual per-message day-boundary tracking). Role alignment maps to `HorizontalAlignment="Right"/"Left"/"Center"` on each item's container, mirroring **role-differentiated-by-position**. The footer is a `StackPanel` with a status `TextBlock`, a 1px `Border`/`Rectangle` filled with a theme brush (thin, theme-brush-bound, mirroring **footer-divider** — WinUI 3 has no built-in `Divider` control), and a `Grid` composer row (prompt `TextBlock`, a `TextBox` with `PlaceholderText="Type a message..."`, and an `AppBarButton`/`Button` with a `FontIcon` glyph for send, `IsEnabled` bound to `!string.IsNullOrWhiteSpace(ComposerText)` for **send-button-requires-text**). Bind `TextBox.KeyDown` to submit on `VirtualKey.Enter` (**return-key-sends**) without `Shift` held. Drive the "follow newest vs. preserve scroll position" behavior with `ScrollViewer.ViewChanging`/`ChangeView(...)` rather than this source's manual anchor-message bookkeeping — WinUI's `ItemsRepeater`/`ScrollViewer` combination exposes bring-into-view APIs (`UIElement.StartBringIntoView`) that cover **follow-newest-when-at-bottom** and **preserve-scroll-position-otherwise** without hand-rolled offset math. For the typing indicator, use a `Storyboard` on three `Ellipse`s gated by `UISettings.AnimationsEnabled` or the app's own "reduce motion" setting — mirroring how `TypingIndicatorView` itself should honor Reduce Motion (see agenticdevelopertoolkit://cookbook/ai/chat/chat-window/typing-indicator-view), not a gap in this view's own behavior. Bind all colors (accent, divider, primary/secondary/placeholder text, chat surface) to `ThemeResource`s in a resource dictionary that mirrors this source's `ThemeRole` cases, updated on the app's theme-changed event, matching **theme-responsive-controls**.
+- **WinUI 3**: Compose a root `Grid` with two `RowDefinition`s (`*` for the transcript, `Auto` for the footer). The transcript is a `ScrollViewer` wrapping an `ItemsRepeater` (or `ListView` with `SelectionMode="Single"` if row selection is wanted, giving `arrow-key-selection` and `return-opens-shift-return-jumps` almost for free via `ListView`'s own keyboard handling) bound to the message collection, with a `DataTemplateSelector` choosing a plain bubble template vs. a "feed row" template per **inflight-or-attributed-uses-row**, and a day-banner header inserted via `CollectionViewSource.IsSourceGrouped="True"` grouped by calendar day (WinUI's native analogue of **day-banner-per-calendar-day**, replacing this source's manual per-message day-boundary tracking). Role alignment maps to `HorizontalAlignment="Right"/"Left"/"Center"` on each item's container, mirroring **role-differentiated-by-position**. The footer is a `StackPanel` with a status `TextBlock`, a 1px `Border`/`Rectangle` filled with a theme brush (thin, theme-brush-bound, mirroring **footer-divider** — WinUI 3 has no built-in `Divider` control), and a `Grid` composer row (prompt `TextBlock`, a `TextBox` with `PlaceholderText="Type a message..."`, and an `AppBarButton`/`Button` with a `FontIcon` glyph for send, `IsEnabled` bound to `!string.IsNullOrWhiteSpace(ComposerText)` for **send-button-requires-text**). Bind `TextBox.KeyDown` to submit on `VirtualKey.Enter` (**return-key-sends**) without `Shift` held. Drive the "follow newest vs. preserve scroll position" behavior with `ScrollViewer.ViewChanging`/`ChangeView(...)` rather than this source's manual anchor-message bookkeeping — WinUI's `ItemsRepeater`/`ScrollViewer` combination exposes bring-into-view APIs (`UIElement.StartBringIntoView`) that cover **follow-newest-when-at-bottom** and **preserve-scroll-position-otherwise** without hand-rolled offset math. For the typing indicator, use a `Storyboard` on three `Ellipse`s gated by `UISettings.AnimationsEnabled` or the app's own "reduce motion" setting — mirroring how `TypingIndicatorView` itself should honor Reduce Motion (see adtoolkit://cookbook/ai/chat/chat-window/typing-indicator-view), not a gap in this view's own behavior. Bind all colors (accent, divider, primary/secondary/placeholder text, chat surface) to `ThemeResource`s in a resource dictionary that mirrors this source's `ThemeRole` cases, updated on the app's theme-changed event, matching **theme-responsive-controls**.
 
 ## Reference Implementations
 
@@ -275,40 +275,42 @@ Not applicable: the source contains no logging calls in this file. (The view mod
 
 **Decision**: The transcript content's width is set as an explicit constant on every layout pass, rather than as an equality constraint to the scroll view's clip width.
 **Rationale**: On AppKit, a bubble bakes the width it was measured at into a constraint of its own; through an equality constraint those baked widths become a width the scroll view — and, transitively, the window — must be. `NSWindow` derives its minimum size from the content's fitting size, computed from constraints of any priority, so the window could be dragged wider and never narrower again. Setting the constant explicitly (`transcriptWidthConstraint.constant = width`, per the class's own doc comment) breaks that relation instead of trying to lower its priority.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: The reader's scroll position is preserved across a full rebuild by remembering the topmost visible message's id and its offset from the viewport's top, rather than remembering a raw scroll offset.
 **Rationale**: A rebuild empties and refills the entire transcript stack, so a raw offset would land on whatever row now happens to occupy that position. Anchoring to a message id (`scrollAnchor()`/`restore(_:)`) keeps the reader on the same message they were reading regardless of how many rows above it changed height.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: A transcript rebuild is deferred while the reader has an active, non-empty text selection inside it, and resumes once the selection collapses.
 **Rationale**: A rebuild discards every row's text view along with any selection or pending copy inside it. A watched feed polls every few seconds and would otherwise interrupt a reader mid-selection; deferring the rebuild, and re-running it the moment the selection collapses (on AppKit, via a `didChangeSelectionNotification` observer), avoids that at the cost of the reader not seeing new messages until they let go.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: A message with a non-`.settled` delivery is always rendered as a transcript row, even in an ordinary one-to-one chat with no attribution — the row is built against a synthesized, empty `Attribution` in that case.
 **Rationale**: Only the transcript row draws a message's delivery status (sending / failed); a plain bubble has no such affordance. Routing on delivery as well as attribution means an in-flight or failed message always gets that treatment, regardless of whether the chat it is in ever produces attributed rows otherwise.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: `bubbleLineLimit` is threaded through to transcript rows only, never to the plain bubbles used in an ordinary one-to-one chat.
 **Rationale**: Line-limiting with an "open the rest" affordance addresses a merged-feed problem — one long reply among many short ones. This source constructs plain bubbles with no line limit at all, so a one-to-one chat's messages are never truncated regardless of `bubbleLineLimit`'s value.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: Expansion state is tracked by message id on the view, and carried forward across a rebuild by matching role plus whitespace-normalized text, rather than by id alone.
 **Rationale**: Per the class's own doc comment on `expandedMessageIDs`, a watched feed rebuilds its whole transcript every few seconds, and a message written under one id can arrive back under a different one once it settles. Matching on normalized text is what lets a message the reader opened out stay open through that id change; a message that disappears without a matching replacement simply loses its expanded state.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: A plain bubble's width cap floors at 200pt (`max(scrollWidth * 0.75, 200)`) with no special-casing once the transcript's own available width drops below that floor (roughly 267pt of scroll width).
 **Rationale**: Not documented in source beyond the formula itself; below that width the floor can make a bubble's cap exceed the space actually available, which reads as a narrow-window bug rather than an intended minimum. Left open rather than assumed: whether the floor should shrink to fit, or the source is fine leaving it as is, is not decided here.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: A `.failed` session state renders no distinct banner, alert, or composer state of its own; the composer's enablement is governed only by `isComposerEnabled` and whether `state == .responding`, exactly as in `.ready`.
 **Rationale**: The source conditions composer enablement solely on `.responding` (`applyComposerEnablement`); no other branch in this file reads `.failed`. Whether a failure state should surface its own affordance (a banner, a retry action) is left open rather than assumed here.
-**Approved: pending**
+**Approved**: pending**
 
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | partial | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [semantic-markup](agenticdevelopercookbook://compliance/accessibility#semantic-markup) | partial | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
@@ -322,6 +324,8 @@ Not applicable: the source contains no logging calls in this file. (The view mod
 
 Statuses rest on: the accessibility identifiers present throughout but the two source-confirmed gaps noted under Accessibility — no explicit label on the composer field and no assistive-technology announcement of a row-selection change (screen-reader-support, semantic-markup); every color being resolved from the active `SemanticPalette`, which this source neither defines nor can verify for contrast or Dynamic Type scaling (contrast-ratio, dynamic-type-support); the day banner's date text and the message timestamps deferring to `Calendar`/formatter machinery outside this file, which is locale-aware by construction (locale-aware-formatting); message text flowing through `NSTextField`/the bubble views without special-casing, so arbitrary Unicode renders normally (unicode-support); two literal, unlocalized English strings hardcoded in this file — the composer placeholder `"Type a message..."` and the send button's accessibility description `"Send"` — with no string-catalog key for either (no-hardcoded-strings); the status label's single-line, truncating configuration (`lineBreakMode = .byTruncatingTail`) tolerating overflow gracefully, while the prompt label's required compression-resistance priority could push a very long localized prompt into crowding the composer field instead of wrapping or truncating (text-expansion-tolerance); the layout using `leadingAnchor`/`trailingAnchor` throughout rather than fixed left/right anchors (rtl-layout-support); and the `observeTheme` registrations on every color-bearing subview plus the view's own background fill, all re-applied on every theme change (platform-theming).
 
+`separation-of-concerns` is partial: `ChatView.swift` is a single view class that owns layout, transcript rebuilding, rebuild-surviving state, row selection, bubble expansion, scrolling and the input field, though it delegates drawing of rows to `ChatTranscriptRowView` and `AIChatBubbleView` and message data to the chat session. `unit-test-coverage` passes because `ChatViewRebuildTests.swift` (scroll position and text selection surviving a rebuild, keyboard versus clicked picks), `ChatViewScrollTests.swift` (opening and reloading on the newest message), `ChatViewFocusTests.swift` (input focus), `ConversationsStatusLineTests.swift`, `BubbleTruncationTests.swift` (expansion) and `AIChatViewModelTests.swift` together exercise each of those responsibilities directly.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -332,3 +336,4 @@ Statuses rest on: the accessibility identifiers present throughout but the two s
 | 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/chat/chat-window/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. |

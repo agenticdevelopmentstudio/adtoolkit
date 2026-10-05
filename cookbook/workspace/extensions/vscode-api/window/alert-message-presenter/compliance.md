@@ -1,0 +1,10 @@
+
+| Check | Status | Category |
+|-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
+| [fault-tolerance](agenticdevelopercookbook://compliance/reliability#fault-tolerance) | passed | Reliability |
+| [secure-log-output](agenticdevelopercookbook://compliance/security#secure-log-output) | failed | Security |
+
+`separation-of-concerns` passes because the file's own header comment states it was split out of `MainThreadWindow.swift` specifically to keep the adaptor's argument parsing and promise settlement testable without AppKit, and the file itself confines its own responsibility to turning one `ExtensionMessageRequest` into `NSAlert` calls and back into an index. `unit-test-coverage` is partial: `MainThreadWindowTests` directly pins `buttonPlan(for:)` and `escapeKeyEquivalentPosition(in:)`, but every test exercising message *presentation* substitutes a `RecordingMessagePresenter`/`SuspendingMessagePresenter` double for `NSAlertMessagePresenter` itself, so `presentMessage(_:)`, `sheetWindow()`, `presentedResponse(for:)`, `alertStyle(for:)`, and `anyVisibleWindow()` have no given test of their own. `fault-tolerance` passes: the no-window case (**drop-when-no-window**) and an out-of-range button response (**out-of-range-response-resolves-absent**) both resolve to `nil` rather than crash, block, or throw, and neither depends on an external service being reachable. `secure-log-output` fails: `presentedResponse(for:)`'s dropped-message log interpolates `alert.messageText` — i.e., `request.message`, arbitrary caller-supplied text with no length or content constraint — with `privacy: .public`, so any sensitive content an extension happened to put in that message is not redacted from the unified log, contrary to the guideline's requirement that log output not carry PII.
+

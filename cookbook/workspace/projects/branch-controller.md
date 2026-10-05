@@ -1,51 +1,44 @@
 ---
 id: 92f11498-2cb2-4b04-92b9-560d9f2de6ee
-title: Branch Management
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller
+title: "Branch Management"
+domain: adtoolkit://cookbook/workspace/projects/branch-controller
 type: ingredient
-version: 1.1.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Owns one project checkout: its live branch, its per-(tab, edge) tab panes,
-  and the three checkout-namespaced commands a command palette and context menu act
-  on it through.'
+summary: "Owns one project checkout: its live branch, its per-(tab, edge) tab panes, and the three checkout-namespaced commands a command palette and context menu act on it through."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- tabs
-- checkout
-- branch
-- command-palette
+  - git
+  - tabs
+  - checkout
+  - branch
+  - command-palette
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider
-- agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view/tab-pane
+  - adtoolkit://cookbook/workspace/files/git-status-provider
+  - adtoolkit://cookbook/ui/layout/tabbed-view/tab-pane
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/BranchController.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabPane/TabPaneDataSource.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabPane/TabPaneDelegate.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabPane/TabPaneStatusSymbol.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/ClosureMenuItemTarget.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/BranchControllerTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/BranchController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabPane/TabPaneDataSource.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabPane/TabPaneDelegate.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabPane/TabPaneStatusSymbol.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/AppShell/ClosureMenuItemTarget.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/BranchControllerTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Branch Management
@@ -130,8 +123,7 @@ menu). Every property and method is confined to a single execution context
 - **refresh-status-command-effect**: Invoking the Refresh Status command
   MUST trigger a status refresh without waiting for or otherwise observing
   its effect, and MUST separately begin an independent, asynchronous
-  branch refresh that does not block the invoking call; neither reference
-  to the branch management component MUST keep it alive beyond what that
+  branch refresh that does not block the invoking call; each reference to the branch management component MUST NOT keep it alive beyond what that
   outstanding work needs.
 - **reveal-in-finder-command-effect**: Invoking the Reveal in Finder
   command MUST reveal the checkout's directory in the system file browser,
@@ -180,6 +172,7 @@ menu). Every property and method is confined to a single execution context
   at the moment the menu is shown, and MUST NOT be fixed once when the menu
   item is built (see Platform Notes for the platform mechanism that
   provides this).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -217,6 +210,7 @@ system, neither of which this component renders itself.
 | git-client-projects-branch-controller-010 | commands-computed-per-access, refresh-status-command-effect | Register a fake git status provider and invoke the Refresh Status command. | The status provider's refresh is called synchronously, before the invocation returns, and the component's own refresh is additionally triggered asynchronously. |
 | git-client-projects-branch-controller-011 | reveal-in-finder-command-effect, copy-path-command-effect, captured-directory-outlives-controller | Read the commands, discard the strong reference to the branch management component, then invoke the captured Reveal in Finder and Copy Path actions. | Revealing the directory in the system file browser, and the clipboard write, both still target the original checkout directory, even though the component that vended the commands is gone. |
 | git-client-projects-branch-controller-012 | context-menu-run-discards-arguments-and-result, context-menu-item-enablement-via-validation | Build the context menu for a checkout whose Refresh Status command reports itself disabled, then check that item's enabled state. | The disabled item's enabled check reads false and the other two read true; invoking the item's action still calls the command's run operation with an empty argument list — menu construction does not gate on the enabled state itself. |
+| git-client-projects-branch-controller-013 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -240,22 +234,15 @@ system, neither of which this component renders itself.
   Notes), so no interleaving can observe a torn write. Refresh itself has
   no coalescing, generation counter, or in-flight guard of any kind —
   unlike its sibling git status provider (see
-  `agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider`), which
+  `adtoolkit://cookbook/workspace/files/git-status-provider`), which
   explicitly coalesces overlapping calls into at most one queued follow-up
   and discards a stale response with a generation check. Two overlapping
   refresh calls (for example, two rapid Refresh Status invocations) each
   independently read the current branch and each independently assign it
   and reload every pane on completion; whichever call's read returns last
   wins, with no rule preferring the call that was *started* last over one
-  that merely finished last; see the open question on refresh-ordering.
-- **refresh-ordering**: NEEDS REVIEW: Not implemented. There is no
-  ordering or coalescing rule for overlapping refresh calls on one branch
-  management component: whichever call's branch read returns last sets the
-  current branch and reloads the panes, even if it was started first.
-  Existing tests exercise only a single refresh call; the app's
-  worktree-scan and command-dispatch call sites, or a stress test issuing
-  overlapping refresh calls, would settle whether this is reachable in
-  practice.
+  that merely finished last; see the pending decision on refresh-ordering.
+- **refresh-ordering**: overlapping refresh calls on one branch management component carry no ordering or coalescing rule; whichever call's branch read returns last sets the current branch and reloads the panes, even if it was started first (see Design Decisions).
 - **Error states**: A missing git executable, a failed process launch, a
   timed-out git call, and a failed git command are not distinguished from
   one another by refresh; every one produces the same outcome — the
@@ -265,7 +252,7 @@ system, neither of which this component renders itself.
   branch read specifically failed, as distinct from succeeding with an
   unchanged value; the failure's only record is the git command log kept
   by the injected git client (a collaborator, not this component — see
-  `agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider`'s sibling
+  `adtoolkit://cookbook/workspace/files/git-status-provider`'s sibling
   git client entry).
 - **Offline or disconnected state**: Not applicable in the network sense —
   reading the current branch runs a local git command against the local
@@ -353,7 +340,7 @@ reads, stores, or transmits no credential, token, or personal data.
 This component makes no logging call of its own. The one error it
 swallows (refresh's failure path) is recorded by a different component,
 the git command log kept by the injected git client's unconditional
-recording (see `agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider`'s
+recording (see `adtoolkit://cookbook/workspace/files/git-status-provider`'s
 sibling git client entry), not logged a second time here.
 
 | Event | Level | Message |
@@ -407,7 +394,7 @@ sibling git client entry), not logged a second time here.
   thread-affinity of its own — mirror the main-thread confinement by only
   ever touching this object from the UI thread (`DispatcherQueue`), the
   same discipline the git status provider's WinUI port already assumes
-  (see `agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider`).
+  (see `adtoolkit://cookbook/workspace/files/git-status-provider`).
   Replace `NSHashTable<TabPaneViewController>.weakObjects()` with a
   `List<WeakReference<TabPaneViewController>>` (or a
   `ConditionalWeakTable`), pruning dead entries on each scan since .NET has
@@ -497,6 +484,10 @@ shown, and "every item silently inert once its target is deallocated" —
 (`BranchController.swift`).
 **Approved**: pending
 
+**Decision**: Overlapping `refresh()` calls on one controller are neither ordered nor coalesced: there is no generation counter or in-flight guard, so the call whose branch read returns last wins, even if it started first.
+**Rationale**: The source's `refresh()` simply awaits the git client's current-branch read and assigns the result, then reloads panes; tests exercise only a single call. Closing it would mean a generation check or coalescing like the sibling git status provider's, once overlapping calls are shown reachable from the worktree-scan and command-dispatch call sites.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -520,7 +511,7 @@ panes, checkout-namespaced and cross-checkout-distinct command ids and
 categories, and context-menu construction with target retention, but has no
 test for `refresh()`'s failure path (see
 **refresh-preserves-branch-on-failure**), for overlapping `refresh()` calls
-(the open question on refresh-ordering), or for the
+(the pending decision on refresh-ordering), or for the
 weak-pane-table eviction (**weak-pane-table**). explicit-error-handling is
 partial because `refresh()`'s `catch` block does nothing beyond a comment
 explaining why (the failure is recorded in `GitCommandLog` by `GitClient`,
@@ -541,7 +532,10 @@ subprocess runs.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the refresh-ordering NEEDS REVIEW marker against source: overlapping refresh calls are not ordered or coalesced; restated as current behavior with a pending decision. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |

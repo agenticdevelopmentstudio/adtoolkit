@@ -1,31 +1,30 @@
 ---
 id: faf4ec69-7b5c-44c2-a8c2-d7e81dc94ea8
-title: Panel Host View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-host-view
+title: "Panel Host View"
+domain: adtoolkit://cookbook/ui/settings/layout/panel-host-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A view that hosts a settings panel's swapped content plus a
-  persistent top-right help button wired to a shared help presenter.
+summary: "A view that hosts a settings panel's swapped content plus a persistent top-right help button wired to a shared help presenter."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- help
+  - settings
+  - help
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-split-view
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-window
+  - adtoolkit://cookbook/ui/settings/settings-split-view
+  - adtoolkit://cookbook/ui/settings/settings-window
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Panel Host View
@@ -141,6 +140,7 @@ button or opening a second drawer.
   its content container, and its help button entirely through the
   platform's layout-constraint system, never by assigning frames manually
   (see Platform Notes for the source's exact mechanism).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -203,13 +203,13 @@ button or opening a second drawer.
   explicit accessibility-change announcement of its own — a screen reader
   is told nothing beyond whatever the platform's default image-change
   handling surfaces on its own.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. The
-  tint color is set from the theme's accent-color or secondary-text-color
-  role with neither color's contrast against whatever the button is drawn
-  over computed or enforced in the source; whether either color reaches
-  WCAG AA's 3:1 non-text contrast minimum for every theme this component
-  ships with depends on each theme's concrete color values and needs
-  auditing per theme.
+- **minimum-contrast-ratio**: The help button's tint MUST come from the
+  theme's accent-color role while help is disclosed and the theme's
+  secondary-text-color role otherwise, and the component MUST NOT compute
+  or enforce any contrast between that tint and whatever the button is
+  drawn over. Whether either color reaches WCAG AA's 3:1 non-text contrast
+  minimum for a given theme depends on that theme's concrete color values,
+  not on this component.
 - **Minimum tap target**: Not applicable in a universal touch-target
   sense — this component targets a pointer-driven desktop environment,
   where a single fixed minimum hit-target size is not established the way
@@ -257,6 +257,7 @@ button or opening a second drawer.
 | panel-host-view-032 | rejects-deserializing-construction | Attempt to construct the component via a deserializing/decoding-based construction path | The call traps or fails; no instance is returned |
 | panel-host-view-033 | constraint-based-layout-only | Inspect the component, its content container, and its help button after construction | Each of the three relies solely on the layout-constraint system, with no manual frame assignment |
 | panel-host-view-034 | help-button-keyboard-focusable | Construct the component, Tab focus to the visible help button, then press Space | The help button receives keyboard focus via Tab/Shift-Tab and its action fires on Space/Return, using the platform's own unmodified default focus and activation handling |
+| panel-host-view-035 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -351,7 +352,7 @@ source.
   secondary-text-color role); if Increase Contrast should raise either
   color's contrast, that is the palette/theme system's responsibility, not
   this component's. Whether these colors reach an adequate ratio is the
-  open question on minimum-contrast-ratio, tracked once under
+  **minimum-contrast-ratio** and its Design Decision, tracked once under
   Accessibility above.
 - **Differentiate Without Color**: Supported — the help-visible and
   help-hidden states are distinguished by both the button's icon shape
@@ -528,10 +529,16 @@ the same notification has to be told by whoever holds that slot rather
 than overwriting it.
 **Approved**: pending
 
+**Decision**: The help button's tint contrast against its background is whatever the theme's accent and secondary-text colors give; the view performs no contrast check, and no per-theme audit against WCAG AA's 3:1 non-text minimum exists.
+**Rationale**: Checked `PanelHostView.swift`: the refresh sets `helpButton.contentTintColor` from `palette.accentColor` or `palette.secondaryTextColor` and nothing measures the result. Closing the gap would take a per-theme contrast audit of both roles or a contrast floor in their derivation.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | accessibility |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | accessibility |
@@ -553,6 +560,8 @@ strings being set as plain platform string literals with no localization-catalog
 reference anywhere in source (no-hardcoded-strings,
 string-externalization — see Localization).
 
+Separation-of-concerns is passed: `PanelHostView` only hosts installed content and a help button whose presentation is delegated through a help presenter, with colors from the theme palette and no settings logic. Unit-test-coverage is failed: no test in the repository's test targets references `PanelHostView`; the hosted-panel test in `SettingsCardViewsTests.swift` exercises `SettingsPanelViewController.hostingView`, a different type.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -561,3 +570,5 @@ string-externalization — see Localization).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/layout/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Restated help-button contrast requirement as current behavior with a pending decision; added Compliance rows |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

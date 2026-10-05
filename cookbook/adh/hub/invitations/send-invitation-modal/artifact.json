@@ -1,0 +1,53 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "633ab7e7-828e-4e7d-b2dc-9ba189536b6e",
+    "title": "Send Invitation Modal",
+    "domain": "adtoolkit://cookbook/adh/hub/invitations/send-invitation-modal",
+    "type": "recipe",
+    "version": "1.3.3",
+    "status": "review",
+    "language": "en",
+    "created": "2026-06-26",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "A controlled dialog that sends invitations over email and/or SMS, with a recipient list + optional note per section, seeded from caller lists.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "modal",
+      "dialog",
+      "invitations",
+      "recipients"
+    ],
+    "ingredients": [
+      "agenticdevelopertoolkit://recipes/alert-and-dialog",
+      "agenticdevelopertoolkit://recipes/recipient-input"
+    ],
+    "depends-on": [],
+    "related": [],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "c1fe04c63dbc87d2",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "ingredients", "heading": "Ingredients"},
+    {"part": "integration-requirements", "heading": "Integration Requirements"},
+    {"part": "layout", "heading": "Layout"},
+    {"part": "shared-state", "heading": "Shared State"},
+    {"part": "integration-test-vectors", "heading": "Integration Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

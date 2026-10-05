@@ -1,32 +1,30 @@
 ---
 id: 72829b3b-ce4a-4730-877f-da7b48e7b3dd
-title: Request Specification
-domain: agenticdevelopertoolkit://cookbook/ai/plugins/request-spec
+title: "Request Specification"
+domain: adtoolkit://cookbook/ai/plugins/request-spec
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The value type a plugin''s request-building operation returns: a
-  fully-described HTTP or local-command request for one chat turn, plus a
-  wall-clock timeout.'
+summary: "The value type a plugin's request-building operation returns: a fully-described HTTP or local-command request for one chat turn, plus a wall-clock timeout."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- value-type
-- transport
+  - ai-plugin
+  - value-type
+  - transport
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/plugins/ai-plugin
+  - adtoolkit://cookbook/ai/plugins/ai-plugin
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Request Specification
@@ -89,8 +87,8 @@ plugin has the same "describe a request, decode the bytes" shape.
 - **non-throwing-construction**: No constructor this type defines MAY throw
   or fail; every path from valid argument values to an instance MUST succeed
   synchronously.
-- **no-input-validation**: Neither the designated constructor nor either
-  convenience constructor MUST validate its arguments; any timeout value
+- **no-input-validation**: The designated constructor and both
+  convenience constructors MUST NOT validate their arguments; any timeout value
   (including zero, negative, not-a-number, or infinite), any URL, and any
   string map or byte payload the caller supplies MUST be accepted and stored
   unchanged. This is a deliberate design, not a gap: interpreting an
@@ -316,11 +314,14 @@ with no side effects of its own.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
 | [test-pyramid](agenticdevelopercookbook://compliance/best-practices#test-pyramid) | passed | Best Practices |
 | [input-sanitization](agenticdevelopercookbook://compliance/security#input-sanitization) | partial | Security |
 
 `separation-of-concerns` passes because the type carries only a description of a request and performs no networking or process work itself (`description-only-contract`). `test-pyramid` passes on unit-test coverage alone (`AIPluginKitTests.swift`) — appropriate for a pure value type with no integration surface of its own. `input-sanitization` is partial because, per `no-input-validation`, this type accepts an unconstrained `timeout` (including `NaN` and negative values) and an unconstrained `executableURL`/`environment` without any check at construction time; the open question of whether that should ever be validated here rather than downstream is recorded above under `no-input-validation` and in the first Design Decision.
+
+`unit-test-coverage` is partial: no test file targets `AIRequestSpec.swift` itself, but the type is built and inspected throughout `PluginRequestTests.swift` (each provider plugin's described request) and `PluginTransportTests.swift` (timeout and environment fields carried into the run), so its fields are exercised indirectly while its defaults are never asserted on their own.
 
 ## Change History
 
@@ -330,3 +331,4 @@ with no side effects of its own.
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/plugins/. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage compliance row; reworded no-input-validation as a MUST NOT. |

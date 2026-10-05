@@ -1,0 +1,3 @@
+
+Not applicable: The wire instant type is not a visual component; any runtime state it holds is described under Behavioral Requirements.
+

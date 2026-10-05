@@ -1,0 +1,76 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "937650ae-ac85-43f4-8aa4-708207e0d745",
+    "title": "Status Server Monitor Webhook Events",
+    "domain": "adtoolkit://cookbook/status/service/monitor/webhook-events",
+    "type": "ingredient",
+    "version": "1.0.3",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Pure, synchronous mappers that turn an untrusted Vercel or Railway webhook body into a ProviderDeploy row, or null when the event is not one this monitor ingests.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "monitor",
+      "webhook",
+      "deploy",
+      "mapper",
+      "server"
+    ],
+    "depends-on": [
+      "agenticdevelopercookbook://guidelines/implementing/security/input-validation"
+    ],
+    "related": [
+      "adtoolkit://cookbook/status/service/monitor/deploy-status",
+      "adtoolkit://cookbook/status/service/monitor/format",
+      "adtoolkit://cookbook/status/service/monitor/provider-deploy",
+      "adtoolkit://cookbook/status/service/monitor/live-buffer",
+      "adtoolkit://cookbook/status/service/monitor/fetch-vercel",
+      "adtoolkit://cookbook/status/service/monitor/fetch-railway"
+    ],
+    "references": [
+      "packages/web/packages/status-server/src/monitor/webhook-events.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/format.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/routes/hooks.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/deploy-mappers.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/timestamp-validation.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/hooks.int.test.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "45d2bf3fbc66adf6",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

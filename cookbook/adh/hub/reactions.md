@@ -1,40 +1,39 @@
 ---
 id: 5e7bafd6-fb7e-45fc-a1de-31e34edf5431
-title: 'Hub Domain: Reactions'
-domain: agenticdevelopertoolkit://cookbook/adh/hub/reactions
+title: "Hub Domain: Reactions"
+domain: adtoolkit://cookbook/adh/hub/reactions
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Web data client (reactionsApi, tally, byTarget) and wire types for emoji
-  reactions on any (targetKind, targetId) subject.
+summary: "Web data client (reactionsApi, tally, byTarget) and wire types for emoji reactions on any (targetKind, targetId) subject."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- hub
-- reactions
-- emoji
-- tally
-- crud
+  - hub
+  - reactions
+  - emoji
+  - tally
+  - crud
 depends-on: []
 related:
-- agenticdevelopertoolkit://recipes/reaction-bar
+  - agenticdevelopertoolkit://recipes/reaction-bar
 references:
-- packages/web/packages/data/src/reactions/reactions.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/reactions/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/reactions/__tests__/reactions.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/reactions/reactions.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/reactions/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/reactions/__tests__/reactions.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Hub Domain: Reactions
@@ -228,6 +227,7 @@ Not applicable: neither `reactions.ts` nor `wire.ts` calls `console.log`, `Logge
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

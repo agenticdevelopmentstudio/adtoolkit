@@ -1,33 +1,32 @@
 ---
 id: 2cd6ffc0-e9db-425b-99ba-eb826ffff118
-title: Themed Terminal View (Hollow Caret)
-domain: agenticdevelopertoolkit://cookbook/workspace/terminal/terminal-view
+title: "Themed Terminal View (Hollow Caret)"
+domain: adtoolkit://cookbook/workspace/terminal/terminal-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A terminal view that toggles its block text caret between filled and
-  hollow-outline based on the current theme and whether its pane has focus.
+summary: "A terminal view that toggles its block text caret between filled and hollow-outline based on the current theme and whether its pane has focus."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- terminal
-- caret
-- composable-tabs
+  - terminal
+  - caret
+  - composable-tabs
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/active-pane
+  - adtoolkit://cookbook/ui/layout/composable-tabs/active-pane
 related: []
 references:
-- https://github.com/migueldeicaza/SwiftTerm/blob/8e7a1e154f470e19c709a00a8768df348ba5fc43/Sources/SwiftTerm/TerminalOptions.swift
-- https://github.com/migueldeicaza/SwiftTerm/blob/8e7a1e154f470e19c709a00a8768df348ba5fc43/Sources/SwiftTerm/Mac/MacCaretView.swift
-approved-by: ''
-approved-date: ''
+  - https://github.com/migueldeicaza/SwiftTerm/blob/8e7a1e154f470e19c709a00a8768df348ba5fc43/Sources/SwiftTerm/TerminalOptions.swift
+  - https://github.com/migueldeicaza/SwiftTerm/blob/8e7a1e154f470e19c709a00a8768df348ba5fc43/Sources/SwiftTerm/Mac/MacCaretView.swift
+approved-by: ""
+approved-date: ""
 ---
 
 # Themed Terminal View (Hollow Caret)
@@ -51,8 +50,7 @@ as active for its window.
 
 ## Behavioral Requirements
 
-- **main-thread-confinement**: The component MUST be usable only on the
-  UI's main execution context.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **caret-appearance-property**: The component MUST expose a public
   appearance property (fields: a caret color, a text color, an
   always-hollow flag, a marks-active-pane flag), defaulting to a white
@@ -174,13 +172,7 @@ as active for its window.
   tap/click target of its own; it inherits the underlying terminal
   engine's full-bounds hit area unmodified and sets no separate frame or
   size constraint.
-- **contrast-ratio**: NEEDS REVIEW: Not implemented in source. The caret
-  color and text color are caller-supplied values applied verbatim (see
-  **filled-caret-color**, **hollow-text-color**) with no contrast
-  computation of its own; whether a given theme's caret color meets a
-  minimum contrast ratio against the terminal background requires
-  inspecting the theme/palette values actually passed in at the call
-  site, outside this source.
+- **contrast-ratio**: the caret color and text color are caller-supplied values applied verbatim (see **filled-caret-color**, **hollow-text-color**); the view performs no contrast computation of its own (see Design Decisions).
 
 ## Conformance Test Vectors
 
@@ -207,8 +199,9 @@ as active for its window.
 | themed-terminal-view-021 | missing-caret-subview-tolerance | No subview whose type name ends in `"CaretView"` exists (for example, the border is applied before the terminal engine adds its caret). | no exception is thrown; no layer property is modified. |
 | themed-terminal-view-022 | caret-subview-type-name-match | Add a subview whose dynamic type name is `"XTermCaretView"`. | the caret-subview lookup resolves to that subview. |
 | themed-terminal-view-023 | caret-subview-cache | The caret subview is resolved once; the resolved subview is removed and replaced by a new subview of a matching type name. | a subsequent lookup re-searches and returns the new subview rather than the stale (now-detached) one. |
+| themed-terminal-view-024 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
-`main-thread-confinement` has no row here: it is a compile-time
+`confines-to-ui-thread` has no row here: it is a compile-time
 guarantee, verified by the language's own isolation checking, not by a
 runtime conformance vector (see Design Decisions).
 
@@ -226,7 +219,7 @@ runtime conformance vector (see Design Decisions).
   the UI's main execution context, so every mutation path (the
   appearance property's change handler, the notification subscription,
   and the cursor-shown/cursor-style-changed overrides) is confined there
-  (see **main-thread-confinement**).
+  (see **confines-to-ui-thread**).
 - **Error states**: WHEN the active-pane tracker's change notification
   does not name a window (including no window at all), the component
   MUST silently ignore the notification and take no action, per the
@@ -248,7 +241,7 @@ runtime conformance vector (see Design Decisions).
   marks-active-pane flag is `true`**: the caret stays filled regardless
   of the marks-active-pane flag — only the always-hollow flag can force
   it hollow outside composable-tabs context — because
-  `agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/active-pane#requirements/view-outside-any-pane-counts-as-active`
+  `adtoolkit://cookbook/ui/layout/composable-tabs/active-pane#requirements/view-outside-any-pane-counts-as-active`
   treats such a view as always "in the active pane."
 - **Multiple instances across different windows**: each instance ignores
   a change notification whose named window does not match its own
@@ -282,7 +275,7 @@ or a view reference.
 | Option | Behavior |
 |--------|----------|
 | Reduce Motion | Not applicable: the caret's border-width/border-color and caret-color/caret-text-color changes are instantaneous property assignments with no animation, transition, or movement code in source. |
-| Increase Contrast | Not applicable from within this file: this view performs no color computation of its own — the caret color/text color are applied verbatim from whatever the caller supplies (see the open question on contrast-ratio under Accessibility). |
+| Increase Contrast | Not applicable from within this file: this view performs no color computation of its own — the caret color/text color are applied verbatim from whatever the caller supplies (see the pending contrast decision under Design Decisions). |
 | Differentiate Without Color | Supported: the active-pane indication conveyed by the marks-active-pane flag is the caret's *shape* — filled block versus hollow outline — not its color alone, per source: "A full block, which also says which pane the user is working in: filled here, an outline in every other pane." |
 
 ## Feature Flags
@@ -386,11 +379,11 @@ Not applicable: the source contains no logging calls.
 **Rationale**: Per source: "SwiftTerm adds its caret as a direct subview but exposes no accessor for it, so it is recognized by class name... Cached, because the search is not free and the caller is not rare... a per-keystroke cost for an answer that changes when SwiftTerm rebuilds its subviews and at no other time."
 **Approved**: pending
 
-**Decision**: `main-thread-confinement` has no runtime conformance vector; it is verified by the Swift compiler's `@MainActor` isolation checking at compile time.
+**Decision**: `confines-to-ui-thread` has no runtime conformance vector; it is verified by the Swift compiler's `@MainActor` isolation checking at compile time.
 **Rationale**: A MUST requirement enforced entirely by the type system needs no runtime test to demonstrate — violating it is a compile error, not an outcome a test vector could observe.
 **Approved**: pending
 
-**Decision**: `ThemedTerminalView` relies on `ComposableTabsActivePane.isInActivePane` treating a view with no `ComposableTabsPaneBackgroundView` ancestor as "in the active pane" (see `agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/active-pane#requirements/view-outside-any-pane-counts-as-active`), so `marksActivePane` never hollows such a caret.
+**Decision**: `ThemedTerminalView` relies on `ComposableTabsActivePane.isInActivePane` treating a view with no `ComposableTabsPaneBackgroundView` ancestor as "in the active pane" (see `adtoolkit://cookbook/ui/layout/composable-tabs/active-pane#requirements/view-outside-any-pane-counts-as-active`), so `marksActivePane` never hollows such a caret.
 **Rationale**: The consequence for this file: a `ThemedTerminalView` used outside any composable-tabs pane with `marksActivePane == true` stays filled rather than hollow, because it is never "not in" an active pane by that dependency's own rule. The rule itself, and why it treats an unclaimed view as active, belongs to `composable-tabs-active-pane` and is not restated here.
 **Approved**: pending
 
@@ -398,16 +391,22 @@ Not applicable: the source contains no logging calls.
 **Rationale**: No rationale is given in source for this specific choice, and no call site in this codebase overrides it with a semantic token — nothing marks it deliberate, and nothing records a plan to pay it down. It should become whichever semantic accent/foreground color token the app's theme system exposes for this purpose once one exists; see the `platform-theming` compliance status below.
 **Approved**: pending
 
+**Decision**: The caret color and text color are applied verbatim from the caller with no contrast computation against the terminal background; no contrast calculation exists in the view's source.
+**Rationale**: Whether a theme's caret color meets a minimum contrast ratio depends on the theme and palette values passed in at the call site. Closing the gap means a contrast check at that call site or in the theme layer, or a clamp inside the view.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 | [platform-theming](agenticdevelopercookbook://compliance/platform-compliance#platform-theming) | failed | Platform Compliance |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | partial | Accessibility |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 
-`platform-theming` fails because `CaretAppearance.color` and `CaretAppearance.textColor` default to the literal `NSColor.white` rather than a semantic, theme-aware color token, so the caret's own defaults do not adapt to the app's theme (see the corresponding Design Decision). `contrast-ratio` is `partial`: the caret's colors are applied verbatim from caller input with no contrast computation in this file, so conformance depends entirely on what the caller supplies — see the open question on contrast-ratio under Accessibility. `keyboard-navigable` and `screen-reader-support` are `partial`: `ThemedTerminalView` adds no keyboard handling, role, or label of its own and overrides none of `LocalProcessTerminalView`'s, but this file gives no evidence of what `LocalProcessTerminalView` itself provides for either, so full conformance cannot be confirmed from this source alone.
+`separation-of-concerns` passes because the view only reconciles the caret's appearance with the active-pane state and delegates terminal emulation, input and focus to the underlying terminal engine; `unit-test-coverage` fails because no test under the repository's test targets references `ThemedTerminalView` or `CaretAppearance`. `platform-theming` fails because `CaretAppearance.color` and `CaretAppearance.textColor` default to the literal `NSColor.white` rather than a semantic, theme-aware color token, so the caret's own defaults do not adapt to the app's theme (see the corresponding Design Decision). `contrast-ratio` is `partial`: the caret's colors are applied verbatim from caller input with no contrast computation in this file, so conformance depends entirely on what the caller supplies — see the open question on contrast-ratio under Accessibility. `keyboard-navigable` and `screen-reader-support` are `partial`: `ThemedTerminalView` adds no keyboard handling, role, or label of its own and overrides none of `LocalProcessTerminalView`'s, but this file gives no evidence of what `LocalProcessTerminalView` itself provides for either, so full conformance cannot be confirmed from this source alone.
 
 ## Change History
 
@@ -417,3 +416,5 @@ Not applicable: the source contains no logging calls.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/terminal/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the contrast-ratio NEEDS REVIEW marker against source: no contrast computation exists, restated as current behavior with a pending decision; added separation-of-concerns (passed) and unit-test-coverage (failed, no tests). |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

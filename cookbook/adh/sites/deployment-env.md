@@ -1,35 +1,34 @@
 ---
 id: 8d05d4b2-06a8-44db-816a-ce839836fd71
-title: Deployment Environment
-domain: agenticdevelopertoolkit://cookbook/adh/sites/deployment-env
+title: "Deployment Environment"
+domain: adtoolkit://cookbook/adh/sites/deployment-env
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The fail-closed dev-deployment allowlist read two ways: a server-render
-  gate and a bundler-foldable build flag.'
+summary: "The fail-closed dev-deployment allowlist read two ways: a server-render gate and a bundler-foldable build flag."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- deployment-env
-- feature-gating
-- build-config
+  - deployment-env
+  - feature-gating
+  - build-config
 depends-on: []
 related: []
 references:
-- packages/web/packages/adh-registry/src/deployment-env.ts (agenticdevelopertoolkit)
-- packages/web/packages/adh-registry/src/__tests__/deploymentEnv.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/adh-registry/src/seo/metadata.ts (agenticdevelopertoolkit)
-- packages/web/packages/adh/src/__tests__/productionBundleGates.test.ts (agenticdevelopertoolkit)
-- adhbackend/src/adh/test/themeSurfaceEnv.test.ts (adhbackend)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/adh-registry/src/deployment-env.ts (agenticdevelopertoolkit)
+  - packages/web/packages/adh-registry/src/__tests__/deploymentEnv.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/adh-registry/src/seo/metadata.ts (agenticdevelopertoolkit)
+  - packages/web/packages/adh/src/__tests__/productionBundleGates.test.ts (agenticdevelopertoolkit)
+  - adhbackend/src/adh/test/themeSurfaceEnv.test.ts (adhbackend)
+approved-by: ""
+approved-date: ""
 ---
 
 # Deployment Environment

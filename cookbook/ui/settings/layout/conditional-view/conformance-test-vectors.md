@@ -1,0 +1,19 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| conditional-view-001 | adds-child-as-only-subview | Construct the component with any setting, child view, and visibility predicate | The child view is content of the constructed component; it is the only content added by the component |
+| conditional-view-002 | fills-container-with-child | Construct the component | The component and the child view both opt out of any implicit frame-based sizing |
+| conditional-view-003 | fills-container-with-child | Construct the component | Active layout constraints pin the child view's top/leading/trailing/bottom edges to the container's corresponding edges, each with a zero offset |
+| conditional-view-004 | evaluates-initial-visibility | Construct with the setting's current value such that the visibility predicate returns `false` | Immediately after construction, the component is hidden — no change notification required |
+| conditional-view-005 | evaluates-initial-visibility | Construct with the setting's current value such that the visibility predicate returns `true` | Immediately after construction, the component is shown |
+| conditional-view-006 | reevaluates-visibility-on-setting-change | After construction, change the observed setting's value so the visibility predicate now returns a different result, then allow the change to deliver | The component's shown/hidden state reflects the new visibility-predicate result after the change delivers |
+| conditional-view-007 | hides-when-predicate-returns-false | Construct shown, then change the setting to a value where the visibility predicate returns `false`, then allow the change to deliver | After the change delivers, the component is hidden |
+| conditional-view-008 | shows-when-predicate-returns-true | Construct hidden, then change the setting to a value where the visibility predicate returns `true`, then allow the change to deliver | After the change delivers, the component is shown |
+| conditional-view-009 | skips-redundant-visibility-writes | With the component hidden, change the setting to a different value for which the visibility predicate is still `false`, then allow the change to deliver | The visibility-change callback is not called for this change, and the component's shown/hidden state is confirmed not reassigned |
+| conditional-view-010 | notifies-visibility-change-once | Register the visibility-change callback, then change the setting so the visibility predicate flips from `true` to `false`, then allow the change to deliver | The callback is called exactly once, after the component has already become hidden |
+| conditional-view-011 | exposes-child-property | Construct the component, then read its child-view property from outside the type | Returns the same view instance passed into construction |
+| conditional-view-012 | exposes-visibility-change-callback | Assign a callback to the visibility-change property from outside the type, then trigger a visibility change | The assigned callback is the one invoked |
+| conditional-view-013 | requires-full-configuration-at-construction | Attempt to construct the component with only a subset of its required inputs (see Platform Notes for the exact construction paths this blocks) | Construction is refused; no usable instance is produced |
+| conditional-view-014 | reflects-setting-change-asynchronously | Change the observed setting's value, then synchronously — in the same call frame, before the change has had a chance to deliver — read the component's shown/hidden state | The component's shown/hidden state still reflects the pre-change visibility; only after the change delivers, on a following turn, does the state reflect the new value |
+| conditional-view-015 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
+

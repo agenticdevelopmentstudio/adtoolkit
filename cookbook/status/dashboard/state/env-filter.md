@@ -1,28 +1,27 @@
 ---
 id: dcfe8ed6-2129-44ea-a084-eb30b640c0e3
-title: Environment Filter
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/env-filter
+title: "Environment Filter"
+domain: adtoolkit://cookbook/status/dashboard/state/env-filter
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: State holding the Overview's selected-environments filter, defaulting
-  to all and persisted to per-browser storage.
+summary: "State holding the Overview's selected-environments filter, defaulting to all and persisted to per-browser storage."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/activity-ttl
+  - adtoolkit://cookbook/status/dashboard/state/activity-ttl
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Environment Filter
@@ -72,6 +71,7 @@ Use it wherever a view needs a persisted, per-browser multi-select over the fixe
 - **per-instance-state**: Each instance MUST hold its own selection; a toggle in one instance MUST NOT update another active instance until that instance is recreated and re-hydrates.
 - **no-cross-tab-sync**: Environment Filter MUST NOT listen for cross-tab storage-change notifications; a change made in another tab is not reflected until this instance is recreated.
 - **no-other-side-effects**: Environment Filter MUST NOT perform network requests, logging, timers or any storage access other than one read per instance and one write per toggle.
+- **client-only**: Environment Filter MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 
 ## Appearance
 
@@ -106,6 +106,7 @@ Not applicable — this is state backed by persistent storage, not a visual comp
 | env-filter-015 | toggle-unvalidated | Default state | Call `toggle("qa")`; then recreate the state and let hydration run | Before recreation `envs` has 4 members including `qa`, storage holds `["production","staging","testing","qa"]`; after recreation `envs` = all three |
 | env-filter-016 | toggle-identity, all-list | Any state | Call `toggle` to force a state update; compare the returned `toggle` and `all` with the previous result's | Both are reference-equal to the previous values |
 | env-filter-017 | storage-key | Storage holds `"adh-env-filter"` = `["production"]` | Run a routine that purges retired storage keys | The key survives unchanged; a companion test asserts this ("leaves keys the app still uses alone") |
+| env-filter-018 | client-only | Environment Filter is loaded in a server-only rendering context | Render it | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -224,6 +225,7 @@ The hook holds only selection state and persistence; the filtering of rows by en
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

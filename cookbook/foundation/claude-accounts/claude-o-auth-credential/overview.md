@@ -1,0 +1,3 @@
+
+A value type for the OAuth credential Claude Code keeps for one account: the access token, the refresh token, the two separate expiries, the granted scopes, and the subscription metadata. It is the object Claude Code stores under its credentials entry in the keychain. "The token" is four things, not one, and rotating an account means replacing all of them together, which is why they travel as one value rather than as a string. It lives in the lowest shared tier because every process that touches a login needs it and none owns it: an app has custody (it reads and writes the keychain item), a daemon evaluates it (is the access token still worth sending, and if not, spend the refresh token), and both halves of that conversation cross a process boundary.
+

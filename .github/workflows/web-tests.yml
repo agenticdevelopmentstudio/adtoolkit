@@ -70,6 +70,7 @@ jobs:
           python3 tools/check_site_deps_test.py
           python3 tools/check_site_deps.py
           python3 tools/rewrite_toolkit_scope_test.py
+          python3 tools/classify_recipes_test.py
           python3 packages/web/tools/copy_css_orphan_test.py
 
       # adh's persona-chat keeps a COPY of chat's contract types rather than a dep

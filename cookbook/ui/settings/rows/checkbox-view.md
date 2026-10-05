@@ -1,31 +1,31 @@
 ---
 id: e9c10ff7-4e13-4007-a963-d2a9e4006745
-title: Checkbox View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
+title: "Checkbox View"
+domain: adtoolkit://cookbook/ui/settings/rows/checkbox-view
 type: ingredient
-version: 1.2.0
+version: 1.2.3
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'A settings row pairing a title label with a trailing toggle bound to a boolean view model.'
+summary: "A settings row pairing a title label with a trailing toggle bound to a boolean view model."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- form-control
-- toggle
+  - settings
+  - form-control
+  - toggle
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/stepper-view
+  - adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+  - adtoolkit://cookbook/ui/settings/rows/stepper-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Checkbox View
@@ -74,8 +74,7 @@ observer.
   that could produce an instance without one (e.g. a bare/default
   construction path or a serialization/decoding-based construction path)
   MUST be rejected (see Platform Notes for the mechanism the source uses).
-- **confines-to-ui-thread**: Component MUST be usable only on the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **claims-sole-onchange-observer**: Component MUST assign its own handler
   to the view model's external-change notification during initialization,
   superseding any handler already registered on that view model instance
@@ -172,7 +171,7 @@ observer.
 | checkbox-view-008 | exposes-constituent-views | Construct the component, then access its label and toggle properties from outside the type | Both properties are accessible and return the same instances built during init |
 | checkbox-view-009 | requires-view-model-at-construction | Attempt construction via a bare/default construction path | The call traps with a fatal error; no instance is returned (a platform-level runtime trap, not an ordinary in-process assertion) |
 | checkbox-view-010 | requires-view-model-at-construction | Attempt construction via a serialization/decoding-based construction path | The call traps with a fatal error; no instance is returned (a platform-level runtime trap, not an ordinary in-process assertion) |
-| checkbox-view-011 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (compile-time on platforms with static isolation checking such as Swift's `@MainActor`, runtime-checked otherwise) |
+| checkbox-view-011 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (at build time or by a runtime check); the component's state is unchanged |
 | checkbox-view-012 | claims-sole-onchange-observer | Register an observer on the view model's external-change notification, then construct the component against that same view model | The notification now points at the component's own handler; invoking it no longer calls the previously registered observer |
 | checkbox-view-013 | inherits-native-keyboard-focus | Construct the component in a running app, tab focus to the toggle, then press Space | The toggle receives keyboard focus in the window's tab order and its state flips on Space, per the platform's native toggle-control behavior (unmodified by source) |
 
@@ -329,7 +328,7 @@ Not applicable: the source contains no logging call.
 
 ## Design Decisions
 
-- **Decision** (AppKit): Draw the row's control as an `NSSwitch`, not a
+- **Decision**: (AppKit) Draw the row's control as an `NSSwitch`, not a
   checkbox button, despite the type being named `CheckboxView`.
   **Rationale**: Per the source's own doc comment, the switch replaced a
   checkbox-with-title button because a checkbox puts its control on the
@@ -337,7 +336,7 @@ Not applicable: the source contains no logging call.
   and sliders beside it in the same card — and left every group looking
   like two different lists interleaved."
   **Approved**: pending
-- **Decision** (AppKit): Name the public property `toggle`, not
+- **Decision**: (AppKit) Name the public property `toggle`, not
   `checkbox`.
   **Rationale**: Per the source's own doc comment, the control "has not
   been a checkbox since the row was restyled, and a name that lies about a
@@ -350,7 +349,7 @@ Not applicable: the source contains no logging call.
   of its own, so an assistive technology would announce it as an
   unlabelled control; the visible label is its title element.
   **Approved**: pending
-- **Decision** (AppKit): Force a fatal error from both `init(coder:)` and
+- **Decision**: (AppKit) Force a fatal error from both `init(coder:)` and
   the frame-only `init(frame:)`, leaving `init(with:)` as the only usable
   initializer.
   **Rationale**: The view has no meaningful default state — it cannot
@@ -359,7 +358,7 @@ Not applicable: the source contains no logging call.
   intentionally disabled rather than left to produce a half-configured
   row.
   **Approved**: pending
-- **Decision** (AppKit): Keep the public type name `CheckboxView` even
+- **Decision**: (AppKit) Keep the public type name `CheckboxView` even
   though it draws a switch, not a checkbox.
   **Rationale**: The type is `SettingsViewProtocol`-conforming API surface
   read by callers across `ComposableSettingsWindow`; renaming it (e.g. to
@@ -390,6 +389,7 @@ Not applicable: the source contains no logging call.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | partial | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `keyboard-navigable` and `screen-reader-support` rest on `toggle` being an
 unmodified `NSSwitch`/`NSControl` with `setAccessibilityTitleUIElement` set
@@ -401,6 +401,8 @@ because repeated commits of the same toggle value are a no-op
 the same `viewModel` is not idempotent — it silently overwrites the prior
 `onChange` handler (**claims-sole-onchange-observer**).
 
+`unit-test-coverage` is `partial` because there is no `CheckboxViewTests` file, but `SettingObservingTests.swift` (`testViewModelClosureInitDrivesACheckbox`) constructs a `CheckboxView` and checks its toggle state and write-through to the view model, and `EditableTableCardUpdateTests.swift` and `ConfigurationContributionPointTests.swift` build it inside groups and assert on the resulting hierarchy; the click-to-commit and external-change resync paths are not exercised directly.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -409,3 +411,6 @@ the same `viewModel` is not idempotent — it silently overwrites the prior
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: shorten summary; add related sibling recipes; split target/action wiring into Platform Notes and add trailing-edge/spacer detail to arranges-row-layout; add claims-sole-onchange-observer and inherits-native-keyboard-focus requirements with test vectors; move normative language out of Edge Cases; mark Increase Contrast label color as not verified; drop the non-decision explanation entry from Design Decisions; downgrade idempotent-operations to partial and add compliance evidence sentence; backfill initial Change History row |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage Compliance row, judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.3 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |

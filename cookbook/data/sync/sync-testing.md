@@ -1,40 +1,39 @@
 ---
 id: fbb19775-20c8-4857-9945-53947a2078df
-title: Sync Engine Testing
-domain: agenticdevelopertoolkit://cookbook/data/sync/sync-testing
+title: "Sync Engine Testing"
+domain: adtoolkit://cookbook/data/sync/sync-testing
 type: ingredient
-version: 1.0.2
+version: 1.0.4
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'In-framework test fakes for the sync engine: an actor-isolated in-memory
-  SyncStore with outbox coalescing and a scripted SyncTransport.'
+summary: "In-framework test fakes for the sync engine: a serialized in-memory SyncStore with outbox coalescing and a scripted SyncTransport."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- sync
-- offline
-- testing
+  - sync
+  - offline
+  - testing
 depends-on:
-- agenticdevelopertoolkit://cookbook/data/sync/sync-engine
+  - adtoolkit://cookbook/data/sync/sync-engine
 related:
-- agenticdevelopertoolkit://cookbook/data/sync/sync-engine
-- agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client
+  - adtoolkit://cookbook/data/sync/sync-engine
+  - adtoolkit://cookbook/data/sync/offline-sync-client
 references:
-- packages/apple/AgenticToolkit/Sync/Testing/InMemorySyncStore.swift
-- packages/apple/AgenticToolkit/Sync/Testing/ScriptedSyncTransport.swift
-- packages/apple/AgenticToolkit/Sync/SyncProtocols.swift
-- packages/apple/AgenticToolkit/Sync/SyncWire.swift
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncTests/InMemorySyncStoreTests.swift
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncTests/SyncEngineTests.swift
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Sync/Testing/InMemorySyncStore.swift
+  - packages/apple/AgenticToolkit/Sync/Testing/ScriptedSyncTransport.swift
+  - packages/apple/AgenticToolkit/Sync/SyncProtocols.swift
+  - packages/apple/AgenticToolkit/Sync/SyncWire.swift
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncTests/InMemorySyncStoreTests.swift
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncTests/SyncEngineTests.swift
+approved-by: ""
+approved-date: ""
 ---
 
 # Sync Engine Testing
@@ -45,21 +44,21 @@ Sync Engine Testing is the pair of reference fakes that ship inside the
 `AgenticToolkitSync` framework (the toolkit convention, per the source comment:
 "fakes ship in the framework"), under `Sync/Testing/`:
 
-- `InMemorySyncStore` — an `actor` conforming to `SyncStore` that keeps
+- `InMemorySyncStore` — a serialized component (every call runs one at a time) conforming to `SyncStore` that keeps
   per-resource mirror rows, a cursor, an outbox, a conflict log and a
   quarantine list in memory. Its doc comments state that it mirrors
   `GRDBSyncStore` for registration, atomic apply, outbox coalescing, inflight
   replay, `newVersion` adoption and purge, "so the fakes don't lie" about the
   real store's behavior. It also exposes test conveniences (`rowCount`, `row`,
   `pendingOpId`).
-- `ScriptedSyncTransport` — an `actor` conforming to `SyncTransport` that
+- `ScriptedSyncTransport` — a serialized component (every call runs one at a time) conforming to `SyncTransport` that
   returns queued pull and push outcomes in FIFO order, records every request,
   and falls back to an empty pull or an all-applied push when its script is
   empty.
 - `SyncStoreFailure` — the error enum both stores throw
   (`unknownResource`, `invalidChange`, `pullOnlyResource`).
 
-Use them to drive [SyncEngine](agenticdevelopertoolkit://cookbook/data/sync/sync-engine) in unit
+Use them to drive [SyncEngine](adtoolkit://cookbook/data/sync/sync-engine) in unit
 tests and previews without SQLite or a network, and as the executable
 specification a port's own store and transport fakes are checked against.
 
@@ -67,11 +66,11 @@ specification a port's own store and transport fakes are checked against.
 
 ### Isolation and types
 
-- **store-actor**: `InMemorySyncStore` MUST be an actor, so every call to it (protocol methods and test conveniences alike) is serialized on that actor and callers outside it MUST `await` it.
-- **transport-actor**: `ScriptedSyncTransport` MUST be an actor, so enqueueing, pulling and pushing are serialized and never interleave within one call.
-- **row-shape**: `InMemorySyncStore.Row` MUST be a `Sendable`, `Equatable` struct with the mutable fields `syncVersion: String`, `deleted: Bool` and `data: [String: JSONValue]`.
-- **outcome-shape**: `ScriptedSyncTransport.Outcome<T: Sendable>` MUST be a `Sendable` enum with exactly two cases, `success(T)` and `failure(SyncTransportError)`.
-- **failure-shape**: `SyncStoreFailure` MUST be a `Sendable`, `Equatable` `Error` enum with the cases `unknownResource(String)`, `invalidChange(String)` and `pullOnlyResource(String)`.
+- **store-actor**: `InMemorySyncStore` MUST serialize every call to it (protocol methods and test conveniences alike) so calls run one at a time, and callers MUST wait for each call to complete.
+- **transport-actor**: `ScriptedSyncTransport` MUST serialize its calls, so enqueueing, pulling and pushing are serialized and never interleave within one call.
+- **row-shape**: `InMemorySyncStore.Row` MUST be an equatable value that is safe to share across threads and concurrency domains, with the mutable fields `syncVersion: String`, `deleted: Bool` and `data: [String: JSONValue]`.
+- **outcome-shape**: `ScriptedSyncTransport.Outcome<T>` MUST be a value, safe to share across threads and concurrency domains whenever `T` is, with exactly two cases, `success(T)` and `failure(SyncTransportError)`.
+- **failure-shape**: `SyncStoreFailure` MUST be an equatable error value, safe to share across threads and concurrency domains, with the cases `unknownResource(String)`, `invalidChange(String)` and `pullOnlyResource(String)`.
 - **observable-logs**: `conflictLog` (`[(opId: String, reason: String?)]`) and `quarantined` (`[SyncPushOp]`) MUST be publicly readable and writable only by the store itself.
 - **transport-records**: `pullCursors` (`[SyncCursor?]`) and `pushedRequests` (`[SyncPushRequest]`) MUST be publicly readable and writable only by the transport itself.
 
@@ -204,7 +203,7 @@ Store vectors start from `InMemorySyncStore()` after `prepare(resources: [SyncRe
 - **Negative limit**: See pending-ops-limit; the call traps at runtime.
 - **Duplicate descriptors in prepare**: The last descriptor's `schemaVersion` MUST win.
 - **Empty prepare**: `prepare(resources: [])` MUST change nothing.
-- **Concurrent calls**: Both fakes are actors, so concurrent calls MUST run one at a time; no call suspends inside its body, so no call interleaves with another.
+- **Concurrent calls**: Both fakes serialize their calls, so concurrent calls MUST run one at a time; no call suspends inside its body, so no call interleaves with another.
 - **Exhausted script**: A drained script MUST fall back to the default response rather than throwing; a test that expects a failure MUST enqueue it.
 - **Cancellation and timeouts**: Neither fake checks task cancellation or applies a timeout; every call returns immediately.
 - **Offline or unreachable server**: Not applicable to the store (no I/O); the transport simulates it only through a scripted `.failure(.transport(_))`.
@@ -243,7 +242,7 @@ Not applicable: neither fake emits analytics events.
 ## Privacy
 
 - **Data collected**: Only the row payloads, ops and requests a test supplies.
-- **Storage**: In actor memory only (`resourceStates`, `outbox`, `quarantined`, `conflictLog`, `pullCursors`, `pushedRequests`).
+- **Storage**: In the serialized component's memory only (`resourceStates`, `outbox`, `quarantined`, `conflictLog`, `pullCursors`, `pushedRequests`).
 - **Transmission**: None; `ScriptedSyncTransport` makes no network call.
 - **Retention**: Until the instance is released; nothing is persisted.
 
@@ -258,12 +257,18 @@ Not applicable: neither source makes a log call; outcomes are observed through r
 - **React/Web**: Single-threaded JS makes each synchronous method atomic without a lock, but async methods interleave across `await`, so keep method bodies free of `await` as the source does. Use `Map` (insertion-ordered) for rows and an array for the outbox; deep-copy the resource map with `structuredClone` before applying a batch. The transport is two arrays shifted per call. `Number.parseInt` accepts trailing garbage, so validate `syncVersion` with a digits-only check instead.
 - **AppKit / UIKit**: The same Swift sources apply unchanged; the framework is Foundation-only, so AppKit and UIKit hosts and XCTest bundles use the fakes directly.
 - **WinUI 3**: Write the store as a class whose `Task`-returning methods take a `SemaphoreSlim(1, 1)` (or keep bodies synchronous and use `lock`), with `Dictionary<string, ResourceState>` for rows and `List<OutboxEntry>` for the outbox; copy the dictionary before applying a batch to keep `apply` atomic. The transport holds two `Queue<Outcome<T>>` and returns `Task.FromResult` or `Task.FromException`. Record requests in `List<T>` exposed as `IReadOnlyList<T>`. Wire types use `System.Text.Json` with `JsonNode` in place of `JSONValue`. For the `syncVersion` check use `int.TryParse` with `NumberStyles.AllowLeadingSign` and `CultureInfo.InvariantCulture`, which matches Swift's `Int(_:)` (sign allowed, whitespace rejected); the default `NumberStyles.Integer` also accepts surrounding whitespace. `Guid.CreateVersion7()` (.NET 9) supplies opIds but does not guarantee same-millisecond ordering. A view model bound to `ObservableCollection` can read the fakes in XAML previews, but tests need no `INotifyPropertyChanged`.
+- **store-actor**: On Apple platforms `InMemorySyncStore` is a Swift `actor`, so callers outside it `await` every call.
+- **transport-actor**: On Apple platforms `ScriptedSyncTransport` is a Swift `actor`; enqueueing, pulling and pushing are actor-isolated.
+- **row-shape**: On Apple platforms `InMemorySyncStore.Row` is a `Sendable`, `Equatable` struct.
+- **outcome-shape**: On Apple platforms `ScriptedSyncTransport.Outcome<T: Sendable>` is a `Sendable` enum.
+- **failure-shape**: On Apple platforms `SyncStoreFailure` is a `Sendable`, `Equatable` `Error` enum.
 
 ## Reference Implementations
 
 | Platform | Path |
 |----------|------|
-| apple | `packages/apple/AgenticToolkit/Sync/Testing/` |
+| apple | `packages/apple/AgenticToolkit/Sync/Testing/InMemorySyncStore.swift` |
+| apple | `packages/apple/AgenticToolkit/Sync/Testing/ScriptedSyncTransport.swift` |
 
 ## Design Decisions
 
@@ -324,6 +329,8 @@ Each fake implements exactly one protocol seam (`SyncStore` or `SyncTransport`) 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.4 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Reference Implementations lists the two fake files instead of the directory. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from the Apple `Sync/Testing` sources and `InMemorySyncStoreTests` |

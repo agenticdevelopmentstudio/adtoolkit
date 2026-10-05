@@ -1,44 +1,38 @@
 ---
 id: a8054368-9885-4b83-90cf-5029728ab397
-title: Provider Configuration
-domain: agenticdevelopertoolkit://cookbook/ai/providers/provider-configuration
+title: "Provider Configuration"
+domain: adtoolkit://cookbook/ai/providers/provider-configuration
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A user's named instance of a provider template — its identifier, display
-  name, plugin identifier, and template identifier — plus a helper that derives
-  a unique display name.
+summary: "A user's named instance of a provider template — its identifier, display name, plugin identifier, and template identifier — plus a helper that derives a unique display name."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- value-type
-- provider-config
+  - ai-plugin
+  - value-type
+  - provider-config
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/providers/provider-config-keys
-- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-descriptor
+  - adtoolkit://cookbook/ai/providers/provider-config-keys
+  - adtoolkit://cookbook/ai/plugins/plugin-descriptor
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/AIPlugins/AIProviderConfigurationTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIProviderConfigKeysTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderConfigStore.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/LLMProvidersListViewModel.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfiguration.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/AIPlugins/AIProviderConfigurationTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIProviderConfigKeysTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/AIProviderConfigStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/LLMProvidersListViewModel.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Provider Configuration
@@ -192,13 +186,17 @@ Not applicable: the record contains no logging call of any kind.
 | [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | passed | Reliability |
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | passed | Privacy and Data |
 | [input-sanitization](agenticdevelopercookbook://compliance/security#input-sanitization) | partial | Security |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `separation-of-concerns` passes because the type carries only identity, leaving field values, model, and secrets to `AIProviderConfigKeys`-addressed stores (see Design Decisions). `idempotent-operations` passes because `uniqueName(_:avoiding:)` and the synthesized `Equatable`/`Hashable` conformances are deterministic, side-effect-free functions of their inputs (see `unique-name-static-purity`). `data-integrity` passes because the type's value semantics (see `value-semantics`) prevent one copy's mutation from silently corrupting another. `data-minimization` passes because the type collects, stores, or transmits no secret material itself (see Privacy). `input-sanitization` is partial: `name`, `pluginIdentifier`, and `templateId` accept any string content with no format or non-empty check (see `no-content-validation`); this is not itself an injection risk within this file, since it parses none of those strings, but a caller that feeds an unvalidated value into a downstream format (e.g. a settings key or a ledger, as `AIProviderConfigKeys` does) inherits whatever risk that downstream format carries.
+
+`unit-test-coverage` is partial because `AIProviderConfigurationTests.swift` covers the Codable round-trip and the settings accessors that persist a configuration list, but there is no dedicated test of `uniqueName(_:avoiding:)` collision behavior within that file (the key-level name uniqueness is exercised in `AIProviderConfigKeysTests.swift`).
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Cite unit-test-coverage in Compliance. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/providers/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |

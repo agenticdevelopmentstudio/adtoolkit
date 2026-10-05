@@ -1,0 +1,23 @@
+
+- **request-value-semantics**: The request MUST be a value type with a memberwise initializer, carrying `viewType: String`, `title: String`, `options: WebviewPanelOptions`, `localResourceRoots: [URL]`, `preserveFocus: Bool`, and `extensionIdentifier: String` verbatim from the caller that built it, and MUST be safe to compare for equality and to pass across concurrency boundaries.
+- **request-resolved-roots-passthrough**: `localResourceRoots` on the request MUST be the already-resolved, absolute set of directories the webview may load local resources from; the presenting role's implementation MUST pass this value through unmodified rather than re-deriving it from `options.declaredLocalResourceRoots`.
+- **request-extension-attribution**: `extensionIdentifier` MUST identify which extension asked for the panel, so a caller can attribute the panel without re-deriving that fact from elsewhere.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
+- **presenter-nil-on-no-placement**: Presenting a webview panel MUST return nothing when there is nowhere to place the panel (for example, no project window is open), rather than raising an error or returning a partially-placed panel.
+- **presenter-single-panel-per-call**: Presenting a webview panel MUST create and return exactly one new panel per call; it MUST NOT return a panel created by a previous call.
+- **presenter-wired-before-revealed**: when placement succeeds, the returned panel's placement callbacks (the pane's `reveal`/`remove` verbs) MUST be installed on the panel before the panel is revealed, so a caller-initiated reveal during that same call always has a working placement behind it.
+- **presenter-reveals-once**: a successful presenting call MUST reveal the returned panel exactly once, honoring the request's `preserveFocus`, as part of the same call — never as a separate step the caller must remember to invoke.
+- **presenter-failed-placement-reveals-nothing**: when placement fails and presenting a webview panel returns nothing, `reveal` MUST NOT be called on any panel.
+- **panel-identity**: `panelID` MUST be a stable, get-only identifier for the panel's entire lifetime.
+- **panel-title-mutation**: `panelTitle` MUST be settable, and assigning it MUST change the panel's displayed title.
+- **panel-html-mutation**: `html` MUST be settable, and assigning it MUST replace the panel's rendered content.
+- **panel-resource-roots-mutation**: `localResourceRoots` MUST be settable, so a webview *view* provider (which receives an already-built panel) can change which local directories the panel's scheme handler may read from after creation.
+- **panel-options-mutation**: `options` MUST be settable, so `enableScripts`, `enableForms`, and `declaredLocalResourceRoots` can change after creation.
+- **panel-state-readback**: `state` MUST expose the most recent state the webview's own script serialized via `vscode.setState`/`getState`, or nothing when no state has ever been set.
+- **panel-message-callback**: `onDidReceiveMessage` MUST be invoked for every message the webview's script posts via `acquireVsCodeApi().postMessage`.
+- **panel-dispose-callback**: `onDidDispose` MUST be invoked exactly once when the panel is disposed, whether disposal was requested by the extension (`dispose()`) or driven by the user closing the pane.
+- **panel-disposed-flag**: `isDisposed` MUST become `true` once the panel is disposed and MUST remain `true` afterward, so a caller can test disposal before acting on a handle that may have gone stale — the guard the resolving bridge performs, in both its restore-after-relaunch path and its contributed-view resolution path (`resolveWebviewView`), before adopting a hand-over.
+- **panel-post-message-result**: `post(message:)` MUST return `false` when the panel is disposed or the message otherwise cannot be delivered, and MUST return `true` when the message was handed to the webview successfully.
+- **panel-reveal-preserve-focus**: `reveal(preserveFocus:)` MUST bring the panel's pane forward and MUST leave keyboard focus wherever it already was when `preserveFocus` is `true`.
+- **panel-dispose-idempotent**: `dispose()` MUST be safe to call more than once; a second call MUST NOT remove the pane a second time or fire `onDidDispose` again.
+

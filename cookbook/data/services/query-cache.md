@@ -1,37 +1,34 @@
 ---
 id: 0fcd16c1-a8da-4184-b63f-97b68ed6378d
-title: Query Cache
-domain: agenticdevelopertoolkit://cookbook/data/services/query-cache
+title: "Query Cache"
+domain: adtoolkit://cookbook/data/services/query-cache
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Shared query-cache runtime: a singleton cache client, provider, and
-  consumer accessor every toolkit data hook fetches through, with whole-cache
-  clearing when the signed-in principal changes.'
+summary: "Shared query-cache runtime: a singleton cache client, provider, and consumer accessor every toolkit data hook fetches through, with whole-cache clearing when the signed-in principal changes."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- cache
-- session
+  - cache
+  - session
 depends-on:
-- agenticdevelopertoolkit://cookbook/data/services/auth/auth-client
+  - adtoolkit://cookbook/data/services/auth/auth-client
 related:
-- agenticdevelopertoolkit://cookbook/data/services/resource-data
-- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
+  - adtoolkit://cookbook/data/services/resource-data
 references:
-- packages/web/packages/data/src/query/index.tsx (agenticdevelopertoolkit)
-- packages/web/packages/data/src/query/__tests__/toolkit-query-provider.test.tsx (agenticdevelopertoolkit)
-- packages/web/packages/data/src/__tests__/query-client.test.tsx (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/query/index.tsx (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/query/__tests__/toolkit-query-provider.test.tsx (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/__tests__/query-client.test.tsx (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Query Cache
@@ -63,11 +60,12 @@ has no visual surface of its own.
   window to `5 * 60 * 1000` (300,000 ms) and the retry count to `1`.
 - **resource-key-gc-time-pinned**: The cache-client factory MUST pin a
   retention time equal to the resource-cache retention constant for every
-  query keyed under the `resource-list` prefix and for every query keyed
-  under the `resource-item` prefix, before returning the client, so every
-  query keyed under either prefix — including one minted by a prefetch or a
-  direct cache write with no observer of its own — uses that retention time
-  rather than the client-wide retention default.
+  query whose key begins with one of the configured long-retention key
+  prefixes (see Configuration; the shipped default prefixes are
+  `resource-list` and `resource-item`), before returning the client, so
+  every query keyed under any such prefix — including one minted by a
+  prefetch or a direct cache write with no observer of its own — uses that
+  retention time rather than the client-wide retention default.
 - **server-client-per-call**: The singleton cache accessor MUST return a
   newly constructed cache client from the cache-client factory on every call
   made with no interactive host environment present, and MUST NOT reuse a
@@ -137,22 +135,22 @@ component.
 
 | ID | Requirements | Input | Expected |
 |----|-------------|-------|----------|
-| hub-domain-query-001 | browser-client-singleton | The singleton cache accessor called twice in the browser | Both calls return the identical cache-client instance |
-| hub-domain-query-002 | browser-client-singleton, provider-uses-singleton | Render the cache provider component wrapping a probe that captures the consumer accessor's result, unmount it, then render the same tree again and capture again | Both captured clients are the identical instance |
-| hub-domain-query-003 | hook-usable-without-provider | Render the probe with no cache-provider component of any kind anywhere above it | The consumer accessor resolves without throwing, to the same instance the singleton cache accessor returns directly |
-| hub-domain-query-004 | server-client-per-call | With no interactive host environment present, call the singleton cache accessor twice | The two returned clients are NOT the identical instance |
-| hub-domain-query-005 | provider-nesting-is-idempotent | Render one instance of the cache provider component nested inside another, each with its own client-capturing probe | The inner probe's client is the identical instance as the outer probe's client |
-| hub-domain-query-006 | provider-siblings-share-client | Render two separate, non-nested trees each rendering the cache provider component, each with its own probe | Both probes resolve to the identical client instance |
-| hub-domain-query-007 | hook-ignores-ancestor-context | Mount a host's own cache-provider wrapper around a distinct cache client (staleness window 30,000 ms, retry count 3) wrapping the cache provider component and a probe | The probe's client is not the host's client, and its resolved staleness window is 300,000 ms, not 30,000 ms |
-| hub-domain-query-008 | query-defaults-stale-and-retry | Inspect a freshly constructed client's resolved default query options | Staleness window is 300,000 ms and retry count is `1` (the staleness half is also exercised indirectly by vector 007) |
-| hub-domain-query-009 | resource-gc-time-constant | Read the exported resource-cache retention constant | `1,800,000` (30 minutes) |
-| hub-domain-query-010 | resource-key-gc-time-pinned | Inspect the resolved defaults for a key beginning `['resource-list', ...]` and one beginning `['resource-item', ...]` on a freshly constructed client | Both resolve their retention time to the resource-cache retention constant; a key under neither prefix resolves the client's unpinned default instead (exercised indirectly through the resource-item/resource-list recipes' own coverage — see the resource-data recipe) |
-| hub-domain-query-011 | browser-client-lazy-construction | Call the singleton cache accessor a first time in the browser, then a second time | The cache-client factory and the session-watch guard each run exactly once, on the first call only (no dedicated test in this package exercises this directly) |
-| hub-domain-query-012 | session-watch-initial-subject | With a valid access token for subject `'user-1'` already stored, trigger the first browser call to the singleton cache accessor | The internal last-seen subject is initialized to `'user-1'` (no test in this package exercises this today) |
-| hub-domain-query-013 | session-change-clears-on-subject-change | With the singleton already constructed for subject `'user-1'`, change the stored token to subject `'user-2'` and invoke the session-change notification | The browser singleton's cache is cleared and the last-seen subject becomes `'user-2'` (no test in this package exercises this today — see Design Decisions) |
-| hub-domain-query-014 | session-refresh-does-not-clear | With the singleton already constructed for subject `'user-1'`, refresh the token for the SAME subject `'user-1'` and invoke the session-change notification | The cache is NOT cleared (no test in this package exercises this today) |
-| hub-domain-query-015 | cross-tab-session-watch | With the singleton constructed for subject `'user-1'`, dispatch a cross-tab storage-change notification (simulating another tab writing subject `'user-2'`'s token) without ever invoking the session-change notification directly | The same comparison runs and clears the cache exactly as vector 013 (no test in this package exercises this today) |
-| hub-domain-query-016 | provider-uses-singleton | Render the cache provider component and inspect the client it passes to its underlying cache-provider wrapper | It is exactly the singleton cache accessor's current return value |
+| query-cache-001 | browser-client-singleton | The singleton cache accessor called twice in the browser | Both calls return the identical cache-client instance |
+| query-cache-002 | browser-client-singleton, provider-uses-singleton | Render the cache provider component wrapping a probe that captures the consumer accessor's result, unmount it, then render the same tree again and capture again | Both captured clients are the identical instance |
+| query-cache-003 | hook-usable-without-provider | Render the probe with no cache-provider component of any kind anywhere above it | The consumer accessor resolves without throwing, to the same instance the singleton cache accessor returns directly |
+| query-cache-004 | server-client-per-call | With no interactive host environment present, call the singleton cache accessor twice | The two returned clients are NOT the identical instance |
+| query-cache-005 | provider-nesting-is-idempotent | Render one instance of the cache provider component nested inside another, each with its own client-capturing probe | The inner probe's client is the identical instance as the outer probe's client |
+| query-cache-006 | provider-siblings-share-client | Render two separate, non-nested trees each rendering the cache provider component, each with its own probe | Both probes resolve to the identical client instance |
+| query-cache-007 | hook-ignores-ancestor-context | Mount a host's own cache-provider wrapper around a distinct cache client (staleness window 30,000 ms, retry count 3) wrapping the cache provider component and a probe | The probe's client is not the host's client, and its resolved staleness window is 300,000 ms, not 30,000 ms |
+| query-cache-008 | query-defaults-stale-and-retry | Inspect a freshly constructed client's resolved default query options | Staleness window is 300,000 ms and retry count is `1` (the staleness half is also exercised indirectly by vector 007) |
+| query-cache-009 | resource-gc-time-constant | Read the exported resource-cache retention constant | `1,800,000` (30 minutes) |
+| query-cache-010 | resource-key-gc-time-pinned | Inspect the resolved defaults for a key beginning with each configured long-retention prefix (by default `['resource-list', ...]` and `['resource-item', ...]`) on a freshly constructed client | Both resolve their retention time to the resource-cache retention constant; a key under none of the configured prefixes resolves the client's unpinned default instead (exercised indirectly through the resource-item/resource-list recipes' own coverage — see the resource-data recipe) |
+| query-cache-011 | browser-client-lazy-construction | Call the singleton cache accessor a first time in the browser, then a second time | The cache-client factory and the session-watch guard each run exactly once, on the first call only (no dedicated test in this package exercises this directly) |
+| query-cache-012 | session-watch-initial-subject | With a valid access token for subject `'user-1'` already stored, trigger the first browser call to the singleton cache accessor | The internal last-seen subject is initialized to `'user-1'` (no test in this package exercises this today) |
+| query-cache-013 | session-change-clears-on-subject-change | With the singleton already constructed for subject `'user-1'`, change the stored token to subject `'user-2'` and invoke the session-change notification | The browser singleton's cache is cleared and the last-seen subject becomes `'user-2'` (no test in this package exercises this today — see Design Decisions) |
+| query-cache-014 | session-refresh-does-not-clear | With the singleton already constructed for subject `'user-1'`, refresh the token for the SAME subject `'user-1'` and invoke the session-change notification | The cache is NOT cleared (no test in this package exercises this today) |
+| query-cache-015 | cross-tab-session-watch | With the singleton constructed for subject `'user-1'`, dispatch a cross-tab storage-change notification (simulating another tab writing subject `'user-2'`'s token) without ever invoking the session-change notification directly | The same comparison runs and clears the cache exactly as vector 013 (no test in this package exercises this today) |
+| query-cache-016 | provider-uses-singleton | Render the cache provider component and inspect the client it passes to its underlying cache-provider wrapper | It is exactly the singleton cache accessor's current return value |
 
 ## Edge Cases
 
@@ -205,7 +203,8 @@ component.
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| The resource-cache retention constant | exported constant | `1,800,000` ms (30 min) | Retention time every `resource-list`/`resource-item`-prefixed query entry uses, pinned by the cache-client factory |
+| The resource-cache retention constant | exported constant | `1,800,000` ms (30 min) | Retention time every query entry under a long-retention key prefix uses, pinned by the cache-client factory |
+| The long-retention key prefixes | list of cache-key prefixes, fixed in the cache-client factory | `resource-list`, `resource-item` | The key prefixes whose entries are pinned to the retention constant; these are the keys the resource-data component writes, and a host with different resource key names changes this list rather than the requirement |
 | The default staleness window | hardcoded in the cache-client factory | `300,000` ms (5 min) | Client-wide default staleness for every query built on this client |
 | The default retry count | hardcoded in the cache-client factory | `1` | Client-wide default retry count for every query built on this client |
 | The mounted subtree | required prop of the cache provider component | none (required) | Subtree the provider mounts its underlying cache-provider wrapper around |
@@ -223,8 +222,7 @@ deep-link registration, or inbound-URL parsing of any kind.
 ## Localization
 
 Not applicable: this component renders no user-facing text. Its only
-string literals are internal cache-key segments (`'resource-list'`,
-`'resource-item'`) and the name of the cross-tab storage-change event it
+string literals are the default internal cache-key prefixes (see Configuration) and the name of the cross-tab storage-change event it
 listens for, none of which is user-facing.
 
 ## Accessibility Options
@@ -255,7 +253,7 @@ product-telemetry event, and calls no reporting sink of its own.
 - **Storage**: The last-seen subject lives in an in-memory, module-scope
   variable — never written to a persistent or session-scoped client-side
   store, or a cookie, and gone the moment the page/module is reloaded. The
-  `resource-list`/`resource-item` cache entries this client governs live
+  cache entries under the long-retention key prefixes this client governs live
   only in the in-memory query cache.
 - **Transmission**: This component makes no network call of its own.
 - **Retention**: The last-seen subject persists only for the life of the
@@ -398,6 +396,10 @@ developer reading only the browser-side singleton behavior could otherwise
 expect server-fetched data to "already be there" on first paint.
 **Approved**: pending
 
+**Decision**: The long-retention cache-key prefixes are fixed in the cache-client factory and not exposed through a caller-facing setter.
+**Rationale**: The two default prefixes name the entries the resource-data component writes, and the factory applies them directly, so a host with different key names must edit the source; the requirement is stated over "configured prefixes" so the behavior survives that change. Closing the gap would take a configuration entry point (for example a factory option) that the resource-data component and this one share.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -412,8 +414,7 @@ expect server-fetched data to "already be there" on first paint.
 `separation-of-concerns` **passed**: this file is pure data-layer
 infrastructure — a cache client, a provider, and a subscription guard — with
 no presentation code and no domain-specific fetch logic of its own; every
-concrete query lives in a sibling file (see `hub-domain-data`,
-`hub-domain-ecosystems`). `unit-test-coverage` is **partial**: the
+concrete query lives in a sibling file (see the resource-data component and the other data components that consume this client). `unit-test-coverage` is **partial**: the
 singleton, per-call-server, provider-nesting, and context-independence
 behaviors are all directly asserted by `query-client.test.tsx` and
 `toolkit-query-provider.test.tsx`, but `watchSession`'s entire
@@ -436,7 +437,7 @@ without ever throwing or adopting the wrong client. `data-integrity`
 exactly a corrupt-data guard — it exists specifically to stop a second
 signed-in principal from reading data cached under the first, and it is a
 second, independent layer against that on top of the tenant-keyed cache
-segments `hub-domain-data` describes. `data-minimization` **passed**: the
+segments the resource-data component describes. `data-minimization` **passed**: the
 only identity value this file reads, `readTokenSubject()`'s `sub` claim, is
 held only in an in-memory comparison variable and is never persisted,
 transmitted, or exposed beyond that comparison.
@@ -445,6 +446,8 @@ transmitted, or exposed beyond that comparison.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Hub framing removed: vector ids take this spec's own name, and the ADH host's default names move to Platform Notes as the web implementation's shipped values. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Make the long-retention cache-key prefixes configuration instead of hard-coded ADH keys; drop ADH-specific references. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to data/services/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe. |

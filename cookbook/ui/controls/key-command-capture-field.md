@@ -1,32 +1,31 @@
 ---
 id: 969b7f76-3fff-4a13-9b85-a61df25c70ee
-title: Key Command Capture Field
-domain: agenticdevelopertoolkit://cookbook/ui/controls/key-command-capture-field
+title: "Key Command Capture Field"
+domain: adtoolkit://cookbook/ui/controls/key-command-capture-field
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A bespoke component that records key-command chords and reports capture/cancel/commit
-  without persisting.
+summary: "A bespoke component that records key-command chords and reports capture/cancel/commit without persisting."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- keyboard-shortcut
-- recorder
-- focus
+  - keyboard-shortcut
+  - recorder
+  - focus
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/key-command-row-view
+  - adtoolkit://cookbook/ui/settings/rows/key-command-row-view
 references:
-- https://github.com/sindresorhus/KeyboardShortcuts
-approved-by: ''
-approved-date: ''
+  - https://github.com/sindresorhus/KeyboardShortcuts
+approved-by: ""
+approved-date: ""
 ---
 
 # Key Command Capture Field
@@ -52,8 +51,8 @@ that either way.
 
 ## Behavioral Requirements
 
-- **main-actor-confinement**: See Platform Notes.
-- **coder-initialization-rejection**: See Platform Notes.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
+- **coder-initialization-rejection**: The control MUST be constructible only in code. Constructing it from a serialized or archived representation (such as a nib or storyboard) MUST be refused as a programmer error that terminates, producing no instance.
 - **click-focus**: Component MUST take focus in response to a click, for
   any click location within its bounds (no sub-region hit-testing is
   performed).
@@ -193,7 +192,7 @@ that either way.
 
 - **Role/trait**: Not implemented in source. No accessibility role, label,
   or title-element link — unlike the Key Command Row View
-  (`agenticdevelopertoolkit://cookbook/ui/settings/rows/key-command-row-view`),
+  (`adtoolkit://cookbook/ui/settings/rows/key-command-row-view`),
   whose sibling toggle control links to its label — appears anywhere in
   this component's own source; the view relies entirely on the platform's
   default accessibility exposure. The view is an interactive,
@@ -216,7 +215,7 @@ that either way.
   Its actual click target is fixed at 22pt tall by a minimum of 132pt wide
   (see Min/Max size), matching this file's own layout constants, not a
   touch guideline.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. Every color this component draws (`controlBackgroundColor`, `accentColor`/`borderColor`, `primaryTextColor`/`placeholderTextColor`) is resolved at runtime from whichever `SemanticPalette` the active theme supplies, and this component's own source performs no contrast check of its own, so whether text-on-background or border-on-background contrast meets a specific ratio (e.g. WCAG 4.5:1) cannot be determined from this source file alone — it would require auditing the contrast ratio of each theme's actual token values.
+- **minimum-contrast-ratio**: The component performs no contrast check of its own. Every color it draws (background, accent and border, primary and placeholder text) is resolved at runtime from the active theme's palette, so whether any pairing meets a specific ratio (for example 4.5:1) depends on the colors each shipped theme supplies.
 
 ## Conformance Test Vectors
 
@@ -251,10 +250,11 @@ that either way.
 | kccf-029 | theme-change-repaint | Field is on screen with theme T1; switch the active theme to T2 | Background/border color and label font/text color are re-read from T2's `SemanticPalette` without further user action |
 | kccf-030 | recording-state-border-color | Compare a non-recording field to the same field once it starts recording | Border color changes from `borderColor` to `accentColor` |
 | kccf-031 | shortcut-presence-text-color | Compare a field with `displayedShortcut` set to one with none | Text color is `primaryTextColor` when a shortcut is shown, `placeholderTextColor` when none is |
+| kccf-032 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
+| kccf-033 | coder-initialization-rejection | Attempt to construct the control from a serialized or archived representation | Construction is refused as a programmer error and terminates; no instance is produced. Verified by inspection only, since the refusal cannot be caught. |
+| kccf-034 | minimum-contrast-ratio | Construct the field under a theme whose primary text and control background colors are close | Text color equals the theme's primary text color and background equals the theme's control background color; no contrast adjustment is applied. |
 
-`main-actor-confinement` and `coder-initialization-rejection` have no test
-vectors: see Platform Notes for how each is
-verified.
+`confines-to-ui-thread` is vector kccf-032 and `coder-initialization-rejection` is vector kccf-033; both are verified by inspection only (see Platform Notes).
 
 ## Edge Cases
 
@@ -415,7 +415,7 @@ Not applicable: this component's own source contains no logging call.
   primary modifier on this platform is Command: the "primary modifier plus
   K"/"primary modifier plus Shift plus K"/"Option plus primary modifier
   plus P" test-vector inputs above correspond to ⌘K, ⌘⇧K, and ⌥⌘P
-  respectively. `main-actor-confinement` is enforced by the class and its
+  respectively. `confines-to-ui-thread` is enforced by the class and its
   public API being declared `@MainActor`, so construction or mutation from
   off the main actor fails to compile — a static, compile-time check
   rather than a vector observed by running the program; a port on a
@@ -547,6 +547,10 @@ always appears the instant recording starts. (Applies to the AppKit
 implementation.)
 **Approved**: pending
 
+**Decision**: The field performs no contrast check: background, border, accent and text colors are the active theme's palette roles as resolved.
+**Rationale**: No source path measures contrast, and the actual values live in each shipped theme outside this component. Closing the gap means auditing each shipped theme's resolved values for these role pairings against a chosen accessibility bar, or adding a contrast floor to the palette resolution the field consumes.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -557,6 +561,8 @@ implementation.)
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | failed | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `native-controls-preference` is passed, not failed: the component
 deliberately avoids the native `NSTextField` control for the reason recorded
@@ -573,6 +579,8 @@ Accessibility Options above; it is not represented in this table.
 `no-hardcoded-strings` is failed because of the two unlocalized literals
 recorded under Localization above.
 
+`separation-of-concerns` passes because the field only turns key events into `onCapture`, `onCancel` and `onCommit` callbacks and displays a shortcut value; what a captured chord means, and whether it conflicts with another, is decided by the owning panel. `unit-test-coverage` is `partial`: `KeyCommands/KeyCommandBehaviourTests.swift` hosts a `KeyCommandCaptureField` (its `recordingField()` helper) and drives its key handling directly (`testShiftTabLeavesTheRecorderInsteadOfBeingRecorded`, `testReturnCommitsInsteadOfBeingRecorded`) and its `onCapture`/`onCommit` callbacks through the panel row, but nothing exercises the Escape cancel, command-chord capture through the key-equivalent path, focus-driven recording state, or theming.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -581,3 +589,4 @@ recorded under Localization above.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/controls/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Wrote the main-thread confinement and archive-rejection requirements platform-neutrally with vectors kccf-032 and kccf-033; resolved the minimum-contrast-ratio NEEDS REVIEW marker as current behavior (no contrast check) with vector kccf-034 and a pending decision; added separation-of-concerns and unit-test-coverage compliance rows. Renamed the thread-confinement requirement to confines-to-ui-thread with the standard wording. Corrected the unit-test-coverage rationale to credit the direct Tab and Return tests. |

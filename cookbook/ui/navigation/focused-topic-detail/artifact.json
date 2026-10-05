@@ -1,0 +1,57 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "7f122a27-5b49-4f03-9439-1152249bc08f",
+    "title": "Focused Topic Detail (FTD) View",
+    "domain": "adtoolkit://cookbook/ui/navigation/focused-topic-detail",
+    "type": "recipe",
+    "version": "1.2.5",
+    "status": "accepted",
+    "language": "en",
+    "created": "2026-06-26",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The master/detail view contract governing every route that manages a collection of one entity kind: topic list, entity pane, selector popup, and All view.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "master-detail",
+      "view",
+      "layout",
+      "navigation"
+    ],
+    "ingredients": [
+      "agenticdevelopertoolkit://recipes/resizable-split",
+      "agenticdevelopertoolkit://recipes/option-menu",
+      "agenticdevelopertoolkit://recipes/alert-and-dialog",
+      "agenticdevelopertoolkit://recipes/data-table",
+      "agenticdevelopertoolkit://recipes/disclosure",
+      "agenticdevelopertoolkit://recipes/topic-detail"
+    ],
+    "depends-on": [],
+    "related": [],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "7bc5799e14ecce02",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "ingredients", "heading": "Ingredients"},
+    {"part": "integration-requirements", "heading": "Integration Requirements"},
+    {"part": "layout", "heading": "Layout"},
+    {"part": "shared-state", "heading": "Shared State"},
+    {"part": "integration-test-vectors", "heading": "Integration Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

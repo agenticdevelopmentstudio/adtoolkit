@@ -1,40 +1,36 @@
 ---
 id: b1a34260-3966-4309-ac58-6249752c95fb
-title: Webview Panel State
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-state
+title: "Webview Panel State"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-state
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The single string a webview panel's viewType, title, page state, and
-  options survive a quit as.
+summary: "The single string a webview panel's viewType, title, page state, and options survive a quit as."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- webview
-- pane
-- persistence
+  - extensions
+  - webview
+  - pane
+  - persistence
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/webview-panel-view
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelState.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/WebviewPanelStateTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewPanelViewController.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewPanelSerializer.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelState.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/WebviewPanelStateTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/WebviewPanelOptions.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewPanelViewController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Webview/WebviewPanelSerializer.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Webview Panel State
@@ -121,7 +117,7 @@ fields it carries: `viewType`, `title`, `state`, and `options`.
   type is itself safe for concurrent access — a value of this component MUST
   be safe to pass across concurrent execution contexts without additional
   synchronization.
-- **empty-view-type-validation**: NEEDS REVIEW: Not implemented in source. Decoding this component refuses data with no `viewType` key at all (**missing-view-type-refused**), but data whose `viewType` key is present with the value of an empty string decodes successfully, since requiring the key only requires a string, not a non-empty one. The source's own documentation gives the reason the missing case is refused — "a default would hand the panel to whichever provider happened to answer to the empty string" — and that same hazard applies to an explicit empty string exactly as much as to an absent key, but only the absent case is guarded. What would settle it: a decision from this toolkit's maintainers on whether decoding should also refuse an empty `viewType`, and whether a second, distinct error condition is needed for that refusal or the existing missing-key failure should be reused.
+- **empty-view-type-validation**: Decoding MUST accept a `viewType` that is present as an empty string: only an absent key is refused (**missing-view-type-refused**), because the key is required to be a string, not a non-empty one. The hazard that justifies refusing the absent case, handing the panel to whichever provider answers to the empty string, applies equally to an explicit empty string, which is not guarded (see the pending design decision on empty view types).
 
 ## Appearance
 
@@ -389,6 +385,10 @@ written to a log by this component.
   declared.
   **Approved**: pending
 
+**Decision**: An empty-string `viewType` decodes successfully; only a missing key is refused.
+**Rationale**: `WebviewPanelState`'s decoder reads `viewType` with a plain string decode, so the empty string passes while the stated reason for refusing a missing key (a default would match whichever provider answers to the empty string) holds for it too. Closing it would take a maintainer decision on whether to refuse an empty `viewType`, and whether that needs a second error condition or can reuse the missing-key failure.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -429,6 +429,7 @@ returning a partially-populated or best-guess value (`malformed-text-refused`,
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the NEEDS REVIEW marker as current behavior and recorded it as a pending design decision. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/webviews/. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

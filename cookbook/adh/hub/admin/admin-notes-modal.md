@@ -1,35 +1,34 @@
 ---
 id: 589babce-b66e-447f-8049-f81af380bbef
-title: Admin Notes Modal
-domain: agenticdevelopertoolkit://cookbook/adh/hub/admin/admin-notes-modal
+title: "Admin Notes Modal"
+domain: adtoolkit://cookbook/adh/hub/admin/admin-notes-modal
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Staged Cancel/Save admin-notes editor: a controlled dialog over a note
-  list-with-details pane, plus a nested new/edit note editor dialog.'
+summary: "Staged Cancel/Save admin-notes editor: a controlled dialog over a note list-with-details pane, plus a nested new/edit note editor dialog."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- modal
-- notes
-- admin
-- list-detail
+  - modal
+  - notes
+  - admin
+  - list-detail
 depends-on:
-- agenticdevelopertoolkit://recipes/dialog
-- agenticdevelopertoolkit://recipes/list-with-details-pane
-- agenticdevelopertoolkit://recipes/button
-- agenticdevelopertoolkit://recipes/textarea
+  - agenticdevelopertoolkit://recipes/dialog
+  - agenticdevelopertoolkit://recipes/list-with-details-pane
+  - agenticdevelopertoolkit://recipes/button
+  - agenticdevelopertoolkit://recipes/textarea
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Admin Notes Modal
@@ -417,11 +416,15 @@ Not applicable: the source contains no logging call.
 | Check | Status | Category |
 |-------|--------|----------|
 | [focus-management](agenticdevelopercookbook://compliance/accessibility#focus-management) | passed | accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 The source shows no override of `Dialog`'s default focus-trap/dismissal
 handling on either dialog (no custom keydown handling, no manual `.focus()`
 calls), so `focus-management` passes on the strength of `Dialog`'s
 own unmodified behavior.
+
+`separation-of-concerns` passes: `admin-notes-modal.tsx` imports only shared UI primitives (`Dialog`, `Textarea`, `Button`, `ListWithDetailsPane`) and the `AdminNote` type, performs no fetching, and receives its notes and an `onSave` callback from the caller. `unit-test-coverage` passes: `adminNotesModal.test.tsx` covers the staged working copy discarded on Cancel, the dirty-gated outer Save button, adoption of refetched notes after a save, and a refetch landing while the dialog is open (adopted when nothing is staged, never clobbering staged edits).
 
 ## Change History
 
@@ -432,3 +435,5 @@ own unmodified behavior.
 | 1.1.1 | 2026-09-23 | Mike Fullerton | Compliance: removed rows for checks absent from the cookbook catalog, remapped modal-dismissal-and-focus to focus-management |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/admin/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Add separation-of-concerns and unit-test-coverage compliance. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |

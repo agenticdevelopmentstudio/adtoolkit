@@ -1,31 +1,33 @@
 ---
 id: 3dc693ab-28e4-4624-9b2d-8dc81f81e037
-title: CRUD Record Form
-domain: agenticdevelopertoolkit://cookbook/ui/crud/crud-record-form
+title: "CRUD Record Form"
+domain: adtoolkit://cookbook/ui/crud/crud-record-form
 type: recipe
-version: 1.3.0
+version: 1.4.2
 status: review
 language: en
-created: '2026-07-03'
-modified: '2026-09-27'
+created: 2026-07-03
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "Metadata-driven create/edit form for a generic CRUD table: builds one field per writable column from the table's metadata (enum columns become a select, boolean columns become a checkbox), and skips server-managed columns."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- crud
-- form
-- metadata
-- validation
+  - crud
+  - form
+  - metadata
+  - validation
 ingredients:
-- agenticdevelopertoolkit://recipes/field
+  - agenticdevelopertoolkit://recipes/field
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/crud/crud-table
+  - adtoolkit://cookbook/ui/crud/crud-table
 references: []
+approved-by: ""
+approved-date: ""
 ---
 
 # CRUD Record Form
@@ -108,6 +110,15 @@ implementation.
   provided submit callback with the payload, disabling Cancel/Save and
   showing "Saving…" while the call is pending, and MUST surface a thrown
   error inline without losing the draft.
+- **lock-form-when-read-only**: `canWrite` MUST be a required input with no
+  default. When it is false the form MUST render every writable column
+  disabled (showing the seeded value), MUST drop the Save control, and MUST
+  render a single **Close** control in place of Cancel that invokes the
+  cancel callback, because a Save the backend would refuse only leads to a 403.
+- **gate-save-on-dirty-on-edit**: On edit, Save MUST be disabled until at least
+  one field differs from the loaded row, and MUST disable again when an edit is
+  reverted to the loaded value; on create Save MUST be enabled from the start,
+  since there is no loaded baseline to diff against.
 
 ## Layout
 
@@ -171,6 +182,10 @@ implementation.
 | T18 | clear-field-by-type-on-edit | edit; clear a plain (non-enum) optional string column | Payload sends `''` for that column |
 | T19 | clear-field-by-type-on-edit | edit; clear an optional enum/integer/JSON column | Column omitted from the payload; its old value survives |
 | T20 | disable-and-skip-create-only-on-edit | edit; a required, empty `createOnly` column | Submission succeeds — no "is required" error; column excluded from the payload |
+| T21 | lock-form-when-read-only | `canWrite=false`, edit mode | Every control is disabled with its seeded value; no Save control; the footer shows one "Close" control that calls the cancel callback |
+| T22 | gate-save-on-dirty-on-edit | edit; an untouched row | Save is disabled |
+| T23 | gate-save-on-dirty-on-edit | edit; change a field, then change it back to the loaded value | Save enables after the change and disables again after the revert |
+| T24 | gate-save-on-dirty-on-edit | create; untouched | Save is enabled |
 
 ## Edge Cases
 
@@ -242,6 +257,7 @@ implementation.
 
 | Platform | Path |
 |----------|------|
+| web | `packages/web/packages/crud/src/CrudRecordForm.tsx` |
 
 ## Design Decisions
 
@@ -263,13 +279,13 @@ carries no column defaults, so sending `''`/`false` would override a DB
 default; omission lets the backend default win.
 **Approved**: pending
 
-**Decision** (React/Web): Validation throws field-named errors surfaced
+**Decision**: (React/Web) Validation throws field-named errors surfaced
 inline via `useAction`.
 **Rationale**: the message names the offending column and the draft is
 retained, so the fix is obvious and non-destructive.
 **Approved**: pending
 
-**Decision** (React/Web): Object/array/unknown columns use a JSON textarea and
+**Decision**: (React/Web) Object/array/unknown columns use a JSON textarea and
 round-trip via `JSON.parse`/`stringify`.
 **Rationale**: jsonb columns must survive edit without a plain-text path
 corrupting an object to "[object Object]".
@@ -294,6 +310,8 @@ row and a conflicting mode flag out of sync with each other.
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | Accessibility |
 | [platform-theming](agenticdevelopercookbook://compliance/platform-compliance#platform-theming) | passed | Platform Compliance |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 `screen-reader-support` and `keyboard-navigable` rest on `Field`'s label
 wrapping and the native `<label>`/`<input>`/`<button>` elements in
@@ -303,10 +321,15 @@ shared classes drawing every color from `apt-*` tokens (no raw hex).
 labels and the required/number/JSON error messages in `CrudRecordForm.tsx` are
 literal English strings with no localization call.
 
+`separation-of-concerns` passes because `CrudRecordForm` generates fields from `CrudTableMeta` and hands the validated payload to its `onSubmit`-style callback, while fetching and persistence live in `useCrudResource` and the surrounding page. `unit-test-coverage` passes because `packages/web/packages/crud/src/__tests__/CrudRecordForm.test.tsx` exercises the form's field generation, validation and submit behavior.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.4.2 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |
+| 1.4.1 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |
+| 1.4.0 | 2026-10-04 | Mike Fullerton | Added the lock-form-when-read-only and gate-save-on-dirty-on-edit requirements with vectors T21-T24 to match the code; filled Reference Implementations; added separation-of-concerns and unit-test-coverage compliance rows. |
 | 1.3.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/crud/. |
 | 1.2.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-23 | Mike Fullerton | Lint pass: added a Design Decision for the `initial`-presence mode inference; named the backend OpenAPI spec (`gen_table_metadata.py`) in place of "the spec" in two places; added the boolean exception to reject-empty-required and the createOnly-before-validation ordering to disable-and-skip-create-only-on-edit; added clear-field-by-type-on-edit with test vectors T17-T19 and T20 for the createOnly/validation ordering; added T13-T16 for JSON pretty-printing, untouched booleans, and `1e999`; defined `rdid`, `fieldCaptionClass`, and `apt-*` on first use; moved the `/all-data` reference out of Overview into a Platform Notes consumer note; added AppKit/UIKit and WinUI 3 Platform Notes bullets and rewrote the SwiftUI/Compose one so none reads "Not applicable"; reformatted every Design Decision into the three-line form with `**Approved**: pending`; rewrote Compliance to link real catalog checks (accessibility, platform-compliance, internationalization), dropping the two rows with no catalog equivalent; fixed the stale source path and the `@agentic-toolkit`/`@agenticdevelopertoolkit/ui` scope mismatch. |

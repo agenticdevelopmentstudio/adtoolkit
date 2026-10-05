@@ -1,0 +1,3 @@
+
+History is state in the status dashboard that loads the last 24 hours of health checks for a single monitored service. It wraps one cached read keyed by the service slug, requests `/history?service=<slug>&hours=24` through the dashboard's status API client (see [status-web-api](adtoolkit://cookbook/status/dashboard/api)), and returns the query result typed as `HistoryResponse`. Passing no slug leaves the query disabled, so a detail pane can use History unconditionally before any service is selected. Its one caller in the package is the detail panel, which feeds `data.checks` into the response-time chart and status strip and shows `loading…` while the result is loading.
+

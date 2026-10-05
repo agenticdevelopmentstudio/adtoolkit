@@ -1,0 +1,3 @@
+
+Decides what is allowed and what the stored values should be for the billing tables; storage is the host's persistence contract. It saves and deletes clients, projects and repos with validation (names, uniqueness, rounding and rate ranges, unique repo claims, protected history), resolves which repo and project claim a piece of work and whether it is tracked, and derives one session's runs and persists them. The session is the unit of derivation because that is what the watermark is stamped on, so a failure leaves each session fully derived or untouched. Refusals are sentences meant to be shown to the user.
+

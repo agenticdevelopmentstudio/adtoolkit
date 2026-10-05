@@ -1,0 +1,6 @@
+
+- **Data collected**: the alert's `target`, `name`, `environment`, `state`, and `detail` strings — infrastructure identifiers and status text describing a monitored site or deploy, sourced by callers external to this module (the issue ledger and monitor sync sweep) from roster and deploy metadata, never from an end user directly. This module constructs and transmits no credential, token, or personal end-user data.
+- **Storage**: none. The queue is in-memory only; this module never writes an alert to disk or a database. An alert not yet delivered when the process exits is lost — there is no persistence to survive a restart.
+- **Transmission**: every queued alert's fields, plus the derived `text`/`content` strings, are sent verbatim in the JSON body of one outbound POST per flush to the caller-supplied destination — an operator-controlled webhook receiver (Slack, Discord, ntfy, or a custom endpoint). This module does not validate or restrict the destination's scheme or host beyond whatever the underlying HTTP client itself enforces; whether that connection is encrypted is a property of the destination, not something this module chooses.
+- **Retention**: not applicable to this module directly — once drained, an alert exists only inside the in-flight HTTP request; this module keeps no record of what it has previously sent.
+

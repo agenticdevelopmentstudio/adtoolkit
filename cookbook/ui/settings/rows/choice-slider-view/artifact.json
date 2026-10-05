@@ -1,0 +1,59 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "aebda2fe-b953-4b3c-a65a-93d92c059fe1",
+    "title": "Choice Slider View",
+    "domain": "adtoolkit://cookbook/ui/settings/rows/choice-slider-view",
+    "type": "ingredient",
+    "version": "1.2.3",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-23",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "A settings row pairing a discrete, tick-snapped slider with a trailing label showing the current choice's name, bound to a choice view model.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "settings",
+      "form-control",
+      "choice"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/ui/settings/rows/captioned-slider-view",
+      "adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view"
+    ],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "21a93e4c783515c0",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

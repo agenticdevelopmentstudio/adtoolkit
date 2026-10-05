@@ -19,7 +19,6 @@
     "version": "1.1.0"
   },
   "structure": {
-    "name": "agentictoolkit",
     "kind": "library"
   },
   "code": {
@@ -830,13 +829,27 @@
         "path": "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser",
         "platform": "apple",
         "kind": "ui",
-        "recipes": "workspace/files"
+        "recipes": "workspace/files",
+        "ignore": [
+          "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/DocumentDestination.swift",
+          "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/FileBrowserSelection.swift",
+          "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/**",
+          "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Settings/**",
+          "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Views/FileEditorState.swift",
+          "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Views/FilePreviewLoader.swift",
+          "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Views/FileTypesSettingsView.swift"
+        ]
       },
       {
         "path": "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/DocumentPane",
         "platform": "apple",
         "kind": "ui",
-        "recipes": "workspace/documents"
+        "recipes": "workspace/documents",
+        "ignore": [
+          "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/DocumentPane/DocumentTabsViewController.swift",
+          "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/DocumentPane/EditorOptionsOverride.swift",
+          "packages/apple/AgenticToolkit/macOS/UI/ViewControllers/DocumentPane/EditorPeripherals.swift"
+        ]
       },
       {
         "path": "packages/apple/AgenticToolkit/macOS/SystemIntegration/WindowManager/WindowActivation",

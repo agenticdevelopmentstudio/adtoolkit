@@ -1,0 +1,3 @@
+
+Not applicable: this file authors no user-facing string of its own. Its two `console.error` calls (`[enrich] failed-deploy query failed:` and `` `[enrich] ${row.id} error fetch/store failed:` ``) are operator-facing diagnostic log lines, not text shown in any UI, so they carry no localization concern here; the `error_text` value it persists via `setErrorText` is entirely provider-authored (Vercel's `errorMessage`/`readyStateReason`, or Railway's build-log tail), not a string literal in this file, so whether or how that value is localized when rendered is a concern of the consumer that displays it, external to this file.
+

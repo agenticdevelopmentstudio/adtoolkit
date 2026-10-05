@@ -1,0 +1,24 @@
+
+- **Empty or missing theme data**: Parsing empty bytes MUST fail with the underlying JSON-parsing error; a document `{}` MUST fail with a missing-colors error; `"colors": {}` MUST fail with a missing-color error naming `editor.foreground`.
+- **A variant file on its own**: a per-variant file that restates a few colours and relies on `include` MUST fail with a missing-color error naming `editor.foreground` when parsed from bytes, and MUST parse when read through the file-based entry point — which is why production callers use the file entry point.
+- **Empty or non-string include**: `"include": ""`, `"include": 3` or `"include": null` MUST be treated as no include (MUST).
+- **Include one level too deep**: a chain of 9 files (8 hops) MUST parse; a 10th file (9th hop) MUST fail with an include-chain-too-deep error (limit 8) (MUST).
+- **Non-object colors in one link of a chain**: when the including file's `colors` is not an object but the base's is, the merged `colors` MUST be the base's (the non-object value is replaced by the merge); the same holds for a non-array `tokenColors` (MUST).
+- **Symlinked include**: containment is decided on the symlink-resolved path; a symlink that lands outside the root MUST fail with an escapes-containment-root error (MUST).
+- **Unreadable optional colour**: a named colour, a 5- or 7-digit value, or a non-string for any optional key MUST count as absent and fall back (cursor → foreground, selection → blend, role → no override) (MUST).
+- **Translucent required colours**: `editor.foreground` and `editor.background` MUST be stored with their declared alpha; only selection is composited (MUST).
+- **Foreground equal to background only after normalisation**: `#FFF` and `#FFFFFFFF` MUST be treated as equal and fail with a foreground-matches-background error (MUST).
+- **tokenColors entry with a `scope` array holding `null`**: the `null` element MUST be skipped and the entry's other selectors kept (MUST).
+- **Scope absent**: an entry with no `scope` (VS Code's "applies to everything") MUST produce no rule, so it cannot falsely match the first role queried (MUST).
+- **No rule matches any role**: syntax styles MUST be empty and no `syntax.` key written (MUST).
+- **Hand-edited duplicate syntax keys**: two keys for one role MUST resolve to the lexicographically greatest; replacing syntax styles MUST remove both (MUST).
+- **Rejected `syntax.` key**: it MUST be preserved when replacing syntax styles and ignored when reading them and by the semantic palette (MUST).
+- **Concurrent access**: the importer has no shared state, so concurrent parses on different threads MUST NOT interfere (MUST). The theme store and its settings-backed storage are confined to a single designated thread, so their calls are serialised and cannot interleave (MUST).
+- **Write followed by callback**: a write through the settings-backed storage MUST produce an external-change callback on a later main-queue turn; a consumer that also reacts synchronously sees two notifications unless it de-duplicates, as the theme manager's reload does (MUST).
+- **Storage never hooked**: a theme store used without a theme manager MUST allocate no observers (MUST).
+- **Corrupt stored themes**: what the custom-themes setting returns when the stored JSON does not decode is owned by the active settings-storage provider (see [Settings Storage](adtoolkit://cookbook/foundation/settings-storage)); this storage returns whatever the setting holds without further validation (MUST).
+- **Large theme file**: the importer MUST read the whole file into memory with no size cap and no timeout (MUST); when importing into the theme store, this blocks that store's designated thread for the read.
+- **Cancellation**: no parse can be cancelled once started (MUST).
+- **Error states**: every failure MUST surface to the caller as an error — an import error, a resource-path error, a file-read error, or the underlying JSON-parsing error — and nothing is stored (MUST).
+- **Offline or disconnected state**: not applicable; the component reads local files and local settings only and performs no network I/O.
+

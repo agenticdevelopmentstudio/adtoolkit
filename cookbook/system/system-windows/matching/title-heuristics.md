@@ -1,46 +1,38 @@
 ---
 id: 77dbd38e-9acd-4053-ba54-738b45101f6b
-title: Window Matching Heuristics
-domain: agenticdevelopertoolkit://cookbook/system/system-windows/matching/title-heuristics
+title: "Window Matching Heuristics"
+domain: adtoolkit://cookbook/system/system-windows/matching/title-heuristics
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Built-in per-app window-title parsers (Xcode, Warp, Brave, VS Code, Terminal)
-  that extract a stable identifying pattern for window fingerprints.
+summary: "Built-in per-app window-title parsers (Xcode, Warp, Brave, VS Code, Terminal) that extract a stable identifying pattern for window fingerprints."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- system-windows
-- window-matching
-- heuristics
+  - system-windows
+  - window-matching
+  - heuristics
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/XcodeHeuristic.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/WarpHeuristic.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/BraveHeuristic.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/VSCodeHeuristic.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/TerminalHeuristic.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SystemWindows/Matching/AppHeuristic.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SystemWindows/MatchStrategy.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SystemWindows/Matching/HeuristicRegistry.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/SystemWindows/HeuristicTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/XcodeHeuristic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/WarpHeuristic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/BraveHeuristic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/VSCodeHeuristic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/Heuristics/TerminalHeuristic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/AppHeuristic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SystemWindows/MatchStrategy.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SystemWindows/Matching/HeuristicRegistry.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/SystemWindows/HeuristicTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Window Matching Heuristics
@@ -124,7 +116,7 @@ title-parser helper that splits a title on the em-dash or en-dash separator.
 - **vscode-filename-first-prefers-last**: With two or more components, when the last component is not generic, the first looks like a filename and the last does not, the VS Code heuristic MUST return the last component (an absent value when empty).
 - **vscode-default-first**: In every other multi-component case, the VS Code heuristic MUST return the first component (an absent value when empty).
 - **vscode-filename-test**: A string MUST count as a filename when splitting it on "." (dropping empty pieces) yields at least two pieces and the last piece, lowercased, is one of: swift, ts, tsx, js, jsx, go, py, rs, rb, java, kt, c, cpp, h, hpp, cs, json, yaml, yml, toml, md, txt, html, css, scss, vue, svelte.
-- **vscode-welcome-doc-contract**: NEEDS REVIEW: Not implemented in source. The VS Code heuristic's own documentation declares "Welcome — Visual Studio Code" -> an absent value ("not a project window"), but the pattern-extraction operation returns "Welcome" for that title because the generic-last branch returns the first component without checking it against the generic set; deciding whether the code or the documentation is authoritative (and adding a test for this title to the reference test suite) settles it.
+- **vscode-welcome-doc-contract**: The VS Code heuristic's documentation declares that "Welcome — Visual Studio Code" yields an absent value ("not a project window"), but the pattern-extraction operation returns "Welcome" for that title because the generic-last branch returns the first component without checking it against the generic set. The code behavior is the current contract.
 
 ### Terminal heuristic
 
@@ -316,6 +308,10 @@ Not applicable: none of the five heuristics nor the title-parser helper logs any
 **Rationale**: Warp and Brave titles use a hyphen, not a dash separator; Warp without " - " is not in its "user - directory" format, so the heuristic declines rather than guessing.
 **Approved**: pending
 
+**Decision**: The VS Code heuristic returns "Welcome" for the Welcome title, contradicting its own documentation.
+**Rationale**: It stands today because the generic-last branch skips the generic-set check. Closing it needs a decision on whether the code or the documentation is authoritative, and a test for this title in the reference test suite.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -344,6 +340,7 @@ Localization).
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved vscode-welcome-doc-contract marker as current behavior plus pending decision |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to system/system-windows/matching/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from the five built-in title heuristics, `AppHeuristic` and `HeuristicTitleParser` |

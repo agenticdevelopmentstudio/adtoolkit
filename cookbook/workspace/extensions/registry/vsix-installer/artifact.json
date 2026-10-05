@@ -1,0 +1,83 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "35dd47a6-23f3-4306-9c81-e3823b79a7a3",
+    "title": "VSIXInstaller",
+    "domain": "adtoolkit://cookbook/workspace/extensions/registry/vsix-installer",
+    "type": "ingredient",
+    "version": "1.1.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Puts a downloaded or user-supplied .vsix on disk as a directory ExtensionRegistry can load, verifying it against the registry's published digest and signature and removing every other directory that claims the same identifier in the same step.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "extension-host",
+      "vsix",
+      "installer",
+      "filesystem"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/workspace/extensions/manifest/extension-identity-component",
+      "adtoolkit://cookbook/workspace/extensions/manifest/extension-resource-path",
+      "adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest",
+      "adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization",
+      "adtoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range",
+      "adtoolkit://cookbook/workspace/extensions/registry/vsix-archive",
+      "adtoolkit://cookbook/workspace/extensions/registry/open-vsx-catalog",
+      "adtoolkit://cookbook/workspace/extensions/registry/open-vsx-client",
+      "adtoolkit://cookbook/workspace/extensions/registry/extension-registry"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Extensions/VSIXArchive.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Extensions/ExtensionIdentityComponent.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Extensions/ExtensionResourcePath.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifestLocalization.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Extensions/ExtensionRegistry.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Concurrency/BlockingWork.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXInstallerTests.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXInstallerFileSystemFailureTests.swift (agenticdevelopertoolkit)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXRegistryInstallTests.swift (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "b4c0837807d86c88",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

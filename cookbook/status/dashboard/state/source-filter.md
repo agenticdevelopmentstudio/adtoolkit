@@ -1,28 +1,27 @@
 ---
 id: 3f2ae6c1-bc07-40ab-b15c-bb4b8c77986b
-title: Source Filter
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/source-filter
+title: "Source Filter"
+domain: adtoolkit://cookbook/status/dashboard/state/source-filter
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: State holding the issue-source multi-select filter, starting with every
-  source selected, with a toggle that adds or removes one.
+summary: "State holding the issue-source multi-select filter, starting with every source selected, with a toggle that adds or removes one."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/env-filter
+  - adtoolkit://cookbook/status/dashboard/state/env-filter
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Source Filter
@@ -65,6 +64,7 @@ Use it wherever a view needs an in-memory, per-use multi-select over the fixed i
 - **per-instance-state**: Each use MUST hold its own selection. A toggle in one use MUST NOT change another concurrent use.
 - **no-persistence**: The selection MUST NOT be written to or read from any storage. It resets to all-selected on every remount and every reload.
 - **no-side-effects**: Source Filter MUST NOT make network requests, log, start timers, or subscribe to anything.
+- **client-only**: Source Filter MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 
 ## Appearance
 
@@ -93,6 +93,7 @@ Not applicable — this is an in-memory state concept, not a visual component.
 | source-filter-009 | per-instance-state | Two separate uses | Call the toggle operation with `"glitchtip"` in the first | The first use has 6 members. The second still has 7. |
 | source-filter-010 | no-persistence | One use toggled to `{dns}` only | Stop using it and start again | `sources` is all 7 members again. No storage is ever touched. |
 | source-filter-011 | toggle-identity-unstable | Any state | Force a re-render and compare the returned toggle operation with the previous one | Not reference-equal. `sources` IS reference-equal when no toggle occurred. |
+| source-filter-012 | client-only | Source Filter is loaded in a server-only rendering context | Render it | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -197,6 +198,7 @@ The hook holds only selection state. Row filtering and label rendering live in `
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,0 +1,3 @@
+
+Not applicable: this file authors no user-facing string of its own. Its `console.log`/`console.error` calls (`[reconcile] vanished-deploy query failed:`, `[reconcile] Vercel deployment ${uid} detail ${res.status}`, `[reconcile] Railway deployment ${id} detail ${res.status}`, `[reconcile] ${row.id} gone at provider → canceling in-flight lifecycle(s)`, `[reconcile] ${row.id} phase fetch/store failed:`, `[reconcile] ${n} in-flight deploy row(s) unconfirmable for 6h+ → unknown`, `[reconcile] expiry sweep failed:`) are operator-facing diagnostic log lines, not text shown in any UI, so they carry no localization concern here.
+

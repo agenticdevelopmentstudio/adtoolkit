@@ -1,64 +1,61 @@
 ---
 id: 35dd47a6-23f3-4306-9c81-e3823b79a7a3
-title: VSIXInstaller
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/vsix-installer
+title: "VSIXInstaller"
+domain: adtoolkit://cookbook/workspace/extensions/registry/vsix-installer
 type: ingredient
-version: 1.0.3
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: "Puts a downloaded or user-supplied .vsix on disk as a directory
-  ExtensionRegistry can load, verifying it against the registry's published
-  digest and signature and removing every other directory that claims the
-  same identifier in the same step."
+summary: "Puts a downloaded or user-supplied .vsix on disk as a directory ExtensionRegistry can load, verifying it against the registry's published digest and signature and removing every other directory that claims the same identifier in the same step."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vsix
-- installer
-- filesystem
+  - extension-host
+  - vsix
+  - installer
+  - filesystem
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range
-- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/vsix-archive
-- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/open-vsx-catalog
-- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/open-vsx-client
-- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-registry
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest-localization
+  - adtoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range
+  - adtoolkit://cookbook/workspace/extensions/registry/vsix-archive
+  - adtoolkit://cookbook/workspace/extensions/registry/open-vsx-catalog
+  - adtoolkit://cookbook/workspace/extensions/registry/open-vsx-client
+  - adtoolkit://cookbook/workspace/extensions/registry/extension-registry
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSIXArchive.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionIdentityComponent.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionResourcePath.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifestLocalization.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionRegistry.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Concurrency/BlockingWork.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXInstallerTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXInstallerFileSystemFailureTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXRegistryInstallTests.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/VSIXArchive.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionIdentityComponent.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionResourcePath.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifestLocalization.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionRegistry.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Concurrency/BlockingWork.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXInstallerTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXInstallerFileSystemFailureTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSIXRegistryInstallTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # VSIXInstaller
 
 ## Overview
 
-`VSIXInstaller` is a `Sendable` `struct` that puts a `.vsix` on disk as a
+`VSIXInstaller` is a stateless value type, safe to share across threads, that puts a `.vsix` on disk as a
 directory `ExtensionRegistry` can load, and takes the previous install of the
 same extension away in the same step. Its whole design is organized around
 two states a half-done install would leave behind, both worse than an outright
@@ -96,15 +93,15 @@ another file is named.
   `ExtensionRegistry.declaredVSCodeVersion`, which equals `SemanticVersion(major:
   1, minor: 138, patch: 0)` (66–68; `ExtensionRegistry.swift`).
 - **injected-file-manager**: `init`'s `fileManager` parameter MUST be a
-  `@Sendable () -> FileManager` closure defaulting to `{ .default }`, never a
-  stored `FileManager` instance, because `FileManager` is not `Sendable` and
-  this type is; every file operation MUST read the file manager through this
+  shareable closure returning a file-system handle (defaulting to the platform's default file-system handle), never a
+  stored handle instance, because a file-system handle is not safe to share across threads and
+  this type is; every file operation MUST read the file-system handle through this
   closure.
-- **sendable-value-type**: `VSIXInstaller` MUST be declared as a `Sendable`
-  `struct`, usable concurrently from any thread or actor without additional
+- **sendable-value-type**: `VSIXInstaller` MUST be an immutable value type
+  that is safe to share across threads and concurrency domains, usable concurrently from any thread or execution context without additional
   synchronization for its own construction and property access, because its
   only stored properties are an immutable `URL`, an immutable
-  `SemanticVersion`, and an immutable `@Sendable` closure.
+  `SemanticVersion`, and an immutable shareable closure.
 - **registry-install-order**: `install(_:using:)` MUST decide installability
   from the record's metadata, then decide verification-artifact completeness
   from the record's metadata, before downloading anything; only after both
@@ -273,8 +270,8 @@ another file is named.
 - **recovery-idempotent**: `recoverInterruptedInstalls()` MUST be safe to call
   when no install is in progress and MUST be safe to call repeatedly, because
   it acts only on entries matching the aside naming convention and a live
-  `moveIntoPlace` holds its aside for both of its renames on one synchronous,
-  actor-free call path.
+  `moveIntoPlace` holds its aside for both of its renames on one synchronous call path
+  with no hop to another execution context.
 - **installation-record-shape**: On success, `install(archive:...)` MUST
   return a `VSIXInstallation` carrying `identifier`, `version`, `displayName`,
   `directory` (the final `destination`), `verification`, `source`,
@@ -306,7 +303,7 @@ another file is named.
   the person reading the message is the one who needs to see what the archive
   claimed.
 - **logging-conformance**: `VSIXInstaller` MUST conform to `Loggable`,
-  declaring `public static nonisolated let logger = makeLogger()`, giving it
+  declaring a static logger readable from any execution context, giving it
   category `"VSIXInstaller"` under whatever subsystem `Bundle.main.
   bundleIdentifier` resolves to (`"nil"` when there is none) (`Loggable.swift`).
 - **case-folded-manifest-identifier**: `manifest.identifier`, which
@@ -315,7 +312,7 @@ another file is named.
   publisher) that `ExtensionManifest.identifier` computes — `VSIXInstaller`
   itself performs no case-folding of its own
   (`ExtensionManifest.swift`).
-- **concurrent-install-ordering**: NEEDS REVIEW: Not implemented in source. No lock or actor serializes concurrent calls to `install(archive:...)` (or the `install(_:using:)` path that calls it) sharing one `installDirectory` value; each call independently runs `recoverInterruptedInstalls`, the supersede scan, `moveIntoPlace`, and superseded-directory cleanup against the same directory tree, and the source defines no ordering, mutual exclusion, or detection of that overlap.
+- **concurrent-install-ordering**: Concurrent install calls sharing one install directory MUST be expected to interleave: no lock or other serialization serializes them (the installer is a plain stateless value), so each call independently runs crash recovery, the supersede scan, the move into place, and superseded-directory cleanup against the same directory tree, and the installer defines no ordering, mutual exclusion, or detection of that overlap.
 
 ## Appearance
 
@@ -443,7 +440,7 @@ Not applicable — this is a file-system installer, not a visual component.
 |--------|------|---------|-------------|
 | `installDirectory` | `URL` | none (required) | Where installs land and are scanned for superseded copies; injected rather than derived. |
 | `hostVersion` | `SemanticVersion` | `ExtensionRegistry.declaredVSCodeVersion` (`1.138.0`) | The VS Code engine version an archive's `engines.vscode` range is checked against. |
-| `fileManager` | `@Sendable () -> FileManager` | `{ .default }` | File-system seam; a test substitutes a `FileManager` subclass that refuses a named move or removal. |
+| `fileManager` | a shareable closure returning a file-system handle | the platform's default file-system handle | File-system seam; a test substitutes a handle that refuses a named move or removal. |
 | `detail` (`install(_:using:)` parameter) | `OpenVSXExtensionDetail` | none (required) | The registry record naming the version, its download URL, and its verification artifacts. |
 | `client` (`install(_:using:)` parameter) | `OpenVSXClient` | none (required) | How the archive and verification artifacts are fetched from the registry. |
 | `archive` (`install(archive:...)` parameter) | `Data` | none (required) | The `.vsix` bytes already in hand. |
@@ -603,6 +600,9 @@ Category: `VSIXInstaller`
   `ObservableCollection` or `INotifyPropertyChanged` belongs on this type
   itself, since it has no UI-observable state of its own — those apply only to
   whatever ViewModel wraps calls into it.
+- **injected-file-manager**: On Apple platforms the `fileManager` parameter is a `@Sendable () -> FileManager` closure defaulting to `{ .default }`, because `FileManager` is not `Sendable`.
+- **sendable-value-type**: On Apple platforms `VSIXInstaller` is declared as a `Sendable` `struct` whose stored properties are an immutable `URL`, an immutable `SemanticVersion`, and an immutable `@Sendable` closure.
+- **logging-conformance**: On Apple platforms the logger is declared `public static nonisolated let logger = makeLogger()`.
 
 ## Reference Implementations
 
@@ -673,6 +673,10 @@ an unrecoverable one. Throwing would report an install that succeeded (or a
 recovery that did the safe thing) as having failed.
 **Approved**: pending
 
+**Decision**: Concurrent installs into one install directory are not serialized or detected as overlapping.
+**Rationale**: `VSIXInstaller` is a stateless `Sendable` struct with no lock, so two overlapping calls each run `recoverInterruptedInstalls`, the supersede scan, `moveIntoPlace`, and cleanup against the same tree. Closing it would take a per-install-directory lock (or a single serialized caller); the only construction sites are in `ExtensionsCoordinator.swift`, and nothing in the installer itself prevents two overlapping installs.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -736,3 +740,5 @@ archive's own manifest rather than trusted (`signature-pair-completeness`,
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.3 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Resolved the concurrent-install-ordering NEEDS REVIEW marker as current behavior (no serialization, stateless installer) and recorded it as a pending design decision. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |

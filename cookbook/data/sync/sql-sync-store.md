@@ -1,39 +1,38 @@
 ---
 id: 14ca2162-b5ec-48bb-95a0-90577e7c9810
-title: SQL Sync Store
-domain: agenticdevelopertoolkit://cookbook/data/sync/sql-sync-store
+title: "SQL Sync Store"
+domain: adtoolkit://cookbook/data/sync/sql-sync-store
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'SQLite-backed store implementation: JSON mirror tables, a coalescing
-  outbox, a cursor and a conflicts audit, with optional typed mirror projections.'
+summary: "SQLite-backed store implementation: JSON mirror tables, a coalescing outbox, a cursor and a conflicts audit, with optional typed mirror projections."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- sync
-- offline
-- persistence
-- sqlite
+  - sync
+  - offline
+  - persistence
+  - sqlite
 depends-on:
-- agenticdevelopertoolkit://cookbook/data/sync/sync-engine
+  - adtoolkit://cookbook/data/sync/sync-engine
 related:
-- agenticdevelopertoolkit://cookbook/data/sync/sync-engine
-- agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client
+  - adtoolkit://cookbook/data/sync/sync-engine
+  - adtoolkit://cookbook/data/sync/offline-sync-client
 references:
-- packages/apple/AgenticToolkit/SyncGRDB/GRDBSyncStore.swift
-- packages/apple/AgenticToolkit/SyncGRDB/SyncMirrorProjection.swift
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncGRDBTests/GRDBSyncStoreTests.swift
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncGRDBTests/SyncMirrorProjectionTests.swift
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/SyncGRDB/GRDBSyncStore.swift
+  - packages/apple/AgenticToolkit/SyncGRDB/SyncMirrorProjection.swift
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncGRDBTests/GRDBSyncStoreTests.swift
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncGRDBTests/SyncMirrorProjectionTests.swift
+approved-by: ""
+approved-date: ""
 ---
 
 # SQL Sync Store
@@ -41,7 +40,7 @@ approved-date: ''
 ## Overview
 
 This store is a SQLite-backed implementation of the store contract driven by
-the sync engine (see [Sync Engine](agenticdevelopertoolkit://cookbook/data/sync/sync-engine)).
+the sync engine (see [Sync Engine](adtoolkit://cookbook/data/sync/sync-engine)).
 It sits on a bounded, deadline-guarded write-ahead-logged connection pool and
 keeps four bookkeeping tables plus one mirror table per registered resource:
 
@@ -116,7 +115,7 @@ top of it.
 - **stage-atomic**: The mirror write and the outbox write of one `stage` call MUST commit together or not at all.
 - **stage-base-version**: `stage` MUST read the row's current `sync_version` (from the projection's stored-version lookup for a claimed resource) before writing, and use it as the base version; a row not yet stored has no base version.
 - **stage-upsert-mirror**: For an unclaimed resource, an upsert MUST set `deleted_at` empty and `data` to the JSON encoding of the mutation's data (an empty object when absent), leaving an existing row's `sync_version` unchanged and creating a new row with `sync_version` 0.
-- **stage-mirror-patch**: NEEDS REVIEW: Not implemented in source. The JSON mirror replaces `data` wholesale with the staged patch while the outbox merges patches and the projection path treats a staged mutation as a deliberate partial patch, so fields absent from the patch vanish from `liveRow` until the next pull; whether the mirror should merge instead needs the sync owner to decide and a test asserting the intended local view.
+- **stage-mirror-patch**: For an unclaimed resource, the JSON mirror MUST replace the row's `data` wholesale with the staged patch, while the outbox merges patches and the projection path treats a staged mutation as a partial patch; fields absent from a patch therefore vanish from `liveRow` until the next pull.
 - **stage-delete-mirror**: For an unclaimed resource, a delete MUST set `deleted_at` to the current timestamp on the existing row and MUST NOT change its `data` or `sync_version`; when the row does not exist, no mirror row MUST be created.
 - **stage-upsert-projection**: For a claimed resource, an upsert MUST call the projection's upsert operation with the base version (0 when absent), the data (an empty object when absent), marking the row as a partial patch (not a full replacement).
 - **stage-delete-projection**: For a claimed resource, a delete MUST call the projection's mark-deleted operation with no version.
@@ -236,8 +235,7 @@ All vectors use a fresh file-backed database and a `personal.notes` resource at 
 | sync-grdb-029 | complete-conflict-audit, complete-conflict-delete | Stage r1; `pendingOps`; complete conflict reason "stale" | `pendingOps` empty; `status().conflictCount` = 1; r1's mirror data unchanged |
 | sync-grdb-030 | cursor-bootstrap, registrations-bootstrap | Never-prepared store; `cursor`; `registrations` | nothing; empty map; neither raises an error |
 | sync-grdb-031 | purge-resources-empty | `purgeResources([])` on a never-prepared store | Returns without error |
-
-**stage-mirror-patch** has no vector because its intended behavior is the open question the requirement text describes.
+| sync-grdb-032 | stage-mirror-patch | Stage an upsert on an unclaimed resource whose existing mirror row has fields `a` and `b`, with a patch carrying only `a` | `liveRow` returns data containing only `a`; `b` is absent until the next pull replaces the row |
 
 ## Edge Cases
 
@@ -388,6 +386,10 @@ Not applicable: the sources make no log call; every failure is raised to the cal
 
 **Approved**: pending
 
+**Decision**: The JSON mirror replaces a row's data wholesale with a staged patch rather than merging it, so a partial patch hides the fields it omits from the local view until the next pull.
+**Rationale**: The mirror, the outbox (which merges patches) and the projection path (which treats a staged mutation as a deliberate partial patch) disagree about what a patch means. Closing it needs the sync owner to decide whether the mirror should merge instead, a change to the mirror write, and a test asserting the intended local view.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -404,12 +406,13 @@ Not applicable: the sources make no log call; every failure is raised to the cal
 | [encryption-at-rest](agenticdevelopercookbook://compliance/privacy-and-data#encryption-at-rest) | failed | Privacy And Data |
 | [data-retention-policy](agenticdevelopercookbook://compliance/privacy-and-data#data-retention-policy) | partial | Privacy And Data |
 
-Storage is behind the `SyncStore` and `SyncMirrorProjection` protocols, and `GRDBSyncStoreTests` plus `SyncMirrorProjectionTests` cover atomicity, coalescing, replay, every purge path and projection routing. Every operation is a single transaction, inflight ops replay after a crash, `prepare` is idempotent, `BoundedDatabase` deadlines bound every call, and `status()` exposes outbox, quarantine and conflict depth. Resource names are allow-listed before they reach SQL, and every value is a bound parameter. Explicit error handling is partial because a completion for an unknown op id is silently ignored and an unparseable `newVersion` is skipped without a signal. Data integrity is partial because a staged upsert replaces the JSON mirror's whole `data` blob while the outbox merges patches, the open question on stage-mirror-patch. Encryption at rest fails because the SQLite file is written unencrypted. Data retention is partial because the conflict audit and tombstones are never pruned, even across an identity change.
+Storage is behind the `SyncStore` and `SyncMirrorProjection` protocols, and `GRDBSyncStoreTests` plus `SyncMirrorProjectionTests` cover atomicity, coalescing, replay, every purge path and projection routing. Every operation is a single transaction, inflight ops replay after a crash, `prepare` is idempotent, `BoundedDatabase` deadlines bound every call, and `status()` exposes outbox, quarantine and conflict depth. Resource names are allow-listed before they reach SQL, and every value is a bound parameter. Explicit error handling is partial because a completion for an unknown op id is silently ignored and an unparseable `newVersion` is skipped without a signal. Data integrity is partial because a staged upsert replaces the JSON mirror's whole `data` blob while the outbox merges patches, the gap recorded under stage-mirror-patch. Encryption at rest fails because the SQLite file is written unencrypted. Data retention is partial because the conflict audit and tombstones are never pruned, even across an identity change.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restate stage-mirror-patch as current behavior with a test vector and pending decision. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to data/sync/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from the Apple `SyncGRDB` sources, `GRDBSyncStoreTests` and `SyncMirrorProjectionTests` |

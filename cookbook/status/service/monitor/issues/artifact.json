@@ -1,0 +1,69 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "130fb0f2-e3a0-452a-bf7d-e49dbb56843e",
+    "title": "Monitor Issues",
+    "domain": "adtoolkit://cookbook/status/service/monitor/issues",
+    "type": "ingredient",
+    "version": "1.2.0",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Records the board's derived verdict into the durable issues ledger — opens, refreshes, and resolves rows, repairs duplicate open rows, and fail-softs per target.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "monitor",
+      "ledger",
+      "issues",
+      "server"
+    ],
+    "depends-on": [
+      "agenticdevelopercookbook://guidelines/implementing/data/constraints-and-validation",
+      "agenticdevelopercookbook://guidelines/implementing/observability/logging"
+    ],
+    "related": [
+      "adtoolkit://cookbook/status/service/monitor/alerts",
+      "adtoolkit://cookbook/status/service/monitor/issue-sources",
+      "adtoolkit://cookbook/status/service/board",
+      "adtoolkit://cookbook/status/service/monitor/cycle-runner",
+      "adtoolkit://cookbook/status/service/storage/libsql"
+    ],
+    "references": [
+      "packages/web/packages/status-server/src/monitor/issues.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/issues.test.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "8a4f2be1bfa4ccd0",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

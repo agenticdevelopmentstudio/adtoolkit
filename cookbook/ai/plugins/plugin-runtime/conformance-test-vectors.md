@@ -1,0 +1,18 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| aiplugins-001 | coordinator-startup-order | Construct a plugins coordinator with app name "Test" | Discovery on the plugin manager runs before migration-if-needed and default-seeding-if-needed, per the fixed startup order |
+| aiplugins-002 | chat-backend-is-ready | The configuration provider's selected plugin identifier is "" | The adapter's readiness is false |
+| aiplugins-003 | chat-backend-is-ready | The configuration provider's selected plugin identifier is "com.x.plugin" | The adapter's readiness is true |
+| aiplugins-004 | chat-backend-no-plugin | The configuration provider's selected plugin identifier is ""; send messages | The returned stream throws a plugin-not-available error; zero text chunks are yielded |
+| aiplugins-005 | local-session-stream-mapping, local-session-turn-finish | Send "hi" with a fake event stream yielding a text-delta "Hel", a text-delta "lo", then an end event with stop reason "end_turn" | Events include a response-started event before the first response-delta event; the concatenated delta text is "Hello"; a terminal response-finished event fires; a state-changed event carrying the ready state follows |
+| aiplugins-006 | local-session-send-busy-guard | Send "first", then send "second" before the first turn completes | The second send produces no user-message/response-started pair in the event stream — it is dropped |
+| aiplugins-007 | local-session-no-plugin | No plugin can be resolved, then send "hi" | Events emit a turn-failed event carrying "No AI provider is configured." and marked not retryable, then a state-changed event carrying the ready state; no response-started event |
+| aiplugins-008 | config-store-seed, config-store-values-overlay | Seed a configuration from a template whose default values are `["baseURL": "https://api.groq.com/openai/v1"]` and a secret `apiKey` field, then read configuration values | `values["baseURL"] == "https://api.groq.com/openai/v1"`, `values["model"] == "m1"`, `values["apiKey"]` is empty; after setting the apiKey field's stored value to "sk-test", resolving configuration values returns `"apiKey" == "sk-test"` |
+| aiplugins-009 | resolver-fails-closed-on-template | The configuration's template id is "renamed-away", a template the descriptor no longer advertises | Resolving the configuration against the plugin manager returns nothing |
+| aiplugins-010 | migration-inclusion-rule | One descriptor, an empty legacy selection, prior values returning `["apiKey": ""]` | The plan's configurations list is empty; the plan's selected id is "" |
+| aiplugins-011 | migration-inclusion-rule, migration-field-write-rule | A descriptor with a non-secret `baseURL` field, an empty legacy selection, prior values returning `baseURL == "http://localhost:1234"` (differs from the template default "") | The plan's configurations list has one entry; the plan's field writes contain an entry with field key "baseURL" and value "http://localhost:1234" |
+| aiplugins-012 | defaults-only-when-empty | The provider-configurations list already holds one entry; seed defaults when needed | The list is unchanged (still exactly the pre-existing entry); the default-seeded guard is now true |
+| aiplugins-013 | mcp-tool-source-unknown-tool | Call the tool named "fs__nonexistent" where no registered pair namespaces to that name | Returns a result of "Unknown tool: fs__nonexistent" marked as an error |
+| aiplugins-014 | mcp-tool-source-namespacing | The registry returns one pair (server name "fs", tool name "read") with an encodable input schema | Listing tool definitions returns exactly one tool definition named "fs__read" |
+

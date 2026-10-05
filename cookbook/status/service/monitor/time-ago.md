@@ -1,34 +1,33 @@
 ---
 id: 839f5416-d1e3-43fb-91a0-4829abdff427
-title: Status Server Monitor Time Ago
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/time-ago
+title: "Status Server Monitor Time Ago"
+domain: adtoolkit://cookbook/status/service/monitor/time-ago
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure, synchronous function turning an ISO timestamp and a caller-supplied
-  clock reading into a compact just-now/m/h/d elapsed-time label.
+summary: "Pure, synchronous function turning an ISO timestamp and a caller-supplied clock reading into a compact just-now/m/h/d elapsed-time label."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- formatting
-- pure-function
-- server
+  - monitor
+  - formatting
+  - pure-function
+  - server
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/time-ago.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/time-ago.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Time Ago
@@ -305,4 +304,4 @@ it degrades to an incorrect but non-crashing string rather than raising an excep
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 |  |  | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

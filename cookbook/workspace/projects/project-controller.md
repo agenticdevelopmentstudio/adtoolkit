@@ -1,56 +1,49 @@
 ---
 id: 5bfadad5-c93b-432a-807e-04be57ff16b4
-title: Project Management
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-controller
+title: "Project Management"
+domain: adtoolkit://cookbook/workspace/projects/project-controller
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Owns a project's checkouts and their branch controllers, reconciles them
-  against stored tabs, and answers the window's tab-item and command-registration requests.
+summary: "Owns a project's checkouts and their branch controllers, reconciles them against stored tabs, and answers the window's tab-item and command-registration requests."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- tabs
-- checkout
-- branch
-- command-palette
+  - git
+  - projects
+  - tabs
+  - checkout
+  - branch
+  - command-palette
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
-- agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view/tab-pane
-- agenticdevelopertoolkit://cookbook/workspace/files/git-status-provider
+  - adtoolkit://cookbook/workspace/projects/branch-controller
+  - adtoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+  - adtoolkit://cookbook/ui/layout/tabbed-view/tab-pane
+  - adtoolkit://cookbook/workspace/files/git-status-provider
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWorkspace.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTabReconciler.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/BranchController.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsTabItemDataSource.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabItem.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/LayoutNode.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectControllerTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWorkspace.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTabReconciler.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/BranchController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsTabItemDataSource.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/TabItem.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/LayoutNode.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectControllerTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Management
@@ -208,6 +201,7 @@ registry in step with which checkouts currently exist.
   loop lets it keep running a branch controller's refresh — and its git
   subprocess — for a controller whose commands were already unregistered;
   the extra refresh has no remaining observer.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -255,6 +249,7 @@ itself.
 | git-client-projects-project-controller-019 | unchanged-plan-still-signals-checkout-change | Not present in the test suite; synthesized from the implementation. After opening, set a listener for the tab-items-need-refresh signal; rename the `feature` worktree's branch on disk without adding or removing a worktree; refresh checkouts. | The stored tab set is unchanged (so the tabs-changed signal does not fire), but the tab-items-need-refresh signal fires exactly once because the checkout list actually changed. |
 | git-client-projects-project-controller-020 | new-checkout-tabs-copy-arrangement-or-blueprint, active-tab-falls-back-to-first | Not present in the test suite; synthesized from the implementation. After opening, add a third worktree on disk, then refresh checkouts. | The new worktree's tab record reuses the existing tab arrangement with fresh identifiers, not the project's default layout blueprint; the active tab still names whichever tab was active before the refresh. |
 | git-client-projects-project-controller-021 | checkouts-from-worktrees | Not present in the test suite; synthesized from the implementation. Build a workspace whose directory is a plain directory that has never been a git repository (so listing its worktrees succeeds with empty output); open the project controller. | The checkout list holds exactly one synthetic checkout for the workspace's own directory, with no branch and marked as main; exactly one branch controller is created, for that synthetic checkout. |
+| git-client-projects-project-controller-022 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -430,7 +425,7 @@ project controller's own name.
   interface requiring thread-affinity of its own — mirror `@MainActor`
   confinement by only ever touching this object from the UI thread
   (`DispatcherQueue`), the same discipline `BranchController`'s WinUI port
-  already assumes (see `agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller`).
+  already assumes (see `adtoolkit://cookbook/workspace/projects/branch-controller`).
   Reproduce **reconcile-calls-chain-in-order** with a stored `Task`
   (previous reconcile) that the next call `await`s before starting its own
   work — the same continuation-chaining pattern, not a `SemaphoreSlim`, so
@@ -441,7 +436,7 @@ project controller's own name.
   rather than .NET's multicast-delegate convention). Read worktrees with
   `System.Diagnostics.Process` running `git worktree list --porcelain`
   through the same single-door `GitClient` WinUI port
-  `agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller` describes,
+  `adtoolkit://cookbook/workspace/projects/branch-controller` describes,
   and reproduce the main-first-then-git-order partition
   (**checkouts-ordered-main-first-then-git-order**) with `Where`/`Concat`
   rather than `OrderBy`, since LINQ's `OrderBy` is stable but a hand-rolled
@@ -569,7 +564,8 @@ actor while the subprocess runs.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

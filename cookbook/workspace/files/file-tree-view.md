@@ -1,33 +1,32 @@
 ---
 id: b307116d-3ab8-422a-b031-885710e11e70
-title: File Tree View
-domain: agenticdevelopertoolkit://cookbook/workspace/files/file-tree-view
+title: "File Tree View"
+domain: adtoolkit://cookbook/workspace/files/file-tree-view
 type: ingredient
-version: 1.2.0
+version: 1.2.3
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A lazily-loaded, git-status-aware file tree with restore-on-relaunch,
-  reveal-from-editor, and live dirty-file tracking.
+summary: "A lazily-loaded, git-status-aware file tree with restore-on-relaunch, reveal-from-editor, and live dirty-file tracking."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- file-browser
-- tree-view
+  - file-browser
+  - tree-view
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/workspace/files/file-browser-view
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references:
-- https://developer.apple.com/documentation/appkit/nsoutlineview
-- https://developer.apple.com/design/human-interface-guidelines/lists-and-tables
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/documentation/appkit/nsoutlineview
+  - https://developer.apple.com/design/human-interface-guidelines/lists-and-tables
+approved-by: ""
+approved-date: ""
 ---
 
 # File Tree View
@@ -38,7 +37,7 @@ This component draws the file tree itself: one collapsible header row per
 root directory (a root manager), and the files and folders under each one,
 in a tree outline rather than a flat list. It is hosted inside the file
 browser (see
-[File Browser](agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view)),
+[File Browser](adtoolkit://cookbook/workspace/files/file-browser-view)),
 which owns the footer strip and the per-root managers; this component owns
 only the tree surface: lazy per-directory loading, expand/collapse and
 selection state kept in sync with injected shared state (a selection model,
@@ -193,8 +192,7 @@ revealing, and copying a path.
   deselect all rows and MUST set `selection.selectedNode` to `nil`.
 - **context-menu-uses-clicked-row**: The context menu MUST be built for the
   row under the cursor, not for the currently selected row.
-- **context-menu-omitted-for-missing-path**: No context menu items MUST be
-  added for a row whose path no longer exists on disk.
+- **context-menu-omitted-for-missing-path**: Context menu items MUST NOT be added for a row whose path no longer exists on disk.
 - **context-menu-hides-open-items-for-directories**: The "Open", "Open in a
   New Tab", and "Open to the Side" items MUST be omitted for a path that is a
   directory.
@@ -254,6 +252,7 @@ revealing, and copying a path.
   (`pendingSelectionPath == nil`).
 - **document-event-ignores-unparseable-uri**: A document event whose URI does
   not parse into a valid file location MUST be silently ignored.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -412,6 +411,7 @@ revealing, and copying a path.
 | file-tree-outline-069 | programmatic-expand-collapse-not-persisted | Restore a stored expanded path via the disclosure-restore operation (or expand an ancestor via the reveal operation), with no matching entry yet in the restoration model. | The restoration model's stored expanded set gains no new entry for that path as a result of the programmatic expansion itself. |
 | file-tree-outline-070 | restore-disclosure-noop-without-pending | Run the disclosure-restore operation when `pendingSelectionPath` is `nil` and no directory in `restoration.expandedPaths` needs expanding. | No selection, expansion, or scroll change occurs, and no crash results. |
 | file-tree-outline-071 | document-event-ignores-unparseable-uri | Fire a document event whose URI string does not parse into a valid file location. | No row lookup, reload, or crash occurs. |
+| file-tree-outline-072 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 **Testing note**: Additional test-only hooks exist to read and drive state
 directly in tests — reading the currently selected URL, reading the currently
@@ -748,7 +748,7 @@ it in this component.
 **Rationale**: this component's own reselection logic only clears
 `selection.selectedNode` when the outgoing selection was a node; a selected
 root *header* (a root manager) that disappears from a reload is not cleared
-here. The [File Browser](agenticdevelopertoolkit://cookbook/workspace/files/file-browser-view)'s
+here. The [File Browser](adtoolkit://cookbook/workspace/files/file-browser-view)'s
 own `teardown-clears-orphaned-root-selection` requirement is what actually
 guarantees `selection.selectedRoot` is cleared when its root is removed.
 **Approved**: pending.
@@ -757,6 +757,8 @@ guarantees `selection.selectedRoot` is cleared when its root is removed.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | partial | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | Accessibility |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
@@ -775,6 +777,8 @@ fixed git-status colors are not verified against theme backgrounds here.
 user-visible strings are `String` literals with no localization key (see
 Localization above).
 
+`separation-of-concerns` is partial: tree state (`FileTreeNode`, `FileTreeManager`) lives in the model layer, but `FileTreeOutlineViewController` itself holds the outline data source and delegate, the context menu (`NSMenuDelegate`), per-directory child watching (`ChildWatcher`), the open-request handling (`OpenRequest`) and its row views in one large file. `unit-test-coverage` is partial: `FileTreeContextMenuTests.swift`, `FileTreeOpenOnSelectionTests.swift`, `SelectionSyncTests.swift` and `FileTreeNodeTests.swift` construct the real controller and cover the menu, open-on-selection, selection sync and node behavior, but no test covers the row views, keyboard handling or child watching.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -784,3 +788,6 @@ Localization above).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/files/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added compliance rows for the required checks judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.3 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |

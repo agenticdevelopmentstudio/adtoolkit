@@ -1,0 +1,6 @@
+
+- **Role/trait**: This component sets no explicit accessibility role, trait, or identifier anywhere. The placeholder's text and icon carry the platform's automatic default behavior (a spoken static-text element, and a label derived from the icon's name) — neither is overridden or suppressed. The mounted text editor's and system preview's own accessibility behavior is out of scope for this recipe.
+- **Label requirements**: No explicit accessibility label, value, or hint is set anywhere in this component; the placeholder relies entirely on the platform's automatic labels for its text and icon.
+- **Announce state changes**: Switching the display state between empty, loading, text, system-preview, and unavailable replaces the content shown inside the one always-mounted content view, but this component posts no explicit accessibility notification (e.g., a layout-changed or screen-changed post) when that switch happens; a screen-reader user is told about the new content only if the platform's own automatic change detection picks it up on its own.
+- **Minimum tap target**: Not applicable: this component targets pointer and keyboard input and defines no tappable or clickable control of its own; the mounted editor's and system preview's own hit targets are out of scope.
+

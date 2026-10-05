@@ -1,31 +1,30 @@
 ---
 id: 91bd3986-da9d-418e-a969-c878efa88d50
-title: Mock Chat Session
-domain: agenticdevelopertoolkit://cookbook/ai/chat/mock-chat-session
+title: "Mock Chat Session"
+domain: adtoolkit://cookbook/ai/chat/mock-chat-session
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Scripted, in-memory ChatSession test double that echoes a sent turn, then
-  streams a fixed reply in character chunks.
+summary: "Scripted, in-memory ChatSession test double that echoes a sent turn, then streams a fixed reply in character chunks."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- chat-session
-- mock
-- streaming
+  - chat-session
+  - mock
+  - streaming
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-view
+  - adtoolkit://cookbook/ai/chat/chat-window/chat-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Mock Chat Session
@@ -60,7 +59,7 @@ This component is a scripted, in-memory `ChatSession` implementation for tests, 
 - **no-io-side-effects**: The component MUST perform no file, network, process, or notification side effect. Its stated role is "No network, no subprocess", and its implementation touches only in-memory state — `reply`, `chunkSize`, `interChunkDelay`, the stored subscriber handle, and the in-flight turn's task handle — plus ordinary identifier-generation, concurrency, and locking primitives.
 - **continuation-access-is-lock-protected**: Every read or write of the stored subscriber handle MUST be protected against concurrent access, so two callers touching it from different threads MUST NOT race with each other.
 - **second-subscription-silently-supersedes-first**: Because `events()` only ever overwrites the single stored subscriber handle, calling `events()` a second time on the same instance MUST replace it without ending the event stream the first call returned. The first stream MUST then simply stop receiving any further event — it is never itself ended by the second subscription. `ChatSession.events()`'s own documented contract already scopes usage to "Subscribe once", so this is that documented single-subscriber contract's actual failure mode when violated, not a defect specific to this component.
-- **live-turn-synchronization**: NEEDS REVIEW: Not implemented in source. The in-flight turn's task handle is read or written without the same protection the stored subscriber handle receives, in four places: assigning a new live turn on `send(_:)`, and cancelling it from `interrupt()`, `close()`, and the event stream's own termination handling — while the component declares itself safe for concurrent use some other way. The stored subscriber handle receives exactly that protection (see **continuation-access-is-lock-protected**); the in-flight turn's task handle does not. Two of these four sites racing — for example, `send(_:)` assigning a new live turn on one thread while `interrupt()` reads the old value on another — is an unsynchronized data race with no ordering rule between them. Settling this needs either bringing every access to the in-flight turn's task handle under the same protection the stored subscriber handle already uses, or an explicit statement from the maintainer that this component is intended for single-thread/single-isolation-domain use only (which nothing in its declared conformance states).
+- **live-turn-synchronization**: The in-flight turn's task handle is read or written without the protection the stored subscriber handle receives, in four places: assigning a new live turn on `send(_:)`, and cancelling it from `interrupt()`, `close()` and the event stream's own termination handling. Two of these sites racing (for example `send(_:)` assigning a new live turn on one thread while `interrupt()` reads the old value on another) is an unsynchronized data race with no ordering rule between them, while the component declares itself safe for concurrent use. The unprotected live-turn access is recorded in the Design Decision on the unchecked concurrency declaration.
 
 ## Appearance
 
@@ -96,7 +95,7 @@ Not applicable — this is a headless, in-memory test double for a chat engine, 
 - **Boundary `chunkSize` values**: `chunkSize <= 0` collapses to one chunk holding the entire `reply`; a `chunkSize` larger than `reply`'s character count also collapses to one chunk, since the chunking operation's single step is capped at the end of the string. MUST.
 - **Boundary `interChunkDelay` values**: The component places no lower or upper bound on `interChunkDelay`. A value of zero MUST still pass through one inter-chunk delay wait per chunk, even though that wait resolves immediately; an arbitrarily large delay MUST simply hold the turn open between deltas, with no timeout of its own that would end it early. MUST.
 - **Concurrent access — two `events()` subscriptions**: see **second-subscription-silently-supersedes-first** above. MUST.
-- **Concurrent access — the in-flight turn's task handle racing across threads**: this is the open question recorded under **live-turn-synchronization**.
+- **Concurrent access — the in-flight turn's task handle racing across threads**: this is the current behavior described under **live-turn-synchronization** and its Design Decision.
 - **Error states**: Not applicable in the sense of an external dependency failing — the component has none (no network, no subprocess, no file I/O) and never yields `.turnFailed` (see **no-turn-failed-emission**). The only failure mode this component can enter is the unresolved in-flight-turn race noted above.
 - **Offline/disconnected state**: Not applicable — the component performs no networking of any kind; its entire purpose is to stand in for a connected session in tests, previews, and demos.
 - **Cancellation mid-turn**: see **cancellation-stops-only-remaining-chunks** and Conformance Test Vector dev-chat-model-007. MUST.
@@ -146,10 +145,10 @@ Not applicable: the component contains no logging call of any kind.
 ## Platform Notes
 
 - **SwiftUI**: The source is `packages/apple/AgenticToolkit/Core/Chat/MockChatSession.swift`, part of the Foundation-only `AgenticToolkitCore` framework — it imports no UI framework. A SwiftUI host consumes it identically to an AppKit host: construct `MockChatSession(reply:chunkSize:interChunkDelay:)` and hand it to `AIChatViewModel(session:)`, which folds its `ChatEvent`s (via `ChatTranscriptReducer`) into the observable state a SwiftUI chat view would bind to.
-- **Compose**: Model `ChatSession` as a Kotlin interface (`fun events(): Flow<ChatEvent>`, `fun send(text: String)`, `fun interrupt()`, `fun close()`, with a default no-op `fun clear()`). Implement the equivalent of `MockChatSession` with a `MutableSharedFlow<ChatEvent>` (or a `Channel<ChatEvent>`) in place of `AsyncStream` plus its `NSLock`-guarded continuation — `emit`/`trySend` on those types is already safe for concurrent producers. Replace the unsynchronized `liveTurn: Task<Void, Never>?` with a `Job?` guarded by a `Mutex` (or stored in an `AtomicReference`), fixing rather than reproducing the source's unsynchronized `liveTurn` access recorded as the open question under **live-turn-synchronization**. Chunk with a grapheme-cluster-aware split (Kotlin `String`'s code-point-aware iteration, not raw UTF-16 `substring`), and use `delay(interChunkDelayMillis)` in place of `Task.sleep(for:)`.
+- **Compose**: Model `ChatSession` as a Kotlin interface (`fun events(): Flow<ChatEvent>`, `fun send(text: String)`, `fun interrupt()`, `fun close()`, with a default no-op `fun clear()`). Implement the equivalent of `MockChatSession` with a `MutableSharedFlow<ChatEvent>` (or a `Channel<ChatEvent>`) in place of `AsyncStream` plus its `NSLock`-guarded continuation — `emit`/`trySend` on those types is already safe for concurrent producers. Replace the unsynchronized `liveTurn: Task<Void, Never>?` with a `Job?` guarded by a `Mutex` (or stored in an `AtomicReference`), fixing rather than reproducing the source's unsynchronized `liveTurn` access recorded under **live-turn-synchronization**. Chunk with a grapheme-cluster-aware split (Kotlin `String`'s code-point-aware iteration, not raw UTF-16 `substring`), and use `delay(interChunkDelayMillis)` in place of `Task.sleep(for:)`.
 - **React/Web**: Model `ChatSession` with `events()` returning an `AsyncGenerator<ChatEvent>` (or an RxJS `Observable<ChatEvent>`); `send(text)` yields a `userMessage` event, then an `async function*` `yield`s each delta chunk after an `await sleep(interChunkDelayMs)`, mirroring the source's `for`-loop-plus-`Task.sleep`. `interrupt()` becomes an `AbortController.abort()` whose `signal.aborted` the chunk-emitting generator checks each iteration, in place of `Task.isCancelled`. Chunk `reply` with `Array.from(reply)` (an array of Unicode code points) rather than slicing the raw UTF-16 `string`, so a chunk boundary cannot split a surrogate pair — the same guarantee the source's `Character`-based `chunk(_:size:)` gives against splitting a grapheme cluster.
 - **AppKit/UIKit**: The reference implementation is `packages/apple/AgenticToolkit/Core/Chat/MockChatSession.swift`, part of the Foundation-only `AgenticToolkitCore` framework — it is UI-framework-agnostic, and only the application embedding it differs, never this contract. It is declared `final class MockChatSession: ChatSession, @unchecked Sendable`; `@unchecked Sendable` disables the compiler's own cross-isolation-domain checking, so every guarantee of safe concurrent use rests entirely on the type's own locking rather than on anything Swift's concurrency checker verifies. The stored subscriber handle referenced under **continuation-access-is-lock-protected** is the type's `continuation: AsyncStream<ChatEvent>.Continuation?` property, and "protected against concurrent access" means every read or write of it goes through an `NSLock`-backed `withLock` helper (`send(_:)`, `close()`) or the equivalent manual `lock.lock()`/`unlock()` pair (`events()`). The in-flight turn's task handle is the `liveTurn: Task<Void, Never>?` property; as recorded under **live-turn-synchronization**, its four access sites — `send(_:)`'s assignment, and the cancellations in `interrupt()`, `close()`, and the `AsyncStream`'s `onTermination` closure — do not go through that same lock. The live turn itself is built on `AsyncStream`, `Task`, `Task.sleep(for:)` (with a thrown `CancellationError` swallowed via `try?`), and `Task.isCancelled` checks between chunks. "A freshly generated unique identifier string" and "the current time" are `UUID().uuidString` and `Date()`. The chunking operation, `Self.chunk(_:size:)`, splits using `Character`-count offsets (`str.count`, `str.index(_:offsetBy:)`), never UTF-8 byte or UTF-16 offsets, and its stride-based loop (`stride(from: 0, to: str.count, by: size)`) caps its final step at `str.endIndex` via `limitedBy:`.
-- **WinUI 3**: Model `ChatSession` as a C# interface — `IAsyncEnumerable<ChatEvent> Events(); void Send(string text); void Interrupt(); void Close();` plus a default-implemented `void Clear() { }` (C# 8+ default interface members mirror the Swift protocol extension's default `clear()`). Implement `MockChatSession`'s equivalent using a `System.Threading.Channels.Channel<ChatEvent>` in place of `AsyncStream`'s manually-locked continuation — `ChannelWriter<ChatEvent>.TryWrite` is itself thread-safe, which removes the need for a hand-rolled `lock` around it entirely. For the in-flight turn, hold the current `Task`/`CancellationTokenSource` pair behind one `lock (_gate)` block covering every read and write to it — `Send`'s assignment, `Interrupt`'s and `Close`'s cancellation calls, and any stream-teardown handler alike — so a WinUI 3 port does not reproduce this source's unsynchronized `liveTurn` access (see the open question under **live-turn-synchronization**); call `cts.Cancel()` from `Interrupt()`/`Close()`, and `await Task.Delay(interChunkDelay, cts.Token)` between chunks in place of `Task.sleep(for:)`. Chunk `reply` with `System.Globalization.StringInfo`'s text-element enumeration (`StringInfo.GetTextElementEnumerator`/`SubstringByTextElements`) rather than plain `string` indexing, since C# `string` indexing is UTF-16-code-unit-based and — unlike Swift's `Character`-based `String.Index` — can split a surrogate pair or a combining grapheme cluster mid-character.
+- **WinUI 3**: Model `ChatSession` as a C# interface — `IAsyncEnumerable<ChatEvent> Events(); void Send(string text); void Interrupt(); void Close();` plus a default-implemented `void Clear() { }` (C# 8+ default interface members mirror the Swift protocol extension's default `clear()`). Implement `MockChatSession`'s equivalent using a `System.Threading.Channels.Channel<ChatEvent>` in place of `AsyncStream`'s manually-locked continuation — `ChannelWriter<ChatEvent>.TryWrite` is itself thread-safe, which removes the need for a hand-rolled `lock` around it entirely. For the in-flight turn, hold the current `Task`/`CancellationTokenSource` pair behind one `lock (_gate)` block covering every read and write to it — `Send`'s assignment, `Interrupt`'s and `Close`'s cancellation calls, and any stream-teardown handler alike — so a WinUI 3 port does not reproduce this source's unsynchronized `liveTurn` access (see **live-turn-synchronization**); call `cts.Cancel()` from `Interrupt()`/`Close()`, and `await Task.Delay(interChunkDelay, cts.Token)` between chunks in place of `Task.sleep(for:)`. Chunk `reply` with `System.Globalization.StringInfo`'s text-element enumeration (`StringInfo.GetTextElementEnumerator`/`SubstringByTextElements`) rather than plain `string` indexing, since C# `string` indexing is UTF-16-code-unit-based and — unlike Swift's `Character`-based `String.Index` — can split a surrogate pair or a combining grapheme cluster mid-character.
 
 ## Reference Implementations
 
@@ -165,8 +164,6 @@ Not applicable: the component contains no logging call of any kind.
 | apple | `packages/apple/AgenticToolkit/Core/Chat/ConversationsSessionFilter.swift` |
 | apple | `packages/apple/AgenticToolkit/Core/Chat/FeedChatSession.swift` |
 | apple | `packages/apple/AgenticToolkit/Core/Chat/MockChatSession.swift` |
-| apple | `packages/apple/AgenticToolkit/macOS/Features/ConversationsWindow/ConversationFocusOverlay.swift` |
-| apple | `packages/apple/AgenticToolkit/macOS/Features/ConversationsWindow/ConversationsKeyCommands.swift` |
 | apple | `packages/apple/AgenticToolkit/macOS/Features/SessionWatcher/SessionWatcherDataModel/SessionSources.swift` |
 | apple | `packages/apple/AgenticToolkit/macOS/Features/SessionWatcher/SessionWatcherDataModel/SessionWatcherSession.swift` |
 
@@ -177,7 +174,7 @@ Not applicable: the component contains no logging call of any kind.
 **Approved**: pending
 
 **Decision**: On the AppKit/UIKit implementation, `MockChatSession` is declared `@unchecked Sendable`, but only `continuation` is consistently accessed under its `lock`; `liveTurn` is not.
-**Rationale**: This is the same gap as the open question recorded under **live-turn-synchronization**, not a considered design choice — it is recorded here because `@unchecked Sendable` is exactly the kind of "trust me, it's synchronized elsewhere" declaration that Source Fidelity requires calling out rather than smoothing over, and because a port that copies the Swift structure literally (rather than the fixes proposed in Platform Notes) would carry the same race into its target platform.
+**Rationale**: This is the same gap as the behavior described under **live-turn-synchronization**, not a considered design choice — it is recorded here because `@unchecked Sendable` is exactly the kind of "trust me, it's synchronized elsewhere" declaration that Source Fidelity requires calling out rather than smoothing over, and because a port that copies the Swift structure literally (rather than the fixes proposed in Platform Notes) would carry the same race into its target platform.
 **Approved**: pending
 
 **Decision**: On the AppKit/UIKit implementation, `chunk(_:size:)` splits on `Character` count, not byte or UTF-16 count.
@@ -192,16 +189,20 @@ Not applicable: the component contains no logging call of any kind.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
 | [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | partial | Reliability |
 
-Notes: no-hardcoded-strings fails because the default `reply`, `"This is a mock reply."`, is a hardcoded English literal with no localization mechanism (see Localization). unit-test-coverage is partial because `MockChatSessionTests.swift` contains exactly one test, covering only the happy-path scripted reply (dev-chat-model-002 above); it exercises neither `interrupt()`, `close()`, an empty `reply`, a non-positive `chunkSize`, nor a second `events()` subscription. data-integrity is partial because of the unsynchronized `liveTurn` access recorded as the open question under **live-turn-synchronization** — a `var` mutated and read from multiple call sites with no lock, on a type declared `@unchecked Sendable`.
+Notes: no-hardcoded-strings fails because the default `reply`, `"This is a mock reply."`, is a hardcoded English literal with no localization mechanism (see Localization). unit-test-coverage is partial because `MockChatSessionTests.swift` contains exactly one test, covering only the happy-path scripted reply (dev-chat-model-002 above); it exercises neither `interrupt()`, `close()`, an empty `reply`, a non-positive `chunkSize`, nor a second `events()` subscription. data-integrity is partial because of the unsynchronized `liveTurn` access recorded under **live-turn-synchronization** — a `var` mutated and read from multiple call sites with no lock, on a type declared `@unchecked Sendable`.
+
+`separation-of-concerns` passes because `MockChatSession` only scripts a canned reply as chunked response events for the chat-session contract; it does no I/O, owns no transcript state and leaves reduction of events to `ChatTranscriptReducer`.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the live-turn-synchronization NEEDS REVIEW marker as current behavior (gap already recorded as a pending Design Decision); added separation-of-concerns compliance row; moved two misattributed Reference Implementations (ConversationFocusOverlay and ConversationsKeyCommands) to their own specs under ai/chat/conversations/. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/chat/. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |

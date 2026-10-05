@@ -1,32 +1,30 @@
 ---
 id: e886e448-6aa5-4359-979d-49fba713ab2a
-title: Plugin Runtime
-domain: agenticdevelopertoolkit://cookbook/ai/plugins/plugin-runtime
+title: "Plugin Runtime"
+domain: adtoolkit://cookbook/ai/plugins/plugin-runtime
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Wires plugins discovered by the plugin manager into chat sessions:
-  per-configuration storage, one-time migration, first-run defaults, template
-  resolution, and two parallel chat-session/chat-backend runtimes.'
+summary: "Wires plugins discovered by the plugin manager into chat sessions: per-configuration storage, one-time migration, first-run defaults, template resolution, and two parallel chat-session/chat-backend runtimes."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugins
-- chat-session
-- configuration
-- runtime
+  - ai-plugins
+  - chat-session
+  - configuration
+  - runtime
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Plugin Runtime
@@ -448,13 +446,7 @@ or is a plain immutable value safe to share — never left unspecified.
 - **mcp-tool-source-content-flatten**: Calling a tool MUST join only the
   text content items of a successful call's response with a newline, and
   MUST silently drop any non-text content item.
-- **mcp-tool-source-argument-validation**: NEEDS REVIEW: Not implemented in
-  source. Calling a tool decodes its arguments permissively and, on a decode
-  failure, silently substitutes no arguments rather than surfacing a
-  validation error — a malformed tool-call payload from the model is
-  forwarded to the underlying call as though no arguments were supplied,
-  instead of being reported back as a tool error the model or user could act
-  on.
+- **mcp-tool-source-argument-validation**: Calling a tool decodes its arguments permissively and, on a decode failure, silently substitutes no arguments rather than surfacing a validation error: a malformed tool-call payload from the model is forwarded to the underlying call as though no arguments were supplied, instead of being reported back as a tool error the model or user could act on.
 
 ### Chat Configuration Providers (Plugin-Backed and Single-Configuration)
 
@@ -462,7 +454,7 @@ or is a plain immutable value safe to share — never left unspecified.
   the single-configuration provider MUST return an empty selected plugin
   identifier, an empty selected model, and empty resolved configuration
   values whenever the underlying configuration-resolution call returns
-  nothing — neither type MUST throw.
+  nothing — each type MUST NOT throw.
 - **plugin-chat-config-provider-selection**: The plugin-backed provider's
   resolved configuration MUST derive from the selected-configuration-id
   setting: an empty string, a string that does not parse as a valid
@@ -527,8 +519,8 @@ settings panel view, never drawing anything itself).
   validating it is the plugin's concern, not this component's.
 - **Null/empty input**: The MCP tool source decoding empty or malformed tool
   arguments MUST NOT throw — the permissive decode swallows the failure and
-  passes no arguments to the underlying MCP call (the open question on
-  mcp-tool-source-argument-validation).
+  passes no arguments to the underlying MCP call (see
+  mcp-tool-source-argument-validation and its Design Decision).
 - **Boundary values**: The tool-calling chat session's iteration cap (8) is
   a hard cap. On the 8th iteration, if the model still returns tool-use
   events, the outer loop MUST still end after that iteration completes —
@@ -808,6 +800,10 @@ but unused.
   events alone. (Apple platform implementation.)
   **Approved**: pending.
 
+**Decision**: Malformed MCP tool-call arguments are replaced by no arguments instead of reported as a tool error.
+**Rationale**: The permissive decode swallows the failure, so the underlying call runs without the arguments the model meant to send; closing the gap takes returning a tool error for an undecodable argument payload so the model can correct itself.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -836,7 +832,7 @@ in the Keychain and never in plain user defaults (see Privacy).
 input-sanitization and explicit-error-handling are partial because
 `MCPChatToolSource.callTool` decodes the model's `argumentsJSON` with `try?`
 and forwards `nil` arguments on a decode failure instead of reporting a tool
-error — the open question on mcp-tool-source-argument-validation — while
+error — see mcp-tool-source-argument-validation and its Design Decision — while
 the other failure paths (no configured provider, unknown tool, a throwing
 MCP call) surface as explicit `ChatError` or tool-error text.
 no-hardcoded-strings fails because the user-facing error strings listed
@@ -851,3 +847,5 @@ under Localization are English literals with no localization mechanism.
 | 1.0.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.0.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/plugins/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the mcp-tool-source-argument-validation NEEDS REVIEW marker as current behavior plus a pending Design Decision. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |

@@ -1,34 +1,33 @@
 ---
 id: 64825f85-8b4d-4406-befc-aa08ce55cc8b
-title: Captioned Slider View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view
+title: "Captioned Slider View"
+domain: adtoolkit://cookbook/ui/settings/rows/captioned-slider-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings-row control pairing a slider with a title label and a live,
-  formatter-derived trailing caption showing the current value.
+summary: "A settings-row control pairing a slider with a title label and a live, formatter-derived trailing caption showing the current value."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- form-control
-- range
+  - settings
+  - form-control
+  - range
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/slider-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+  - adtoolkit://cookbook/ui/settings/rows/slider-view
+  - adtoolkit://cookbook/ui/settings/rows/checkbox-view
+  - adtoolkit://cookbook/ui/settings/rows/number-field-view
+  - adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Captioned Slider View
@@ -96,6 +95,7 @@ interactions back into the view model's setting observer.
   instance; no construction path may produce a usable instance without
   both (see Platform Notes for how the source enforces this on
   this platform).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -190,6 +190,7 @@ interactions back into the view model's setting observer.
 | captioned-slider-view-011 | exposes-constituent-views | Construct the component, then access its title label, slider, and caption label from outside the type | All three properties are accessible and return the same instances built during construction |
 | captioned-slider-view-012 | requires-view-model-and-formatter-at-construction | Attempt to construct via a serialization/decoding-based construction path that supplies neither a view model nor a formatter | Construction is rejected; no usable instance is produced. Not testable as an ordinary in-process assertion on every platform — where the failure mode is a runtime trap rather than a thrown/returned error, this requires a crash-test harness or a compile-time/unavailable check instead. |
 | captioned-slider-view-013 | requires-view-model-and-formatter-at-construction | Attempt to construct via a bare/default construction path that supplies neither a view model nor a formatter | Construction is rejected; no usable instance is produced. Same testing caveat as above. |
+| captioned-slider-view-016 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -386,7 +387,7 @@ Not applicable: the source contains no logging call.
 
 ## Design Decisions
 
-- **Decision** (AppKit): Update the caption label from the slider's raw
+- **Decision**: (AppKit) Update the caption label from the slider's raw
   `newValue` inside `sliderChanged(_:)`, ahead of writing to
   `viewModel.settingObserver.value`, rather than waiting for `sync()` to
   run off the round-tripped `viewModel.value`.
@@ -394,7 +395,7 @@ Not applicable: the source contains no logging call.
   while dragging instead of a value that lags one `onChange` cycle behind
   the slider's own position.
   **Approved**: pending
-- **Decision** (AppKit): Set the slider's horizontal content-hugging
+- **Decision**: (AppKit) Set the slider's horizontal content-hugging
   priority to `1` and the caption label's horizontal
   compression-resistance priority to `.required`.
   **Rationale**: The source comment states this priority is "below the
@@ -409,7 +410,7 @@ Not applicable: the source contains no logging call.
   observer-driven feedback loop) when the slider reports a value that
   hasn't actually changed.
   **Approved**: pending
-- **Decision** (AppKit): Force a fatal error from both `init(coder:)` and
+- **Decision**: (AppKit) Force a fatal error from both `init(coder:)` and
   the frame-only `init(frame:)`, leaving `init(viewModel:formatter:)` as
   the only usable initializer.
   **Rationale**: The view has no meaningful default state — it cannot
@@ -445,6 +446,7 @@ Not applicable: the source contains no logging call.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 `keyboard-navigable` and `screen-reader-support` are `partial` because
 source sets no custom focus-ring or accessibility-linkage code at all:
@@ -458,6 +460,8 @@ instances via `ComposableSettings.makeRow` and `makeRowLabel`/
 every write, and the file's single responsibility (row composition and
 value sync, with rendering and formatting delegated elsewhere).
 
+No test in the repository's test targets constructs `CaptionedSliderView`, so `unit-test-coverage` is `failed`: a search of `AgenticToolkitMacOSTests` and the other test targets for the type name finds nothing.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -467,3 +471,5 @@ value sync, with rendering and formatting delegated elsewhere).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage Compliance row, judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

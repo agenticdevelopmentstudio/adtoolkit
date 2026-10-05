@@ -1,39 +1,38 @@
 ---
 id: a11f34ff-116c-47d6-bffa-edd0799cbcb2
-title: Settings Split View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/settings-split-view
+title: "Settings Split View"
+domain: adtoolkit://cookbook/ui/settings/settings-split-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings window's sidebar/detail split view, with back/forward
-  history and optional search.
+summary: "A settings window's sidebar/detail split view, with back/forward history and optional search."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- split-view
-- view-controller
-- navigation
-- search
+  - settings
+  - split-view
+  - view-controller
+  - navigation
+  - search
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel-list
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-host-view
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-scroll-view
+  - adtoolkit://cookbook/ui/settings/settings-panel-list
+  - adtoolkit://cookbook/ui/settings/layout/panel-host-view
+  - adtoolkit://cookbook/ui/settings/layout/panel-scroll-view
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel-split
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-window
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/settings/settings-panel-split
+  - adtoolkit://cookbook/ui/settings/settings-window
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references:
-- https://developer.apple.com/design/human-interface-guidelines/split-views
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/design/human-interface-guidelines/split-views
+approved-by: ""
+approved-date: ""
 ---
 
 # Settings Split View
@@ -261,6 +260,7 @@ This recipe documents only what this component itself declares.
   recomputed from the live containment relationship each time it is read,
   not cached — returning none when no enclosing split exists (see the
   source mechanism in Platform Notes).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -390,6 +390,7 @@ This recipe documents only what this component itself declares.
 | split-view-controller-052 | locates-enclosing-split-by-parent-chain | This instance is added as a panel of an outer settings split view | The enclosing-settings-split query returns that outer instance |
 | split-view-controller-053 | (edge case: removing a non-member panel) | Panels `[a, b]`, remove `z` where `z` is not in the panel list | The stored panels are unchanged (`[a, b]`); navigation history is still reset, the sidebar's panel list is still re-set, and the navigation-change notification still fires |
 | split-view-controller-054 | (edge case: stale nested-detail floor) | Two nested settings-split-view siblings raise the nested-detail floor to `420`; removing a panel drops the nested count to one | The nested-detail floor remains `420` (not reset toward `0`), because the unification step's early exit returns before recomputing it |
+| split-view-controller-055 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -683,6 +684,7 @@ tradeoff.
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | accessibility |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | accessibility |
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | platform-compliance |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | best-practices |
 
 Statuses rest on: this file delegating row
 rendering to `PanelListViewController`, help chrome to `PanelHostView`, and
@@ -697,10 +699,14 @@ but that placeholder is the unlocalized `"Search"` literal documented under
 Localization, so a non-English VoiceOver user would hear an English word
 regardless of the app's language.
 
+`unit-test-coverage` is partial: `ThemedSplitViewOrientationTests.swift` builds `SplitViewController` and asserts its split view is side by side, and the collaborators it delegates to are tested separately (`SettingsSearchIndexTests.swift`, `SettingsNavigationHistoryTests.swift`), but panel add/remove, selection, the search redirect, help routing and sidebar autosave have no test of their own.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage compliance row (partial: orientation test only). |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

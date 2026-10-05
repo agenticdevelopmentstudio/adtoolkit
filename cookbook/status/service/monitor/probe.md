@@ -1,43 +1,42 @@
 ---
 id: 1094926a-e89e-416d-aa62-8bfd42afa1b4
-title: Status Server Monitor Probe
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/probe
+title: "Status Server Monitor Probe"
+domain: adtoolkit://cookbook/status/service/monitor/probe
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The live DNS-then-HTTP probe for one configured endpoint — bounded-concurrency,
-  capped-body, whole-leg-timeout — that health sync and the no-DB status fallback both use.
+summary: "The live DNS-then-HTTP probe for one configured endpoint — bounded-concurrency, capped-body, whole-leg-timeout — that health sync and the no-DB status fallback both use."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- probe
-- dns
-- http
-- server
+  - monitor
+  - probe
+  - dns
+  - http
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/health
-- agenticdevelopertoolkit://cookbook/status/service/monitor/endpoint-kinds
+  - adtoolkit://cookbook/status/service/monitor/health
+  - adtoolkit://cookbook/status/service/monitor/endpoint-kinds
 references:
-- packages/web/packages/status-server/src/monitor/probe.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/probe.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/endpoint-kinds.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/util/map-limit.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/probe.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/probe.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/endpoint-kinds.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/util/map-limit.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Probe

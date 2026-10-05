@@ -1,40 +1,38 @@
 ---
 id: fea35fb1-9eeb-4647-b185-902c1d1cb988
-title: VSCodeEngineRange
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range
+title: "VSCodeEngineRange"
+domain: adtoolkit://cookbook/workspace/extensions/manifest/vs-code-engine-range
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Parses and evaluates a VS Code extension manifest''s engines.vscode range:
-  VS Code''s own non-npm version grammar, not an npm semver range.'
+summary: "Parses and evaluates a VS Code extension manifest's engines.vscode range: VS Code's own non-npm version grammar, not an npm semver range."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-compatibility
-- semantic-versioning
-- version-range
+  - extension-host
+  - vscode-compatibility
+  - semantic-versioning
+  - version-range
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
+  - adtoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSCodeEngineRangeTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ActivationEventMatcher.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionRegistry.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/VSCodeEngineRangeTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ActivationEventMatcher.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionRegistry.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # VSCodeEngineRange
@@ -184,13 +182,14 @@ transfer.
   must-equal flags are `false`; this is `true` for `"*"` and for an all-`x`
   range such as `"x.x.x"`, and `false` for every other range, including a
   literal `"0.0.0"` and a `">=0.0.0"` minimum.
-- **value-semantics**: `VSCodeEngineRange` MUST conform to `Sendable`,
-  `Hashable`, and `CustomStringConvertible`, with its `description`
+- **value-semantics**: `VSCodeEngineRange` MUST be an immutable value safe to
+  share across threads and concurrency domains, comparable for equality and hashable, and
+  convertible to text, with its `description`
   returning `rawValue` exactly.
 - **concurrency-safety**: `VSCodeEngineRange` instances MUST be safe to
   construct and to query (`accepts(_:)`, `minimumVersion`,
-  `isUnconstrained`, `description`) concurrently, from any isolation
-  domain, without external synchronization, because every stored property
+  `isUnconstrained`, `description`) concurrently, from any thread or
+  concurrency domain, without external synchronization, because every stored property
   on `VSCodeEngineRange` and on the private `Requirement` it wraps is a
   `let` and neither type declares any mutable shared state.
 
@@ -234,7 +233,7 @@ not a visual component.
 | vcer-019 | accepts-minimum-comparison | `VSCodeEngineRange(">=1.74.0")!.accepts(1.73.9)` | `false` — source: `accepts(_:)`'s `isMinimum` branch, no dedicated test |
 | vcer-020 | caret-operator, accepts-patch-comparison | `VSCodeEngineRange("^0.10.5")!.accepts(SemanticVersion(major: 0, minor: 10, patch: 6))` | `true` (major `0` clears only the patch flag) — source: `parse(_:)`'s caret branch, no dedicated test |
 | vcer-021 | caret-operator, accepts-minor-comparison | `VSCodeEngineRange("^0.10.5")!.accepts(SemanticVersion(major: 0, minor: 11, patch: 0))` | `false` (minor flag stays set when major base is `0`) — source: `parse(_:)`'s caret branch, no dedicated test |
-| vcer-022 | concurrency-safety | one shared `VSCodeEngineRange` value queried by `accepts(_:)` from many concurrent tasks | every call returns the same result a sequential call would, with no crash or data race — traced to `Sendable`/immutable-storage declaration, no dedicated test |
+| vcer-022 | concurrency-safety | one shared `VSCodeEngineRange` value queried by `accepts(_:)` from many concurrent tasks | every call returns the same result a sequential call would, with no crash or data race — traced to immutable storage, no dedicated test |
 
 ## Edge Cases
 
@@ -379,6 +378,7 @@ states).
   every operation is a synchronous, side-effect-free struct computation
   with no I/O, no serialization, and no observable mutable state to notify
   on.
+- **value-semantics**: On Apple platforms `VSCodeEngineRange` conforms to `Sendable`, `Hashable`, and `CustomStringConvertible`; its `Requirement` storage is all `let`.
 
 ## Reference Implementations
 
@@ -491,6 +491,7 @@ distinct `engines.vscode` ranges real Open VSX web extensions publish.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

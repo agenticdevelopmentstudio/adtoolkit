@@ -1,41 +1,39 @@
 ---
 id: 0679e232-f536-4d02-b3f0-592d52d44582
-title: Status Server OpenAPI
-domain: agenticdevelopertoolkit://cookbook/status/service/openapi
+title: "Status Server OpenAPI"
+domain: adtoolkit://cookbook/status/service/openapi
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Three files that assemble the status backend's OpenAPI 3.1 document — merging
-  fourteen hand-written route modules with the natively-generated auto-document, and
-  the shared fragment builders both depend on.
+summary: "Three files that assemble the status backend's OpenAPI 3.1 document — merging fourteen hand-written route modules with the natively-generated auto-document, and the shared fragment builders both depend on."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- openapi
-- documentation
-- pure-function
-- server
+  - openapi
+  - documentation
+  - pure-function
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/api-design
+  - agenticdevelopercookbook://guidelines/implementing/networking/api-design
 related:
-- agenticdevelopertoolkit://cookbook/status/service/auth
-- agenticdevelopertoolkit://cookbook/status/service/telemetry/fetchers
+  - adtoolkit://cookbook/status/service/auth
+  - adtoolkit://cookbook/status/service/telemetry/fetchers
 references:
-- packages/web/packages/status-server/src/openapi/build.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/openapi/route-key.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/openapi/shared.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/openapi.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/openapi-exclusions.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/tools/dump-openapi.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/openapi/build.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/openapi/route-key.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/openapi/shared.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/openapi.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/openapi-exclusions.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/tools/dump-openapi.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server OpenAPI
@@ -226,4 +224,4 @@ Not applicable: none of `build.ts`, `route-key.ts`, or `shared.ts` contains a lo
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

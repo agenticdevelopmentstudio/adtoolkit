@@ -1,0 +1,70 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "19839612-1fd1-44c5-8659-674c264240be",
+    "title": "Security Client",
+    "domain": "adtoolkit://cookbook/adh/hub/security/security-client",
+    "type": "ingredient",
+    "version": "1.2.0",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The client-side contract for the personal API token surface (`/api/auth/tokens`) and the bucket access-list surface (`/api/bucket/access-groups`): mint/list/revoke tokens, and access-group/member/grant CRUD.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "security",
+      "api-tokens",
+      "access-control",
+      "hub",
+      "buckets"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/adh/hub/security/authentication-client",
+      "adtoolkit://cookbook/adh/hub/access"
+    ],
+    "references": [
+      "packages/web/packages/data/src/security/tokens.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/security/bucket-access.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/security/wire.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/security/index.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/adh-api-types/src/schema.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "f82455448da5c35b",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

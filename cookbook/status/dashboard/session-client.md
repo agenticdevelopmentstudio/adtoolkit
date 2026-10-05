@@ -1,40 +1,39 @@
 ---
 id: 5935b39d-9451-48c1-8b99-bd510d66d1a0
-title: Session Client
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/session-client
+title: "Session Client"
+domain: adtoolkit://cookbook/status/dashboard/session-client
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The status dashboard's session client (auth/me fetch, a shared cached session,
-  host header auth seam) and its backend wire DTO types.
+summary: "The status dashboard's session client (auth/me fetch, a shared cached session, host header auth seam) and its backend wire DTO types."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- status
-- auth
-- api-client
-- monitoring
+  - status
+  - auth
+  - api-client
+  - monitoring
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
-- agenticdevelopercookbook://guidelines/implementing/security/token-handling
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/security/token-handling
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
-- agenticdevelopertoolkit://cookbook/status/service/auth
-- agenticdevelopertoolkit://cookbook/status/service/monitor/types
+  - adtoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/service/auth
+  - adtoolkit://cookbook/status/service/monitor/types
 references:
-- packages/web/packages/status-web/src/header-auth.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/header-auth.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/types.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/api/client.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-web/src/header-auth.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/header-auth.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/api/client.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Session Client
@@ -91,7 +90,7 @@ not re-exported from the barrel.
 - **session-return-shape**: The session hook MUST return `user` and `isPending`, where `user` is the cached data or `null` when no data exists, and `isPending` is true only while the first load is in flight with no data yet.
 - **session-kept-across-errors**: When a refetch fails after data has been cached, the session hook MUST keep returning the last cached user; a failed refetch MUST NOT change `user` to `null`. Sign-out is observed only when a fetch resolves a definitive `null`.
 - **session-error-not-exposed**: The session hook MUST NOT expose the query's error or error state to its caller; only `user` and `isPending` are returned.
-- **first-load-failure-projection**: NEEDS REVIEW: Not implemented in source. When the very first `/auth/me` load fails all four attempts, `isPending` becomes false with no cached data, so the session hook returns `user: null` — indistinguishable from a definitive signed-out answer — and the header shows login/signup links; this contradicts the documented rule that "sign-out only ever comes from a definitive null user", and the hook exposes no error signal to tell the two apart. Settling this needs a decision from the package owner on whether a cold-load failure should surface an error state (for example, an explicit error flag) or remain projected to signed-out.
+- **first-load-failure-projection**: When the very first session load fails every retry attempt, the session projection MUST report no user, the same as a definitive signed-out answer, because no cached data exists and the hook exposes no error signal; the header then shows login and signup links. Sign-out otherwise only ever comes from a definitive null user.
 - **session-query-defaults-inherited**: The session hook MUST NOT override any caching option beyond those named above; refetch-on-focus, refetch-on-reconnect and cache garbage-collection timing are whatever the host's shared query client defaults are.
 - **session-client-resolution**: The session hook MUST resolve its API client through the nearest provider's client, or the same-origin default client when none is mounted.
 
@@ -281,6 +280,10 @@ Not applicable: neither piece of this logic calls a console or logging API; the 
 **Rationale**: the field's doc comment says to render `tier`, never `environment` (which reads "production" for every Vercel project), and that the client deliberately owns no copy of `deployEnv`.
 **Approved**: pending
 
+**Decision**: A cold-load failure of the session query is projected to signed-out and is indistinguishable from a definitive null user; the hook exposes no error flag.
+**Rationale**: It stands today because the hook returns only the user. Closing it needs a package-owner decision on whether a cold-load failure should surface an explicit error state or remain projected to signed-out, and a test for the all-attempts-failed first load.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -303,6 +306,7 @@ Not applicable: neither piece of this logic calls a console or logging API; the 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved first-load-failure-projection marker as current behavior plus pending decision |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

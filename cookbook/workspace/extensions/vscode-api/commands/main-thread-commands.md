@@ -1,43 +1,37 @@
 ---
 id: 5141968f-3922-47f2-a31f-ba953b92a048
-title: VS Code Commands Bridge
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+title: "VS Code Commands Bridge"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The extension host's vscode.commands adaptor — registerCommand, executeCommand
-  and getCommands — dispatching every command into the app's own CommandRegistry,
-  the same table the app's menus and command palette already share, rather than a
-  second extension-private one.
+summary: "The extension host's vscode.commands adaptor — registerCommand, executeCommand and getCommands — dispatching every command into the app's own CommandRegistry, the same table the app's menus and command palette already share, rather than a second extension-private one."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- commands
-- disposable
+  - extension-host
+  - vscode-api
+  - commands
+  - disposable
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
+  - adtoolkit://cookbook/workspace/extensions/host/extension-event
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadCommands.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadCommandsTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadCommands.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadCommandsTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # VS Code Commands Bridge
@@ -269,6 +263,7 @@ only in documentation until a coordinator task wires it in.
   own retain graph.
 - **logging-conformance**: The adaptor MUST participate in the host's
   logging convention, exposing a logger built from its own name.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -297,6 +292,7 @@ Not applicable — this is the extension host's `vscode.commands` adaptor, not a
 | main-thread-commands-009 | get-commands-filters-underscore-prefixed-ids-on-true, get-commands-defaults-to-including-every-id | Register a command whose id starts with `"_"` alongside an ordinary one, then call `getCommands(true)` and separately `getCommands()` | `getCommands(true)` resolves with a list excluding the underscore-prefixed id; `getCommands()` (no argument) resolves with a list that includes it |
 | main-thread-commands-010 | unregister-is-guarded-by-both-ownership-and-token, disposable-captures-a-fixed-token | Register `'test.cmd'`, keep its disposable, tear the whole adaptor down, let a different registrant register `'test.cmd'` again, then dispose the kept disposable | The kept disposable's late dispose call is a no-op — the newer registration under `'test.cmd'` survives untouched |
 | main-thread-commands-011 | execute-rejects-on-torn-down-adaptor, register-raises-on-torn-down-adaptor, get-commands-rejects-on-torn-down-adaptor | Deallocate the adaptor's owner, then call the previously captured `registerCommand`, `executeCommand`, and `getCommands` block values | `registerCommand` raises synchronously; `executeCommand` and `getCommands` each reject their returned promise; none of the three answers `undefined` as if it had succeeded |
+| main-thread-commands-012 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -391,7 +387,7 @@ No other event in this file is logged: `registerCommand`'s refusals (missing id,
 **Rationale**: the choice follows each member's own return shape. `registerCommand` returns a disposable, not a thenable, so there is nothing for a failure to reject; answering `undefined` instead of raising would let an extension push nothing useful onto its own subscription list while believing it had registered a command. `executeCommand` and `getCommands` return a thenable, and a VS Code extension writes `await vscode.commands.executeCommand(...)` inside a `try` — a synchronous throw from underneath that `await` would reach a `catch` other than the one the extension wrote, so both reject instead.
 **Approved**: pending
 
-**Decision** (Swift implementation): the invoke operation returns private callback-failure and dispatch-unavailable wrapper values through the shared command's `([Any]) -> Any?` signature, rather than converting a callback's failure into a rejection or thrown error at the point of dispatch.
+**Decision**: (Swift implementation) the invoke operation returns private callback-failure and dispatch-unavailable wrapper values through the shared command's `([Any]) -> Any?` signature, rather than converting a callback's failure into a rejection or thrown error at the point of dispatch.
 **Rationale**: that dispatch signature is shared with every non-extension command in the app, and giving it any awareness that a scripting engine or promises exist would leak this adaptor's concerns into a type the registry, the menu system, and the command palette all depend on. The two wrapper values are private to this file, and only the execute-command handler — the one member with a promise to settle — ever unwraps them.
 **Approved**: pending
 
@@ -419,6 +415,7 @@ No other event in this file is logged: `registerCommand`'s refusals (missing id,
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/commands/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

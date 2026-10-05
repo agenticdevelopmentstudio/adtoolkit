@@ -1,0 +1,65 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "b976c0d2-084c-4a47-928a-14e33983077f",
+    "title": "Messaging Client",
+    "domain": "adtoolkit://cookbook/adh/hub/messaging/messaging-client",
+    "type": "ingredient",
+    "version": "1.1.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The client-side contract for the Hub's Messaging feature: a data-source operation set for status/templates/log/send, the wire types those operations carry, and the rail navigation, provider-status banners, and placeholder-gated send form built on top of them.",
+    "platforms": [
+      "swift",
+      "macos",
+      "ios"
+    ],
+    "tags": [
+      "hub",
+      "messaging",
+      "data-source",
+      "forms",
+      "templates"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/ui/navigation/htdv"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/Hub/Features/Messaging/MessagingModels.swift (apple)",
+      "packages/apple/AgenticToolkit/Hub/Features/Messaging/MessagingTopic.swift (apple)",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/MessagingTopicTests.swift (apple)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "07c5094d15098e25",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

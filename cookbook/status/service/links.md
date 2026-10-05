@@ -1,28 +1,28 @@
 ---
 id: 1c017caa-0dcc-4278-9b82-af4fa935a3d9
-title: status-server-src-lib
-domain: agenticdevelopertoolkit://cookbook/status/service/links
+title: "status-server-src-lib"
+domain: adtoolkit://cookbook/status/service/links
 type: ingredient
 version: 1.0.3
 status: review
 language: en
 created: 2026-09-24
-modified: '2026-09-27'
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Link generation for monitored sites and deploy projects, deriving live URLs
-  and platform dashboards from configuration and metadata.
+summary: "Link generation for monitored sites and deploy projects, deriving live URLs and platform dashboards from configuration and metadata."
 platforms:
-- web
+  - typescript
+  - web
 tags:
-- link-generation
-- configuration
+  - link-generation
+  - configuration
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # status-server-src-lib
@@ -177,7 +177,7 @@ Not applicable: the module contains no logging calls. All errors (e.g., missing 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | 2026-09-24 | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Claude | Add WinUI 3 translation guidance |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.3 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |

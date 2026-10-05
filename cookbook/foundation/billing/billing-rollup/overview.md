@@ -1,0 +1,3 @@
+
+Rolls closed segments into billing entries under one rule: an entry at `unbilled` is a view of its segments and may be recomputed on every pass; an entry past `unbilled` is history and is never recomputed, edited or silently grown. Late work on a frozen day becomes a visible supplemental entry. Entries group by project, local day and rate (day granularity) or by run (run granularity), so an entry never mixes two rates. Rate, rounding and currency are snapshotted when the entry is first written, so a later rate change never reprices old time. The same component owns hand edits, description-only edits, deletes, audited status moves, assigning segments, and the per-currency overview.
+

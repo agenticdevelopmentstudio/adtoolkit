@@ -1,0 +1,4 @@
+
+- **error-text-not-localized**: `composeVercelDeployError`'s returned string (surfaced by `enrich-deploy-errors.ts`, external, into the persisted `error_text` field the details pane and CLI display, per that file's own doc comment) is composed verbatim from Vercel's own `errorMessage`, `readyStateReason`, and `errorStep` fields, with no localization mechanism of any kind applied by this file — whatever language Vercel's API returns those fields in is what the end user sees.
+- **build-log-not-localized**: `composeVercelBuildLog`'s returned string (surfaced by `routes/deploy-logs.ts`, external, as the `log` field of its JSON response, read by a human debugging a failed build) is likewise composed verbatim from Vercel's build-event `payload.text` values, with no localization mechanism of any kind applied by this file.
+

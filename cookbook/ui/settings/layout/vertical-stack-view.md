@@ -1,32 +1,30 @@
 ---
 id: 765b853f-36a2-4e4f-b8aa-2cd15714a67f
-title: Vertical Stack View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/vertical-stack-view
+title: "Vertical Stack View"
+domain: adtoolkit://cookbook/ui/settings/layout/vertical-stack-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
 created: 2026-09-23
-modified: '2026-09-27'
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A thin wrapper view arranging a column of sibling views
-  top-to-bottom in a settings layout, pinned flush to all four edges,
-  forwarding added-view calls to its internal vertical stack.
+summary: "A thin wrapper view arranging a column of sibling views top-to-bottom in a settings layout, pinned flush to all four edges, forwarding added-view calls to its internal vertical stack."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ui
-- stack-view
-- settings
+  - ui
+  - stack-view
+  - settings
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/horizontal-stack-view
+  - adtoolkit://cookbook/ui/settings/layout/horizontal-stack-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Vertical Stack View
@@ -47,8 +45,7 @@ operation, which forwards to that same internal stack view.
 
 ## Behavioral Requirements
 
-- **confines-to-ui-thread**: The component MUST be usable only on the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **arranges-children-vertically**: The component MUST construct an
   internal stack oriented vertically.
 - **sets-arranged-subview-spacing-from-group-spacing-token**: The
@@ -258,8 +255,8 @@ Not applicable: the component contains no logging calls.
   (`packages/apple/AgenticToolkit/macOS/SystemIntegration/ComposableSettingsWindow/Views/VerticalStackView.swift`)
   is a macOS-only (`import AppKit`), `@MainActor` `NSView` subclass
   conforming to `SettingsViewProtocol` (a marker protocol with no
-  requirements of its own, backing **conforms-to-settings-view-protocol**,
-  covered here rather than as a normative requirement). It sets
+  requirements of its own, so the conformance is recorded here rather than
+  as a normative requirement). It sets
   `translatesAutoresizingMaskIntoConstraints = false` on itself and on its
   internal `NSStackView` (`orientation = .vertical`) — a pure Auto Layout
   framework construction rule with no equivalent step needed on a
@@ -310,7 +307,7 @@ Not applicable: the component contains no logging calls.
 
 ## Design Decisions
 
-**Decision** (AppKit): The frame-accepting initializer discards its
+**Decision**: (AppKit) The frame-accepting initializer discards its
 argument and always constructs with a zero frame.
 **Rationale**: The component positions itself entirely through Auto
 Layout (disabling autoresizing-mask/frame translation, plus the activated
@@ -324,7 +321,7 @@ siblings rather than reconcile it with the constraints that immediately
 override it.
 **Approved**: pending
 
-**Decision** (AppKit): The internal stack view is exposed publicly, unlike
+**Decision**: (AppKit) The internal stack view is exposed publicly, unlike
 the otherwise structurally identical horizontal stack view, whose
 internal stack view is private.
 **Rationale**: Not explained in source comments. This is a genuine
@@ -368,3 +365,5 @@ Notes: separation-of-concerns passes trivially because `VerticalStackView`, like
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Compliance section rewritten as linked checks against the compliance catalog |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/layout/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Fixed stale requirement-ID prose |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

@@ -1,31 +1,30 @@
 ---
 id: 07388a5c-901d-4cf3-b818-bf52c180be08
-title: Permissions Panel View
-domain: agenticdevelopertoolkit://cookbook/system/permissions/permissions-panel-view
+title: "Permissions Panel View"
+domain: adtoolkit://cookbook/system/permissions/permissions-panel-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings panel that stacks one permission row per permission and drives
-  a refresh on first appearance, on app activation, and after a grant action completes.
+summary: "A settings panel that stacks one permission row per permission and drives a refresh on first appearance, on app activation, and after a grant action completes."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- permissions
-- settings
+  - permissions
+  - settings
 depends-on:
-- agenticdevelopertoolkit://cookbook/system/permissions/permission-row-view
+  - adtoolkit://cookbook/system/permissions/permission-row-view
 related:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Permissions Panel View
@@ -88,6 +87,7 @@ settings-framework dependency, so any app or window can host it.
 - **supports-direct-refresh**: The component MUST expose a public refresh
   operation that awaits a full re-read of every row's status, independent
   of the window-attach and app-activation triggers.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -164,6 +164,7 @@ settings-framework dependency, so any app or window can host it.
 | permissions-panel-view-012 | action-refresh | Simulate a row's action callback firing, with a presenter stand-in that appends `"present"` to a shared call-order log before returning (slow to return), and a checker whose status operation appends `"status"` to that same log. | The log records `present` before any `status` entry, and the action callback's own asynchronous work returns control to its caller before the first `status` entry is appended — showing the resulting refresh runs as a separate, unawaited task. |
 | permissions-panel-view-013 | cancels-refresh-and-observer-on-deinit | Start a refresh, tear down the panel before it completes, then post an activation notification. | The in-flight refresh is cancelled with no crash; the posted notification produces no further row update from the torn-down instance. |
 | permissions-panel-view-015 | supports-direct-refresh | Call refresh directly, with no window attach or activation event having occurred. | All rows' refresh operations are invoked and the call returns only once every row's refresh has completed. |
+| permissions-panel-view-016 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -341,6 +342,7 @@ Not applicable: the component contains no logging call of any kind.
   Windows analog of this component's `x-apple.systempreferences:` pane
   URLs (constructed in `Permission.swift`, a different component's
   concern).
+- **confines-to-ui-thread**: On Apple platforms the type is `@MainActor`-isolated, so the compiler enforces the rule.
 
 ## Reference Implementations
 
@@ -404,12 +406,16 @@ by the current minimum-deployment behavior.
 |-------|--------|----------|
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | Accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 `screen-reader-support` is partial because the component registers no
 accessibility-grouping role for its row list (see Accessibility);
 `keyboard-navigable` passed because the source overrides
 no key-view loop, first responder, or key-equivalent, leaving AppKit's
 automatic tab order across the arranged rows intact.
+
+`separation-of-concerns` is `passed` because `PermissionsPanelView` only arranges one `PermissionRowView` per permission and decides when to refresh (on appearing, on app reactivation and after an action); status reading belongs to the injected `PermissionChecking` and card rendering to the row. `unit-test-coverage` is `failed` because no test references `PermissionsPanelView`: `PermissionRowViewTests.swift` covers only the row, so the panel's newest-refresh-wins serialization and its activation observer have no test.
 
 ## Change History
 
@@ -420,3 +426,5 @@ automatic tab order across the arranged rows intact.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to system/permissions/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Cited separation-of-concerns and unit-test-coverage in Compliance |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

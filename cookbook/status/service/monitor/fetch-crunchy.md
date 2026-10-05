@@ -1,38 +1,38 @@
 ---
 id: f236e0ab-2623-4543-a3d9-9ffb4ba3f147
-title: Status Server Monitor Fetch Crunchy
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-crunchy
+title: "Status Server Monitor Fetch Crunchy"
+domain: adtoolkit://cookbook/status/service/monitor/fetch-crunchy
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "Monitor-cycle poller that lists every Crunchy Bridge cluster and maps each to a deploy row whose phase is the cluster's health; token-gated, cooldown-aware, single bounded attempt."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- crunchy
-- deploy
-- fetcher
-- server
+  - monitor
+  - crunchy
+  - deploy
+  - fetcher
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/fetch-crunchy.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/crunchy-deployments.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/fetch-crunchy.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/crunchy-deployments.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Fetch Crunchy

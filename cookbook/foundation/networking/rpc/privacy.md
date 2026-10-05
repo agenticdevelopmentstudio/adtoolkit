@@ -1,0 +1,6 @@
+
+- **Data handled**: The channel's configured arguments, environment, and any bytes sent to the child MAY carry a credential a caller placed into the child's command line, environment, or standard input; the child's standard output and standard error MAY likewise echo one back. Nothing in this component inspects any of that data — every byte is forwarded to the child process or handed back to the caller exactly as given or received, with no logging, redaction, or classification of its own.
+- **Storage**: Nothing in this component performs storage. The channel holds standard-output frames only until a consumer reads them from the message stream, and holds standard error only in its capped, in-memory buffer for the channel's lifetime.
+- **Transmission**: Nothing in this component performs network transmission; all I/O is local — pipes between this process and a spawned child.
+- **Retention**: A decoded frame is retained only until its consumer reads it from the message stream; the channel's standard-error buffer is retained, capped at 1 MiB (tail-only), for the life of the channel and is released with it. The framing decoder's own buffer never exceeds 16 MiB for the newline-delimited and content-length-prefixed schemes, and holds nothing at all for the unframed scheme.
+

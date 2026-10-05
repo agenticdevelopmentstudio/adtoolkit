@@ -1,0 +1,3 @@
+
+Renders integer hundredths as currency text and reads typed amounts back. It is the only integer-to-string bridge for money: nothing else may format an amount through a floating-point number. The integer is always hundredths of the currency's major unit whatever that currency's own minor unit is, so parsing multiplies by 100 and display divides by 100 for every currency, and the two agree for currencies with no minor unit or three. Display always shows exactly two fraction digits, so rows added up equal the total. Parsing is forgiving about what people paste, deciding which of the period and comma is the decimal point from the text and the locale, and returns nothing, never a plausible wrong number, for anything it cannot read unambiguously.
+

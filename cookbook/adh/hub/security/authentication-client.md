@@ -1,38 +1,38 @@
 ---
 id: 65fbb2b1-ca41-499f-ac03-7ecc0e206dcc
-title: Authentication Client
-domain: agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client
+title: "Authentication Client"
+domain: adtoolkit://cookbook/adh/hub/security/authentication-client
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "The client-side contract for personal API tokens, storage tokens, and per-ecosystem bucket access lists: a root routing surface, a mint/reveal-once/revoke lifecycle for both token kinds, and a groups/members/grants tree for bucket access lists."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- authentication
-- api-tokens
-- storage-tokens
-- access-control
-- hub
+  - authentication
+  - api-tokens
+  - storage-tokens
+  - access-control
+  - hub
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Authentication/AccessListsTopic.swift
-- packages/apple/AgenticToolkit/Hub/Features/Authentication/ApiTokensRail.swift
-- packages/apple/AgenticToolkit/Hub/Features/Authentication/AuthenticationModels.swift
-- packages/apple/AgenticToolkit/Hub/Features/Authentication/AuthenticationModule.swift
-- packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/StorageTokensRail.swift
-- packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/EcosystemConfigModels.swift
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Hub/Features/Authentication/AccessListsTopic.swift
+  - packages/apple/AgenticToolkit/Hub/Features/Authentication/ApiTokensRail.swift
+  - packages/apple/AgenticToolkit/Hub/Features/Authentication/AuthenticationModels.swift
+  - packages/apple/AgenticToolkit/Hub/Features/Authentication/AuthenticationModule.swift
+  - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/StorageTokensRail.swift
+  - packages/apple/AgenticToolkit/Hub/Features/EcosystemConfig/EcosystemConfigModels.swift
+approved-by: ""
+approved-date: ""
 ---
 
 # Authentication Client
@@ -253,7 +253,7 @@ points.
   groups/detail/members/grants.
 - **access-detail-refetches-every-call**: Resolving a path MUST re-fetch the bucket list, the group
   list, and — whenever the path is non-empty — the group detail and bucket-table list on every call;
-  none of the four MUST be cached across calls.
+  the four MUST NOT be cached across calls.
 
 **Shared across all four roles**
 
@@ -266,7 +266,7 @@ points.
 
 **Security**
 
-- **security-secret-not-persisted**: Neither rail MUST write a revealed plaintext secret to disk, to a
+- **security-secret-not-persisted**: Each rail MUST NOT write a revealed plaintext secret to disk, to a
   settings store, or to a secure credential store; the revealed-secrets store is a plain in-memory
   mapping with no backing store.
 - **security-secret-single-source**: The plaintext secret MUST be obtainable only from the response of
@@ -591,6 +591,8 @@ into the other rail's pattern.
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | partial | Privacy and Data |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | Reliability |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 `secure-storage` passes: no plaintext secret is ever written to disk, `UserDefaults`, or the Keychain by
 this component — `revealedSecrets` is transient, in-memory, and actively self-expiring
@@ -609,10 +611,13 @@ Disclosure safeguard under Privacy). `idempotent-operations` passes for the one 
 source: `upsertGrant(groupID:_:)` — calling it twice with the same `target`/`crud` body produces the
 same end state each time, by design (`AccessGrantUpsert` is explicitly an upsert, not an append).
 
+`separation-of-concerns` passes: `ApiTokensRail`, `AccessListsTopic`, and `AuthenticationModule` build navigation levels and form specifications over injected data-source protocols and hold no networking or persistence of their own (`AuthenticationModels.swift` and the topic files import only `Foundation` and `AgenticToolkitHTDV`). `unit-test-coverage` passes: `AuthenticationModuleTests.swift` covers the root level, the about notice, the API-tokens level, create-spec scope building and reveal, scope-helper legacy handling, catalogue-unavailable disabling of create, token detail and revoke, the shared storage section, and unknown paths; `AccessListsTopicTests.swift` covers listing, create validation and conflict, group, settings, members, and grants levels, the protected everyone group, and unknown paths.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restate negative requirements as MUST NOT prohibitions; add separation-of-concerns and unit-test-coverage compliance. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/security/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |

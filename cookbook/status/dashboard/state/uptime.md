@@ -1,37 +1,36 @@
 ---
 id: e322fd0c-1552-4bd9-b129-3c809af3a972
-title: Uptime State
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/uptime
+title: "Uptime State"
+domain: adtoolkit://cookbook/status/dashboard/state/uptime
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: State that loads per-service daily uptime for the last N days (default
-  90) from the status backend, fetched once with no polling.
+summary: "State that loads per-service daily uptime for the last N days (default 90) from the status backend, fetched once with no polling."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/api
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/response-history
-- agenticdevelopertoolkit://cookbook/status/service/monitor/uptime
+  - adtoolkit://cookbook/status/dashboard/state/response-history
+  - adtoolkit://cookbook/status/service/monitor/uptime
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Uptime State
 
 ## Overview
 
-The uptime state loads per-service daily uptime over the last `days` days. It wraps one shared read keyed by the window length, requests `/uptime?days=<days>` through the dashboard's injected API client (see [status-web-api](agenticdevelopertoolkit://cookbook/status/dashboard/api)), and returns the read result typed as the uptime response. Unlike its sibling [status-web-hooks-use-response-history](agenticdevelopertoolkit://cookbook/status/dashboard/state/response-history), it sets no polling interval, so it does not poll. It has two consumers in the dashboard, both passing `90`: the dashboard view, which builds a per-service map from `data.services` and picks the selected service's entry, and the overview tab, which reduces `data.services` to one portfolio percentage. The numbers themselves are computed by the backend `/uptime` route in the status service (see [status-server-monitor-uptime](agenticdevelopertoolkit://cookbook/status/service/monitor/uptime)).
+The uptime state loads per-service daily uptime over the last `days` days. It wraps one shared read keyed by the window length, requests `/uptime?days=<days>` through the dashboard's injected API client (see [status-web-api](adtoolkit://cookbook/status/dashboard/api)), and returns the read result typed as the uptime response. Unlike its sibling [status-web-hooks-use-response-history](adtoolkit://cookbook/status/dashboard/state/response-history), it sets no polling interval, so it does not poll. It has two consumers in the dashboard, both passing `90`: the dashboard view, which builds a per-service map from `data.services` and picks the selected service's entry, and the overview tab, which reduces `data.services` to one portfolio percentage. The numbers themselves are computed by the backend `/uptime` route in the status service (see [status-server-monitor-uptime](adtoolkit://cookbook/status/service/monitor/uptime)).
 
 ## Behavioral Requirements
 
@@ -59,6 +58,7 @@ The uptime state loads per-service daily uptime over the last `days` days. It wr
 - **no-timeout**: The state MUST NOT impose its own request timeout; a request that never settles leaves the read fetching until the client or browser ends it.
 - **no-persistence**: The state MUST NOT write uptime data to any durable store; results live only in the in-memory shared cache.
 - **single-threaded-ordering**: Concurrent calls with the same `days` MUST share one cache entry and be deduplicated by the shared cache rather than by the state, so multiple consumers calling this state with the same window under one shared cache issue one request.
+- **client-only**: Uptime State MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 
 ## Appearance
 
@@ -90,6 +90,7 @@ No dedicated test exists for this state; the consuming views' tests mock it out 
 | use-uptime-010 | raw-fetch-not-json-helper | This state called with `90`; inspect the request | No `Content-Type` header is added by the state |
 | use-uptime-011 | single-threaded-ordering | Two consumers both use this state with `90` under one shared cache | One fetch is made; both receive the same `data` |
 | use-uptime-012 | return-value | This state called with `90`, before the stub resolves | The result has `isLoading` true and `data` undefined, and exposes no keys beyond the read result's own |
+| use-uptime-013 | client-only | Load Uptime State in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -213,6 +214,7 @@ Not applicable: the state makes no log calls; failures reach the caller only thr
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial recipe extracted from `use-uptime.ts` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe extracted from `use-uptime.ts` |

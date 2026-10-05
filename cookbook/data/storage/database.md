@@ -1,39 +1,38 @@
 ---
 id: ea580796-8b16-4832-b11d-ad3cae991ecd
-title: Database
-domain: agenticdevelopertoolkit://cookbook/data/storage/database
+title: "Database"
+domain: adtoolkit://cookbook/data/storage/database
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Deadline-bounded SQLite connection pool (one writer, many readers, runaway-query
-  ejection, lane metrics) plus the app's shared storage-directory naming.
+summary: "Deadline-bounded SQLite connection pool (one writer, many readers, runaway-query ejection, lane metrics) plus the app's shared storage-directory naming."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- database
-- sqlite
-- persistence
+  - database
+  - sqlite
+  - persistence
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/data/sync/sync-engine
-- agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client
-- agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-database
+  - adtoolkit://cookbook/data/sync/sync-engine
+  - adtoolkit://cookbook/data/sync/offline-sync-client
+  - adtoolkit://cookbook/adh/hub/content/markdown-store
+  - adtoolkit://cookbook/workspace/projects/project-database
 references:
-- packages/apple/AgenticToolkit/Database/BoundedDatabase.swift
-- packages/apple/AgenticToolkit/Database/AppStorageLocation.swift
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitDatabaseTests/BoundedDatabaseTests.swift
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitDatabaseTests/AppStorageLocationTests.swift
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Database/BoundedDatabase.swift
+  - packages/apple/AgenticToolkit/Database/AppStorageLocation.swift
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitDatabaseTests/BoundedDatabaseTests.swift
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitDatabaseTests/AppStorageLocationTests.swift
+approved-by: ""
+approved-date: ""
 ---
 
 # Database
@@ -59,10 +58,10 @@ sit on. It has two parts:
   reduced to characters a path can hold.
 
 Consumers include the sync store (see
-[Offline Sync Client](agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client)),
-the markdown store (see [Markdown Core](agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store)),
+[Offline Sync Client](adtoolkit://cookbook/data/sync/offline-sync-client)),
+the markdown store (see [Markdown Core](adtoolkit://cookbook/adh/hub/content/markdown-store)),
 and the project database (see
-[Project Database](agenticdevelopertoolkit://cookbook/workspace/projects/project-database)),
+[Project Database](adtoolkit://cookbook/workspace/projects/project-database)),
 which names its file inside the storage-location helper's directory.
 
 ## Behavioral Requirements
@@ -107,7 +106,7 @@ which names its file inside the storage-location helper's directory.
 - **write-serialised**: Top-level writes MUST be serialised on the single writer connection.
 - **write-no-transaction**: The transaction-free write operation MUST run its body on the writer connection without opening a transaction, for bodies that issue their own begin/commit or run statements that cannot sit inside one (such as attaching another database file or reclaiming space).
 - **open-transaction-rollback**: When a top-level transaction-free write's body returns or fails with a transaction still open, the database MUST roll that transaction back after the deadline is disarmed and before the connection is returned to the pool.
-- **rollback-failure**: NEEDS REVIEW: Not implemented in source. The safety-net rollback is issued in a way that discards its own failure, so if it fails the error is lost and the writer connection returns to the pool still inside a transaction with no signal to the caller or to the metrics; evidence needed is whether a failed rollback should raise, log, or count as an eviction.
+- **rollback-failure**: The safety-net rollback MUST be issued in a way that discards its own failure: if it fails, the error is lost, no signal reaches the caller or the metrics, and the writer connection returns to the pool still inside a transaction.
 - **default-deadlines**: A top-level read with no explicit deadline MUST use the configured read deadline; a top-level write or transaction-free write with no explicit deadline MUST use the configured write deadline.
 - **explicit-deadline**: An explicit deadline on a top-level call MUST replace the default for that call only.
 - **synchronous-calls**: Every operation MUST be synchronous: it blocks the calling thread until its body finishes and returns the value or raises.
@@ -133,7 +132,7 @@ which names its file inside the storage-location helper's directory.
 - **nested-eviction-error**: An ejection inside a nested call MUST raise the deadline-exceeded error with the nested call's lane and an elapsed value of `0`; the enclosing top-level call then records one eviction on its own lane and re-raises that same error.
 - **nested-not-metered**: A nested call MUST NOT change the in-flight, completed, or evicted counters; it is counted by its enclosing operation.
 - **is-reentrant**: The reentrancy indicator MUST be true exactly when the calling thread is inside a read, write, or transaction-free write, so a consumer can translate errors only at the outermost boundary.
-- **cross-instance-reentrancy**: NEEDS REVIEW: Not implemented in source. The reentrancy indicator's documentation says "on this database," but the current-connection slot is a single per-thread value shared by every bounded database instance, so a call on database B made inside an operation on database A runs B's body inline on A's connection and B's reentrancy indicator reports `true`; evidence needed is whether cross-instance nesting must be rejected, routed to B's own pool, or documented as unsupported.
+- **cross-instance-reentrancy**: The current-connection slot MUST be treated as a single per-thread value shared by every bounded database instance: a call on database B made inside an operation on database A runs B's body inline on A's connection, and B's reentrancy indicator reports `true`, even though its documentation says "on this database." Cross-instance nesting is unsupported.
 
 ### Bounded Database: Metrics
 
@@ -206,9 +205,9 @@ Not applicable — this is a database access layer and storage-path helper, not 
 - **Statement that never reaches a progress check**: Ejection MUST only happen at a 1000-step boundary, so time blocked outside actual statement execution (for example waiting on a lock, bounded instead by the busy timeout) is not interrupted by the deadline.
 - **Locked database**: A write MUST wait up to the busy timeout for the lock, then fail with the underlying database library's busy error, which propagates unchanged and is not counted in the metrics.
 - **Body swallows the ejection**: The call MUST return the body's value and count as a completion; for a transaction-free write, any transaction left open MUST be rolled back before the connection is reused (sed-015).
-- **Failed safety-net rollback**: Covered by the open question on rollback-failure.
+- **Failed safety-net rollback**: See `rollback-failure`: the failure is discarded and the connection returns to the pool inside the transaction.
 - **Write nested inside a read**: A write called inside a top-level read MUST run inline on the reader connection; this source adds no check, so the write statement fails with whatever error the underlying database library raises for a read-only connection, and that error propagates.
-- **Nested op on a different instance**: Covered by the open question on cross-instance-reentrancy.
+- **Nested op on a different instance**: See `cross-instance-reentrancy`: the body runs inline on the enclosing instance's connection.
 - **Nested ejection details**: The raised error MUST carry the nested call's lane and an elapsed value of `0`, even though the enclosing operation's lane records the eviction.
 - **Concurrent callers**: Top-level reads on different threads MAY run in parallel up to the configured reader count; top-level writes MUST queue on the single writer; the metrics snapshot MAY be read from any thread.
 - **Cancellation**: There is no cancellation interface; an external cancellation signal does not interrupt a running call, and the deadline is the only way a statement is stopped.
@@ -347,6 +346,14 @@ Not applicable: neither component performs its own logging; ejections surface as
 
 **Approved**: pending
 
+**Decision**: A failed safety-net rollback is discarded: it raises nothing, logs nothing and is not counted in the metrics.
+**Rationale**: The rollback is issued so that its own error is dropped, which leaves a connection still inside a transaction in the pool with no signal. Closing it needs a choice between raising, logging, or counting the failure as an eviction, and a test that forces a failing rollback.
+**Approved**: pending
+
+**Decision**: Nesting a call on a different bounded database instance inside an operation is unsupported: it runs inline on the enclosing instance's connection and reports as reentrant.
+**Rationale**: The current-connection slot is one per-thread value shared by all instances, so the second instance never gets its own connection. Closing it would take rejecting cross-instance nesting, routing the call to the second instance's own pool, or documenting it as unsupported at the API.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -366,6 +373,7 @@ The module keeps storage mechanics (pool, deadlines, metrics) and storage naming
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restate rollback-failure and cross-instance-reentrancy as current behavior with pending decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to data/storage/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `BoundedDatabase.swift`, `AppStorageLocation.swift` and their tests |

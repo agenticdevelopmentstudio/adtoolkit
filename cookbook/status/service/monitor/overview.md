@@ -1,49 +1,48 @@
 ---
 id: add8a34c-a40d-417e-9ee8-aec108e73474
-title: Status Server Monitor Overview
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/overview
+title: "Status Server Monitor Overview"
+domain: adtoolkit://cookbook/status/service/monitor/overview
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Platform-grouped deploy tallies and explicit platform-plus-project endpoint-to-deploy
-  correlation, with no host guessing.
+summary: "Platform-grouped deploy tallies and explicit platform-plus-project endpoint-to-deploy correlation, with no host guessing."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- deploy
-- pure-function
-- server
+  - monitor
+  - deploy
+  - pure-function
+  - server
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/issue-sources
-- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
-- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-view
-- agenticdevelopertoolkit://cookbook/status/service/board
+  - adtoolkit://cookbook/status/service/monitor/issue-sources
+  - adtoolkit://cookbook/status/service/monitor/deploy-status
+  - adtoolkit://cookbook/status/service/monitor/deploy-view
+  - adtoolkit://cookbook/status/service/board
 references:
-- packages/web/packages/status-server/src/monitor/overview.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/canon/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/canon/canon.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/target-key.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/ownership.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/issue-sources.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/lib/links.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/auto-configure.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/lib/deploy-view.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/lib/deploy-view.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/overview.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/canon/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/canon/canon.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/target-key.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/ownership.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/issue-sources.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/lib/links.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/auto-configure.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/lib/deploy-view.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/lib/deploy-view.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Overview

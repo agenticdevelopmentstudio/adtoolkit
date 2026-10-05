@@ -1,31 +1,30 @@
 ---
 id: f3d7adbb-ece4-4b00-97af-f7e3db9d5999
-title: Dismissible Hint View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/dismissible-hint-view
+title: "Dismissible Hint View"
+domain: adtoolkit://cookbook/ui/settings/layout/dismissible-hint-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row pairing a hint label with a dismiss button that
-  persists a setting and hides itself once dismissed.
+summary: "A settings row pairing a hint label with a dismiss button that persists a setting and hides itself once dismissed."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- onboarding
+  - settings
+  - onboarding
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/conditional-view
+  - adtoolkit://cookbook/ui/settings/layout/conditional-view
 references:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
-approved-by: ''
-approved-date: ''
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+approved-by: ""
+approved-date: ""
 ---
 
 # Dismissible Hint View
@@ -40,7 +39,7 @@ session." It self-reports visibility changes so a hosting group view can
 collapse the padding and hairline around a card row whose content has
 hidden itself, rather than leaving an empty band behind — the same
 mechanism the sibling conditional view recipe
-(`agenticdevelopertoolkit://cookbook/ui/settings/layout/conditional-view`) uses for
+(`adtoolkit://cookbook/ui/settings/layout/conditional-view`) uses for
 the same reason.
 
 ## Behavioral Requirements
@@ -88,6 +87,7 @@ the same reason.
 - **dismiss-persistence**: Component MUST set the observed setting's
   value to `true` whenever the dismiss button is clicked, unconditionally,
   regardless of the setting's current value.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -181,6 +181,7 @@ the same reason.
 | dismissible-hint-view-019 | visibility-change-callback | Assign a callback to the visibility-change property from outside the type, then trigger a visibility change | The assigned callback is the one invoked |
 | dismissible-hint-view-020 | dismiss-persistence | Click the dismiss button | The dismissed-setting's persisted value becomes `true` |
 | dismissible-hint-view-021 | self-hiding-conformance | Construct the component | The component exposes a visibility-change callback and identifies itself to a hosting container as capable of self-hiding |
+| dismissible-hint-view-022 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 Vector `dismissible-hint-view-021` is a static/type-check vector (verifying
 the component identifies itself to hosting containers as self-hiding), not
@@ -225,7 +226,7 @@ a runtime behavior assertion.
   following turn. This is a MUST-level consequence of the mechanism this
   component observes through — the same underlying mechanism the sibling
   conditional view recipe
-  (`agenticdevelopertoolkit://cookbook/ui/settings/layout/conditional-view`)
+  (`adtoolkit://cookbook/ui/settings/layout/conditional-view`)
   documents for its own observed setting.
 - Repeated taps on the dismiss button: each tap unconditionally sets the
   setting's value to `true` again, with no read-back of the setting's
@@ -257,7 +258,7 @@ applies.
 `buttonTitle`'s default value, the English literal `"Got It"`, carries no
 localization key or lookup — `text` and any explicit `buttonTitle`
 argument are the caller's responsibility to localize (the same treatment
-as the sibling Badge recipe (`agenticdevelopertoolkit://cookbook/ui/controls/badge`)
+as the sibling Badge recipe (`adtoolkit://cookbook/ui/controls/badge`)
 gives fully caller-supplied text), but this one default value ships baked
 directly into the component itself; a call site that never overrides
 `buttonTitle` ships this English literal regardless of the app's locale.
@@ -415,7 +416,7 @@ Not applicable: the component performs no logging of its own.
   asynchronously-delivered change notification arrives, and avoids firing
   `onVisibilityChange` for a hosting `GroupView` before that view has even
   finished adding this row — the same reasoning the sibling `ConditionalView`
-  recipe (`agenticdevelopertoolkit://cookbook/ui/settings/layout/conditional-view`) documents for its own
+  recipe (`adtoolkit://cookbook/ui/settings/layout/conditional-view`) documents for its own
   initial-visibility evaluation.
   **Approved**: pending
 - **Decision**: Guard the `onChange` handler with `dismissed != self.isHidden`
@@ -450,6 +451,8 @@ Not applicable: the component performs no logging of its own.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | Platform Compliance |
 | [platform-theming](agenticdevelopercookbook://compliance/platform-compliance#platform-theming) | passed | Platform Compliance |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | Accessibility |
@@ -467,6 +470,8 @@ writes `true` unconditionally regardless of the setting's current value
 `"Got It"` is a literal baked into the initializer while `text` and any
 caller-supplied `buttonTitle` are not (no-hardcoded-strings: partial).
 
+Separation-of-concerns is passed: `DismissibleHintView` renders a hint with a dismiss control and delegates the persisted dismissed flag entirely to the `UserSetting<Bool>` it is handed, observed through `UserSettingObserver`, so it holds no storage logic of its own. Unit-test-coverage is failed: no test in the repository's test targets references `DismissibleHintView`.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -476,4 +481,6 @@ caller-supplied `buttonTitle` are not (no-hardcoded-strings: partial).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/layout/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added Compliance rows for separation-of-concerns and unit-test-coverage |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 </content>

@@ -1,42 +1,36 @@
 ---
 id: 6fa79a51-8e62-4a99-8979-c93a4269dac8
-title: Diagnostic Types
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/diagnostic-types
+title: "Diagnostic Types"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/languages/diagnostic-types
 type: ingredient
-version: 1.1.0
+version: 1.1.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Installs vscode.DiagnosticSeverity, DiagnosticTag, DiagnosticRelatedInformation
-  and Diagnostic in the extension's script context, and bridges instances to and
-  from host code.
+summary: "Installs vscode.DiagnosticSeverity, DiagnosticTag, DiagnosticRelatedInformation and Diagnostic in the extension's script context, and bridges instances to and from host code."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- diagnostics
+  - extension-host
+  - vscode-api
+  - diagnostics
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/DiagnosticTypes.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/DiagnosticTypesTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/TextGeometry.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/Uri.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/DiagnosticTypes.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/DiagnosticTypesTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/TextGeometry.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/Uri.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Diagnostic Types
@@ -59,7 +53,7 @@ This component gives the extension host's embedded script context real, `instanc
 - **tag-reverse-mapping**: The installed `DiagnosticTag` object MUST also expose the reverse mapping `[1] === 'Unnecessary'` and `[2] === 'Deprecated'`.
 - **enum-objects-are-plain-and-frozen**: `DiagnosticSeverity` and `DiagnosticTag` MUST be plain frozen objects, not script classes; no code in this component constructs an instance of either.
 - **classes-frozen-after-construction**: `DiagnosticRelatedInformation`, `DiagnosticRelatedInformation.prototype`, `Diagnostic`, and `Diagnostic.prototype` MUST each be frozen via `Object.freeze` inside the same evaluation that builds them, with no window in which any of the four exists unfrozen.
-- **instances-not-frozen**: Neither a `DiagnosticRelatedInformation` instance nor a `Diagnostic` instance MUST be frozen; both types' properties are writable after construction (none of `vscode.d.ts`'s declared properties for either is `readonly`), so extension code MAY set `diagnostic.source`, `.code`, `.tags`, or a `relatedInformation`'s fields after construction.
+- **instances-not-frozen**: A `DiagnosticRelatedInformation` instance and a `Diagnostic` instance MUST NOT be frozen; both types' properties are writable after construction (none of `vscode.d.ts`'s declared properties for either is `readonly`), so extension code MAY set `diagnostic.source`, `.code`, `.tags`, or a `relatedInformation`'s fields after construction.
 - **related-information-constructor-validates-location**: `DiagnosticRelatedInformation`'s constructor MUST throw a `TypeError` whose message is `"location must be a vscode.Location"` when `location` is not `instanceof` the `Location` class published in the text-geometry component's installed container (read lazily via `globalThis[textGeometryGlobalName]` at construction time, not captured at evaluation time).
 - **diagnostic-constructor-validates-range**: `Diagnostic`'s constructor MUST throw a `TypeError` whose message is `"range must be a vscode.Range"` when `range` is not `instanceof` the `Range` class published in the text-geometry component's installed container, read the same lazy way.
 - **diagnostic-constructor-validates-message**: `Diagnostic`'s constructor MUST throw a `TypeError` with the message `"message must be set"` when `message` is falsy (including an empty string).
@@ -80,7 +74,7 @@ This component gives the extension host's embedded script context real, `instanc
 - **diagnostic-value-optional-fields-set-only-when-present**: Encoding a diagnostic value MUST assign `source`, `code`, `relatedInformation`, and `tags` on the constructed instance only when the corresponding field is present; when a field is absent, the corresponding property MUST be left unassigned, not set to `null` or `undefined`.
 - **diagnostic-value-propagates-nested-encode-failure**: Encoding a diagnostic value MUST fail — without constructing a partially-filled result — if encoding `range`, any element of `relatedInformation`, or `code` fails.
 - **related-information-value-constructs-through-real-constructor**: Encoding a related-information value MUST build the result by calling the installed `DiagnosticRelatedInformation` class's constructor with `(location, message)`, so the result is genuinely `instanceof` `vscode.DiagnosticRelatedInformation`.
-- **no-instance-caching-of-decoded-values**: Decoding a diagnostic value or a related-information value MUST decode fresh from the given script value on every call; neither operation MUST cache or reuse a prior decode for the same underlying script object.
+- **no-instance-caching-of-decoded-values**: Decoding a diagnostic value or a related-information value MUST decode fresh from the given script value on every call; each operation MUST NOT cache or reuse a prior decode for the same underlying script object.
 
 ## Appearance
 
@@ -203,7 +197,7 @@ No other event in this component is logged: neither a constructor's error nor a 
 - **AppKit / UIKit**: this is the source. `packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/DiagnosticTypes.swift` is part of the `AgenticToolkitMacOS` framework target, which `project.yml` declares `platform: macOS` only — no iOS target packages this file. It is an extension of `VSCodeAPI`, itself `@MainActor`, and its consumers among the given sources are the JS-side `vscode.languages` diagnostics collection machinery and `MainThreadDiagnostics` (not among the given sources), which reads decoded `ExtensionDiagnostic` values back through `diagnostic(from:in:)`. Every function in this file MUST execute on the main actor: `VSCodeAPI` is declared `@MainActor` because `JSContext`/`JSValue` are not `Sendable` and JavaScriptCore always calls back on the thread that made the call, so there is no path by which two calls into this file's functions execute concurrently against the same context — the compiler enforces this rather than any lock or queue in the source. The Swift mirror types (`ExtensionDiagnosticSeverity`, `ExtensionDiagnosticTag`, `ExtensionDiagnosticCodeValue`, `ExtensionDiagnosticCode`, `ExtensionDiagnosticRelatedInformation`, and `ExtensionDiagnostic`) are each declared `Sendable` and `Equatable`, so a decoded value MAY be passed across actor boundaries once it has left the `JSContext`.
 - **Compose**: model the four installed declarations as Kotlin: `DiagnosticSeverity`/`DiagnosticTag` as enum classes with an explicit numeric `value` property (Kotlin enums do not compile to a bidirectional-mapping object the way `tsc` does, so a small companion-object lookup table is needed to reproduce **severity-reverse-mapping**/**tag-reverse-mapping**), and `DiagnosticRelatedInformation`/`Diagnostic` as `data class`es whose "constructor" is a factory function performing the same `range`/`location`/`message` validation and throwing an `IllegalArgumentException` in place of a JS `TypeError`. The "never assign `undefined`" contract (**diagnostic-constructor-leaves-optionals-unassigned**) has no direct Kotlin analogue on a `data class`; model it with nullable properties defaulted to `null` and treat "absent" and "explicitly null" as the same case throughout, mirroring **diagnostic-decode-optional-field-absence**.
 - **React/Web**: this is closest to the actual runtime shape — extension code in the real VS Code product already runs against the genuine `vscode.d.ts` declarations these mirror. A React/Web host embedding a similar extension bridge would decode/encode the same four shapes across whatever serialization boundary (e.g. `postMessage` to a worker) replaces this file's `JSContext` boundary, and would need the same "refuse the whole value on any malformed optional field" discipline (**diagnostic-decode-optional-field-malformed-refuses-whole-value**) when deserializing untrusted extension-authored data.
-- **WinUI 3**: model `DiagnosticSeverity`/`DiagnosticTag` as `public enum DiagnosticSeverity { Error = 0, Warning = 1, Information = 2, Hint = 3 }` (a real C# enum already gives the forward mapping; `Enum.GetName(typeof(DiagnosticSeverity), value)` reproduces the reverse mapping on demand rather than needing a hand-built table). Model `DiagnosticRelatedInformation` and `Diagnostic` as `sealed record`s or plain classes whose constructors validate `location`/`range` with `is Location`/`is Range` pattern-matching (WinUI 3's `Location`/`Range` equivalents) and throw `ArgumentException` in place of a JS `TypeError`, matching **diagnostic-constructor-validates-location** and **diagnostic-constructor-validates-range**. `ExtensionDiagnosticCode`'s three-shape union (`code?: string | number | { value: string | number; target: Uri }`) has no built-in C# union type; model it as a small discriminated `abstract record CodeValue` with `Scalar`/`Link` subtypes, the direct analogue of the Swift `enum ExtensionDiagnosticCode { case scalar(...); case link(...) }` this file declares. `System.Text.Json.JsonSerializer` with a custom converter is the .NET equivalent of this file's manual `diagnosticCode(from:in:)`/`diagnosticCodeJSValue(for:in:)` pair, since the WinUI host would decode extension-authored diagnostics from a JSON-shaped bridge rather than a `JSValue`. The "assign only when present, never `null`/`undefined`" contract (**diagnostic-value-optional-fields-set-only-when-present**) maps to `JsonIgnoreCondition.WhenWritingNull` combined with nullable reference types, so an absent field is omitted from serialized output rather than written as `null`.
+- **WinUI 3**: model `DiagnosticSeverity`/`DiagnosticTag` as `public enum DiagnosticSeverity { Error = 0, Warning = 1, Information = 2, Hint = 3 }` (a real C# enum already gives the forward mapping; `Enum.GetName(typeof(DiagnosticSeverity), value)` reproduces the reverse mapping on demand rather than needing a hand-built table). Model `DiagnosticRelatedInformation` and `Diagnostic` as `sealed record`s or plain classes whose constructors validate `location`/`range` with `is Location`/`is Range` pattern-matching (WinUI 3's `Location`/`Range` equivalents) and throw `ArgumentException` in place of a JS `TypeError`, matching **related-information-constructor-validates-location** and **diagnostic-constructor-validates-range**. `ExtensionDiagnosticCode`'s three-shape union (`code?: string | number | { value: string | number; target: Uri }`) has no built-in C# union type; model it as a small discriminated `abstract record CodeValue` with `Scalar`/`Link` subtypes, the direct analogue of the Swift `enum ExtensionDiagnosticCode { case scalar(...); case link(...) }` this file declares. `System.Text.Json.JsonSerializer` with a custom converter is the .NET equivalent of this file's manual `diagnosticCode(from:in:)`/`diagnosticCodeJSValue(for:in:)` pair, since the WinUI host would decode extension-authored diagnostics from a JSON-shaped bridge rather than a `JSValue`. The "assign only when present, never `null`/`undefined`" contract (**diagnostic-value-optional-fields-set-only-when-present**) maps to `JsonIgnoreCondition.WhenWritingNull` combined with nullable reference types, so an absent field is omitted from serialized output rather than written as `null`.
 
 ## Reference Implementations
 
@@ -245,6 +239,9 @@ No other event in this component is logged: neither a constructor's error nor a 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.3 | 2026-10-04 | Mike Fullerton | Prose no longer cites a requirement id that does not exist. |
+| 1.1.2 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Restored inverted prohibitions: a 'Neither … MUST' rule now reads 'MUST NOT'. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/languages/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,0 +1,32 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| spacing-control-001 | renders-diagram-for-style | Construct with the `frame` style | The component builds edge fields/steppers/arrows/handles for all four edges and no gutter controls |
+| spacing-control-002 | renders-diagram-for-style | Construct with the `paneDividers` style | The component builds gutter fields/steppers/arrows/handles for both gutters and no edge controls |
+| spacing-control-003 | fires-onchange-only-on-user-edit | Click the "more" arrow for the top edge | `onChange` is invoked once, with `value.top` increased by 1 |
+| spacing-control-004 | fires-onchange-only-on-user-edit | Assign the component's `value` directly (not through a user edit), setting `top` to `5` | `onChange` is not invoked |
+| spacing-control-005 | skips-redundant-onchange | `value.top` equals the range's upper bound; click the "more" arrow for the top edge again | `onChange` is not invoked; `value` is unchanged |
+| spacing-control-006 | clamps-user-edits-to-range | The range is `0` to `40`, `value.top` is `40`; click the "more" arrow for the top edge | `value.top` remains `40` |
+| spacing-control-007 | clamps-user-edits-to-range | Type `"999"` into the top field and press Return | `value.top` is `40` (clamped), and the field displays `40` |
+| spacing-control-008 | commits-field-on-editing-end | Type `"7"` into the top field without pressing Return, Tab, or clicking away | `value.top` is unchanged |
+| spacing-control-009 | commits-field-on-editing-end | Type `"7"` into the top field, then press Return | `value.top` is `7` |
+| spacing-control-010 | recovers-unparseable-field-text | Type `"abc"` into a field holding `5`, then attempt to end editing | The field recovers to a valid number (`"5"`, the value already held); editing ends without getting stuck |
+| spacing-control-011 | repeats-held-arrow | Press and hold the "more" arrow for the top edge for 1 second | The value increases once at press, not again until `0.45`s elapses, then once more every `0.06`s thereafter |
+| spacing-control-012 | freezes-pressed-arrow-pair | Hold the "more" arrow for the top edge while a different field's value changes and triggers a re-layout | The held arrow's pair is not moved/re-seated while it is still pressed |
+| spacing-control-013 | drags-edge-one-to-one | The `frame` style; begin a drag on the top edge's handle, then move the pointer `10pt` along its drag axis | `value.top` changes by `10` times the top edge's gain (see table above) points from its value at drag start |
+| spacing-control-014 | drags-gutter-two-to-one-outward | The `paneDividers` style; begin a drag on the `betweenColumns` gutter's handle from the near side of centre, then move the pointer `5pt` further from centre | `value.betweenColumns` increases by `10` points from its value at drag start |
+| spacing-control-015 | arrow-points-in-line-travel-direction | Inspect the top edge's two arrow buttons' directions | The "more" arrow points down (the top edge's growing direction) and the "less" arrow points up (its shrinking direction) |
+| spacing-control-016 | resets-only-visible-numbers | The `frame` style, all four edges and both gutters nonzero (gutters set directly on `value`); click Reset | All four edges become `0` in one `onChange`; `value.betweenColumns`/`betweenRows` are unchanged |
+| spacing-control-017 | tab-order-is-picture-order | The `frame` style; focus the top field, press Tab three times | Focus visits leading, then trailing, then bottom, in that order, never a stepper or arrow button |
+| spacing-control-018 | arrow-keys-adjust-focused-field | Focus the top field (`value.top` is `5`), press the Up arrow key | `value.top` is `6`; the Left/Right arrow keys instead move the caret and do not change `value.top` |
+| spacing-control-019 | preserves-other-fields-mid-edit | Begin typing `"1"` (uncommitted) into the leading field, then click the "more" arrow for the top edge | The leading field's on-screen, uncommitted text remains `"1"`; the top field's displayed number updates |
+| spacing-control-020 | reflects-forced-field-after-commit | `value.top` is `40`; type `"999"` into the top field (clamps to `40`, the value already held) and press Return | The field displays `40` immediately after commit, even though the clamped result equals the value already held |
+| spacing-control-021 | group-accessibility-container | Inspect the constructed component's accessibility properties | It reports itself as a single accessibility element with the group role |
+| spacing-control-022 | reports-fixed-intrinsic-size | Construct with either `style` and any `value` | The component's natural size is `420×250` points |
+| spacing-control-023 | clips-below-minimum-size | Constrain the component's available area to `100×100pt`, well under its minimum size (`315×183pt`) | The diagram's drawn size equals the minimum size minus twice the chrome inset (`315×183` − `2×(75×41)` = `165×101pt`), not the available area's size (`100×100pt`); child elements are placed from that floor, not compressed further |
+| spacing-control-024 | repaints-on-theme-change | Change the active theme's palette after construction | The frame/pane fill and border colors, and the field/reset fonts, update to the new palette's values without reconstructing the component |
+| spacing-control-025 | caps-displayed-inset-at-maximum | The range is `0` to `100` (custom), `value.top` is `100` | The diagram draws the top inset at the same displayed extent as `value.top` at `40` |
+| spacing-control-026 | drags-gutter-two-to-one-outward | The `paneDividers` style; begin a drag on the `betweenColumns` gutter's handle from the near side of centre, then move the pointer `20pt` toward and past the centre (a net displacement of `-20pt` along the drag axis from the grab point) | `value.betweenColumns` decreases by `40` points from its value at drag start — the sign stays fixed by the near-side start and does not flip when the pointer crosses the centre |
+| spacing-control-027 | minimum-contrast-ratio | Construct the control under a theme whose border blend leaves the frame stroke close to the project-pane backdrop | The frame stroke equals the theme's border role exactly and field text equals the primary text role; no contrast adjustment is applied. |
+| spacing-control-028 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
+

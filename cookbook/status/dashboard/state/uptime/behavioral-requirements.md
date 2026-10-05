@@ -1,0 +1,27 @@
+
+- **hook-signature**: The state MUST accept one optional argument, `days`, a number giving the length of the uptime window in days.
+- **days-default**: When `days` is omitted or `undefined`, the state MUST use `90`.
+- **return-value**: The state MUST return the full read-result object unchanged (fields such as `data`, `error`, `isLoading`, `isError`, `status`, `refetch`), adding no fields of its own.
+- **client-source**: The state MUST obtain its HTTP client through dependency injection, which resolves to the client supplied by the nearest override provider, or the same-origin default client (base path `/api`) when no provider is mounted.
+- **query-key**: The read MUST be cached under a key combining `uptime` and the requested `days`, so each distinct window length has its own cache entry.
+- **always-enabled**: The read MUST NOT be conditionally disabled; it fetches whenever the state is mounted, for any `days` value.
+- **request-path**: Each fetch MUST request the relative path `/uptime?days=<days>`, which the client resolves against its base path (by default producing `/api/uptime?days=<days>`).
+- **days-interpolation**: The `days` value MUST be interpolated into the query string by plain string conversion, with no percent-encoding, rounding, or range check (so `30` becomes `days=30` and `1.5` becomes `days=1.5`).
+- **request-init**: Each fetch MUST be issued with no extra request options, so it is a default `GET` with no added headers, body, or cancellation signal from the state.
+- **raw-fetch-not-json-helper**: The state MUST use the client's basic request operation, not its JSON-decoding convenience method, so the convenience method's `Content-Type` header, its error-detail extraction, and its 204-as-`undefined` handling do not apply.
+- **non-ok-error**: When the response's `ok` flag is false, the read MUST throw, with the message `uptime <status>` (for example `uptime 401`), placing the read in its error state.
+- **error-detail-dropped**: On a non-ok response the state MUST NOT read the response body; any `error` or `message` detail the server returns is not included in the thrown error.
+- **success-body**: When the response is ok, the read MUST resolve with the parsed JSON body, typed as the uptime response without runtime schema validation.
+- **parse-failure**: When an ok response's body is not valid JSON, the rejection from parsing it as JSON MUST propagate as the read's error.
+- **network-failure**: When the underlying request rejects (network failure or unreachable host), the rejection MUST propagate unchanged as the read's error.
+- **uptime-response-shape**: A successful result MUST carry `services` (a list of service entries) and `days` (a number).
+- **uptime-service-shape**: Each service entry MUST carry `slug` and `name` (strings), `uptimePercent` (a number or `null`), `totalChecks` (a number), and `daily` (a list of daily entries).
+- **uptime-day-shape**: Each daily entry MUST carry `day` (a string), `status` (one of `"healthy"`, `"degraded"` or `"down"`), and `uptimePercent` (a number or `null`).
+- **pass-through**: The state MUST return the service list and each service's `daily` list in the order the backend sent them, without sorting, filtering, filling missing days, or recomputing percentages.
+- **no-polling**: The read MUST NOT poll on a timer; after the first successful load, refetches happen only through the platform's default triggers (remount of a stale read, window refocus, reconnect) or an explicit manual refetch.
+- **no-other-hook-policy**: The state MUST NOT set its own staleness duration, cache lifetime, retry count, focus-refetch or reconnect-refetch behavior; those come from the host cache's defaults.
+- **no-timeout**: The state MUST NOT impose its own request timeout; a request that never settles leaves the read fetching until the client or browser ends it.
+- **no-persistence**: The state MUST NOT write uptime data to any durable store; results live only in the in-memory shared cache.
+- **single-threaded-ordering**: Concurrent calls with the same `days` MUST share one cache entry and be deduplicated by the shared cache rather than by the state, so multiple consumers calling this state with the same window under one shared cache issue one request.
+- **client-only**: Uptime State MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
+

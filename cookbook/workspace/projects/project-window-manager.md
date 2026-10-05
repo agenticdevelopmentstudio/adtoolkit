@@ -1,50 +1,44 @@
 ---
 id: 7f1b8bef-e78e-4cac-be55-c948fe9062e5
-title: Project Window Manager
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-window-manager
+title: "Project Window Manager"
+domain: adtoolkit://cookbook/workspace/projects/project-window-manager
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Owns one window per open project, pairs each with the project's controller,
-  restores windows open at last quit, and drains quit-time teardowns.
+summary: "Owns one window per open project, pairs each with the project's controller, restores windows open at last quit, and drains quit-time teardowns."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- window-controller
+  - git
+  - projects
+  - window-controller
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-controller
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
-- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-database
+  - adtoolkit://cookbook/workspace/projects/project-controller
+  - adtoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+  - adtoolkit://cookbook/workspace/projects/git-repo
+  - adtoolkit://cookbook/workspace/projects/project-database
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWindowManager.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWorkspace.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/SystemIntegration/WindowManager/WindowManager.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Concurrency/PendingTeardowns.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsWindowController.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectWindowManagerControllerTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWindowManager.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWorkspace.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/SystemIntegration/WindowManager/WindowManager.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Concurrency/PendingTeardowns.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsWindowController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectWindowManagerControllerTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Window Manager
@@ -71,10 +65,7 @@ property and method is confined there by that declaration alone.
   project-opening interface — supplying an open-project operation and a
   close-project operation, each keyed by a repository id — and MUST
   publish its state so another component can observe it.
-- **main-thread-confinement**: The manager MUST be confined to the UI's
-  main execution context, with no thread-safety guarantee of its own;
-  every stored property and every method MUST be reached only from that
-  context.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **shared-singleton**: The manager MUST expose one process-wide shared
   instance.
 - **open-window-setting-key**: The manager MUST record whether a
@@ -298,6 +289,7 @@ of which this file renders itself.
 | git-client-projects-project-window-manager-010 | close-drops-controller-and-reregisters-survivors | Open a project, then close it by id and check whether its controller reports itself closed with no intervening suspension. | the controller reports open immediately before the close and closed immediately after it, in the same synchronous call — proving the close is marked synchronously from the close handling, not from separately scheduled work — ProjectWindowManagerControllerTests.swift › testClosingMarksTheControllerClosedInTheSameTurn |
 | git-client-projects-project-window-manager-011 | restore-plan-is-pure, restore-forgets-missing-folders, restore-reopens-existing-folders | Not present in the given test suite; synthesized from the source. Compute the restore plan for three repositories a, b, c, where a and b were open at last quit and only a and c still exist on disk. | the reopen set is `{a}` and the forget set is `{b}`; c (never flagged open) appears in neither set — synthesized, no dedicated test in the given suite |
 | git-client-projects-project-window-manager-012 | shutdown-all-language-services-runs-concurrently, shutdown-all-language-services-drains-pending-teardowns | Not present in the given test suite; synthesized from the source together with the pending-teardowns registry's own drain guarantee. Open two projects with distinct counting stand-ins for language services, close one of them (starting its teardown through the pending-teardowns registry), then immediately shut down all language services before that teardown would otherwise finish on its own. | both counting stand-ins report exactly one shutdown call once shutting down all language services returns — the closed project's already-detached teardown is still waited for, not just the still-open project's — synthesized, no dedicated test in the given suite |
+| git-client-projects-project-window-manager-013 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -320,7 +312,7 @@ of which this file renders itself.
 - **Concurrent access**: Every mutation of the open-controllers table,
   the open-order list, the project-controllers table, the
   adopted-for-scripting set, and the key-observer table is confined to
-  the manager's main execution context (**main-thread-confinement**), so
+  the manager's main execution context (**confines-to-ui-thread**), so
   no interleaving between opening a project, closing a project, adopting
   a window for scripting, and the notification-driven handlers can
   observe a torn collection (MUST). One race the source does guard
@@ -340,14 +332,14 @@ of which this file renders itself.
   — every operation this file performs is local: the database, the
   filesystem check the restore plan's exists-on-disk predicate performs,
   and git through the project controller (documented in
-  `agenticdevelopertoolkit://cookbook/workspace/projects/project-controller`).
+  `adtoolkit://cookbook/workspace/projects/project-controller`).
   None of it reaches a remote host.
 - **Cancellation and timeouts**: Opening a project's own opening work is
   not cancelled by a subsequent close of that project; the in-flight work
   keeps running to completion, and it is the project controller's own
   closed-state guard — not anything in this file — that stops it from
   persisting stale data or reloading a dead window (see
-  `agenticdevelopertoolkit://cookbook/workspace/projects/project-controller`'s
+  `adtoolkit://cookbook/workspace/projects/project-controller`'s
   reconcile-aborts-after-a-late-close requirement, and vector -007
   above). Shutting down all language services waits for its group of
   concurrent operations and then for the pending-teardowns registry to
@@ -488,7 +480,7 @@ bundle identifier; category is this component's name.
   thread-affinity of its own — mirror `@MainActor` confinement by only ever
   touching this object from the UI thread (`DispatcherQueue`), the same
   discipline `ProjectController`'s WinUI port already assumes (see
-  `agenticdevelopertoolkit://cookbook/workspace/projects/project-controller`). Reproduce
+  `adtoolkit://cookbook/workspace/projects/project-controller`). Reproduce
   `NSWindow.willCloseNotification`'s `queue: nil` synchronous delivery
   (**close-observer-uses-nil-queue**) with `Window.Closed`, handled inline on
   the UI thread rather than through a dispatcher post, so a scan that closes a
@@ -499,11 +491,12 @@ bundle identifier; category is this component's name.
   own async shutdown drains in a loop — rather than firing a bare
   `Task.Run(async () => ...)` that a process exit can orphan. Read and write
   the persisted "window open" flag through the same `System.Data.Sqlite`-backed
-  settings store `agenticdevelopertoolkit://cookbook/workspace/projects/project-database`
+  settings store `adtoolkit://cookbook/workspace/projects/project-database`
   describes, using `HttpClient`/`System.Text.Json`/`Task`/`async` and
   `Windows.Storage` only where a networked or file-based collaborator this
   manager delegates to (git, language servers) needs them — this type itself
   makes no HTTP call and reads no `Windows.Storage` file directly.
+- **confines-to-ui-thread** (scope): The manager has no thread-safety guarantee of its own; every stored property and method is reached only from the UI thread.
 
 ## Reference Implementations
 
@@ -631,6 +624,7 @@ anywhere in this file.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Spec-local UI-thread confinement ids folded into the shared confines-to-ui-thread requirement, with a test vector; scope detail is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

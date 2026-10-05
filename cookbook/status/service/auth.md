@@ -1,44 +1,42 @@
 ---
 id: 735b4e58-bce9-4754-ad3f-bf0344fd4b32
-title: Status Server Auth
-domain: agenticdevelopertoolkit://cookbook/status/service/auth
+title: "Status Server Auth"
+domain: adtoolkit://cookbook/status/service/auth
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Status backend''s auth layer: session cookie helpers, the default AuthGate
-  (session/sts_-token/PEER_TOKEN/AUTH_DISABLED resolution), GitHub OAuth login, bcrypt
-  password hashing, and the host-implementable AuthGate port.'
+summary: "Status backend's auth layer: session cookie helpers, the default AuthGate (session/sts_-token/PEER_TOKEN/AUTH_DISABLED resolution), GitHub OAuth login, bcrypt password hashing, and the host-implementable AuthGate port."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- auth
-- session
-- oauth
-- server
+  - auth
+  - session
+  - oauth
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/security/authentication
-- agenticdevelopercookbook://guidelines/implementing/security/token-handling
-- agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
+  - agenticdevelopercookbook://guidelines/implementing/security/authentication
+  - agenticdevelopercookbook://guidelines/implementing/security/token-handling
+  - agenticdevelopercookbook://guidelines/implementing/security/sensitive-data
 related: []
 references:
-- packages/web/packages/status-server/src/auth/cookie.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/auth/default-adapter.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/auth/github.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/auth/password.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/auth/port.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/auth-gate.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/auth.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/github-oauth.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/auth-edge.int.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/auth/cookie.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/auth/default-adapter.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/auth/github.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/auth/password.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/auth/port.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/auth-gate.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/auth.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/github-oauth.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/auth-edge.int.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Auth
@@ -278,7 +276,7 @@ best practices."
   meaning from its bytes — its meaning is resolved entirely by
   `storage.auth.resolveSession`, external to these five files and not
   specified here.
-- **credential-never-logged**: No function in these five files MUST log a
+- **credential-never-logged**: The functions in these five files MUST NOT log a
   raw bearer value, `PEER_TOKEN`, GitHub OAuth `client_secret`, GitHub
   access token, or password. `exchangeCode` holds the GitHub access token
   only in a local variable used to build two outbound request headers; none
@@ -667,6 +665,7 @@ files to carry PII.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,35 +1,34 @@
 ---
 id: 775f1761-f757-41d0-b51b-354a410a11f4
-title: Group View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view
+title: "Group View"
+domain: adtoolkit://cookbook/ui/settings/layout/group-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A card view drawing a captioned, rounded settings group whose rows are
-  padded and hairline-divided, closing up automatically around a hidden row.
+summary: "A card view drawing a captioned, rounded settings group whose rows are padded and hairline-divided, closing up automatically around a hidden row."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- card
-- settings
-- layout
+  - card
+  - settings
+  - layout
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/conditional-view
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/dismissible-hint-view
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/settings/layout/conditional-view
+  - adtoolkit://cookbook/ui/settings/layout/dismissible-hint-view
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references:
-- https://developer.apple.com/design/human-interface-guidelines/lists-and-tables
-- https://developer.apple.com/documentation/appkit/nsstackview
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/design/human-interface-guidelines/lists-and-tables
+  - https://developer.apple.com/documentation/appkit/nsstackview
+approved-by: ""
+approved-date: ""
 ---
 
 # Group View
@@ -123,8 +122,7 @@ recipes fulfill for that reason.
 - **row-content-horizontal-inset**: Component MUST inset the wrapped
   content's leading and trailing edges from the row's own corresponding
   edges by 14pt on each side.
-- **ui-thread-confinement**: Component MUST be usable only from the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -221,7 +219,7 @@ recipes fulfill for that reason.
 | group-view-019 | separator-recompute-on-add | Add row A, then add row B | Recomputation after each addition is observable — whether row B's row shows a separator reflects row A's row's hidden state at the time row B was added |
 | group-view-020 | separator-visibility | Add three standard-style, not-hidden rows in sequence | The second and third rows show a separator; only the first does not |
 | group-view-021 | first-row-headless | Add a single row as the only row | That row's divider is hidden |
-| group-view-023 | ui-thread-confinement | Attempt to construct or mutate the component from off the UI thread | The call is rejected by the platform's UI-thread confinement enforcement (compile-time on platforms with static isolation checking, runtime-checked otherwise) |
+| group-view-023 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | The call is rejected by the platform's UI-thread confinement enforcement (compile-time on platforms with static isolation checking, runtime-checked otherwise) |
 | group-view-024 | row-visibility-binding | Hide a row's wrapped content, then have the row resynchronize its visibility | The row's own hidden state becomes `true` |
 | group-view-025 | row-visibility-at-construction | Construct a row whose wrapped content's hidden state is `true` | Immediately after construction returns, the row's own hidden state is `true` |
 | group-view-026 | separator-collapse | Turn a row's separator visibility off (from on) | The row's divider becomes hidden; the space reserved for it becomes `0` |
@@ -255,7 +253,7 @@ them there.
   caption spacing, 14pt horizontal inset, 9pt vertical inset, 1pt divider
   thickness); it exposes no caller-configurable numeric range of its own.
 - Concurrent access: Not applicable — the component is confined to the UI
-  thread (see `ui-thread-confinement`), so adding a row, updating
+  thread (see `confines-to-ui-thread`), so adding a row, updating
   separators, and every layout change are serialized on that thread.
 - Error states: Not applicable — every operation in this component (adding
   a row, updating separators, syncing visibility) is a synchronous,
@@ -409,7 +407,7 @@ Not applicable: the component contains no logging call.
   an unchanged `oldValue` to skip redundant writes — the requirements above
   describe these mechanics only by their observable effect, since any of
   these names could change under a refactor without changing what the card
-  looks like or does. `ui-thread-confinement` is enforced at compile time
+  looks like or does. `confines-to-ui-thread` is enforced at compile time
   by the class's `@MainActor` declaration: the Swift compiler rejects
   construction or mutation of a `GroupView` from a non-isolated context.
   `translatesAutoresizingMaskIntoConstraints` is set to `false` on the view
@@ -456,7 +454,7 @@ Not applicable: the component contains no logging call.
 
 ## Design Decisions
 
-**Decision** (AppKit/UIKit): Place the caption outside `cardView`, as a
+**Decision**: (AppKit/UIKit) Place the caption outside `cardView`, as a
 sibling in `outerStack`, rather than as the card's own first row.
 **Rationale**: per the source's own doc comment, "a title as the card's
 first row reads as just another setting" — the caption sits outside the
@@ -464,7 +462,7 @@ card because that is what separates a group's name from its contents at a
 glance.
 **Approved**: pending
 
-**Decision** (AppKit/UIKit): `addSettingSubview` takes an explicit
+**Decision**: (AppKit/UIKit) `addSettingSubview` takes an explicit
 `style: CardRowStyle` parameter rather than inferring row style from the
 added view's type.
 **Rationale**: per the source's own doc comment, inferring style from type
@@ -475,7 +473,7 @@ into six divided rows." What a view means in a card is not knowable from
 what class it is, so the caller states it.
 **Approved**: pending
 
-**Decision** (AppKit/UIKit): `viewDidMoveToSuperview` activates a width
+**Decision**: (AppKit/UIKit) `viewDidMoveToSuperview` activates a width
 constraint equating `GroupView` to its new superview, rather than giving
 `GroupView` an intrinsic or fixed width.
 **Rationale**: per the source's own comment, each group fills its parent
@@ -485,7 +483,7 @@ the group still control their own horizontal layout via content-hugging
 priorities.
 **Approved**: pending
 
-**Decision** (AppKit/UIKit): Drive `updateSeparators()` from
+**Decision**: (AppKit/UIKit) Drive `updateSeparators()` from
 `SelfHidingSettingsView`'s `onVisibilityChange` callback, rather than
 observing `isHidden` via KVO or polling it.
 **Rationale**: per the source's own doc comment, `GroupView` "listens so the
@@ -496,7 +494,7 @@ its content is; without the callback, a dismissed hint leaves an empty band
 and a stray divider behind.
 **Approved**: pending
 
-**Decision** (AppKit/UIKit): `viewDidMoveToSuperview` neither stores nor
+**Decision**: (AppKit/UIKit) `viewDidMoveToSuperview` neither stores nor
 deactivates a width constraint from a previous superview before activating
 a new one.
 **Rationale**: acceptable as shipped because every known call site adds a
@@ -506,7 +504,7 @@ surfaces specifically in the re-parenting scenario recorded under Edge
 Cases, should a future caller move a `GroupView` between superviews.
 **Approved**: pending
 
-**Decision** (AppKit/UIKit): When every row in a `GroupView` is hidden,
+**Decision**: (AppKit/UIKit) When every row in a `GroupView` is hidden,
 `cardView` is left visible — collapsed to near-zero height — rather than
 being hidden or removed along with its rows.
 **Rationale**: `GroupView.swift` never sets `cardView.isHidden`;
@@ -522,6 +520,8 @@ Cases).
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | Platform Compliance |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | partial | Reliability |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
@@ -534,10 +534,14 @@ a prior superview (see Design Decisions); and `screen-reader-support` is
 `partial` because no accessibility grouping ties the header to
 `cardView`/`rowStack` (see Accessibility).
 
+Separation-of-concerns is passed: `GroupView` owns only the card layout (a title header, rows with separators and self-hiding rows) via its private `CardRow`, while row content, explanations and visibility come from the views added to it. Unit-test-coverage is partial: no dedicated `GroupViewTests.swift` exists, but `EditableTableCardUpdateTests.swift` (rows reopening around a hidden `ExplanationView` and a `ConditionalView`), `SettingsSearchIndexTests.swift` and `KeyCommandsPanelHierarchyTests.swift` construct real `GroupView` cards and assert on their contents and nesting; separator updates and the width-constraint behavior are untested.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added Compliance rows for separation-of-concerns and unit-test-coverage |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/layout/. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

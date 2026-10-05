@@ -1,51 +1,51 @@
 ---
 id: 4b16f67f-3877-47d3-97eb-af99581a5b11
-title: Status Server Monitor Fetch Vercel Projects
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-vercel-projects
+title: "Status Server Monitor Fetch Vercel Projects"
+domain: adtoolkit://cookbook/status/service/monitor/fetch-vercel-projects
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "Paginates Vercel's project list under an 18s budget, maps each project's deployment window into ProviderDeploy rows, backfills a buried verdict, and flags any project whose live production build is stale."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- vercel
-- deploy
-- fetcher
-- server
+  - monitor
+  - vercel
+  - deploy
+  - fetcher
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
-- agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
-- agenticdevelopercookbook://guidelines/implementing/networking/pagination
-- agenticdevelopercookbook://guidelines/implementing/networking/caching
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
+  - agenticdevelopercookbook://guidelines/implementing/networking/pagination
+  - agenticdevelopercookbook://guidelines/implementing/networking/caching
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
-- agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-cloudflare
-- agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-crunchy
-- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
+  - adtoolkit://cookbook/status/service/monitor/alerts
+  - adtoolkit://cookbook/status/service/monitor/fetch-cloudflare
+  - adtoolkit://cookbook/status/service/monitor/fetch-crunchy
+  - adtoolkit://cookbook/status/service/monitor/deploy-status
 references:
-- packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/format.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/time-ago.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/util/map-limit.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/vercel-projects-budget.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/vercel-conclusive-backfill.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/prod-staleness.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/latest-deploys-of.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/format.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/time-ago.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/util/map-limit.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/vercel-projects-budget.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/vercel-conclusive-backfill.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/prod-staleness.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/latest-deploys-of.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Fetch Vercel Projects

@@ -1,0 +1,8 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: restated four AppKit-mechanism MUSTs as observable outcomes and moved their mechanisms into the AppKit/UIKit Platform Notes bullet and Design Decisions; simplified the working-state-spin guard condition; noted that the idle symbol/tint/label are never seen or announced while the view is hidden; documented the missing symbol-provider seam for the unresolvable-symbol test vector instead of inventing one; renamed every requirement to a subject-noun name and updated all cross-references; moved the internal cookbook reference from `references` to `related`; corrected the pulse's per-direction/full-cycle timing; added test vectors for the working/summarizing tint, idle symbol, and summarizing-while-idle pulse; made the two flagged vectors mechanically checkable; grounded the `.sourceAtop` rationale in the source's own doc comment; unquoted the frontmatter dates; and rebuilt the Compliance table to cite only checks that exist in the catalog with rulings-consistent statuses. |
+| 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/agent-sessions/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the contrast NEEDS REVIEW marker as current behavior plus a pending Design Decision; added separation-of-concerns and unit-test-coverage compliance. |

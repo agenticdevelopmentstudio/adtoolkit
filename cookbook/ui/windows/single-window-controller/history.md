@@ -1,0 +1,10 @@
+
+| Version | Date | Author | Summary |
+|---|---|---|---|
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial extraction from the Apple `SingleWindowController` (AppKit, macOS) source. |
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: reframed the requirement-count design decision as deliberate coupling debt rather than scope justification; merged the loadWindow build-order requirements into one build-sequence requirement and corrected registry-registration timing to init(); renamed init-argument-storage to describe storage only; renamed all requirements to subject-only kebab-case; reworded windowSpec citations as "a registered WindowSpec"; corrected the forces-front/quiet-presentation, HUD transparency/floating/transparency-property wording; moved private refit-machinery names out of requirements and test vectors into Platform Notes; replaced test vectors 001 and 037 with behavioral vectors, added a setFloating(false) vector, and merged the forces-front vectors; corrected the fitWindow zero/negative-size edge case against the real guard clause; moved the platform-design-languages reference into related and added sibling recipe links; removed the macos tag; reformatted Compliance to Check/Status/Category and Design Decisions to bold labels; ran compliance_fix.py to drop uncataloged Compliance checks; rejected the default-placement, double-persist, and compliance-coverage findings against current source. |
+| 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/windows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns (partial) and unit-test-coverage (partial) compliance rows. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

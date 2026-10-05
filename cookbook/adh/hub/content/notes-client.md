@@ -1,42 +1,41 @@
 ---
 id: c68fdd3a-092a-4718-b16e-4cc7a0037edd
-title: Notes Client
-domain: agenticdevelopertoolkit://cookbook/adh/hub/content/notes-client
+title: "Notes Client"
+domain: adtoolkit://cookbook/adh/hub/content/notes-client
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Thin corpus-marker lens over the shared markdown-document client: stamps/filters
-  the notes bucket marker, renames its category tree, re-exports shared taxonomy.'
+summary: "Thin corpus-marker lens over the shared markdown-document client: stamps/filters the notes bucket marker, renames its category tree, re-exports shared taxonomy."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- notes
-- markdown
-- taxonomy
-- crud
-- web
+  - notes
+  - markdown
+  - taxonomy
+  - crud
+  - web
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-client
-- agenticdevelopertoolkit://cookbook/adh/hub/content/docs-client
+  - adtoolkit://cookbook/adh/hub/content/markdown-client
+  - adtoolkit://cookbook/adh/hub/content/docs-client
 references:
-- packages/web/packages/data/src/notes/notes.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/notes/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/markdown.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/taxonomy.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/__tests__/markdown.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/notes/notes.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/notes/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/markdown.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/taxonomy.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/__tests__/markdown.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Notes Client
@@ -135,8 +134,7 @@ no web consumer," and this client is documented as never calling it.
   own comment: "the taxonomy is NOT the notebook's — one owner has one
   vocabulary spanning notes, research papers and board cards, so a rename
   here is a rename there."
-- **taxonomy-ops-not-workspace-scoped**: none of the re-exported
-  `taxonomyApi`'s seven operations MUST accept or send a `workspace`
+- **taxonomy-ops-not-workspace-scoped**: the re-exported `taxonomyApi`'s seven operations MUST NOT accept or send a `workspace`
   parameter, because the categories/category-edges/keywords tables they
   address carry a `customer_id`/`ecosystem_id` ownership stamp rather than
   an `owner_kind`/`owner_id` column a workspace slug could narrow.
@@ -246,7 +244,7 @@ Not applicable — this is a data client (a stateless collection of async functi
 - **Boundary: 201st matching note.** MUST be silently omitted from the result, per `list-page-size-fixed`.
 - **Re-creating an existing category under the same parents.** Per `markdown.ts`'s comment on `createCategory`, this MUST succeed idempotently (no 409) when every parent requested is already one of that category's current parents.
 - **Re-creating an existing category under a different, conflicting set of parents.** MUST reject with the mapped 409 message described in `create-category-conflict-message`.
-- **Concurrent access: two `notesApi.create` calls fired without awaiting between them.** Per `stateless-client` and `create-not-idempotent`, each call MUST independently POST and MUST resolve to a distinct document with its own id; neither call MUST observe or be blocked by the other.
+- **Concurrent access: two `notesApi.create` calls fired without awaiting between them.** Per `stateless-client` and `create-not-idempotent`, each call MUST independently POST and MUST resolve to a distinct document with its own id; each call MUST NOT observe or be blocked by the other.
 - **Concurrent access: `taxonomyApi.removeCategoryParent` racing `taxonomyApi.addCategoryParent` on the same category.** `removeCategoryParent` reads the category's current parent edges, then deletes the ones matching the given `parentId`, in two separate requests; a parent link added by a concurrent `addCategoryParent` call after that read completes MUST NOT be included in the delete loop, because the read is a snapshot (documented in `taxonomy.ts`'s module comment on the same snapshot property for `addCategoryParent`).
 - **Error state: backend unreachable.** Any `notesApi` operation's `authedJson`/`authedRequest` call rejecting with a network error MUST propagate that rejection unmodified, per `errors-propagate-unmodified` and `no-client-side-retry` — no retry is attempted.
 - **Error state: non-2xx status other than the mapped 409.** A 403, 404, or 500 from any operation other than `createCategory` MUST propagate unmodified; no operation besides `createCategory` defines special-case status handling.
@@ -348,6 +346,7 @@ Not applicable: `notes.ts` and the `markdown.ts`/`taxonomy.ts` modules it delega
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe covering notes.ts as a marker lens over markdown.ts and taxonomy.ts. |

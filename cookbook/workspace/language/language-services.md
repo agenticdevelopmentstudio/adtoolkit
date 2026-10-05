@@ -1,43 +1,43 @@
 ---
 id: 82065ef6-9f0a-424f-aa32-3814d9cb843f
-title: Language Services
-domain: agenticdevelopertoolkit://cookbook/workspace/language/language-services
+title: "Language Services"
+domain: adtoolkit://cookbook/workspace/language/language-services
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The text-document model, the app-wide open-document registry, and the debounced autosave scheduler behind every LSP-backed editor pane, plus the one shared URL-to-DocumentUri conversion point.
+summary: "The text-document model, the app-wide open-document registry, and the debounced autosave scheduler behind every LSP-backed editor pane, plus the one shared URL-to-DocumentUri conversion point."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- language-server
-- text-document
-- autosave
-- debounce
-- document-store
-- lsp
-- utf-16
+  - language-server
+  - text-document
+  - autosave
+  - debounce
+  - document-store
+  - lsp
+  - utf-16
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/files/file-editor-view
-- agenticdevelopertoolkit://cookbook/workspace/documents/document-editor-view
+  - adtoolkit://cookbook/workspace/files/file-editor-view
+  - adtoolkit://cookbook/workspace/documents/document-editor-view
 references:
-- packages/apple/AgenticToolkit/Language/TextDocument.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Language/TextDocumentSaveScheduler.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Language/TextDocumentStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Language/URL+DocumentUri.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Concurrency/KeyedDebouncer.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/TextDocumentTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/TextDocumentSaveSchedulerTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/TextDocumentStoreTests.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Language/TextDocument.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Language/TextDocumentSaveScheduler.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Language/TextDocumentStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Language/URL+DocumentUri.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Concurrency/KeyedDebouncer.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/TextDocumentTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/TextDocumentSaveSchedulerTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitLanguageTests/TextDocumentStoreTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Language Services

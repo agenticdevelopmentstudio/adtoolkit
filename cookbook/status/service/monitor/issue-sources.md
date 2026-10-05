@@ -1,46 +1,43 @@
 ---
 id: 86e7936a-c295-4e1f-8f7a-7278b4849008
-title: Status Server Monitor Issue Sources
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/issue-sources
+title: "Status Server Monitor Issue Sources"
+domain: adtoolkit://cookbook/status/service/monitor/issue-sources
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Deploy-provider status vocabulary: the IssueSource union and its labels,
-  the integration-platform-to-health-source lookup, the HTTP/deploy bad-state predicates,
-  the consecutive-failure streak step, and the vanished-Vercel-project narrowing that
-  keeps deploy Problems from pinning open or going silent.'
+summary: "Deploy-provider status vocabulary: the IssueSource union and its labels, the integration-platform-to-health-source lookup, the HTTP/deploy bad-state predicates, the consecutive-failure streak step, and the vanished-Vercel-project narrowing that keeps deploy Problems from pinning open or going silent."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- deploy
-- vocabulary
-- pure-function
-- server
+  - monitor
+  - deploy
+  - vocabulary
+  - pure-function
+  - server
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
+  - adtoolkit://cookbook/status/service/monitor/deploy-status
 references:
-- packages/web/packages/status-server/src/monitor/issue-sources.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/overview.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/canon/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/ownership.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/libsql/stores/observation-store.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-deploy.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-monitoring.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-ownership.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/lib/issue-sources.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/issue-sources.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/overview.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/canon/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/ownership.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/libsql/stores/observation-store.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-deploy.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-monitoring.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-ownership.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/lib/issue-sources.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Issue Sources
@@ -215,7 +212,7 @@ Not applicable: this file contains no logging call of any kind — every exporte
 - **Decision**: `dropVanishedVercelProjects` declines to narrow (returns `vanished: []`) both when the live read is empty AND when it would remove every configured project, rather than trusting either read at face value.
   **Rationale**: stated directly in the source comment as two independently load-bearing guards — an empty live set is indistinguishable from a read that came back empty because the token was rescoped, not because the account was emptied; and a non-empty read naming none of the configured projects is indistinguishable from a re-scoped token or a project transfer returning a complete list of somebody else's projects. Both decline the narrowing rather than the underlying deletion, so the cost of a false guard is a board that keeps showing deploy Problems for a project that really was deleted — judged, per the same comment, as far cheaper than silently losing every monitor for the fleet in one bad read.
   **Approved**: pending
-- **Decision** (`mirror-parity-guard`, SHOULD): the hand-mirrored client copy of `IssueSource`/`SOURCE_LABEL`/`ISSUE_SOURCES` at `status-web/src/lib/issue-sources.ts` SHOULD gain a cross-package parity test analogous to `deploy-status-parity.test.ts`, which performs this same role for the sibling `deploy-status.ts` module.
+- **Decision**: (`mirror-parity-guard`, SHOULD) the hand-mirrored client copy of `IssueSource`/`SOURCE_LABEL`/`ISSUE_SOURCES` at `status-web/src/lib/issue-sources.ts` SHOULD gain a cross-package parity test analogous to `deploy-status-parity.test.ts`, which performs this same role for the sibling `deploy-status.ts` module.
   **Rationale**: the client file's own doc comment names the exact failure mode of an unguarded drift — "a source the server can emit and the client has never heard of renders `undefined` in the filter and the badge" — but, unlike `deploy-status.ts`, no test in either package currently asserts the two copies agree; `status-web/src/lib/issue-sources.test.ts` only asserts the client copy's own internal consistency (every `ISSUE_SOURCES` member has a truthy label), never that it matches this file. This is an absent safeguard for a documented risk, not a defect in this file's own behavior, so it is recorded here as a deviation-with-rationale rather than a source-fidelity gap.
   **Approved**: pending
 

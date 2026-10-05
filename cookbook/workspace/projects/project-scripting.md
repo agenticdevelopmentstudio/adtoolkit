@@ -1,56 +1,47 @@
 ---
 id: ccb08e0d-f505-4195-adf8-d8ac9208b24c
-title: Project Scripting
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-scripting
+title: "Project Scripting"
+domain: adtoolkit://cookbook/workspace/projects/project-scripting
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The scripting surface for project windows: enumerating and looking
-  up open project windows, tabs and panes, and wiring each tab''s git branch into
-  the scripting vocabulary.'
+summary: "The scripting surface for project windows: enumerating and looking up open project windows, tabs and panes, and wiring each tab's git branch into the scripting vocabulary."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- scripting
-- cocoa-scripting
-- applescript
-- composable-tabs
+  - git
+  - projects
+  - scripting
+  - cocoa-scripting
+  - applescript
+  - composable-tabs
 depends-on:
-- agenticdevelopertoolkit://cookbook/system/scripting
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-controller
-- agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller
+  - adtoolkit://cookbook/system/scripting
+  - adtoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+  - adtoolkit://cookbook/workspace/projects/project-controller
+  - adtoolkit://cookbook/workspace/projects/branch-controller
 related:
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+  - adtoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/Scripting/ProjectWindowManager+Scripting.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/Scripting/ScriptableProjectWindow.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/Scripting/ScriptableProjectTab.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/Scripting/ScriptablePane.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWindowManager.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsWindowController.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/BranchController.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Scripting/MainActorScriptCommand.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/ComposableTabs/ProjectScriptingTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/Scripting/ProjectWindowManager+Scripting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/Scripting/ScriptableProjectWindow.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/Scripting/ScriptableProjectTab.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/Scripting/ScriptablePane.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWindowManager.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsWindowController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/BranchController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Scripting/MainActorScriptCommand.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/ComposableTabs/ProjectScriptingTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Scripting
@@ -127,7 +118,7 @@ interface and are used throughout as such.
   when no open pane's `uniqueID` equals the argument.
 - **main-thread-confinement**: every operation in this surface, and every
   member of the three wrapper types, MUST run on the UI's main execution
-  context; none of the four types MUST be called from any other execution
+  context; the four types MUST NOT be called from any other execution
   context.
 - **window-id-is-project-id**: the scriptable window's `uniqueID` MUST
   return its underlying window's project id, falling back to the empty
@@ -159,7 +150,7 @@ interface and are used throughout as such.
   longer exists.
 - **window-object-specifier-key**: the scriptable window's object
   specifier MUST be built under the `projectWindows` collection key,
-  addressed by its `uniqueID` (see `agenticdevelopertoolkit://cookbook/system/scripting`
+  addressed by its `uniqueID` (see `adtoolkit://cookbook/system/scripting`
   for that mechanism's own contract).
 - **tab-value-rebuilt-per-read**: the scriptable tab MUST be constructed
   fresh on every enumeration or lookup call, with all six fields (`id`,
@@ -179,7 +170,7 @@ interface and are used throughout as such.
   builds, so a directory that resolves to no project controller, no branch
   controller for that directory, or a branch controller whose checkout is
   on a detached HEAD (no current branch, see
-  `agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller`) all
+  `adtoolkit://cookbook/workspace/projects/branch-controller`) all
   collapse to the same observable value: an empty string, never a null
   stringified and never a thrown error.
 - **tab-object-specifier-key**: the scriptable tab's object specifier MUST
@@ -287,7 +278,7 @@ neither of which this surface draws.
   wrapper types, is confined to the UI's main execution context (MUST, see
   **main-thread-confinement**); the AppleScript scripting layer itself dispatches command
   handlers on the main thread (see
-  `agenticdevelopertoolkit://cookbook/system/scripting`), so no two enumerations or
+  `adtoolkit://cookbook/system/scripting`), so no two enumerations or
   lookups from this surface can interleave with each other or with a
   window opening or closing. There is no lock, queue, or independent
   concurrency state defined here — main-thread confinement is the entire
@@ -300,7 +291,7 @@ neither of which this surface draws.
   (MUST, see **tab-branch-empty-when-unresolved**). Any error a git
   subprocess could raise is fully absorbed inside the branch controller's
   own refresh operation before its current branch is ever read by this
-  surface (see `agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller`);
+  surface (see `adtoolkit://cookbook/workspace/projects/branch-controller`);
   none of it is observable through the scriptable tab's `branch`.
 - **Offline or disconnected state**: Not applicable in the network sense —
   nothing here makes a network call. Git itself is local-only, and even
@@ -379,7 +370,7 @@ already been shown; it makes no network transmission at all.
 This surface and the three wrapper types make no logging call. A branch
 that fails to resolve is not logged here at all; any underlying git
 failure is recorded once, upstream, by the git command log (see
-`agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller`), not a
+`adtoolkit://cookbook/workspace/projects/branch-controller`), not a
 second time by this surface.
 
 | Event | Level | Message |
@@ -439,7 +430,7 @@ second time by this surface.
   the pane view model a `ScriptablePane`-equivalent holds. Resolve the git
   branch through the same `GitClient`/`BranchController` port this family's
   siblings already define (see
-  `agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller`), folding
+  `adtoolkit://cookbook/workspace/projects/branch-controller`), folding
   a `null` result to `string.Empty` at the same point `ComposableTabsWindowController.scriptingTabs(branch:)`
   does, and enforce main-thread confinement with `DispatcherQueue` in place
   of `@MainActor`.
@@ -484,7 +475,7 @@ comment states this is deliberate: a caller with no branch controller "passes
 `{ _ in nil }`, which `ScriptableProjectTab` reports as an empty string"
 (`ComposableTabsWindowController.swift`) — matching
 `BranchController`'s own policy that a detached HEAD is "an answer,"
-documented in `agenticdevelopertoolkit://cookbook/workspace/projects/branch-controller`.
+documented in `adtoolkit://cookbook/workspace/projects/branch-controller`.
 **Approved**: pending
 
 **Decision**: `ScriptableProjectTab.uniqueID` is the tab *group's* id, not
@@ -549,6 +540,7 @@ error.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

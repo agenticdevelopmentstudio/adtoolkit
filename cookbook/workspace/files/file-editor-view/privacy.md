@@ -1,0 +1,6 @@
+
+- **Data collected**: None of its own beyond the file the user has already selected in the file browser. The component reads that file's bytes into memory to display and, for text, into an editable buffer; it collects nothing else.
+- **Storage**: Local disk only. Edits are written back to the same file the user opened, through the injected autosave scheduler's debounced autosave; the in-memory cache (up to 8 documents, plus their undo history) lives only as long as this view does and is not itself persisted.
+- **Transmission**: None from this component. Project language-server communication (completion, jump-to-definition, diagnostics), when language services are supplied, is a local inter-process exchange with a language server, not a network call.
+- **Retention**: A file's content on disk persists per the file system's own guarantees, subject to the debounce window stated under Autosave & Persistence and the retry behavior described in Design Decisions. The in-memory cache retains a document only until it is evicted (least-recently-selected, past 8 documents) or this pane is torn down, at which point its pending autosave is flushed and its reference released — nothing is retained beyond that.
+

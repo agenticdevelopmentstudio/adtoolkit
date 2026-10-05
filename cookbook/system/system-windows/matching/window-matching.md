@@ -1,37 +1,36 @@
 ---
 id: 840dc813-b4a3-483c-be87-2959ac551ea7
-title: Window Matching
-domain: agenticdevelopertoolkit://cookbook/system/system-windows/matching/window-matching
+title: "Window Matching"
+domain: adtoolkit://cookbook/system/system-windows/matching/window-matching
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: App title heuristics, user rules and their JSON store, window fingerprinting,
-  scoring, and greedy one-to-one re-matching of dormant snapshots.
+summary: "App title heuristics, user rules and their JSON store, window fingerprinting, scoring, and greedy one-to-one re-matching of dormant snapshots."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- system-windows
-- window-matching
-- heuristics
-- fingerprinting
-- persistence
+  - system-windows
+  - window-matching
+  - heuristics
+  - fingerprinting
+  - persistence
 depends-on:
-- agenticdevelopertoolkit://cookbook/system/system-windows/window-context-model
+  - adtoolkit://cookbook/system/system-windows/window-context-model
 related:
-- agenticdevelopertoolkit://cookbook/system/system-windows/matching/title-heuristics
-- agenticdevelopertoolkit://cookbook/system/system-windows/system-windows-engine
+  - adtoolkit://cookbook/system/system-windows/matching/title-heuristics
+  - adtoolkit://cookbook/system/system-windows/system-windows-engine
 references:
-- https://developer.apple.com/documentation/foundation/nsregularexpression
-- https://developer.apple.com/documentation/coregraphics/1455137-cgwindowlistcopywindowinfo
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/documentation/foundation/nsregularexpression
+  - https://developer.apple.com/documentation/coregraphics/1455137-cgwindowlistcopywindowinfo
+approved-by: ""
+approved-date: ""
 ---
 
 # Window Matching
@@ -62,10 +61,10 @@ Use it whenever a window must be persisted by identity rather than by a
 volatile OS handle. The data types it consumes (a match strategy, a window
 fingerprint, a live window record, a dormant window snapshot, a window
 context) are specified in
-[Window Matching Core System Windows](agenticdevelopertoolkit://cookbook/system/system-windows/window-context-model).
+[Window Matching Core System Windows](adtoolkit://cookbook/system/system-windows/window-context-model).
 The per-app built-in heuristics (Xcode, Warp, Brave, VS Code, Terminal) are
 specified in
-[Window Matching Heuristics](agenticdevelopertoolkit://cookbook/system/system-windows/matching/title-heuristics);
+[Window Matching Heuristics](adtoolkit://cookbook/system/system-windows/matching/title-heuristics);
 this recipe specifies only their registration, not their parsing rules.
 
 ## Behavioral Requirements

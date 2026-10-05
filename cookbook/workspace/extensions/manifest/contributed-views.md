@@ -1,33 +1,31 @@
 ---
 id: 236659d0-ee7d-45c9-8986-181f027a4058
-title: Contributed Views
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/contributed-views
+title: "Contributed Views"
+domain: adtoolkit://cookbook/workspace/extensions/manifest/contributed-views
 type: ingredient
-version: 1.1.0
+version: 1.1.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Turns a decoded extension manifest's contributes.views and contributes.viewsContainers
-  into sorted, notes-carrying registry data, resolving codicon names to this host's
-  icon symbols without opening any file.
+summary: "Turns a decoded extension manifest's contributes.views and contributes.viewsContainers into sorted, notes-carrying registry data, resolving codicon names to this host's icon symbols without opening any file."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- contributed-views
-- view-containers
-- manifest-parsing
-- icon-mapping
+  - extensions
+  - contributed-views
+  - view-containers
+  - manifest-parsing
+  - icon-mapping
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Contributed Views
@@ -51,7 +49,7 @@ This component defines the data this host keeps for a VS Code extension's `contr
 - **containers-not-deduplicated**: unlike the location resolution in `container-id-first-wins-for-axis`, the containers list itself MUST include every declared container record, including two or more entries that share the same `containerID` across different locations; this component MUST NOT deduplicate or drop any container entry.
 - **duplicate-view-id-first-wins**: when the same extension's manifest declares the same view `id` more than once — whether within one target's array or across two or more different targets — only the first entry in `views-sort-order`'s order MUST be registered as a view record; every subsequent entry sharing that `id` MUST be dropped (never appended to the views list) and MUST produce exactly one `duplicateViewID` note naming the `viewID` and the target container that won.
 - **dropped-duplicate-suppresses-its-own-notes**: a dropped duplicate entry (per `duplicate-view-id-first-wins`) MUST NOT produce a `whenNotEvaluated`, `unmappedIcon`, `fileIcon`, or `malformedField` note of its own even when its declaration would otherwise trigger one; only the `duplicateViewID` note MUST be produced for it.
-- **view-kind-default**: a view's kind MUST be tree whenever the declared `type` is absent or is any string other than the literal `"webview"`, and MUST be webview only when the declared `type` is exactly `"webview"`; neither outcome MUST produce a note.
+- **view-kind-default**: a view's kind MUST be tree whenever the declared `type` is absent or is any string other than the literal `"webview"`, and MUST be webview only when the declared `type` is exactly `"webview"`; each outcome MUST NOT produce a note.
 - **icon-blank-input**: when the declared `icon`, after trimming leading and trailing whitespace and newline characters, is an empty string, `symbolName` and `iconPath` MUST both be absent and no note MUST be produced.
 - **icon-codicon-form**: a trimmed, non-empty `icon` value that begins with `"$("` and ends with `")"` MUST be treated as a codicon reference rather than a file path.
 - **icon-codicon-animation-modifier-stripped**: within a codicon reference, any suffix after a `~` character (e.g. the `~spin` in `$(sync~spin)`) MUST be removed before the codicon name is looked up, so `$(sync~spin)` and `$(sync)` MUST resolve to the identical `symbolName`.
@@ -208,6 +206,7 @@ Not applicable: this component makes no logging call of any kind; every compromi
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
 | [graceful-degradation](agenticdevelopercookbook://compliance/reliability#graceful-degradation) | passed | Reliability |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | Reliability |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
@@ -215,10 +214,14 @@ Not applicable: this component makes no logging call of any kind; every compromi
 
 `graceful-degradation` passes because a malformed field, an unmapped icon, an unknown container, or a duplicate view id each costs only that one field or entry — per `unreadable-key-note-per-key`, `icon-codicon-unmapped`, `unknown-container-note`, and `duplicate-view-id-first-wins` — never the extension's other views or the whole build. `idempotent-operations` passes because building views is a pure function (`build-is-pure`) over immutable inputs and a fixed table, so calling it twice with identical arguments MUST return bit-for-bit identical containers, views, and notes lists, with no accumulation between calls. `no-hardcoded-strings` fails because every note's `detail` sentence is an unlocalized English string literal (see Localization), with no localization key of any kind. `unit-test-coverage` passes: `ContributedViewsBuilderTests.swift` exercises registry-id namespacing, the tree/webview default, every icon-resolution branch (mapped, unmapped, animated, blank, file-path), the `when`-clause note, all four axis-rule target kinds, both duplicate-view-id shapes (within one target and across two), container-without-icon survival, both directions of the unreadable-key leniency, and declared-order preservation for both containers and views.
 
+`separation-of-concerns` passes because `ContributedViews.swift` imports only Foundation and splits its work across separate types: the value records (`ContributedViewContainer`, `ContributedView`, `ContributedViewNote`), the codicon lookup table (`CodiconSymbols`), and the pure `ContributedViewsBuilder`; the builder only classifies the manifest and never renders, persists, or evaluates `when` clauses.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.2 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Added the separation-of-concerns compliance row with justification from the code. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/manifest/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

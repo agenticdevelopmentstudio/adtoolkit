@@ -1,0 +1,9 @@
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `CLOUDFLARE_API_TOKEN` | `string \| undefined` (field of `env`) | none — required for a non-no-op poll | The Cloudflare API Bearer token. Absent or empty triggers the no-op branch (noop-missing-credentials). This file reads it only from the `env` object passed in; it does not read `process.env` itself. |
+| `CLOUDFLARE_ACCOUNT_ID` | `string \| undefined` (field of `env`) | none — required for a non-no-op poll | The Cloudflare account id to enumerate Workers under. The caller (`sync.ts`, external) resolves this externally via `resolveCfAccountForConn` before calling this function; this file performs no account-id discovery of its own. |
+| `workerScripts` | `readonly string[] \| undefined` (field of `env`) | `[]` (via `env.workerScripts ?? []`) | The configured fallback Worker-script id list, used only when `listWorkerScripts` fails to enumerate scripts live (fallback-to-configured-scripts). The caller passes `conn.cloudflare.workerScripts` (external, sourced from the DB integration config). |
+| `overallBudgetMs` | `number \| undefined` (field of `env`) | `18_000` | The overall poll budget in milliseconds, counted from before the script listing starts (deadline-starts-before-listing). Per the source's own comment, "under sync's 20s `guard`" — deliberately shorter than the caller's `PROVIDER_POLL_TIMEOUT_MS` (20,000ms, `sync.ts`, external) so this function's own partial-result path fires before the caller's blunter all-or-nothing timeout would discard the whole poll. Overridable, per the source comment, "for tests/tuning." |
+| `CF_SCRIPT_CONCURRENCY` (module constant) | `number` | `5` | Fixed fan-out limit for per-script fetches via `mapLimit`; not exposed on `env` and not configurable per call. |
+

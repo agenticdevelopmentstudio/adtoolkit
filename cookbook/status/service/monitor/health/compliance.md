@@ -1,0 +1,10 @@
+
+| Check | Status | Category |
+|-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | passed | Best Practices |
+| [fault-tolerance](agenticdevelopercookbook://compliance/reliability#fault-tolerance) | passed | Reliability |
+
+`unit-test-coverage` is `partial`: `health.test.ts` gives `classify` six assertions with meaningful expectations, covering fast/slow 2xx, a 5xx, a missing body marker, a non-ok health-kind JSON body, and a non-2xx `expectedStatus` match — but four branches this recipe traces directly to the source (a non-JSON body falling through, a JSON body with no `status` field falling through, the exact `DEGRADED_THRESHOLD_MS` latency boundary, and the case-insensitive/non-string `status` coercion) have no assertion of their own anywhere in `health.test.ts`. `separation-of-concerns` passes: this file's only responsibility is turning an already-observed probe outcome into a `HealthStatus` verdict; it performs no I/O, no persistence, and no HTTP/DNS work of its own, leaving fetching, timing, and body-reading to `probe.ts` (external). `explicit-error-handling` passes: the one error `classify` can encounter — `JSON.parse` throwing on a non-JSON `bodyText` — is caught by an explicit `try`/`catch` whose empty body is documented by an inline comment explaining the fall-through is deliberate, not an unhandled or silently-ignored exception path. `fault-tolerance` passes: `classify` accepts an arbitrary `bodyText` string (malformed JSON, HTML, or any other content) and an arbitrary `status` field shape (string, number, boolean, object) without throwing or crashing, per health-kind-json-parse-failure-falls-through and health-kind-status-field-string-coercion.
+

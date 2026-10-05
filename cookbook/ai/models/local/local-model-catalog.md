@@ -1,38 +1,35 @@
 ---
 id: 79c8f46f-e934-46d1-8d0e-4bbee625e163
-title: Local Model Catalog
-domain: agenticdevelopertoolkit://cookbook/ai/models/local/local-model-catalog
+title: "Local Model Catalog"
+domain: adtoolkit://cookbook/ai/models/local/local-model-catalog
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A cache mapping a local model server's model name to its on-disk size in
-  bytes, fetched from Ollama's native /api/tags endpoint.
+summary: "A cache mapping a local model server's model name to its on-disk size in bytes, fetched from Ollama's native /api/tags endpoint."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- local-model
-- caching
-- ollama
-- ai-plugin
+  - local-model
+  - caching
+  - ollama
+  - ai-plugin
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/LocalModelCatalog.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalModelServer.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/LocalModelCatalogTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/LocalModelServerTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/LocalModelCatalog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/LocalModelServer.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/LocalModelCatalogTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/LocalModelServerTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Local Model Catalog
@@ -131,45 +128,11 @@ constructed without an explicit catalog.
   a model when the parsed sizes only contain that model name suffixed with
   `:latest` (delegated to the model server helper's size resolver).
 
-Three concerns the catalog's own purpose calls for are left undefined:
+Three concerns the catalog's own purpose calls for are not handled; each is stated below as current behavior and recorded as a pending Design Decision:
 
-- **concurrent-fetch-deduplication**: NEEDS REVIEW: Not implemented. The
-  per-server sizes lookup checks the cache for freshness, then waits on the
-  fetch, and only afterward writes the new entry. Because that wait is
-  reentrant, two concurrent lookups for the same expired or uncached base
-  URL can both observe the same pre-fetch cache state and both trigger a
-  fetch; the entry that ends up cached is whichever call's write executes
-  last, not necessarily the one from the most recently issued request, and
-  the server is hit twice (or more) for one logical refresh instead of once.
-  No in-flight-request tracking or coalescing exists. This cannot be
-  resolved from the catalog's own behavior alone; it requires either an
-  explicit statement that duplicate concurrent fetches are an accepted cost
-  (the guard's own call sites are typically not highly concurrent) or an
-  in-flight-request cache keyed by base URL.
-- **base-url-locality-is-unenforced**: NEEDS REVIEW: Not implemented. Both
-  the catalog's own stated purpose (fetching and caching a *local* server's
-  sizes) and the model server helper's loopback-detection function describe
-  and can test for a local server, but the catalog never calls that check
-  before deriving a tags URL from the base URL and issuing a fetch to it. A
-  caller passing a non-loopback base URL — by misconfiguration or a future
-  provider that reuses this component — causes the catalog to make an
-  outbound request to that remote host on every cache miss, with nothing to
-  prevent it. The inference guard's own stated assumption (that its decision
-  covers one request to a loopback provider) states the same assumption
-  without enforcing it either. Resolved by either calling the
-  loopback-detection check and failing closed (returning nothing) for a
-  non-loopback base URL, or a maintainer confirming that locality is
-  guaranteed by a caller outside this component.
-- **fetch-error-is-fully-swallowed**: NEEDS REVIEW: Not implemented. A
-  failed fetch attempt discards whatever error it produced (a timeout, a
-  connection failure, a non-200 status, or any error a substituted fetch
-  function raises) with no log, no diagnostic, and no way for a caller to
-  distinguish "server refused the connection" from "server returned no
-  models" from "response failed to parse." A maintainer investigating why
-  the guard stopped seeing model sizes for a given server has no signal from
-  this component. Resolved by logging the discarded error (subsystem/
-  category to be defined) or by a maintainer confirming that silence is
-  intentional for this internal advisory cache.
+- **concurrent-fetch-deduplication**: The per-server sizes lookup checks the cache for freshness, then waits on the fetch, and only afterward writes the new entry. Because that wait is reentrant, two concurrent lookups for the same expired or uncached base URL can both observe the same pre-fetch cache state and both trigger a fetch; the entry that ends up cached is whichever call's write executes last, not necessarily the one from the most recently issued request, and the server is hit twice (or more) for one logical refresh. No in-flight-request tracking or coalescing exists.
+- **base-url-locality-is-unenforced**: The catalog never calls the model server helper's loopback-detection check before deriving a tags URL from the base URL and issuing a fetch. A caller passing a non-loopback base URL (by misconfiguration or a future provider that reuses this component) causes an outbound request to that remote host on every cache miss. The inference guard's own stated assumption (one request to a loopback provider) states the same locality without enforcing it.
+- **fetch-error-is-fully-swallowed**: A failed fetch attempt discards whatever error it produced (a timeout, a connection failure, a non-200 status, or any error a substituted fetch function raises) with no log and no diagnostic, so a caller cannot distinguish a refused connection from a server that returned no models or a response that failed to parse.
 
 ## Appearance
 
@@ -225,8 +188,8 @@ component.
   with no possibility of a torn read or write of the cache. This is
   applicable — the shared instance is read from at least the inference
   guard, which itself runs from multiple callers — and is safe by
-  construction for memory, but see the open question on
-  concurrent-fetch-deduplication above: statement-level safety does not
+  construction for memory, but see
+  concurrent-fetch-deduplication above and its Design Decision: statement-level safety does not
   prevent two concurrent callers for the same key from each triggering their
   own network fetch.
 - **Server unreachable (network/offline).** When the local server's process
@@ -333,9 +296,9 @@ fetch-error-is-fully-swallowed in Behavioral Requirements.
   `@Sendable (URL) async throws -> Data`, defaulting to a `liveFetcher` that
   issues a `GET` with `URLRequest.timeoutInterval = 5` and throws
   `URLError(.badServerResponse)` on a non-200 `HTTPURLResponse`. The
-  `concurrent-fetch-deduplication` open question follows from actor
+  `concurrent-fetch-deduplication` gap follows from actor
   reentrancy: two `await`s on `fetcher(url)` before either write to `cache`
-  can interleave. The `fetch-error-is-fully-swallowed` open question follows
+  can interleave. The `fetch-error-is-fully-swallowed` gap follows
   from `if let data = try? await fetcher(url)`, which discards whatever
   error `fetcher` throws — including `URLError(.cannotConnectToHost)` on a
   connection failure, or a `CancellationError` on task cancellation.
@@ -428,10 +391,24 @@ fetch-error-is-fully-swallowed in Behavioral Requirements.
   per distinct spelling used.
   **Approved**: pending
 
+**Decision**: Concurrent sizes lookups for one base URL are not coalesced.
+**Rationale**: Two lookups can each fetch and the last write wins; closing the gap takes either an explicit acceptance that duplicate concurrent fetches are an accepted cost (the guard's call sites are not highly concurrent) or an in-flight-request cache keyed by base URL.
+**Approved**: pending
+
+**Decision**: Base URL locality is assumed, not enforced.
+**Rationale**: The catalog fetches from whatever base URL it is given; closing the gap takes calling the loopback-detection check and failing closed (returning nothing) for a non-loopback base URL, or a maintainer confirming a caller outside this component guarantees locality.
+**Approved**: pending
+
+**Decision**: Fetch errors are discarded without a log.
+**Rationale**: A failed fetch yields only nil or the stale sizes, leaving no signal about why the guard stopped seeing model sizes; closing the gap takes logging the discarded error (subsystem and category to be defined) or a maintainer confirming that silence is intended for this internal advisory cache.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [graceful-degradation](agenticdevelopercookbook://compliance/reliability#graceful-degradation) | passed | Reliability |
 | [fault-tolerance](agenticdevelopercookbook://compliance/reliability#fault-tolerance) | passed | Reliability |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | partial | Reliability |
@@ -445,7 +422,7 @@ fault-tolerance passes because a persistently down or non-ollama server is
 retried on the slower `failureTTL` cadence instead of being hit on every
 lookup. idempotent-operations is partial because concurrent calls for the
 same uncached or expired `baseURL` are not deduplicated — see the
-open question on concurrent-fetch-deduplication in Behavioral
+concurrent-fetch-deduplication in Behavioral
 Requirements — so repeated concurrent invocations can each trigger their own
 network side effect instead of converging on one. explicit-error-handling
 fails because every fetch, HTTP-status, and parse failure is discarded via
@@ -453,11 +430,14 @@ fails because every fetch, HTTP-status, and parse failure is discarded via
 is no log, no thrown error, and no way for a caller or maintainer to
 distinguish the failure modes from one another.
 
+`separation-of-concerns` passes because `LocalModelCatalog` only caches and refreshes per-server model sizes, delegating URL derivation and size parsing to the model server helper and consuming decisions to `LocalInferenceGuard`. `unit-test-coverage` is partial: `LocalModelCatalogTests.swift` covers a single fetch served from cache, a failed fetch not retried within the failure TTL, an unlisted model having no size, and a failed refetch keeping the last known-good sizes, but nothing covers concurrent lookups, a non-loopback base URL or the swallowed error.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/models/local/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved three NEEDS REVIEW markers as current behavior plus pending Design Decisions; added separation-of-concerns and unit-test-coverage compliance. |

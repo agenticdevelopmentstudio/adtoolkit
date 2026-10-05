@@ -1,32 +1,30 @@
 ---
 id: 2067e249-4f97-4575-b8ed-8f55f6dc96df
-title: Stream Event
-domain: agenticdevelopertoolkit://cookbook/ai/plugins/stream-event
+title: "Stream Event"
+domain: adtoolkit://cookbook/ai/plugins/stream-event
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A value type describing one event in an AI provider's response
-  stream, plus the decoder role that turns raw bytes into a sequence of
-  them.
+summary: "A value type describing one event in an AI provider's response stream, plus the decoder role that turns raw bytes into a sequence of them."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- streaming
-- decoder
+  - ai-plugin
+  - streaming
+  - decoder
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/plugins/ai-plugin
+  - adtoolkit://cookbook/ai/plugins/ai-plugin
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Stream Event
@@ -119,19 +117,7 @@ typed event sequence.
   or cache decoder state beyond the data and decoder-instance lifetimes
   already described above — the source contains no file, database, or
   secure-storage write of its own.
-- **decode-failure-signal**: NEEDS REVIEW: Not implemented in source.
-  Neither the stream event type nor the decoder role defines a case or
-  return path meaning "this frame is malformed and will never decode" — a
-  permanently corrupt frame (e.g. JSON truncated by a dropped connection,
-  or bytes that fail text decoding) is indistinguishable from a frame that
-  is merely incomplete and awaiting more bytes; both currently yield an
-  empty list from consume with no signal reaching the host. What is
-  missing: an explicit decode-error case or failure path the host could
-  observe and surface. What would settle it: a design decision on whether
-  "permanently malformed" should ever be observable, given every current
-  provider's wire format (server-sent-event lines, newline-delimited JSON,
-  plain text) is line-oriented and naturally resynchronizes on the next
-  frame regardless of one bad line.
+- **decode-failure-signal**: Neither the stream event type nor the decoder role defines a case or return path meaning "this frame is malformed and will never decode": a permanently corrupt frame (for example JSON truncated by a dropped connection, or bytes that fail text decoding) is indistinguishable from a frame that is merely incomplete and awaiting more bytes, and both currently yield an empty list from consume with no signal reaching the host.
 
 ## Appearance
 
@@ -188,8 +174,8 @@ stream-decoding role, not a visual component.
   bytes that fail text decoding, an unrecognized event type) MUST NOT cause
   consume or finish to raise an error — the source declares neither
   operation as failure-raising, so a decoder MUST fall back to returning an
-  empty list for that frame. See the open question on decode-failure-signal
-  for the genuine gap this leaves.
+  empty list for that frame. See decode-failure-signal and its
+  Design Decision for the gap this leaves.
 - **Offline / disconnected state**: When the underlying byte stream fails
   before ending normally (e.g. a network read interrupted by a dropped
   connection), the host's byte pump MUST propagate that error immediately,
@@ -283,7 +269,7 @@ data-and-role declaration with no side effects of its own.
 ## Design Decisions
 
 **Decision**: `consume(_:)` and `finish()` are both non-throwing; a frame that cannot be decoded simply yields no event, with no distinct error signal.
-**Rationale**: This keeps every conforming decoder simple — none of the five shipped decoders (`ClaudeSSEDecoder`, `OpenAIReplyDecoder`, `GeminiReplyDecoder`, `ChatReplyDecoder`, `PlainTextDecoder`) needs error-propagation plumbing — but it means a genuinely malformed, unrecoverable frame is indistinguishable from one that is merely incomplete and awaiting more bytes; both currently vanish silently. This is the same gap the open question on decode-failure-signal documents.
+**Rationale**: This keeps every conforming decoder simple — none of the five shipped decoders (`ClaudeSSEDecoder`, `OpenAIReplyDecoder`, `GeminiReplyDecoder`, `ChatReplyDecoder`, `PlainTextDecoder`) needs error-propagation plumbing — but it means a genuinely malformed, unrecoverable frame is indistinguishable from one that is merely incomplete and awaiting more bytes; both currently vanish silently. This is the same gap the behavior described under decode-failure-signal documents.
 **Approved**: pending
 
 **Decision**: `AIStreamEvent` declares three cases — `textDelta`, `toolUse`, `end` — even though no `AIStreamDecoder` shipped in this repository (`ClaudeSSEDecoder`, `OpenAIReplyDecoder`, `GeminiReplyDecoder`, `ChatReplyDecoder`, `PlainTextDecoder`) ever returns a `.toolUse` event.
@@ -298,6 +284,10 @@ data-and-role declaration with no side effects of its own.
 **Rationale**: A buffered whole-response decoder like `OpenAIReplyDecoder` needs an explicit `finish()` to emit its accumulated reply, but a decoder with no trailing state to flush (such as `LineDecoder` in `PluginTransportTests.swift`) has nothing useful to say when the stream closes; the default lets such a decoder omit the method entirely instead of writing a body that only returns `[]`.
 **Approved**: pending
 
+**Decision**: A permanently malformed frame is not observable by the host.
+**Rationale**: There is no decode-error case or failure path, so a corrupt frame looks the same as an incomplete one; every current provider's wire format (server-sent-event lines, newline-delimited JSON, plain text) is line-oriented and resynchronizes on the next frame regardless of one bad line, so closing the gap takes a design decision on whether permanently malformed ever needs to be observable and, if so, an explicit decode-error case.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -307,7 +297,7 @@ data-and-role declaration with no side effects of its own.
 | [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | failed | Best Practices |
 | [fault-tolerance](agenticdevelopercookbook://compliance/reliability#fault-tolerance) | partial | Reliability |
 
-Notes: separation-of-concerns passes because the event enum (`AIStreamEvent`) is kept separate from the decoding protocol (`AIStreamDecoder`), and decoding itself is kept separate from the host's transport and framing — `PluginTransport` supplies the bytes, this file only turns bytes already in hand into typed events. unit-test-coverage passes because `PluginDecoderTests.swift`, `PluginTransportTests.swift`, and `PluginTransportFramingTests.swift` exercise every shipped decoder and the framing contract directly. explicit-error-handling fails because a malformed or unparseable frame is silently swallowed as `[]` from `consume(_:)`/`finish()` with no distinct signal reaching the host, per the open question on decode-failure-signal. fault-tolerance is partial because `consume(_:)` and `finish()` never throw or crash on unexpected byte input — every shipped decoder falls back to returning no event — but a permanently malformed frame stays indistinguishable from one that is merely incomplete, the same gap covered by the open question on decode-failure-signal.
+Notes: separation-of-concerns passes because the event enum (`AIStreamEvent`) is kept separate from the decoding protocol (`AIStreamDecoder`), and decoding itself is kept separate from the host's transport and framing — `PluginTransport` supplies the bytes, this file only turns bytes already in hand into typed events. unit-test-coverage passes because `PluginDecoderTests.swift`, `PluginTransportTests.swift`, and `PluginTransportFramingTests.swift` exercise every shipped decoder and the framing contract directly. explicit-error-handling fails because a malformed or unparseable frame is silently swallowed as `[]` from `consume(_:)`/`finish()` with no distinct signal reaching the host, per decode-failure-signal and its Design Decision. fault-tolerance is partial because `consume(_:)` and `finish()` never throw or crash on unexpected byte input — every shipped decoder falls back to returning no event — but a permanently malformed frame stays indistinguishable from one that is merely incomplete, the same gap covered by decode-failure-signal.
 
 ## Change History
 
@@ -318,3 +308,4 @@ Notes: separation-of-concerns passes because the event enum (`AIStreamEvent`) is
 | 1.0.3 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.4 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/plugins/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the decode-failure-signal NEEDS REVIEW marker as current behavior plus a pending Design Decision. |

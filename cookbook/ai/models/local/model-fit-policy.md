@@ -1,39 +1,35 @@
 ---
 id: 5069f11f-e0c6-40c3-92ca-6152b8df3bc2
-title: Model Fit Policy
-domain: agenticdevelopertoolkit://cookbook/ai/models/local/model-fit-policy
+title: "Model Fit Policy"
+domain: adtoolkit://cookbook/ai/models/local/model-fit-policy
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure policy mapping a local model's disk size, available RAM, thresholds,
-  and memory pressure to a fit tier and an allow/block/defer verdict, shared by
-  an inference guard and model pickers.
+summary: "Pure policy mapping a local model's disk size, available RAM, thresholds, and memory pressure to a fit tier and an allow/block/defer verdict, shared by an inference guard and model pickers."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- model-fit
-- memory-budget
-- policy
+  - ai-plugin
+  - model-fit
+  - memory-budget
+  - policy
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/ModelFitPolicy.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelFitPolicyTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ModelChooserContent.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ModelChooserViewController.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/ModelFitPolicy.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelFitPolicyTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/LocalInferenceGuard.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ModelChooserContent.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/AIPlugins/Settings/ModelChooserViewController.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Model Fit Policy

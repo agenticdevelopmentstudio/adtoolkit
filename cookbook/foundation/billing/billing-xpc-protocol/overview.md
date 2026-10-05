@@ -1,0 +1,3 @@
+
+The billing half of a daemon's XPC surface as its own protocol, so any app (a menu-bar app, a command-line tool) can talk billing to a daemon without linking the daemon's whole protocol. A daemon declares a composite protocol refining both its own and this one; a client builds its interface from this one alone. NSXPC dispatches by selector, so both sides agree as long as these selectors do not change. Every payload crosses as JSON data (snake_case, ISO-8601) because the transport only carries property-list types. The reply conventions carry meaning: a nil or false write reply means nothing was written and the second argument gives the reason; a list read that failed is the single sentinel row; a count of -1 means the write failed.
+

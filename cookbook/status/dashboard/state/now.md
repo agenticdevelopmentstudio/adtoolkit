@@ -1,27 +1,26 @@
 ---
 id: 0b171409-02f8-4ad2-97d3-8f4b1adfa340
-title: Coarse Clock
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/now
+title: "Coarse Clock"
+domain: adtoolkit://cookbook/status/dashboard/state/now
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: State returning a coarse wall-clock timestamp captured when first used and
-  refreshed on a fixed interval (default 30 s).
+summary: "State returning a coarse wall-clock timestamp captured when first used and refreshed on a fixed interval (default 30 s)."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Coarse Clock
@@ -45,7 +44,7 @@ Various dashboard views and the board state use the returned value for relative-
 - **interval-change-restart**: When the interval changes between uses, Now MUST clear the existing timer and start a new one with the new interval; the stored value MUST NOT be reset by the change.
 - **unmount-cleanup**: When the caller stops using it, Now MUST clear its interval timer so no further updates are scheduled.
 - **instance-independence**: Each use MUST own an independent clock and timer; two callers using Now are not synchronized and MAY return values that differ by up to one interval.
-- **client-only-module**: Now has no server-only or universal-rendering variant; it requires a live client execution context, because it depends on state, update notifications and a repeating timer.
+- **client-only**: Coarse Clock MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 - **no-validation**: Now MUST pass the interval to the timer unchanged; it performs no range or type check of its own.
 - **no-side-effects-beyond-timer**: Now MUST NOT perform network, storage, logging or other I/O; its only side effect is the interval timer.
 - **concurrency**: All updates MUST run on a single execution thread via the timer callback and the caller's own update mechanism; there is no cross-thread access, so ordering between ticks and reads is determined by that thread's scheduling.
@@ -76,6 +75,7 @@ No dedicated test file exists for this concept; it is exercised only indirectly 
 | use-now-006 | unmount-cleanup | Start using Now with a 1,000 ms interval; stop using it; advance the timer by 5,000 ms | The timer is cleared exactly once; no further update or warning occurs; zero pending timers |
 | use-now-007 | instance-independence | Start using Now in two places: one with a 1,000 ms interval at clock 0, another at clock 400 | The first returns `0`, the second returns `400`; after advancing to 1,000 ms the first returns `1000` while the second still returns `400` |
 | use-now-008 | no-side-effects-beyond-timer | Start using Now with the default interval, with network, storage and logging calls monitored | No calls to any of them |
+| use-now-009 | client-only | Load Coarse Clock in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -173,6 +173,7 @@ The hook does one thing â€” supply a stable, periodically refreshed timestamp â€
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

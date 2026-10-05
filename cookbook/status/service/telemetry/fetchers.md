@@ -1,36 +1,34 @@
 ---
 id: 8648272e-2da3-46fc-b9e8-5148dacdbcff
-title: Status Server Fetchers
-domain: agenticdevelopertoolkit://cookbook/status/service/telemetry/fetchers
+title: "Status Server Fetchers"
+domain: adtoolkit://cookbook/status/service/telemetry/fetchers
 type: ingredient
-version: 1.0.2
+version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Two Fetcher-port adapters (GlitchTip issues, PostHog HogQL analytics) feeding
-  the status server's telemetry streams — env-gated no-op, one bounded fetch attempt,
-  and DTO mapping.
+summary: "Two Fetcher-port adapters (GlitchTip issues, PostHog HogQL analytics) feeding the status server's telemetry streams — env-gated no-op, one bounded fetch attempt, and DTO mapping."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- telemetry
-- glitchtip
-- posthog
-- fetcher
-- server
+  - telemetry
+  - glitchtip
+  - posthog
+  - fetcher
+  - server
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/telemetry/fetchers/glitchtip.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/telemetry/fetchers/posthog.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/telemetry-glitchtip-fetcher.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/telemetry/fetchers/glitchtip.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/telemetry/fetchers/posthog.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/telemetry-glitchtip-fetcher.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Fetchers
@@ -121,7 +119,7 @@ Not applicable — this is a pair of telemetry Fetcher-port adapters, not a visu
 - **Offline / disconnected state**: both files bound every outbound request with an `AbortController`/timeout (`TIMEOUT_MS` for GlitchTip, `QUERY_TIMEOUT_MS` per PostHog query) so an unreachable or hanging provider fails the poll within a fixed budget rather than hanging the caller indefinitely.
 - **glitchtip-issue-schema-unverified**: `mapIssues`/`GlitchtipIssue` reads `id`, `title`, `culprit`, `level`, `count`, `userCount`, `firstSeen`, `lastSeen`, `permalink`, and `project` in the shapes declared, falling back per field as described above; the file's own comment records that this shape has not been confirmed against a live GlitchTip instance. The response schema itself is owned by GlitchTip.
 - **posthog-query-response-schema-unverified**: `hogql` reads the aggregate from `results[0][0]` of a `{ results: [[value]] }` response; the file's own comment records that this shape has not been confirmed against a live PostHog project. The response schema itself is owned by PostHog.
-- **posthog-malformed-result-shape-unsignaled**: NEEDS REVIEW: Not implemented in source. When a query's response is `ok` but `results[0][0]` is neither a `number` nor a `string` (missing `results`, `null`, an object, a boolean), `hogql` resolves `{ value: null, error: null }`, and the caller treats it identically to a successful query with no assertable KPI — no `console.warn`, no recorded `failure`, and no signal distinguishing it from a provider that genuinely answered with nothing; whether a malformed shape of this kind should count as a failure is unresolved without a decision on how strictly to validate the HogQL response.
+- **posthog-malformed-result-shape-unsignaled**: When a PostHog query response is ok but its first result cell is neither a number nor a string (missing results, null, an object, a boolean), the query helper MUST resolve a null value with a null error. The caller treats it like a successful query with no assertable KPI: no warning is logged, no failure is recorded, and nothing distinguishes it from a provider that answered with nothing. The metric is skipped; only when every query yields no item does the batch report failure (ok false), still without a per-query warning.
 
 ## Configuration
 
@@ -206,6 +204,10 @@ Subsystem: process `console` | Category: telemetry
   **Rationale**: the source comment states this directly — persisting whatever succeeded means a total outage is the only case that returns `ok: false`, so a partial provider degradation never overwrites already-good trend data (in the external `Store`) with an empty set.
   **Approved**: pending
 
+**Decision**: A malformed but ok PostHog result shape is not signaled as a failure.
+**Rationale**: It stands today because only transport and HTTP errors count as failures. Closing it needs a decision on how strictly to validate the response shape, and a test for each malformed shape.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -227,6 +229,7 @@ Subsystem: process `console` | Category: telemetry
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Resolved posthog-malformed-result-shape marker as current behavior plus pending decision |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation, documenting the GlitchTip issues fetcher and PostHog HogQL analytics fetcher: their env-gated no-op, single bounded fetch attempt, DTO mapping, the `complete`-flag contract with the reconciling errors store, and the PostHog batch's sequential, partial-success semantics. Records the open questions over both providers' unverified response schemas and PostHog's unsignaled malformed-shape case.
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation, documenting the GlitchTip issues fetcher and PostHog HogQL analytics fetcher: their env-gated no-op, single bounded fetch attempt, DTO mapping, the `complete`-flag contract with the reconciling errors store, and the PostHog batch's sequential, partial-success semantics. Records the open questions over both providers' unverified response schemas and PostHog's unsignaled malformed-shape case.

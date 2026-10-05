@@ -1,45 +1,40 @@
 ---
 id: d46b3e1c-9cd9-41b6-bdd2-524ece5e294b
-title: Notes Model
-domain: agenticdevelopertoolkit://cookbook/workspace/notes/notes-model
+title: "Notes Model"
+domain: adtoolkit://cookbook/workspace/notes/notes-model
 type: ingredient
-version: 1.1.0
+version: 1.1.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The on-device model, storage contract, and orchestrator behind the
-  Notes feature — a note, a note folder, a storage seam, a markdown-backed
-  conformer, and the manager coordinating them.
+summary: "The on-device model, storage contract, and orchestrator behind the Notes feature — a note, a note folder, a storage seam, a markdown-backed conformer, and the manager coordinating them."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- notes
-- markdown
-- persistence
-- frontmatter
-- debounce
-- concurrency
-- taxonomy
+  - notes
+  - markdown
+  - persistence
+  - frontmatter
+  - debounce
+  - concurrency
+  - taxonomy
 depends-on:
-- agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store
-- agenticdevelopertoolkit://recipes/markdown-core
+  - agenticdevelopertoolkit://recipes/markdown-core
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/Note.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NoteFolder.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NoteStorage.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NoteTaxonomyProviding.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/MarkdownNoteStorage.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NotesManager.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/NotesWindow/Note.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NoteFolder.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NoteStorage.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NoteTaxonomyProviding.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/NotesWindow/MarkdownNoteStorage.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/NotesWindow/NotesManager.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Notes Model
@@ -62,9 +57,8 @@ in-memory list of notes, issues every storage call off that thread in
 strict issue order, runs a per-note debounced autosave, and surfaces a
 failed read or write as a single failure record.
 
-This is a different, unrelated contract from the web-side notes client
-documented in `agenticdevelopertoolkit://cookbook/adh/hub/content/notes-client` —
-that recipe's own text says as much: its notes are a backend content
+This is a different, unrelated contract from the web-side notes client —
+its notes are a backend content
 resource reached over a REST API, these are a local, on-device store
 reached through the storage contract described here, and the shared name
 is a coincidence, not a shared contract.
@@ -353,8 +347,7 @@ no visual surface, not a visual component.
   an unparented root.
 - Deleting a note by an id with no corresponding document does not fail:
   the store's delete operation treats a missing id as success by design
-  (see `agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store`'s
-  delete-is-idempotent requirement), so calling delete twice for the same
+  (the document store's delete operation is idempotent), so calling delete twice for the same
   note is safe.
 - Toggling a pin while a debounced content save for the same note is
   still pending does not wait for it: toggling the pin writes through
@@ -427,15 +420,13 @@ Logging below.
   `isPinned`.
 - **Storage**: Persisted locally by whatever storage implementation the
   host injects. The markdown-backed conformer persists a note as a row in
-  a local document store (a local database, per
-  `agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store`), keyed by
+  a local document store (a local database), keyed by
   the note's id lowercased to a string; none of the six sources given
   here adds encryption, secure-credential storage, or any protection
   beyond what that document store itself already applies.
 - **Transmission**: None of these six sources calls out to a network
   directly. The markdown-backed conformer's insert operation does enqueue
-  a create operation onto the document store's own remote outbox (per
-  `agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-store`), so a
+  a create operation onto the document store's own remote outbox, so a
   note's content and metadata eventually leave the device through that
   separate, already-documented sync path, on a schedule this layer does
   not control.
@@ -536,11 +527,11 @@ factory) | Category: the manager's name
 **Rationale**: Nothing today needs it — `NotesCoordinator` builds one `NotesManager` shared by every host, and that manager already serializes its own storage calls — but the transaction is cheap enough to pay for up front, before the writer that would need it (a background sync pull, a second coordinator) exists, because the read-and-write layer is the only layer that can make the pair indivisible later.
 **Approved**: pending
 
-**Decision** (AppKit/macOS): `NotesManager` runs every storage call off the main actor, but re-serializes them into one `storageChain` so they still execute strictly in the order they were issued.
+**Decision**: (AppKit/macOS) `NotesManager` runs every storage call off the main actor, but re-serializes them into one `storageChain` so they still execute strictly in the order they were issued.
 **Rationale**: Each write hands storage a whole `Note` snapshot taken on the main actor. Before storage moved off the main actor, issue order and execution order were the same thing for free — no suspension point existed inside a call. Detaching each call independently would silently give that up, letting a stale content-save land after a newer pin-toggle write and resurrect superseded content.
 **Approved**: pending
 
-**Decision** (AppKit/macOS): A debounced save whose write throws stays pending and is retried with backoff (via `KeyedDebouncer`), rather than being dropped after a log line.
+**Decision**: (AppKit/macOS) A debounced save whose write throws stays pending and is retried with backoff (via `KeyedDebouncer`), rather than being dropped after a log line.
 **Rationale**: Three prior, independent copies of this cancel-and-reschedule-then-flush-once pattern (in this manager, `TextDocumentSaveScheduler`, and `SemanticTokenHighlightProvider`) each dropped a note whose write threw. A dropped note left the user's edit unsaved with no further attempt and no visible failure until the next launch, at which point it was already gone.
 **Approved**: pending
 
@@ -569,6 +560,9 @@ Separation of concerns holds structurally: `NoteStorage` is a narrow, four-metho
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.3 | 2026-10-04 | Mike Fullerton | Dropped the stray reference to the hub's notes client from the overview. |
+| 1.1.2 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Removed the upward dependency on adh/hub/content/markdown-store (frontmatter depends-on and in-text links); the document store is described in plain terms. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/notes/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

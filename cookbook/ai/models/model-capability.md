@@ -1,35 +1,34 @@
 ---
 id: 4ebd01d4-1326-42fa-83ba-58b0aebb31c7
-title: Model Capability
-domain: agenticdevelopertoolkit://cookbook/ai/models/model-capability
+title: "Model Capability"
+domain: adtoolkit://cookbook/ai/models/model-capability
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A yes/no capability axis (tools, reasoning, vision, conversation) for
-  a model, matched against gateway-reported names with per-case fallbacks.
+summary: "A yes/no capability axis (tools, reasoning, vision, conversation) for a model, matched against gateway-reported names with per-case fallbacks."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- capability
+  - ai-plugin
+  - capability
 depends-on:
-- agenticdevelopertoolkit://cookbook/ai/models/model-catalog
+  - adtoolkit://cookbook/ai/models/model-catalog
 related: []
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/ModelUseFacet.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelCapabilityTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelUseFacetTests.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/ModelCapability.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/ModelUseFacet.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIModelCatalog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelCapabilityTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/ModelUseFacetTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Model Capability
@@ -349,6 +348,7 @@ Not applicable: this component contains no logging call of any kind.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | Reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
@@ -363,10 +363,13 @@ this type's "does it have this" axis and `ModelUseFacet`'s "what's it
 good for" axis, and derives `.conversation` by calling into
 `ModelUseFacet` rather than duplicating its heuristic.
 
+`unit-test-coverage` passes because `ModelCapabilityTests.swift` exercises the type directly: a reported capability being recognised, a curated tools flag counting, chat being read out of prose, and reasoning and vision never being inferred from prose, with `ProviderPickerTests.swift` covering its use in the picker.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage compliance row. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/models/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |

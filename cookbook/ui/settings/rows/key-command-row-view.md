@@ -1,30 +1,29 @@
 ---
 id: 1d2f69b6-1156-4dfa-a390-a240925ba1bd
-title: Key Command Row View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/key-command-row-view
+title: "Key Command Row View"
+domain: adtoolkit://cookbook/ui/settings/rows/key-command-row-view
 type: ingredient
-version: 1.2.0
+version: 1.2.3
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row for one bindable command — a capture field, a pending
-  confirm/cancel pair, and an enable switch, backed by a shared key-command registry.
+summary: "A settings row for one bindable command — a capture field, a pending confirm/cancel pair, and an enable switch, backed by a shared key-command registry."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- keyboard-shortcuts
+  - settings
+  - keyboard-shortcuts
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/controls/key-command-capture-field
+  - adtoolkit://cookbook/ui/controls/key-command-capture-field
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Key Command Row View
@@ -167,8 +166,7 @@ live in the view that loses focus — it lives in the row.
   error.
 - **removes-its-notification-observer-on-deinit**: Component MUST remove
   its bindings-changed observer when deinitialized.
-- **confines-to-ui-thread**: Component MUST be usable only on the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -234,7 +232,7 @@ live in the view that loses focus — it lives in the row.
 - **Role/trait**: This component sets no accessibility role on itself.
   The toggle keeps the platform's native switch role via
   **links-toggle-accessibility-title**. The capture field's own role belongs
-  to its component; see `agenticdevelopertoolkit://cookbook/ui/controls/key-command-capture-field`,
+  to its component; see `adtoolkit://cookbook/ui/controls/key-command-capture-field`,
   which records the open question.
 - **Label requirements**: The toggle's accessible name comes from the title
   label via **links-toggle-accessibility-title**. The capture field is given
@@ -296,7 +294,7 @@ live in the view that loses focus — it lives in the row.
 | key-command-row-view-036 | requires-a-command-and-a-registry-to-construct | Inspect the component's public initializers | Only the designated initializer (command, registry) is available; both parameters are non-optional |
 | key-command-row-view-037 | requires-a-command-and-a-registry-to-construct | Attempt construction via a serialization/decoding-based construction path (no command or registry available) | The call traps with a fatal error (a platform-level runtime trap, not an ordinary in-process assertion); no instance is returned |
 | key-command-row-view-038 | removes-its-notification-observer-on-deinit | Construct a row, capture its notification observer, then release the row | The observer is removed from the notification center; no further calls into the deallocated row occur when the notification is posted again |
-| key-command-row-view-039 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (compile-time on platforms with static isolation checking such as Swift's `@MainActor`, runtime-checked otherwise) |
+| key-command-row-view-039 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (at build time or by a runtime check); the component's state is unchanged |
 | key-command-row-view-040 | preserves-pending-edit-on-external-change | Capture a chord (mid-edit, chord pending), then post the registry's bindings-changed notification for a change made by a sibling row | Row's pending shortcut is unchanged and the row remains in the mid-edit state; the capture field's displayed shortcut and the toggle still reflect the refreshed binding |
 | key-command-row-view-041 | clears-edit-state-after-commit-or-cancel | Capture a chord, then invoke cancel | Row's pending shortcut is `nil`, capture field's pending shortcut is `nil`, capture field is no longer recording, row leaves the mid-edit state |
 | key-command-row-view-042 | refreshes-after-commit-or-cancel | Capture a chord, then invoke cancel | Capture field's displayed shortcut and the toggle's state are re-read from the registry immediately after cancel |
@@ -577,6 +575,7 @@ Not applicable: source contains no logging call anywhere in source.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | accessibility |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | internationalization |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 The `passed` rows rest on source facts that are unconditional: the row is
 `@MainActor`-isolated throughout, composes native `NSSwitch`/AppKit
@@ -593,6 +592,8 @@ because every user-facing string
 this file introduces is a Swift literal with no localization mechanism, as
 the Localization section states.
 
+`unit-test-coverage` is `partial` because `KeyCommandBehaviourTests.swift` builds `KeyCommandRowView` rows against a registry and asserts on recording over a shipped-off command (it switches on), the switch refusing to re-enable a taken chord, and the recorder's Shift-Tab behavior, and `KeyCommandsPanelHierarchyTests.swift` asserts on the rows' place in the panel; there is no dedicated `KeyCommandRowViewTests` file and layout and reset paths are not asserted.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -601,3 +602,6 @@ the Localization section states.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage Compliance row, judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.3 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |

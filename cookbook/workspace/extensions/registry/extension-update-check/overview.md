@@ -1,0 +1,3 @@
+
+The update check answers whether one installed extension — or a whole list of them — has a newer version this host could actually run. It holds a registry client and the host's declared semantic version, and it offers two operations: checking a single installed extension, which answers for that one extension, and checking a list, which answers for every extension in the list by running one per-extension lookup concurrently and folding the results into an update report. The contract's defining rule is that a newer version is reported only when installing it would succeed: each candidate is run through the same installability gate the installer uses, and a newer version that fails it is treated as no update at all, not as an update the caller must separately refuse.
+

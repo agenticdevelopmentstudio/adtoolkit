@@ -1,48 +1,47 @@
 ---
 id: da6524ff-4def-461c-a885-d385a118e596
-title: Deploy Engine
-domain: agenticdevelopertoolkit://cookbook/status/deploy-engine
+title: "Deploy Engine"
+domain: adtoolkit://cookbook/status/deploy-engine
 type: ingredient
-version: 1.0.3
+version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure planners plus injected-I/O runners that match deploy projects to monitored
-  sites/endpoints, wire and create them, and retire stale monitors.
+summary: "Pure planners plus injected-I/O runners that match deploy projects to monitored sites/endpoints, wire and create them, and retire stale monitors."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- deploy
-- provisioning
-- auto-configure
-- vercel
-- railway
-- cloudflare
-- rate-limiting
-- reconciliation
+  - deploy
+  - provisioning
+  - auto-configure
+  - vercel
+  - railway
+  - cloudflare
+  - rate-limiting
+  - reconciliation
 depends-on: []
 related: []
 references:
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts
-- packages/web/packages/deploy-platform/src/engine/builder-match.ts
-- packages/web/packages/deploy-platform/src/engine/classify.ts
-- packages/web/packages/deploy-platform/src/engine/plan.ts
-- packages/web/packages/deploy-platform/src/engine/run.ts
-- packages/web/packages/deploy-platform/src/providers/cloudflare.ts
-- packages/web/packages/deploy-platform/src/providers/host-pick.ts
-- packages/web/packages/deploy-platform/src/providers/railway.ts
-- packages/web/packages/deploy-platform/src/providers/vercel.ts
-- packages/web/packages/deploy-platform/src/util/cached-single-flight.ts
-- packages/web/packages/deploy-platform/src/util/map-limit.ts
-- packages/web/packages/deploy-platform/src/util/with-timeout.ts
-- packages/web/packages/deploy-platform/src/canon/index.ts
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts
+  - packages/web/packages/deploy-platform/src/engine/builder-match.ts
+  - packages/web/packages/deploy-platform/src/engine/classify.ts
+  - packages/web/packages/deploy-platform/src/engine/plan.ts
+  - packages/web/packages/deploy-platform/src/engine/run.ts
+  - packages/web/packages/deploy-platform/src/providers/cloudflare.ts
+  - packages/web/packages/deploy-platform/src/providers/host-pick.ts
+  - packages/web/packages/deploy-platform/src/providers/railway.ts
+  - packages/web/packages/deploy-platform/src/providers/vercel.ts
+  - packages/web/packages/deploy-platform/src/util/cached-single-flight.ts
+  - packages/web/packages/deploy-platform/src/util/map-limit.ts
+  - packages/web/packages/deploy-platform/src/util/with-timeout.ts
+  - packages/web/packages/deploy-platform/src/canon/index.ts
+approved-by: ""
+approved-date: ""
 ---
 
 # Deploy Engine
@@ -723,7 +722,7 @@ visual component.
   Vercel teams sharing a project name, or one account switching `teamId` for
   the same project, read and overwrite each other's cached domain list for
   up to the one-hour TTL.
-- **map-limit-non-positive-limit**: NEEDS REVIEW: Not implemented in source. `mapLimit` sizes its worker pool as `Math.min(limit, items.length)` with no check that `limit >= 1`; a `limit <= 0` yields zero workers, so every result stays `undefined` with no item processed and no error, and `map-limit.test.ts` has no case for it — whether a non-positive `limit` should throw, clamp to 1, or stay the caller's responsibility is undecided.
+- **map-limit-non-positive-limit**: The concurrency-limited map MUST size its worker pool as the smaller of the limit and the item count. It performs no check that the limit is at least 1: a limit of zero or below yields zero workers, so every result stays undefined with no item processed and no error.
 
 ## Configuration
 
@@ -990,6 +989,10 @@ independently.
 
 **Approved**: pending
 
+**Decision**: A non-positive concurrency limit yields zero workers and silently returns unprocessed results; no test covers it.
+**Rationale**: It stands today because callers pass constant positive limits. Closing it needs a decision on whether a non-positive limit should throw, clamp to 1, or stay the caller's responsibility, plus a test.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Notes |
@@ -1019,3 +1022,4 @@ independently.
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.3 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Resolved map-limit-non-positive-limit marker as current behavior plus pending decision |

@@ -1,40 +1,36 @@
 ---
 id: c4375e0e-091f-4627-b3c9-e7d36221802f
-title: Contributed Settings
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/contributed-settings
+title: "Contributed Settings"
+domain: adtoolkit://cookbook/workspace/extensions/manifest/contributed-settings
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure classifier turning one VS Code extension manifest's contributes.configuration
-  into settings rows, storage names, and a note for every schema declaration it could
-  not honour exactly.
+summary: "Pure classifier turning one VS Code extension manifest's contributes.configuration into settings rows, storage names, and a note for every schema declaration it could not honour exactly."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- configuration
-- settings
-- manifest
-- contribution-point
+  - extensions
+  - configuration
+  - settings
+  - manifest
+  - contribution-point
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/ContributedSettings.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ContributionPoint.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ContributedSettingsBuilderTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/ConfigurationContributionPoint.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/ContributedSettings.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionManifest.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ContributionPoint.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ContributedSettingsBuilderTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/ConfigurationContributionPoint.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Contributed Settings
@@ -250,8 +246,7 @@ grounding but are out of this recipe's scope.
   any of them across a concurrency boundary with no additional
   synchronization.
 - **pure-no-side-effects**: classification MUST hold no mutable state of
-  its own, and neither building sections nor computing a storage name MUST
-  read a setting's stored value, write one, or perform any file, network,
+  its own, and building sections and computing a storage name MUST NOT read a setting's stored value, write one, or perform any file, network,
   or window-system side effect — each call's only observable effect MUST
   be its return value.
 
@@ -306,7 +301,7 @@ Not applicable — this is a pure manifest-to-settings-row classifier, not a vis
 - **Null and empty input**: an extension manifest that declares no `contributes.configuration` key at all MUST classify as undeclared (`undeclared-configuration`); a declared but empty properties object within a section MUST drop that section entirely with no note (`empty-section-dropped`); a declared `enum` containing only `null` (no retained string member) MUST fail the choice classification and fall through to type-based or default-based classification exactly like an enum with a non-string member.
 - **Boundary values — bounds that invert**: a `minimum` greater than a `maximum` (before or, for `"integer"`, after inward rounding) MUST be treated as no bounds at all, with a contradictory-bounds note, per `bounds-contradiction-dropped`.
 - **Boundary values — default outside agreeing bounds**: MUST be clamped to the nearer bound with a default-out-of-range note, per `default-clamped-to-bounds`.
-- **integer-bound-overflow**: NEEDS REVIEW: Not implemented in source. Converting a bound with magnitude larger than the platform's whole-number range, or a bound that is not-a-number or infinite, into a whole-number bound fails silently and the bound is then discarded — indistinguishable from a schema that declared no bound at all, and no note is recorded. Every other way a declared bound cannot be honoured (contradictory bounds, a default outside the representable bounds) does produce a note; this path does not. What is missing: whether an out-of-range `minimum`/`maximum` should record a note of its own, or is deliberately meant to be treated as absent. Evidence that would settle it: a ruling from whoever maintains the settings builder's corpus study (see the source's own doc comments citing corpus counts), or a corpus property that exercises this path (Platform Notes — the exact conversion mechanism).
+- **integer-bound-overflow**: Converting an `"integer"` setting's `minimum`/`maximum` into a whole-number bound MUST yield no bound when the value is outside the platform's whole-number range, not-a-number, or infinite, and records no note for that case; the bound is treated as absent, indistinguishable from a schema that declared none (see the design decision on this below).
 - **Concurrent access**: not applicable as a hazard — classification is a stateless collection of pure functions over immutable, thread-safe values (`thread-safe-value-types`, `pure-no-side-effects`); concurrent calls from any thread produce independent results with no shared mutable state to race.
 - **Error states — a property that failed to decode at all**: not this component's concern. The manifest decoder decodes each property individually and tolerates a per-property decoding failure, so a property whose JSON value is not an object (e.g. a bare string) never reaches classification at all — it is simply absent from the section's properties, with no corresponding note; see contributed-settings-024.
 - **Error states — `contributes.configuration` present but unreadable**: MUST classify as unreadable, not undeclared, per `unreadable-configuration`.
@@ -406,7 +401,7 @@ Not applicable: this component makes no logging call of its own. Every compromis
 **Rationale**: the source's own inline comment states this directly — `array`/`object` are "where a structured value is *supposed* to land, not a compromise" (`ContributedSettings.swift`) — distinguishing an intended destination for the JSON escape hatch from every case where the escape hatch is a fallback for something this classifier could not otherwise render.
 **Approved**: pending
 
-**Decision**: an out-of-`Int`-range `"integer"` `minimum`/`maximum` is silently dropped with no `ContributedSettingNote` (see the open question on integer-bound-overflow), unlike every other bound anomaly this file handles.
+**Decision**: an out-of-`Int`-range `"integer"` `minimum`/`maximum` is silently dropped with no `ContributedSettingNote` (see `integer-bound-overflow` under Edge Cases), unlike every other bound anomaly this file handles.
 **Rationale**: recorded here as observed technical debt affecting behavioral correctness, per Source Fidelity, rather than corrected — fixing it would mean adding a new `ContributedSettingNote.Kind` case, a decision outside this recipe's authority to make on the maintainer's behalf.
 **Approved**: pending
 
@@ -432,3 +427,5 @@ Not applicable: this component makes no logging call of its own. Every compromis
 | 1.0.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/manifest/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the integer-bound-overflow NEEDS REVIEW marker as current behavior (out-of-range bounds are dropped without a note); the gap stays recorded as a pending design decision. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |

@@ -1,45 +1,46 @@
 ---
 id: b1622d2b-587f-4207-89ed-2130f8309f8c
-title: Status Server Peers
-domain: agenticdevelopertoolkit://cookbook/status/service/peers
+title: "Status Server Peers"
+domain: adtoolkit://cookbook/status/service/peers
 type: ingredient
-version: 1.0.2
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The status server''s peers subsystem: base-url.ts''s URL/self/duplicate
-  rules, fetch.ts''s fail-soft peer poller, and fleet.ts''s fleet-assembly contract.'
+summary: "The status server's peers subsystem: base-url.ts's URL/self/duplicate rules, fetch.ts's fail-soft peer poller, and fleet.ts's fleet-assembly contract."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- peers
-- fleet
-- monitoring
-- polling
-- server
+  - peers
+  - fleet
+  - monitoring
+  - polling
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
-- agenticdevelopercookbook://guidelines/implementing/security/token-handling
-- agenticdevelopercookbook://guidelines/implementing/security/input-validation
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/security/token-handling
+  - agenticdevelopercookbook://guidelines/implementing/security/input-validation
 related:
-- agenticdevelopertoolkit://cookbook/status/service/config
-- agenticdevelopertoolkit://cookbook/status/service/mcp
-- agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner
+  - adtoolkit://cookbook/status/service/config
+  - adtoolkit://cookbook/status/service/mcp
+  - adtoolkit://cookbook/status/service/monitor/cycle-runner
 references:
-- packages/web/packages/status-server/src/peers/base-url.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/peers/fetch.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/peers/fleet.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/peer-base-url.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/peers-fetch.int.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/peers/base-url.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/peers/fetch.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/peers/fleet.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/peer-base-url.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/peers-fetch.int.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
+
+# Status Server Peers
 
 ## Overview
 
@@ -121,7 +122,7 @@ Not applicable — this is a fleet-peer polling and assembly module, not a visua
 - **Boundary values**: a base URL written with its scheme's default port (`:443` on `https:`, `:80` on `http:`) MUST fold to the portless form, while a non-default port MUST be preserved (normalize-canonical-form). `isDuplicatePeerError`'s `cause`-chain walk is bounded at three levels; a matching `code` nested at a fourth level or deeper MUST NOT be detected — this bound is a deliberate, documented limit of duplicate-error-detection, not an open gap.
 - **Concurrent access**: two overlapping `fetchPeers` calls writing the same peer's snapshot MUST NOT corrupt that row or cause either call to throw — `storage.peers.upsertSnapshot`'s conflict target is `peerId` (external, `libsql/stores/peer-store.ts`), so the result is last-write-wins on that row. `assembleFleet`'s `listActive()` and `listSnapshots()` reads are two separate, non-transactional calls; a peer added, deactivated, or resnapshotted between them SHOULD be reflected in whichever read observes it first — the source gives no consistency guarantee stronger than "whatever each call currently returns."
 - **Error states**: an HTTP response with `ok: false`, a thrown or aborted `fetch`, and a JSON body that fails to parse MUST all be treated identically — a single `reachable: false` upsert with the caught error's `message` (poll-failure-upsert, poll-http-error-becomes-failure).
-  - **peer-snapshot-payload-unvalidated**: NEEDS REVIEW: Not implemented in source. `fetchPeers` stores the peer's `/snapshot` response body's `overall` field, and the whole `payload`, with no runtime type check — a peer returning a non-string `overall` (or a malformed `payload`) is stored and later read back by `assembleFleet` exactly as received, with no validation boundary anywhere in these three files.
+  - **peer-snapshot-payload-unvalidated**: The fetch MUST store the peer snapshot response's overall field and the whole payload exactly as received, with no runtime type check; a peer returning a non-string overall or a malformed payload is stored and later read back by the fleet assembler as received, with no validation boundary in these three files.
 - **Offline/disconnected state**: `AbortSignal.timeout(10_000)` bounds every peer's request to a fixed 10-second budget, so a hanging or unreachable peer MUST fail within that window rather than hang the whole `fetchPeers` call (poll-request-timeout). `fetchPeers` itself runs only on a full-sync cycle (`monitor/cycle-runner.ts`, external), not every cycle, so a peer that stays offline can show a stale card for up to one full-sync interval — that cadence is owned by the caller, not by these three files.
 
 ## Configuration
@@ -214,6 +215,10 @@ None of the three files calls `console.*` or any logger; `fetchPeers` and `fleet
   **Rationale**: that file's own header comment states the mirror is deliberate — the board is a separate Next app that cannot import the backend's module, and "the backend stays the authority" — recorded here as a known, intentional duplication that must be kept in step by hand, not an accidental drift within this recipe's scope to fix.
   **Approved**: pending
 
+**Decision**: Peer snapshot responses are stored without runtime validation of their overall field or payload.
+**Rationale**: It stands today because peers are trusted fleet members. Closing it needs a validation boundary (a schema check) at fetch time and a test with a malformed peer response.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -235,6 +240,8 @@ None of the three files calls `console.*` or any logger; `fetchPeers` and `fleet
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Resolved peer-snapshot-payload-unvalidated marker as current behavior plus pending decision |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from `src/peers/base-url.ts`, `src/peers/fetch.ts`, and `src/peers/fleet.ts`; one open question recorded on the unvalidated peer-snapshot `overall`/`payload` field. |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `src/peers/base-url.ts`, `src/peers/fetch.ts`, and `src/peers/fleet.ts`; one open question recorded on the unvalidated peer-snapshot `overall`/`payload` field. |

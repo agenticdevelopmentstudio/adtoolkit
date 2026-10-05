@@ -1,32 +1,31 @@
 ---
 id: 3a3e4da0-e900-4281-a19c-e29cbd34cbab
-title: Popup Menu Choice View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
+title: "Popup Menu Choice View"
+domain: adtoolkit://cookbook/ui/settings/rows/popup-menu-choice-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row pairing a title label with a borderless popup control
-  bound to a choice view model's choices, mirroring System Settings' popup row.
+summary: "A settings row pairing a title label with a borderless popup control bound to a choice view model's choices, mirroring System Settings' popup row."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- form-control
-- choice
+  - settings
+  - form-control
+  - choice
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/choice-slider-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
+  - adtoolkit://cookbook/ui/settings/rows/choice-slider-view
+  - adtoolkit://cookbook/ui/settings/rows/checkbox-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Popup Menu Choice View
@@ -97,8 +96,7 @@ selection back into the view model.
 - **fixes-choice-set-at-construction**: Component MUST NOT add, remove, or
   reorder popup menu items after initialization; the view model's choices
   are consumed only during construction.
-- **confines-to-ui-thread**: Component MUST be usable only from the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **tolerates-empty-choices**: Component MUST construct without error when
   the view model's choices are empty, adding zero popup menu items and
   leaving no item selected.
@@ -188,13 +186,7 @@ selection back into the view model.
   minimum is touch guidance, not a pointer-interface requirement. This
   component sets no reduced control size on the popup, so it keeps the
   platform's regular system click-target metrics.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. The
-  label text color resolves from the active theme's `.primaryText` role
-  against the hosting background at runtime; the component performs no
-  contrast check, so whether a given theme's resolved pair meets 4.5:1
-  cannot be determined from this component's definition — settled by a
-  theme-level contrast audit of `.primaryText` against the backgrounds it
-  sits on.
+- **minimum-contrast-ratio**: The component performs no contrast check of its own. The label's color comes from the theme's primary-text role through the shared row-label factory, and when the row is disabled the label is drawn at a fixed 40% opacity; the popup draws its current value in the platform's own style.
 
 ## Conformance Test Vectors
 
@@ -480,6 +472,10 @@ inherited initializers that could construct it without one are
 intentionally disabled rather than left to produce a half-configured row.
 **Approved**: pending
 
+**Decision**: The component performs no contrast check of its own: the label's primary-text color (dimmed to a fixed 40% opacity when the row is disabled) resolve from the active theme at runtime, so whether a given theme's resolved pair reaches the 4.5:1 text threshold is not established by this component.
+**Rationale**: Contrast is a property of the theme's resolved color pairs, which live outside this component; closing the gap would take a theme-level audit (or an enforced minimum in the theme layer) of those roles against the backgrounds a settings row sits on, which no source or test does today.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -490,6 +486,7 @@ intentionally disabled rather than left to produce a half-configured row.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 `screen-reader-support` and `idempotent-operations` rest on
 **links-popup-accessibility-title** and **skips-redundant-commits**/
@@ -498,6 +495,8 @@ intentionally disabled rather than left to produce a half-configured row.
 this file exercises keyboard input — the source relies entirely on
 `NSPopUpButton`'s own inherited keyboard handling, which this file neither
 configures nor overrides.
+
+`unit-test-coverage` passes because `PopupMenuChoiceViewTests.swift` exercises the view directly: replacing choices repopulates and keeps the selected value, same-labeled choices are each offered and selected by value, a value no longer offered selects nothing, an unchanged choice list leaves the menu alone, and disabling the view dims the title with the popup.
 
 ## Change History
 
@@ -508,3 +507,5 @@ configures nor overrides.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker against the source: restated as current behavior (no contrast check in the component) and recorded the gap as a pending Design Decision; added separation-of-concerns/unit-test-coverage Compliance rows. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

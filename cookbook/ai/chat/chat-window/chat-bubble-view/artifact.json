@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "24199c9b-53ce-41a7-9cce-3b914f0a424a",
+    "title": "Chat Bubble View",
+    "domain": "adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view",
+    "type": "ingredient",
+    "version": "1.2.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-23",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "A chat message bubble with role/style-based theming, an optional inline timestamp, and line-limited truncation with an expand/collapse toggle.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "chat",
+      "messaging",
+      "ui-component"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/ai/chat/chat-window/chat-day-banner-view",
+      "adtoolkit://cookbook/ai/chat/chat-window/chat-transcript-row-view",
+      "agenticdevelopertoolkit://recipes/message-bubble"
+    ],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "fe0fb424504a90ad",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

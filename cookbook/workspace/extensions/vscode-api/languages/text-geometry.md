@@ -1,46 +1,39 @@
 ---
 id: 214977ad-b330-4e32-97cf-9383ad9d4e8c
-title: Text Geometry
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/text-geometry
+title: "Text Geometry"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/languages/text-geometry
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The classes that give an extension's JavaScript environment real, instanceof-checkable
-  Position, Range and Location values matching the VS Code API's vscode.Position/vscode.Range/vscode.Location,
-  plus the host-side bridge that reads and builds them.
+summary: "The classes that give an extension's JavaScript environment real, instanceof-checkable Position, Range and Location values matching the VS Code API's vscode.Position/vscode.Range/vscode.Location, plus the host-side bridge that reads and builds them."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- text-geometry
-- bridge
+  - extension-host
+  - vscode-api
+  - text-geometry
+  - bridge
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-host
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/diagnostic-types
+  - adtoolkit://cookbook/workspace/extensions/host/extension-host
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/languages/diagnostic-types
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/TextGeometry.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/TextGeometryTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/Uri.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/DiagnosticTypes.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/TextGeometry.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/TextGeometryTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/Uri.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/DiagnosticTypes.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Text Geometry
@@ -301,7 +294,7 @@ No other event in this ingredient is logged: the failed cache-write inside the c
 **Approved**: pending
 
 **Decision**: **main-thread-confinement** has no row in Conformance Test Vectors.
-**Rationale** (AppKit/UIKit): on this platform it is a compiler-enforced fact about `VSCodeAPI`'s own `@MainActor` declaration, not a runtime branch a script or a single call can exercise as a PASS/FAIL test; this recipe follows the same precedent the `LanguageModelMessageVocabulary` recipe already sets for the identical requirement on the identical enum, covering it instead under Edge Cases ("Concurrent access").
+**Rationale**: (AppKit/UIKit) on this platform it is a compiler-enforced fact about `VSCodeAPI`'s own `@MainActor` declaration, not a runtime branch a script or a single call can exercise as a PASS/FAIL test; this recipe follows the same precedent the `LanguageModelMessageVocabulary` recipe already sets for the identical requirement on the identical enum, covering it instead under Edge Cases ("Concurrent access").
 **Approved**: pending
 
 ## Compliance

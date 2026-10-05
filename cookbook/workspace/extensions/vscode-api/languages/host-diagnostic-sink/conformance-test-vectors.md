@@ -1,0 +1,11 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| host-diagnostic-sink-001 | fire-forwards-uris-unchanged, fire-called-unconditionally | Construct the sink with an emitter that has zero listeners; call `diagnosticsChanged(for:)` with the URL for `/one.txt` | The emitter fires with exactly `[/one.txt]`; end to end, this is `MainThreadDiagnosticsTests.eachOfTheFiveMutatingOperationsProducesAnEvent`'s step 1 (`c.set(vscode.Uri.file('/one.txt'), d)`), which reaches the real sink and records `/one.txt` at the listener |
+| host-diagnostic-sink-002 | fire-called-unconditionally, log-before-fire | Call `diagnosticsChanged(for:)` with an empty list | The sink logs `"diagnostics changed for 0 uri(s)"` and fires the emitter with an empty list; no early return on an empty list |
+| host-diagnostic-sink-003 | log-before-fire | Call `diagnosticsChanged(for:)` with two URLs | The log line (`"diagnostics changed for 2 uri(s)"`) runs before the emitter fires — traced to the operation's statement order |
+| host-diagnostic-sink-004 | one-emitter-shared-across-adaptors, fire-forwards-uris-unchanged | Build a sink and a diagnostics bridge sharing one emitter; install an `onDidChangeDiagnostics` listener; call `c.set(vscode.Uri.file('/a.txt'), d)` then `c.delete(vscode.Uri.file('/b.txt'))` inside one window, then close the window | The listener receives one event whose URLs are `["/a.txt", "/b.txt"]` — `MainThreadDiagnosticsTests.twoMutationsInOneWindowArriveAsOneEventCarryingBothUris`, which exercises `diagnosticsChanged(for:)` twice and the shared emitter's coalescing once |
+| host-diagnostic-sink-005 | emitter-required-no-default | Attempt to construct the sink with no arguments | Fails to compile: the constructor declares no default for the emitter parameter |
+| host-diagnostic-sink-007 | protocol-conformance, loggable-conformance | Inspect the sink's declared conformances | Declares exactly the diagnostic-sink protocol (in the primary declaration) and the shared logging convention (in its own extension), satisfied by `diagnosticsChanged(for:)` and the shared logger property respectively |
+| host-diagnostic-sink-008 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
+

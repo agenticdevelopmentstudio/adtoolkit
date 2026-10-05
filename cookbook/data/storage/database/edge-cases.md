@@ -1,0 +1,21 @@
+
+- **Empty display name**: The token-deriving operation applied to an empty string, or to a name made only of spaces or punctuation, MUST return `"AgenticToolkit"`; a missing or empty declared display name MUST make the display-name reader return `"AgenticToolkit"`.
+- **Path separators in the name**: Path-separator characters, periods, and spaces MUST be dropped by the token-deriving operation, so the result can never escape the home directory or add a nested path component.
+- **Localized bundle name**: When an app localizes its declared display name, the display-name reader and the token-deriving operation MUST follow the active localization, so the storage directory can differ between locales (see Design Decisions).
+- **Non-ASCII names**: Letters, combining marks, and digits outside ASCII MUST survive the token-deriving operation; the directory then carries non-ASCII characters, lowercased by a locale-independent lowercasing operation.
+- **Missing parent directory**: Constructing a bounded database on a path whose directory does not exist MUST raise the underlying database library's open error; neither component creates the directory.
+- **Near-miss in-memory paths**: Only the exact string `":memory:"` MUST select the single-shared-connection mode; any other spelling (such as a file URI) MUST go to the pooled, file-backed mode.
+- **Reader count below 1**: The reader count is passed to the underlying database library unvalidated; that library owns the outcome.
+- **Zero or negative deadline**: MUST eject at the first progress check rather than trap.
+- **Statement that never reaches a progress check**: Ejection MUST only happen at a 1000-step boundary, so time blocked outside actual statement execution (for example waiting on a lock, bounded instead by the busy timeout) is not interrupted by the deadline.
+- **Locked database**: A write MUST wait up to the busy timeout for the lock, then fail with the underlying database library's busy error, which propagates unchanged and is not counted in the metrics.
+- **Body swallows the ejection**: The call MUST return the body's value and count as a completion; for a transaction-free write, any transaction left open MUST be rolled back before the connection is reused (sed-015).
+- **Failed safety-net rollback**: See `rollback-failure`: the failure is discarded and the connection returns to the pool inside the transaction.
+- **Write nested inside a read**: A write called inside a top-level read MUST run inline on the reader connection; this source adds no check, so the write statement fails with whatever error the underlying database library raises for a read-only connection, and that error propagates.
+- **Nested op on a different instance**: See `cross-instance-reentrancy`: the body runs inline on the enclosing instance's connection.
+- **Nested ejection details**: The raised error MUST carry the nested call's lane and an elapsed value of `0`, even though the enclosing operation's lane records the eviction.
+- **Concurrent callers**: Top-level reads on different threads MAY run in parallel up to the configured reader count; top-level writes MUST queue on the single writer; the metrics snapshot MAY be read from any thread.
+- **Cancellation**: There is no cancellation interface; an external cancellation signal does not interrupt a running call, and the deadline is the only way a statement is stopped.
+- **Offline or network loss**: Not applicable; the component performs only local file I/O.
+- **Direct writer access**: Statements run through direct writer access MUST NOT be ejected or metered, because no deadline is armed on that thread.
+

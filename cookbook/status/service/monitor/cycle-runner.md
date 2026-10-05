@@ -1,47 +1,46 @@
 ---
 id: 99e2ec9b-b209-4af9-a7d9-f3c4cc5e27db
-title: Status Server Monitor Cycle Runner
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner
+title: "Status Server Monitor Cycle Runner"
+domain: adtoolkit://cookbook/status/service/monitor/cycle-runner
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Composes one monitor cycle from its collaborator modules — the endpoint-probe
-  sweep every tick, plus peers, telemetry, maintenance and heartbeat on a full sync.
+summary: "Composes one monitor cycle from its collaborator modules — the endpoint-probe sweep every tick, plus peers, telemetry, maintenance and heartbeat on a full sync."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- cycle
-- worker
-- server
+  - monitor
+  - cycle
+  - worker
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
-- agenticdevelopercookbook://guidelines/implementing/observability/logging
-- agenticdevelopercookbook://guidelines/implementing/code-quality/dependency-injection
+  - agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/observability/logging
+  - agenticdevelopercookbook://guidelines/implementing/code-quality/dependency-injection
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
+  - adtoolkit://cookbook/status/service/monitor/alerts
 references:
-- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/heartbeat.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/alerts.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/peers/fetch.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/telemetry/server.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/libsql/stores/maintenance-store.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/worker.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/scheduler.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/heartbeat.int.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/sync.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/heartbeat.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/alerts.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/peers/fetch.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/telemetry/server.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/libsql/stores/maintenance-store.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/worker.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/scheduler.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/heartbeat.int.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Cycle Runner
@@ -129,7 +128,7 @@ Not applicable: this file defines no application URL scheme or HTTP route of its
 
 ## Localization
 
-This file's only literal string is the hardcoded English `console.log` message it builds for a retention prune (maintenance-prune-logged-on-deletion). It routes through no localization mechanism, and unlike the Slack/Discord-rendered lines in `alerts.ts` (see the [Status Server Monitor Alerts](agenticdevelopertoolkit://cookbook/status/service/monitor/alerts) recipe), this string's only audience is an operator reading container stdout, never an end user or a webhook receiver.
+This file's only literal string is the hardcoded English `console.log` message it builds for a retention prune (maintenance-prune-logged-on-deletion). It routes through no localization mechanism, and unlike the Slack/Discord-rendered lines in `alerts.ts` (see the [Status Server Monitor Alerts](adtoolkit://cookbook/status/service/monitor/alerts) recipe), this string's only audience is an operator reading container stdout, never an end user or a webhook receiver.
 
 | String Key | Default (en) | Context |
 |-----------|-------------|---------|

@@ -1,31 +1,30 @@
 ---
 id: f4740433-221c-4c89-b888-ee8da7aa4b3c
-title: Swatch Grid View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/swatch-grid-view
+title: "Swatch Grid View"
+domain: adtoolkit://cookbook/ui/settings/rows/swatch-grid-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings-window component that displays an array of colors as
-  a grid of fixed-size color swatches.
+summary: "A settings-window component that displays an array of colors as a grid of fixed-size color swatches."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- color
-- grid
+  - settings
+  - color
+  - grid
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/color-picker-view
+  - adtoolkit://cookbook/ui/settings/rows/color-picker-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Swatch Grid View
@@ -38,7 +37,7 @@ colors as a grid of fixed-size color swatches, wrapped into rows of a
 fixed column count. Per its doc comment, it generalizes the ad-hoc
 swatch/ANSI grid the terminal profiles view used to build inline. Unlike
 sibling rows such as the color picker row
-(agenticdevelopertoolkit://cookbook/ui/settings/rows/color-picker-view), it is
+(adtoolkit://cookbook/ui/settings/rows/color-picker-view), it is
 purely a display component: it exposes one mutator, a color-replacement
 operation, and contains no interactive-control code of any kind.
 
@@ -88,6 +87,8 @@ Construction requires its colors and layout parameters; the
 deserializing construction path is rejected, a platform mechanic rather
 than a normative requirement here — see traps-on-coder-init
 under Platform Notes.
+
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -156,13 +157,7 @@ under Platform Notes.
   trackpad-driven composition with no touch input path in source, and,
   per the States section, no interactive element exists at all to size a
   tap target for.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source.
-  Each swatch's 0.5pt border color resolves from the active theme's
-  border role against the hosting background at runtime; the component
-  performs no contrast check, so whether a given theme's resolved pair
-  meets the 3:1 non-text contrast threshold cannot be determined from
-  this file. This would be settled by a theme-level contrast audit of
-  border against the backgrounds it sits on.
+- **minimum-contrast-ratio**: The component performs no contrast check of its own. Each swatch's 0.5pt border takes its color from the theme's border role through a theme observer, and the swatch fill is the caller-supplied color; contrast of the border against the background is whatever the active theme resolves.
 
 ## Conformance Test Vectors
 
@@ -182,6 +177,7 @@ under Platform Notes.
 | swatch-grid-view-013 | renders-empty-grid | Construct with an empty color array | The view has zero rows and zero swatches immediately after construction |
 | swatch-grid-view-014 | shortens-final-row | Construct with 10 colors and columns = 4 | The final row contains exactly 2 swatches (10 mod 4), fewer than a full row of 4 |
 | swatch-grid-view-015 | single-row-when-columns-exceeds-count | Construct with 3 colors and columns = 8 | Exactly 1 row is produced, containing all 3 swatches, fewer than columns |
+| swatch-grid-view-016 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -396,6 +392,9 @@ logger reference anywhere in source).
   recipe implementable without inventing a role that source doesn't
   suggest.
   **Approved**: pending
+- **Decision**: The component performs no contrast check of its own: each swatch's 0.5pt border color (the theme's border role), against the 3:1 non-text threshold, resolve from the active theme at runtime, so whether a given theme's resolved pair reaches the 4.5:1 text threshold is not established by this component.
+  **Rationale**: Contrast is a property of the theme's resolved color pairs, which live outside this component; closing the gap would take a theme-level audit (or an enforced minimum in the theme layer) of those roles against the backgrounds a settings row sits on, which no source or test does today.
+  **Approved**: pending
 
 ## Compliance
 
@@ -405,11 +404,14 @@ logger reference anywhere in source).
 | [platform-design-language](agenticdevelopercookbook://compliance/platform-compliance#platform-design-language) | passed | platform-compliance |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | failed | accessibility |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 Statuses rest on: `SwatchGridView.swift` uses only native
 `NSStackView`/`NSView` composition with no business logic mixed into its
 rendering code, but defines no accessibility label or non-color
 differentiator on any swatch.
+
+`unit-test-coverage` is `partial` because `ThemeUITests.swift` (`swatchGrid`) constructs a `SwatchGridView` from a palette's ANSI colors, calls `setColors` with another theme's colors and asserts the view has subviews; it does not assert column wrapping, swatch size or the border.
 
 ## Change History
 
@@ -420,3 +422,5 @@ differentiator on any swatch.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker against the source: restated as current behavior (no contrast check in the component) and recorded the gap as a pending Design Decision; added separation-of-concerns/unit-test-coverage Compliance rows. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

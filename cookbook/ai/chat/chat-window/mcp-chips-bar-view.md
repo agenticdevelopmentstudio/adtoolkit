@@ -1,31 +1,30 @@
 ---
 id: bea6525c-171f-4547-bbb3-7c709543552e
-title: MCP Chips Bar View
-domain: agenticdevelopertoolkit://cookbook/ai/chat/chat-window/mcp-chips-bar-view
+title: "MCP Chips Bar View"
+domain: adtoolkit://cookbook/ai/chat/chat-window/mcp-chips-bar-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Chat-window header bar for picking which configured MCP servers are active;
-  built but not yet wired to a chat consumer.
+summary: "Chat-window header bar for picking which configured MCP servers are active; built but not yet wired to a chat consumer."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- mcp
-- chat
-- toggle
-- popover
+  - mcp
+  - chat
+  - toggle
+  - popover
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # MCP Chips Bar View
@@ -124,6 +123,7 @@ downstream currently reads that state (see Design Decisions).
 - **applies-picker-padding-and-min-width**: The popover's root layout
   container MUST use 8pt spacing, MUST be padded 14pt on all sides, and MUST
   have a minimum width of 220pt.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -238,6 +238,7 @@ downstream currently reads that state (see Design Decisions).
 | mcp-chips-bar-025 | row-toggle-calls-view-model-toggle | id1's row toggle is switched by the user | `viewModel.toggle(id1)` is invoked exactly once |
 | mcp-chips-bar-026 | uses-checkbox-toggle-style | Inspect any rendered row toggle | A checkbox toggle style is applied |
 | mcp-chips-bar-027 | applies-picker-padding-and-min-width | Inspect the server picker's root layout container | 8pt spacing, 14pt padding on all sides, and a minimum width of 220pt |
+| mcp-chips-bar-028 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -503,6 +504,7 @@ intent between the bar and the picker.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | Platform Compliance |
 | [platform-design-language](agenticdevelopercookbook://compliance/platform-compliance#platform-design-language) | passed | Platform Compliance |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | partial | Accessibility |
@@ -529,6 +531,8 @@ string-table lookup (see Localization). Separation-of-concerns passes because
 `MCPChipsBar` and `MCPServerPicker` as plain rendering of that model's
 published state.
 
+`unit-test-coverage` fails because no test file or test mentions `MCPChipsBarView`, `MCPChipsBar` or `MCPChipsBarViewModel` under the Apple test targets, so the active-server toggle logic (`isActive`, `toggle`) is untested.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -538,3 +542,5 @@ published state.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/chat/chat-window/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage compliance row. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

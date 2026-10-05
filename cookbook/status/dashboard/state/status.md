@@ -1,30 +1,29 @@
 ---
 id: acf8decd-8427-4547-a9ec-49c0a35b0b3a
-title: Status State
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/status
+title: "Status State"
+domain: adtoolkit://cookbook/status/dashboard/state/status
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: State that reads the service health summary from GET /status into a
-  shared cache, surfacing the backend's error reason when the read fails.
+summary: "State that reads the service health summary from GET /status into a shared cache, surfacing the backend's error reason when the read fails."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/api
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/refresh-all
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/config-status
+  - adtoolkit://cookbook/status/dashboard/state/refresh-all
+  - adtoolkit://cookbook/status/dashboard/state/config-status
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Status State
@@ -74,6 +73,7 @@ The one piece of logic this state adds over a plain request is error-reason extr
 - **no-cancellation**: The read MUST NOT accept or forward a cancellation signal; an in-flight request runs to completion even when the read is cancelled or its consumers unmount.
 - **side-effects**: The state's only side effect MUST be the one `GET /status` request per read; it MUST NOT write storage, log, emit analytics, or mutate server state.
 - **server-contract**: The response body shape and the `{ error }` failure body are owned by the status service's `/status` endpoint; this state surfaces whatever that endpoint sends, unchanged apart from the error-message extraction above.
+- **client-only**: Status State MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 
 ## Appearance
 
@@ -104,6 +104,7 @@ Not applicable — this is a data state, not a visual component.
 | use-status-011 | refetch-on-focus | The read is loaded and stale; the application regains focus | One additional request to `/status` is made |
 | use-status-012 | error-message-only | The transport resolves with status `503` and body `{ "error": "db down" }` | `error` has no `status` or `body` property; only `message` is `db down` |
 | use-status-013 | result-type | A consumer mock providing the result shape `{ isLoading: false, error: null, data: { overall: "operational", checkedAt, services: [one healthy service] } }` | The dashboard view reads `data.services` and `data.checkedAt` from the result without adaptation (the result is the raw read result) |
+| use-status-014 | client-only | Load Status State in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -212,6 +213,7 @@ The hook owns only the query definition and error-reason extraction; transport a
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

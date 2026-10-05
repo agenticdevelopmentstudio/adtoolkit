@@ -1,0 +1,58 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "96bc198e-c726-476a-bc4a-ddc1d5c0c2f8",
+    "title": "Delete Entity Section",
+    "domain": "adtoolkit://cookbook/adh/hub/admin/delete-entity-section",
+    "type": "recipe",
+    "version": "1.4.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-07-03",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The Danger-zone disclosure for an entity's settings pane — neutral until disclosed, red once open, and a two-phase (acknowledge then type-to-confirm) delete.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "forms",
+      "destructive",
+      "confirmation",
+      "disclosure",
+      "settings"
+    ],
+    "ingredients": [
+      "agenticdevelopertoolkit://recipes/disclosure",
+      "agenticdevelopertoolkit://recipes/button",
+      "agenticdevelopertoolkit://recipes/dialog"
+    ],
+    "depends-on": [],
+    "related": [
+      "agenticdevelopertoolkit://recipes/field-group",
+      "adtoolkit://cookbook/ui/navigation/focused-topic-detail"
+    ],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "a948ea25499eec1f",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "ingredients", "heading": "Ingredients"},
+    {"part": "integration-requirements", "heading": "Integration Requirements"},
+    {"part": "layout", "heading": "Layout"},
+    {"part": "shared-state", "heading": "Shared State"},
+    {"part": "integration-test-vectors", "heading": "Integration Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

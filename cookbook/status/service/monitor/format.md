@@ -1,41 +1,39 @@
 ---
 id: ae9a73de-80c8-4deb-82ab-89c7c5854c54
-title: Status Server Monitor Format
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/format
+title: "Status Server Monitor Format"
+domain: adtoolkit://cookbook/status/service/monitor/format
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure, synchronous commit-display formatters — sha truncation and subject/full-message
-  extraction — that replace copy-pasted logic across the status server's deploy fetchers
-  and board row builders.
+summary: "Pure, synchronous commit-display formatters — sha truncation and subject/full-message extraction — that replace copy-pasted logic across the status server's deploy fetchers and board row builders."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- formatting
-- commit
-- server
+  - monitor
+  - formatting
+  - commit
+  - server
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/format.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/format.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/webhook-events.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-railway.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-cloudflare.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/derive-activity.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/format.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/format.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/webhook-events.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/fetch-vercel-projects.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/fetch-railway.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/fetch-cloudflare.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/derive-activity.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Format
@@ -116,7 +114,7 @@ scratch.
   execute synchronously and MUST perform no I/O, network call, logging, or persistence of
   any kind; each is a pure function of its arguments with no dependency on module-level or
   external state.
-- **no-throw**: none of the three functions MUST throw for any input within its declared
+- **no-throw**: the three functions MUST NOT throw for any input within its declared
   parameter type (`string | null | undefined` for `hash`/`message`, `number` for `max`);
   every branch each function can take returns a value.
 
@@ -340,6 +338,7 @@ failure.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 |  |  | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

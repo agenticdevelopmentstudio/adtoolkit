@@ -1,33 +1,32 @@
 ---
 id: 62c755ed-eeba-4ada-a907-4a0f802e0466
-title: Window Matching Shortcuts
-domain: agenticdevelopertoolkit://cookbook/system/system-windows/window-shortcuts
+title: "Window Matching Shortcuts"
+domain: adtoolkit://cookbook/system/system-windows/window-shortcuts
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Global modifier-chord shortcut scheme (14 named chords) and the manager that
-  dispatches each chord to a window-contexts model action.
+summary: "Global modifier-chord shortcut scheme (14 named chords) and the manager that dispatches each chord to a window-contexts model action."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-matching
-- window-contexts
-- keyboard-shortcuts
-- global-hotkeys
+  - window-matching
+  - window-contexts
+  - keyboard-shortcuts
+  - global-hotkeys
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/system/system-windows/window-contexts
+  - adtoolkit://cookbook/system/system-windows/window-contexts
 references:
-- https://github.com/sindresorhus/KeyboardShortcuts
-approved-by: ''
-approved-date: ''
+  - https://github.com/sindresorhus/KeyboardShortcuts
+approved-by: ""
+approved-date: ""
 ---
 
 # Window Matching Shortcuts
@@ -39,7 +38,7 @@ The window-context global shortcut scheme. It has two parts:
 - **The shortcut scheme** — fourteen named global shortcuts, each defaulting to the scheme's own modifier pair plus a distinct key, plus two ordered lists: the nine switch-by-index names, and all fourteen names together.
 - **The shortcut manager** — a component that, on construction, registers a key-down handler for every one of those names, dispatches each to a window-contexts model action, and reserves the chords with the app's key-command registry so the app's own key-command settings refuse them.
 
-Use it once per app that hosts window contexts: the host constructs one manager at feature start and retains it for the app's lifetime. The model's behavior behind each action belongs to [Window Matching System Windows Contexts](agenticdevelopertoolkit://cookbook/system/system-windows/window-contexts); this recipe covers only the scheme and the dispatch.
+Use it once per app that hosts window contexts: the host constructs one manager at feature start and retains it for the app's lifetime. The model's behavior behind each action belongs to [Window Matching System Windows Contexts](adtoolkit://cookbook/system/system-windows/window-contexts); this recipe covers only the scheme and the dispatch.
 
 ## Behavioral Requirements
 

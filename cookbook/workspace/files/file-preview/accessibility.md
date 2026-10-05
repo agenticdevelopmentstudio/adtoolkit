@@ -1,0 +1,6 @@
+
+- **Role/trait**: Not customized — the component sets no accessibility role, label, or element override anywhere in this file; the native preview control carries the platform's own built-in accessibility behavior for a file preview, unmodified by this wrapper.
+- **Label requirements**: Not customized — the component assigns no accessibility label of its own; whatever label the native preview control exposes natively (e.g., derived from the previewed file) is unmodified by this file.
+- **Announce state changes**: Not implemented — when the file location changes and the preview target is reassigned (see **updates-preview-item-on-url-change**), no explicit accessibility notification (e.g., a layout-changed or screen-changed post) accompanies that reassignment anywhere in this file; any announcement to a screen reader of the changed preview content is the native preview control's own automatic behavior, not code defined here.
+- **Minimum tap target**: Not applicable — the component targets pointer input and wires no click or press handling of its own in this file, so it has no tap target of its own to size; any hit-testing inside the preview is the native preview control's own, pointer-driven behavior.
+

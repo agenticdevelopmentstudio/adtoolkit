@@ -1,0 +1,62 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "2cfe57f0-cdd4-4723-a6e0-2ce4f136ce7f",
+    "title": "Badge",
+    "domain": "adtoolkit://cookbook/ui/controls/badge",
+    "type": "ingredient",
+    "version": "1.3.0",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-23",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "A small rounded pill label for a status or category chip, in filled or outlined style, with caller-supplied color and automatic black/white contrasting text.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "ui",
+      "badge",
+      "status-indicator"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/ui/controls/badge",
+      "agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages"
+    ],
+    "references": [
+      "https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html",
+      "https://developer.apple.com/design/human-interface-guidelines/color"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "3ebfd46e04893d5a",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

@@ -1,37 +1,33 @@
 ---
 id: e711e689-78e6-403f-8f3c-ed9f29053e8e
-title: Host Language Vocabulary
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/host-language-vocabulary
+title: "Host Language Vocabulary"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/languages/host-language-vocabulary
 type: ingredient
-version: 1.1.0
+version: 1.1.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "The production language-vocabulary conformer for vscode.languages.getLanguages(): the built-in language catalogue, built-ins first, followed by every extension-contributed identifier."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- languages
+  - extension-host
+  - vscode-api
+  - languages
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/HostLanguageVocabulary.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguages.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/LanguageContributionPoint.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadLanguagesVocabularyTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/HostLanguageVocabulary.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguages.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/LanguageContributionPoint.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadLanguagesVocabularyTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Host Language Vocabulary
@@ -105,6 +101,7 @@ translation into VS Code's spellings.
   contribution point as its sole constructor argument and MUST store it
   for the instance's lifetime as the only source `languageIdentifiers`
   consults for contributed identifiers.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -131,6 +128,7 @@ visual component.
 | hlv-004 | computed-not-cached | call `languageIdentifiers` twice on the same instance of this component with no mutation of the contribution point between calls | both calls return equal lists, and neither call is served from a stored field — traced to the source's "Computed, never cached" doc comment; no dedicated test |
 | hlv-005 | contributed-order-preservation | a contribution point with one extension contributing languages in the manifest order `["second", "first", "third"]` (none matching a built-in) | the tail of `languageIdentifiers` reads `["second", "first", "third"]`, matching the contribution point's own manifest-order guarantee — traced to `LanguageContributionPointVocabularyTests.contributedIdentifiersPreserveManifestOrderWithinOneExtension`, composed through this component; no dedicated `HostLanguageVocabularyTests` case |
 | hlv-006 | tsname-exclusion | a contribution point with no contributions; the resulting `languageIdentifiers` | contains `javascript`, `jsx`, `typescript`, and `tsx` as four distinct entries, none collapsed into a shared grammar name — traced to the source's "Does not use the grammar-name field" doc comment; no dedicated test |
+| hlv-007 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -241,7 +239,7 @@ Not applicable: this component contains no logging call.
   getter with no memoization) that rebuilds its result on every call,
   never a cached value, backed by a JS `Set` for the same seen-before
   dedup a `for` loop with `.has()`/`.add()` gives. There is no actor
-  concept in a single-threaded JS runtime, so `main-actor-isolation`
+  concept in a single-threaded JS runtime, so `confines-to-ui-thread`
   collapses to "call this only from the execution context that owns the
   contribution registry."
 - **AppKit / UIKit**: identical to the SwiftUI note — the component
@@ -355,6 +353,8 @@ result (`built-in-deduplication`, `contributed-deduplication`, Edge Cases
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.2 | 2026-10-04 | Mike Fullerton | Spec-local UI-thread confinement ids folded into the shared confines-to-ui-thread requirement, with a test vector; scope detail is in Platform Notes. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/languages/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,0 +1,20 @@
+
+- **script-compilation-and-execution**: The script-running operation MUST compile the given AppleScript source string and, when compilation succeeds, MUST execute it.
+- **compile-failure-result**: The script-running operation MUST return a compile-failed result when compiling the given source string fails.
+- **runtime-failure-result**: The script-running operation MUST return a runtime-failed result carrying a message and a number when execution produces a non-empty error description, with the message taken from that description's error-message entry and the number from its error-number entry.
+- **runtime-failure-fallback-values**: The script-running operation MUST substitute the literal string "unknown error" for the message when the error description has no string value for its error-message entry, and MUST substitute `0` for the number when the description has no integer value for its error-number entry.
+- **success-result-value**: The script-running operation MUST return a success result carrying the executed script's own textual result value when the error description is empty.
+- **success-value-nilable**: Callers MUST treat the textual value a success result carries as possibly absent, since the executed script's own result is not guaranteed to produce a textual value for every script.
+- **result-value-equality**: The result type MUST support equality comparison, comparing the success, compile-failed, and runtime-failed cases (and their carried values) by value.
+- **runner-caller-thread**: The script-running operation MUST execute synchronously on the thread it is called from and MUST NOT dispatch the compile-or-execute work to any other thread or queue internally.
+- **caller-main-thread-marshaling**: Callers SHOULD invoke the script-running operation on the platform's main thread on system versions where the underlying scripting engine requires it, per the documented guidance that the engine requires the main thread on some system versions and that a caller running on a background execution context should marshal to the main thread if needed.
+- **command-default-behavior**: The command base's default command-handling behavior, when a subclass does not override it, MUST return an absent value.
+- **command-runs-on-serialized-context**: A subclass's command-handling override MUST run on the base's single serialized execution context, since the override point itself is isolated to that context.
+- **command-default-implementation-bridges-context**: The command base's default-implementation operation MUST invoke the command-handling override from inside a bridge onto that same serialized execution context.
+- **command-result-propagation**: The command base's default-implementation operation MUST return exactly the value produced by that invocation of the command-handling override, with no transformation.
+- **command-return-type-freedom**: A subclass's command-handling override MAY return any value assignable to the command base's declared open result type, including an absent value, since the default-implementation operation's own contract returns that same open result type.
+- **element-specifier-result**: The element-locator helper MUST return a locator built from the application's own scripting class description as the container class description, the given key, and the result of calling the given unique-id closure, when the application's own class description resolves to a scripting class description.
+- **element-specifier-nil-fallback**: The element-locator helper MUST return an absent value when the application's own class description does not resolve to a scripting class description.
+- **element-specifier-runs-on-serialized-context**: The element-locator helper MUST perform the application's-class-description read, the unique-id call, and the locator construction from inside a bridge onto the platform's serialized main execution context.
+- **element-specifier-no-container-specifier**: The element-locator helper MUST pass an absent container locator, since every element it addresses hangs directly off the application.
+

@@ -1,47 +1,41 @@
 ---
 id: 94dc5dad-be14-4520-8afe-e944e59a0117
-title: VS Code API Bridge
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api
+title: "VS Code API Bridge"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Shared ceremony every vscode.* adaptor uses for installing members, promise
-  settlement, calling back into extensions, and stub sub-namespaces.
+summary: "Shared ceremony every vscode.* adaptor uses for installing members, promise settlement, calling back into extensions, and stub sub-namespaces."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- disposable
-- bridge
+  - extension-host
+  - vscode-api
+  - disposable
+  - bridge
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-diagnostics
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/main-thread-language-models
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-languages
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/js-value-bridge
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-diagnostics
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/language-models/main-thread-language-models
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/languages/main-thread-languages
+  - adtoolkit://cookbook/workspace/extensions/host/js-value-bridge
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/VSCodeAPISettlementTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/VSCodeAPIDisposableTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/VSCodeAPISubNamespaceTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadCommands.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/VSCodeAPISettlementTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/VSCodeAPIDisposableTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/VSCodeAPISubNamespaceTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadCommands.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # VS Code API Bridge
@@ -235,7 +229,7 @@ signatures that require concurrency safety regardless.
   Code's own behavior for a promise given to an API such as
   `showQuickPick` that never resolves.
 - **settlement-handlers-capture-no-live-value**: Neither the fulfillment
-  nor the rejection handler passed to the extension's `then` MUST capture
+  nor the rejection handler passed to the extension's `then` MUST NOT capture
   a script value directly; each MUST read its argument from the current
   call's arguments or mint a fresh "undefined" from the active context at
   call time.
@@ -336,6 +330,7 @@ signatures that require concurrency safety regardless.
 - **promise-settlement-box-carries-a-fixed-pair**: The promise-settlement
   box MUST hold exactly one promise's resolve and reject values, read back
   only by name, and MUST NOT double as a general-purpose value box.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -372,6 +367,7 @@ Not applicable — this is the extension host's shared `vscode.*` member/promise
 | vscodeapi-017 | sub-namespace-is-read-only | Assigning to, or deleting, a member on a sub-namespace stub | Throws a type error naming the sub-namespace's path and the key; the assignment or deletion does not succeed |
 | vscodeapi-018 | call-refuses-when-trampoline-cannot-be-installed | Calling back into a callback that has no active context, with no receiver and no arguments | Answers "unavailable" without invoking the callback |
 | vscodeapi-019 | outcome-refuses-a-malformed-trampoline-record | Reading a dispatch outcome given a settled value that is not an object (a bare number) | Logs an error and answers "unavailable," not "threw" and not "returned" |
+| vscodeapi-020 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -475,7 +471,7 @@ Subsystem: matches the host's logging subsystem | Category: the bridge's own cat
   **Rationale**: upstream VS Code does not settle either, and answering after some fixed delay would invent user-visible-wrong behavior (an extension told a picker was dismissed that the user never saw). The cost — one leaked continuation and two capturing handlers per un-settling thenable — is confined to the extension whose own thenable never resolves.
   **Approved**: pending
 
-- **Decision** (Swift/AppKit implementation): The fulfillment/rejection handlers in settlement reading, and the rejection handler in rejection observation, capture no script value, reading their argument from the current call's arguments or minting a fresh "undefined" from the active context at call time instead.
+- **Decision**: (Swift/AppKit implementation) The fulfillment/rejection handlers in settlement reading, and the rejection handler in rejection observation, capture no script value, reading their argument from the current call's arguments or minting a fresh "undefined" from the active context at call time instead.
   **Rationale**: a `JSValue` retains its `JSContext`, so a block capturing one and exported to JavaScript creates a retain cycle between the block and the context; the leak would then be the whole context rather than one continuation.
   **Approved**: pending
 
@@ -483,11 +479,11 @@ Subsystem: matches the host's logging subsystem | Category: the bridge's own cat
   **Rationale**: a callback that genuinely returns nothing answers a value holding "undefined," not an absent result; an absent result here means the bridge itself declined to answer. Conflating the two would let a caller resolve an extension's promise with "undefined" — the same answer a successful void command produces — when the true situation was a dispatch failure.
   **Approved**: pending
 
-- **Decision** (Swift implementation): The confined-value box is one generic type rather than several private, purpose-built box structs.
+- **Decision**: (Swift implementation) The confined-value box is one generic type rather than several private, purpose-built box structs.
   **Rationale**: several unrelated shared-library signatures independently require concurrency safety for values (script values and closures over them) this module cannot conform, because the script-value type is owned by the script engine, not by this module. One declaration replaces what would otherwise be several private structs under different names, each a copy of another.
   **Approved**: pending
 
-- **Decision** (Swift implementation): The bridge, the call-outcome value, the settlement value, and the then-lookup result carry no concurrency-safety declaration beyond the teardown-response value's explicit one.
+- **Decision**: (Swift implementation) The bridge, the call-outcome value, the settlement value, and the then-lookup result carry no concurrency-safety declaration beyond the teardown-response value's explicit one.
   **Rationale**: every value in play (the script value, the script context) is inherently confined to one execution context by nature, and every producer and consumer is already confined to the bridge's own execution context; adding a declaration would either be a false promise or require boxing types that have no reason to leave that context.
   **Approved**: pending
 
@@ -508,6 +504,8 @@ Subsystem: matches the host's logging subsystem | Category: the bridge's own cat
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restored the inverted prohibition in settlement-handlers-capture-no-live-value: handlers MUST NOT capture a script value (matches the source's no-capture design and the Design Decision). |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

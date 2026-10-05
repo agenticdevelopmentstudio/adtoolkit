@@ -1,0 +1,62 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "8648272e-2da3-46fc-b9e8-5148dacdbcff",
+    "title": "Status Server Fetchers",
+    "domain": "adtoolkit://cookbook/status/service/telemetry/fetchers",
+    "type": "ingredient",
+    "version": "1.1.0",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Two Fetcher-port adapters (GlitchTip issues, PostHog HogQL analytics) feeding the status server's telemetry streams — env-gated no-op, one bounded fetch attempt, and DTO mapping.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "telemetry",
+      "glitchtip",
+      "posthog",
+      "fetcher",
+      "server"
+    ],
+    "depends-on": [],
+    "related": [],
+    "references": [
+      "packages/web/packages/status-server/src/telemetry/fetchers/glitchtip.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/telemetry/fetchers/posthog.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/telemetry-glitchtip-fetcher.test.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "383da07e1e897f01",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

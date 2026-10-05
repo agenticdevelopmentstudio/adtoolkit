@@ -1,32 +1,31 @@
 ---
 id: 0bc93127-4078-4bc6-a250-04dde181788b
-title: Dismissible Overlay View
-domain: agenticdevelopertoolkit://cookbook/ui/containers/dismissible-overlay-view
+title: "Dismissible Overlay View"
+domain: adtoolkit://cookbook/ui/containers/dismissible-overlay-view
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Covers its host with a blurred, fading backdrop and dismisses itself on
-  an unclaimed click, Escape, or Return.
+summary: "Covers its host with a blurred, fading backdrop and dismisses itself on an unclaimed click, Escape, or Return."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ui
-- overlay
-- dismissible
+  - ui
+  - overlay
+  - dismissible
 depends-on: []
 related:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references:
-- https://developer.apple.com/design/human-interface-guidelines/motion
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/design/human-interface-guidelines/motion
+approved-by: ""
+approved-date: ""
 ---
 
 # Dismissible Overlay View
@@ -114,6 +113,7 @@ the pre-dismissal hook for whatever it has running that needs to stop.
 - **optional-dismissed-callback**: Callers MAY leave `onDismissed` as
   `nil`, in which case dismissal performs no additional callback work
   beyond the fade-out animation and removal from superview.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -164,7 +164,7 @@ the pre-dismissal hook for whatever it has running that needs to stop.
   notification when it appears or disappears, so no notification is posted
   at either transition — only whatever the platform's own default
   view-hierarchy handling provides applies.
-- **keyboard-focus-containment**: NEEDS REVIEW: Not implemented in source. Key-equivalent handling only intercepts Escape, Return, and keypad Enter; nothing restricts Tab-key focus traversal to the overlay's own content while presented, so a keyboard user could Tab onto a host control underneath the backdrop, and whether that is acceptable can only be settled by a keyboard-only pass tabbing through a presented overlay with the running UI.
+- **keyboard-focus-containment**: The overlay MUST NOT be relied on to contain keyboard focus. Key-equivalent handling intercepts only Escape, Return, and keypad Enter; Tab traversal is not restricted to the overlay's own content while it is presented, so a keyboard user can Tab onto a host control beneath the backdrop.
 - **Minimum tap target**: Not applicable in the small-target sense — per
   `mouse-down-dismissal` and `host-coverage`,
   the dismiss gesture's target is the overlay's entire frame, which itself
@@ -202,6 +202,7 @@ the pre-dismissal hook for whatever it has running that needs to stop.
 | dismissible-overlay-023 | open-subclassing | Define a subclass overriding presentation, the pre-dismissal hook, and the press- and key-equivalent-handling entry points | Code compiles; the subclass's overrides run in place of the base implementation |
 | dismissible-overlay-024 | optional-dismissed-callback | Leave `onDismissed` as `nil`, then dismiss the overlay | No crash; the fade-out animation and removal from superview still proceed |
 | dismissible-overlay-025 | key-equivalent-subview-priority | Present one overlay in a host, then present a second instance as a subview added above the first (mirroring "a message expanded over a conversation"); send an Escape key event | The outer (first-presented) overlay's key-equivalent handling reports the event as handled via reaching the inner overlay first; only the inner (topmost) overlay dismisses itself, not the outer one |
+| dismissible-overlay-026 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 `will-dismiss-cleanup` has no test vector: it is guidance for
 what a subclass author puts inside their own override, not a behavior
@@ -451,6 +452,7 @@ Not applicable: the source contains no logging call.
   accelerator's `Invoked` handler with an `isDismissing`-style boolean field,
   since `KeyboardAccelerator.Invoked` has no built-in idempotency the way
   `dismiss()`'s own guard provides.
+- **UI-thread confinement**: `confines-to-ui-thread` — the type is declared `@MainActor` and is an `NSView` subclass, so construction or mutation from off the main actor fails to compile; the fade-out completion handler, which AppKit declares non-isolated, re-enters the main actor with `MainActor.assumeIsolated`.
 
 ## Reference Implementations
 
@@ -526,6 +528,10 @@ compile-fail check (e.g. a test target file that must not build) rather
 than a normal test-runner assertion.
 **Approved**: pending
 
+**Decision**: While presented, the overlay does not trap Tab focus: only Escape, Return and keypad Enter are intercepted, and Tab can reach host controls underneath the backdrop.
+**Rationale**: Nothing in the source restricts focus traversal to the overlay's content, and no keyboard-only pass has settled whether that is acceptable for the overlay's current host. Closing the gap would mean limiting the key-view loop to the overlay's subtree while presented and restoring it on dismissal.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -535,6 +541,8 @@ than a normal test-runner assertion.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | failed | Accessibility |
 | [reduced-motion](agenticdevelopercookbook://compliance/accessibility#reduced-motion) | passed | Accessibility |
 | [platform-theming](agenticdevelopercookbook://compliance/platform-compliance#platform-theming) | passed | Platform Compliance |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `keyboard-navigable` passes because Escape, Return, and keypad Enter all
 dismiss the overlay without requiring it to become first responder (see
@@ -551,10 +559,13 @@ because the only animation is an opacity fade (see Accessibility Options).
 from a system `NSVisualEffectView.Material` value, not a raw color this
 view chooses itself.
 
+`separation-of-concerns` passes because the view owns only the backdrop, the dismissal gestures and the fade, and hands the owner two hooks (`willDismiss()` and `onDismissed`) rather than reaching into host state; subclasses such as `ConversationFocusOverlay` supply the content. `unit-test-coverage` is `partial`: no test file targets `DismissibleOverlayView` by name, but `Chat/ConversationFocusTests.swift` drives it through its subclass `ConversationFocusOverlay` (`testEscapeDismissesTheOverlay`, `testReturnDismissesTheOverlay`, `testAnOrdinaryKeyLeavesTheOverlayUp`, `testAPressThatNoControlTookDismissesTheOverlay`, `testTheOverlayIsDrawnBeforeItStartsToFadeIn`), so key and mouse dismissal and the draw-before-fade rule are pinned; nothing tests the `onDismissed` and `willDismiss()` ordering, double-dismissal, or the fade duration.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the keyboard-focus-containment NEEDS REVIEW marker as current behavior (Tab focus is not trapped) with a pending design decision; added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. Corrected unit-test-coverage to partial: the overlay's dismissal gestures are tested through its subclass. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/containers/. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

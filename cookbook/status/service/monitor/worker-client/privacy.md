@@ -1,0 +1,6 @@
+
+- **Data collected**: this component itself collects nothing; it holds the exact worker data it was constructed with — a connection value (an opaque connection type) and a full status configuration, including credentials and secrets (the provider API tokens and other secrets) — and forwards that value unchanged into every worker it spawns.
+- **Storage**: the constructor's configuration (including the connection value and status configuration) is held in memory for the lifetime of the worker client instance, re-read on every respawn; this component never writes it to disk.
+- **Transmission**: the only "transmission" this component performs is handing its worker data (plus the cooldowns buffer it adds) to the newly constructed worker, crossing an in-process structured-clone boundary — never a network call. No credential or secret value is ever written into any of this component's own error messages (see Localization); those name only a timeout duration, an exit code, or a reply's own error/message text.
+- **Retention**: not applicable beyond the "Storage" note above — this component keeps no separate history of past connection/configuration values; it only ever holds the one it was constructed with.
+

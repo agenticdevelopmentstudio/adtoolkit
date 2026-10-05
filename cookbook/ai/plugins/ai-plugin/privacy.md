@@ -1,0 +1,6 @@
+
+- **Data handled**: Building a request receives the chat context's configuration, and building a validation request receives a configuration directly, either of which MAY carry a credential such as an API key — the host reads these from the plugin's settings schema and injects secrets (API keys) from secure storage just before calling request-building; the plugin never touches storage itself.
+- **Storage**: This contract defines no storage of its own. Secret persistence (e.g. keychain-style secure storage) is the host's responsibility, implemented by a sibling secret-storage component, not by any conforming plugin.
+- **Transmission**: A conforming plugin never transmits data itself; it only describes a request (the returned request spec's headers or body MAY embed a credential, e.g. as an `Authorization: Bearer <apiKey>` header) for the host's transport to send.
+- **Violation handling**: Out of scope for this contract — detecting or reacting to a security violation (an invalid key, a revoked credential) is delegated entirely to the host's secret-storage and transport layers; this contract neither validates nor reports on credential legitimacy beyond the optional validation-request hook.
+

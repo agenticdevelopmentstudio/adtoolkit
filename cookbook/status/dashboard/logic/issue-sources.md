@@ -1,30 +1,29 @@
 ---
 id: 2d763e2e-ef33-4d49-957e-6b8ced23218e
-title: Issue Sources
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/issue-sources
+title: "Issue Sources"
+domain: adtoolkit://cookbook/status/dashboard/logic/issue-sources
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The status dashboard's issue-source vocabulary, its display labels, filter
-  order, type guard, and the mirrored stuck-deploy threshold
+summary: "The status dashboard's issue-source vocabulary, its display labels, filter order, type guard, and the mirrored stuck-deploy threshold"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/source-filter
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/board-types
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/endpoint-kinds
+  - adtoolkit://cookbook/status/dashboard/state/source-filter
+  - adtoolkit://cookbook/status/dashboard/logic/board-types
+  - adtoolkit://cookbook/status/dashboard/logic/endpoint-kinds
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Issue Sources
@@ -43,7 +42,7 @@ It exports five things:
 
 The module is a client-side MIRROR of the server's own issue-sources module: "same union, same labels, same order". The server file also holds the judgment functions that decide whether an HTTP check, a deploy, or a platform stream counts as bad or stuck. The client copies only the vocabulary and the threshold constant. It has no state, no I/O and no side effects.
 
-Consumers in the client: the source-filter state ([Source Filter](agenticdevelopertoolkit://cookbook/status/dashboard/state/source-filter)) seeds its selection from the source order list; the board types ([Board Types](agenticdevelopertoolkit://cookbook/status/dashboard/logic/board-types)) type board rows with the issue-source vocabulary; the row-building logic, the activity panel, the overview tab and the global panel read the labels, order and guard.
+Consumers in the client: the source-filter state ([Source Filter](adtoolkit://cookbook/status/dashboard/state/source-filter)) seeds its selection from the source order list; the board types ([Board Types](adtoolkit://cookbook/status/dashboard/logic/board-types)) type board rows with the issue-source vocabulary; the row-building logic, the activity panel, the overview tab and the global panel read the labels, order and guard.
 
 ## Behavioral Requirements
 
@@ -249,4 +248,4 @@ Not applicable: the module makes no log calls, and the guard reports its answer 
 |---------|------|--------|---------|
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/logic/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from source |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from source |

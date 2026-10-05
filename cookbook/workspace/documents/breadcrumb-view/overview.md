@@ -1,0 +1,3 @@
+
+This component is a VS Code-style breadcrumb strip shown above a document editor: a horizontal row of buttons, one per path segment between the project root and the open file, separated by chevrons, so a user can see where the current file sits and jump to any ancestor directory. Setting the open file rebuilds the strip; clicking a crumb opens a popover listing that directory's siblings (handled by the breadcrumb popover component), and choosing an entry there — or selecting a crumb by index directly — reports a URL back through a selection callback: the file chosen in the popover, or the crumb's own directory when a crumb is selected by index directly. The view itself is limited to path arithmetic and layout; it performs no filesystem access of its own.
+

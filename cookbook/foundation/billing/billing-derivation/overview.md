@@ -1,0 +1,3 @@
+
+Turns a session's activity timestamps into runs: continuous stretches of work split wherever the idle gap exceeds a cutoff. The derivation is pure and re-derivable from the same events, so a crash, a reinstall mid-session, a laptop sleep or a timer nobody stopped cost nothing: sleep produces a gap, a gap produces a split. The price is up to one scheduling interval of lag, and a run still open is not yet billable. A run closes at the previous event, so the idle stretch that revealed the stop is never billed. Two entry points exist: one over raw timestamp strings, one over already parsed, sorted, unique epoch seconds (the form the activity cache keeps).
+

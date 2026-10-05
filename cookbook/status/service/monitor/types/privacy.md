@@ -1,0 +1,3 @@
+
+Not applicable: this module declares data shapes only — it collects, stores, and transmits nothing itself. None of its fields is a token or credential; `missingEnv` (integration check entry) carries only the names of unset environment variables — per its own documentation, "named exactly, e.g. CLOUDFLARE_ACCOUNT_ID" — never their values, so this field cannot leak a credential even when populated. The commit hashes, branch names, project names, URLs, and error strings the other records carry are operational monitoring data already produced elsewhere; this module neither reads nor writes them.
+

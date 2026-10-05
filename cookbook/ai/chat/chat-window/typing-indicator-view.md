@@ -1,36 +1,35 @@
 ---
 id: 653874b6-86c4-41cb-9350-5f61bb5fca85
-title: Typing Indicator View
-domain: agenticdevelopertoolkit://cookbook/ai/chat/chat-window/typing-indicator-view
+title: "Typing Indicator View"
+domain: adtoolkit://cookbook/ai/chat/chat-window/typing-indicator-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: An animated three-dot view that pulses in sequence to signal the assistant
-  is composing a reply.
+summary: "An animated three-dot view that pulses in sequence to signal the assistant is composing a reply."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- chat
-- messaging
-- ui-component
-- typing-indicator
+  - chat
+  - messaging
+  - ui-component
+  - typing-indicator
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-transcript-row-view
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-view
+  - adtoolkit://cookbook/ai/chat/chat-window/chat-transcript-row-view
+  - adtoolkit://cookbook/ai/chat/chat-window/chat-view
 references:
-- https://developer.apple.com/design/human-interface-guidelines/layout
-- https://developer.apple.com/documentation/foundation/runloop/mode-swift.struct/default
-- https://learn.microsoft.com/en-us/uwp/api/windows.ui.viewmanagement.uisettings.animationsenabled
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/design/human-interface-guidelines/layout
+  - https://developer.apple.com/documentation/foundation/runloop/mode-swift.struct/default
+  - https://learn.microsoft.com/en-us/uwp/api/windows.ui.viewmanagement.uisettings.animationsenabled
+approved-by: ""
+approved-date: ""
 ---
 
 # Typing Indicator View
@@ -51,6 +50,7 @@ The Typing Indicator View shows three small dots inside a rounded pill and, once
 - **start-schedules-repeating-timer**: When `startAnimating()` is called, the component MUST make dot 0 the next dot to be highlighted and MUST schedule a repeating tick every 0.35 seconds thereafter.
 - **single-dot-highlighted-per-tick**: On each tick, the component MUST animate exactly one dot's opacity to 1.0 over 0.2 seconds while animating the other two dots' opacity to 0.3 over the same 0.2 seconds, and MUST advance which dot is highlighted by one position (wrapping modulo 3) on every subsequent tick.
 - **timer-invalidated-on-removal**: The component MUST stop its animation timer when it is removed from the view hierarchy.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -96,6 +96,7 @@ The Typing Indicator View shows three small dots inside a rounded pill and, once
 | typing-indicator-010 | single-dot-highlighted-per-tick | `startAnimating()`, then allow three consecutive ticks | The highlighted dot index advances 0 → 1 → 2 → 0, wrapping modulo 3 |
 | typing-indicator-011 | timer-invalidated-on-removal | `startAnimating()`, then remove the view from the view hierarchy, then wait longer than one tick interval | No dot's opacity changes after removal; the highlight animation does not continue |
 | typing-indicator-012 | start-schedules-repeating-timer, timer-invalidated-on-removal | Call `startAnimating()` twice in a row without an intervening removal from the view hierarchy | The second call replaces the animation timer without invalidating the first one, which remains scheduled independently; both timers then drive the tick against the shared highlight state, roughly doubling the effective tick rate — well-defined by the source, not a crash (see Edge Cases) |
+| typing-indicator-013 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -125,10 +126,10 @@ Not applicable: the component renders no text or string content of any kind — 
 | Option | Behavior |
 |--------|----------|
 | Reduce Motion | The pulsing opacity animation runs unconditionally once the animation is started; the component does not read the system's reduce-motion setting or observe changes to it, so a user with that preference enabled sees the same continuous looping pulse as everyone else. |
-| Increase Contrast | The container fill (0.08 alpha) and the dimmed dot state (0.3 alpha) are both deliberately low-contrast by design, and the component does not respond to the system's increase-contrast setting: nothing in the component reads that setting to raise either value; see the open question on low-alpha-contrast. |
+| Increase Contrast | The container fill (0.08 alpha) and the dimmed dot state (0.3 alpha) are both deliberately low-contrast by design, and the component does not respond to the system's increase-contrast setting: nothing in the component reads that setting to raise either value; see **low-alpha-contrast** and its Design Decision. |
 | Differentiate Without Color | Not applicable: the indicator conveys no state through color — every dot and the container share the same `secondaryText` hue throughout, and which dot is "active" is conveyed by opacity/brightness within that single hue, not by a color-coded distinction that would need a non-color alternative. |
 
-- **low-alpha-contrast**: NEEDS REVIEW: Not implemented. The container fill (0.08 alpha) and the dimmed dot state (0.3 alpha) are fixed alpha multipliers this component applies over a host-supplied background, and the dot color itself comes from the active theme palette; the component defines no contrast floor for either, so whether the dimmed dots and container remain distinguishable against a given host background requires a human judging the rendered contrast in the running UI.
+- **low-alpha-contrast**: The container fill (0.08 alpha) and the dimmed dot state (0.3 alpha) are fixed alpha multipliers this component applies over a host-supplied background, and the dot color comes from the active theme palette; the component defines no contrast floor for either, so whether the dimmed dots and container stay distinguishable against a given host background is not checked here.
 
 ## Feature Flags
 
@@ -148,10 +149,10 @@ Not applicable: the source contains no logging calls (no `os_log`, `Logger`, or 
 
 ## Platform Notes
 
-- **SwiftUI**: Build an `HStack(spacing: 4)` of three `Circle().fill(color).frame(width: 7, height: 7)` views inside a `RoundedRectangle(cornerRadius: 12).fill(fillColor).frame(width: 48, height: 28)` background. Drive the wave with a `TimelineView(.periodic(from: .now, by: 0.35))` (or an owning view model's own repeating `Timer`) that advances an `activeIndex` and wraps each dot's `.opacity(index == activeIndex ? 1.0 : 0.3)` in `withAnimation(.easeInOut(duration: 0.2))`, matching **single-dot-highlighted-per-tick**. Read `@Environment(\.accessibilityReduceMotion)` to substitute a static state when true — SwiftUI makes that check easy where this source has none (see the Reduce Motion gap above). Source `fillColor`/dot color the same way `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view#platforms/swiftui` sources its own theme colors.
-- **Compose**: Build a `Row(horizontalArrangement = Arrangement.spacedBy(4.dp))` of three `Box` circles (`Modifier.size(7.dp).background(color, CircleShape)`) inside a `Modifier.background(fillColor, RoundedCornerShape(12.dp)).size(48.dp, 28.dp)` container. Drive the wave with a coroutine `while (isActive) { delay(350); ... }` loop (or `rememberInfiniteTransition`) advancing an active index, animating each dot's alpha with `animateFloatAsState(targetValue = ..., animationSpec = tween(200))`, matching **single-dot-highlighted-per-tick**. Gate the animation on `LocalContext.current`'s `Settings.Global.ANIMATOR_DURATION_SCALE` (Android's reduced-motion equivalent) before starting it, since the source has no such gate. Source `fillColor`/dot color from the same custom `CompositionLocal` palette holder documented at `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view#platforms/compose`.
+- **SwiftUI**: Build an `HStack(spacing: 4)` of three `Circle().fill(color).frame(width: 7, height: 7)` views inside a `RoundedRectangle(cornerRadius: 12).fill(fillColor).frame(width: 48, height: 28)` background. Drive the wave with a `TimelineView(.periodic(from: .now, by: 0.35))` (or an owning view model's own repeating `Timer`) that advances an `activeIndex` and wraps each dot's `.opacity(index == activeIndex ? 1.0 : 0.3)` in `withAnimation(.easeInOut(duration: 0.2))`, matching **single-dot-highlighted-per-tick**. Read `@Environment(\.accessibilityReduceMotion)` to substitute a static state when true — SwiftUI makes that check easy where this source has none (see the Reduce Motion gap above). Source `fillColor`/dot color the same way `adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view#platforms/swiftui` sources its own theme colors.
+- **Compose**: Build a `Row(horizontalArrangement = Arrangement.spacedBy(4.dp))` of three `Box` circles (`Modifier.size(7.dp).background(color, CircleShape)`) inside a `Modifier.background(fillColor, RoundedCornerShape(12.dp)).size(48.dp, 28.dp)` container. Drive the wave with a coroutine `while (isActive) { delay(350); ... }` loop (or `rememberInfiniteTransition`) advancing an active index, animating each dot's alpha with `animateFloatAsState(targetValue = ..., animationSpec = tween(200))`, matching **single-dot-highlighted-per-tick**. Gate the animation on `LocalContext.current`'s `Settings.Global.ANIMATOR_DURATION_SCALE` (Android's reduced-motion equivalent) before starting it, since the source has no such gate. Source `fillColor`/dot color from the same custom `CompositionLocal` palette holder documented at `adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view#platforms/compose`.
 - **React/Web**: Render a flex row (`display: flex; align-items: center; gap: 4px`) of three `<span class="dot">` elements (`width: 7px; height: 7px; border-radius: 50%`) inside a container styled `border-radius: 12px; width: 48px; height: 28px`. Drive the wave with a `setInterval(350)` that advances an active index and toggles a CSS class per dot, with `.dot { opacity: 0.3; transition: opacity 200ms; } .dot.active { opacity: 1; }`, matching **single-dot-highlighted-per-tick**. Honor the `prefers-reduced-motion: reduce` media query by skipping the `transition` (or the interval entirely, holding one static state) — this source has no equivalent check at all. Source dot/container color from CSS custom properties tied to the active theme.
-- **AppKit / UIKit**: Source: `packages/apple/AgenticToolkit/macOS/Features/AIChatWindow/TypingIndicatorView.swift`. Implemented as a `@MainActor`, `final` `NSView` subclass holding three plain `NSView`s (`wantsLayer = true`) inside an `NSStackView`, laid out entirely with `NSLayoutConstraint.activate` — the stack is centered with `centerXAnchor`/`centerYAnchor` constraints equal to the container's own (see **pill-container-shape**, **stack-centered-in-container**). The wave is driven by a private `Timer?` (`timer`) and a private `Int` step counter (`step`): `startAnimating()` resets `step` to zero and reschedules `timer` via `Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true)` (see **start-schedules-repeating-timer**); each fire re-enters via `MainActor.assumeIsolated` and animates each dot's `alphaValue` through `NSAnimationContext.runAnimationGroup` (see **single-dot-highlighted-per-tick**); `removeFromSuperview()` invalidates `timer` and sets it to `nil` (see **timer-invalidated-on-removal**). `init?(coder:)` is marked `@available(*, unavailable)` and calls `fatalError()` if reached at runtime regardless — a Swift/AppKit compile-time constraint with no equivalent construction path on the other platforms, so it carries no conformance vector of its own. Theme changes are observed via `observeTheme { view, palette in ... }`, the same pattern documented at `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view#platforms/appkit-uikit` and `agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-day-banner-view#platforms/appkit-uikit`. This file targets macOS only — it lives under `macOS/Features` and uses `NSView`/`NSStackView`/`NSAnimationContext`, none of which exist in UIKit; an iOS port would substitute `UIView`/`UIStackView` and drive the pulse with `UIView.animate(withDuration:)` (or a `CADisplayLink`) on a `Timer`-driven or display-link-driven cadence, and would need its own theme-observation hook and its own Reduce Motion check via `UIAccessibility.isReduceMotionEnabled`, since this source has neither. The Reduce Motion and Increase Contrast gaps noted in Accessibility Options are macOS-specific gaps in this concrete source: a fix would read `NSWorkspace.shared.accessibilityDisplayShouldReduceMotion` and observe `NSWorkspace.accessibilityDisplayOptionsDidChangeNotification` for the former, and read `NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast` for the latter. The screen-reader gaps in Accessibility would be closed by posting an `NSAccessibility.post(element:notification:)` notification around `startAnimating()`/`removeFromSuperview()` (there is no such call anywhere in `setup()`, `startAnimating()`, `tick()`, or `removeFromSuperview()` today) and by giving the container (or a dedicated element) an accessibility role and label such as `.staticText`/"Assistant is typing", matching the sibling `ChatDayBannerView`'s pattern. Apple's 44×44pt tap-target guidance does not apply since this is a non-interactive, non-clickable view. On this platform, `Timer.scheduledTimer(withTimeInterval:repeats:block:)` schedules the timer on the current run loop's `.default` mode only (it is not added to `.common` modes); per Apple's documented [RunLoop.Mode.default](https://developer.apple.com/documentation/foundation/runloop/mode-swift.struct/default) behavior, a timer scheduled this way is suspended while the main run loop is servicing a tracking loop elsewhere in the same app, which is the mechanism behind the "Timer suspended during other UI activity" edge case above.
+- **AppKit / UIKit**: Source: `packages/apple/AgenticToolkit/macOS/Features/AIChatWindow/TypingIndicatorView.swift`. Implemented as a `@MainActor`, `final` `NSView` subclass holding three plain `NSView`s (`wantsLayer = true`) inside an `NSStackView`, laid out entirely with `NSLayoutConstraint.activate` — the stack is centered with `centerXAnchor`/`centerYAnchor` constraints equal to the container's own (see **pill-container-shape**, **stack-centered-in-container**). The wave is driven by a private `Timer?` (`timer`) and a private `Int` step counter (`step`): `startAnimating()` resets `step` to zero and reschedules `timer` via `Timer.scheduledTimer(withTimeInterval: 0.35, repeats: true)` (see **start-schedules-repeating-timer**); each fire re-enters via `MainActor.assumeIsolated` and animates each dot's `alphaValue` through `NSAnimationContext.runAnimationGroup` (see **single-dot-highlighted-per-tick**); `removeFromSuperview()` invalidates `timer` and sets it to `nil` (see **timer-invalidated-on-removal**). `init?(coder:)` is marked `@available(*, unavailable)` and calls `fatalError()` if reached at runtime regardless — a Swift/AppKit compile-time constraint with no equivalent construction path on the other platforms, so it carries no conformance vector of its own. Theme changes are observed via `observeTheme { view, palette in ... }`, the same pattern documented at `adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view#platforms/appkit-uikit` and `adtoolkit://cookbook/ai/chat/chat-window/chat-day-banner-view#platforms/appkit-uikit`. This file targets macOS only — it lives under `macOS/Features` and uses `NSView`/`NSStackView`/`NSAnimationContext`, none of which exist in UIKit; an iOS port would substitute `UIView`/`UIStackView` and drive the pulse with `UIView.animate(withDuration:)` (or a `CADisplayLink`) on a `Timer`-driven or display-link-driven cadence, and would need its own theme-observation hook and its own Reduce Motion check via `UIAccessibility.isReduceMotionEnabled`, since this source has neither. The Reduce Motion and Increase Contrast gaps noted in Accessibility Options are macOS-specific gaps in this concrete source: a fix would read `NSWorkspace.shared.accessibilityDisplayShouldReduceMotion` and observe `NSWorkspace.accessibilityDisplayOptionsDidChangeNotification` for the former, and read `NSWorkspace.shared.accessibilityDisplayShouldIncreaseContrast` for the latter. The screen-reader gaps in Accessibility would be closed by posting an `NSAccessibility.post(element:notification:)` notification around `startAnimating()`/`removeFromSuperview()` (there is no such call anywhere in `setup()`, `startAnimating()`, `tick()`, or `removeFromSuperview()` today) and by giving the container (or a dedicated element) an accessibility role and label such as `.staticText`/"Assistant is typing", matching the sibling `ChatDayBannerView`'s pattern. Apple's 44×44pt tap-target guidance does not apply since this is a non-interactive, non-clickable view. On this platform, `Timer.scheduledTimer(withTimeInterval:repeats:block:)` schedules the timer on the current run loop's `.default` mode only (it is not added to `.common` modes); per Apple's documented [RunLoop.Mode.default](https://developer.apple.com/documentation/foundation/runloop/mode-swift.struct/default) behavior, a timer scheduled this way is suspended while the main run loop is servicing a tracking loop elsewhere in the same app, which is the mechanism behind the "Timer suspended during other UI activity" edge case above.
 - **WinUI 3**: This is the platform with no direct analogue in the source, so start from first principles. Use a horizontal `StackPanel Orientation="Horizontal" Spacing="4"` holding three `Ellipse Width="7" Height="7" Fill="{ThemeResource SecondaryTextBrush}"`, placed as a sibling inside a `Grid` alongside a background `Border CornerRadius="12" Width="48" Height="28" Background="{ThemeResource SecondaryTextBrush}" Opacity="0.08"` — setting `Opacity` directly on that `Border` reproduces the fixed 0.08-alpha fill from **container-fill-tracks-theme** without inventing a separate low-alpha brush resource, and because the `Border` and the `StackPanel` are siblings rather than parent and child, the `Border`'s `Opacity` affects only the `Border` itself, not the ellipses. Drive the wave with a `DispatcherTimer` ticking every 350ms that advances an active index and starts a `Storyboard`/`DoubleAnimation` on the active `Ellipse.Opacity` from 0.3 to 1.0 over 200ms while animating the previously-active ellipse back to 0.3, matching **single-dot-highlighted-per-tick**. Before starting or resuming that `DispatcherTimer`, check `new Windows.UI.ViewManagement.UISettings().AnimationsEnabled` ([UISettings.AnimationsEnabled](https://learn.microsoft.com/en-us/uwp/api/windows.ui.viewmanagement.uisettings.animationsenabled), WinUI's Reduce Motion analogue) and hold a static opacity state when it is false — a check this source does not have (see the Reduce Motion gap above). Bind `Ellipse.Fill` and the background `Border.Background` to the same `{ThemeResource SecondaryTextBrush}` entry so a `RequestedTheme`/high-contrast dictionary swap recolors both live, mirroring **container-fill-tracks-theme**/**dot-color-tracks-theme**: unlike this source's `observeTheme` callback, which pushes the new palette to the view explicitly, a `{ThemeResource}` binding re-resolves itself automatically when the app's theme or high-contrast dictionary changes, so no equivalent push mechanism is needed on this platform.
 
 ## Reference Implementations
@@ -175,13 +176,19 @@ Not applicable: the source contains no logging calls (no `os_log`, `Logger`, or 
 **Approved**: pending
 
 **Decision**: Reduce Motion and Increase Contrast are left unhandled in this file.
-**Rationale**: Not explained in source comments; recorded here as known technical debt affecting behavioral correctness for users with either preference enabled — the component does not respond to Increase Contrast, and the rendered contrast is the open question on low-alpha-contrast.
+**Rationale**: Not explained in source comments; recorded here as known technical debt affecting behavioral correctness for users with either preference enabled — the component does not respond to Increase Contrast, and the rendered contrast is covered by **low-alpha-contrast** and its Design Decision.
+**Approved**: pending
+
+**Decision**: The container fill and dimmed dot state have no contrast floor against the host background.
+**Rationale**: Both are fixed alpha multipliers over whatever background the host supplies and the component performs no contrast check; closing the gap takes a contrast judgment of the rendered indicator against each host background in the running UI, or a contrast floor enforced by the component.
 **Approved**: pending
 
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | failed | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [reduced-motion](agenticdevelopercookbook://compliance/accessibility#reduced-motion) | failed | Accessibility |
@@ -190,6 +197,8 @@ Not applicable: the source contains no logging calls (no `os_log`, `Logger`, or 
 | [platform-theming](agenticdevelopercookbook://compliance/platform-compliance#platform-theming) | passed | Platform Compliance |
 
 `failed` rows rest on a total absence in source: no accessibility role, label, or state-change notification exists anywhere (screen-reader-support), and no Reduce Motion check of any kind gates the looping pulse (reduced-motion). `partial` rows reflect what the source only partly addresses: the dot and container colors resolve from the active `SemanticPalette`, which this file neither defines nor can verify for contrast, but the two alpha multipliers (0.08, 0.3) are this component's own deliberately low-contrast choices with no Increase Contrast accommodation (contrast-ratio); the view follows AppKit layer/Auto Layout conventions and theme-driven color throughout, but the fixed 12pt corner radius on a 28pt pill does not fully round its ends the way a stadium shape would, with no rationale given in source (platform-design-language); and a custom three-dot widget was built rather than reusing a stock control such as `NSProgressIndicator`, which has no built-in equivalent of this specific chase pattern (native-controls-preference). The `passed` row rests on the `observeTheme` registration applying the palette immediately at construction and again on every subsequent theme change, recoloring both the container fill and the dots (platform-theming).
+
+`separation-of-concerns` passes because `TypingIndicatorView` only draws a row of dots in a rounded container and pulses their opacity; whether it is shown is decided by `ChatTranscriptRowView`, and its colors come from the theme palette. `unit-test-coverage` fails because no test file targets `TypingIndicatorView`; `ConversationFocusTests.swift` merely locates the view among a row's subviews to check a row's focus handling, and nothing asserts the dot animation, container fill or start/stop behavior.
 
 ## Change History
 
@@ -200,3 +209,5 @@ Not applicable: the source contains no logging calls (no `os_log`, `Logger`, or 
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/chat/chat-window/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the low-alpha-contrast NEEDS REVIEW marker as current behavior plus a pending Design Decision; added separation-of-concerns and unit-test-coverage compliance. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

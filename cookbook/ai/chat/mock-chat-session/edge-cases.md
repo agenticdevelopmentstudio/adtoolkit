@@ -1,0 +1,11 @@
+
+- **Null/empty input to `send(_:)`**: An empty string or whitespace-only `text` MUST be echoed and processed exactly like any other input — `send(_:)` performs no trimming or emptiness guard of its own, unlike a sibling network- or subprocess-backed `ChatSession` implementation's `send(_:)`, which trims and rejects an empty trimmed string before doing anything. MUST.
+- **Empty `reply`**: The turn's chunking behavior for an empty `reply` differs by `chunkSize`'s sign — see **chunk-size-positive-empty-reply-no-chunks** (zero `.responseDelta` events when `chunkSize > 0`) versus **chunk-size-non-positive-single-chunk** (one empty-string `.responseDelta` event when `chunkSize <= 0`). MUST.
+- **Boundary `chunkSize` values**: `chunkSize <= 0` collapses to one chunk holding the entire `reply`; a `chunkSize` larger than `reply`'s character count also collapses to one chunk, since the chunking operation's single step is capped at the end of the string. MUST.
+- **Boundary `interChunkDelay` values**: The component places no lower or upper bound on `interChunkDelay`. A value of zero MUST still pass through one inter-chunk delay wait per chunk, even though that wait resolves immediately; an arbitrarily large delay MUST simply hold the turn open between deltas, with no timeout of its own that would end it early. MUST.
+- **Concurrent access — two `events()` subscriptions**: see **second-subscription-silently-supersedes-first** above. MUST.
+- **Concurrent access — the in-flight turn's task handle racing across threads**: this is the current behavior described under **live-turn-synchronization** and its Design Decision.
+- **Error states**: Not applicable in the sense of an external dependency failing — the component has none (no network, no subprocess, no file I/O) and never yields `.turnFailed` (see **no-turn-failed-emission**). The only failure mode this component can enter is the unresolved in-flight-turn race noted above.
+- **Offline/disconnected state**: Not applicable — the component performs no networking of any kind; its entire purpose is to stand in for a connected session in tests, previews, and demos.
+- **Cancellation mid-turn**: see **cancellation-stops-only-remaining-chunks** and Conformance Test Vector dev-chat-model-007. MUST.
+

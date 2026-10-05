@@ -1,41 +1,41 @@
 ---
 id: 635cbbe4-a8e1-4ae1-a8a5-437f5bba27a6
-title: Status Server Live
-domain: agenticdevelopertoolkit://cookbook/status/service/live-events
+title: "Status Server Live"
+domain: adtoolkit://cookbook/status/service/live-events
 type: ingredient
-version: 1.0.2
+version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "In-process pub/sub for the status backend's /live SSE push: fan-out, a recency cache, and a debounced, fail-soft snapshot rebuild trigger."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- server
-- live
-- sse
-- pub-sub
+  - server
+  - live
+  - sse
+  - pub-sub
 depends-on:
-- agenticdevelopercookbook://principles/separation-of-concerns
-- agenticdevelopercookbook://principles/fail-fast
-- agenticdevelopercookbook://guidelines/implementing/networking/caching
+  - agenticdevelopercookbook://principles/separation-of-concerns
+  - agenticdevelopercookbook://principles/fail-fast
+  - agenticdevelopercookbook://guidelines/implementing/networking/caching
 related: []
 references:
-- packages/web/packages/status-server/src/live/live-events.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/live-events.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/live-types.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/stream.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/hooks.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/live/live-events.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/live-events.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/live-types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/stream.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/hooks.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Live
@@ -131,7 +131,7 @@ snapshot once one exists.
 - **reset-cancels-armed-timer**: `resetLiveEvents` MUST cancel a debounce
   timer that `emitLiveUpdate` has armed but that has not yet fired, so its
   scheduled build never runs.
-- **in-flight-build-cancellation**: NEEDS REVIEW: Not implemented in source. Once the debounce timer fires, `pending` is cleared and the build's promise is already in flight; `resetLiveEvents` has nothing left to cancel it with, so a build that started just before a reset can still resolve afterward and call `publishSnapshot`, repopulating the cache and delivering to whatever subscribers are registered at that later moment, which contradicts `resetLiveEvents`'s own doc comment "cancel any pending build"; settling this needs an abort signal threaded into `buildLiveSnapshot` or a generation counter checked before that late `publishSnapshot` call runs.
+- **in-flight-build-cancellation**: Resetting live events MUST cancel a pending debounced build. Once the debounce timer has fired, the pending marker is cleared and the build is in flight, and reset has nothing left to cancel it with: a build that started just before a reset can still resolve afterward and publish, repopulating the cache and delivering to whichever subscribers are registered at that later moment.
 
 ### Module Scope & Concurrency
 
@@ -393,6 +393,10 @@ Subsystem: `status-server` | Category: `live-events`
   over.
   **Approved**: pending
 
+**Decision**: A snapshot build already in flight when live events are reset is not cancelled and can publish after the reset.
+**Rationale**: It stands today because no abort signal or generation counter reaches the build. Closing it needs an abort signal threaded into the snapshot builder, or a generation counter checked before the late publish, and a reset-during-build test.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -444,6 +448,7 @@ instead of one build per stream.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Resolved in-flight-build-cancellation marker as current behavior plus pending decision |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,34 +1,33 @@
 ---
 id: b02bf1ad-408a-4ebc-9e62-2ad5ae5220d2
-title: Stepper View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/stepper-view
+title: "Stepper View"
+domain: adtoolkit://cookbook/ui/settings/rows/stepper-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row pairing a title label, a monospaced value label,
-  and a stepper control bound to a bounded range view model.
+summary: "A settings row pairing a title label, a monospaced value label, and a stepper control bound to a bounded range view model."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- form-control
-- range
-- numeric
+  - settings
+  - form-control
+  - range
+  - numeric
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/integer-field-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view
+  - adtoolkit://cookbook/ui/settings/rows/checkbox-view
+  - adtoolkit://cookbook/ui/settings/rows/integer-field-view
+  - adtoolkit://cookbook/ui/settings/rows/number-field-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Stepper View
@@ -88,8 +87,7 @@ keeps in sync with the stepper's value on every change.
 - **exposes-constituent-views**: Component MUST expose the label, the
   stepper, and the value label as public, directly-accessible
   properties.
-- **confines-to-ui-thread**: Component MUST be usable only on the UI
-  thread; construction and mutation are confined to it.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 Wiring the stepper's own change notification to the component, and
 construction requiring a view model, are
@@ -183,13 +181,7 @@ rejects-coder-initialization, and rejects-frame-only-initialization.
   source; the 44×44pt guidance is touch-specific. No control-size
   override is set on the stepper, so it keeps the platform's regular
   system metrics.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source.
-  The label and value-label text color resolves from the active theme's
-  primaryText/secondaryText role against the hosting background at
-  runtime; the component performs no contrast check, so whether a given
-  theme's resolved pair meets 4.5:1 cannot be determined from this file.
-  This would be settled by a theme-level contrast audit of
-  primaryText/secondaryText against the backgrounds it sits on.
+- **minimum-contrast-ratio**: The component performs no contrast check of its own. The label takes the theme's primary-text role and the value label the theme's secondary-text role (at the monospaced code text style), both through the shared label factories, so contrast is whatever the active theme resolves.
 
 ## Conformance Test Vectors
 
@@ -448,6 +440,10 @@ that also wants to observe the same view model instance directly — the
 same trade-off the checkbox row and the integer field row make.
 **Approved**: pending
 
+**Decision**: The component performs no contrast check of its own: the label's primary-text color and the value label's secondary-text color resolve from the active theme at runtime, so whether a given theme's resolved pair reaches the 4.5:1 text threshold is not established by this component.
+**Rationale**: Contrast is a property of the theme's resolved color pairs, which live outside this component; closing the gap would take a theme-level audit (or an enforced minimum in the theme layer) of those roles against the backgrounds a settings row sits on, which no source or test does today.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -458,6 +454,9 @@ same trade-off the checkbox row and the integer field row make.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
+
+No test in the repository's test targets constructs `StepperView`, so `unit-test-coverage` is `failed`: a search of `AgenticToolkitMacOSTests` and the other test targets for the type name finds nothing.
 
 ## Change History
 
@@ -468,3 +467,5 @@ same trade-off the checkbox row and the integer field row make.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker against the source: restated as current behavior (no contrast check in the component) and recorded the gap as a pending Design Decision; added separation-of-concerns/unit-test-coverage Compliance rows. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

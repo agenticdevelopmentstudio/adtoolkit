@@ -1,40 +1,38 @@
 ---
 id: 39a7192e-7e1e-4e93-b615-312a5ddf69b0
-title: Hub Domain Access Client
-domain: agenticdevelopertoolkit://cookbook/adh/hub/access
+title: "Hub Domain Access Client"
+domain: adtoolkit://cookbook/adh/hub/access
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Client for the workspace roles & permissions access API: feature areas,
-  role CRUD, subject assignments, item restriction, and the effective-access
-  explainer.'
+summary: "Client for the workspace roles & permissions access API: feature areas, role CRUD, subject assignments, item restriction, and the effective-access explainer."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- access-control
-- permissions
-- roles
-- workspace
-- api
+  - access-control
+  - permissions
+  - roles
+  - workspace
+  - api
 depends-on: []
 related: []
 references:
-- packages/web/packages/data/src/access/access.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/access/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/access/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/access/__tests__/access.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/access/access.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/access/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/access/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/access/__tests__/access.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Hub Domain Access Client
@@ -237,7 +235,7 @@ component.
   string the caller supplies; an empty slug is sent to the server unchanged as `workspace=`.
   A non-empty customer or org slug is a caller precondition, per the module's top-of-file
   comment.
-- **Null and empty input — assignment scope pairing**: see `assignment-scope-pairing-validation`
+- **Null and empty input — assignment scope pairing**: see `assignment-scope-pairing-passthrough`
   below.
 - **Empty `grants` array**: the create-role and update-role operations MUST send an empty
   `grants: []` unchanged when the caller supplies one; no client-side check requires at
@@ -272,14 +270,11 @@ component.
 - **No retry beyond the 401 waterfall**: every call issues exactly one request (plus, on a
   `401`, the single inherited refresh-and-retry); nothing in this file retries a network
   failure or a non-401 error status.
-- **assignment-scope-pairing-validation**: NEEDS REVIEW: Not implemented in source. The
-  assignment write input's `feature`/`itemId` fields are independently optional, but the
-  field's own doc comment declares they must be provided together to scope a grant to one
-  item and omitted together for a workspace-wide grant; the assignment-upsert operation
-  sends whatever partial combination the caller passes with no client-side check enforcing
-  that pairing. Evidence that would settle it: the backend's handling of a
-  `feature`-without-`itemId` (or the reverse) assignment write, which is not present in this
-  checkout.
+- **assignment-scope-pairing-passthrough**: the assignment write input's `feature` and `itemId`
+  fields are independently optional, and the assignment-upsert operation MUST send whatever
+  combination the caller passes verbatim; it performs no client-side check that the two are provided
+  together (to scope a grant to one item) or omitted together (for a workspace-wide grant), even
+  though the field's own doc comment declares that pairing.
 
 ## Configuration
 
@@ -401,32 +396,38 @@ Not applicable: this client contains no logging call of any kind.
 
 **Decision**: `ACCESS_FEATURES` is exported as a plain constant but never consulted from
 inside `listFeatures` itself.
-**Platform**: React/Web.
 **Rationale**: the source's own comment frames it as a degraded path for "a backend that
 predates `/access/features`," and the authoritative registry is per-deployment and
 server-refined — so `listFeatures` staying strict (throw on anything it can't validate) and
 leaving the fallback decision to the caller keeps this module from silently masking a real
 backend/response mismatch as an old-backend case.
+Platform scope: React/Web.
 **Approved**: pending
 
 **Decision**: `restrictItem`/`restoreItem` call `authedJson` rather than `authedRequest`,
 even though both are declared `Promise<void>`.
-**Platform**: React/Web.
 **Rationale**: this is recorded as observed source behavior, not smoothed into the declared
 type — a 204 response from either endpoint throws today, per `item-restrict-restore-parse-body`;
 a port MUST preserve this exact behavior rather than "fixing" it to `authedRequest`'s
 discard-the-body semantics, since the current backend's actual response shape for these two
 routes is not available in this checkout to confirm which is correct.
+Platform scope: React/Web.
 **Approved**: pending
 
 **Decision**: only `listFeatures` validates its response shape at runtime; `listRoles`,
 `listAssignments`, and `effective` trust the generic `authedJson<T>` cast.
-**Platform**: React/Web.
 **Rationale**: the source's own `isAccessFeatureRow` comment explains this guard was added
 after a bare cast on `/access/features` let a malformed response reach every consumer
 looking like real data; no equivalent comment or fix exists for the other reads, so this
 recipe records the current asymmetry as a fact of the source rather than projecting the same
 guard onto endpoints that don't have it.
+Platform scope: React/Web.
+**Approved**: pending
+
+**Decision**: the assignment-upsert operation does not validate that `feature` and `itemId` are supplied together or omitted together; a partial combination is sent to the backend as given.
+
+**Rationale**: the field's doc comment states the pairing rule but the client leaves enforcement to the backend, whose handling of a `feature`-without-`itemId` write is not present in this checkout; closing the gap would take either a client-side guard rejecting partial scopes or a discriminated input type that makes the partial combination unrepresentable.
+
 **Approved**: pending
 
 ## Compliance
@@ -464,6 +465,8 @@ other method offers a fallback of any kind.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Design Decisions keep the Decision / Rationale / Approved triple; each decision's platform line is folded into its rationale. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolve open-question markers against the code; restate unimplemented behavior as current behavior with pending Decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

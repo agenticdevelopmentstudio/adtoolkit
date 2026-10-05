@@ -1,0 +1,3 @@
+
+The one timestamp parser for the whole system. Timestamps arrive in three shapes across a daemon, its app and its command-line tool, and every subsystem must accept all of them: ISO 8601 with fractional seconds (`2026-04-14T10:00:00.123Z`), plain ISO 8601 (`2026-04-14T10:00:00Z`), and the text a SQLite `datetime()` call produces (`2026-04-14 10:00:00`, UTC, space-separated), which is what the database stores and the shape the standard ISO 8601 formatter silently cannot parse. Before this existed about six sites hand-rolled a try-fractional-then-plain parser and most omitted the SQLite shape, so they silently failed on stored timestamps, which was the bug behind a monitor's idle minutes always reading zero. Parsing through here fixes that class of bug in one place.
+

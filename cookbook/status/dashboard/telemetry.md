@@ -1,30 +1,29 @@
 ---
 id: c85f8913-1112-4ba2-b78f-2b97ea2f8fba
-title: Status Web Telemetry
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/telemetry
+title: "Status Web Telemetry"
+domain: adtoolkit://cookbook/status/dashboard/telemetry
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Client telemetry contract for the status dashboard: snapshot DTOs, ports,
-  and the composition root picking the live source and localStorage cache'
+summary: "Client telemetry contract for the status dashboard: snapshot DTOs, ports, and the composition root picking the live source and localStorage cache"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/telemetry
-- agenticdevelopertoolkit://cookbook/status/service/telemetry
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/state/telemetry
+  - adtoolkit://cookbook/status/service/telemetry
+  - adtoolkit://cookbook/status/dashboard/api
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Web Telemetry
@@ -37,7 +36,7 @@ The telemetry subsystem of the status dashboard's web client (`packages/web/pack
 - `ports.ts`: the ports. `FetchResult<T>`, `Fetcher<T>` and `Store<T>` describe the server-side poll-and-persist pipeline. `SnapshotCache` and `TelemetrySource` are the two client-side ports.
 - `client.ts`: "THE client composition root". It exports one `cache: SnapshotCache` (wired to the localStorage adapter `localCache`) and one `source: TelemetrySource` (wired to `liveSource`). `tursoSource` is also wired, but inactive.
 
-The [useTelemetry](agenticdevelopertoolkit://cookbook/status/dashboard/state/telemetry) hook uses only `cache` and `source`. Swapping the backend means changing one line in `client.ts`, and the hook, cache and panels stay the same. The server side that answers `/telemetry`, `/errors` and `/analytics` is covered by [Status Server Telemetry](agenticdevelopertoolkit://cookbook/status/service/telemetry). The `StatusApiClient` that every source reads through is covered by [Status Web API](agenticdevelopertoolkit://cookbook/status/dashboard/api).
+The [useTelemetry](adtoolkit://cookbook/status/dashboard/state/telemetry) hook uses only `cache` and `source`. Swapping the backend means changing one line in `client.ts`, and the hook, cache and panels stay the same. The server side that answers `/telemetry`, `/errors` and `/analytics` is covered by [Status Server Telemetry](adtoolkit://cookbook/status/service/telemetry). The `StatusApiClient` that every source reads through is covered by [Status Web API](adtoolkit://cookbook/status/dashboard/api).
 
 ## Behavioral Requirements
 
@@ -265,4 +264,4 @@ Not applicable: no module in the subsystem logs. Source failures surface as reje
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from source |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from source |

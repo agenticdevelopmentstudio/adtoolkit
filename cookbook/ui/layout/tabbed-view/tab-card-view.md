@@ -1,34 +1,33 @@
 ---
 id: d906afe1-a621-42f1-87c5-c71ec9d43c1e
-title: Tab Pane View
-domain: agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view/tab-card-view
+title: "Tab Pane View"
+domain: adtoolkit://cookbook/ui/layout/tabbed-view/tab-card-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A card view for one tab in a tabbed-view edge bar that sizes, colors,
-  and animates between front and stacked-behind depths.
+summary: "A card view for one tab in a tabbed-view edge bar that sizes, colors, and animates between front and stacked-behind depths."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- tabs
-- tab-bar
-- card
-- layout
+  - tabs
+  - tab-bar
+  - card
+  - layout
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/layout/tabbed-view
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references:
-- https://developer.apple.com/design/human-interface-guidelines/
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/design/human-interface-guidelines/
+approved-by: ""
+approved-date: ""
 ---
 
 # Tab Pane View
@@ -36,7 +35,7 @@ approved-date: ''
 ## Overview
 
 The component is a card drawn as one tab in an edge bar of
-[the tabbed view](agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view): a stacked
+[the tabbed view](adtoolkit://cookbook/ui/layout/tabbed-view): a stacked
 block, the same arrangement on all four edges, showing a session's
 agent/model name, status symbols, session name, working directory, branch,
 and an optional summary. It is hosted by a controller that drives its stack
@@ -199,6 +198,7 @@ column of cards reads as a deck turned to the selected tab.
 - **context-menu-provider-is-optional**: Component MAY be left with no
   context-menu provider set, in which case requesting a context menu always
   falls back to the platform's default context menu.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -326,6 +326,7 @@ column of cards reads as a deck turned to the selected tab.
 | tab-pane-048 | onclose-is-optional | Leave the close callback unset; press the close control | No crash; no observable side effect |
 | tab-pane-049 | context-menu-provider-is-optional | Leave the context-menu provider unset; request a context menu | Returns the platform's default context menu |
 | tab-pane-050 | status-symbols-replace-existing | On a freshly constructed card with no prior status symbols, replace the status symbols with none | No status icons remain |
+| tab-pane-051 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -541,60 +542,62 @@ Not applicable: this component contains no logging call.
 
 ## Design Decisions
 
-- Decision (AppKit): `init?(coder:)` is `@available(*, unavailable)` and its
+- **Decision**: (AppKit) `init?(coder:)` is `@available(*, unavailable)` and its
   body returns `nil` rather than calling `fatalError()`.
-  Rationale: The `unavailable` attribute already makes this initializer
+  **Rationale**: The `unavailable` attribute already makes this initializer
   uncallable from Swift source, so the body is unreachable in practice;
   returning `nil` here (and in the file-private `TabCardBackgroundView`'s own
   `init?(coder:)`) is what this file does, rather than the `fatalError()`
   pattern used by some other AppKit types in the codebase — noted here per
   source fidelity rather than smoothed over.
-  Approved: pending
-- Decision: `stackDepth` accepts any `Int` with no clamp, and
+  **Approved**: pending
+- **Decision**: `stackDepth` accepts any `Int` with no clamp, and
   `recession(atDepth:)` treats any non-positive depth as zero recession while
   `isFrontCard` still requires `stackDepth == 0` exactly.
-  Rationale: `TabBarStackedItem.stackDepth`'s own doc comment defines depth as
+  **Rationale**: `TabBarStackedItem.stackDepth`'s own doc comment defines depth as
   "0 for the selected item itself, 1 for either neighbour, and on outward" —
   non-negative by contract — and the one caller in this codebase
   (`TabPaneViewController.applyDepth()`) always passes `max(1, stackDepth)` or
   `0`, so a negative depth never currently reaches this view. Nothing in
   `TabPaneView.swift` itself enforces that contract, so the combination is
   recorded here per source fidelity rather than assumed away.
-  Approved: pending
-- Decision: `recession(atDepth:)` grows with depth only on a vertical
+  **Approved**: pending
+- **Decision**: `recession(atDepth:)` grows with depth only on a vertical
   (`.left`/`.right`) edge; a horizontal (`.top`/`.bottom`) edge gets the same
   flat `4pt` inset at every depth greater than zero.
-  Rationale: Per `Edge.isVertical`'s and `TabPaneView.recession`'s own doc
+  **Rationale**: Per `Edge.isVertical`'s and `TabPaneView.recession`'s own doc
   comments, only a vertical bar lays its cards in a column with room to
   recede down; a horizontal bar's cards sit side by side along their long
   axis with no depth to show, so there is nothing for a second or third step
   to add.
-  Approved: pending
-- Decision (AppKit): The card's own view is left unpinned on both axes — no
+  **Approved**: pending
+- **Decision**: (AppKit) The card's own view is left unpinned on both axes — no
   self-constraint on width or height.
-  Rationale: Per `setUp()`'s inline comment, the cross axis is the hosting
+  **Rationale**: Per `setUp()`'s inline comment, the cross axis is the hosting
   bar's own required-priority constraint (`TabBarView.rebuildButtons()`) and
   the length axis is AppKit's own priority-501
   `NSViewController.preferredContentSize` constraint, driven by
   `contentSize`; a required self-pin here would restate one of those two
   numbers at required priority and risk an unsatisfiable conflict with
   whichever one wins.
-  Approved: pending
-- Decision (AppKit): `contentSize` measures `content.fittingSize`, not the
+  **Approved**: pending
+- **Decision**: (AppKit) `contentSize` measures `content.fittingSize`, not the
   card's own `fittingSize`.
-  Rationale: Per the property's doc comment, `TabPaneViewController` installs
+  **Rationale**: Per the property's doc comment, `TabPaneViewController` installs
   AppKit's priority-501 `preferredContentSize` constraints onto the card
   itself, and the labels resist compression at only `.defaultLow` — so asking
   the card for its own `fittingSize` after a first measurement would return
   that first answer again, and a card whose text grows on a later `reload()`
   would never widen. The stack (`content`) carries none of those constraints,
   so it is measured instead.
-  Approved: pending
+  **Approved**: pending
 
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | partial | accessibility |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | accessibility |
 | [reduced-motion](agenticdevelopercookbook://compliance/accessibility#reduced-motion) | failed | accessibility |
@@ -612,6 +615,8 @@ Reduced-motion is failed for the gap documented in Accessibility Options.
 String-externalization is failed because `closeButton`'s "Close" accessibility
 description is a hardcoded English literal (see Localization).
 
+Separation-of-concerns is passed: `TabPaneView` only draws the card (background, labels, status symbols, close control) and exposes its depth and callbacks, while content values come from `TabPaneDataSource` and user intent leaves through `TabPaneDelegate`, so the card holds no tab-ordering or data-fetching policy. Unit-test-coverage is partial: `TabPaneViewControllerTests.swift` and `TabCardStackTests.swift` drive the card through its controller (label content, measured size, close button placement, depth-dependent painting and animation), but there is no test file for `TabPaneView` itself and several edge-specific drawing details are untested.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -622,3 +627,5 @@ description is a hardcoded English literal (see Localization).
 | 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/tabbed-view/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added Compliance rows for separation-of-concerns and unit-test-coverage |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

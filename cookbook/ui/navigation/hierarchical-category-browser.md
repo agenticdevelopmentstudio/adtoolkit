@@ -1,40 +1,42 @@
 ---
 id: e36ff99d-0ebd-42ca-87f0-2881a8bfedea
-title: Hierarchical Category Browser
-domain: agenticdevelopertoolkit://cookbook/ui/navigation/hierarchical-category-browser
+title: "Hierarchical Category Browser"
+domain: adtoolkit://cookbook/ui/navigation/hierarchical-category-browser
 type: recipe
-version: 1.3.2
+version: 1.3.5
 status: review
 language: en
-created: '2026-08-23'
-modified: '2026-09-27'
+created: 2026-08-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Shared category rail: one HTDV level per walked depth, All/Uncategorized at root, per-level gear.'
+summary: "Shared category rail: one HTDV level per walked depth, All/Uncategorized at root, per-level gear."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- hierarchical
-- category
-- rail
-- navigation
-- master-detail
+  - hierarchical
+  - category
+  - rail
+  - navigation
+  - master-detail
 ingredients:
-- agenticdevelopertoolkit://recipes/category-picker-dialog
+  - agenticdevelopertoolkit://recipes/category-picker-dialog
 depends-on:
-- agenticdevelopertoolkit://recipes/hierarchical-topic-detail
+  - agenticdevelopertoolkit://recipes/hierarchical-topic-detail
 related:
-- agenticdevelopertoolkit://recipes/hierarchical-topic-detail
-- agenticdevelopertoolkit://recipes/topic-detail
-- agenticdevelopertoolkit://recipes/category-picker-dialog
-- agenticdevelopertoolkit://recipes/list-chooser
-- agenticdevelopertoolkit://recipes/entity-chooser
-- agenticdevelopertoolkit://recipes/dialog
-- agenticdevelopertoolkit://recipes/dialog-actions
-- agenticdevelopertoolkit://recipes/alert-and-dialog
+  - agenticdevelopertoolkit://recipes/hierarchical-topic-detail
+  - agenticdevelopertoolkit://recipes/topic-detail
+  - agenticdevelopertoolkit://recipes/category-picker-dialog
+  - agenticdevelopertoolkit://recipes/list-chooser
+  - agenticdevelopertoolkit://recipes/entity-chooser
+  - agenticdevelopertoolkit://recipes/dialog
+  - agenticdevelopertoolkit://recipes/dialog-actions
+  - agenticdevelopertoolkit://recipes/alert-and-dialog
 references: []
+approved-by: ""
+approved-date: ""
 ---
 
 # Hierarchical Category Browser
@@ -409,12 +411,16 @@ own Layout section.
 - **SwiftUI**: Not applicable — web-only (platforms: typescript, web).
 - **Compose**: Not applicable — web-only (platforms: typescript, web).
 - **AppKit / UIKit**: Not applicable — web-only (platforms: typescript, web).
-- **WinUI 3**: Not applicable — web-only (platforms: typescript, web).
+- **WinUI 3**: A `NavigationView` or a row of `ListView` columns, one per walked depth, hosts the levels; the synthetic All and Uncategorized rows lead the root `ListView`, each level header carries a `DropDownButton` with a `MenuFlyout` for the gear actions, and the picker, rename and delete dialogs are `ContentDialog`s over a `TreeView`. The source implementation is web-only; this is translation guidance, not shipped code.
 
 ## Reference Implementations
 
 | Platform | Path |
 |----------|------|
+| web | `packages/web/packages/features/categories/src/useCategoryLevels.tsx` |
+| web | `packages/web/packages/ui/src/blocks/category-picker-dialog.tsx` |
+| web | `packages/web/packages/ui/src/blocks/category-gear-menu.tsx` |
+| web | `packages/web/packages/ui/src/blocks/category-tree.ts` |
 
 ## Design Decisions
 
@@ -495,6 +501,8 @@ own Layout section.
 
 | Check | Status | Category |
 |---|---|---|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | Accessibility |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | Accessibility |
 | [focus-management](agenticdevelopercookbook://compliance/accessibility#focus-management) | passed | Accessibility |
@@ -512,6 +520,8 @@ hit-target dimensions; the failed row reflects that every UI string in
 `useCategoryLevels.tsx` and its dialogs is a hardcoded English literal with no
 localization framework in the source.
 
+Separation-of-concerns is passed: tree shaping lives in `category-tree.ts`, the picker dialog and gear menu are separate blocks, and `useCategoryLevels` only assembles the per-depth levels from them. Unit-test-coverage is passed: `useCategoryLevels.test.tsx`, `categoryPickerDialog.test.tsx`, `categoryGearMenu.test.tsx` and `categoryTree.test.ts` exist alongside rename, delete and field tests for the same blocks.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -519,6 +529,9 @@ localization framework in the source.
 | 1.0.0 | 2026-08-23 | Mike Fullerton | Initial recipe, documenting `useCategoryLevels` and the notebook/research rail it drives. |
 | 1.1.0 | 2026-08-24 | Mike Fullerton | Added the fifth gear verb, Also file (`file-a-category-in-a-second-place`), so the DAG is reachable from the rail; made the Move picker's no-parent row say whether it roots or merely unfiles (`not-call-an-unfiling-a-rooting`); added slug de-collision (`select-by-slug-not-id`) and the route-following rules for a rename, a move, and a delete (`follow-a-rename-to-the-new-slug`, `follow-a-move-to-its-new-place`, `follow-a-delete-to-the-surviving-level`), the contested-slug guard (`not-guess-a-contested-slug`), and the half-move failure-handling rules (`add-before-remove-on-move`, `refresh-before-surfacing-a-half-move`, `skip-an-existing-edge-on-retry`). |
 | 1.2.0 | 2026-09-23 | Mike Fullerton | Renamed every requirement to subject-only kebab-case, dropping the old prefix everywhere it is cited. |
-| 1.3.0 | 2026-09-23 | Mike Fullerton | Lint pass: replaced wiki-links with full `agenticdevelopertoolkit://` recipe links and converted backtick requirement citations to `#integration-requirements/<name>` fragments; split `file-a-category-in-a-second-place` and `follow-a-move-to-its-new-place` into separately named requirements (`disable-not-hide-an-invalid-file-target`, `not-navigate-on-file`, `rederive-the-moved-segment-not-carry-it-over`, `not-navigate-on-a-move-off-chain-or-failed`); promoted three MUST rules out of Design Decisions into named Integration Requirements (`add-before-remove-on-move`, `refresh-before-surfacing-a-half-move`, `skip-an-existing-edge-on-retry`); reformatted every Design Decision into Decision/Rationale/Approved form and removed a dangling reference to an outside plan document; rebuilt the Compliance table against real catalog checks (Accessibility, Internationalization) in place of invented categories; added the missing rename-follow test vector and Also file to the disabled-action vectors, then renumbered every vector ID in order; corrected the `clear-to-the-parent-level` wording and the "Renaming the currently-open category" edge case to state the current (immediate) behavior, and moved two edge cases' historical narrative out of Edge Cases; corrected `ui/src/blocks/*` paths to their repo-rooted `external/agenticdevelopertoolkit/...` form and the route-following function count from two to three; shortened the frontmatter summary and dropped a tag past the five-tag limit; added SwiftUI/Compose/AppKit-UIKit/WinUI 3 Platform Notes bullets; added `dialog`, `dialog-actions`, and `alert-and-dialog` to `related`. |
+| 1.3.0 | 2026-09-23 | Mike Fullerton | Lint pass: replaced wiki-links with full `adtoolkit://` recipe links and converted backtick requirement citations to `#integration-requirements/<name>` fragments; split `file-a-category-in-a-second-place` and `follow-a-move-to-its-new-place` into separately named requirements (`disable-not-hide-an-invalid-file-target`, `not-navigate-on-file`, `rederive-the-moved-segment-not-carry-it-over`, `not-navigate-on-a-move-off-chain-or-failed`); promoted three MUST rules out of Design Decisions into named Integration Requirements (`add-before-remove-on-move`, `refresh-before-surfacing-a-half-move`, `skip-an-existing-edge-on-retry`); reformatted every Design Decision into Decision/Rationale/Approved form and removed a dangling reference to an outside plan document; rebuilt the Compliance table against real catalog checks (Accessibility, Internationalization) in place of invented categories; added the missing rename-follow test vector and Also file to the disabled-action vectors, then renumbered every vector ID in order; corrected the `clear-to-the-parent-level` wording and the "Renaming the currently-open category" edge case to state the current (immediate) behavior, and moved two edge cases' historical narrative out of Edge Cases; corrected `ui/src/blocks/*` paths to their repo-rooted `external/agenticdevelopertoolkit/...` form and the route-following function count from two to three; shortened the frontmatter summary and dropped a tag past the five-tag limit; added SwiftUI/Compose/AppKit-UIKit/WinUI 3 Platform Notes bullets; added `dialog`, `dialog-actions`, and `alert-and-dialog` to `related`. |
 | 1.3.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.3.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
+| 1.3.3 | 2026-10-04 | Mike Fullerton | Filled Reference Implementations, WinUI 3 translation guidance and Compliance rows |
+| 1.3.4 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |
+| 1.3.5 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |

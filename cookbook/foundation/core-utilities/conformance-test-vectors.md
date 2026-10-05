@@ -1,0 +1,41 @@
+
+| ID | Requirements | Input | Expected |
+|----|--------------|-------|----------|
+| fc-001 | encoding-skip-shape, encoding-skip-decode-yields-nothing, decode-integration-skips-key | decode `{"a": 1, "b": 2}` into a model with a plain integer field `a` and an encoding-skip-wrapped optional integer field `b` | `b`'s stored value is nothing; the `2` in the input is discarded |
+| fc-002 | encoding-skip-encode-noop, encode-integration-skips-key, encoding-skip-round-trip-loses-value | encode a model with an encoding-skip-wrapped optional integer field `b` set to 42, then decode the result | encoded JSON has no `"b"` key at all; the decoded field's stored value is nothing |
+| fc-003 | encoding-skip-concurrency | one wrapper instance's stored value mutated from two concurrent tasks with no external synchronization | undefined/racy result; the type provides no protection of its own (no concurrency-safety guarantee, mutable storage) |
+| fc-004 | keychain-service-default | read the store's `service` in a process where no bundle identifier is available | `"com.agentictoolkit"` |
+| fc-005 | keychain-set-returns-status, keychain-get-primary-lookup | `set("hello-world", forKey: key)` then `get(forKey: key)` | `set` returns `true`; `get` returns `"hello-world"` |
+| fc-006 | keychain-get-exhausted-returns-nothing | `get(forKey:)` for a key never set | nothing |
+| fc-007 | keychain-exists-checks-current-scope, keychain-delete-idempotent | set a key, check `exists` (`true`), `delete` it, check `exists` again (`false`), `delete` it a second time | first `exists` is `true`, second is `false`, second `delete` still returns `true` |
+| fc-008 | keychain-set-overwrites | `set("first", forKey: key)`, then `set("second", forKey: key)`, then `get(forKey: key)` | `"second"` |
+| fc-009 | keychain-set-returns-status | `set("", forKey: key)`, then `get(forKey: key)`, then `exists(forKey: key)` | `set` returns `true`; `get` returns `""`; `exists` returns `true` |
+| fc-010 | keychain-copy-value-single-match | set a string containing multibyte Unicode and control characters, then `get` it back | the identical string, byte-for-byte |
+| fc-011 | keychain-query-shape, keychain-query-access-group-forces-data-protection | build a query for account `"acct"` with access group `"ABCDE12345.example.shared"` | dictionary has `kSecAttrAccessGroup` equal to that group, `kSecUseDataProtectionKeychain` true, `kSecAttrAccount` equal to `"acct"` |
+| fc-012 | keychain-query-shape | build a query for account `"acct"` with no access group | no `kSecAttrAccessGroup`/`kSecUseDataProtectionKeychain` keys present, `kSecAttrAccount` equal to `"acct"` |
+| fc-013 | keychain-exists-checks-current-scope | set `keyA` and `keyB`, delete `keyA` | `get(keyA)` returns nothing; `get(keyB)` unaffected |
+| fc-014 | keychain-get-access-group-migration, keychain-set-access-group-accessibility | a secret stored while the access group is nothing; the access group is then set to a group and `get(forKey:)` is called for the same key | `get` locates the item under the no-group scope, re-stores it under the new group with `kSecAttrAccessible` set to after-first-unlock-this-device-only, and returns the value (traced to source, no dedicated test) |
+| fc-015 | keychain-get-legacy-service-migration, keychain-legacy-item-not-deleted | a secret stored under a service later listed in `legacyServices`; `service` now points elsewhere | `get(forKey:)` finds the value under the retired service, re-stores it under the current `service`, returns it, and leaves the original item under the retired service untouched (traced to source, no dedicated test) |
+| fc-016 | keychain-exists-checks-legacy-scopes, keychain-exists-does-not-migrate | a secret present only under a retired service listed in `legacyServices` | `exists(forKey:)` returns `true` without re-storing anything under the current service (traced to source, no dedicated test) |
+| fc-017 | keychain-copy-value-logs-unexpected-errors-only | `copyValue` for a key that has never existed (item-not-found status) | no error is logged (traced to source, no dedicated test) |
+| fc-018 | keychain-secret-value-not-logged | review every error/info log call site in the secret-storage component's source | each interpolates only the account key and a status/message, never the secret string itself (traced to source, no dedicated test) |
+| fc-019 | keychain-access-group-default, keychain-legacy-services-default | read the store's `accessGroup` and `legacyServices` before any caller assigns them | `accessGroup` is nothing; `legacyServices` is `[]` (traced to source declaration, no dedicated test) |
+| fc-020 | keychain-global-state-not-isolated | thread A sets the store's `service` while thread B concurrently reads it, with no external synchronization | undefined/racy result; the store performs no locking of its own around these shared values (traced to source declaration, no dedicated test) |
+| fc-021 | keychain-secret-storage-mechanism, keychain-secret-no-transmission, keychain-secret-lifetime-caller-controlled | review every code path in the secret-storage component's source | every write goes through the underlying add/update call against a generic-password item, no path constructs a network call, and no path schedules a deletion or expiry timer (traced to source, whole-file review) |
+| fc-022 | semver-parse-forms | parse `"1.74.0"`, `"1.74"`, `"1"` | all equal the corresponding value with missing components defaulted to `0` |
+| fc-023 | semver-parse-forms | parse `"v1.74.0"` | equals major 1, minor 74, patch 0 |
+| fc-024 | semver-parse-rejects-invalid | parse `"1.74.0-rc.1"`, `"1.74.0+build"`, `"abc"`, `""`, `"1.x.0"` | nothing for every input |
+| fc-025 | semver-component-bound | parse a string with a component equal to the largest 64-bit integer (in the major, then minor, then patch position), `"2147483648"`, and `"v2147483648.0.0"` | nothing for every input |
+| fc-026 | semver-component-bound | parse `"2147483647.2147483647.2147483647"` vs. `"2147483648"` | the first equals major 2147483647, minor 2147483647, patch 2147483647; the second is nothing |
+| fc-027 | semver-ordering | four ordering comparisons across `major`/`minor`/`patch`, including `minor: 9` vs. `minor: 10` | numeric ordering holds throughout; the `9`/`10` pair does not sort as strings would |
+| fc-028 | semver-shape, semver-description-round-trip | describe `"1.74.2"`, then re-parse that description | description equals `"1.74.2"`; re-parsing it equals the original value |
+| fc-029 | text-folding-normalization | fold `"CAFÉ"` vs. fold `"cafe"` | equal |
+| fc-030 | text-folding-empty-input, text-folding-pure | fold `""` | `""` |
+| fc-031 | text-folding-locale-independence | fold `"İstanbul"` evaluated with the current locale set to Turkish (`tr`) and separately to U.S. English (`en_US`) | identical result in both cases, because folding is explicitly locale-independent rather than using the current locale (traced to source, no dedicated test) |
+| fc-032 | float-clamped-shape, float-clamped-pure | clamp `5`, `-3`, `42`, `0`, `10` to the range `0...10` | `5`, `0`, `10`, `0`, `10` respectively |
+| fc-033 | float-clamped-degenerate-range | clamp `-100`, `100`, `5` to the range `5...5` | `5` in every case |
+| fc-034 | float-clamped-shape | clamp `-100`, `100`, `-7` to the range `-10...-5` | `-10`, `-5`, `-7` respectively |
+| fc-035 | loggable-requirement, loggable-default-subsystem, loggable-default-category, loggable-factory | a type `Foo` conforms to the logger factory contract via a single factory-backed static logger property, running in a process where the bundle identifier is `"com.example.app"` | `Foo`'s logger's subsystem is `"com.example.app"`; its category is `"Foo"` (traced to source, no dedicated test) |
+| fc-036 | loggable-instance-forwarding | an instance's `logger` on a type conforming to the logger factory contract | identical to the type-level value (traced to source, no dedicated test) |
+| fc-037 | loggable-default-members-isolation | inspect the declarations of `subsystem`, `category`, the instance `logger`, and the factory method in the contract's default implementations | none carries its own explicit isolation annotation; only the contract's `logger` requirement declares one (traced to source, no dedicated test) |
+

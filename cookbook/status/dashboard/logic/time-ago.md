@@ -1,34 +1,33 @@
 ---
 id: 66b7f642-d41d-4d84-aea7-624a5f47eef3
-title: Status Web Time Ago
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/time-ago
+title: "Status Web Time Ago"
+domain: adtoolkit://cookbook/status/dashboard/logic/time-ago
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure, synchronous function turning an ISO timestamp and a caller-supplied
-  clock reading into a compact just-now/m/h/d elapsed-time label for the dashboard.
+summary: "Pure, synchronous function turning an ISO timestamp and a caller-supplied clock reading into a compact just-now/m/h/d elapsed-time label for the dashboard."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- formatting
-- pure-function
+  - formatting
+  - pure-function
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/time-ago
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/now
-- agenticdevelopertoolkit://cookbook/status/dashboard/session-client
+  - adtoolkit://cookbook/status/service/monitor/time-ago
+  - adtoolkit://cookbook/status/dashboard/state/now
+  - adtoolkit://cookbook/status/dashboard/session-client
 references:
-- packages/web/packages/status-web/src/lib/time-ago.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/lib/time-ago.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-web/src/lib/time-ago.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/lib/time-ago.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Web Time Ago
@@ -44,7 +43,7 @@ in for testability." Its callers are dashboard components (`DeployList`, `Dashbo
 `configure/ProjectBrowser`); most take `nowMs` from the `useNow` hook, and
 `SnapshotStaleBanner` passes `Date.parse(snapshot.generatedAt)` instead. The function body
 is byte-for-byte identical to the status server's
-[Status Server Monitor Time Ago](agenticdevelopertoolkit://cookbook/status/service/monitor/time-ago);
+[Status Server Monitor Time Ago](adtoolkit://cookbook/status/service/monitor/time-ago);
 the two copies share one contract and differ only in their callers and in the web copy
 having a test file (`time-ago.test.ts`).
 
@@ -269,4 +268,4 @@ the caller, and no test covers that path.
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 |  |  | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,35 +1,35 @@
 ---
 id: 3bb63ddd-6c9a-41c1-a906-6c8542cb4e5c
-title: Health Check History
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/history
+title: "Health Check History"
+domain: adtoolkit://cookbook/status/dashboard/state/history
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Cached state that fetches one service's 24-hour health-check history from
-  the status API, idle until a slug is selected.
+summary: "Cached state that fetches one service's 24-hour health-check history from the status API, idle until a slug is selected."
 platforms:
-- web
+  - typescript
+  - web
 tags: []
 depends-on:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/api
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/activity-history
+  - adtoolkit://cookbook/status/dashboard/state/activity-history
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Health Check History
 
 ## Overview
 
-History is state in the status dashboard that loads the last 24 hours of health checks for a single monitored service. It wraps one cached read keyed by the service slug, requests `/history?service=<slug>&hours=24` through the dashboard's status API client (see [status-web-api](agenticdevelopertoolkit://cookbook/status/dashboard/api)), and returns the query result typed as `HistoryResponse`. Passing no slug leaves the query disabled, so a detail pane can use History unconditionally before any service is selected. Its one caller in the package is the detail panel, which feeds `data.checks` into the response-time chart and status strip and shows `loading…` while the result is loading.
+History is state in the status dashboard that loads the last 24 hours of health checks for a single monitored service. It wraps one cached read keyed by the service slug, requests `/history?service=<slug>&hours=24` through the dashboard's status API client (see [status-web-api](adtoolkit://cookbook/status/dashboard/api)), and returns the query result typed as `HistoryResponse`. Passing no slug leaves the query disabled, so a detail pane can use History unconditionally before any service is selected. Its one caller in the package is the detail panel, which feeds `data.checks` into the response-time chart and status strip and shows `loading…` while the result is loading.
 
 ## Behavioral Requirements
 
@@ -54,7 +54,7 @@ History is state in the status dashboard that loads the last 24 hours of health 
 - **no-hook-level-policy**: History MUST NOT set its own freshness window, cache retention window, retry count, automatic refresh interval, or refresh-on-returning-focus behavior; caching, retry, and refresh behavior MUST come entirely from the shared cache's host-supplied and library defaults.
 - **no-timeout**: History MUST NOT impose its own request timeout; a request that never settles leaves the query pending until the client or runtime ends it.
 - **no-persistence**: History MUST NOT write history to any durable store; results live only in the in-memory shared cache.
-- **client-only-module**: History has no server-only or universal-rendering variant; it requires a live client execution context.
+- **client-only**: Health Check History MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 - **single-threaded-ordering**: History runs on a single execution thread; concurrent reads with the same slug MUST share one cache entry and are deduplicated by the shared cache rather than by History itself.
 
 ## Appearance
@@ -85,6 +85,7 @@ No test file exists for the source directly; these vectors are derived from the 
 | use-history-008 | network-failure | History with slug `"api"`; stub fails with a network error | `isError` is true; error is that same failure |
 | use-history-009 | query-key | Use History with slug `"a"`, then with slug `"b"` | Two requests, one per slug; returning to `"a"` within the cache's lifetime serves the cached `"a"` data |
 | use-history-010 | raw-fetch-not-json-helper | History with slug `"api"`; inspect the request | No `Content-Type` header is added by History |
+| use-history-011 | client-only | Load Health Check History in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -201,7 +202,8 @@ Not applicable: History makes no log calls; failures reach the caller only throu
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial recipe extracted from `use-history.ts` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe extracted from `use-history.ts` |
 </content>

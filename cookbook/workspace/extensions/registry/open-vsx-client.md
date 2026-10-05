@@ -1,44 +1,43 @@
 ---
 id: bc4c4fe9-aa33-47a7-94d2-fb688e70caec
-title: OpenVSXClient
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/open-vsx-client
+title: "OpenVSXClient"
+domain: adtoolkit://cookbook/workspace/extensions/registry/open-vsx-client
 type: ingredient
-version: 1.0.3
+version: 1.0.4
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: "Read-only, stateless Sendable client for the Open VSX registry: paged
-  search, per-version detail, and bounded artifact/text downloads."
+summary: "Read-only, stateless, thread-safe client for the Open VSX registry: paged search, per-version detail, and bounded artifact/text downloads."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- open-vsx
-- networking
-- registry-client
+  - extension-host
+  - open-vsx
+  - networking
+  - registry-client
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Networking/BoundedBodyLoader.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionIdentityComponent.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/OpenVSXClient.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Networking/BoundedBodyLoader.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionIdentityComponent.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # OpenVSXClient
 
 ## Overview
 
-`OpenVSXClient` is a stateless, `Sendable` `struct` that reads the Open VSX
+`OpenVSXClient` is a stateless value type, safe to share across threads, that reads the Open VSX
 extension registry over HTTPS: one page of catalog search results, the full
 metadata record for one extension version, and the raw bytes or trimmed text
 of a registry-named artifact (a `.vsix`, its detached `.sigzip` signature
@@ -79,8 +78,8 @@ another file is named.
 - **default-metadata-ceiling**: `OpenVSXClient.defaultMaximumMetadataBytes`
   MUST equal `8,388,608` (`8 * 1024 * 1024`) bytes, and `init`'s
   `maximumMetadataBytes` parameter MUST default to it.
-- **stateless-value-type**: `OpenVSXClient` MUST be declared as a `Sendable`
-  `struct` holding only `registryBase`, `loader`, `maximumArtifactBytes`, and
+- **stateless-value-type**: `OpenVSXClient` MUST be an immutable value type, safe to share across threads and concurrency domains,
+  holding only `registryBase`, `loader`, `maximumArtifactBytes`, and
   `maximumMetadataBytes`, all assigned once in `init` and never mutated
   afterward; no result of `search`, `detail`, `data`, or `text` MUST be
   cached or memoized by this type.
@@ -206,11 +205,11 @@ another file is named.
   truncated mid-token (tests `undecodableResponse`,
   `anEmptyBodyIsUndecodable`, `theWrongShapeIsUndecodable`,
   `aTruncatedBodyIsUndecodable`).
-- **sendable-isolation**: `OpenVSXClient` MUST be declared `Sendable` and
+- **sendable-isolation**: `OpenVSXClient` MUST be safe to share across threads and concurrency domains and
   MUST be usable concurrently, without additional synchronization, from any
-  thread or actor, because every stored property (`registryBase`, `loader`,
-  the two `Int` ceilings) is immutable after `init` and `BoundedBodyLoader`
-  is itself declared `Sendable` (`BoundedBodyLoader.swift`).
+  thread or execution context, because every stored property (`registryBase`, `loader`,
+  the two integer ceilings) is immutable after construction and `BoundedBodyLoader`
+  is itself safe to share (`BoundedBodyLoader.swift`).
 - **independent-concurrent-calls**: Concurrent calls to `search`, `detail`,
   `data`, or `text` on the same `OpenVSXClient` value MUST run independently:
   each call starts its own `URLSessionDataTask`, and `BoundedBodyLoader`'s
@@ -230,7 +229,7 @@ another file is named.
   original error type (for example a `URLError`), not wrapped in
   `OpenVSXError`.
 - **logging-conformance-declared-unused**: `OpenVSXClient` MUST conform to
-  `Loggable`, declaring `public static nonisolated let logger = makeLogger()`
+  `Loggable`, declaring a static logger readable from any execution context,
   scoped by that protocol's default to category `"OpenVSXClient"`, but no
   method on `OpenVSXClient` calls `logger` — every failure surfaces to the
   caller as a thrown `OpenVSXError` case instead of a log line (`Loggable.swift`).
@@ -449,7 +448,7 @@ Category: `OpenVSXClient`
 
 | Event | Level | Message |
 |-------|-------|---------|
-| — | — | Not emitted: `OpenVSXClient` conforms to `Loggable` and declares `public static nonisolated let logger = makeLogger()`, but no method in the source calls `logger` — every failure is communicated to the caller as a thrown `OpenVSXError` case instead of a log line. |
+| — | — | Not emitted: `OpenVSXClient` conforms to `Loggable` and declares a static logger readable from any execution context, but no method in the source calls `logger` — every failure is communicated to the caller as a thrown `OpenVSXError` case instead of a log line. |
 
 ## Platform Notes
 
@@ -525,6 +524,9 @@ Category: `OpenVSXClient`
   `ObservableCollection` or `INotifyPropertyChanged` belongs on this type
   itself, since it has no UI-observable state of its own — those apply only
   to whatever ViewModel wraps calls into it.
+- **stateless-value-type**: On Apple platforms `OpenVSXClient` is declared as a `Sendable` `struct`.
+- **sendable-isolation**: On Apple platforms `OpenVSXClient` is declared `Sendable`, usable from any thread or actor, and `BoundedBodyLoader` is itself declared `Sendable` (`BoundedBodyLoader.swift`).
+- **logging-conformance-declared-unused**: On Apple platforms the logger is declared `public static nonisolated let logger = makeLogger()`.
 
 ## Reference Implementations
 
@@ -647,3 +649,4 @@ source).
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.3 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
+| 1.0.4 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |

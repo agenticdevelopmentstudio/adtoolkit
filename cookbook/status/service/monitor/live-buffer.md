@@ -1,39 +1,39 @@
 ---
 id: fdfdaf38-95de-4475-98f4-e09fb998bb57
-title: Status Server Monitor Live Buffer
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/live-buffer
+title: "Status Server Monitor Live Buffer"
+domain: adtoolkit://cookbook/status/service/monitor/live-buffer
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: In-memory ring buffer of webhook-received deploy events, capped at 200, merged into live reads so a webhook shows up before the next provider poll.
+summary: "In-memory ring buffer of webhook-received deploy events, capped at 200, merged into live reads so a webhook shows up before the next provider poll."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- buffer
-- webhook
-- deploy
-- server
+  - monitor
+  - buffer
+  - webhook
+  - deploy
+  - server
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/provider-deploy
+  - adtoolkit://cookbook/status/service/monitor/provider-deploy
 references:
-- packages/web/packages/status-server/src/monitor/live-buffer.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/hooks.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/hooks.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/hooks-alerting.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/live-deploy-targets.int.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/live-buffer.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/hooks.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/hooks.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/hooks-alerting.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/live-deploy-targets.int.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Live Buffer
@@ -75,7 +75,7 @@ approved-date: ''
 ### Ordering, Concurrency, and Side Effects
 
 - **synchronous-single-threaded-execution**: `pushDeployEvent`, `deployEventsSince`, and `clearDeployEvents` MUST each execute to completion synchronously, with no `await` and no asynchronous step between reading and mutating the shared `buffer` array; within a single process, JavaScript's single-threaded execution model MUST make any two calls into this module run to completion one at a time, with no interleaving of one call's read/splice with another's — this is a fact of the runtime, not a lock this module implements.
-- **no-external-side-effects**: none of the three exported functions MUST perform a network call, a file-system operation, a database call, or emit a process signal or notification of any kind; their only observable effect outside their own return value is mutating the shared module-scope `buffer` array.
+- **no-external-side-effects**: the three exported functions MUST NOT perform a network call, a file-system operation, a database call, or emit a process signal or notification of any kind; their only observable effect outside their own return value is mutating the shared module-scope `buffer` array.
 
 ## Appearance
 
@@ -193,6 +193,7 @@ Not applicable: this file contains no `console.*` call or structured-logger call
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

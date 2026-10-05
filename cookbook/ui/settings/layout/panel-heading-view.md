@@ -1,33 +1,32 @@
 ---
 id: 9e21151e-dc58-49a2-be1e-4984529f4396
-title: Panel Heading View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-heading-view
+title: "Panel Heading View"
+domain: adtoolkit://cookbook/ui/settings/layout/panel-heading-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A view pairing a primary-styled heading label with an optional
-  wrapping caption, used above a run of settings groups in a settings panel.
+summary: "A view pairing a primary-styled heading label with an optional wrapping caption, used above a run of settings groups in a settings panel."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- heading
+  - settings
+  - heading
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view
+  - adtoolkit://cookbook/ui/settings/layout/explanation-view
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/header-view
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/settings/layout/explanation-view
+  - adtoolkit://cookbook/ui/settings/layout/header-view
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Panel Heading View
@@ -51,8 +50,7 @@ in Design Decisions, not here.
 
 ## Behavioral Requirements
 
-- **confines-to-ui-thread**: The component MUST be usable only on the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **exposes-title-label**: The component MUST expose its heading label as
   a public, immutable stored property.
 - **exposes-caption-label**: The component MUST expose a public, read-only
@@ -218,7 +216,7 @@ the static or trap check it is.
   component itself defines. This mirrors the pattern the Explanation View
   recipe's own `updates-text-via-label-property` requirement documents
   for that view (see
-  `agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view#exposes-label-property`;
+  `adtoolkit://cookbook/ui/settings/layout/explanation-view#exposes-label-property`;
   also Design Decisions).
 - **Constructed with no caption and later needing one**: The caption view
   is constructed once at construction time and never reassigned; the
@@ -393,7 +391,7 @@ Not applicable: the source contains no logging call.
   actually gives it, the same reasoning the Explanation View recipe
   documents for that view's own horizontal-compression decision.
   **Approved**: pending
-- **Decision** (AppKit/UIKit): The gap above a Panel Heading View inside a
+- **Decision**: (AppKit/UIKit) The gap above a Panel Heading View inside a
   panel is widened to `1.5×` the panel's group spacing by the panel's own
   add-heading operation, not by this component itself.
   **Rationale**: the panel's own source comment on that operation states
@@ -410,6 +408,8 @@ Not applicable: the source contains no logging call.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | passed | Internationalization |
 
@@ -422,10 +422,14 @@ navigation would let them (see Accessibility above).
 caller-supplied strings, with no user-visible string literal owned by this
 component itself.
 
+Separation-of-concerns is passed: `PanelHeadingView` only shows a title and an optional caption, delegating caption wrapping to `ExplanationView` rather than duplicating the wrap policy. Unit-test-coverage is partial: no dedicated `PanelHeadingViewTests.swift` exists, but `KeyCommandsPanelHierarchyTests.swift` (`testTheScopeHeadingCarriesTheExplanation`, `testThePanelHeadsEachScopeOnceAndOnlyWhenItHasSections`) builds real panels and asserts a heading's `titleLabel` and `captionLabel` text; the no-caption path and layout are untested.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added Compliance rows for separation-of-concerns and unit-test-coverage |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/layout/. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

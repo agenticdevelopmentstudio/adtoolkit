@@ -1,0 +1,11 @@
+
+| Check | Status | Category |
+|-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
+| [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | partial | Best Practices |
+| [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | Reliability |
+| [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | partial | Reliability |
+
+Notes: separation-of-concerns passes because `ProjectDatabase.swift` holds only schema, migration, and CRUD statements against its own tables — it performs no directory scanning, no reconciliation, and no window or layout business logic beyond storing and returning the rows another component reads and writes. unit-test-coverage is partial: `ProjectDatabaseTests.swift` exercises every public repository and settings method plus five distinct migration scenarios (a fresh database, a v1-to-v4 upgrade, a version row deleted mid-chain, the whole chain rewound, and directory-on-demand creation), but `checkpoint()` has no assertion verifying the WAL file was actually truncated, and the row-dropping path this recipe flags under `malformed-row-handling` has no test anywhere in the given sources. explicit-error-handling is partial for the same reason: every SQL-level failure this file's own statements can produce throws a specific `ProjectDatabaseError` case, but the malformed-row guard in `queryRepos` is the one path in this file that discards a failure signal instead of raising it — see the pending decision on `malformed-row-handling`. data-integrity is partial: the `UNIQUE` constraint on `git_repo.path`, the `ON DELETE CASCADE` foreign keys, and the transaction-wrapped, idempotency-guarded migration chain are all real, exercised integrity mechanisms, but this file never calls `PRAGMA integrity_check` and has no detection at all for a row that fails to parse on the way out of the database — again, the pending decision on `malformed-row-handling`.
+

@@ -1,0 +1,8 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial extraction from `ComposableTabsWindowController.swift`. |
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: renamed all requirements to subject-noun form and updated every cross-reference; added a `search-target` requirement to resolve the circular search-target definition; stated the divider-persist debounce timing in `structural-change-persistence`; added `depends-on` entries for the two composed ingredients that have recipes; reformatted Design Decisions to the bold three-line form and added two entries recording hardcoded strings and swallowed persistence errors as accepted debt; corrected Localization from "Not applicable" to applicable-and-unmet; added accessibility, privacy-and-data, and internationalization checks to Compliance and marked `completeness` partial; removed the incorrect UWP `ApplicationView.PreferredLaunchViewSize` reference from the WinUI 3 Platform Note; and extended the Conformance Test Vectors to cover fresh node ids on edge top-up, arrange-button `.state`, the window spec's minimum size, the empty-tab-title footer separator, and the new `search-target` requirement; removed Compliance rows for checks absent from the cookbook catalog |
+| 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/composable-tabs/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |

@@ -1,29 +1,28 @@
 ---
 id: ca7205d2-31c0-424a-95a2-a356bed30187
-title: Live Snapshot
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/live-snapshot
+title: "Live Snapshot"
+domain: adtoolkit://cookbook/status/dashboard/state/live-snapshot
 type: ingredient
-version: 1.1.0
+version: 1.2.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Cached state, shared per API client, that feeds the latest live snapshot
-  from a server-push stream with a 60 s poll fallback.
+summary: "Cached state, shared per API client, that feeds the latest live snapshot from a server-push stream with a 60 s poll fallback."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/board
+  - adtoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/state/board
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Live Snapshot
@@ -96,7 +95,7 @@ Live Snapshot does not fold notifications into a durable model; the board state 
 - **fetch-failure-sets-error**: A failed read (an unsuccessful response, a network failure, or a parse failure) MUST set `liveError` to that failure's message text and propagate the failure.
 - **live-error-sticky**: `liveError` MUST change only on a completed read, so it stays set across in-flight refetches until a read succeeds.
 - **stream-loss-refetch**: Whenever `streamConnected` is false after Live Snapshot's state is re-evaluated (including the first time), it MUST trigger a re-read of the live cache key.
-- **per-client-poll-isolation**: NEEDS REVIEW: Not implemented in source. The module header promises "two stores, never a store whose transport is re-pointed at whichever provider rendered last", but the poll's query key is `["live"]` for every client, so two stores under one `QueryClient` share one cache entry: one client's poll result is ingested into both stores, and `liveError` is recorded only in the store whose `fetchLive` ran. Settled by the owner deciding whether the key must include a client identity, and a two-provider test.
+- **per-client-poll-isolation**: Each store SHOULD have its own transport and poll. The poll cache key is the same for every client, so two stores under one query client share one cache entry: one client's poll result is ingested into both stores, and the live error is recorded only in the store whose fetch ran.
 
 ### Manual check
 
@@ -111,7 +110,7 @@ Live Snapshot does not fold notifications into a durable model; the board state 
 - **check-unrelated-push**: An ingested snapshot with a `generatedAt` before the check's request time MUST update `snapshot` but MUST leave `awaitingCheck` true.
 - **check-safety**: In the started case, if no resolving snapshot arrives within `CHECK_SAFETY_MS` (200,000 ms), the store MUST clear the request time, set `awaitingCheck` to false, and call the poll re-read once.
 - **check-no-error-surface**: A failed check MUST NOT set `liveError` or expose any error; it is indistinguishable to the caller from a debounced check.
-- **overlapping-check-requests**: NEEDS REVIEW: Not implemented in source. A second `refresh()` while the first POST is still in flight has no ordering rule: the first call's completion may clear `awaitingCheck` and the request time belonging to the second, and each started call assigns its own safety timer without clearing the other's, so an earlier timer can clear the later check's spinner and only the last-assigned timer is cancelled on resolve or reset. Settled by the owner choosing an ordering rule (ignore, supersede, or queue) and a test that fires two clicks with interleaved responses.
+- **overlapping-check-requests**: A refresh MAY be called while an earlier check request is still in flight; no ordering rule applies. A call clears any existing safety timer when it starts, but assigns its own timer only after its request resolves, without clearing a timer already assigned. When the first call finishes without a started cycle (debounced, coalesced or failed), it clears the awaiting-check flag and request time that belong to the second call. When both calls start a cycle, the second-resolving call overwrites the timer handle while the first timer stays armed and uncancellable, so it can clear the later check's spinner; only the last-assigned timer is cancelled on resolve or reset.
 
 ### Reconnect
 
@@ -135,8 +134,9 @@ Live Snapshot does not fold notifications into a durable model; the board state 
 
 - **single-thread**: All store mutation MUST run on a single execution thread, from event callbacks, timers and asynchronous continuations; store code cannot interleave with itself.
 - **no-persistence**: Live Snapshot MUST NOT persist any of its state to durable storage; all state is in memory for as long as the app runs, and is lost on reload.
-- **no-timeout**: Neither the live read nor the check request MUST apply a client request timeout or cancellation signal; only the check's safety timer bounds the spinner.
+- **no-timeout**: The live read and the check request MUST NOT apply a client request timeout or cancellation signal; only the check's safety timer bounds the spinner.
 - **side-effects**: The only network side effects MUST be the stream connection to `/live/stream`, a GET to `/live`, and a POST to `/live/check`, all through the injected client.
+- **client-only**: Live Snapshot MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 
 ## Appearance
 
@@ -176,11 +176,12 @@ Vectors 001–004 exercise the same-snapshot check directly. 005–020 assume a 
 | use-live-snapshot-018 | ingest-once, frame-subscribe | Subscribe a counter to frame notifications; ingest the same snapshot once from the stream and once from the poll | Counter is 1 |
 | use-live-snapshot-019 | stream-ref-count, stream-single, stream-release | Use Live Snapshot twice under one client; stop using it once; then stop using it again | 1 stream connection in total; still open after the first stop; closed after the second |
 | use-live-snapshot-020 | client-estimate, result-next-poll-fallback | No stream; the poll succeeds with its last-success time at T | `nextPollAt` equals T + 60,000 |
+| use-live-snapshot-021 | client-only | Load Live Snapshot in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
 - **Nothing received yet**: `snapshot` MUST be null, `blind` false, `offline` false, and `nextPollAt` null until the first poll completes.
-- **Server rendering**: No stream connection MUST open, because no live client execution environment for streaming is present; the server-rendering view returns the fresh view, so a universal-rendering pass shows the pre-anything state.
+- **Server rendering**: A stream connection MUST NOT open, because no live client execution environment for streaming is present; the server-rendering view returns the fresh view, so a universal-rendering pass shows the pre-anything state.
 - **Stream open before first schedule notification**: `nextPollAt` MUST fall back to the client estimate.
 - **Schedule notification with `nextCheckAt: null`**: `nextCheckAt` MUST become null, and `nextPollAt` falls back to the client estimate.
 - **Schedule notification with an unparseable date string**: The payload parses, but the date does not resolve to a valid timestamp, and `nextPollAt` MUST become that invalid-timestamp value (the fallback applies only to a missing value, not an invalid one); because an invalid timestamp never equals itself, each such notification MUST re-notify listeners.
@@ -198,7 +199,7 @@ Vectors 001–004 exercise the same-snapshot check directly. 005–020 assume a 
 - **Two overlapping manual checks**: See the open question on overlapping-check-requests.
 - **Two providers under one shared cache context**: See the open question on per-client-poll-isolation.
 - **Running the test-reset operation with a check in flight**: The in-flight request's continuation is not cancelled; when it completes it MAY patch the fresh view and MAY start a new safety timer that later calls the captured re-read.
-- **Hung `GET /live` or check request**: No client timeout MUST apply; `polling` stays true while the read is in flight.
+- **Hung `GET /live` or check request**: A client timeout MUST NOT apply; `polling` stays true while the read is in flight.
 - **Concurrent access**: Single execution thread; synchronous store code cannot interleave, and the only asynchronous overlaps are those two open questions.
 
 ## Configuration
@@ -250,6 +251,7 @@ Not applicable: Live Snapshot makes no log calls; failures surface only through 
 - **React/Web**: Source platform. `hooks/use-live-snapshot.ts` bridges a closure store into React with `useSyncExternalStore` (subscribe opens the stream) and runs the fallback with `@tanstack/react-query` v5 `useQuery`. The client comes from `api/client.ts` (`useStatusApi`, `createStatusApiClient`), the types from `lib/live-types.ts`, and `useBoard` consumes `subscribeLiveFrames`. The stream is a browser `EventSource` on `/live/stream`; "transient" versus "terminal" connection errors correspond to its `readyState` being anything other than `CLOSED` versus exactly `CLOSED`, and "no live client execution environment" corresponds to `window`/`EventSource` being undefined (server rendering). Notification payloads are parsed with `JSON.parse` on the event's `data`; the schedule notification's timestamp is `Date.parse(nextCheckAt)`, which yields `NaN` for an unparseable string — and `NaN !== NaN` is exactly why such a frame re-notifies listeners every time. The poll re-reads call `queryClient.refetchQueries({ queryKey: ["live"] })`; the client estimate reads the query's `dataUpdatedAt` and `isFetching` fields. The store's own functions are `isSameSnapshot`, `ingestOnce`, `fetchLive`, `subscribeLiveFrames` and `__resetStoreForTests`; the live-read request is `apiClient.fetch("/live")`, and the manual check is `apiClient.fetch("/live/check", { method: "POST" })`. Vectors 001–004 come from `use-live-snapshot.test.ts`; 005–011 from `use-live-snapshot.dom.test.tsx` (a mock `EventSource`, stubbed `fetch`, `__resetStoreForTests()` after each case); the rest are derived from the source.
 - **AppKit / UIKit**: The same `@MainActor` store as SwiftUI, observed via `withObservationTracking` or Combine `@Published`; ref-count from view-controller appearance or explicit `acquire`/`release`. Use `Timer` or `Task` for the poll, safety and reopen timers.
 - **WinUI 3**: A `LiveSnapshotStore` class implementing `INotifyPropertyChanged` (or CommunityToolkit.Mvvm `ObservableObject`), one instance per API client held in a `ConcurrentDictionary<ApiClient, LiveSnapshotStore>` or registered in `Microsoft.Extensions.DependencyInjection`. .NET has no `EventSource`, so read the stream with `HttpClient.GetStreamAsync("live/stream")` (or `SendAsync` with `HttpCompletionOption.ResponseHeadersRead`) and parse `event:`/`data:` lines with a `StreamReader` (or `System.Net.ServerSentEvents.SseParser` on .NET 9+); you must implement both reconnect paths yourself, since nothing auto-retries. Deserialize with `System.Text.Json` `JsonSerializer.Deserialize<LiveSnapshot>` (which, unlike the source's cast, throws on type mismatch). Poll with `PeriodicTimer(TimeSpan.FromSeconds(60))` in an `async Task` loop gated on `StreamConnected`, send the check with `HttpClient.PostAsync("live/check", null)`, and model the 200 s safety and 3 s reopen timers with `Task.Delay` plus a `CancellationTokenSource` per timer. Ref-count with `Acquire()`/`Release()` called from each page's `Loaded`/`Unloaded`. Raise `PropertyChanged` on the UI thread via `DispatcherQueue.TryEnqueue`, and expose `Refresh` and `Reconnect` as `IRelayCommand`s. Keying the poll by client is up to you here, so the shared-`["live"]`-key issue does not carry over by default.
+- **client-only**: On the web, the module opens with the `"use client"` directive.
 
 ## Reference Implementations
 
@@ -291,6 +293,14 @@ Not applicable: Live Snapshot makes no log calls; failures surface only through 
 **Rationale**: The board state refetches on notifications without opening a second connection ("one connection per tab is the existing contract"). The store's listeners also fire on connection-state changes, which should not trigger a board refetch.
 **Approved**: pending
 
+**Decision**: The live poll uses one cache key for every client, so two stores under one query client share a cache entry despite the module header promising isolated stores.
+**Rationale**: It stands today because the key carries no client identity. Closing it needs an owner decision on whether the key must include a client identity, and a two-provider test.
+**Approved**: pending
+
+**Decision**: Overlapping check requests have no ordering rule; the flags of an earlier call can clear those of a later call, and an overwritten safety timer handle leaves an orphaned timer.
+**Rationale**: It stands today because each call manages its own flags and timer assignment independently, with no call identity. Closing it needs the owner to choose an ordering rule (ignore, supersede or queue) and a test that fires two clicks with interleaved responses.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -322,7 +332,11 @@ Not applicable: Live Snapshot makes no log calls; failures surface only through 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.3 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Restored inverted prohibitions: a 'Neither … MUST' rule now reads 'MUST NOT'. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved two NEEDS REVIEW markers as current behavior plus pending decisions |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial recipe extracted from `use-live-snapshot.ts` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe extracted from `use-live-snapshot.ts` |
 </content>

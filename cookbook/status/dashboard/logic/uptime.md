@@ -1,44 +1,43 @@
 ---
 id: aa2f3a92-8bac-4a0f-8e61-382958ab53ef
-title: Uptime Math
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/uptime
+title: "Uptime Math"
+domain: adtoolkit://cookbook/status/dashboard/logic/uptime
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Pure uptime arithmetic: per-day uptime percent, per-day health status from
-  check counts, and the portfolio-wide mean uptime percent'
+summary: "Pure uptime arithmetic: per-day uptime percent, per-day health status from check counts, and the portfolio-wide mean uptime percent"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on:
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/health
+  - adtoolkit://cookbook/status/dashboard/logic/health
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/uptime
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/uptime
+  - adtoolkit://cookbook/status/service/monitor/uptime
+  - adtoolkit://cookbook/status/dashboard/state/uptime
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Uptime Math
 
 ## Overview
 
-This logic is the client's copy of the uptime arithmetic. It has no I/O, no state and no dependencies beyond a health status (see [Health Classification](agenticdevelopertoolkit://cookbook/status/dashboard/logic/health)). It exports:
+This logic is the client's copy of the uptime arithmetic. It has no I/O, no state and no dependencies beyond a health status (see [Health Classification](adtoolkit://cookbook/status/dashboard/logic/health)). It exports:
 
-- **counts** — a shape of four numbers: `total`, `healthy`, `degraded`, `down`.
+- **counts**: a shape of four numbers: `total`, `healthy`, `degraded`, `down`.
 - **the uptime-percent function** — takes counts and returns a number or null: the share of checks that were up (healthy or degraded), as a percentage rounded to two decimals, or null when there were no checks.
 - **the day-status function** — takes counts and returns a health status: collapses a day's counts to one `"healthy"`, `"degraded"` or `"down"` verdict.
 - **the overall-uptime-percent function** — takes a list of services and returns a number or null: the portfolio-wide uptime, the simple unweighted mean of each service's own uptime percent, rounded to two decimals, or null when no service has data.
 
-At runtime only the overall-uptime-percent function is called: the overview tab view passes it the list of services from [the uptime state](agenticdevelopertoolkit://cookbook/status/dashboard/state/uptime), or an empty list while loading, and renders the result in the overview stats view. The per-day uptime-percent and status values arrive already computed from the status server, whose own counterpart (see [Status Server Monitor Uptime](agenticdevelopertoolkit://cookbook/status/service/monitor/uptime)) carries the same three functions and backs the `/uptime` read route. The two implementations differ only in comments and line wrapping.
+At runtime only the overall-uptime-percent function is called: the overview tab view passes it the list of services from [the uptime state](adtoolkit://cookbook/status/dashboard/state/uptime), or an empty list while loading, and renders the result in the overview stats view. The per-day uptime-percent and status values arrive already computed from the status server, whose own counterpart (see [Status Server Monitor Uptime](adtoolkit://cookbook/status/service/monitor/uptime)) carries the same three functions and backs the `/uptime` read route. The two implementations differ only in comments and line wrapping.
 
 Use this component whenever a port must reproduce the status page's uptime numbers exactly: the rounding and the "degraded counts as up" rule are what make the numbers match.
 
@@ -140,7 +139,7 @@ Vectors 001–009 are the assertions in the implementation's test suite (see Pla
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | the counts argument (to the uptime-percent function and the day-status function) | counts (four numbers) | none — required | The day's check counts: `total`, `healthy`, `degraded`, `down`. |
-| the services argument (to the overall-uptime-percent function) | a list of objects each carrying `uptimePercent` (a number or null) | none — required | One entry per service; the list of services from [the uptime state](agenticdevelopertoolkit://cookbook/status/dashboard/state/uptime), or an empty list while loading. |
+| the services argument (to the overall-uptime-percent function) | a list of objects each carrying `uptimePercent` (a number or null) | none — required | One entry per service; the list of services from [the uptime state](adtoolkit://cookbook/status/dashboard/state/uptime), or an empty list while loading. |
 | Down-majority threshold | constant | `0.5` | Hardcoded in the day-status function; strictly greater than this share of down checks makes the day `"down"`. Not configurable. |
 | Rounding precision | constant | 2 decimal places | Hardcoded in both percent functions. Not configurable. |
 
@@ -229,6 +228,7 @@ Not applicable: no function in this logic logs.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Requirements use the named-bullet form, `- **id**: ...`, instead of an em dash after the id. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/logic/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

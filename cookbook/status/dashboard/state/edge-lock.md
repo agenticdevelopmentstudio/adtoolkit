@@ -1,28 +1,27 @@
 ---
 id: 9f84dd73-abbf-4ad5-be6e-f3fb04f941c3
-title: Edge Lock
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/edge-lock
+title: "Edge Lock"
+domain: adtoolkit://cookbook/status/dashboard/state/edge-lock
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Behavior that locks a scrolling list to its top or bottom edge through
-  container resizes and follows new items within 24px of that edge.
+summary: "Behavior that locks a scrolling list to its top or bottom edge through container resizes and follows new items within 24px of that edge."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/activity-history
+  - adtoolkit://cookbook/status/dashboard/state/activity-history
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Edge Lock
@@ -93,6 +92,7 @@ Edge Lock produces no return value; it works only through side effects on the co
 
 - **css-bottom-anchor**: For a bottom-locked list, the caller MUST anchor short content to the bottom in layout (a flex column, with the row block pushed to the end). This concept's guidance states this as the layout contract, because no scroll position can close the gap an underfull list leaves above the container's bottom edge.
 - **item-signal**: To trigger item-change follow, the caller MUST change `newestKey` or `count`. A height change with neither of these and no container resize MUST NOT trigger a pin.
+- **client-only**: Edge Lock MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 
 ## Appearance
 
@@ -124,6 +124,7 @@ Vectors 001–008 come from the reference implementation's test assertions, usin
 | edge-lock-010 | resize-top-no-write, resize-resync | `edge` `"top"`, user scrolled to 150; resize reported | The behavior does not write the scroll offset; tracked `dist` equals the platform's scroll offset (150 unless the platform clamped it) |
 | edge-lock-011 | resize-observer-absent | Resize notifications unavailable; mount a bottom-locked element (1000/400) | Scroll offset is 600; no observer is created; a later resize changes nothing |
 | edge-lock-012 | item-follow-within-slack | Bottom edge, dist exactly 24; update with a new `count` after `contentSize` grows by 100 | The element is pinned to the tail (24 is inside the slack, since the comparison is `<=`) |
+| edge-lock-013 | client-only | Load Edge Lock in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -238,6 +239,7 @@ The hook does one job, scroll-edge locking, and it touches only the DOM element 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

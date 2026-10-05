@@ -1,31 +1,30 @@
 ---
 id: 1e58add7-d85d-4e62-b857-c5e3203795be
-title: Screen Manager
-domain: agenticdevelopertoolkit://cookbook/ui/windows/screen-manager
+title: "Screen Manager"
+domain: adtoolkit://cookbook/ui/windows/screen-manager
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A service that tracks the attached screen set, persists every set seen
-  with timestamps, and classifies live screen changes.
+summary: "A service that tracks the attached screen set, persists every set seen with timestamps, and classifies live screen changes."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-management
-- screens
-- persistence
+  - window-management
+  - screens
+  - persistence
 depends-on:
-- agenticdevelopertoolkit://cookbook/foundation/settings-storage
+  - adtoolkit://cookbook/foundation/settings-storage
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Screen Manager
@@ -131,7 +130,7 @@ set storage, a fixed clock) in tests.
 - **upsert-no-prune-without-persist**: A non-persisting upsert MUST NOT prune, sort or rebuild the known-set-ids collection.
 - **returning-set-keeps-first-seen**: Returning to a previously seen set MUST keep its original first-seen timestamp and bump only its last-seen timestamp.
 - **storage-settings-blob**: The settings-backed storage MUST store the whole set list as one encoded value under a single key (default `ScreenSets`) in the settings store's non-secure provider, with an empty list as the default when nothing is stored.
-- **storage-failure-signal**: NEEDS REVIEW: Not implemented in source. The storage seam has no error channel; with the default settings provider, an undecodable stored blob loads as an empty list and an unencodable list is silently not written, so a corrupt blob silently erases every known set (and every per-set placement keyed to it) at the next persist. Settle by deciding whether load/save failures must be logged or surfaced to the caller.
+- **storage-failure-signal**: The storage seam does not report load or save failures: the protocol has no error channel, and with the default settings-backed provider an undecodable stored blob loads as an empty list and an unencodable list is silently not written. A corrupt blob is therefore replaced, without any log, at the next persist, erasing every known set and the per-set placements keyed to it.
 
 ### Side effects
 
@@ -301,6 +300,10 @@ Spurious notifications, touches, reconciles, loads and saves are not logged.
 **Rationale**: Selector-based `addObserver` adds a second registration instead of replacing the first, which would double-fire; removing first makes re-arming idempotent.
 **Approved**: pending
 
+**Decision**: Storage load and save failures are absorbed without a log or a signal to the caller.
+**Rationale**: `ScreenSetStorage` declares `loadSets()` and `saveSets(_:)` with no error channel, `SettingsStoreScreenSetStorage` delegates to a settings store whose default value is an empty list, and `ScreenManager` neither logs nor handles a failed load or save. Closing it means deciding whether failures are logged or surfaced and then widening the storage seam.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -322,6 +325,7 @@ separation-of-concerns passes because screen enumeration (`ScreenProvider`), per
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the storage-failure-signal marker as current behavior (no error channel on the storage seam) with a pending Design Decision. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/windows/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from `ScreenManager.swift`, `ScreenChange.swift`, `ScreenSet.swift`, `ScreenSetStorage.swift`, `ScreenSnapshot.swift` and `ScreenManagerTests.swift` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `ScreenManager.swift`, `ScreenChange.swift`, `ScreenSet.swift`, `ScreenSetStorage.swift`, `ScreenSnapshot.swift` and `ScreenManagerTests.swift` |

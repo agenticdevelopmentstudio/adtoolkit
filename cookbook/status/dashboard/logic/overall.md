@@ -1,29 +1,28 @@
 ---
 id: ef8570df-111e-484f-aad7-20ad49bd34dc
-title: Overall Status Rollup
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/overall
+title: "Overall Status Rollup"
+domain: adtoolkit://cookbook/status/dashboard/logic/overall
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Pure function folding per-service HealthStatus values into one OverallStatus
-  verdict: unknown, major_outage, degraded or operational'
+summary: "Pure function folding per-service HealthStatus values into one OverallStatus verdict: unknown, major_outage, degraded or operational"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/overall
-- agenticdevelopertoolkit://cookbook/status/dashboard/session-client
+  - adtoolkit://cookbook/status/service/monitor/overall
+  - adtoolkit://cookbook/status/dashboard/session-client
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Overall Status Rollup
@@ -34,7 +33,7 @@ approved-date: ''
 
 The rule is: no statuses is `"unknown"`; every status `"down"` is `"major_outage"`; any status `"down"` or `"degraded"` short of all-down is `"degraded"`; otherwise `"operational"`.
 
-Within status-web, `OverallStatus` is re-exported by `src/types.ts` and types the `overall` field of `StatusResponse`, the shape of the payload the status server returns. No status-web module calls `computeOverall` at runtime; the verdict a page shows arrives already computed in `StatusResponse.overall`. The status server owns the authoritative rollup in its own `monitor/overall.ts` (see [Status Server Monitor Overall](agenticdevelopertoolkit://cookbook/status/service/monitor/overall)), which carries the same `computeOverall` plus an extra `publicOverall` step that this client copy does not have.
+Within status-web, `OverallStatus` is re-exported by `src/types.ts` and types the `overall` field of `StatusResponse`, the shape of the payload the status server returns. No status-web module calls `computeOverall` at runtime; the verdict a page shows arrives already computed in `StatusResponse.overall`. The status server owns the authoritative rollup in its own `monitor/overall.ts` (see [Status Server Monitor Overall](adtoolkit://cookbook/status/service/monitor/overall)), which carries the same `computeOverall` plus an extra `publicOverall` step that this client copy does not have.
 
 ## Behavioral Requirements
 

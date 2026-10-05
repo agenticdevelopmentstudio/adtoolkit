@@ -1,38 +1,37 @@
 ---
 id: 4e32bf7a-b87a-44f6-aa16-f57a533e3b77
-title: Status Server Monitor Self-Check Stability
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/self-check-stability
+title: "Status Server Monitor Self-Check Stability"
+domain: adtoolkit://cookbook/status/service/monitor/self-check-stability
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Debounces unreachable self-check failures across repeated runs and correlates
-  simultaneous confirmed failures into one Connectivity warning.
+summary: "Debounces unreachable self-check failures across repeated runs and correlates simultaneous confirmed failures into one Connectivity warning."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- self-check
-- debounce
-- correlation
-- server
+  - monitor
+  - self-check
+  - debounce
+  - correlation
+  - server
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/integrations
-- agenticdevelopertoolkit://cookbook/status/service/monitor/issue-sources
+  - adtoolkit://cookbook/status/service/monitor/integrations
+  - adtoolkit://cookbook/status/service/monitor/issue-sources
 references:
-- packages/web/packages/status-server/src/monitor/self-check-stability.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/self-check-stability.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/self-check-stability.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/self-check-stability.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Self-Check Stability

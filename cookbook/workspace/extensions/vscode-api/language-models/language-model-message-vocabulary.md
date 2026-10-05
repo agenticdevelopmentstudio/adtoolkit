@@ -1,42 +1,37 @@
 ---
 id: 4d04037c-098f-4ea5-8313-7e0374700a96
-title: Language Model Message Vocabulary
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/language-model-message-vocabulary
+title: "Language Model Message Vocabulary"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/language-models/language-model-message-vocabulary
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Installs the eight vscode.LanguageModel* value types an extension constructs
-  to talk to a language model, building all eight together in one pass so each can reference the others directly.
+summary: "Installs the eight vscode.LanguageModel* value types an extension constructs to talk to a language model, building all eight together in one pass so each can reference the others directly."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- language-model
+  - extension-host
+  - vscode-api
+  - language-model
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-host
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
+  - adtoolkit://cookbook/workspace/extensions/host/extension-host
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/LanguageModelMessageVocabulary.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/LanguageModelMessageVocabularyTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/LanguageModelMessageVocabulary.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/LanguageModelMessageVocabularyTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Language Model Message Vocabulary
@@ -85,8 +80,8 @@ This component gives the extension host's script context real, `instanceof`-chec
 - **chat-message-name-passthrough**: When `LanguageModelChatMessage.User`/`.Assistant` is called with a `name` argument, the constructed message's `name` MUST equal that argument.
 - **content-part-type-not-runtime-checked**: `LanguageModelChatMessage`'s `content` setter MUST NOT validate that array elements match the role-specific part types `vscode.d.ts` documents (a `LanguageModelToolResultPart` inside a `User` message's content, or a `LanguageModelToolCallPart` inside an `Assistant` message's, are both accepted at runtime), matching that upstream enforces this distinction only at the TypeScript type-checking layer.
 - **classes-frozen-after-construction**: `LanguageModelTextPart`, `LanguageModelPromptTsxPart`, `LanguageModelToolCallPart`, `LanguageModelToolResultPart`, `LanguageModelToolResult`, `LanguageModelDataPart`, and `LanguageModelChatMessage` MUST each be frozen via `Object.freeze`, and each of their seven `.prototype` objects MUST also be frozen, all inside the same evaluation that builds them, with no window in which any of the fourteen is unfrozen.
-- **instances-not-frozen**: No instance of any of the seven constructor functions MUST be frozen; `role`, `name`, `content`, `value`, `callId`, `input`, `data`, and `mimeType` MUST all remain writable on a constructed instance after construction.
-- **no-tojson-method**: None of the eight installed members MUST define a `toJSON` method; `vscode.d.ts` declares none, and this host has no reader for the extension-host RPC marshalling shape (`$mid`) upstream's own `toJSON` produces.
+- **instances-not-frozen**: An instance of any of the seven constructor functions MUST NOT be frozen; `role`, `name`, `content`, `value`, `callId`, `input`, `data`, and `mimeType` MUST all remain writable on a constructed instance after construction.
+- **no-tojson-method**: The eight installed members MUST NOT define a `toJSON` method; `vscode.d.ts` declares none, and this host has no reader for the extension-host RPC marshalling shape (`$mid`) upstream's own `toJSON` produces.
 
 ## Appearance
 
@@ -244,6 +239,7 @@ No other event in this file is logged: the failed cache-write `Object.defineProp
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/language-models/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

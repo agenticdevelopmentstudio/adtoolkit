@@ -1,43 +1,41 @@
 ---
 id: 19839612-1fd1-44c5-8659-674c264240be
-title: Security Client
-domain: agenticdevelopertoolkit://cookbook/adh/hub/security/security-client
+title: "Security Client"
+domain: adtoolkit://cookbook/adh/hub/security/security-client
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The client-side contract for the personal API token surface (`/api/auth/tokens`) and the
-  bucket access-list surface (`/api/bucket/access-groups`): mint/list/revoke tokens, and
-  access-group/member/grant CRUD.'
+summary: "The client-side contract for the personal API token surface (`/api/auth/tokens`) and the bucket access-list surface (`/api/bucket/access-groups`): mint/list/revoke tokens, and access-group/member/grant CRUD."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- security
-- api-tokens
-- access-control
-- hub
-- buckets
+  - security
+  - api-tokens
+  - access-control
+  - hub
+  - buckets
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client
-- agenticdevelopertoolkit://cookbook/adh/hub/access
+  - adtoolkit://cookbook/adh/hub/security/authentication-client
+  - adtoolkit://cookbook/adh/hub/access
 references:
-- packages/web/packages/data/src/security/tokens.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/security/bucket-access.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/security/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/security/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
-- packages/web/packages/adh-api-types/src/schema.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/security/tokens.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/security/bucket-access.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/security/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/security/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+  - packages/web/packages/adh-api-types/src/schema.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Security Client
@@ -79,7 +77,7 @@ authored under.
 - **token-metadata-never-carries-secret**: Every other tokens operation (listing, fetching scopes,
   revoking) MUST operate only on the non-secret token record, whose fields are `id`, `name`, `prefix`
   (documented as "non-secret leading chars, for display"), `createdAt`, `expiresAt`, `lastUsedAt`, and
-  an optional `scope`; none of these three operations MUST ever receive or return the raw secret.
+  an optional `scope`; these three operations MUST NOT ever receive or return the raw secret.
 
 **Bucket access lists**
 
@@ -129,7 +127,7 @@ authored under.
 - **access-crud-string-passthrough**: Upserting a grant MUST send whatever `crud` string the caller
   supplies (documented as "comma-separated CRUD subset, e.g. `'C,R,U,D'` or `''` (none)") verbatim, with
   no client-side charset, ordering, or length check.
-- **access-metadata-not-writable**: Neither the create-group nor update-group request body MUST
+- **access-metadata-not-writable**: The create-group and update-group request bodies MUST NOT
   include a `metadata` field; neither operation can set the `metadata` an access group record carries,
   even though fetching a group or listing all groups MUST return whatever `metadata` the backend
   supplies.
@@ -138,14 +136,14 @@ authored under.
 
 - **every-bucket-access-call-url-encodes-identifiers**: Every bucket access-list operation MUST
   percent-encode the bucket id, group id, member-row id, and grant id before placing them in a URL.
-- **no-compact-on-write-bodies**: None of minting, creating a group, updating a group, adding a member,
-  or upserting a grant MUST apply a general-purpose field-compaction transform to its body before
+- **no-compact-on-write-bodies**: Minting, creating a group, updating a group, adding a member,
+  and upserting a grant MUST NOT apply a general-purpose field-compaction transform to its body before
   serializing it; each builds its own conditional object shape (or, for minting, serializes the
   caller's object directly), and the standard omission of `undefined`-valued keys during serialization
   is what actually drops absent optionals.
-- **no-client-side-cache**: Neither client MUST cache or memoize any response; every call issues
+- **no-client-side-cache**: Each client MUST NOT cache or memoize any response; every call issues
   exactly one HTTP request.
-- **stateless-module**: Neither client MUST hold mutable state across calls; the only persistent values
+- **stateless-module**: Each client MUST NOT hold mutable state across calls; the only persistent values
   are the fixed path constants for the tokens base path, the groups base path, and the buckets base
   path.
 
@@ -158,8 +156,8 @@ the caller's own *session* credential — that lives in a shared authenticated-r
 clients compose rather than reimplement.
 
 - **auth-delegated-to-shared-client**: Every token/access-list network call MUST go through the shared
-  authenticated-request helpers, which attach a bearer token read from the stored access token; neither
-  client MUST read, store, or attach a session token itself.
+  authenticated-request helpers, which attach a bearer token read from the stored access token; each
+  client MUST NOT read, store, or attach a session token itself.
 - **session-refresh-waterfall**: A `401` response to any call from either client MUST trigger exactly
   one token refresh and one retried request, inherited unconditionally from the shared request helper;
   a second `401` on the retried request MUST propagate as a thrown error carrying `status: 401`.
@@ -475,6 +473,7 @@ credential with no way for the caller to detect or reconcile it from this module
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restate negative requirements as MUST NOT prohibitions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/security/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

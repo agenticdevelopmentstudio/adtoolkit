@@ -1,42 +1,40 @@
 ---
 id: ce157d5a-c145-4348-b58f-6a76c9fda1d6
-title: Status Server MCP
-domain: agenticdevelopertoolkit://cookbook/status/service/mcp
+title: "Status Server MCP"
+domain: adtoolkit://cookbook/status/service/mcp
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Status backend''s MCP tool surface: a stateless Streamable-HTTP /mcp route,
-  the two-layer fail-closed admin gate, and 32 tools that thin-wrap the same store/service
-  functions their REST twins call.'
+summary: "Status backend's MCP tool surface: a stateless Streamable-HTTP /mcp route, the two-layer fail-closed admin gate, and 32 tools that thin-wrap the same store/service functions their REST twins call."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- mcp
-- authorization
-- server
+  - mcp
+  - authorization
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/security/mcp-server-security
-- agenticdevelopercookbook://guidelines/implementing/security/mcp-input-validation
-- agenticdevelopercookbook://guidelines/implementing/networking/mcp-server-design
-- agenticdevelopercookbook://guidelines/implementing/security/authorization
+  - agenticdevelopercookbook://guidelines/implementing/security/mcp-server-security
+  - agenticdevelopercookbook://guidelines/implementing/security/mcp-input-validation
+  - agenticdevelopercookbook://guidelines/implementing/networking/mcp-server-design
+  - agenticdevelopercookbook://guidelines/implementing/security/authorization
 related:
-- agenticdevelopertoolkit://cookbook/status/service/auth
+  - adtoolkit://cookbook/status/service/auth
 references:
-- packages/web/packages/status-server/src/mcp/route.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/mcp/server.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/mcp/tools.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/mcp.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/mcp-deploy-tools.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-route.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/mcp/route.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/mcp/server.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/mcp/tools.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/mcp.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/mcp-deploy-tools.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-route.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server MCP

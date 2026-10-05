@@ -1,30 +1,29 @@
 ---
 id: 5b0fea72-dbb8-4299-a54f-dc16486df1ae
-title: Extension Identity Component
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
+title: "Extension Identity Component"
+domain: adtoolkit://cookbook/workspace/extensions/manifest/extension-identity-component
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Denylist predicate deciding whether a string from an extension manifest is
-  safe to splice as one path or URL component.
+summary: "Denylist predicate deciding whether a string from an extension manifest is safe to splice as one path or URL component."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- path-safety
-- input-validation
+  - extension-host
+  - path-safety
+  - input-validation
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Identity Component

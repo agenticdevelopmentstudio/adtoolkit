@@ -1,13 +1,13 @@
 ---
 id: 7f122a27-5b49-4f03-9439-1152249bc08f
 title: "Focused Topic Detail (FTD) View"
-domain: agenticdevelopertoolkit://cookbook/ui/navigation/focused-topic-detail
+domain: adtoolkit://cookbook/ui/navigation/focused-topic-detail
 type: recipe
-version: 1.2.2
+version: 1.2.5
 status: accepted
 language: en
 created: 2026-06-26
-modified: 2026-09-27
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
@@ -30,6 +30,8 @@ ingredients:
 depends-on: []
 related: []
 references: []
+approved-by: ""
+approved-date: ""
 ---
 
 # Focused Topic Detail (FTD) View
@@ -215,6 +217,11 @@ Color only via `apt-*` tokens (`apt-red` destructive, `apt-border`, `apt-text-mu
 
 | Platform | Path |
 |----------|------|
+| web | `packages/web/packages/ui/src/blocks/focused-topic-detail.tsx` |
+| web | `packages/web/packages/ui/src/blocks/topic-detail.tsx` |
+| web | `packages/web/packages/ui/src/blocks/popup-menu.tsx` |
+| web | `packages/web/packages/ui/src/blocks/resource-card.tsx` |
+| web | `packages/web/packages/ui/src/blocks/section-header.tsx` |
 
 ## Design Decisions
 
@@ -238,12 +245,12 @@ Color only via `apt-*` tokens (`apt-red` destructive, `apt-border`, `apt-text-mu
   **Rationale**: A layout preference set once should survive navigation and reload rather than reset to the default on every visit.
   **Approved**: pending
 
-## Instantiations
+### Instantiations
 
 Concrete bindings for each route that composes this contract. The general
 contract above always wins on conflict.
 
-### Ecosystems
+#### Ecosystems
 
 The first concrete FTD instantiation. Parameter bindings are given inline in
 the Overview's Terminology table.
@@ -283,7 +290,7 @@ keeps ignoring `identifier` (it is server-managed).
   **Rationale**: Buckets are real ecosystem child data; "Schemas" no longer matches what the topic manages, and the delete-warning child-entities copy ("…applications, buckets, and users") already reflects this name.
   **Approved**: pending
 
-### Teams / Persona APIs
+#### Teams / Persona APIs
 
 Both compose the shared `ResourceTab` orchestrator. The entity's own pane
 (`Team` / `Service`) is the first topic; `paneOwnedActions` keeps the action
@@ -298,6 +305,8 @@ cache as Ecosystems.
 
 | Check | Status | Category |
 |---|---|---|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [semantic-markup](agenticdevelopercookbook://compliance/accessibility#semantic-markup) | passed | Accessibility |
 | [focus-management](agenticdevelopercookbook://compliance/accessibility#focus-management) | passed | Accessibility |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
@@ -327,10 +336,15 @@ Process: the repo's pre-commit gate (`check_ui.py`, typecheck, lint,
 `/code-review`) runs before every commit on this surface; it is a workflow
 step, not a compliance check.
 
+Separation-of-concerns is passed: `focused-topic-detail.tsx` composes only existing blocks (`PopupMenu`, `TopicDetail`, `SectionHeader`, `ResourceCard`) and leaves the focused pane's content to the consumer, and the destructive flow lives in the separate `DeleteEntitySection` block. Unit-test-coverage is partial: `deleteEntitySection.test.tsx` and the `topicDetail*.test.tsx` files in `packages/web/packages/ui/src/__tests__` cover the delete flow and the topic-detail block it composes, but no test file imports the focused-topic-detail block itself, so the popup/All-view/card-toggle composition is untested.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.2.5 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |
+| 1.2.4 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |
+| 1.2.3 | 2026-10-04 | Mike Fullerton | Filled Reference Implementations and Compliance rows |
 | 1.2.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.2.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-23 | Mike Fullerton | Lint pass: renamed the remaining verb-phrase requirements to subject-only names and updated every citation; split the Ecosystems/Teams instantiation values out of the general contract into a new Instantiations section; reworded Platform Notes and Design Decisions from migration-plan phrasing to a steady-state contract (Design Decisions reformatted to Decision/Rationale/Approved) and gave Platform Notes real per-platform APIs; fixed the `{basePath}` route templates that doubled a leading slash; clarified that `{id}`/`lastId` are the rdid and stated the post-rename deep-link fallback; replaced hardcoded `adh:`/hub-path/example values with `{{app_prefix}}`/`{{org_package}}` placeholders outside the instantiation appendix; promoted four requirements (rename-unknown-rdid-404, identifier-availability-check, warning-copy-article-agreement, explicit-all-precedence) out of Edge Cases/Design Decisions; added test vectors for every previously-uncovered requirement plus a delete-error vector; moved the concrete toggle ARIA rule into the accessibility requirement; explained the identifier regex's segment asymmetry and the always-lowercase rdid; standardized the shared-block naming (`FocusedTopicDetail` in `@agenticdevelopertoolkit/ui/blocks`, `DeleteEntitySection` in `@agentic-toolkit/adh-ui/blocks`); rebuilt Compliance as real linked catalog checks with a process note replacing the pre-commit-gate row. |

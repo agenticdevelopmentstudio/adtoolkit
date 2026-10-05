@@ -1,31 +1,30 @@
 ---
 id: 9ab21212-c31d-4a4a-b563-2a2666eec03d
-title: Status Web URL Host
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/url
+title: "Status Web URL Host"
+domain: adtoolkit://cookbook/status/dashboard/logic/url
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: hostOf extracts the WHATWG URL host from a string and returns the input unchanged
-  when it does not parse as an absolute URL
+summary: "hostOf extracts the WHATWG URL host from a string and returns the input unchanged when it does not parse as an absolute URL"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/session-client
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/row-detail
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/stale-monitors
+  - adtoolkit://cookbook/status/dashboard/session-client
+  - adtoolkit://cookbook/status/dashboard/logic/row-detail
+  - adtoolkit://cookbook/status/dashboard/logic/stale-monitors
 references:
-- https://url.spec.whatwg.org/#dom-url-host
-approved-by: ''
-approved-date: ''
+  - https://url.spec.whatwg.org/#dom-url-host
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Web URL Host
@@ -194,4 +193,4 @@ Not applicable: `hostOf` has no logging calls. The caught parse error is turned 
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from `status-web/src/lib/url.ts` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `status-web/src/lib/url.ts` |

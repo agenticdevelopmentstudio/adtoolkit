@@ -1,0 +1,3 @@
+
+# Extension Manifest Localization
+

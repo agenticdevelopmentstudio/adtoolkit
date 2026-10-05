@@ -1,33 +1,31 @@
 ---
 id: 5e9843b1-cc8d-4048-97e7-21991bf5830c
-title: Horizontal Stack View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/layout/horizontal-stack-view
+title: "Horizontal Stack View"
+domain: adtoolkit://cookbook/ui/settings/layout/horizontal-stack-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A thin wrapper view that arranges a row of sibling views left-to-right
-  in a settings layout, pinned flush to all four edges, forwarding added-view
-  calls to its internal horizontal stack.
+summary: "A thin wrapper view that arranges a row of sibling views left-to-right in a settings layout, pinned flush to all four edges, forwarding added-view calls to its internal horizontal stack."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ui
-- stack-view
-- settings
+  - ui
+  - stack-view
+  - settings
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/vertical-stack-view
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/divider-view
+  - adtoolkit://cookbook/ui/settings/layout/vertical-stack-view
+  - adtoolkit://cookbook/ui/settings/layout/divider-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Horizontal Stack View
@@ -46,8 +44,7 @@ only other public operation adds a view to the arranged row.
 
 ## Behavioral Requirements
 
-- **confines-to-ui-thread**: The component MUST be usable only on the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **arranges-children-horizontally**: The component MUST arrange its
   children in a horizontal row.
 - **group-spacing**: The component MUST set the spacing between arranged
@@ -118,7 +115,7 @@ only other public operation adds a view to the arranged row.
 
 | ID | Requirements | Input | Expected |
 |----|-------------|-------|----------|
-| horizontal-stack-view-001 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (compile-time on platforms with static isolation checking such as Swift's `@MainActor`, runtime-checked otherwise). This is a static/compile-time check on such platforms, not one a runtime conformance suite executes. |
+| horizontal-stack-view-001 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (at build time or by a runtime check); the component's state is unchanged. This is a static/compile-time check on such platforms, not one a runtime conformance suite executes. |
 | horizontal-stack-view-003 | arranges-children-horizontally | Inspect the internal stack view of any initialized component | Its orientation is horizontal |
 | horizontal-stack-view-004 | group-spacing | Inspect the internal stack view of any initialized component | Its spacing equals the standard group-spacing value (20.0pt) |
 | horizontal-stack-view-006 | adds-stack-view-as-subview | Any initialized component | The internal stack view is the component's only child |
@@ -233,6 +230,7 @@ Not applicable: the source contains no logging calls.
               HorizontalAlignment="Stretch"
               VerticalAlignment="Stretch"/>
   ```
+- **confines-to-ui-thread**: On Apple platforms the type is `@MainActor`-isolated, so the compiler enforces the rule.
 
 ## Reference Implementations
 
@@ -242,7 +240,7 @@ Not applicable: the source contains no logging calls.
 
 ## Design Decisions
 
-**Decision** (AppKit): `init(frame frameRect: NSRect)` discards its
+**Decision**: (AppKit) `init(frame frameRect: NSRect)` discards its
 `frameRect` argument and always calls `super.init(frame: .zero)`.
 **Rationale**: The component positions itself entirely through Auto Layout (`translatesAutoresizingMaskIntoConstraints = false` plus the activated edge-pinning constraints). The inherited frame-based initializer exists only so the type can still be constructed through it at all; the source ignores the caller-supplied rect rather than reconciling it with the Auto Layout constraints that take over immediately afterward. This is the same pattern used by the sibling `VerticalStackView` and `DividerView`.
 **Approved**: pending
@@ -252,7 +250,7 @@ point; no counterpart for removing an arranged child is exposed.
 **Rationale**: Not explained in source comments. This is consistent with the ComposableSettingsWindow pattern of assembling a settings row or panel once, at construction time, rather than mutating it afterward. Recorded here as a known limitation of the public API rather than an intended, documented contract, since nothing in the source states it was deliberate.
 **Approved**: pending
 
-**Decision** (AppKit): `stackView` is declared `private`, unlike the
+**Decision**: (AppKit) `stackView` is declared `private`, unlike the
 otherwise structurally identical `VerticalStackView`, whose `stackView`
 property is `public`.
 **Rationale**: Not explained in source comments. This is a genuine asymmetry between the two sibling wrappers: a caller of `HorizontalStackView` cannot reach the internal `NSStackView` to reconfigure it (e.g. alignment or distribution) or to remove an arranged subview directly, while a caller of `VerticalStackView` can. Recorded here rather than smoothed over, since the two types would otherwise read as interchangeable except for orientation.
@@ -279,3 +277,5 @@ Notes: separation-of-concerns passes trivially because `HorizontalStackView` con
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Compliance section rewritten as linked checks against the compliance catalog |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/layout/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |

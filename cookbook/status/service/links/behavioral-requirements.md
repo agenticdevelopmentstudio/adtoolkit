@@ -1,0 +1,17 @@
+
+- **platform-meta-interface**: The module exports `PlatformMeta` interface carrying optional platform-specific identifiers (`railwayProjectId`, `vercelTeamId`, `cloudflareAccountId`) needed to construct dashboard URLs; all fields are nullable.
+- **site-links-interface**: The module exports `SiteLinks` interface with `live` and `platform` fields, both nullable strings representing absolute URLs.
+- **live-url-normalization**: `liveUrl()` MUST accept a string parameter representing either an absolute URL with scheme or a bare host. MUST prepend `https://` when the input lacks a URL scheme (detected by RFC 3986 scheme pattern `^[a-z][a-z0-9+.-]*://`); MUST return the input unchanged if a scheme is present.
+- **live-url-idempotent**: `liveUrl()` MUST be idempotent: calling it twice on its own output MUST return the same result.
+- **dashboard-url-vercel**: When platform is canonicalized to `vercel`, `platformDashboardUrl()` MUST return `https://vercel.com/{vercelTeamId}/{projectName}` if `meta.vercelTeamId` is present; MUST return `null` if `vercelTeamId` is missing or falsy.
+- **dashboard-url-railway**: When platform is canonicalized to `railway`, `platformDashboardUrl()` MUST return `https://railway.app/project/{railwayProjectId}` if `meta.railwayProjectId` is present; MUST return `null` if `railwayProjectId` is missing or falsy.
+- **dashboard-url-cloudflare**: When platform is canonicalized to `cloudflare`, `platformDashboardUrl()` MUST return `https://dash.cloudflare.com/{cloudflareAccountId}/workers/services/view/{projectName}` if `meta.cloudflareAccountId` is present; MUST return `null` if `cloudflareAccountId` is missing or falsy.
+- **dashboard-url-platform-canonicalization**: `platformDashboardUrl()` MUST canonicalize the platform parameter using `platformCanon()` from the monitor submodule before evaluating the switch; `cloudflare-pages` and `cloudflare` MUST be treated as equivalent.
+- **dashboard-url-unknown-platform**: When the canonicalized platform does not match `vercel`, `railway`, or `cloudflare`, `platformDashboardUrl()` MUST return `null`.
+- **dashboard-url-project-name-required**: `platformDashboardUrl()` MUST return `null` when `projectName` is not provided (null or falsy), regardless of platform or credentials.
+- **project-name-url-encoding**: In `platformDashboardUrl()`, `projectName` MUST be URL-encoded with `encodeURIComponent()` in the Vercel and Cloudflare URLs; the Railway URL does not contain the project name (it uses `meta.railwayProjectId`, inserted unencoded), though a falsy `projectName` still yields `null` for Railway too.
+- **site-links-production-endpoint**: `siteLinks()` MUST select the production endpoint by matching `environment === 'production'` in the endpoints array; MUST fall back to the first endpoint (`endpoints[0]`) if no production endpoint is found.
+- **site-links-live-url**: In `siteLinks()`, the `live` field MUST be `liveUrl(prod.url)` for the selected endpoint (production, else first); MUST be `null` only when the endpoints array is empty. `url` is a required string on the endpoint type, so there is no null-url branch — an empty `url` yields `"https://"`.
+- **site-links-platform-dashboard**: In `siteLinks()`, the `platform` field MUST be the result of `platformDashboardUrl(site.platform, site.projectName, meta)`.
+- **default-meta-parameter**: `platformDashboardUrl()` and `siteLinks()` MUST accept an optional `meta` parameter; when not provided, both functions MUST treat it as an empty object `{}`.
+

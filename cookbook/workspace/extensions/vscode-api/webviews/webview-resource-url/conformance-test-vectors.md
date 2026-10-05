@@ -1,0 +1,18 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| wru-001 | resource-url-naming-only, percent-encoding-round-trip, candidate-canonicalization, containment-delegation, first-matching-root-wins | Name the resource URL for the file `root/"media/style.css"` with panel identifier `"panel-1"`, then decide that URL against panel `"panel-1"` and resource roots `[root]` | The file outcome for `root/"media/style.css"`, canonicalized |
+| wru-002 | percent-encoding-round-trip | Name and then decide the same round trip for the relative paths `"media/my style.css"`, `"media/a#b.css"`, `"media/100%.css"`, and `"média/ü.css"` | each round-trips to the file outcome for that same file |
+| wru-003 | host-document-url, host-document-detection | Build the panel's host-document URL for panel `"panel-1"`, then decide that URL against panel `"panel-1"` and resource roots `[]` | The host-document outcome |
+| wru-004 | host-document-detection, empty-roots-refuses-every-file | Decide the panel's own host-document URL (for panel `"panel-1"`) against panel `"panel-1"` and resource roots `[]` | The host-document outcome, unaffected by an empty set of resource roots |
+| wru-005 | empty-roots-refuses-every-file | Decide the resource URL for the file `root/"style.css"` (named for panel `"panel-1"`) against panel `"panel-1"` and resource roots `[]` | Fails with a resource-url decision failure |
+| wru-006 | containment-delegation, containment-failure-payload | a file inside `elsewhere` looked up with resource roots `[allowed]`, where `elsewhere` is not `allowed` | Fails with a resource-url decision failure |
+| wru-007 | containment-delegation, first-matching-root-wins | a file inside `second`, looked up with resource roots `[first, second]` | The file outcome for that file, allowed because the second root contains it |
+| wru-008 | candidate-canonicalization, containment-delegation | the resource URL named for `root/"../../../etc/passwd"` (panel `"panel-1"`), decided against resource roots `[root]` | Fails with a resource-url decision failure |
+| wru-009 | containment-delegation | a file inside a directory named `"ext-evil"`, looked up against resource roots `[<the sibling directory "ext">]` | Fails with a resource-url decision failure, even though `"ext-evil"` has `"ext"` as a string prefix |
+| wru-010 | candidate-canonicalization, containment-delegation | the resource URL named for `root` itself (panel `"panel-1"`), decided against resource roots `[root]` | Fails with a resource-url decision failure; the root is not contained in itself |
+| wru-011 | panel-validation-second | a URL built for panel identifier `"panel-2"`, decided against panel `"panel-1"` and resource roots `[root]` | Fails with an unexpected-panel failure carrying declared `"panel-2"`, expected `"panel-1"` |
+| wru-012 | scheme-validation-first | decide the raw URLs `"file:///etc/passwd"`, `"https://example.com/x.js"`, and `"data:text/html,<b>x</b>"`, each against a panel identifier and resource roots | each fails with a resource-url decision failure |
+| wru-013 | scheme-constant | Read this component's scheme constant | equals `"agentic-webview"`; is not one of `http`, `https`, `file`, `data`, `blob`, `about`, `ws`, `wss`, `ftp`, `javascript`; starts with a letter; and every character is a lowercase letter, digit, `+`, `-`, or `.` |
+| wru-014 | stateless-re-derivation, safe-for-concurrent-access | Decide many URLs concurrently, from many independent execution contexts, with different URLs and resource-root arrays | every call returns the outcome its own arguments imply, with no crash and no result influenced by another concurrent call |
+

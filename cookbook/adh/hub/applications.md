@@ -1,43 +1,36 @@
 ---
 id: 519d4419-8f80-478d-aa08-912b66bbe5cf
-title: Hub Domain Applications
-domain: agenticdevelopertoolkit://cookbook/adh/hub/applications
+title: "Hub Domain Applications"
+domain: adtoolkit://cookbook/adh/hub/applications
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The client-side contract for the Hub''s Applications feature: CRUD/rename/grants/tokens
-  operations, wire and domain data types for consumer kind and CRUD permission grants,
-  and the feature''s rail navigation, identifier-rename/grant-rehoming sequence, and
-  mint/reveal-once/revoke token lifecycle.'
+summary: "The client-side contract for the Hub's Applications feature: CRUD/rename/grants/tokens operations, wire and domain data types for consumer kind and CRUD permission grants, and the feature's rail navigation, identifier-rename/grant-rehoming sequence, and mint/reveal-once/revoke token lifecycle."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- hub
-- applications
-- access-control
-- api-tokens
+  - hub
+  - applications
+  - access-control
+  - api-tokens
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client
+  - adtoolkit://cookbook/adh/hub/security/authentication-client
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Applications/ApplicationsDataSource.swift
-  (apple)
-- packages/apple/AgenticToolkit/Hub/Features/Applications/ApplicationsModels.swift
-  (apple)
-- packages/apple/AgenticToolkit/Hub/Features/Applications/ApplicationsTopic.swift
-  (apple)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/ApplicationsTopicTests.swift
-  (apple)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Hub/Features/Applications/ApplicationsDataSource.swift (apple)
+  - packages/apple/AgenticToolkit/Hub/Features/Applications/ApplicationsModels.swift (apple)
+  - packages/apple/AgenticToolkit/Hub/Features/Applications/ApplicationsTopic.swift (apple)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/ApplicationsTopicTests.swift (apple)
+approved-by: ""
+approved-date: ""
 ---
 
 # Hub Domain Applications
@@ -56,7 +49,7 @@ to label and enumerate the buckets/tables a grant can target. Every thrown error
 normalized to the shared error type before it reaches a caller, and every token
 secret this component ever holds is a transient, reveal-once-then-drop entry in an
 in-memory dictionary — the same pattern the sibling Authentication feature
-(`agenticdevelopertoolkit://cookbook/adh/hub/security/authentication-client`) uses for its own
+(`adtoolkit://cookbook/adh/hub/security/authentication-client`) uses for its own
 API and storage tokens.
 
 ## Behavioral Requirements
@@ -261,15 +254,12 @@ API and storage tokens.
   `level == "table"` — `"row"` is rejected before it can be saved
   (**table-grant-row-level-rejected**) and there is no other path that writes a
   table grant.
-- **grants-write-concurrency**: NEEDS REVIEW: Not implemented. The grant-rewrite
-  logic and the "Add schema" save action both read the application's full list of
-  schema grants, mutate an in-memory copy, and write the whole array back with no
-  version token, ETag, or compare-and-swap; two overlapping writers (two devices,
-  tabs, or concurrent form submissions against the same application) can each read
-  the same snapshot and the second set-schema-grants call silently discards the
-  first writer's change. Settling this needs either a server-side optimistic-lock
-  primitive this contract does not expose, or evidence that the backend itself
-  serializes set-schema-grants calls per application (neither is currently known).
+- **grants-write-last-writer-wins**: the grant-rewrite logic and the "Add schema" save action
+  both read the application's full list of schema grants, mutate an in-memory copy, and write the
+  whole array back with no version token, entity tag, or compare-and-swap; two overlapping writers
+  (two devices, tabs, or concurrent form submissions against the same application) MAY each read
+  the same snapshot, and the second set-schema-grants call then silently discards the first
+  writer's change.
 
 **Access tokens**
 
@@ -376,11 +366,11 @@ rail-navigation logic, not a visual component.
   application renamed and re-homed but with its display name/consumer kind
   unchanged; the grant-write ordering acknowledges there is "no compensating write"
   for the grant step specifically, and the same is true, undocumented, for the
-  trailing update call (MUST NOT roll back — matches the implementation; NEEDS
-  REVIEW below covers the concurrent-writer variant, this line covers the
+  trailing update call (MUST NOT roll back — matches the implementation; the
+  grants-write-last-writer-wins requirement covers the concurrent-writer variant, this line covers the
   single-writer partial-failure sequence).
-- **Concurrent schema-grant writers**: see the open question on
-  grants-write-concurrency — two overlapping set-schema-grants calls for the same
+- **Concurrent schema-grant writers**: see
+  grants-write-last-writer-wins — two overlapping set-schema-grants calls for the same
   application MUST NOT be assumed to compose; the last writer's full-array write
   wins and silently discards the other's change (SHOULD be addressed before this
   component is relied on for multi-writer scenarios; currently undefined).
@@ -633,11 +623,11 @@ presentation layer drives it.
 **Decision**: CRUD-permissions, table-grant, and schema-grant values are kept out of wire
 serialization entirely, with the wire shape's translation left to an adapter outside these domain
 types.
-**Platform**: AppKit/UIKit.
 **Rationale**: this makes it impossible to serialize these domain
 types onto the API by accident — a caller reaching for Swift's `JSONEncoder` on a `SchemaGrant`
 fails to compile rather than silently producing the wrong wire shape (`{schemaId, crud, tables:
 [{tableId, crud}]}` is not what the struct's stored properties would naively encode to).
+Platform scope: AppKit/UIKit.
 **Approved**: pending
 
 **Decision**: a table's permissions are rejected outright (not clamped or silently ignored) when
@@ -651,12 +641,18 @@ narrower grant than requested only by inspecting it afterward.
 
 **Decision**: schema and table grant edits are persisted by rewriting the application's entire
 list of schema grants on every save, rather than a per-field or per-grant PATCH.
-**Platform**: AppKit/UIKit.
 **Rationale**: this keeps the write path uniform — one shape of call
 (`setSchemaGrants(applicationID:_:)`) handles add, edit, and remove for both schema- and
-table-level grants — at the cost of the concurrency exposure covered by the open question on
-grants-write-concurrency; it is not documented whether this tradeoff was made knowingly or
+table-level grants — at the cost of the concurrency exposure covered by the
+grants-write-last-writer-wins requirement; it is not documented whether this tradeoff was made knowingly or
 because the backend has historically been treated as single-writer-per-application.
+Platform scope: AppKit/UIKit.
+**Approved**: pending
+
+**Decision**: schema-grant writes are last-writer-wins; the component reads the full grant list, mutates a copy, and writes the whole array back with no optimistic-lock token.
+
+**Rationale**: this contract exposes no version token or compare-and-swap primitive, and whether the backend serializes set-schema-grants calls per application is not known; closing the gap would take a server-side optimistic-lock primitive surfaced through this contract.
+
 **Approved**: pending
 
 ## Compliance
@@ -688,13 +684,15 @@ is a single `try await` that throws straight through to the caller on any failur
 not. `data-integrity` is `partial`: individual writes are internally consistent (each
 `setSchemaGrants` call replaces the array atomically from the caller's point of view, and
 `table-grant-ceiling-enforcement` validates cross-field consistency before a save), but see the
-open question on grants-write-concurrency — the whole-list read-modify-write pattern has no
+grants-write-last-writer-wins requirement — the whole-list read-modify-write pattern has no
 protection against two overlapping writers silently discarding one another's changes.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Design Decisions keep the Decision / Rationale / Approved triple; each decision's platform line is folded into its rationale. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolve open-question markers against the code; restate unimplemented behavior as current behavior with pending Decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,44 +1,42 @@
 ---
 id: eb7e9eeb-86f3-4053-827a-ea259833c6ad
-title: Dashboard API
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/api
+title: "Dashboard API"
+domain: adtoolkit://cookbook/status/dashboard/api
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The status dashboard's same-origin JSON/SSE port to its backend, the
-  shared-client wiring consumers use to reach it, and the monitored-sites and
-  peers configuration-CRUD clients built on it.
+summary: "The status dashboard's same-origin JSON/SSE port to its backend, the shared-client wiring consumers use to reach it, and the monitored-sites and peers configuration-CRUD clients built on it."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- status
-- api-client
-- config
-- peers
-- monitoring
+  - status
+  - api-client
+  - config
+  - peers
+  - monitoring
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
-- agenticdevelopercookbook://guidelines/implementing/security/token-handling
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/security/token-handling
 related:
-- agenticdevelopertoolkit://cookbook/status/service/routes
-- agenticdevelopertoolkit://cookbook/status/service/peers
-- agenticdevelopertoolkit://cookbook/status/service/monitor/endpoint-kinds
+  - adtoolkit://cookbook/status/service/routes
+  - adtoolkit://cookbook/status/service/peers
+  - adtoolkit://cookbook/status/service/monitor/endpoint-kinds
 references:
-- packages/web/packages/status-web/src/api/client.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/api/monitored-sites.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/api/monitored-sites.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/api/peers.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/lib/endpoint-kinds.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-web/src/api/client.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/api/monitored-sites.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/api/monitored-sites.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/api/peers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/lib/endpoint-kinds.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Dashboard API

@@ -1,40 +1,39 @@
 ---
 id: 130fb0f2-e3a0-452a-bf7d-e49dbb56843e
-title: Monitor Issues
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/issues
+title: "Monitor Issues"
+domain: adtoolkit://cookbook/status/service/monitor/issues
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Records the board's derived verdict into the durable issues ledger — opens,
-  refreshes, and resolves rows, repairs duplicate open rows, and fail-softs per target.
+summary: "Records the board's derived verdict into the durable issues ledger — opens, refreshes, and resolves rows, repairs duplicate open rows, and fail-softs per target."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- ledger
-- issues
-- server
+  - monitor
+  - ledger
+  - issues
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/data/constraints-and-validation
-- agenticdevelopercookbook://guidelines/implementing/observability/logging
+  - agenticdevelopercookbook://guidelines/implementing/data/constraints-and-validation
+  - agenticdevelopercookbook://guidelines/implementing/observability/logging
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
-- agenticdevelopertoolkit://cookbook/status/service/monitor/issue-sources
-- agenticdevelopertoolkit://cookbook/status/service/board
-- agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner
-- agenticdevelopertoolkit://cookbook/status/service/storage/libsql
+  - adtoolkit://cookbook/status/service/monitor/alerts
+  - adtoolkit://cookbook/status/service/monitor/issue-sources
+  - adtoolkit://cookbook/status/service/board
+  - adtoolkit://cookbook/status/service/monitor/cycle-runner
+  - adtoolkit://cookbook/status/service/storage/libsql
 references:
-- packages/web/packages/status-server/src/monitor/issues.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/issues.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/issues.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/issues.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Monitor Issues
@@ -100,11 +99,11 @@ The module exports exactly two operations. Reading the ledger reads every curren
 ### Determinism
 
 - **reapply-is-idempotent**: Invoking the apply operation twice in succession with an unchanged board (the same problems and monitored targets) MUST return an opened count of `0` on the second call and MUST leave the ledger's row count unchanged, because the target already has a matching open row that the second call only refreshes.
-- **no-injected-clock**: Neither the apply operation nor the ledger read MUST accept a caller-supplied clock parameter; every timestamp either operation's underlying storage primitives write MUST come from that primitive's own current-time reading at the moment it runs. The rule requiring an injectable clock applies to the board-derivation logic, which must be pure for the regression suite — this operation is the opposite kind, one that exists to write rows, and giving it a caller-supplied time it cannot hand to any of its three primitives would document a guarantee it does not make.
+- **no-injected-clock**: The apply operation and the ledger read MUST NOT accept a caller-supplied clock parameter; every timestamp either operation's underlying storage primitives write MUST come from that primitive's own current-time reading at the moment it runs. The rule requiring an injectable clock applies to the board-derivation logic, which must be pure for the regression suite — this operation is the opposite kind, one that exists to write rows, and giving it a caller-supplied time it cannot hand to any of its three primitives would document a guarantee it does not make.
 
 ### Concurrency
 
-- **concurrent-write-ordering**: NEEDS REVIEW: Not implemented in source. The open operation's insert is guarded against a concurrent race by the database's partial unique index via an insert-or-do-nothing guarantee, but the update and resolve primitives carry no equivalent guard — no compare-and-swap, version check, or transaction ties a target's read (via the ledger read) to its later write. The board-reconciliation operation (this operation's sole caller) is documented as running from both the monitor's own isolated execution context and several concurrent call sites against the same underlying storage, so two apply-operation invocations racing on the same target's open row are a real possibility, not a hypothetical one. What happens when they do — whether the second write's plain last-write-wins overwrite of the first is acceptable (both are honest projections of the board at each caller's own read time) or needs an optimistic-lock/transaction — is not stated anywhere in this module or its callers. Settled by confirming with the status-server maintainers whether the board-reconciliation operation's call sites are expected to genuinely overlap in production traffic.
+- **concurrent-write-ordering**: The open operation's insert MUST be guarded against concurrent races by the database's partial unique index (insert-or-do-nothing). The update and resolve primitives carry no equivalent guard: no compare-and-swap, version check or transaction ties a target's read to its later write, so overlapping board reconciliations on the same target's open row resolve by last write wins.
 
 ## Appearance
 
@@ -233,6 +232,10 @@ A successful open, update, or recovered/unmonitored resolve produces no log outp
   **Rationale**: the source's own extended comment weighs both alternatives explicitly and rejects them — a data migration "buys one field, one time, and owes a correctness argument per family," and one-shot alert suppression "can only ever be exercised once, and whose failure mode is swallowing a real page." Because an old-spelled target is absent from the new `monitoredTargets`, it closes silently as `unmonitored` (correct — no recovery was observed), and the re-derived target then opens fresh and alerts unconditionally (`open-alerts-unconditionally`) — a one-time, expected burst on the deploy that ships this change, not corruption. The resolved-row environment staleness is self-clearing within `ACTIVITY_WINDOW_MS` (24h) because only open rows are refreshed by `updateIssue`.
   **Approved**: pending
 
+**Decision**: Update and resolve of an issue row are unguarded read-then-write sequences; concurrent reconciliations are last-write-wins.
+**Rationale**: It stands today because both writes are honest projections of the board at each caller's read time. Closing it needs confirmation from the status-server maintainers that the reconciliation call sites genuinely overlap in production, and then an optimistic lock or transaction plus a test.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -250,6 +253,7 @@ A successful open, update, or recovered/unmonitored resolve produces no log outp
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved concurrent-write-ordering marker; restored inverted MUST NOT on no-injected-clock |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/service/monitor/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

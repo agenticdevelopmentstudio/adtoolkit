@@ -1,57 +1,47 @@
 ---
 id: cb25bd84-9a11-4070-8b3c-f178cff76068
-title: JavaScript Value Bridge
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/host/js-value-bridge
+title: "JavaScript Value Bridge"
+domain: adtoolkit://cookbook/workspace/extensions/host/js-value-bridge
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Shared JavaScript value constructions and Promise-rejection builders every
-  vscode-namespace adaptor in the extension host uses instead of its own copy.
+summary: "Shared JavaScript value constructions and Promise-rejection builders every vscode-namespace adaptor in the extension host uses instead of its own copy."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- bridge
+  - extension-host
+  - vscode-api
+  - bridge
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-event
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-presenting
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-status-bar-presenting
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-presenting
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
+  - adtoolkit://cookbook/workspace/extensions/host/extension-event
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-presenting
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-status-bar-presenting
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-presenting
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/webviews/extension-webview-presenting
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/JSValueBridge.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/JSValueBridgeTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWorkspace.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguageModels.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWebviews.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadTreeViews.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/JSValueBridge.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/JSValueBridgeTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWindow.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWorkspace.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadDiagnostics.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadLanguageModels.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWebviews.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadTreeViews.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # JavaScript Value Bridge

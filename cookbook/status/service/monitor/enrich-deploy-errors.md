@@ -1,45 +1,44 @@
 ---
 id: e029def6-7d5d-4e52-b565-e2a6612179bb
-title: Status Server Monitor Enrich Deploy Errors
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/enrich-deploy-errors
+title: "Status Server Monitor Enrich Deploy Errors"
+domain: adtoolkit://cookbook/status/service/monitor/enrich-deploy-errors
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Fetches and persists the provider failure reason for recent failed Vercel/Railway
-  deploys lacking one, bounded per cycle with cooldown-aware fail-soft dispatch.
+summary: "Fetches and persists the provider failure reason for recent failed Vercel/Railway deploys lacking one, bounded per cycle with cooldown-aware fail-soft dispatch."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- deploy
-- vercel
-- railway
-- rate-limiting
-- server
+  - monitor
+  - deploy
+  - vercel
+  - railway
+  - rate-limiting
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
-- agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/enrich-deploy-errors.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/fetch-railway.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/libsql/stores/deploy-store.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/conn/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/util/map-limit.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/enrich-deploy-errors.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/fetch-vercel.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/fetch-railway.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/libsql/stores/deploy-store.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/conn/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/util/map-limit.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/deploy-error-shaping.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Enrich Deploy Errors

@@ -1,54 +1,52 @@
 ---
 id: 3ea9329e-5acc-4c43-b5ce-bb8c50570104
-title: Authentication Client
-domain: agenticdevelopertoolkit://cookbook/data/services/auth/auth-client
+title: "Authentication Client"
+domain: adtoolkit://cookbook/data/services/auth/auth-client
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Headless authentication client providing bearer-token sessions with
-  single-flight refresh, SSO/central-login navigation, WebAuthn/MFA ceremonies,
-  and account-security enrollment.'
+summary: "Headless authentication client providing bearer-token sessions with single-flight refresh, SSO/central-login navigation, WebAuthn/MFA ceremonies, and account-security enrollment."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- auth
-- session
-- oauth
-- sso
-- mfa
-- webauthn
-- token-refresh
+  - auth
+  - session
+  - oauth
+  - sso
+  - mfa
+  - webauthn
+  - token-refresh
 depends-on: []
 related: []
 references:
-- packages/web/packages/auth/src/account-security.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/asBase.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/config.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/labels.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/mfa.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/refresh.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/report.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/sso.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/types.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/__tests__/client.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/__tests__/refresh.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/__tests__/report.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/__tests__/tokens.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/__tests__/link.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/__tests__/types.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/__tests__/sso.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/__tests__/silent-restore.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/auth/src/account-security.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/asBase.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/config.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/labels.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/mfa.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/refresh.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/report.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/sso.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/tokens.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/__tests__/client.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/__tests__/refresh.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/__tests__/report.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/__tests__/tokens.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/__tests__/link.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/__tests__/types.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/__tests__/sso.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/__tests__/silent-restore.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Authentication Client
@@ -1044,6 +1042,8 @@ consistency.
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | passed | Privacy and Data |
 | [no-pii-in-logs](agenticdevelopercookbook://compliance/privacy-and-data#no-pii-in-logs) | passed | Privacy and Data |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 `secure-storage` is **partial**: the refresh token is deliberately never
 persisted client-side and the CSRF nonce/return-to path live in
@@ -1070,10 +1070,13 @@ scalar-only context, never a request body or token. `no-hardcoded-strings`
 parameter anywhere in this component (see Localization) — this is a plain,
 honestly-reported gap in the source, not a hidden one.
 
+`separation-of-concerns` passes because each of the eleven source files owns one concern with no overlap — `tokens.ts` token storage, `refresh.ts` the refresh single-flight, `sso.ts` SSO hint and return-to handling, `report.ts` the telemetry sink, `client.ts` the HTTP calls, `mfa.ts` and `account-security.ts` their endpoint families, `config.ts`, `labels.ts` and `types.ts` configuration, copy and shapes. `unit-test-coverage` is partial because `client.test.ts`, `refresh.test.ts`, `sso.test.ts`, `tokens.test.ts`, `report.test.ts`, `silent-restore.test.ts`, `link.test.ts` and `types.test.ts` in the auth package's `__tests__` directory cover the core flows, but `mfa.ts`, `account-security.ts` and `asBase.ts` have no dedicated test file.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Cite separation-of-concerns and unit-test-coverage in Compliance. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to data/services/auth/. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |

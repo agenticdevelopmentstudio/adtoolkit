@@ -1,35 +1,34 @@
 ---
 id: d76fe59c-9633-4d9f-82c7-4091c5e7f54e
-title: Row Detail
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/row-detail
+title: "Row Detail"
+domain: adtoolkit://cookbook/status/dashboard/logic/row-detail
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure mapping from a status-board row to the labeled row detail the details
-  pane renders, plus its plaintext serialization for copy
+summary: "Pure mapping from a status-board row to the labeled row detail the details pane renders, plus its plaintext serialization for copy"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/deploy-display
+  - adtoolkit://cookbook/status/dashboard/logic/deploy-display
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Row Detail
 
 ## Overview
 
-This logic turns one status-board row (specified in [Status Row Model](agenticdevelopertoolkit://cookbook/status/dashboard/logic/row-model)) into the fields the details pane shows for a selected row, and turns those fields into plaintext for the pane's "copy" button. Its callers are the activity panel view and the activity details view.
+This logic turns one status-board row (specified in [Status Row Model](adtoolkit://cookbook/status/dashboard/logic/row-model)) into the fields the details pane shows for a selected row, and turns those fields into plaintext for the pane's "copy" button. Its callers are the activity panel view and the activity details view.
 
 It provides one data shape and two pure functions:
 
@@ -37,13 +36,13 @@ It provides one data shape and two pure functions:
 - **The detail-building function** maps a row to a row detail. Its documented intent is that it "mirrors the row's own link derivations so the row and the details pane always agree on titles/links", and it renders the status word exactly as the server sent it.
 - **The serialization function** turns a row detail into "a clean, labeled plaintext block" so "the whole problem ... can be pasted straight into an LLM without opening the provider dashboard".
 
-This logic depends on a host-extraction helper, which returns a URL's host or the input unchanged when parsing fails, and on the platform label function specified in [Deploy Display](agenticdevelopertoolkit://cookbook/status/dashboard/logic/deploy-display). It has no state, no I/O and no side effects.
+This logic depends on a host-extraction helper, which returns a URL's host or the input unchanged when parsing fails, and on the platform label function specified in [Deploy Display](adtoolkit://cookbook/status/dashboard/logic/deploy-display). It has no state, no I/O and no side effects.
 
 ## Behavioral Requirements
 
 ### Data shapes
 
-- **row-input-shape**: The detail-building function MUST accept a row with these fields (named as in [Status Row Model](agenticdevelopertoolkit://cookbook/status/dashboard/logic/row-model)): `key`, `source`, `platform` (string or absent), `name`, `environment` (string or absent), `statusWord`, `tone` (one of `good`, `bad`, `progress`, `neutral`, `stale`), `sha`, `commitUrl`, `message`, `detail`, `at` (an ISO timestamp), `sourceUrl`, `liveUrl`, plus the optional `commitBody`, `statusCode`, `responseTimeMs`, `lastCheckedAt`, `downSince`, `branch` and `errorText`.
+- **row-input-shape**: The detail-building function MUST accept a row with these fields (named as in [Status Row Model](adtoolkit://cookbook/status/dashboard/logic/row-model)): `key`, `source`, `platform` (string or absent), `name`, `environment` (string or absent), `statusWord`, `tone` (one of `good`, `bad`, `progress`, `neutral`, `stale`), `sha`, `commitUrl`, `message`, `detail`, `at` (an ISO timestamp), `sourceUrl`, `liveUrl`, plus the optional `commitBody`, `statusCode`, `responseTimeMs`, `lastCheckedAt`, `downSince`, `branch` and `errorText`.
 - **row-detail-shape**: The row detail MUST hold exactly these fields: `title` (a string), and the following, each nullable: `titleUrl`, `environment`, `platformText`, `platformLink`, `problem`, `problemLink`, `statusCode` (a number or null), `responseTime`, `branch`, `since`, `lastChecked`, `sha`, `commitSubject`, `commitUrl`, `commitBody`, `errorText`, and `deployOutcome` (one of `success`, `failed`, or null).
 - **optional-fields-null**: Every optional row field that is absent MUST become `null` in the row detail. This covers `statusCode`, `branch`, `lastChecked`, `commitBody` and `errorText`.
 
@@ -290,4 +289,4 @@ Not applicable: this logic has no logging calls and no failure path to log.
 |---------|------|--------|---------|
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/logic/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from source |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from source |

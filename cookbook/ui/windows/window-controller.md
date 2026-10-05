@@ -1,31 +1,29 @@
 ---
 id: 8ed694b4-e238-48c5-9589-81ce6aaebb32
-title: Typed Window Content
-domain: agenticdevelopertoolkit://cookbook/ui/windows/window-controller
+title: "Typed Window Content"
+domain: adtoolkit://cookbook/ui/windows/window-controller
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A generic window controller adding a typed content accessor over the
-  single-instance window base, paired with a generic wrapper that installs a
-  strongly-typed view as a content controller.
+summary: "A generic window controller adding a typed content accessor over the single-instance window base, paired with a generic wrapper that installs a strongly-typed view as a content controller."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-controller
-- view-controller
+  - window-controller
+  - view-controller
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller
+  - adtoolkit://cookbook/ui/windows/single-window-controller
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Typed Window Content
@@ -37,7 +35,7 @@ window's content instead of the untyped content controller that the
 single-instance window base's content accessor returns.
 
 The window controller is an open subclass of the single-instance window base
-(see `agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller`, which
+(see `adtoolkit://cookbook/ui/windows/single-window-controller`, which
 this recipe depends on and does not restate) that adds exactly one member: a
 computed typed accessor that downcasts the base's content to a
 caller-supplied content-controller type. It overrides nothing else and
@@ -58,7 +56,7 @@ directly, bypassing nib/resource loading entirely.
 - **inherits-single-window-controller-lifecycle**: The window controller
   MUST inherit all window build, frame-persistence, visibility-persistence,
   and HUD behavior unchanged from the single-instance window base (see
-  `agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller`), since it
+  `adtoolkit://cookbook/ui/windows/single-window-controller`), since it
   overrides no member of the base.
 - **exposes-typed-view-controller-accessor**: The window controller MUST
   expose a computed typed accessor equal to the base's content, downcast to
@@ -122,7 +120,7 @@ directly, bypassing nib/resource loading entirely.
 - Role/trait: Not applicable — the component sets no accessibility role,
   trait, or identifier of its own. The window's accessibility identifier is
   already the single-instance window base's concern (see
-  `agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller`); any
+  `adtoolkit://cookbook/ui/windows/single-window-controller`); any
   content-level role belongs to whatever content-controller or view type the
   caller supplies — a child component with its own recipe, not this one.
 - Label requirements: Not applicable — the component sets no label, for the
@@ -203,7 +201,7 @@ Not applicable: the component reads no feature-flag system of its own.
 Not applicable: the component emits no analytics events of its own.
 Window-interaction tracking is the single-instance window base's concern
 (already documented as delegated to the window manager's interaction hook in
-`agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller`).
+`adtoolkit://cookbook/ui/windows/single-window-controller`).
 
 ## Privacy
 
@@ -211,7 +209,7 @@ Window-interaction tracking is the single-instance window base's concern
 - **Storage**: None — the component persists nothing of its own; whatever
   frame/visibility persistence occurs on a window-controller instance is the
   single-instance window base's behavior, already documented in
-  `agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller`.
+  `adtoolkit://cookbook/ui/windows/single-window-controller`.
 - **Transmission**: Not applicable — the component contains no network code.
 - **Retention**: Not applicable — the component retains no data.
 
@@ -279,7 +277,7 @@ all window lifecycle, frame-persistence, visibility-persistence, and HUD
 behavior as inherited unchanged from `SingleWindowController`, cited through
 `depends-on` rather than restated.
 **Rationale**: `SingleWindowController` already has its own canonical recipe
-(`agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller`); restating its
+(`adtoolkit://cookbook/ui/windows/single-window-controller`); restating its
 requirements here would duplicate content that has its own source of truth
 and risks drift when that recipe changes, and would misrepresent this file's
 actual (much smaller) scope.
@@ -301,12 +299,16 @@ only fails at runtime when actually invoked.
 |-------|--------|----------|
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | Platform Compliance |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | Accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 Statuses rest on both types being built entirely from stock
 `NSWindowController`/`NSViewController` plumbing with no custom-drawn chrome;
 and on the file adding no accessibility identifier or label of its own while
 not obstructing whatever the caller-supplied `ViewControllerType`/`ViewType`
 provides.
+
+`separation-of-concerns` passes because `WindowController` adds only a typed `viewController` accessor over `SingleWindowController`, and `WindowContentViewController` only hosts a caller-supplied content view as its root view. `unit-test-coverage` is failed because no test file targets either type: `WindowContentViewController` is not referenced by any test, and the typed accessor is only reached indirectly through subclasses such as `RecordDetailWindowController` in `RecordDetailWindowControllerTests.swift`.
 
 ## Change History
 
@@ -317,3 +319,4 @@ provides.
 | 1.1.1 | 2026-09-23 | Mike Fullerton | Compliance: removed rows for checks absent from the cookbook catalog |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/windows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns (passed) and unit-test-coverage (failed) compliance rows. |

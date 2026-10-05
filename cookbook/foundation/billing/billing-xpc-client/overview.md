@@ -1,0 +1,3 @@
+
+Defines the service interface an app asks of billing (every read, write, count and the preferences push) and the client that implements it over a daemon connection. Reads answer nil when they failed, so a failed read is never an empty list. Writes answer the stored value or a refusal carrying the sentence the store gave. The client is generic over a small transport interface (decoded calls, refusable calls, int and data calls) so any transport, including a test double, can stand in, and so this tier depends on no daemon framework. Bodies are encoded snake_case and replies decoded snake_case with ISO-8601 dates.
+

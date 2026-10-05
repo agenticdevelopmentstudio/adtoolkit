@@ -1,0 +1,67 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "82d3214f-620d-4fab-b817-f194d93ac296",
+    "title": "SyncEngineTriggers",
+    "domain": "adtoolkit://cookbook/data/sync/sync-triggers",
+    "type": "ingredient",
+    "version": "1.0.3",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Kick sources that wake the sync engine: a fixed-interval ticker, a connectivity-restored watcher, and a host-driven manual trigger.",
+    "platforms": [
+      "swift",
+      "macos",
+      "ios"
+    ],
+    "tags": [
+      "sync",
+      "offline",
+      "engine"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/data/sync/sync-engine",
+      "adtoolkit://cookbook/data/sync/offline-sync-client"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/Sync/Triggers/PeriodicTriggerSource.swift",
+      "packages/apple/AgenticToolkit/Sync/Triggers/ConnectivityTriggerSource.swift",
+      "packages/apple/AgenticToolkit/Sync/Triggers/ManualTriggerSource.swift",
+      "packages/apple/AgenticToolkit/Sync/SyncProtocols.swift",
+      "packages/apple/AgenticToolkit/Sync/SyncEvents.swift",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncTests/TriggerSourceTests.swift"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "e15f51ce00a79e09",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

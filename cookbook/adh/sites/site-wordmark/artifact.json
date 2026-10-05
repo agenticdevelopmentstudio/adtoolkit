@@ -1,0 +1,57 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "21cbbc1c-38a0-4e7a-8ca0-06e2f29429f5",
+    "title": "Site Wordmark",
+    "domain": "adtoolkit://cookbook/adh/sites/site-wordmark",
+    "type": "ingredient",
+    "version": "1.4.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-06-26",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The compact ADH marketing-site brand wordmark: the site's full name with its trailing accent word in gold italic over an optional mono identity line.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "branding",
+      "wordmark",
+      "chrome",
+      "marketing"
+    ],
+    "depends-on": [],
+    "related": [],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "7e345a858835cf5b",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

@@ -1,31 +1,30 @@
 ---
 id: aea5e7b2-00d2-4f23-bfc5-8dc64e8d0d2a
-title: Composable Tabs Add Pane Sheet
-domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/add-pane-view
+title: "Composable Tabs Add Pane Sheet"
+domain: adtoolkit://cookbook/ui/layout/composable-tabs/add-pane-view
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A dialog behind arrange mode's Add button that lets the user choose a
-  view and a placement direction, defaulting to Right, through two separate choices.
+summary: "A dialog behind arrange mode's Add button that lets the user choose a view and a placement direction, defaulting to Right, through two separate choices."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- dialog
-- sheet
-- form-control
+  - dialog
+  - sheet
+  - form-control
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs
+  - adtoolkit://cookbook/ui/layout/composable-tabs
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Composable Tabs Add Pane Sheet
@@ -113,6 +112,7 @@ canceling dismisses without reporting anything.
 - **associates-popup-with-row-caption**: Each choice list SHOULD be
   associated with its row's caption ("Add:" / "Where:") so a screen reader
   announces the caption together with the choice's current value.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -209,6 +209,7 @@ canceling dismisses without reporting anything.
 | add-pane-023 | ok-button-accessibility-identifier | Inspect the OK button's accessibility identifier | Equals "composable-tabs.add-pane.ok" |
 | add-pane-024 | add-row-label-text | Inspect the Add row's label | Text reads "Add:"; alignment is right |
 | add-pane-025 | where-row-label-text | Inspect the Where row's label | Text reads "Where:"; alignment is right |
+| add-pane-026 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -387,6 +388,7 @@ this file.
   selections and raise the add-pane event only after `ShowAsync()` has
   returned and the dialog has closed, mirroring the source's
   dismiss-before-invoke ordering in the confirm action.
+- **UI-thread confinement**: `confines-to-ui-thread` — the view controller is declared `@MainActor`, so use from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -413,7 +415,7 @@ right is the least surprising default.
 
 **Decision**: Dismiss the sheet before invoking `onAdd` in the confirm
 action, rather than invoking `onAdd` first.
-**Rationale (AppKit)**: Per the source comment, `onAdd` re-parents view
+**Rationale**: (AppKit) Per the source comment, `onAdd` re-parents view
 controllers by splitting the pane; doing that while the sheet is still
 presented would leave the sheet anchored to a window whose content has
 already moved out from under it.
@@ -430,7 +432,7 @@ convention.
 
 **Decision**: Center-align the grid's rows instead of using `NSGridView`'s
 default first-baseline row alignment.
-**Rationale (AppKit)**: Per the source comment, a label baseline-aligned
+**Rationale**: (AppKit) Per the source comment, a label baseline-aligned
 against a popup sits high in it, which reads as a row that did not quite
 line up; centering both views in the row instead makes the label and popup
 look vertically aligned.
@@ -453,6 +455,8 @@ not need to reproduce a "what if Right is missing" branch.
 | [focus-management](agenticdevelopercookbook://compliance/accessibility#focus-management) | passed | accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | accessibility |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | best-practices |
 
 Keyboard-navigable passes because Cancel/OK carry the Escape/Return key
 equivalents and every other control is a stock, natively keyboard-accessible
@@ -470,6 +474,8 @@ in this file ("Add:",
 "Where:", "Left", "Right", "Above", "Below", "Cancel", "OK") is a hardcoded
 English literal with no localization key.
 
+`separation-of-concerns` passes because `ComposableTabsAddPaneViewController` only presents the choice of view to add and reports the selection; creating the pane and placing it belong to the arranging controller. `unit-test-coverage` is `failed`: no test file in the Apple test targets references `ComposableTabsAddPaneViewController`.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -480,3 +486,4 @@ English literal with no localization key.
 | 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/composable-tabs/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |

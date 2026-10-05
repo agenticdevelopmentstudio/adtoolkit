@@ -1,28 +1,27 @@
 ---
 id: 7610ef55-32c9-43b6-8a70-aaa247cc4899
-title: Board State
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/board
+title: "Board State"
+domain: adtoolkit://cookbook/status/dashboard/state/board
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The client's one source for the server-derived board, folding read staleness
-  and frozen data into a null board with a reason
+summary: "The client's one source for the server-derived board, folding read staleness and frozen data into a null board with a reason"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/api
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Board State
@@ -273,4 +272,4 @@ Not applicable: this logic contains no log calls; failures surface only through 
 |---------|------|--------|---------|
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial recipe extracted from `use-board.ts` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe extracted from `use-board.ts` |

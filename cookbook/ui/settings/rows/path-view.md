@@ -1,32 +1,30 @@
 ---
 id: c7201487-b696-43b9-a4f9-d1a9e6141f7c
-title: Path View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/path-view
+title: "Path View"
+domain: adtoolkit://cookbook/ui/settings/rows/path-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A single-line settings row that shows a filesystem path, truncated in the
-  middle, with the full path preserved for its tooltip, accessibility value, and selectable
-  text.
+summary: "A single-line settings row that shows a filesystem path, truncated in the middle, with the full path preserved for its tooltip, accessibility value, and selectable text."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- static-text
+  - settings
+  - static-text
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view
+  - adtoolkit://cookbook/ui/settings/layout/explanation-view
 references:
-- https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html
-approved-by: ''
-approved-date: ''
+  - https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html
+approved-by: ""
+approved-date: ""
 ---
 
 # Path View
@@ -37,7 +35,7 @@ The Path View is a settings row: a single label showing one filesystem
 path "as a path rather than as prose." It conforms to the settings row
 interface every settings row implements, with no requirements of its own.
 The design rationale: the sibling row
-[Explanation View](agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view)
+[Explanation View](adtoolkit://cookbook/ui/settings/layout/explanation-view)
 word-wraps, which is right for a sentence and wrong for a path — a real
 path wrapped inside a settings panel's ~134pt content column broke across
 nine hyphenated lines, long enough to push the group heading off the bottom
@@ -84,6 +82,7 @@ label is selectable so its text can be copied.
   theme's `.secondaryText` color role and `.caption` text role.
 - **conforms-to-settings-view-protocol**: The view MUST conform to the
   settings row interface.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -143,15 +142,7 @@ label is selectable so its text can be copied.
   (click-drag, double-click-word-select) across the label's full displayed
   area, which is a text-selection affordance, not a discrete tap target
   subject to a minimum size.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source.
-  `.secondaryText` is derived with only an enforced *minimum* contrast
-  ratio of 3.0 against the background, below the 4.5:1 that [WCAG 2.1 SC
-  1.4.3](https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html)
-  requires for the 11pt regular `.caption` text role this label uses (too
-  small for the relaxed 3:1 large-text ratio); whether any given theme's
-  actual resolved `secondaryText`-on-background ratio reaches 4.5:1 depends
-  on that theme's concrete foreground/background pair and cannot be
-  determined from this component's definition alone.
+- **minimum-contrast-ratio**: The component performs no contrast check of its own. The label comes from the shared value-label factory, which draws in the theme's secondary-text role at the caption text style; contrast is whatever the active theme resolves for that role against the background, and the theme layer enforces only a minimum contrast of 3.0 for it.
 
 ## Conformance Test Vectors
 
@@ -175,6 +166,7 @@ label is selectable so its text can be copied.
 | path-view-016 | conforms-to-settings-view-protocol | Construct the view | The instance satisfies the settings row interface without a cast |
 | path-view-019 | prefixes-optional-caption | Construct with path `"/tmp/x"` and caption `""` | The label's text == `": /tmp/x"` |
 | path-view-020 | truncates-middle | Construct with path `"/tmp/x"` and caption `"AVeryLongCaptionThatAloneExceedsTheAvailableWidth"`, then constrain the view narrower than the caption's own rendered width | The displayed, truncated glyphs elide into the caption itself, not only the path portion; the label's truncation mode remains middle truncation |
+| path-view-021 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 A UI-test note: verifying that selecting all and copying yields the full
 label text on the system clipboard requires platform UI-automation access
@@ -436,6 +428,9 @@ logger reference anywhere in source).
   could construct it without one are intentionally disabled rather than
   left to produce a blank row.
   **Approved**: pending
+- **Decision**: The component performs no contrast check of its own: the label's secondary-text color (the theme layer enforces only a 3.0 minimum for it, below the 4.5:1 that small caption text calls for) resolve from the active theme at runtime, so whether a given theme's resolved pair reaches the 4.5:1 text threshold is not established by this component.
+  **Rationale**: Contrast is a property of the theme's resolved color pairs, which live outside this component; closing the gap would take a theme-level audit (or an enforced minimum in the theme layer) of those roles against the backgrounds a settings row sits on, which no source or test does today.
+  **Approved**: pending
 
 ## Compliance
 
@@ -445,6 +440,8 @@ logger reference anywhere in source).
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 Statuses rest on: the label's font tracking the theme's `.caption` role and
 `sizeScale` (`dynamic-type-support`, per Appearance above); the enforced
@@ -457,10 +454,14 @@ section's Label requirements above); and the hardcoded `": "`
 separator literal at `PathView.swift` (`no-hardcoded-strings`, per
 Localization above).
 
+`separation-of-concerns` passes because `PathView` has one job, presenting a single already-known path string as one truncating line; it reads no filesystem, owns no setting and has no view model, and takes its label styling from the shared `makeValueLabel` factory. `unit-test-coverage` passes because `PathViewTests.swift` exercises the view directly: the whole path survives truncation in the tooltip, accessibility value and selectable text, the label is one line truncated in the middle, the caption is drawn at the head, and a long path yields its width instead of widening the window.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker against the source: restated as current behavior (no contrast check in the component) and recorded the gap as a pending Design Decision; added separation-of-concerns/unit-test-coverage Compliance rows. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

@@ -1,0 +1,13 @@
+
+### Dead-Man Check-In (`pingHeartbeat`)
+
+- **noop-null-or-empty-url**: `pingHeartbeat` MUST return immediately, performing no network call, when `url` is `null` or an empty string — any value the `if (!url) return;` guard treats as falsy.
+- **single-get-request**: When `url` is a non-empty string, `pingHeartbeat` MUST issue exactly one HTTP GET request to `url`, never more than one request and never a different HTTP method.
+- **user-agent-header**: The GET request MUST set the header `User-Agent` to the literal value `AgenticDeveloperHubStatus/1.0`.
+- **bounded-timeout-5000ms**: The GET request MUST carry a deadline of 5,000 milliseconds (`HEARTBEAT_TIMEOUT_MS`), enforced by passing `AbortSignal.timeout(HEARTBEAT_TIMEOUT_MS)` as the request's `signal`.
+- **non-2xx-logged-not-thrown**: MUST log via `console.error` when the resolved `Response`'s `ok` flag is `false`, with the message `[heartbeat] check-in URL answered <status> — the dead-man ping is NOT registering; verify HEARTBEAT_URL` where `<status>` is the numeric `res.status`; MUST NOT throw, reject, or retry for this condition.
+- **network-failure-logged-not-thrown**: MUST catch a rejected `fetch` call — a network-level failure or the 5,000ms `AbortSignal.timeout` deadline firing — and log via `console.error` with the message `[heartbeat] ping failed: <message>`, where `<message>` is the caught value's `message` property when it is an `Error` instance, else the caught value coerced with `String(err)`; MUST NOT rethrow or leave the returned promise rejected.
+- **always-resolves-undefined**: `pingHeartbeat` MUST resolve to `undefined` and MUST NOT reject, under every input and outcome this file can produce: a `null`/empty `url`, a successful `2xx` response, a non-2xx response, or a network failure or timeout.
+- **caller-supplied-url-no-default-no-env-read**: `pingHeartbeat` MUST take `url` as its only parameter and MUST apply no default value of its own when a caller has one to supply; per the function's own doc comment, `url` is `config.heartbeatUrl`, and the module MUST NOT read `HEARTBEAT_URL` or any other environment variable directly — enabling or disabling the feature, and choosing the endpoint, are entirely the caller's decision.
+- **independent-per-call-no-shared-state**: Each call to `pingHeartbeat` MUST perform its own independent fetch with no queue, cache, debounce, or de-duplication shared with any other call; the module holds no mutable state beyond the `HEARTBEAT_TIMEOUT_MS` constant, so concurrent or repeated calls MUST NOT interact with, block, or influence one another's outcome or logging.
+

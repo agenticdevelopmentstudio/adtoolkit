@@ -1,44 +1,44 @@
 ---
 id: bd58dfa4-13f8-4e92-adbe-45f8a020168d
-title: Monitor Worker Client
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/worker-client
+title: "Monitor Worker Client"
+domain: adtoolkit://cookbook/status/service/monitor/worker-client
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Self-healing background-worker RPC client that spawns the monitor cycle's worker, times out a wedged one, and respawns it sharing the provider-cooldown buffer.
+summary: "Self-healing background-worker RPC client that spawns the monitor cycle's worker, times out a wedged one, and respawns it sharing the provider-cooldown buffer."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- worker
-- concurrency
-- server
+  - monitor
+  - worker
+  - concurrency
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/code-quality/dependency-injection
+  - agenticdevelopercookbook://guidelines/implementing/concurrency/concurrency
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/code-quality/dependency-injection
 related:
-- agenticdevelopertoolkit://cookbook/status/service/config
-- agenticdevelopertoolkit://cookbook/status/service/monitor/cycle-runner
+  - adtoolkit://cookbook/status/service/config
+  - adtoolkit://cookbook/status/service/monitor/cycle-runner
 references:
-- packages/web/packages/status-server/src/monitor/worker-client.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/worker.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/cooldown/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/package.json (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/worker-boot.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/helpers/worker-boot-driver.mjs (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/worker-client.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/worker.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/cooldown/provider-cooldown.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/cooldown/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/package.json (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/worker-boot.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/helpers/worker-boot-driver.mjs (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Monitor Worker Client

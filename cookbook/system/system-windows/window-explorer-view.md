@@ -1,31 +1,30 @@
 ---
 id: 8aee173a-25e4-443e-a9ab-d629b58817e1
-title: Window Explorer View
-domain: agenticdevelopertoolkit://cookbook/system/system-windows/window-explorer-view
+title: "Window Explorer View"
+domain: adtoolkit://cookbook/system/system-windows/window-explorer-view
 type: ingredient
-version: 1.2.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A reusable view listing running windows by app with selection checkboxes
-  and Accessibility-permission handling.
+summary: "A reusable view listing running windows by app with selection checkboxes and Accessibility-permission handling."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-explorer
-- system-windows
-- window-selection
+  - window-explorer
+  - system-windows
+  - window-selection
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/controls/badge
+  - adtoolkit://cookbook/ui/controls/badge
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Window Explorer View
@@ -484,7 +483,7 @@ space, temporarily hidden) MUST NOT be silently unassigned from the group —
 per the source comment directly above the prune.
 **Approved**: pending
 
-**Decision** (SwiftUI): Fall back to the hard-coded `Color.blue` for a context badge when
+**Decision**: (SwiftUI) Fall back to the hard-coded `Color.blue` for a context badge when
 `Color(hex: ctx.color)` returns `nil`, rather than a theme color.
 **Rationale**: `Color(hex:)` returns `nil` only when the stored string is not a
 valid 6-digit hex value, which should not occur for a color a context
@@ -505,6 +504,8 @@ palette.
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | partial | Internationalization |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | partial | Internationalization |
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | passed | Privacy & Data |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | partial | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 `screen-reader-support` is partial because the refresh button has no explicit
 `.accessibilityLabel` (see **refresh-button-label**);
@@ -521,10 +522,13 @@ whether that palette scales with the system text-size setting.
 only currently-running window data needed for display, filtered by
 `appState.settings.hiddenApps`, and persists nothing.
 
+`separation-of-concerns` is `partial` because `WindowExplorerView` renders the grouped list but its `refreshAsync` also enumerates windows, filters them by size, visibility and hidden apps, and enriches titles through the accessibility API inside the view, work that belongs in a model or service the view reads from. `unit-test-coverage` is `failed` because no test references `WindowExplorerView` or `AppWindowGroup` anywhere in the repository's test targets.
+
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Cited separation-of-concerns and unit-test-coverage in Compliance |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to system/system-windows/. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |

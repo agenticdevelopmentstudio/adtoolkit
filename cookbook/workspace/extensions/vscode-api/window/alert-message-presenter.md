@@ -1,39 +1,34 @@
 ---
 id: 77fe79f8-7d45-4e51-aee0-d6de78b459e1
-title: Alert Message Presenter
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/alert-message-presenter
+title: "Alert Message Presenter"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/window/alert-message-presenter
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The one given implementation of the message-presenting role: presents
-  a vscode.window.show*Message request as a native alert attached to a window,
-  or drops it when no window is available.'
+summary: "The one given implementation of the message-presenting role: presents a vscode.window.show*Message request as a native alert attached to a window, or drops it when no window is available."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- message-presenting
+  - extension-host
+  - vscode-api
+  - message-presenting
 depends-on:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/NSAlertMessagePresenter.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionMessagePresenting.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/NSAlertMessagePresenter.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionMessagePresenting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWindowTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Alert Message Presenter
@@ -41,7 +36,7 @@ approved-date: ''
 ## Overview
 
 This component is the one production implementation of the message-presenting
-role documented in [Extension Message Presenting](agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting)
+role documented in [Extension Message Presenting](adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting)
 given among the sources: it turns a `vscode.window.show*Message` request into
 a native alert attached to a window. Where the protocol recipe documents the
 contract every implementation must satisfy, this recipe documents this
@@ -149,6 +144,7 @@ on its own: a dropped, never-shown message.
 - **thread-confined-external-access**: a caller outside this component's own
   confined execution context MUST reach any of its operations only through
   an asynchronous call across that boundary.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -178,6 +174,7 @@ Not applicable — this is a message-presentation implementation that hands the 
 | ns-alert-message-presenter-010 | severity-style-mapping | Map the severities information, warning, and error to an alert style | Returns informational, warning, and critical respectively |
 | ns-alert-message-presenter-011 | drop-when-no-window, dropped-message-logged | Present a request where the injected window-lookup function returns nothing and no window the app currently has satisfies both visibility and eligibility to become the main window | Resolving the presentation window returns nothing; resolving the response logs an error-level message and returns nothing without presenting any alert; presenting the request resolves to nothing |
 | ns-alert-message-presenter-012 | response-to-item-index, out-of-range-response-resolves-absent | Present a non-empty-items request where the user's response, once reduced to a button index, falls within the button-plan entries' bounds, versus a (defensive) case where it does not | Returns the corresponding button-plan entry (an item index, or nothing for the cancel slot) in the first case, and nothing in the second without an out-of-bounds access |
+| ns-alert-message-presenter-013 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -247,7 +244,7 @@ Not applicable — this is a message-presentation implementation that hands the 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `window` | window-lookup function | none (required; construction takes no default) | Queried fresh on every presentation call to decide which window an alert attaches to; an absent result falls back to selecting any visible window before the message is dropped. |
-| `request` | message request | none (required, supplied per presentation call) | The per-call payload — severity, message, detail, modal flag, item titles, close-affordance indices; its own field shapes, defaults, and invariants are documented in [Extension Message Presenting](agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting) rather than restated here. |
+| `request` | message request | none (required, supplied per presentation call) | The per-call payload — severity, message, detail, modal flag, item titles, close-affordance indices; its own field shapes, defaults, and invariants are documented in [Extension Message Presenting](adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting) rather than restated here. |
 
 ## Deep Linking
 
@@ -338,7 +335,7 @@ Subsystem: the app's own identifier (or a fixed fallback literal when unset) | C
 **Approved**: pending
 
 **Decision**: `closeAffordanceIndices`'s last-wins tie-break in the cancel slot is applied here, not re-derived here.
-**Rationale**: the rule itself — the *last* flagged item's index wins the single cancel slot — is documented in full, with its upstream justification, in [ExtensionMessagePresenting](agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting)'s Design Decisions; **button-plan-cancel-slot** in this recipe applies that same rule to this conformer's concrete AppKit button layout rather than restating the rationale.
+**Rationale**: the rule itself — the *last* flagged item's index wins the single cancel slot — is documented in full, with its upstream justification, in [ExtensionMessagePresenting](adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-message-presenting)'s Design Decisions; **button-plan-cancel-slot** in this recipe applies that same rule to this conformer's concrete AppKit button layout rather than restating the rationale.
 **Approved**: pending
 
 **Decision**: `presentedResponse(for:)` bridges `beginSheetModal(for:completionHandler:)` into `async` with `withCheckedContinuation`, unlike every other `beginSheetModal` site in this tier.
@@ -364,6 +361,7 @@ Subsystem: the app's own identifier (or a fixed fallback literal when unset) | C
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/window/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

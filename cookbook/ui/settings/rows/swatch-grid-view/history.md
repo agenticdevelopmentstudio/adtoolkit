@@ -1,0 +1,10 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial ingredient recipe for SwatchGridView, covering row-wrapping layout, full-rebuild update strategy, theme-reactive swatch border vs. fixed fill, and two open accessibility questions (role and per-swatch label) for review. |
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: moved AppKit implementation identifiers out of Behavioral Requirements into Platform Notes; relaxed replaces-colors-and-rebuilds and recorded the rebuild strategy as a Design Decision; reframed the fixed-fill edge case as current MAY behavior and dropped the unsupported Increase Contrast claim; removed the requirement-count Design Decision and reformatted Design Decisions to the bold Decision/Rationale/Approved form; promoted three Edge Case MUSTs to named requirements with test vectors; rephrased test vectors 004-007 and 011-012 to observable structure, a named theme-change mechanism, and a death-test note; added a default SHOULD recommendation for swatch accessibility labels; fixed Platform Notes formatting, shortened the summary, and cleaned up the Compliance table; records the unverified theme-token contrast as an open question. |
+| 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker against the source: restated as current behavior (no contrast check in the component) and recorded the gap as a pending Design Decision; added separation-of-concerns/unit-test-coverage Compliance rows. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

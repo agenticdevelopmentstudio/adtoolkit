@@ -1,35 +1,34 @@
 ---
 id: 2871e97f-f971-46fe-a4d2-de57ad5c94c5
-title: Status Server Monitor Health
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/health
+title: "Status Server Monitor Health"
+domain: adtoolkit://cookbook/status/service/monitor/health
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure function classifying one HTTP probe's status code, latency, and optional
-  body checks into the healthy, degraded, or down verdict the monitor persists.
+summary: "Pure function classifying one HTTP probe's status code, latency, and optional body checks into the healthy, degraded, or down verdict the monitor persists."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- health
-- classification
-- pure-function
-- server
+  - monitor
+  - health
+  - classification
+  - pure-function
+  - server
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/health.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/probe.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/health.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/probe.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Health

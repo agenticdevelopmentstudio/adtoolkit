@@ -1,0 +1,54 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "3dc693ab-28e4-4624-9b2d-8dc81f81e037",
+    "title": "CRUD Record Form",
+    "domain": "adtoolkit://cookbook/ui/crud/crud-record-form",
+    "type": "recipe",
+    "version": "1.4.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-07-03",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Metadata-driven create/edit form for a generic CRUD table: builds one field per writable column from the table's metadata (enum columns become a select, boolean columns become a checkbox), and skips server-managed columns.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "crud",
+      "form",
+      "metadata",
+      "validation"
+    ],
+    "ingredients": [
+      "agenticdevelopertoolkit://recipes/field"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/ui/crud/crud-table"
+    ],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "6744ce228608003a",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "ingredients", "heading": "Ingredients"},
+    {"part": "integration-requirements", "heading": "Integration Requirements"},
+    {"part": "layout", "heading": "Layout"},
+    {"part": "shared-state", "heading": "Shared State"},
+    {"part": "integration-test-vectors", "heading": "Integration Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

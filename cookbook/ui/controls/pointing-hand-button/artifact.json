@@ -1,0 +1,61 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "46b9d1b8-8a6e-4b61-98ec-5201be24302f",
+    "title": "Pointing Hand Button",
+    "domain": "adtoolkit://cookbook/ui/controls/pointing-hand-button",
+    "type": "ingredient",
+    "version": "1.2.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-23",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "A button that shows the pointing-hand cursor over its bounds even when its window does not have focus, via a cursor rect plus an always-active hover-tracking region.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "ui",
+      "button",
+      "cursor"
+    ],
+    "depends-on": [],
+    "related": [],
+    "references": [
+      "https://developer.apple.com/documentation/appkit/nscursor",
+      "https://developer.apple.com/documentation/appkit/nstrackingarea",
+      "https://developer.apple.com/documentation/appkit/nsview/resetcursorrects()",
+      "https://developer.apple.com/documentation/swiftui/view/pointerstyle(_:)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "e4ddede355730d67",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

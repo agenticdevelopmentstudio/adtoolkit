@@ -1,0 +1,3 @@
+
+The editable table card is a themed card holding a table. Columns are declared with a title, width and kind: editable or read-only text, a toggle, an on/off indicator, a day, a time of day, a duration or a money amount. Rows carry an id, one value per column, a flag that marks them visually and a read-only flag. Headers of sortable columns report clicks instead of reordering, so the owner decides the order. Cells edit in place; typed cells parse their text and report a typed value or reject it. A footer offers add and remove and may hold extra controls. A reload that arrives while a cell is being edited is held until the edit ends.
+

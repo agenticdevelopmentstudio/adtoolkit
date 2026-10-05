@@ -1,0 +1,13 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| ai-provider-config-sync-001 | serialized-field-names, structural-equality | Construct a sync envelope with `enabled: true`, a selected configuration id, and one resolved-configuration record (identity fields "Groq" / "com.x.openai-compatible" / "custom", model "llama-3.3-70b", values `{"baseURL": "https://api.groq.com/openai/v1"}`, secrets `{"apiKey": "sk-abc"}`); encode then decode | Decoded value equals the original exactly |
+| ai-provider-config-sync-002 | selected-config-id-decodes-missing-as-nil | Decode `{"enabled":false,"configs":[]}` | Decoded `selectedConfigId` is absent, `enabled` is false, `configs` is empty |
+| ai-provider-config-sync-003 | selected-config-id-omits-key-when-nil | Encode a sync envelope with `enabled: false`, no selected configuration, and an empty `configs` list | The resulting JSON object has no `selectedConfigId` key at all (not a null value) |
+| ai-provider-config-sync-004 | configs-collection | Encode a sync envelope with `enabled: true`, no selected configuration, and an empty `configs` list | The resulting JSON's `configs` key is present as an empty array |
+| ai-provider-config-sync-005 | empty-secret-clears-credential | Round-trip a resolved-configuration record whose `secrets` map is `{"apiKey": ""}` through encode/decode | Decoded `secrets["apiKey"]` is the empty string — it survives the wire unchanged (not stripped or converted to a missing key), preserving the "clear this credential" signal |
+| ai-provider-config-sync-006 | structural-equality | Two resolved-configuration records built with identical identity fields, model, values, and secrets, versus a third differing only in model | The first two compare equal; the third compares unequal to either |
+| ai-provider-config-sync-007 | structural-equality | Two sync envelopes with identical enabled/selected-configuration/configs fields, versus a third differing only in enabled | The first two compare equal; the third compares unequal to either |
+| ai-provider-config-sync-008 | serialized-field-names | Encode a resolved-configuration record whose identifier is `11111111-2222-3333-4444-555555555555` | The JSON `id` field is the string `"11111111-2222-3333-4444-555555555555"` (the canonical uppercase, hyphenated form) |
+| ai-provider-config-sync-009 | concurrent-share-safety, concurrency-isolation | Capture a constructed sync-envelope value in a closure passed to a new concurrent execution context with no suspension and no confinement hop | Runs with no concurrency-safety diagnostic, because every stored field is itself safe to share across concurrency domains |
+

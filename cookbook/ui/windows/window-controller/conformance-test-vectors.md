@@ -1,0 +1,13 @@
+
+| ID | Requirements | Input | Action | Expected |
+|----|-------------|-------|--------|----------|
+| window-controller-001 | inherits-single-window-controller-lifecycle | a window-controller subclass instance | the show-window operation is called | the window builds, shows, and persists frame/visibility exactly as the single-instance window base specifies |
+| window-controller-002 | exposes-typed-view-controller-accessor | a window controller whose content is an instance of the target content-controller type | the typed accessor is read | the same instance is returned, typed as the target content-controller type |
+| window-controller-003 | returns-nil-for-non-matching-content-view-controller | a window controller whose content is absent or a different content-controller type | the typed accessor is read | absent is returned |
+| window-controller-004 | declares-no-additional-initializer | any window-controller subclass | attempt the base class's window-ID/content construction path, and separately attempt archive-based construction | the base construction path compiles and constructs the instance; the archive-based construction path does not compile, since the window controller declares no initializer of its own and inherits the base class's construction-by-archive being made unavailable there |
+| window-controller-005 | exposes-typed-content-view-property | a content wrapper built with the view-supplying construction path | the content-view property is read | it returns the exact instance passed at construction |
+| window-controller-006 | initializes-view-controller-with-supplied-content-view | a view instance `v` | the content wrapper is constructed with `v` | the content-view property is `v` and the instance is a fully initialized content controller |
+| window-controller-007 | provides-parameterless-convenience-initializer | a view type with a working parameterless construction path | the content wrapper's parameterless construction path is used | the content-view property is a freshly constructed default instance of that view type |
+| window-controller-008 | fails-at-runtime-on-archive-initialization | a content-wrapper type | archive-based construction is invoked from a death-test run in a separate process (an in-process test cannot assert a process trap; treat as review-only where a death-test harness is unavailable) | the process traps with a fatal error |
+| window-controller-009 | installs-content-view-directly-in-load-view | a constructed content wrapper | the view-loading step runs (triggered by first access to the controller's view) | the controller's view is the content-view property instance, with no nib/resource loaded |
+

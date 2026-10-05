@@ -1,33 +1,32 @@
 ---
 id: 93f50554-5ae3-4a43-b8db-539d4d804890
-title: Help Content View
-domain: agenticdevelopertoolkit://cookbook/ui/containers/help-content-view
+title: "Help Content View"
+domain: adtoolkit://cookbook/ui/containers/help-content-view
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A fixed "Help" heading over an independently scrolling list of help topics,
-  styled in the same row style as the rest of the settings.
+summary: "A fixed \"Help\" heading over an independently scrolling list of help topics, styled in the same row style as the rest of the settings."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- help
+  - settings
+  - help
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/group-view
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-scroll-view
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/panel-view
+  - adtoolkit://cookbook/ui/settings/layout/explanation-view
+  - adtoolkit://cookbook/ui/settings/layout/group-view
+  - adtoolkit://cookbook/ui/settings/layout/panel-scroll-view
+  - adtoolkit://cookbook/ui/settings/layout/panel-view
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Help Content View
@@ -82,7 +81,8 @@ feeds it the active panel's help content.
   drawer around it — so that the topic cards (a Group View's
   elevated-surface fill) are what visibly stand out, rather than a
   heading-shaped band of a second, near-identical color above them.
-- **coder-init-unavailable**: See Platform Notes.
+- **coder-init-unavailable**: The view MUST be constructible only in code. Constructing it from a serialized or archived representation MUST be refused as a programmer error that terminates, producing no instance.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -147,7 +147,7 @@ feeds it the active panel's help content.
   the literal string `"Help"` (**fixed-help-heading**). Per-topic labeling
   is a Group View's and an Explanation View's responsibility, not this
   file's; the Explanation View's own recipe
-  (`agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view`) covers
+  (`adtoolkit://cookbook/ui/settings/layout/explanation-view`) covers
   its label behavior.
 - **Announce state changes (e.g., loading, disabled)**: The content-setting
   operation tears down and rebuilds the entire scrolled panel with no
@@ -159,7 +159,7 @@ feeds it the active panel's help content.
   button, control, or click handler of its own; it is a non-interactive
   content view. (The scroll view it hosts uses the platform's standard
   hit-testing, which this file does not customize.)
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. The heading label's color is the theme's `primaryTextColor`, which `SemanticPalette` resolves as the theme's raw foreground color with no enforced minimum-contrast floor (unlike `.secondaryText`, which is explicitly dimmed toward the background with a `minContrast: 3.0` clamp); whether `primaryTextColor` reaches WCAG AA's 4.5:1 ratio against `windowBackgroundColor` for every theme this component ships with cannot be determined from source alone — it depends on each theme's concrete foreground/background color pair and would be settled by auditing the computed contrast ratio per theme.
+- **minimum-contrast-ratio**: The heading label's color is the active theme's primary text color, resolved as the theme's raw foreground color with no enforced minimum-contrast floor (unlike the secondary text role, which is dimmed toward the background); the component performs no contrast check of its own, so the heading's contrast against the window background is whatever each theme's colors produce.
 
 ## Conformance Test Vectors
 
@@ -174,8 +174,11 @@ feeds it the active panel's help content.
 | help-content-view-007 | scroll-reset | Set help content to tall content, scroll to the bottom, then set help content again to new content | The scroll view's visible origin is back at the top immediately after the second call returns |
 | help-content-view-008 | theme-application, window-background | Construct the component while Theme A is active | Background color equals Theme A's `windowBackgroundColor` (not a distinct or hardcoded color); heading font equals Theme A's `.heading` font; heading text color equals Theme A's `primaryTextColor` |
 | help-content-view-009 | theme-application | With the component constructed under Theme A, switch the active theme to Theme B | All three properties from help-content-view-008 update to Theme B's values without re-constructing the view |
+| help-content-view-010 | coder-init-unavailable | Attempt to construct the view from a serialized or archived representation | Construction is refused as a programmer error and terminates; no instance is produced. Verified by inspection only, since the refusal cannot be caught. |
+| help-content-view-011 | minimum-contrast-ratio | Construct the component under a theme whose primary text color is close to its window background color | The heading label's color equals the theme's primary text color exactly; no contrast adjustment is applied. |
+| help-content-view-012 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
-`coder-init-unavailable` has no test vector: see Platform Notes for how it is verified.
+`coder-init-unavailable` is vector 010; because the refusal terminates the process, it is verified by inspection rather than by an automated test (see Platform Notes).
 
 ## Edge Cases
 
@@ -416,6 +419,7 @@ source.
   `{ThemeResource}` rather than a fixed color, so `RequestedTheme`/
   light-dark changes repaint automatically the way `ThemePaletteObserver`
   repaints this view on every theme change.
+- **UI-thread confinement**: `confines-to-ui-thread` — the type is declared `@MainActor` and is an `NSView` subclass, so construction or mutation from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -434,7 +438,7 @@ source.
   `ComposableSettings` naming for these shared views "is a naming debt, not
   a layering one (it is all one framework), and paying it off is a larger
   change than this file should make." (Applies to the AppKit implementation.)
-  **Approved: pending**
+  **Approved**: pending**
 - **Decision**: When the content-setting operation is given no content or
   an empty topics list, the view shows a fixed "No Help Yet" group instead
   of closing the drawer or leaving the scroll area blank.
@@ -445,7 +449,7 @@ source.
   the window flinching," and concludes "an honest sentence beats an empty
   pane that reads as a rendering failure." (Applies to the AppKit
   implementation.)
-  **Approved: pending**
+  **Approved**: pending**
 - **Decision**: The view's background is painted with
   `palette.windowBackgroundColor` — the same color as the window and drawer
   around it — rather than a distinct background.
@@ -453,7 +457,7 @@ source.
   that "the cards are what should stand out" and a heading-shaped band of a
   second near-identical grey above them "only reads as a misprint."
   (Applies to the AppKit implementation.)
-  **Approved: pending**
+  **Approved**: pending**
 - **Decision**: The content-setting operation always tears down and
   rebuilds the entire panel from scratch, with no comparison against the
   previously stored content, even though the content type supports
@@ -469,7 +473,10 @@ source.
   performance-sensitive path, so a full rebuild is the simplest correct
   behavior rather than a documented optimization trade-off. (Applies to the
   AppKit implementation.)
-  **Approved: pending**
+  **Approved**: pending**
+- **Decision**: The heading is drawn in the theme's primary text color with no enforced minimum-contrast floor against the window background.
+  **Rationale**: The palette resolves the primary text role as the theme's raw foreground color and this view adds no contrast logic, so each shipped theme's contrast for the heading is unverified. Closing the gap means auditing each shipped theme's resolved foreground and window-background colors, or adding a contrast floor to the palette's primary text resolution.
+  **Approved**: pending
 
 ## Compliance
 
@@ -481,6 +488,8 @@ source.
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | internationalization |
 | [unicode-support](agenticdevelopercookbook://compliance/internationalization#unicode-support) | passed | internationalization |
 | [platform-theming](agenticdevelopercookbook://compliance/platform-compliance#platform-theming) | passed | platform-compliance |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | best-practices |
 
 Statuses rest on: every color resolved from the active `SemanticPalette`
 and re-applied on every theme change via `ThemePaletteObserver`, matching
@@ -497,6 +506,8 @@ and every topic string being rendered as caller-supplied `NSTextField`/
 `ExplanationView` text with no special-casing of its contents
 (unicode-support).
 
+`separation-of-concerns` passes because the view only renders a `HelpContent` value it is handed through `setHelp(_:)` and re-themes from the palette; it does no lookup, navigation or persistence, and the drawer controller owns when help changes. `unit-test-coverage` is `partial`: `Help/HelpContentTests.swift` covers topic order, equality, the empty state (`testEmptyContentRendersTheHonestEmptyStateRatherThanBlank`) and one group per topic (`testSetHelpRendersOneGroupPerTopic`), but nothing tests the fixed heading, scroll reset, wholesale replacement or live theme change.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -506,3 +517,4 @@ and every topic string being rendered as caller-supplied `NSTextField`/
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/containers/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Wrote coder-init-unavailable as a platform-neutral requirement with vector 010; resolved the minimum-contrast-ratio NEEDS REVIEW marker as current behavior (no contrast floor) with vector 011 and a pending decision; added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |

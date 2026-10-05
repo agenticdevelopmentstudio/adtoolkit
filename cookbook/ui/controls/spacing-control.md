@@ -1,36 +1,34 @@
 ---
 id: f064de5a-b117-4147-96a9-c1ed11d5c976
-title: Spacing Control
-domain: agenticdevelopertoolkit://cookbook/ui/controls/spacing-control
+title: "Spacing Control"
+domain: adtoolkit://cookbook/ui/controls/spacing-control
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A control that draws a small picture of a view's insets or a pane grid's
-  gutters, and lets the user edit those numbers by typing, by stepper, by clicking
-  an arrow, or by dragging the line the arrow stands on.
+summary: "A control that draws a small picture of a view's insets or a pane grid's gutters, and lets the user edit those numbers by typing, by stepper, by clicking an arrow, or by dragging the line the arrow stands on."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- spacing
-- settings
-- form-control
-- range
+  - spacing
+  - settings
+  - form-control
+  - range
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/pane-spacing
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/settings-view
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view
+  - adtoolkit://cookbook/ui/layout/composable-tabs/pane-spacing
+  - adtoolkit://cookbook/ui/layout/composable-tabs/settings-view
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/settings/rows/captioned-slider-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Spacing Control
@@ -164,6 +162,7 @@ without reading the underlying value type's source:
 Both gutters use a fixed gain of `2` (not signed per gutter — the sign for a
 gutter drag instead comes from which side of the divider's centre the drag
 began, per `drags-gutter-two-to-one-outward`).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -230,27 +229,14 @@ began, per `drags-gutter-two-to-one-outward`).
   space"), which the screen reader reads as the button's label. This
   mirrors the same control-to-title linkage gap already noted on the
   sibling ingredient
-  (`agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view#accessibility`).
+  (`adtoolkit://cookbook/ui/settings/rows/captioned-slider-view#accessibility`).
 - **Announce state changes (e.g., loading, disabled)**: Not applicable — the
   component has no loading or disabled state (see States) for a change to
   announce.
 - **Minimum tap target**: Not applicable — this is a pointer/trackpad-driven
   composition with no touch input path in source; the 44×44pt minimum is
   touch-interface guidance, not a pointer-interface requirement.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. Every
-  color this file draws for text or a tint comes from a theme role — field
-  text (primary-text), arrow glyphs (accent), the outer frame's stroke
-  (border) against the project-pane backdrop, and each pane's stroke
-  (project-pane outline) against the window-background role — none of which
-  carry a guaranteed contrast floor in the theme model (the primary-text
-  role returns the theme's raw foreground, the accent role returns a raw
-  palette slot or the raw foreground, and the border role blends foreground
-  into background at a fixed 0.18 fraction, unlike the secondary-text
-  role's minimum contrast of 3.0), and no check anywhere in the
-  implementation verifies any of those pairs against the 4.5:1 (text) / 3:1
-  (non-text) floor; settling it needs a theme-level contrast audit of the
-  theme model's roles against real theme values (see also Accessibility
-  Options: Increase Contrast).
+- **minimum-contrast-ratio**: The component performs no contrast check of its own. Every color it draws for text or a tint comes from a theme role: field text (primary text), arrow glyphs (accent), the outer frame's stroke (border) against the project-pane backdrop, and each pane's stroke (project-pane outline) against the window-background role. None of these roles carries a guaranteed contrast floor in the theme model (primary text is the theme's raw foreground, accent is a raw palette slot or the raw foreground, and border blends foreground into background at a fixed 0.18 fraction, unlike the secondary text role's minimum contrast of 3.0), so whether any pair meets 4.5:1 (text) or 3:1 (non-text) depends on each theme's values.
 
 ## Conformance Test Vectors
 
@@ -282,6 +268,8 @@ began, per `drags-gutter-two-to-one-outward`).
 | spacing-control-024 | repaints-on-theme-change | Change the active theme's palette after construction | The frame/pane fill and border colors, and the field/reset fonts, update to the new palette's values without reconstructing the component |
 | spacing-control-025 | caps-displayed-inset-at-maximum | The range is `0` to `100` (custom), `value.top` is `100` | The diagram draws the top inset at the same displayed extent as `value.top` at `40` |
 | spacing-control-026 | drags-gutter-two-to-one-outward | The `paneDividers` style; begin a drag on the `betweenColumns` gutter's handle from the near side of centre, then move the pointer `20pt` toward and past the centre (a net displacement of `-20pt` along the drag axis from the grab point) | `value.betweenColumns` decreases by `40` points from its value at drag start — the sign stays fixed by the near-side start and does not flip when the pointer crosses the centre |
+| spacing-control-027 | minimum-contrast-ratio | Construct the control under a theme whose border blend leaves the frame stroke close to the project-pane backdrop | The frame stroke equals the theme's border role exactly and field text equals the primary text role; no contrast adjustment is applied. |
+| spacing-control-028 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -593,6 +581,7 @@ Not applicable: source contains no logging call anywhere.
   navigation cannot infer the picture's reading order from `Canvas`-based
   placement any more than AppKit's inferred key-view loop could from
   frame-based placement.
+- **UI-thread confinement**: `confines-to-ui-thread` — the type is declared `@MainActor` and is an `NSView` subclass, so construction or mutation from off the main actor fails to compile; the drag-tracking loop also runs on the main actor.
 
 ## Reference Implementations
 
@@ -602,7 +591,7 @@ Not applicable: source contains no logging call anywhere.
 
 ## Design Decisions
 
-- **Decision** (AppKit): Keep the range's floor and ceiling out of the
+- **Decision**: (AppKit) Keep the range's floor and ceiling out of the
   fields' `NumberFormatter` and clamp only inside
   `Spacing.setting(_:in:)`/`Spacing.adjusting(_:by:in:)`.
   **Rationale**: the source comment on `makeField` explains that a
@@ -611,14 +600,14 @@ Not applicable: source contains no logging call anywhere.
   end editing — trapping the caret in an emptied field. `Spacing` is the
   one place that can clamp instead of reject.
   **Approved**: pending
-- **Decision** (AppKit): Give arrow buttons and steppers
+- **Decision**: (AppKit) Give arrow buttons and steppers
   `refusesFirstResponder = true`, keeping Tab limited to the four or two
   number fields, depending on `style`.
   **Rationale**: the source comments on `makeStepper`/`makeArrowButton` state
   that a stepper or an arrow in the tab loop would put extra stops between
   two number fields — Tab is for the numbers.
   **Approved**: pending
-- **Decision** (AppKit): Intercept Tab explicitly inside
+- **Decision**: (AppKit) Intercept Tab explicitly inside
   `control(_:textView:doCommandBy:)` rather than relying on AppKit's
   inferred key-view loop, and only within the control — at either end,
   focus is handed back to whatever `nextKeyView` the panel wired up.
@@ -627,7 +616,7 @@ Not applicable: source contains no logging call anywhere.
   thread the control's numbers in among whatever else the panel shows; a
   closed ring was considered and rejected as a focus trap.
   **Approved**: pending
-- **Decision** (AppKit): Bound `SpacingHandle.claimsPress`'s wait at
+- **Decision**: (AppKit) Bound `SpacingHandle.claimsPress`'s wait at
   `patience` (`0.3`s) in addition to the per-event `grace` (`0.12`s).
   **Rationale**: the source comment explains a resting trackpad delivers a
   steady trickle of sub-`slop` jitter events that each restart an unbounded
@@ -647,6 +636,9 @@ Not applicable: source contains no logging call anywhere.
   (freezes-pressed-arrow-pair), is what keeps a full-range hold under the
   pointer.
   **Approved**: pending
+- **Decision**: The control performs no contrast check: text, arrow, frame-stroke and pane-stroke colors are the active theme's roles as resolved, with no 4.5:1 text or 3:1 non-text floor enforced.
+  **Rationale**: The theme model gives these roles no contrast floor and nothing in the implementation verifies the pairs. Closing the gap means a theme-level contrast audit of the roles against real theme values, or adding a contrast floor to the theme model's primary text, accent and border roles.
+  **Approved**: pending
 
 ## Compliance
 
@@ -660,6 +652,7 @@ Not applicable: source contains no logging call anywhere.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | accessibility |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | internationalization |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | best-practices |
 
 Separation-of-concerns passes because the control holds only a `Spacing`
 value and an `onChange` closure, with all settings/persistence concerns
@@ -680,6 +673,8 @@ minimum-contrast-ratio). String-externalization fails because every
 user-facing string in this file is a hardcoded literal with no
 localization mechanism (see Localization).
 
+`unit-test-coverage` is `partial`: `UI/SpacingTests.swift` pins the arithmetic and layout of the control (`testTheGrowingArrowAddsRoomAndTheShrinkingArrowTakesItAway`, `testATypedNumberIsClampedRatherThanRefused`, and the `SpacingControlLayoutTests` cases for number placement and non-overlap), but nothing there exercises `onChange` firing rules, theme re-application or the Reset button.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -689,3 +684,4 @@ localization mechanism (see Localization).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/controls/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the minimum-contrast-ratio NEEDS REVIEW marker as current behavior (no contrast check) with a vector and a pending decision; added the unit-test-coverage compliance row. Added the confines-to-ui-thread requirement and vector. |

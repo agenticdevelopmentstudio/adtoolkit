@@ -1,42 +1,42 @@
 ---
 id: b1fa768d-a088-4507-92f6-6296f93bee2c
-title: Hub Domain Markdown Client
-domain: agenticdevelopertoolkit://cookbook/adh/hub/content/markdown-client
+title: "Hub Domain Markdown Client"
+domain: adtoolkit://cookbook/adh/hub/content/markdown-client
 type: ingredient
-version: 1.0.2
+version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Web data-access package bundling the markdown research-document client, its category and tag taxonomy writer, and a legacy storage-bucket schema CRUD client under one folder.
+summary: "Web data-access package bundling the markdown research-document client, its category and tag taxonomy writer, and a legacy storage-bucket schema CRUD client under one folder."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- markdown
-- taxonomy
-- buckets
-- schemas
-- crud
-- web
+  - markdown
+  - taxonomy
+  - buckets
+  - schemas
+  - crud
+  - web
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/adh/hub/content/docs-client
-- agenticdevelopertoolkit://cookbook/adh/hub/buckets
+  - adtoolkit://cookbook/adh/hub/content/docs-client
+  - adtoolkit://cookbook/adh/hub/buckets
 references:
-- packages/web/packages/data/src/markdown/markdown.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/schemas.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/taxonomy.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/markdown/__tests__/markdown.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/markdown/markdown.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/schemas.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/taxonomy.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/markdown/__tests__/markdown.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Hub Domain Markdown Client
@@ -226,13 +226,13 @@ historically distinct clients:
   and delete every table belonging to the bucket (in parallel) before
   deleting the parent bucket row, per the source's own stated reason: "No
   DB-level cascade from buckets to bucket_types."
-- **schemas-get-swallows-errors**: NEEDS REVIEW: Not implemented in source. `schemasApi.get` wraps its entire body in a bare `catch { return null; }` with no binding on the caught value at all, so a genuine 404, a 500, a 403, and a network failure are all indistinguishable from "no such schema" to every caller; the contract a lookup-by-id normally offers — a distinct not-found outcome from a transport or server failure — is undefined here, and nothing in the source states which of those cases the `null` return is meant to represent.
-- **schemas-update-reconcile-has-no-rollback-or-lock**: NEEDS REVIEW: Not implemented in source. Unlike `create`, which explicitly calls `rollbackSchema` and states its purpose is avoiding an orphaned half-built schema, `schemasApi.update`'s table-reconcile loop (delete-then-add/patch) has no compensating action if a DELETE, POST, or PUT partway through the sequence throws, and no lock or version check against a second, concurrently-running `update` call on the same schema id reading the same "current tables" snapshot; either case can leave a schema's persisted table set permanently inconsistent with what any caller asked for, with no defined recovery path.
+- **schemas-get-swallows-errors**: the schema lookup-by-id operation `schemasApi.get` wraps its entire body in a bare catch that returns `null` with no binding on the caught value, so a genuine 404, a 500, a 403, and a network failure are all indistinguishable from "no such schema" to every caller; the source does not state which of those cases the `null` return is meant to represent.
+- **schemas-update-reconcile-has-no-rollback-or-lock**: unlike `create`, which calls `rollbackSchema` to avoid an orphaned half-built schema, `schemasApi.update`'s table-reconcile loop (delete-then-add/patch) has no compensating action if a DELETE, POST, or PUT partway through the sequence throws, and no lock or version check against a second concurrent `update` on the same schema id reading the same "current tables" snapshot; either case can leave a schema's persisted table set inconsistent with what any caller asked for, with no defined recovery path.
 
 ### taxonomy.ts — category/tag taxonomy writes (generic CRUD door)
 
-- **taxonomy-ops-not-workspace-scoped**: none of `taxonomyApi`'s seven
-  operations MUST accept or send a `workspace` query parameter; per the
+- **taxonomy-ops-not-workspace-scoped**: `taxonomyApi`'s seven
+  operations MUST NOT accept or send a `workspace` query parameter; per the
   module's own header comment, these tables are scoped by `customer_id` +
   `ecosystem_id` as an ownership stamp rather than by an `owner_kind`/
   `owner_id` column the workspace pin could filter on, so a platform
@@ -330,7 +330,7 @@ Not applicable — this is a web data-access package for markdown research docum
 | HDM-012 | `markdownApi.createCategory({name})` where the POST throws a conflict | throws `Error('A category named "<name>" already exists somewhere else.')` | markdown.ts, `createCategory`'s catch block (no dedicated test) |
 | HDM-013 | `schemasApi.create({tables: [{name: "Contacts"}, {name: "contacts"}], ...}, ecosystemId)` | throws `Error('Duplicate table name "contacts" in this bucket.')` before any network request is issued | schemas.ts, `assertUniqueTableNames` (no test file exists for schemas.ts) |
 | HDM-014 | `schemasApi.create` succeeds on the parent bucket but the second table's POST throws | calls `rollbackSchema` (deletes the first created table, then the bucket, via `Promise.allSettled`), then rethrows the table-creation error unchanged | schemas.ts, `create`'s catch block (no test file) |
-| HDM-015 | `schemasApi.get(id)` where the underlying GET throws any error (404, 500, or a network failure) | resolves `null` in every case, with no way to distinguish which occurred | schemas.ts, `get`'s bare `catch { return null }` — see the open question on schemas-get-swallows-errors |
+| HDM-015 | `schemasApi.get(id)` where the underlying GET throws any error (404, 500, or a network failure) | resolves `null` in every case, with no way to distinguish which occurred | schemas.ts, `get`'s bare `catch { return null }` — see the schemas-get-swallows-errors requirement |
 | HDM-016 | `schemasApi.list(ecosystemId)` with buckets belonging to several ecosystems | resolves only the buckets whose `ecosystemId` matches, sorted alphabetically by name | schemas.ts, `list` (`scopeByOwner` + `sortByText`, no test file) |
 | HDM-017 | `taxonomyApi.removeCategoryParent(childId, parentId)` called when no edge with that `parentId` exists for `childId` | resolves with zero DELETE calls issued | taxonomy.ts, `removeCategoryParent`'s own doc comment (no test file exists for taxonomy.ts) |
 | HDM-018 | `markdownApi.list({}, {noted: false, doc: false})` | request query string omits both `noted` and `doc` entirely (not sent as `false`) | markdown.ts, `listQuery` |
@@ -356,10 +356,10 @@ Not applicable — this is a web data-access package for markdown research docum
 - **concurrent-schemas-update-same-id**: two `schemasApi.update` calls
   racing on the same schema id each read their own "current tables"
   snapshot before reconciling; neither detects the other's changes — see
-  the open question on schemas-update-reconcile-has-no-rollback-or-lock.
+  the schemas-update-reconcile-has-no-rollback-or-lock requirement.
 - **schemas-get-error-vs-not-found**: `schemasApi.get` returns `null` for a
   genuinely missing schema and for a transport or server failure alike —
-  see the open question on schemas-get-swallows-errors.
+  see the schemas-get-swallows-errors requirement.
 - **remove-category-parent-double-call**: calling
   `taxonomyApi.removeCategoryParent` twice in a row for the same
   `(childId, parentId)` pair costs the second call zero DELETE requests,
@@ -520,7 +520,7 @@ table-reconcile loop has no equivalent compensation.
 **Rationale**: `create`'s own comment states the rollback exists to avoid
 "orphaning a half-built schema"; `update` has no comment addressing the
 same risk for its own multi-step reconcile, which is the asymmetry recorded
-as the open question on schemas-update-reconcile-has-no-rollback-or-lock.
+as the schemas-update-reconcile-has-no-rollback-or-lock requirement.
 **Approved**: pending.
 
 **Decision**: `schemasApi.update`'s table reconcile deletes removed tables
@@ -575,6 +575,18 @@ owned by an ecosystem directly; and the taxonomy tables carry only a
 scope column at all.
 **Approved**: pending.
 
+**Decision**: schema lookup-by-id returns `null` for every failure, so a not-found cannot be told apart from a transport or server error.
+
+**Rationale**: the bare catch discards the error and the source does not state what `null` is meant to represent; closing the gap takes narrowing the catch to a 404 and rethrowing everything else, or returning a discriminated result.
+
+**Approved**: pending
+
+**Decision**: schema update has no rollback on a partial failure and no lock or version check against a concurrent update of the same schema.
+
+**Rationale**: the create path has an explicit rollback but the update's table-reconcile loop does not, and the contract exposes no optimistic-lock primitive; closing the gap takes a compensating action for a failed step plus a version check or server-side serialization per schema id.
+
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -608,22 +620,21 @@ operations, and schemas.ts and taxonomy.ts have no test file at all.
 `schemasApi.create` does the same for the parent bucket; every other
 markdown.ts/taxonomy.ts operation lets its error propagate unmodified.
 `schemasApi.get`, by contrast, catches every error indiscriminately and
-discards it — the open question on schemas-get-swallows-errors.
+discards it — the schemas-get-swallows-errors requirement.
 
 **error-recovery**: partial. `schemasApi.create` has an explicit
 compensating rollback (delete every table it created, then the parent
 bucket) if a child-table insert fails partway, stating its own goal is
 avoiding an orphaned half-built schema. `schemasApi.update`'s table-reconcile
-loop has no equivalent path — the open question on
-schemas-update-reconcile-has-no-rollback-or-lock.
+loop has no equivalent path — the schemas-update-reconcile-has-no-rollback-or-lock requirement.
 
 **data-integrity**: partial. `assertUniqueTableNames` stops a caller from
 creating or renaming into a client-side duplicate before any request is
 sent, and `update`'s delete-before-add ordering is explicitly sequenced to
 avoid racing the backend's unique index. The same operation's reconcile can
 still leave a schema with a half-applied set of tables if one request in
-the sequence fails, with nothing to detect or repair it — the open question
-on schemas-update-reconcile-has-no-rollback-or-lock.
+the sequence fails, with nothing to detect or repair it — the
+schemas-update-reconcile-has-no-rollback-or-lock requirement.
 
 **idempotent-operations**: partial. `removeCategoryParent`, `deleteCategory`,
 and `deleteTag` are each documented as safe to call twice, and
@@ -661,6 +672,7 @@ logging call reads any of it.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Resolve open-question markers against the code; restate unimplemented behavior as current behavior with pending Decisions. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe covering markdown.ts, schemas.ts, taxonomy.ts, and wire.ts. |

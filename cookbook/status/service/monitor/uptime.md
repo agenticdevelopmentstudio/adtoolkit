@@ -1,42 +1,42 @@
 ---
 id: 88dabdf6-14a3-44eb-ab0d-ae18007c683e
-title: Monitor Uptime
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/uptime
+title: "Monitor Uptime"
+domain: adtoolkit://cookbook/status/service/monitor/uptime
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure per-day uptime-percentage and health-verdict arithmetic over check counts, plus the unweighted mean that rolls per-service percentages into one portfolio number.
+summary: "Pure per-day uptime-percentage and health-verdict arithmetic over check counts, plus the unweighted mean that rolls per-service percentages into one portfolio number."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- uptime
-- rollup
-- pure-function
-- server
+  - monitor
+  - uptime
+  - rollup
+  - pure-function
+  - server
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/health
-- agenticdevelopertoolkit://cookbook/status/service/monitor/overall
+  - adtoolkit://cookbook/status/service/monitor/health
+  - adtoolkit://cookbook/status/service/monitor/overall
 references:
-- packages/web/packages/status-server/src/monitor/uptime.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/openapi/paths/reads.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/reads.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/lib/uptime.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/lib/uptime.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/components/OverviewTab.tsx (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/uptime.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/openapi/paths/reads.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/reads.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/lib/uptime.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/lib/uptime.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/components/OverviewTab.tsx (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Monitor Uptime

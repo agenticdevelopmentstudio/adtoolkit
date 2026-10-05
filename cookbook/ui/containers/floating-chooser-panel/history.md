@@ -1,0 +1,9 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: name the show() nil-window guard and the no-screen-at-all fallback as requirements with new test vectors 031/032; mark activation vectors 016/017 manual/integration-only (no injected seam for the global activation seam); reformat Design Decisions to bold labels; add the two hosted content-controller recipes to related; loosen test vectors 002/020/029 to concrete, less brittle assertions; clarify the dismissing-interval terminology in the States table and vector 024; clarify resets-dismissing-flag-after-close to describe only the outer close() clearing the flag; rebuild Compliance against the real catalog (accessibility/focus-management only) |
+| 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/containers/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Wrote rejects-coder-initialization as a platform-neutral requirement with vector 033; resolved the position-clamping NEEDS REVIEW marker as current behavior (no clamp) with vector 034 and a pending decision; added separation-of-concerns and unit-test-coverage compliance rows. Corrected unit-test-coverage to partial: the dismissal path and sizing are tested through subclasses; added the confines-to-ui-thread requirement and vector. |

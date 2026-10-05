@@ -1,0 +1,11 @@
+
+| Check | Status | Category |
+|-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | best-practices |
+| [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | passed | best-practices |
+| [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
+| [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | partial | reliability |
+
+Separation of concerns holds structurally: `MarkdownSchema` owns DDL and migration, `MarkdownProjection` owns the sync-mirror translation contract, `MarkdownStore` owns document and outbox lifecycle, and `MarkdownTaxonomy` extends the store for categories and keywords rather than folding taxonomy concerns into it — six files, four clear responsibilities, no circular reach between them. Unit test coverage holds: the four test files covering this component between them exercise nearly every requirement above by name, including the schema-drift self-check against the live table definitions. Explicit error handling holds: every failure surface in this component is a typed enum thrown to the caller, never a swallowed optional-try or a silently substituted default — the two real optional-try uses in the projection guard a validity check with a proper fallthrough, not a discarded failure. Idempotent operations hold for every lifecycle method examined except the one place idempotency is explicitly not wanted: `deleteDocument` treats a missing id as success by design, and the taxonomy's revive-on-conflict pattern makes re-adding an edge, assignment, or keyword a no-op. Data integrity is marked partial: the dual-flag delete-state normalization, the cycle and self-edge refusals, and the orphan-purge refusal are all real integrity guards, but `drain-mutual-exclusion` in Behavioral Requirements leaves serializing drains to the caller: two concurrent drains would send one outbox operation to adh twice, with nothing in this component to prevent it.
+

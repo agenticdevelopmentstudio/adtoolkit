@@ -1,0 +1,60 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "4b1a3eb0-0a8a-4059-b2ac-824013072bd5",
+    "title": "Panel View",
+    "domain": "adtoolkit://cookbook/ui/settings/layout/panel-view",
+    "type": "ingredient",
+    "version": "1.2.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-23",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "A view that stacks group cards and panel headings inside a themed panel, matching a settings app's outer layout.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "settings",
+      "layout"
+    ],
+    "depends-on": [
+      "adtoolkit://cookbook/ui/settings/layout/group-view",
+      "adtoolkit://cookbook/ui/settings/layout/panel-heading-view"
+    ],
+    "related": [
+      "agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages"
+    ],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "0b3cae280d3ec525",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

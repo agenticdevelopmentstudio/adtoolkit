@@ -1,33 +1,32 @@
 ---
 id: 24199c9b-53ce-41a7-9cce-3b914f0a424a
-title: Chat Bubble View
-domain: agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
+title: "Chat Bubble View"
+domain: adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A chat message bubble with role/style-based theming, an optional inline
-  timestamp, and line-limited truncation with an expand/collapse toggle.
+summary: "A chat message bubble with role/style-based theming, an optional inline timestamp, and line-limited truncation with an expand/collapse toggle."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- chat
-- messaging
-- ui-component
+  - chat
+  - messaging
+  - ui-component
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-day-banner-view
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-window/chat-transcript-row-view
-- agenticdevelopertoolkit://recipes/message-bubble
+  - adtoolkit://cookbook/ai/chat/chat-window/chat-day-banner-view
+  - adtoolkit://cookbook/ai/chat/chat-window/chat-transcript-row-view
+  - agenticdevelopertoolkit://recipes/message-bubble
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Chat Bubble View
@@ -234,44 +233,46 @@ Not applicable: the source contains no logging calls (no `Logger`, `os_log`, or 
 
 **Decision**: Message text and the inline timestamp are always set in the app's resolved terminal font (Menlo-Regular 13pt by default, via `TerminalAppearance.resolvedFont(theme:)`), never the theme's general body-text font, in both `.speaker` and `.terminal` styles.
 **Rationale**: These bubbles are a written-down terminal conversation — the feed's rows are literally transcripts of sessions running in a terminal — so text set in a different face than the terminal it came from would read as a different program's output. The face is chosen once, for the terminal, and both bubble styles follow it. A consequence traced in this recipe (see Compliance) is that the message text does not scale with the app's general typography size control the way theme body/caption text elsewhere does — only the separate Terminal font-size setting affects it.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: In `.terminal` style, `.user` and `.assistant` resolve to the identical fill (the palette's `surface` color) and border (the palette's `border` color), rather than keeping the role-based coloring `.speaker` style uses.
 **Rationale**: A one-to-one chat has two speakers and no other way to tell them apart, so coloring by role there *is* the attribution. A merged feed already states who is talking in a header line above every row, so coloring by role again there would spend the window's whole palette repeating a fact already said in words, right beside a session list drawn as inset boxes on the window's surface — which is the shape `.terminal` reuses.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: A theme's bubble border role is applied only when the theme explicitly overrides it (`theme.roleOverrides[role.rawValue] != nil`), never merely because the role's default derivation would produce some color.
 **Rationale**: Every role resolves to *some* color when a theme leaves it undeclared, so checking the resolved color alone would draw a hairline border around every bubble in every theme. Checking for an explicit override instead limits the border to themes that opted in.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: `.error` and `.notice` roles keep their fixed border behavior (always bordered / never bordered) even in `.terminal` style, since **terminal-style-role-fill-override** only applies to `.user` and `.assistant`.
 **Rationale**: `.error` and `.notice` are not conversation — they carry no speaker to disambiguate — so they stay on the general semantic danger/secondary-text treatment in every style rather than being folded into the terminal panel's speaker-neutral look.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: The expand toggle is a chevron symbol (`chevron.down.circle.fill` / `chevron.up.circle.fill`) rather than words, sized at 22pt, and sits in the bubble's lower-right corner under everything rather than immediately after the point where the text was cut.
 **Rationale**: Words would compete with the message they sit under, reading as one more line of the reply; a symbol is recognized rather than read, and at this size is a target hit without aiming. Putting it in a fixed lower-right position, rather than trailing the cut point, means it is the same control in the same place whether the message is cut short or laid out whole, rather than moving to wherever the text happened to stop.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: The timestamp uses a fixed `h:mm a` (12-hour, unpadded hour) pattern rather than a locale-derived hour-cycle template.
 **Rationale**: The class comment documents this as an intentional glance-legibility choice shared with `ChatTranscriptRowView`'s own timestamp, not an oversight. This is a real divergence from `AgenticDeveloperToolkit`'s `MessageBubbleView`, which derives its timestamp pattern from the locale's own hour-cycle template — `AIChatBubbleView` does not follow that convention, and a reader in a 24-hour-clock locale will still see a 12-hour timestamp here.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: `AIChatBubbleView.mouseDown(with:)`, when `isTextSelectable` is `true`, consumes a click on the bubble's own padding without ever calling `super.mouseDown(with:)`; when `isTextSelectable` is `false`, it does call `super.mouseDown(with:)`.
 **Rationale**: The text view already keeps presses that land on the text itself. Letting a press on the surrounding padding fall through to the superview would mean a click two points from a word a reader was about to select could dismiss something else entirely — the same gesture, two different outcomes, decided by a couple of points. Consuming it here keeps that from happening only when the bubble is meant to support text selection; a non-selectable bubble has no selection to protect, so it lets the default behavior proceed.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: `BubbleTextView.mouseDown(with:)` still calls `onSingleClick` even on a double-click, whenever no `onDoubleClick` handler is registered, because the double-click short-circuit only fires when a handler exists.
 **Rationale**: A double-click means "select this word" and, in a feed with a handler wired up, also means "open this conversation." Only one of those can have the gesture; where no handler is waiting for it, the click falls through as an ordinary click (invoking `onSingleClick` and the text view's own default handling), so a reader without that handler wired up still gets ordinary double-click word selection.
-**Approved: pending**
+**Approved**: pending**
 
 **Decision**: `measure(_:width:)`'s line-counting walk stops early if it encounters a zero-length effective range, and `trimming(_:within:width:)` stops removing characters once the remaining string is no longer longer than the ellipsis itself.
 **Rationale**: Both are defensive guards against a degenerate text-layout result producing an infinite loop, rather than a claim about how many lines or characters the result is guaranteed to have. They trade a possibly-imprecise line count or an ellipsis-only string for a function call that is guaranteed to return.
-**Approved: pending**
+**Approved**: pending**
 
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | partial | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
@@ -284,6 +285,8 @@ Not applicable: the source contains no logging calls (no `Logger`, `os_log`, or 
 
 Statuses rest on: the expand toggle's explicit accessibility label versus the bubble container having no label or grouping of its own (screen-reader-support); the bubble itself having no `keyDown`/`acceptsFirstResponder`, with the equivalent path supplied only by its host `ChatView`'s row-selection keyboard handling, which this recipe traces but which this component alone does not provide (keyboard-navigable — see Accessibility); the palette's dimmed text roles (`secondaryText`, `timestampText`) enforcing a minimum contrast floor against the window background while nothing verifies contrast between a role's own paired fill and text color, e.g. `userText` against `userBubble` (contrast-ratio); the message text being pinned to the separate Terminal font-size setting rather than the app's general typography scale (`SemanticPalette.size(_:)`/`scaled(by:)`) that the "Text Size" reader control and other UI use — increasing that control changes nothing in this bubble's message text (dynamic-type-support); the fixed `h:mm a` pattern ignoring the user's locale hour-cycle preference, unlike `AgenticDeveloperToolkit`'s `MessageBubbleView` (locale-aware-formatting); the component rendering arbitrary caller-provided Unicode text via `NSAttributedString`/`NSTextView` without special-casing (unicode-support); the "Show the whole message" / "Show less" / "…" strings being Swift string literals in `AIChatBubbleView.swift` rather than sourced from a resource table (string-externalization, no-hardcoded-strings); and the bubble measuring and sizing to whatever text it is given, up to `maxWidth`, rather than assuming a fixed width for a fixed string length (text-expansion-tolerance).
 
+`separation-of-concerns` passes because `AIChatBubbleView` only draws one message bubble (text, timestamp, truncation and its expand toggle) from a message and the active `SemanticPalette`; row layout, selection and transcript ordering live in `ChatTranscriptRowView` and `ChatView`. `unit-test-coverage` is partial: `BubbleTruncationTests.swift` covers the line limit, ellipsis, wrapped-line counting and when the toggle is offered, and `BubbleStyleTests.swift` covers muted work output and the terminal bubble style, and `TranscriptDateTests.swift` pins the twelve-hour timestamp format through the bubble's time formatter, but nothing asserts the toggle's accessibility label or theme repaint.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -293,3 +296,5 @@ Statuses rest on: the expand toggle's explicit accessibility label versus the bu
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/chat/chat-window/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |

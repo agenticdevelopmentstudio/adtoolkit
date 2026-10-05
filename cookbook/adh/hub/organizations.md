@@ -1,40 +1,39 @@
 ---
 id: 98d7c94e-4db9-42c9-b36e-1a2a59409fda
-title: Organizations
-domain: agenticdevelopertoolkit://cookbook/adh/hub/organizations
+title: "Organizations"
+domain: adtoolkit://cookbook/adh/hub/organizations
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A data client for organization records (list, resolve, create, rename,
-  archive, restore) and an organization workspace's member roster.
+summary: "A data client for organization records (list, resolve, create, rename, archive, restore) and an organization workspace's member roster."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- hub
-- organizations
-- workspace
-- roster
-- api
+  - hub
+  - organizations
+  - workspace
+  - roster
+  - api
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/data/services/auth/auth-client
+  - adtoolkit://cookbook/data/services/auth/auth-client
 references:
-- packages/web/packages/data/src/organizations/organizations.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/organizations/members.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/organizations/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/organizations/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/organizations/organizations.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/organizations/members.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/organizations/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/organizations/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/auth/src/client.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Organizations
@@ -176,10 +175,10 @@ inside the wrong workspace's own rail.
 - **every-call-url-encodes-identifiers**: every organizations and roster operation MUST
   percent-encode every caller-supplied identifier it places in a URL (workspace slug, key, id,
   roster slug).
-- **no-client-side-cache**: neither the organizations operations nor the roster operation MUST
+- **no-client-side-cache**: the organizations operations and the roster operation MUST NOT
   cache or memoize any response themselves; every call issues exactly one HTTP request.
-- **module-holds-no-mutable-state**: neither the organizations operations nor the roster operation
-  MUST hold mutable state across calls; the only persistent value besides the URL templates each
+- **module-holds-no-mutable-state**: the organizations operations and the roster operation MUST NOT
+  hold mutable state across calls; the only persistent value besides the URL templates each
   operation builds inline is the read-only organizations cache-key prefix. Unlike the sibling
   Ecosystems/Access clients, no shared base-route constant is extracted for either.
 
@@ -192,7 +191,7 @@ rather than reimplements.
 
 - **auth-delegated-to-shared-client**: every network call in both the organizations and roster
   operations MUST go through the shared authenticated request client, which attaches
-  `Authorization: Bearer <token>` from the stored access token; neither MUST read, store, or attach
+  `Authorization: Bearer <token>` from the stored access token; both MUST NOT read, store, or attach
   a token itself.
 - **session-refresh-waterfall**: a 401 response to any call MUST trigger exactly one token refresh
   and one retried request, inherited unconditionally from the shared client; a second 401 on the
@@ -200,8 +199,8 @@ rather than reimplements.
 - **errors-carry-status-and-code**: any non-2xx response other than an unresolved 401 MUST cause
   the call to throw an HTTP error, carrying the response's HTTP status and, when the body supplies
   one, a machine-readable code.
-- **authorization-enforced-server-side**: neither the organizations operations nor the roster
-  operation MUST perform any client-side permission check before sending a request: create's
+- **authorization-enforced-server-side**: the organizations operations and the roster
+  operation MUST NOT perform any client-side permission check before sending a request: create's
   split (open in a personal workspace, admin-of-the-organization required from an organization
   workspace), rename's split (name/description need org-team-admin, slug needs site-admin),
   archive's allowed roles (organization creator, org-team admin, or site-admin), and the roster's
@@ -433,9 +432,9 @@ genuinely is asking the membership question.
 by the caller — there is nothing optional to omit. `rename`'s body has three independently optional
 fields, and an untouched field must not travel as an explicit `undefined` key on the wire; `compact`
 is needed only where partial updates exist.
-**Approved**: pending
-**Applies to**: Web — `compact` is this platform's own JSON-body-trimming helper; a port only needs
+Platform scope: Web — `compact` is this platform's own JSON-body-trimming helper; a port only needs
 to reproduce omitting untouched fields from the outgoing body, not this specific helper.
+**Approved**: pending
 
 **Decision**: `restore`'s 409 handling is status-based (`isConflict`), while `create`/`rename`'s is
 message-based (`rethrowConflict`).
@@ -444,10 +443,10 @@ organization handle has been taken") does not match `rethrowConflict`'s "already
 match — reusing `rethrowConflict` here would fail to produce the friendly message and let the raw
 backend wording leak through. Status-based detection avoids depending on exact wording that this
 one route doesn't share with the other two.
-**Approved**: pending
-**Applies to**: Web — `isConflict`/`rethrowConflict` are this platform's own helpers; a port only
+Platform scope: Web — `isConflict`/`rethrowConflict` are this platform's own helpers; a port only
 needs to preserve the underlying distinction (detect this route's conflict by status, not by
 matching message text).
+**Approved**: pending
 
 **Decision**: `resolve` does not intercept a 404 into `null`.
 **Rationale**: no comment in the source explains this choice, and no other 404-to-null pattern
@@ -473,10 +472,10 @@ each workspace caches its own answer and switching workspaces cannot serve the p
 invalidating the bare prefix clears every workspace at once, which is what `create`/`rename` need.
 Sharing one key over the organizations question and the membership question is what made the two
 lists impossible to tell apart before this endpoint existed.
-**Approved**: pending
-**Applies to**: Web — the specific prefix-tuple representation (`ORGANIZATIONS_QUERY_KEY`) is this
+Platform scope: Web — the specific prefix-tuple representation (`ORGANIZATIONS_QUERY_KEY`) is this
 platform's react-query convention; a port only needs an equivalent cache-key concept with the same
 prefix/distinctness invariants.
+**Approved**: pending
 
 ## Compliance
 
@@ -533,6 +532,8 @@ file (see Localization) — a plain, honestly-reported gap, not a hidden one.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Design Decisions keep the Decision / Rationale / Approved triple; each decision's platform line is folded into its rationale. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restate negative requirements as MUST NOT prohibitions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial recipe: `organizationsApi` (list/resolve/create/rename/archive/restore), `workspaceMembersApi.list`, and the wire model contract. |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe: `organizationsApi` (list/resolve/create/rename/archive/restore), `workspaceMembersApi.list`, and the wire model contract. |

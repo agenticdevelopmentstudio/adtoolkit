@@ -1,39 +1,38 @@
 ---
 id: 0f423d74-6916-41cb-9f3c-bdb29c416a96
-title: Status Server Monitor Cadence
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/cadence
+title: "Status Server Monitor Cadence"
+domain: adtoolkit://cookbook/status/service/monitor/cadence
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Gates the status monitor's expensive deploy-sync phase behind a boot-safe
-  delay and a recurring interval, with a manual override that re-anchors both.
+summary: "Gates the status monitor's expensive deploy-sync phase behind a boot-safe delay and a recurring interval, with a manual override that re-anchors both."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- cadence
-- deploy
-- server
+  - monitor
+  - cadence
+  - deploy
+  - server
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
-- agenticdevelopertoolkit://cookbook/status/service/config
+  - adtoolkit://cookbook/status/service/monitor/alerts
+  - adtoolkit://cookbook/status/service/config
 references:
-- packages/web/packages/status-server/src/monitor/cadence.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/cadence.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/config-cadence.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/scheduler.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/cadence.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/cadence.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/config/port.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/config-cadence.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/cycle-runner.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/scheduler.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Cadence

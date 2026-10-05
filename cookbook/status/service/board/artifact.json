@@ -1,0 +1,83 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "7984f592-a12d-49da-806c-ff39d9557998",
+    "title": "Status Server Board",
+    "domain": "adtoolkit://cookbook/status/service/board",
+    "type": "ingredient",
+    "version": "1.0.3",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Status backend's board fold: the pure functions under `src/board/` that reduce deploy, HTTP/DNS, platform-health, GlitchTip-error, and roster facts into one `Board` (a Problems list, an Activity feed, an overall indicator, and the set of currently monitored targets), plus the target-key minting, ownership resolution, and ledger-reconciliation entrypoint that keep every board sub-system agreeing on one spelling of \"which target\".",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "monitoring",
+      "status",
+      "deploy",
+      "activity-feed",
+      "pure-function"
+    ],
+    "depends-on": [
+      "agenticdevelopercookbook://guidelines/implementing/networking/pagination",
+      "agenticdevelopercookbook://guidelines/implementing/networking/idempotency-keys",
+      "agenticdevelopercookbook://guidelines/implementing/testing/testing"
+    ],
+    "related": [
+      "adtoolkit://cookbook/status/service/auth"
+    ],
+    "references": [
+      "packages/web/packages/status-server/src/board/target-key.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/board/ownership.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/board/derive-activity.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/board/derive.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/board/facts.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/board/reconcile.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/board/types.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/board-target-key.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/board-ownership.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/board-deploy.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/board-endpoint.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/board-errors.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/board-monitoring.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/board-regressions.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/board-activity.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/board-activity-page.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/board-facts.test.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "513cfba11b7fcec5",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

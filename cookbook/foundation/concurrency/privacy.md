@@ -1,0 +1,6 @@
+
+- **Data handled**: None of the three utilities defines a data field of its own — each only carries whatever the caller's closure captures or returns. In practice that closure MAY handle sensitive data: a plugin installer's use of the blocking-work helper verifies a signature and digest inside the closure, and a document reloader's use reads arbitrary file contents that MAY be sensitive user documents. None of the three utilities itself inspects, parses, or branches on the content of any value passing through it.
+- **Storage**: None of the three utilities persists anything; each holds a closure or a task handle only in memory for the duration of one dispatched call, one debounce cycle, or one teardown's execution.
+- **Transmission**: None of the three utilities transmits data itself; whatever a wrapped closure does with the network (none of the current call sites' closures perform network I/O) is entirely outside these utilities.
+- **Retention**: None — the blocking-work helper retains nothing past one call; a debouncer entry is retained only until it succeeds or is cancelled (with failed entries retained specifically so flushing all can find them at shutdown); a tracked teardown handle is retained only until its teardown completes.
+

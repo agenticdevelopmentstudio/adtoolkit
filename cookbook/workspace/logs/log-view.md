@@ -1,30 +1,29 @@
 ---
 id: c5a74f9a-d38f-4724-ad1d-f6460ebc2bb0
-title: Log View
-domain: agenticdevelopertoolkit://cookbook/workspace/logs/log-view
+title: "Log View"
+domain: adtoolkit://cookbook/workspace/logs/log-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Themed log table driven by a log provider, with per-column click hooks
-  and tail-follow.
+summary: "Themed log table driven by a log provider, with per-column click hooks and tail-follow."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- log
-- table
+  - log
+  - table
 depends-on: []
 related:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Log View
@@ -162,6 +161,7 @@ contract:
 - **reload-is-public-and-unconditional**: The component's public reload
   operation MUST refresh the table's displayed data whenever invoked,
   independent of any provider change notification.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -268,6 +268,7 @@ contract:
 | log-view-029 | scroll-to-end-no-ops-when-empty | Call the scroll-to-end operation on a view whose provider has zero lines. | No scroll occurs and no error or crash results. |
 | log-view-030 | reload-is-public-and-unconditional | Call the public reload operation with no preceding provider change. | The table's data is reloaded. |
 | log-view-032 | empty-table-counts-as-at-bottom | With a provider holding zero lines and `followTail == true`, trigger an appended change adding the first line. | The view scrolls to that new line after the reload, since the pre-append empty state counts as at-bottom. |
+| log-view-033 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -499,13 +500,15 @@ as an API-visibility note.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | Accessibility |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | partial | Accessibility |
 | [dynamic-type-support](agenticdevelopercookbook://compliance/accessibility#dynamic-type-support) | partial | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | passed | Internationalization |
 
-`screen-reader-support` and `no-hardcoded-strings` pass because the source
+`separation-of-concerns` passes because `LogView` only renders: rows and columns come from the `LogProvider` contract and it reports clicks through hooks, with no data fetching or formatting of its own; `unit-test-coverage` passes because `LogViewTests.swift` in `AgenticToolkitMacOSTests/LoggingWindow` exercises the view's table, tail-follow and click dispatch behavior; `screen-reader-support` and `no-hardcoded-strings` pass because the source
 adds no custom accessibility overrides that would break AppKit's default
 table/row/cell hierarchy and defines no string literal of its own;
 `keyboard-navigable` is partial because row selection is keyboard-operable
@@ -523,3 +526,5 @@ does not control or expose.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/logs/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Compliance now cites separation-of-concerns (passed) and unit-test-coverage (passed, LogViewTests); format only. |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

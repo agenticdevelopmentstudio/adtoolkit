@@ -1,0 +1,32 @@
+
+- **columns-in-declared-order**: The table MUST show one column per declared column, in declared order, with the declared titles and widths.
+- **sort-reports-only**: Only sortable columns MUST carry sorting; clicking one MUST report the column id and direction and MUST NOT reorder rows, which stay in the order given.
+- **rows-in-given-order**: The table MUST show one row per given row, in order.
+- **empty-message**: An empty table MUST hide its header and show the empty message; a non-empty table MUST hide the message.
+- **visible-row-count**: The table MUST size itself to show a configurable number of rows, six by default.
+- **toggle-cells-report**: A toggle cell MUST show its state as a switch and report the row id, the column id and the new state when changed.
+- **indicator-cells**: An indicator cell MUST show a filled mark for on and a hollow mark for off, with an accessibility label of its title followed by on or off.
+- **mismatched-cell-draws-nothing**: A cell whose value does not match its column's kind MUST draw nothing.
+- **text-edit-reports-new-text**: Committing an edit to an editable text cell MUST report the row id, column id and new text.
+- **unchanged-edit-is-not-reported**: Ending an edit whose text equals the text the cell was filled with MUST report nothing.
+- **edit-binds-to-its-row-and-column**: An edit MUST be committed against the row and column the field was filled for, not the row or column now at that position, so reloads, sorting by the owner and header drags cannot move an edit to another record.
+- **gone-or-unknown-edits-are-dropped**: An edit whose row no longer exists, or whose field the table cannot place, MUST NOT be reported.
+- **typed-day**: A day cell MUST accept only a strict year-month-day text in the card's time zone and report a day.
+- **typed-time**: A time cell MUST parse local time text, place it nearest the cell's reference date, and report a time.
+- **typed-duration**: A duration cell MUST parse its text with the duration formatter, check the declared range, and report whole seconds or minutes as declared.
+- **typed-money**: A money cell MUST parse its text with the money formatter in the cell's currency (US dollars by default), check the declared range, and report cents; a blank MUST report no amount when blanks are allowed.
+- **unparseable-edit-is-rejected**: Text that does not parse, or parses out of range, MUST be reported through the rejected-edit callback with the row and column and MUST NOT be reported as an edit.
+- **read-only-rows-reject-edits**: A read-only row MUST reject every edit through the rejected-edit callback and show its stored values again.
+- **reload-held-while-editing**: A reload that arrives while a cell is being edited MUST be held until the edit commits or the window closes, and a later reload MUST fold into the held one.
+- **close-releases-held-reload**: Closing the window while a reload is held MUST end the edit and apply the held reload.
+- **update-rows-in-place**: Updating rows by id MUST replace only the named rows, keep order and selection, and report false for an id the table does not have.
+- **selection-by-id**: The table MUST select by row id, report false for a missing id and leave the selection alone, restore selection by id after a reload, and clear it when its row goes away.
+- **selection-reports-are-deduplicated**: The selection callback MUST report each change once, including losing the selection.
+- **remove-follows-selection**: Add MUST always be enabled; remove MUST be enabled only while a row is selected and the owner's can-remove check allows it.
+- **footer-can-be-hidden**: The add and remove footer MUST be hideable.
+- **footer-accessories**: Callers MUST be able to add footer buttons and a pull-down menu button whose items are rebuilt each time it opens.
+- **flagged-rows-are-marked**: A flagged row MUST be marked visibly without using the selection color.
+- **locale-and-zone-reload**: Changing the time zone or locale MUST reload the table so day, time and money cells re-render.
+- **views-are-recycled**: Row views and cells MUST be recycled while scrolling.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
+

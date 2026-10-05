@@ -1,29 +1,28 @@
 ---
 id: bc43002d-faf6-4ffa-bc12-95f1a07f27e8
-title: Multi-Choice Filter Button
-domain: agenticdevelopertoolkit://cookbook/ui/controls/multi-choice-filter-button
+title: "Multi-Choice Filter Button"
+domain: adtoolkit://cookbook/ui/controls/multi-choice-filter-button
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
 created: 2026-09-23
-modified: '2026-09-27'
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A pull-down control that filters on any combination of a short, fixed
-  choice list, with a live summary title.
+summary: "A pull-down control that filters on any combination of a short, fixed choice list, with a live summary title."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- picker
-- filter
+  - picker
+  - filter
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Multi-Choice Filter Button
@@ -113,9 +112,9 @@ system control for a hand-built one.
   font to the active theme's `SemanticPalette.font(.body)`, applying both
   immediately at initialization and reapplying both every time the active
   theme changes.
-- **rejects-coder-initialization**: See Platform Notes.
-- **confines-to-main-actor**: See Platform Notes.
-- **disables-autoresizing-mask-translation**: See Platform Notes.
+- **rejects-coder-initialization**: The control MUST be constructible only in code. Constructing it from a serialized or archived representation (such as a nib or storyboard) MUST be refused as a programmer error that terminates, producing no instance.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
+- **disables-autoresizing-mask-translation**: The control MUST be positioned only by explicit layout constraints supplied by its container; it MUST NOT have constraints generated implicitly from its frame.
 
 ## Appearance
 
@@ -184,14 +183,7 @@ system control for a hand-built one.
   minimum is touch guidance that does not apply. Source sets no explicit
   control-size override, so it keeps the platform's regular system control
   metrics.
-- **contrast**: NEEDS REVIEW: Not implemented in source. The foreground
-  tint color (`primaryTextColor`) and the button's bezel are both resolved
-  from the active theme at runtime, and this component's own source
-  performs no contrast check against that background; resolving it
-  requires auditing each shipped theme's foreground-vs-bezel contrast
-  against a chosen accessibility bar (e.g., WCAG 2.1 AA's 4.5:1 for
-  body-sized text), a call for the design/accessibility owner of the theme
-  catalog, not this file.
+- **contrast**: The component performs no contrast check of its own. The foreground tint color (the theme's primary text color) and the button's bezel are both resolved from the active theme at runtime, so foreground-versus-bezel contrast is whatever each shipped theme produces.
 
 ## Conformance Test Vectors
 
@@ -216,9 +208,12 @@ system control for a hand-built one.
 | multi-choice-filter-button-017 | themes-text-appearance | Construct the button, then post a theme-change notification with a new theme | The foreground tint color and font update to the new theme's corresponding values without re-constructing the button |
 | multi-choice-filter-button-021 | label-and-any-never-checked | Construct with `choices: [a, b]`; invoke choice `a`'s item action | Item 0 and the "Any" item remain unchecked; only `a`'s item is checked |
 | multi-choice-filter-button-022 | initializes-selection-empty | Construct the button; check `selection` immediately, before any interaction | `selection == []` |
+| multi-choice-filter-button-023 | rejects-coder-initialization | Attempt to construct the control from a serialized or archived representation | Construction is refused as a programmer error and terminates; no instance is produced. Verified by inspection only, since the refusal cannot be caught. |
+| multi-choice-filter-button-024 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
+| multi-choice-filter-button-025 | disables-autoresizing-mask-translation | Inspect the control's implicit frame-to-constraint translation after construction | Translation is disabled, so only explicit constraints position the control. |
+| multi-choice-filter-button-026 | contrast | Construct the button under a theme whose primary text color is close to its bezel color | The foreground tint equals the theme's primary text color; no contrast adjustment is applied. |
 
-`rejects-coder-initialization`, `confines-to-main-actor`, and
-`disables-autoresizing-mask-translation` have no test vectors: see Platform Notes for each.
+`rejects-coder-initialization`, `confines-to-ui-thread` and `disables-autoresizing-mask-translation` are vectors 023, 024 and 025; the first two are verified by inspection only (see Platform Notes).
 
 ## Edge Cases
 
@@ -370,7 +365,7 @@ Not applicable: this component's own source contains no logging call.
 - **AppKit / UIKit** (source platform): Source file
   `packages/apple/AgenticToolkit/macOS/UI/Controls/MultiChoiceFilterButton.swift`.
   A macOS-only (`import AppKit`) `NSPopUpButton` subclass, `@MainActor`,
-  configured `pullsDown: true`. `confines-to-main-actor` is enforced by
+  configured `pullsDown: true`. `confines-to-ui-thread` is enforced by
   the class being declared `@MainActor`, so construction or mutation from
   off the main actor fails to compile — a static, compile-time check
   rather than a vector observed by running the program.
@@ -488,6 +483,10 @@ constraint on `Choice.id`; keeping ids unique is a contract on the caller,
 stated in Edge Cases. (Applies to the AppKit implementation.)
 **Approved**: pending
 
+**Decision**: The button performs no contrast check: the foreground tint is the theme's primary text color and the bezel is the platform's, with no enforced ratio between them.
+**Rationale**: Neither the tint nor the bezel is measured anywhere in the source. Closing the gap means auditing each shipped theme's foreground-versus-bezel contrast against a chosen accessibility bar (for example 4.5:1 for body-sized text), a call for the owner of the theme catalog.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -498,6 +497,8 @@ stated in Edge Cases. (Applies to the AppKit implementation.)
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | Internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 Native-controls-preference and platform-design-language pass because the
 component is a stock pull-down/menu control with no custom drawing.
@@ -513,6 +514,8 @@ String-externalization is failed because the "Any" and "{n} selected"
 strings are hardcoded English literals with no localization key (see
 Localization).
 
+`separation-of-concerns` passes because the control owns only the menu, the title summary and the checkmarks, takes its choices as caller-supplied id/title/detail values and reports changes through `onChange`, leaving the meaning of an id to the caller. `unit-test-coverage` is `failed`: a search of the Apple test targets finds no test file for `MultiChoiceFilterButton`, so vectors 001 through 026 are unpinned by automated tests.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -522,3 +525,4 @@ Localization).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/controls/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Wrote the archive-rejection, main-thread confinement and autoresizing-translation requirements platform-neutrally with vectors 023-025; resolved the contrast NEEDS REVIEW marker as current behavior (no contrast check) with vector 026 and a pending decision; added separation-of-concerns and unit-test-coverage compliance rows. Renamed the thread-confinement requirement to confines-to-ui-thread with the standard wording. |

@@ -1,41 +1,35 @@
 ---
 id: ef4d83d7-ce2c-4868-9763-62a4513ad7c6
-title: File System Detection
-domain: agenticdevelopertoolkit://cookbook/workspace/files/project-detection
+title: "File System Detection"
+domain: adtoolkit://cookbook/workspace/files/project-detection
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: IDE-marker directory scanning and file-extension language resolution for
-  the file browser's model layer.
+summary: "IDE-marker directory scanning and file-extension language resolution for the file browser's model layer."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- file-browser
-- detection
+  - file-browser
+  - detection
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Detection/IDEDetector.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Detection/LanguageDetection.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/LanguageDetectionTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Views/FileTypesSettingsView.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileTreeManager.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Language/LSP/LanguageServerConfiguration.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Detection/IDEDetector.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/Detection/LanguageDetection.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/FileBrowser/LanguageDetectionTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Views/FileTypesSettingsView.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/FileBrowser/Model/FileTreeManager.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Language/LSP/LanguageServerConfiguration.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # File System Detection
@@ -234,10 +228,10 @@ code-language value.
   operation's own documentation, it is "the single place that mapping is
   made" (see Design Decisions for why the language-server configuration
   component cannot simply call it).
-- **detect-scan-failure-unsignaled**: NEEDS REVIEW: Not implemented in source. `scan-top-level-read-failure-yields-empty` and an ordinary empty, marker-free directory both produce an empty `detectedIDEs` and `isDetecting == false` with no other observable difference — the detect operation has no way to tell a caller "the scan failed" apart from "the scan found nothing." Settling this requires deciding whether the IDE-marker detector should expose a distinct failure/error state, which the source does not do.
-- **open-fallback-result-unchecked**: NEEDS REVIEW: Not implemented in source. The system default-handler open in the fallback branch of the open operation returns a success indicator, but that return value is never read, logged, or otherwise acted on — a failed fallback open is completely silent, unlike the specific-application path's logged failure. Settling this requires deciding what, if anything, the fallback path should report on failure.
-- **language-unresolvable-mapping-unsignaled**: NEEDS REVIEW: Not implemented in source. The settings UI collects a custom mapping's language name from free text with only a non-empty check (no validation against the built-in language table); when that text matches no canonical name or extension entry, `language-falls-back-to-builtin-detection` silently ignores the user's mapping with no error, log, or other signal that it never took effect. Settling this requires deciding whether the language-resolution operation, the mapping lookup, or the settings UI itself should validate or report an unresolvable language name.
-- **custom-mapping-cache-race**: NEEDS REVIEW: Not implemented in source. The custom-mapping store's cache and active-defaults-key are mutable shared state with no lock or other serialization discipline; the language-resolution operation can run on any thread, and a concurrent save (which clears the cache) racing a concurrent mapping-lookup read has no defined ordering. Settling this requires deciding what synchronization, if any, the custom-mapping store should adopt.
+- **detect-scan-failure-unsignaled**: A failed top-level directory read (**scan-top-level-read-failure-yields-empty**) and an ordinary empty, marker-free directory both produce an empty detected list with the detecting flag cleared; the detect operation exposes no failure or error state, so a caller cannot tell "the scan failed" from "the scan found nothing" (see the pending design decision on scan failure signaling).
+- **open-fallback-result-unchecked**: When the open operation takes the fallback branch (no associated application identifier, or none installed), it hands the project location to the system's default handler and does not read the success indicator that call returns: a failed fallback open is not logged, retried or reported, unlike the specific-application path, whose failure is logged (**open-bundle-path-failure-logged-only**) (see the pending design decision on the fallback open result).
+- **language-unresolvable-mapping-unsignaled**: The settings UI collects a custom mapping's language name as free text and checks only that it is non-empty, with no validation against the built-in language table. When that text matches no canonical language name or extension entry, **language-falls-back-to-builtin-detection** silently ignores the user's mapping: no error, log or other signal says it never took effect (see the pending design decision on unresolvable language names).
+- **custom-mapping-cache-race**: The custom-mapping store's lookup cache and active defaults key are mutable shared state with no lock or other serialization. Language resolution can run on any thread, so a concurrent save (which clears the cache) racing a concurrent mapping lookup has no defined ordering (see the pending design decision on custom-mapping store synchronization).
 
 ## Appearance
 
@@ -324,7 +318,7 @@ file-extension-to-language resolver, not a visual component.
   safe with no shared mutable state between them. MUST.
 - **Concurrent access — language detection and the custom-mapping store.**
   Unlike the IDE-marker detector, this path has no defined ordering: see
-  the `custom-mapping-cache-race` marker above.
+  `custom-mapping-cache-race` above and its pending design decision.
 - **Error states — unreadable directory at any scanned level.** Every
   directory-listing call in the scan operation, the marker-matching step,
   and the JetBrains-type heuristic tolerates a failure without throwing
@@ -335,7 +329,7 @@ file-extension-to-language resolver, not a visual component.
 - **Error states — application-open failure.** The specific-application
   path logs and swallows the error (`open-bundle-path-failure-logged-only`,
   MUST); the fallback path swallows it with no signal at all
-  (`open-fallback-result-unchecked` marker).
+  (`open-fallback-result-unchecked`).
 - **Offline/disconnected: not applicable.** Neither the IDE-marker
   detector nor the language-detection component performs any network
   I/O — every operation is a local file-system read or a local
@@ -544,6 +538,22 @@ The language-detection component contains no logging call of any kind.
   behavior, per source fidelity.
   **Approved**: pending
 
+**Decision**: The IDE-marker detector cannot signal that its scan failed; an unreadable root and an empty root look the same.
+**Rationale**: `IDEDetector.scan(rootURL:)` returns `[]` when the top-level `contentsOfDirectory` call fails, and `detect()` publishes that exactly like an empty result. Closing it would take a distinct failure state on the detector, which is a decision about what a caller should show for it.
+**Approved**: pending
+
+**Decision**: The fallback open's success indicator is never read, so a failed fallback open is silent.
+**Rationale**: In `IDEDetector.open(project:rootURL:)` the `NSWorkspace.shared.open(targetURL)` fallback result is discarded, while the specific-application path logs its completion error. Closing it would take deciding what, if anything, the fallback path should report on failure.
+**Approved**: pending
+
+**Decision**: A custom mapping whose language name resolves to no known language is accepted and silently has no effect.
+**Rationale**: `FileTypesSettingsView` only requires a non-empty language name, and `LanguageDetection.language(for:)` falls through to built-in detection when no `CodeLanguage` matches the name. Closing it would take validating or reporting an unresolvable name in the settings UI, the mapping lookup, or the resolver.
+**Approved**: pending
+
+**Decision**: The custom-mapping store's cache and active defaults key have no synchronization.
+**Rationale**: `CustomFileTypeMappings` keeps `cache` and `activeDefaultsKey` as `nonisolated(unsafe)` statics, cleared by `save(_:)` and filled by `mapping(for:)`, while `LanguageDetection.language(for:)` may be called from any thread. Closing it would take a lock or actor isolation around the cache, which is a decision about what synchronization the store should adopt.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -575,5 +585,6 @@ result rather than throwing or crashing (see Edge Cases).
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Restated four open-question requirements as current behavior and recorded each as a pending design decision. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/files/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |

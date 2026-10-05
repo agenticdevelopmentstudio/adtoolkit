@@ -1,47 +1,41 @@
 ---
 id: d7171e41-4638-4243-9821-7a46cecf15c2
-title: Project Tab Reconciler
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-tab-reconciler
+title: "Project Tab Reconciler"
+domain: adtoolkit://cookbook/workspace/projects/project-tab-reconciler
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Turns a project's stored tabs and current checkouts into a plan of tabs to
-  keep, checkouts needing new tabs, and tabs whose directory is truly gone.
+summary: "Turns a project's stored tabs and current checkouts into a plan of tabs to keep, checkouts needing new tabs, and tabs whose directory is truly gone."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- tabs
-- reconciliation
-- pure-function
+  - git
+  - projects
+  - tabs
+  - reconciliation
+  - pure-function
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-controller
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-checkout
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-database-layout
+  - adtoolkit://cookbook/workspace/projects/project-controller
+  - adtoolkit://cookbook/workspace/projects/project-checkout
+  - adtoolkit://cookbook/workspace/projects/project-database-layout
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTabReconciler.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectTabReconcilerTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/LayoutNode.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase+Layout.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectTabReconciler.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Projects/ProjectTabReconcilerTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/LayoutNode.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/MultiTabbedViewController/Edge.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectCheckout.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase+Layout.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Tab Reconciler
@@ -155,23 +149,7 @@ function of its arguments.
   fresh worktree listing, and git registers each worktree at a distinct
   path. A caller that passes two checkouts sharing one uncovered directory
   gets both in `add`.
-- **volume-lookup-failure-handling**: NEEDS REVIEW: Not implemented in
-  source. The volume lookup collapses every failure of the underlying
-  volume-identity query — a thrown error and a successful call whose
-  volume is empty — into the same no-result outcome, so the mount-lookup
-  function's equality check cannot distinguish "both sides are on the same
-  mounted volume" from "neither side's volume could be determined at all";
-  when both volume lookups fail identically, the equality check evaluates
-  to true, the mount-lookup function reports the directory mounted, and
-  building a plan then drops — permanently, per the documentation — a
-  record whose real mount status was never actually established. What is
-  missing: whether the volume-identity query can fail for an existing
-  local directory on the filesystems this app supports, and if so what the
-  mount-lookup function should return instead of treating that failure as
-  "mounted." What would settle it: a documented statement of the intended
-  fallback for that case, or evidence that the volume-identity query never
-  fails for a path the deepest-existing-ancestor walk has already
-  confirmed exists.
+- **volume-lookup-failure-handling**: the volume lookup collapses every failure of the underlying volume-identity query (a thrown error and a successful call with no volume) into the same no-result outcome, so when both sides' lookups fail the mount-lookup function's equality check evaluates to true and reports the directory mounted; building a plan then retains or drops a record on a mount status that was never established (see Design Decisions).
 
 ## Appearance
 
@@ -468,6 +446,10 @@ way keeps the comparison meaningful even when the project's own directory no
 longer exists (`ProjectTabReconciler.swift`).
 **Approved**: pending
 
+**Decision**: A failed volume-identity query is treated as "no volume", so two failed lookups compare equal and the directory is reported mounted (`volume-lookup-failure-handling`).
+**Rationale**: The source's volume lookup is a `try?` over the resource-values call, giving the same absent result for an error as for no volume, and the mount check compares the two results for equality. Closing it needs a stated fallback for a failed lookup (for example, treat as not determinable and keep the record) or evidence that the query never fails for a path the existing-ancestor walk already confirmed exists.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -489,7 +471,7 @@ the symlink-resolution case, and both `makeRecords` invariants directly, but
 `arrangement(of:activeTabID:)` has no dedicated test in this file at all,
 and no test exercises the real, non-overridden
 `volumeIsMounted(for:projectDirectory:)` against an actual resource-value
-failure. explicit-error-handling is partial because of the open question on
+failure. explicit-error-handling is partial because of the pending decision on
 volume-lookup-failure-handling: `volumeURL(of:)`'s `try?` turns a thrown
 resource-value error into the same `nil` that a legitimately absent volume
 URL produces, and that ambiguity feeds directly into a permanent-deletion
@@ -498,7 +480,7 @@ pure, synchronous computation over its arguments with no stored state, so
 calling `plan(...)` again with the same stored tabs, checkouts, and
 filesystem state MUST reproduce the same `Plan` (see
 `reconciler-no-mutation-of-inputs`, `reconciler-synchronous-non-throwing`).
-data-integrity is partial: the open question on
+data-integrity is partial: the pending decision on
 volume-lookup-failure-handling can permanently drop a record whose mount
 status was never established, while duplicate checkout directories rest on
 the caller precondition in **duplicate-checkout-directory-handling**.
@@ -507,6 +489,7 @@ the caller precondition in **duplicate-checkout-directory-handling**.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the volume-lookup NEEDS REVIEW marker against source: a try? makes failed lookups compare equal; restated as current behavior with a pending decision. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

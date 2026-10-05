@@ -1,0 +1,23 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| git-client-projects-project-scan-progress-window-001 | confines-to-ui-thread | Call present or finish from code that is not on the UI's main execution context and does not hand off to it. | The call is rejected before it can run, since the progress window is confined to the main execution context and neither operation offers an off-context path. |
+| git-client-projects-project-scan-progress-window-002 | fixed-panel-geometry-and-style | Construct the progress window. | The instance's window has an initial content size of 240×72 points and a titled, utility-style chrome. |
+| git-client-projects-project-scan-progress-window-003 | panel-title | Construct the progress window. | The window's title equals "Scanning". |
+| git-client-projects-project-scan-progress-window-004 | floating-non-modal-presentation | Construct the progress window. | The window is a floating panel; the component exposes no modal-presentation operation to call instead. |
+| git-client-projects-project-scan-progress-window-005 | deactivation-visibility | Construct the progress window. | The window stays visible when the host application deactivates. |
+| git-client-projects-project-scan-progress-window-006 | key-only-if-needed | Construct the progress window. | The window becomes the focused (key) window only if something inside it needs focus. |
+| git-client-projects-project-scan-progress-window-007 | centered-on-screen | Construct the progress window. | The window's frame is centered on the screen that contains it. |
+| git-client-projects-project-scan-progress-window-008 | automation-identifiers-assigned | Construct the progress window. | The panel's automation identifier equals "project-scan.window" and the headline view's automation identifier equals "project-scan.headline". |
+| git-client-projects-project-scan-progress-window-009 | initial-headline-text | Construct the progress window and read the headline before presenting or finishing it. | The headline label's text equals "Scanning for projects…". |
+| git-client-projects-project-scan-progress-window-010 | initial-progress-bar-state | Construct the progress window. | The progress indicator is indeterminate, at a small control size, animated on its own thread, with a value range of 0 to 1. |
+| git-client-projects-project-scan-progress-window-012 | present-starts-animation-and-orders-front | Construct the progress window, then present it. | The progress indicator's animation is running and the window becomes visible on screen without becoming the focused window. |
+| git-client-projects-project-scan-progress-window-013 | present-guards-missing-window | On an instance whose window no longer exists, call present. | No crash occurs; the animation is not started and no window is brought to the front. |
+| git-client-projects-project-scan-progress-window-014 | finish-completes-progress-bar | Construct, present, then finish. | The progress indicator becomes determinate and its value equals its maximum (`1`). |
+| git-client-projects-project-scan-progress-window-015 | finish-updates-headline-text | Construct, present, then finish. | The headline label's text equals "Scan complete". |
+| git-client-projects-project-scan-progress-window-016 | finish-schedules-delayed-close | Finish, then observe the window before and after 1.0 second elapses. | Before 1.0 second, the window is still visible; after 1.0 second, the window has closed. |
+| git-client-projects-project-scan-progress-window-017 | finish-outlives-caller-reference | Finish, then immediately release every external reference to the instance. | After 1.0 second, the panel still closes itself; the instance is not disposed of early. |
+| git-client-projects-project-scan-progress-window-018 | finish-completes-progress-bar, finish-updates-headline-text, finish-schedules-delayed-close | Construct the progress window and finish it without ever presenting it. | The indicator and headline update exactly as in vectors 014-015, and the window still closes after 1.0 second, even though it was never shown. |
+| git-client-projects-project-scan-progress-window-019 | present-starts-animation-and-orders-front | Call present twice in succession. | The animation is started again and the window is simply re-ordered to the front; no error and no duplicate window are produced. |
+| git-client-projects-project-scan-progress-window-020 | finish-schedules-delayed-close | Call finish twice in succession. | Two delayed closes are scheduled; the first closes the window after 1.0 second, and the second's close on the already-closed window is a no-op that produces no crash. |
+

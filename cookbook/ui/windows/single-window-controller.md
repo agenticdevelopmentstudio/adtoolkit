@@ -1,35 +1,33 @@
 ---
 id: 3f6268b8-410d-4d3c-979c-2a9f9f1534f3
-title: Single-Instance Window
-domain: agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller
+title: "Single-Instance Window"
+domain: adtoolkit://cookbook/ui/windows/single-window-controller
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A base window controller that lazily builds a single window from subclass
-  configuration, persists its frame and visibility, and supports quiet presentation
-  and HUD chrome.
+summary: "A base window controller that lazily builds a single window from subclass configuration, persists its frame and visibility, and supports quiet presentation and HUD chrome."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-controller
-- frame-persistence
-- hud
-- singleton
+  - window-controller
+  - frame-persistence
+  - hud
+  - singleton
 depends-on: []
 related:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
-- agenticdevelopertoolkit://cookbook/ui/windows/window-controller
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/windows/window-controller
+  - adtoolkit://cookbook/ui/layout/composable-tabs/tabs-window
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Single-Instance Window
@@ -266,6 +264,7 @@ Decisions for how this recipe treats the mismatch).
 - **singleton-is-open**: The is-open operation MUST return false when no
   current instance exists, and otherwise MUST return the current instance's
   visibility flag.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -372,6 +371,7 @@ Decisions for how this recipe treats the mismatch).
 | single-window-controller-051 | singleton-ensure-current | no current instance exists | ensure-current is called twice | the shared-instance factory runs once; the second call reuses the first instance |
 | single-window-controller-052 | singleton-present | no current instance exists | present is called | a shared instance is created and shown |
 | single-window-controller-053 | singleton-is-open | no current instance exists | is-open is called | it returns false |
+| single-window-controller-054 | confines-to-ui-thread | The component exists | Use it from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -637,6 +637,8 @@ first; until then this recipe carries the debt rather than hiding it.
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | Platform Compliance |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | Accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | Reliability |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | partial | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 Statuses rest on direct inspection of `SingleWindowController.swift`: native
 `NSWindow`/`NSPanel` construction with no custom-drawn chrome
@@ -644,6 +646,8 @@ Statuses rest on direct inspection of `SingleWindowController.swift`: native
 from `windowID` (screen-reader-support), and no-op repeats of
 `fitWindow`/`showWindow`/`ensureCurrent` when nothing has changed
 (idempotent-operations).
+
+`separation-of-concerns` is partial: frame persistence math lives in `WindowFrameManager`, lookup in `WindowRegistry` and window placement values in `WindowSpec`, but `SingleWindowController` itself still bundles window construction, restore and delegate wiring, content refit after a move, the HUD configuration and the singleton convenience in one class. `unit-test-coverage` is partial: `SingleWindowControllerTests.swift`, `SingleWindowControllerMoveRefitTests.swift`, `SingletonWindowControllerTests.swift` and `PerIDWindowControllerTests.swift` cover subclass configuration, lifecycle, centering, delegate timing, move refit and the singleton convenience, but nothing exercises the `HUDConfiguration` path (`configureAsHUD`).
 
 ## Change History
 
@@ -654,3 +658,5 @@ from `windowID` (screen-reader-support), and no-op repeats of
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/windows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns (partial) and unit-test-coverage (partial) compliance rows. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

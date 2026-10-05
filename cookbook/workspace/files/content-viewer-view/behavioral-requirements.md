@@ -1,0 +1,31 @@
+
+- **show-placeholder-without-selection**: The component MUST render the placeholder view (icon plus message) when `selectedNode` is `nil`.
+- **show-detail-with-selection**: The component MUST render the file detail view, passing it the selected node and `config`, when `selectedNode` is non-`nil`.
+- **fill-available-space**: The component MUST expand to fill all available width and height, in both the placeholder and the detail state.
+- **placeholder-icon-style**: The placeholder MUST display the icon named `doc.text.magnifyingglass` at a 48pt icon size, in the theme's `tertiaryText` color.
+- **placeholder-message-text**: The placeholder MUST display the literal text "Select a file to view its details" in the theme's `heading` text role and `secondaryText` color.
+- **header-icon-symbol**: The detail view's header MUST display the icon named by `node.systemImageName` at a 40pt icon size.
+- **header-icon-color-package**: The header icon MUST render in the theme's `warning` color when the selected node is a package (`node.isPackage`).
+- **header-icon-color-directory**: The header icon MUST render in the theme's `accent` color when the selected node is a directory and is not a package.
+- **header-icon-color-swift-or-json**: The header icon MUST render in the theme's `warning` color when the selected node is a file whose extension, compared case-insensitively, is `swift` or `json`.
+- **header-icon-color-markdown**: The header icon MUST render in the theme's `accent` color when the selected node is a file whose extension, compared case-insensitively, is `md` or `markdown`.
+- **header-icon-color-default**: The header icon MUST render in the theme's `secondaryText` color when the selected node is a file whose extension matches none of the cases above, including a file with no extension.
+- **header-name-text**: The detail view's header MUST display `node.name` in the theme's `title` text role, limited to 2 lines, center-aligned.
+- **header-type-description-text**: The detail view's header MUST display the computed type description (see `type-description-*` requirements) directly below the name, in the theme's `caption` text role and `secondaryText` color.
+- **divider-between-header-and-grid**: The detail view MUST render a horizontal divider between the header and the metadata grid.
+- **grid-path-row-always-shown**: The metadata grid MUST always include a "Path:" row whose value is `node.url.path`.
+- **grid-path-value-selectable**: The "Path:" row's value text MUST be user-selectable, unlike every other value in the grid.
+- **grid-path-line-limit**: The "Path:" row's value text MUST be limited to 3 lines, with tail truncation.
+- **grid-size-row-conditional**: The metadata grid MUST include a "Size:" row, showing `node.fileSize` formatted by a `ByteCountFormatter` configured with `.file` count style, if and only if `node.fileSize` is non-`nil`.
+- **grid-modified-row-conditional**: The metadata grid MUST include a "Modified:" row, showing `node.modificationDate` formatted by a `DateFormatter` configured with long date style and medium time style, if and only if `node.modificationDate` is non-`nil`.
+- **grid-type-row-always-shown**: The metadata grid MUST always include a "Type:" row whose value is the computed type description.
+- **grid-extension-row-conditional**: The metadata grid MUST include an "Extension:" row, showing `node.url.pathExtension` prefixed with a literal `.`, if and only if the node is not a directory and its path extension is non-empty.
+- **grid-items-row-conditional**: The metadata grid MUST include an "Items:" row, showing the count of `node.children`, if and only if `node.children` is non-`nil`.
+- **grid-label-color**: Every metadata grid row's label (e.g. "Path:", "Size:") MUST render in the theme's `secondaryText` color, trailing-aligned within the label column.
+- **grid-value-text-role**: The metadata grid's values MUST render in the theme's `body` text role.
+- **type-description-package**: The type description MUST be `config.packageDisplayNames[extension]` when the node is a package and that extension has a configured display name, and the literal text "Package" when the node is a package with no configured display name for its extension.
+- **type-description-directory**: The type description MUST be the literal text "Directory" when the node is a directory and is not a package.
+- **type-description-known-extension**: The type description for a file MUST be the fixed string for its extension (compared case-insensitively) from the following mapping: `swift`→"Swift Source File", `json`→"JSON File", `md`/`markdown`→"Markdown Document", `txt`/`text`→"Text File", `plist`→"Property List", `entitlements`→"Entitlements File", `xcodeproj`→"Xcode Project", `xcworkspace`→"Xcode Workspace", `png`→"PNG Image", `jpg`/`jpeg`→"JPEG Image", `svg`→"SVG Image", `gif`→"GIF Image", `sh`→"Shell Script", `zsh`→"Zsh Script", `bash`→"Bash Script", `py`→"Python Script", `js`→"JavaScript File", `ts`→"TypeScript File", `css`→"CSS Stylesheet", `html`→"HTML Document", `yaml`/`yml`→"YAML File", `toml`→"TOML File", `gitignore`→"Git Ignore Rules".
+- **type-description-fallback-extension**: The type description for a file whose extension matches none of the known cases MUST be `"<EXTENSION>" uppercased, followed by " File"` when the extension is non-empty, and the literal text "File" when the extension is empty.
+- **no-filesystem-access-in-view**: The component MUST NOT perform any file system read of its own; every value it displays MUST already be present on the `FileTreeNode` or `FileTreeConfig` it was given.
+

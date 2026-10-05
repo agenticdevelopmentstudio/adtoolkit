@@ -1,0 +1,6 @@
+
+- **Role/trait**: Not applicable at this level — the pane spacing values are configuration state, not a view. The split view overrides no accessibility API and inherits whatever role/trait the platform's own split view exposes by default.
+- **Label requirements**: Not applicable — this component assigns no accessibility label or identifier to anything; a pane's own accessible content and identifier are a different component's concern (see the composable-tabs pane view).
+- **Announce state changes**: Not applicable — notifying of a spacing change only redraws the divider after the user changes a spacing setting themselves; the change is purely visual, carries no information a screen-reader user needs, and the user who made it already knows it happened.
+- **Minimum interactive target**: Dragging a divider is a pointer-driven interaction here; this component has no touch-target concept analogous to the minimum used on touch-driven platforms. The minimum divider grab width (`6pt`) is this component's own minimum draggable width, applied by consumers widening the hit-test region (out of this recipe's scope; not applicable here as a marker, consistent with the composable-tabs pane view's own treatment of touch-target size for the same divider).
+

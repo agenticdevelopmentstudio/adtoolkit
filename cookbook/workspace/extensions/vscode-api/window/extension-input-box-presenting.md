@@ -1,34 +1,32 @@
 ---
 id: 5161980d-20b6-4779-867f-16ed45278a33
-title: Extension Input Box Presenting
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-presenting
+title: "Extension Input Box Presenting"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-presenting
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Data and validation types for one vscode.window.showInputBox call, and the
-  thread-confined presenting role that shows the field and returns the result.
+summary: "Data and validation types for one vscode.window.showInputBox call, and the thread-confined presenting role that shows the field and returns the result."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- input-box
-- validation
+  - extension-host
+  - vscode-api
+  - input-box
+  - validation
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionInputBoxPresenting.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionInputBoxPresenting.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Input Box Presenting
@@ -148,6 +146,7 @@ declaration; every side effect belongs to an implementation.
   foundational, non-UI, non-networking facilities and declares no
   side-effecting code of its own — every side effect belongs to whatever
   implements the presenting role.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -178,6 +177,7 @@ Not applicable — this is a data/role declaration for one vscode.window.showInp
 | extension-input-box-presenting-011 | validate-absent-when-not-validating, validate-non-optional-parameter | A request with the validating flag false is presented; the harness calls the validate function handed to the presentation with three different candidate strings | Every call to validate answers an absent result regardless of the candidate string, and the function is invoked directly with no need to guard against it being absent. |
 | extension-input-box-presenting-012 | presenter-isolation-not-concurrency-safe | Attempt to store an implementation of the presenting role into a context that requires concurrency-safe values, with no unsafe override annotation | Fails — the role carries no concurrency-safety guarantee. |
 | extension-input-box-presenting-013 | cross-call-ordering-left-to-conformer, no-side-effects | Search the component's declaration for any networking, file-system, or process-launching call, or any queue/ordering property | No matches — the component declares no side-effecting API and no cross-call ordering state of its own. |
+| extension-input-box-presenting-014 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -289,6 +289,7 @@ Not applicable: this component contains no logging call and imports no logging f
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/window/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

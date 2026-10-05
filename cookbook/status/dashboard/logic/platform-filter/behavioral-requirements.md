@@ -1,0 +1,22 @@
+
+- **none-sentinel**: The logic MUST provide a no-platform sentinel value equal to `"__none__"`, used as the filter key for an endpoint whose platform is absent (`null`).
+- **all-keys-contents**: The all-keys function MUST return a collection with set semantics (each key present at most once) containing every entry of the known-platforms list plus the no-platform sentinel, and nothing else.
+- **all-keys-fresh-set**: The all-keys function MUST return a newly created collection on every call, so a caller that mutates the result does not change the next result.
+- **all-keys-ignores-data**: The all-keys function MUST take no arguments and MUST include the no-platform sentinel whether or not any endpoint is unwired.
+- **options-signature**: The options function MUST accept a list of endpoints, each carrying a platform value that is either a string or absent (`null`), and MUST return a list of options, each with a `key` and a `label`.
+- **options-synchronous**: The options function MUST return its result synchronously and MUST NOT mutate its argument, keep state between calls, or perform I/O.
+- **known-platforms-always**: The options function MUST emit one row for every entry of the known-platforms list, even when no endpoint uses that platform or the input list is empty.
+- **known-platforms-order**: The known-platform rows MUST come first, in the canonical order of the known-platforms list.
+- **known-platform-label**: Each known-platform row MUST use the platform string as both key and label (for example a row with key and label both equal to `railway`), with no capitalization or display-name mapping.
+- **known-platform-no-duplicate**: A known platform that is also present among the endpoints MUST appear exactly once.
+- **unknown-platforms-appended**: Every non-null platform value present among the endpoints that is not in the known-platforms list MUST get one row, with the value as both key and label, placed after all known-platform rows.
+- **unknown-platforms-order**: Unknown-platform rows MUST appear in the order their value first occurs in the input list.
+- **unknown-platforms-deduplicated**: An unknown value that occurs on several endpoints MUST produce exactly one row.
+- **known-match-exact**: Membership in the known-platforms list MUST be tested by exact, case-sensitive string equality, so a value such as `"Vercel"` is treated as an unknown platform.
+- **none-row-conditional**: The options function MUST append a row whose key is the no-platform sentinel and whose label is `"no platform"` only when at least one endpoint has an absent platform.
+- **none-row-last**: When the no-platform row is present, it MUST be the final row.
+- **null-maps-to-sentinel**: An absent (`null`) platform MUST be mapped to the no-platform sentinel before de-duplication, and MUST NOT produce an unknown-platform row.
+- **no-errors**: The options function and the all-keys function MUST NOT throw for input matching the expected shape; the logic has no failure path and returns no error values.
+- **selection-contract**: A caller that keeps an endpoint when its selection contains that endpoint's platform (or the no-platform sentinel when absent) MUST see every known platform and every unwired endpoint pass when the selection is the full set returned by the all-keys function. An endpoint with an unknown platform is not in that full set and so does not pass that default selection.
+- **single-threaded**: Both functions MUST run to completion synchronously; the logic has no asynchronous work and no shared mutable state, so calls cannot interleave.
+

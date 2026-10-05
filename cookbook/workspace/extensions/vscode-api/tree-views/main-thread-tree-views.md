@@ -1,58 +1,49 @@
 ---
 id: 8a2a51ce-eee3-4c8b-b6df-90daa35f7ad0
-title: VS Code Tree Views Bridge
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/main-thread-tree-views
+title: "VS Code Tree Views Bridge"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/main-thread-tree-views
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The extension host's bridge for vscode.window.registerTreeDataProvider
-  and createTreeView — pulling rows from an extension's tree data provider, minting
-  a per-row handle for each element, and bridging the TreeView object's chrome,
-  selection, and lifecycle events back into the extension's JavaScript environment.
+summary: "The extension host's bridge for vscode.window.registerTreeDataProvider and createTreeView — pulling rows from an extension's tree data provider, minting a per-row handle for each element, and bridging the TreeView object's chrome, selection, and lifecycle events back into the extension's JavaScript environment."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- tree-view
-- disposable
+  - extension-host
+  - vscode-api
+  - tree-view
+  - disposable
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadTreeViews.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionTreeDataSource.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Tree/ContributedTreeItem.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/ContributedViews.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadTreeViewsTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadTreeViews.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionTreeDataSource.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Tree/ContributedTreeItem.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/NotImplementedLedger.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/ContributedViews.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadTreeViewsTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # VS Code Tree Views Bridge
 
 ## Overview
 
-This is the extension host's bridge for `vscode.window.registerTreeDataProvider` and `vscode.window.createTreeView`, and it builds the `vscode.TreeView` object the second one hands back. It is the one bridge in this area whose seam points the other way from its siblings: a webview provider is called once and never again, while a tree data provider is asked for rows for as long as its pane is open, so this bridge's whole substance is the element bookkeeping a webview bridge has no use for. It owns a registration table, one entry per contributed view id this extension currently provides; each entry is the actual tree data source conformer for that registration and does the element bookkeeping — the one production conformer the type `agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source` names out of its own scope.
+This is the extension host's bridge for `vscode.window.registerTreeDataProvider` and `vscode.window.createTreeView`, and it builds the `vscode.TreeView` object the second one hands back. It is the one bridge in this area whose seam points the other way from its siblings: a webview provider is called once and never again, while a tree data provider is asked for rows for as long as its pane is open, so this bridge's whole substance is the element bookkeeping a webview bridge has no use for. It owns a registration table, one entry per contributed view id this extension currently provides; each entry is the actual tree data source conformer for that registration and does the element bookkeeping — the one production conformer the type `adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source` names out of its own scope.
 
 The element table is the whole of the bookkeeping. `getChildren`/`getTreeItem` are asked about the provider's own model objects, which live only in the extension's JavaScript environment; the pane on the other side of the protocol boundary knows nothing but tree item values keyed by an opaque id. The element table is what lets a later children-request or activation call turn that opaque id back into the element the extension itself understands, and a command table, a parent table, and a child-handle table are the same idea applied to a row's declared command and its position in the tree. Every element reference here belongs to the registration alone — nothing exported back to the extension (the `TreeView` object, its event-subscription blocks) retains one, because holding a live reference to an extension-side value from an object the extension's own runtime holds would create a reference cycle; every block the `TreeView` object exposes holds the registration only weakly instead.
 
@@ -60,7 +51,7 @@ Handles are minted per row and are **positional unless the row declared a `TreeI
 
 ## Behavioral Requirements
 
-- **main-thread-confinement**: Both the bridge and each registration MUST be confined to a single thread; every stored property and method on either MUST execute on that thread, because the extension's own values are not safe to share across threads and the extension's runtime invokes every block here on the thread that made the call.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **register-raises-on-torn-down-adaptor**: Registering a tree data provider MUST raise rather than return a disposable once the bridge has been torn down, matching the registration call's own synchronous disposable return shape.
 - **create-tree-view-raises-on-torn-down-adaptor**: Creating a tree view MUST raise rather than return a tree view once the bridge has been torn down, matching the creation call's own synchronous return shape.
 - **register-requires-string-view-id**: Registering a tree data provider MUST raise "\<path\>'s first argument must be a view id string." and register nothing when the first argument is missing or is not a string.
@@ -154,6 +145,7 @@ Not applicable — this is a logic component with no UI of its own; accessibilit
 | main-thread-tree-views-011 | targeted-refresh-keeps-unreissued-descendants-alive, forget-drops-a-handle-and-everything-beneath-it | A three-level tree (`branch`/`child`/`grandchild`, all declared ids) is fully expanded, then `branch`'s own subtree is targeted-refreshed (its `getChildren` reissues the same `child`) | `grandchild`'s row is still answerable — requesting its children still resolves, and activating it still runs its own declared command — `MainThreadTreeViewsTests.refreshingABranchKeepsTheRowsBelowItAlive` |
 | main-thread-tree-views-012 | targeted-refresh-forgets-only-genuinely-removed-children, command-is-read-and-cleared-on-absence | A root list of two declared-id rows (`a`, `b`) is read, then the provider is made to answer only `a` on the next request for root children | The second root-children request answers only `["#a"]`; activating the row previously known as `b` (kept from the first read) no longer runs any command — `MainThreadTreeViewsTests.refreshingABranchForgetsTheRowsItStoppedNaming` |
 | main-thread-tree-views-013 | handle-escaping-keeps-the-two-spaces-disjoint | A root declaring `id: 'src'` (collapsible, one unnamed child) alongside a sibling root declaring `id: 'src/0'` | The sibling's handle (`#src%2F0`) and the unnamed child's positional handle (`#src/0`) are different strings; activating the sibling runs its own command, not the unnamed child's — `MainThreadTreeViewsTests.aDeclaredIDCannotCollideWithAPositionalHandle` |
+| main-thread-tree-views-014 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -162,7 +154,7 @@ Not applicable — this is a logic component with no UI of its own; accessibilit
 - **Boundary values**: a view id equal to the empty string is a valid string and reaches the registration step exactly as any other id would; nothing in this component rejects it, since **register-requires-string-view-id**/**create-tree-view-requires-string-view-id** check only that the value is a string (fact).
 - **Boundary values**: a `TreeItem.collapsibleState` outside `0...2` (or absent) is clamped to `.none` rather than rejected, per **collapsible-state-clamps-unknown-to-none** (MUST).
 - **Concurrent access**: both the bridge and each registration are confined to a single thread with no additional locking; every stored property is read and mutated only on that thread, so there is no data race to define behavior for at the implementation level (fact).
-- **Concurrent access**: NEEDS REVIEW: Not implemented. Behavior undefined. Two children requests issued for the **same** parent before the first one's settlement wait returns MUST NOT be assumed to leave the child-handle/element tables in any particular state relative to each other — each call independently clears the parent's previous-children entry before its own wait, so the second call to reach that point sees an already-emptied entry rather than the first call's in-flight previous-children snapshot.
+- **Concurrent access (same parent)**: two children requests issued for the **same** parent before the first one's settlement wait returns are not serialized, and the resulting child-handle and element tables are unspecified between them: each call independently removes the parent's previous-children entry before its own wait, so the second call to reach that point sees an already-emptied entry rather than the first call's in-flight previous-children snapshot. The pane's own cache keeps a second ask for a branch inside its budget from reaching the provider (`ExtensionTreePaneLoadingTests`), so this is a latent hazard of the bridge rather than an observed behavior (see the design decision on same-parent concurrency below).
 - **Error states**: a provider's `getChildren` or `getTreeItem` throwing, or its returned thenable rejecting, MUST be logged and MUST answer a children request with an empty list; neither exception nor rejection reason is ever surfaced to the pane, per **children-empty-on-getchildren-throw-or-rejection** and **tree-item-duck-typed-not-instanceof** (MUST).
 - **Error states**: activating a row's underlying command-registry dispatch throwing MUST be caught, logged, and swallowed; it MUST NOT propagate to the pane that requested activation, per **activate-catches-and-logs-a-thrown-registry-error** (MUST).
 - **Cancellation or timeout**: not applicable to any member here — the settlement wait (out of this component's scope) has no timeout of its own, and this component imposes none; a `getChildren`/`getTreeItem` thenable that never settles leaves the corresponding children request suspended indefinitely (fact, inherited from that settlement mechanism).
@@ -229,10 +221,11 @@ Subsystem: the app's own bundle identifier | Category: the bridge and each regis
 ## Platform Notes
 
 - **SwiftUI**: not applicable to this file — `MainThreadTreeViews.swift` imports only `Foundation`, `JavaScriptCore`, `os`, and `AgenticToolkitCore`, with no SwiftUI dependency; nothing in this component renders a view.
-- **AppKit / UIKit**: this is the source. `packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadTreeViews.swift` is part of the `AgenticToolkitMacOS` framework target, which `project.yml` declares `platform: macOS` only — no iOS target packages this file. It is `@MainActor`-isolated per both class declarations (`main-thread-confinement`), because `JSValue` is not `Sendable` and JavaScriptCore invokes every block here on the thread that made the call. Every provider-supplied model object is held as a `JSValue` inside the extension's own `JSContext`; `ExtensionTreeModel.elements: [String: JSValue]`, `commandsByHandle`, `parentByHandle`, and `childHandles` are the concrete tables behind the element/command/parent/child-handle bookkeeping described above, and a row's command arguments (`command-arguments-are-forwarded-as-jsvalues-unconverted`) are read via `VSCodeAPI.arrayLength(of:)`/`atIndex(_:)` and stored as the `JSValue`s they already are, with no conversion through `toObject()`. Nothing exported back to JavaScript (the `TreeView` object, its event-subscription blocks) stores a `JSValue` of its own, because a `JSValue` retained by an object JavaScriptCore itself holds is a retain cycle through `JSManagedValue.h`; every block the `TreeView` object exposes (the `title`/`message`/`description`/`badge` accessors, the four `install(event:...)` subscriptions, `onDidChangeCheckboxState`, `reveal`, `dispose`) captures `model`/`treeViews` only as `[weak ...]` and stores no `JSValue` of its own. Both `MainThreadTreeViews` and `ExtensionTreeModel` conform to `Loggable`, each exposing its own `nonisolated static let logger` built with `makeLogger()`; the bundle identifier comes from `Bundle.main.bundleIdentifier` (via `Loggable`'s default, falling back to `"nil"`), and the category is each type's own name. Raise-on-teardown (`register-raises-on-torn-down-adaptor`, `create-tree-view-raises-on-torn-down-adaptor`) is built via `VSCodeAPI.member(..., whenTornDown: .raisedException, ...)`. Its one given caller-side collaborator, `ExtensionTreeViewController` (`agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view`), is an `NSOutlineView`-backed macOS controller.
-- **Compose**: model `MainThreadTreeViews` as a Kotlin class holding a `MutableMap<String, ExtensionTreeModel>`, confined to the main dispatcher to mirror `@MainActor`. `ExtensionTreeModel`'s `elements`/`commandsByHandle`/`parentByHandle`/`childHandles` become plain `MutableMap`s guarded by that same confinement (no `Mutex` needed, matching the source's own single-actor argument); the four `ExtensionEventEmitter`s become `SharedFlow`s a `TreeView`-equivalent surface collects from, matching how `agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source` already models that boundary.
+- **AppKit / UIKit**: this is the source. `packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadTreeViews.swift` is part of the `AgenticToolkitMacOS` framework target, which `project.yml` declares `platform: macOS` only — no iOS target packages this file. It is `@MainActor`-isolated per both class declarations (`confines-to-ui-thread`), because `JSValue` is not `Sendable` and JavaScriptCore invokes every block here on the thread that made the call. Every provider-supplied model object is held as a `JSValue` inside the extension's own `JSContext`; `ExtensionTreeModel.elements: [String: JSValue]`, `commandsByHandle`, `parentByHandle`, and `childHandles` are the concrete tables behind the element/command/parent/child-handle bookkeeping described above, and a row's command arguments (`command-arguments-are-forwarded-as-jsvalues-unconverted`) are read via `VSCodeAPI.arrayLength(of:)`/`atIndex(_:)` and stored as the `JSValue`s they already are, with no conversion through `toObject()`. Nothing exported back to JavaScript (the `TreeView` object, its event-subscription blocks) stores a `JSValue` of its own, because a `JSValue` retained by an object JavaScriptCore itself holds is a retain cycle through `JSManagedValue.h`; every block the `TreeView` object exposes (the `title`/`message`/`description`/`badge` accessors, the four `install(event:...)` subscriptions, `onDidChangeCheckboxState`, `reveal`, `dispose`) captures `model`/`treeViews` only as `[weak ...]` and stores no `JSValue` of its own. Both `MainThreadTreeViews` and `ExtensionTreeModel` conform to `Loggable`, each exposing its own `nonisolated static let logger` built with `makeLogger()`; the bundle identifier comes from `Bundle.main.bundleIdentifier` (via `Loggable`'s default, falling back to `"nil"`), and the category is each type's own name. Raise-on-teardown (`register-raises-on-torn-down-adaptor`, `create-tree-view-raises-on-torn-down-adaptor`) is built via `VSCodeAPI.member(..., whenTornDown: .raisedException, ...)`. Its one given caller-side collaborator, `ExtensionTreeViewController` (`adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view`), is an `NSOutlineView`-backed macOS controller.
+- **Compose**: model `MainThreadTreeViews` as a Kotlin class holding a `MutableMap<String, ExtensionTreeModel>`, confined to the main dispatcher to mirror `@MainActor`. `ExtensionTreeModel`'s `elements`/`commandsByHandle`/`parentByHandle`/`childHandles` become plain `MutableMap`s guarded by that same confinement (no `Mutex` needed, matching the source's own single-actor argument); the four `ExtensionEventEmitter`s become `SharedFlow`s a `TreeView`-equivalent surface collects from, matching how `adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source` already models that boundary.
 - **React/Web**: this component's own upstream is VS Code's real `MainThreadTreeViews` (`mainThreadTreeViews.ts`), already TypeScript, so a web port is closer to restoring the original than translating it — a class wrapping the same element-handle bookkeeping, with `registerTreeDataProvider` returning a `Disposable`-shaped object and `createTreeView` returning a plain object exposing native `EventEmitter`s instead of this file's hand-built `ExtensionEventEmitter` bridge.
 - **WinUI 3**: model `ExtensionTreeModel`'s element table as a class whose every member runs on a captured `DispatcherQueue` (the `@MainActor` equivalent — WinUI 3 has no compiler-enforced actor isolation, so every entry point MUST assert `DispatcherQueue.HasThreadAccess` or marshal via `DispatcherQueue.TryEnqueue`). The extension-side `JSValue` element becomes whatever the chosen JavaScript engine binding uses (ClearScript's `ScriptObject`, or Jint's `JsValue`), and the handle-minting scheme (`#<escaped-id>` versus `<parent>/<index>`) ports unchanged, since it is pure string manipulation with no platform dependency. Drive a `Microsoft.UI.Xaml.Controls.TreeView` from `children(of:)`-equivalent calls exactly as the companion `ExtensionTreeViewController` recipe's WinUI note describes, and fire `ProviderReplaced`/invalidate in the same order as **provider-replacement-ordering** from whatever registry class plays the role of `MainThreadTreeViews`.
+- **confines-to-ui-thread** (scope): The rule covers the bridge and each registration, every stored property and method on either: the extension's own values are not safe to share across threads, and its runtime invokes every block here on the thread that made the call.
 
 ## Reference Implementations
 
@@ -258,8 +251,12 @@ Subsystem: the app's own bundle identifier | Category: the bridge and each regis
 **Rationale**: a tree row routinely runs a command another extension, or the app itself, contributed — not necessarily one this extension registered — and the registry is the one place all three meet. Going back through `vscode.commands.executeCommand` would add a round trip through the extension's own runtime for no benefit, since the arguments are already in the right form, exactly what the commands bridge hands the registry itself.
 **Approved**: pending
 
-**Decision** (AppKit/UIKit): every block installed on the JS-visible `TreeView` object captures `model` and `treeViews` only weakly and stores no `JSValue` of its own.
+**Decision**: (AppKit/UIKit) every block installed on the JS-visible `TreeView` object captures `model` and `treeViews` only weakly and stores no `JSValue` of its own.
 **Rationale**: a `JSValue` retained by an object JavaScriptCore itself holds (the `TreeView` object, exported back into the extension's context) is a retain cycle through `JSManagedValue.h`. The sole strong reference to a live `ExtensionTreeModel` is `MainThreadTreeViews.models`; dropping an entry from that dictionary is what makes every weakly-captured block on that model's `TreeView` object go inert at once, mirroring `MainThreadWebviews`'s identical no-capture contract.
+**Approved**: pending
+
+**Decision**: Two children requests for the same parent are not serialized by this bridge; the bookkeeping for a parent's previous children is taken at the start of the answer and not guarded against an overlapping request.
+**Rationale**: `children(of:)` removes the parent's previous-children entry (`childHandles.removeValue`) before awaiting the provider's settlement, with no per-parent lock, generation counter or in-flight coalescing, so overlapping asks race on `childHandles`/`elements`. Closing it would take a per-parent in-flight task that a second ask joins or supersedes; the pane's own cache and 30-second budget (see the tree view) are what keep it from occurring today.
 **Approved**: pending
 
 ## Compliance
@@ -278,6 +275,8 @@ Subsystem: the app's own bundle identifier | Category: the bridge and each regis
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Spec-local UI-thread confinement ids folded into the shared confines-to-ui-thread requirement, with a test vector; scope detail is in Platform Notes. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the concurrent-children-request NEEDS REVIEW marker as current behavior (no per-parent serialization) and recorded it as a pending design decision. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/tree-views/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

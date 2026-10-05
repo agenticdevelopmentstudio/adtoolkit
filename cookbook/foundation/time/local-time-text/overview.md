@@ -1,0 +1,3 @@
+
+Times of day the way a viewer reads and types them: a 12-hour clock where their locale uses one, a 24-hour clock where it does not, the month and day in the locale's own order, and either clock accepted when typed. Every formatter is built once per pattern, zone and locale and reused, because a table of timestamps renders hundreds of rows per refresh and a formatter costs tens of microseconds to build against well under one to reuse; the cache is lock-guarded so any thread may format. It is for display and entry only: the wire form every process compares as a string is the UTC timestamp's, never this one.
+

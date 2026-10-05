@@ -1,26 +1,26 @@
 ---
 id: a7c2b9e1-5d4f-4a2c-9e6f-8b3a1c5d7e2f
-title: Status Server Telemetry
-domain: agenticdevelopertoolkit://cookbook/status/service/telemetry
+title: "Status Server Telemetry"
+domain: adtoolkit://cookbook/status/service/telemetry
 type: ingredient
 version: 1.0.2
 status: review
 language: en
 created: 2026-09-24
-modified: '2026-09-27'
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Telemetry data collection and persistence abstraction for production visibility
-  dashboards
+summary: "Telemetry data collection and persistence abstraction for production visibility dashboards"
 platforms:
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Telemetry
@@ -208,4 +208,4 @@ Subsystem: (no fixed subsystem; uses `console.error()`)
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | 2026-09-24 | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

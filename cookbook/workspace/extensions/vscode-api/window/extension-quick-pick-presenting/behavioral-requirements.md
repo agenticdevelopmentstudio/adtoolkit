@@ -1,0 +1,31 @@
+
+- **item-thread-safe-equatable**: `ExtensionQuickPickItem` MUST be safe to use across concurrent execution contexts and MUST support equality comparison.
+- **item-label-required**: `ExtensionQuickPickItem.label` MUST be a non-optional `String`; it is the only property that applies to a row for which `isSeparator` is `true`.
+- **item-description-optional**: `ExtensionQuickPickItem.description` MUST be `nil` when the item carried no description, or carried one that was not a string; when non-`nil` it is rendered less prominently on the same line as `label`.
+- **item-detail-optional**: `ExtensionQuickPickItem.detail` MUST be `nil` on the same terms as `description`; when non-`nil` it is rendered less prominently on a separate line.
+- **item-separator-flag**: `ExtensionQuickPickItem.isSeparator` MUST be `true` only for a row whose upstream `kind` was `QuickPickItemKind.Separator` (the number `-1`); every other row MUST report `false`.
+- **item-separator-fields-defaulted**: When `isSeparator` is `true`, `description`, `detail`, `isPicked`, and `alwaysShow` MUST each be constructed at their default (`nil`, `nil`, `false`, `false`) regardless of what values the extension supplied for them, because only `label` applies to a separator row.
+- **item-picked-flag**: `ExtensionQuickPickItem.isPicked` MUST report the item's truthy `picked` value exactly as supplied, independent of the owning request's `canPickMany` value; applying `picked`'s "only honored when the picker allows multiple selections" rule is the presenting conformer's responsibility, not this type's.
+- **item-always-show-flag**: `ExtensionQuickPickItem.alwaysShow` MUST report the item's truthy `alwaysShow` value exactly as supplied; keeping the row visible despite an active filter is the presenting conformer's or model's responsibility, not this type's.
+- **item-explicit-initializer**: `ExtensionQuickPickItem` MUST declare an explicit, publicly accessible constructor rather than relying on a compiler-synthesized memberwise one, so a caller in another module can construct one directly.
+- **request-thread-safe-equatable**: `ExtensionQuickPickRequest` MUST be safe to use across concurrent execution contexts and MUST support equality comparison.
+- **request-optional-text-fields**: `ExtensionQuickPickRequest.title`, `.placeHolder`, and `.prompt` MUST each be `nil` when the extension supplied none for the corresponding `QuickPickOptions` field.
+- **request-items-order-preserved**: `ExtensionQuickPickRequest.items` MUST preserve the extension-supplied order, separators included at their original positions; the indices a conforming presenter answers are positions into this exact array.
+- **request-can-pick-many-flag**: `ExtensionQuickPickRequest.canPickMany` MUST report whether the user may accept more than one row.
+- **request-match-flags**: `ExtensionQuickPickRequest.matchOnDescription` and `.matchOnDetail` MUST each report the caller-supplied filtering flag for that field, independent of one another.
+- **request-ignore-focus-out-flag**: `ExtensionQuickPickRequest.ignoreFocusOut` MUST report whether the picker should stay open when focus moves elsewhere.
+- **request-explicit-initializer**: `ExtensionQuickPickRequest` MUST declare an explicit, publicly accessible constructor, for the same cross-module-constructibility reason as `ExtensionQuickPickItem`.
+- **presenting-single-context-execution**: `ExtensionQuickPickPresenting` MUST serialize every conformer's `presentQuickPick` call onto a single, consistent execution context.
+- **presenting-class-only**: `ExtensionQuickPickPresenting` MUST constrain conformers to reference types; a value type MUST NOT be able to conform.
+- **presenting-single-requirement**: `ExtensionQuickPickPresenting` MUST declare exactly one requirement, `presentQuickPick(_:onHighlight:)`.
+- **presenting-index-based-answer**: A conformer's non-dismissed answer MUST be indices into the `request.items` array it was given, never labels or copies of the items; two items sharing a `label` MUST remain distinguishable by position alone.
+- **presenting-dismissal-is-nil**: A conformer MUST answer `nil` when, and only when, the user dismissed the picker without accepting a selection.
+- **presenting-empty-selection-is-not-dismissal**: When `request.canPickMany` is `true` and the user explicitly accepts a selection of zero rows, a conformer MUST answer `[]`; `nil` and `[]` MUST NOT be conflated.
+- **presenting-single-select-array-shape**: A conformer's non-dismissed answer MUST be an optional list of integers regardless of `request.canPickMany`; when `request.canPickMany` is `false`, a non-dismissed answer MUST contain exactly one element.
+- **presenting-answer-order-preserved**: The order of indices in a conformer's non-dismissed answer MUST be the order the selection is to be reported to the extension; it MUST NOT be reordered (for example, sorted) downstream.
+- **presenting-highlight-index**: Each `onHighlight` invocation MUST pass an index into `request.items` corresponding to the row newly highlighted.
+- **presenting-highlight-frequency**: `onHighlight` MAY be invoked any number of times, including zero, over the lifetime of one `presentQuickPick` call.
+- **presenting-highlight-after-return-prohibited**: A conformer MUST NOT invoke `onHighlight` after its `presentQuickPick` call has returned.
+- **presenting-async-return**: `presentQuickPick` MUST be an operation that suspends until the picker session concludes — accepted or dismissed — before completing.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
+

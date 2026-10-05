@@ -1,31 +1,29 @@
 ---
 id: 1cecd319-1cc2-40a5-8ef0-56267eb78b89
-title: Session Activity Icon View
-domain: agenticdevelopertoolkit://cookbook/ai/agent-sessions/session-activity-icon-view
+title: "Session Activity Icon View"
+domain: adtoolkit://cookbook/ai/agent-sessions/session-activity-icon-view
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
 created: 2026-09-23
-modified: '2026-09-27'
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Fixed-size glyph showing a session row's activity — spinning arrows
-  while working, a pulsing warning icon while waiting, sparkles while summarizing,
-  and nothing while idle.
+summary: "Fixed-size glyph showing a session row's activity — spinning arrows while working, a pulsing warning icon while waiting, sparkles while summarizing, and nothing while idle."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ui
-- status-indicator
+  - ui
+  - status-indicator
 depends-on: []
 related:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Session Activity Icon View
@@ -190,7 +188,7 @@ spin or pulse survives repeated polling without stuttering.
   pointer-driven, non-touch component with no interaction handling of any
   kind in the source; a touch platform's minimum tap-target size applies to
   touch targets, not to a static image-only display element.
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source. The glyph's tint (theme accent/tertiary-text/warning color role, or the system fallback) is rasterized as an opaque fill over whatever background sits behind this 13×13pt component — a session row in a list — with no contrast check against that background anywhere in this component; settling it needs a contrast audit of each tint against the session row background across the app's shipped themes.
+- **theme-owned-tint-contrast**: The glyph's tint MUST come from the active theme's accent, tertiary-text or warning color role (or the system fallback) as an opaque fill; the component performs no contrast check of its own against the session row background behind it.
 
 ## Conformance Test Vectors
 
@@ -309,7 +307,7 @@ and the tooltip in English only.
 | Option | Behavior |
 |--------|----------|
 | Reduce Motion | Not handled: the rotation (working's spin) and the opacity pulse (waiting/summarizing) both repeat indefinitely, and nothing in this component checks the platform's Reduce Motion signal before starting either, nor is a static substitute offered for either animated state. |
-| Increase Contrast | Not applicable to this component directly: the source reads no system contrast setting; the tint always comes from the active theme (or the system fallback color before the first theme apply), so whether the resulting contrast is adequate is tracked once under the open question on minimum-contrast-ratio above, not duplicated here. |
+| Increase Contrast | Not applicable to this component directly: the source reads no system contrast setting; the tint always comes from the active theme (or the system fallback color before the first theme apply), so whether the resulting contrast is adequate is tracked once under **theme-owned-tint-contrast** above and its Design Decision, not duplicated here. |
 | Differentiate Without Color | Supported: each state's glyph shape (double-arrow, filled dot, circled exclamation mark, sparkle) differs from every other state's shape independently of the tint color a theme assigns (see **state-based-symbol-selection** and **state-based-tint**), so state is never conveyed by color alone. |
 
 ## Feature Flags
@@ -454,7 +452,7 @@ Not applicable: the source contains no logging calls of any kind.
   down over the output line beneath it instead of spinning in place. AppKit
   never touches a sublayer's geometry, so a spin installed on the dedicated
   `glyph` sublayer keeps its centered anchor and spins in place.
-  **Approved: pending**
+  **Approved**: pending**
 - **Decision**: Idle sessions with no summarization in progress hide the
   view entirely (`isHidden = true`) instead of showing a quiet resting dot
   or other neutral glyph.
@@ -465,7 +463,7 @@ Not applicable: the source contains no logging calls of any kind.
   the list mean something. Summarizing overrides this even while idle,
   because the sparkles glyph reports work happening *about* the session,
   which a blank slot would deny.
-  **Approved: pending**
+  **Approved**: pending**
 - **Decision**: Recoloring draws the raw symbol image and then fills the
   tint color over it with `.sourceAtop` compositing, instead of using
   `NSImage.SymbolConfiguration`'s own color options.
@@ -478,7 +476,7 @@ Not applicable: the source contains no logging calls of any kind.
   which specific `NSImage.SymbolConfiguration` color option was tried before
   landing on the fill approach — only the source's own stated reason for
   rejecting that family of API.
-  **Approved: pending**
+  **Approved**: pending**
 - **Decision**: CoreAnimation (`CABasicAnimation`) drives the spin and pulse
   rather than a newer SF Symbol content-transition/variable-rotation
   effect.
@@ -486,7 +484,7 @@ Not applicable: the source contains no logging calls of any kind.
   macOS 15, and this framework ships to macOS 14; CoreAnimation is the
   compatible substitute available on the framework's minimum deployment
   target.
-  **Approved: pending**
+  **Approved**: pending**
 - **Decision**: `update(activity:isSummarizing:)` returns immediately,
   performing no redraw or animation change, when neither argument differs
   from the view's current stored values.
@@ -495,12 +493,18 @@ Not applicable: the source contains no logging calls of any kind.
   this guard, a running "working" spin restarted from its initial angle on
   every poll and visibly stuttered instead of spinning continuously;
   returning early for an unchanged value is what keeps it smooth.
-  **Approved: pending**
+  **Approved**: pending**
+
+**Decision**: The glyph tint is not checked for contrast against the session row background.
+**Rationale**: The tint is rasterized over whatever sits behind this 13x13pt component and the component performs no contrast check; closing the gap takes a contrast audit of each tint against the session row background across the app's shipped themes.
+**Approved**: pending
 
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | accessibility |
 | [reduced-motion](agenticdevelopercookbook://compliance/accessibility#reduced-motion) | failed | accessibility |
@@ -510,12 +514,14 @@ Not applicable: the source contains no logging calls of any kind.
 sets a meaningful accessibility label for every state (see
 **state-based-label-and-tooltip**). `contrast-ratio` is `partial` because
 the tint's contrast against a session row's background cannot be computed
-from this file alone (see the open question on minimum-contrast-ratio).
+from this file alone (see **theme-owned-tint-contrast** and its Design Decision).
 `reduced-motion` is `failed` because no code path here checks a Reduce
 Motion signal before starting the spin or pulse animation (see
 Accessibility Options → Reduce Motion). `no-hardcoded-strings` is `failed`
 because the four accessibility label/tooltip strings are plain `String`
 literals with no localization key (see Localization).
+
+`separation-of-concerns` passes because `SessionWatcherActivityIconView` only draws and animates one glyph for a state it is handed; it reads no session data, performs no I/O and owns no layout beyond its own bounds. `unit-test-coverage` is partial: `SessionWatcherActivityIconViewTests.swift` covers the working glyph spinning about its centre, staying centred when the row moves it, and swapping the animation on state changes (that test also asserts the idle accessibility label), but nothing asserts the working, waiting or summarizing labels, the tooltip or the tint role.
 
 ## Change History
 
@@ -525,3 +531,4 @@ literals with no localization key (see Localization).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/agent-sessions/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the contrast NEEDS REVIEW marker as current behavior plus a pending Design Decision; added separation-of-concerns and unit-test-coverage compliance. |

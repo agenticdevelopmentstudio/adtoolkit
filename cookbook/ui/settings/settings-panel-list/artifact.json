@@ -1,0 +1,64 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "a41760b2-4ffd-413b-970f-c0373c9bd3b6",
+    "title": "Settings Panel List",
+    "domain": "adtoolkit://cookbook/ui/settings/settings-panel-list",
+    "type": "ingredient",
+    "version": "1.2.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-23",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The sidebar of a settings split view - maps panels to sectioned rows, filters them by search query, and bridges row selection back to the selected panel.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "settings",
+      "sidebar",
+      "search",
+      "split-view"
+    ],
+    "depends-on": [
+      "adtoolkit://cookbook/ui/navigation/topic-list",
+      "adtoolkit://cookbook/ui/settings/settings-panel"
+    ],
+    "related": [
+      "adtoolkit://cookbook/ui/layout/composable-tabs/settings-view"
+    ],
+    "references": [
+      "https://developer.apple.com/design/human-interface-guidelines/lists-and-tables"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "0741415aa07b8045",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

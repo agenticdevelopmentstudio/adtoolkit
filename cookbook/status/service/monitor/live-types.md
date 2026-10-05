@@ -1,38 +1,38 @@
 ---
 id: 2c8b4572-3851-4111-97d6-a42792fb7150
-title: Status Server Monitor Live Types
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/live-types
+title: "Status Server Monitor Live Types"
+domain: adtoolkit://cookbook/status/service/monitor/live-types
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "The type-only /api/live contract: LiveSnapshot and its LiveServiceDTO, StaleProdDTO, ProviderKey and ProviderHealth members, shared by the route and the client store."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- live
-- types
-- dto
-- server
+  - monitor
+  - live
+  - types
+  - dto
+  - server
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/live-events
+  - adtoolkit://cookbook/status/service/live-events
 references:
-- packages/web/packages/status-server/src/monitor/live-types.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/reads.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/helpers/snapshot.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/openapi/paths/reads.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/live-types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/reads.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/helpers/snapshot.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/openapi/paths/reads.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Live Types

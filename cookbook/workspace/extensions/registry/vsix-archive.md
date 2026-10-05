@@ -1,37 +1,35 @@
 ---
 id: dbe4b3b6-ac5b-4d45-ba2a-84aad1a8582e
-title: VSIX Archive
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/vsix-archive
+title: "VSIX Archive"
+domain: adtoolkit://cookbook/workspace/extensions/registry/vsix-archive
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: "Proves a downloaded .vsix's bytes against a registry-published digest
-  and signature, then expands it to disk through a timed, size-bounded archive
-  extraction."
+summary: "Proves a downloaded .vsix's bytes against a registry-published digest and signature, then expands it to disk through a timed, size-bounded archive extraction."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vsix
-- containment
-- code-signing
+  - extension-host
+  - vsix
+  - containment
+  - code-signing
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/open-vsx-client
+  - adtoolkit://cookbook/workspace/extensions/registry/open-vsx-client
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/VSIXArchive.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Process/CommandRunner.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/VSIXArchive.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Process/CommandRunner.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/VSIXInstaller.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # VSIX Archive
@@ -278,17 +276,7 @@ not a visual component.
   a signature-archive entry of exactly the Ed25519 signature length (64)
   bytes MUST be accepted, and any other length MUST be refused
   (**signature-archive-extraction**).
-- **concurrent-access**: NEEDS REVIEW: Not implemented in source. Two
-  concurrent expansion calls given the same destination are not serialized
-  against each other — no lock or exclusive-create primitive guards the
-  check-then-create sequence, since directory creation does not fail when
-  the directory already exists, so both callers can pass the existence
-  guard and then run two extraction processes writing into the same
-  directory concurrently with no defined outcome for which files survive;
-  resolving this needs either a documented contract requiring a fresh
-  destination per call or a lock/atomic-create primitive — today's only
-  caller always supplies a fresh, uniquely-named destination per install,
-  which does not settle what expansion itself guarantees.
+- **concurrent-access**: Two concurrent expansion calls given the same destination are not serialized against each other: the existence check and the directory creation are two separate steps with no lock or exclusive-create primitive between them, so both callers can pass the existence guard and run two extraction processes into the same directory with no defined outcome for which files survive. The only caller today always supplies a fresh, uniquely-named destination per install, so expansion relies on that caller contract rather than enforcing it.
 
   Calls to verification, and calls to expansion with distinct destination
   values, remain independent
@@ -487,7 +475,7 @@ Subsystem: the host's logging subsystem | Category: this concept's own category
 
 ## Design Decisions
 
-**Decision** (Swift/AppKit implementation, macOS): Shell out to
+**Decision**: (Swift/AppKit implementation, macOS) Shell out to
 `/usr/bin/ditto -x -k` rather than a Swift or third-party zip library for
 extraction.
 **Rationale**: It is the platform's own unarchiver — the same one a Finder
@@ -556,6 +544,10 @@ not be read as "these bytes were checked" — hence the separate
 hash's presence.
 **Approved**: pending
 
+**Decision**: Expansion does not guard against two concurrent calls sharing one destination; it relies on the caller supplying a fresh, uniquely-named destination.
+**Rationale**: The existence check precedes directory creation without an atomic step (directory creation does not fail when the directory already exists), so closing the gap would take either a documented fresh-destination contract enforced at the type's boundary or a lock/atomic-create primitive. Today's only caller (the installer) always generates a unique destination per install, so the gap is unreachable in practice but not ruled out by the type itself.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -601,8 +593,8 @@ state — removed, never partially written — when either fires
 partial: the type does handle a hostile or malformed archive without
 crashing (a non-zip file, a zip bomb, a traversing or symlinked entry all
 throw or fail cleanly), but concurrent calls to `expand` sharing the same
-`destination` are not guarded against, which is the open question on
-`concurrent-access`.
+`destination` are not guarded against, which is recorded as a pending design
+decision (`concurrent-access`).
 
 ## Change History
 
@@ -613,3 +605,4 @@ throw or fail cleanly), but concurrent calls to `expand` sharing the same
 | 1.0.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/registry/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the concurrent-access NEEDS REVIEW marker as current behavior (no serialization; relies on unique destinations) and recorded it as a pending design decision. |

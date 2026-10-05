@@ -1,48 +1,41 @@
 ---
 id: 1cacbe17-bca6-458c-bf1f-df9efa3652be
-title: VS Code Workspace Bridge
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/workspace/main-thread-workspace
+title: "VS Code Workspace Bridge"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/workspace/main-thread-workspace
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The extension host''s vscode.workspace bridge: name, workspaceFolders,
-  getWorkspaceFolder, and the seven fs operations, terminating in the app''s own
-  filesystem service and workspace roots.'
+summary: "The extension host's vscode.workspace bridge: name, workspaceFolders, getWorkspaceFolder, and the seven fs operations, terminating in the app's own filesystem service and workspace roots."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- workspace
-- filesystem
+  - extension-host
+  - vscode-api
+  - workspace
+  - filesystem
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-host
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
+  - adtoolkit://cookbook/workspace/extensions/host/extension-host
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/commands/main-thread-commands
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWorkspace.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/JSValueBridge.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/FileSystem/FileSystemService.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/FileSystem/FileSystemServicing.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWorkspaceTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadWorkspace.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/VSCodeAPI.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/JSValueBridge.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Host/ExtensionHost.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/FileSystem/FileSystemService.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/FileSystem/FileSystemServicing.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadWorkspaceTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/project.yml (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # VS Code Workspace Bridge
@@ -105,6 +98,7 @@ This bridge is the extension host's `vscode.workspace` counterpart: `name`, `wor
 - **promise-settlement-crosses-contexts-through-a-box**: every `fs` operation MUST capture the promise's resolve and reject functions for its asynchronous operation through an intermediate box, never as a bare direct capture, and each captured pair MUST be used only on the single execution context that created it.
 - **dispose-marks-torn-down-and-nothing-else**: `dispose()` MUST mark the bridge torn down and MUST NOT attempt to unregister `fs`, `workspaceFolders`, `name`, or `getWorkspaceFolder` from any registry, because those four are installed directly into the shim's member table by whoever installs this bridge, and that table is owned and torn down by the extension-host bridge above this contract, not by this component.
 - **logging-conformance**: this component MUST support the shared logging contract every bridge in this module implements, exposing a logger built the same way every sibling bridge builds its own.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -147,6 +141,7 @@ Not applicable — this is the extension host's `vscode.workspace` bridge, not a
 | main-thread-workspace-023 | fs-is-a-deferred-sub-namespace-with-seven-members, fs-miss-and-probe-recording-is-wired | probe `'copy' in vscode.workspace.fs`, then call `vscode.workspace.fs.copy(a, b)` | The probe is `false`; the call throws `NotImplementedError`; `notImplementedLedger.accesses` has exactly one entry for `vscode.workspace.fs.copy` with `count === 1` and `probeCount === 1` |
 | main-thread-workspace-024 | operation-checks-teardown-before-running | call `fs.readFile(...)`, attach `.then`, then call `workspace.dispose()` before the underlying asynchronous operation has had its first turn | The promise rejects with a message containing `"torn down"` rather than resolving with the file's real contents |
 | main-thread-workspace-025 | operation-checks-teardown-after-running | call `fs.readFile(...)` against a filesystem-service double whose `readFile` suspends until released; wait for it to enter, call `workspace.dispose()`, then release it | The promise rejects with a message containing `"torn down"`, even though the underlying operation completed successfully after disposal |
+| main-thread-workspace-026 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -285,6 +280,7 @@ This component supports the shared logging contract (see **logging-conformance**
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/workspace/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

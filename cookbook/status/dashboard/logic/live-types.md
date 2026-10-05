@@ -1,30 +1,29 @@
 ---
 id: 41f840c1-ea34-489d-9b9f-a61dec2a9402
-title: Live Snapshot Wire Types
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/live-types
+title: "Live Snapshot Wire Types"
+domain: adtoolkit://cookbook/status/dashboard/logic/live-types
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Type-only wire contract for the status dashboard's /api/live snapshot, shared
-  by the live store and its consumers.
+summary: "Type-only wire contract for the status dashboard's /api/live snapshot, shared by the live store and its consumers."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/live-snapshot
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/board-types
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/state/live-snapshot
+  - adtoolkit://cookbook/status/dashboard/logic/board-types
+  - adtoolkit://cookbook/status/dashboard/api
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Live Snapshot Wire Types
@@ -214,4 +213,4 @@ The module holds only the wire contract, with transport, selection and rendering
 |---------|------|--------|---------|
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial recipe extracted from `live-types.ts` and its consumers |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe extracted from `live-types.ts` and its consumers |

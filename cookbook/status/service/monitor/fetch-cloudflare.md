@@ -1,40 +1,38 @@
 ---
 id: b3e2495c-5478-411c-80d7-9eefc2f2e297
-title: Status Server Monitor Fetch Cloudflare
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/fetch-cloudflare
+title: "Status Server Monitor Fetch Cloudflare"
+domain: adtoolkit://cookbook/status/service/monitor/fetch-cloudflare
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Polls every Cloudflare Worker script's deployments with bounded fan-out and
-  an 18s budget, mapping metadata into ProviderDeploy rows; a no-op absent a token,
-  and cools down after a 429.
+summary: "Polls every Cloudflare Worker script's deployments with bounded fan-out and an 18s budget, mapping metadata into ProviderDeploy rows; a no-op absent a token, and cools down after a 429."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- cloudflare
-- deploy
-- fetcher
-- server
+  - monitor
+  - cloudflare
+  - deploy
+  - fetcher
+  - server
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/timeouts
-- agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
-- agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
+  - agenticdevelopercookbook://guidelines/implementing/networking/timeouts
+  - agenticdevelopercookbook://guidelines/implementing/networking/retry-and-resilience
+  - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/alerts
+  - adtoolkit://cookbook/status/service/monitor/alerts
 references:
-- packages/web/packages/status-server/src/monitor/fetch-cloudflare.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/cloudflare-deployments.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/provider-cooldown.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/fetch-cloudflare.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/cloudflare-deployments.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/provider-cooldown.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Fetch Cloudflare

@@ -1,38 +1,37 @@
 ---
 id: 2b4d0f95-dbdf-48a9-8579-a3e5b7d488fe
-title: Pane View
-domain: agenticdevelopertoolkit://cookbook/ui/layout/pane-view
+title: "Pane View"
+domain: adtoolkit://cookbook/ui/layout/pane-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pane chrome providing a title bar, content hosting, host-mediated close/minimize/zoom/restore,
-  and per-pane spacing, while probing its content for six optional capabilities.
+summary: "Pane chrome providing a title bar, content hosting, host-mediated close/minimize/zoom/restore, and per-pane spacing, while probing its content for six optional capabilities."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- pane
-- view-controller
-- accessibility
+  - pane
+  - view-controller
+  - accessibility
 depends-on:
-- agenticdevelopertoolkit://recipes/pane-title-bar-view
-- agenticdevelopertoolkit://recipes/pane-minimize-picker
-- agenticdevelopertoolkit://recipes/pane-minimized-strip-view
-- agenticdevelopertoolkit://recipes/options-dialog-view-controller
+  - agenticdevelopertoolkit://recipes/pane-title-bar-view
+  - agenticdevelopertoolkit://recipes/pane-minimize-picker
+  - agenticdevelopertoolkit://recipes/pane-minimized-strip-view
+  - agenticdevelopertoolkit://recipes/options-dialog-view-controller
 related:
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
-- agenticdevelopertoolkit://recipes/window-options-dialog
-- agenticdevelopertoolkit://recipes/pane-control-cluster
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/layout/composable-tabs/leaf-pane-view
+  - agenticdevelopertoolkit://recipes/window-options-dialog
+  - agenticdevelopertoolkit://recipes/pane-control-cluster
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Pane View
@@ -129,6 +128,7 @@ It exposes seven extension points — building its content, building its contain
 ### Sizing for the host
 
 - **minimized-thickness-formula**: The minimized thickness for an edge MUST equal the minimized rail's thickness plus twice the content inset for a horizontal edge, and the title bar's height plus twice the content inset for a vertical edge.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -228,6 +228,7 @@ It exposes seven extension points — building its content, building its contain
 | pvc-060 | rail-glyph-from-content | Content not implementing the minimized-representation capability; minimize to the leading edge | The rail's icon reads the generic default; its tooltip equals the pane's resolved title |
 | pvc-061 | clamped-pane-yields-width | Construct a pane and never enable the clamping option, then disable it | The title bar's horizontal compression-resistance priority is unchanged from its default — the yield never occurs |
 | pvc-062 | spacing-defaults-to-inherited | Content implementing the content-spacing-consuming capability with an inherited spacing of `top: 10, leading: 0, bottom: 0, trailing: 0`, no stored override | The pane's inherited spacing equals exactly the content's value, `top: 10, leading: 0, bottom: 0, trailing: 0` |
+| pvc-063 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -299,6 +300,7 @@ Not applicable: no logging call of any kind appears anywhere in this concept.
 - **React/Web**: A `<div>` pane wrapper with a fixed-height header `<div>` (26px) holding the same left-to-right regions — window controls, title, accessory slot, gear. The capability protocols become optional props/callbacks (`onTitleChange`, `renderAccessories`, `renderOptionRows`) checked for existence the way `as?` is checked here. The minimized rail is a `<div>` swapped in by conditional render, not a CSS transition, matching the source's instant appearance change. Persisted chrome state goes to the same key-value abstraction (`localStorage`, or a server-backed store) keyed by the same three strings.
 - **AppKit/UIKit**: This recipe's own platform (`NSViewController`, `NSView`, `NSButton`, `NSMenu`); nothing in this file targets UIKit/iOS. The pane does not support `NSCoder`-based initialization: invoking `init(coder:)` calls `fatalError` — a pure framework construction rule, not a behavior of the concept itself. The `host` property is declared `weak`, the standard Cocoa mechanism for the pane not to keep its host alive. The class is `@MainActor`-isolated, which is what backs the single-thread confinement described under Edge Cases → Concurrent access. The options menu sets `autoenablesItems = false` so AppKit's default menu-validation chain never overrides an item's own enabled state (`menu-items-self-validate`). The gear button is built via `WindowOptionsDialog.makeGearButton(tooltip: "Pane options")` — borderless, `.accessoryBarAction` bezel, the `gearshape` SF Symbol shown image-only, tinted with the theme's secondary-text color. String literals are set through plain `String`-typed properties (`toolTip`, `title`, `setAccessibilityLabel`, `accessibilityDescription`), none of which resolve against a `.strings` catalog or `NSLocalizedString` automatically. Colors are resolved through `ThemedBackgroundView` and `WindowOptionsDialog.makeGearButton`'s `observeTheme` tinting; no `NSAnimationContext` or layer animation appears anywhere in this file. A UIKit port has no exact analogue for an `NSPopover`-anchored minimize picker or an app-modal sheet; it would present the minimize choices as a `UIMenu` on a long-press or a `UIPopoverPresentationController`-anchored sheet, and the "Settings…" dialog as a `UISheetPresentationController` detent sheet instead of `presentAsSheet`. The six probed capability protocols carry over unchanged — continuing to check with `as?` against `UIViewController` subclasses. Internally, the source wires the push-callback capabilities once in `wireContentCallbacks()`, re-evaluates control availability in `refreshControlAvailability()`, tracks the content's four edge pins in `contentEdgeConstraints`, and drops the title bar's `titleBarTrailing` constraint while docked to a rail — private mechanics specific to this file that a port reproduces by whatever means fits its own framework, not by name.
 - **WinUI 3**: Recreate the pane as a `UserControl` with a two-row `Grid`: a fixed-height title row (a `GridLength` matching the title bar's height, 26px-equivalent) hosting a `StackPanel` of close/minimize/zoom `Button`s at the left, a `TextBlock` with `TextTrimming="CharacterEllipsis"` for the middle-truncated title, an accessory `StackPanel`, and a trailing gear `Button` (a `FontIcon` glyph for the gearshape symbol) that opens a `ContentDialog` mirroring the options dialog — an optional heading, a `StackPanel` of option rows (the spacing control plus its "Use Default" `Button`, then the content's own rows), and a single closing action. Model the clamping option by setting every child's `HorizontalAlignment="Stretch"` with `MinWidth="0"` rather than letting `Auto`-sized columns demand room, matching "the bar stops insisting on the width its contents would prefer." Minimizing to a vertical edge collapses the content row's `RowDefinition` to `Height="0"` while keeping the title row; minimizing to a horizontal edge swaps the whole `Grid` for a narrow rail `Border` (28px-equivalent width, matching the minimized rail's thickness) hosting a single glyph `Button`, docked with `HorizontalAlignment="Left"` or `"Right"` per edge — the direct analogue of the source's dock-to-one-side-only rail. Persist the minimize edge, zoomed flag, and spacing override through whatever local settings store the app uses (e.g. `ApplicationData.Current.LocalSettings`), matching the string-keyed, absent-means-default contract the state store defines.
+- **UI-thread confinement**: `confines-to-ui-thread` — the view controller is declared `@MainActor`, so use from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -340,8 +342,12 @@ Not applicable: no logging call of any kind appears anywhere in this concept.
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | Internationalization |
 | [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | partial | Reliability |
 | [state-recovery](agenticdevelopercookbook://compliance/reliability#state-recovery) | partial | Reliability |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 Statuses rest on `PaneViewController.swift` and `PaneSpacingOverride.swift` as built: the gear and spacing-reset buttons carry real accessibility labels and identifiers, but no `NSAccessibility` notification is posted anywhere when the title, minimize state, or zoom state changes (`screen-reader-support`, partial); every user-facing string (`fallbackTitle`, the gear's tooltip/label, the "Settings…" and "Use Default" titles) is a hardcoded Swift literal with no localization key (`string-externalization`, failed); `PaneSpacingOverride`'s `JSONEncoder`/`JSONDecoder` calls are wrapped in `try?` so a corrupt or unwritable row is silently dropped rather than reported (`data-integrity`, partial); and the default `EphemeralPaneStateStore` keeps state in memory only, so nothing survives an actual process restart unless the caller injects a persistent store (`state-recovery`, partial).
+
+`separation-of-concerns` passes because `PaneViewController` supplies only the title bar, content hosting and host-mediated close, minimize, zoom and restore actions; what the actions do is decided by the host. `unit-test-coverage` is `partial`: `Panes/PaneViewControllerTests.swift` and `Panes/PaneCapabilitiesTests.swift` cover the chrome and capabilities, but not every vector.
 
 ## Change History
 
@@ -352,3 +358,5 @@ Statuses rest on `PaneViewController.swift` and `PaneSpacingOverride.swift` as b
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage compliance rows. Added the confines-to-ui-thread requirement and vector. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |

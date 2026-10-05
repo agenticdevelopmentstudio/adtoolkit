@@ -1,0 +1,26 @@
+
+- **Window-list query fails**: Both list operations (MUST) return `[]`; control operations then throw the window-not-found error for every id.
+- **Record missing required fields**: The record (MUST) is skipped during parsing; it never appears in a list and cannot be controlled.
+- **Accessibility not trusted**: Listing (MUST) still succeeds with system-supplied titles; titles the window list omits (no Screen Recording permission) stay empty; every control operation throws the accessibility-not-available error.
+- **Screen Recording granted**: The window list returns titles, so backfill (MUST) makes near-zero accessibility calls.
+- **Minimized or off-screen window in a multi-window app**: Its window-list bounds differ from its accessibility geometry, so backfill (MUST) leaves its title empty unless the app has only one accessibility window.
+- **Sheet over its document**: Two accessibility windows share one frame, so backfill (MUST) leaves the title empty, and control matching (MUST) picks the earliest accessibility window when titles also tie.
+- **Two windows with identical title and frame**: Matching (MUST) returns the first; the accessibility layer exposes no window id for a candidate to disambiguate on.
+- **Window id recycled between list and control**: Resolution (MUST) targets whatever window now holds the id; nothing checks identity beyond the id and the score.
+- **Window closes between resolution and write**: The write MUST fail and surface as the attribute-set-failed error with the raw accessibility code.
+- **Non-resizable or non-movable window**: The failing write MUST surface as the attribute-set-failed error; for setting a frame, a size failure after a successful move leaves the window moved.
+- **Parked window with no main screen**: Focusing MUST skip the unpark and raise the window where it is.
+- **Unpark write fails**: See the open question on focus-unpark-failure.
+- **Activation refused by the system**: Focusing (MUST) throw the activation-failed error after the window has already been raised within its app.
+- **App launched during observation**: Windows that appear within the 1.0-second launch delay MUST be absorbed by the refresh and never reported as created.
+- **App that does not support accessibility**: Observer creation fails and the app MUST be skipped silently; its windows are never reported as created or title-changed, though their destruction can still be reported when another app's destroy event triggers the diff.
+- **Accessibility registration errors**: See the open question on observer-registration-errors.
+- **Destroy event for one app**: The diff (MUST) report every vanished id across all apps, including windows of apps with no accessibility observer.
+- **Title change while PID unreadable**: Matching (MUST) consider every app's windows and report the first geometric match.
+- **Window moved before the title event is handled**: No geometry match MUST mean the title change is dropped.
+- **Unresponsive target app**: Accessibility calls MUST block the caller up to the system's default accessibility messaging timeout; the engine sets no timeout, cancellation or retry.
+- **Concurrent access**: The observer is confined to the main thread by its documented invariant; the window manager holds no state and is safe to call concurrently, so concurrent list calls from separate instances do not share state.
+- **Stop during pending delayed work**: The 1.0 s and 0.5 s blocks MUST check whether observation is still active and do nothing after it stops; a restart within the delay lets them run against the new session.
+- **Offline / network**: Not applicable: the engine performs no network I/O.
+- **Empty inputs**: A zero point or zero size MUST be sent to the target window unvalidated; the target app decides the outcome and any rejection surfaces as the attribute-set-failed error.
+

@@ -1,0 +1,7 @@
+
+- **Data collected**: None of `ExtensionSnippet`, `SnippetFileFailure`, or `SnippetStore`'s own state defines a field for a credential or token. `ExtensionSnippet.body`/`.prefix` are values taken verbatim from a snippets file an extension bundles or a user edits by hand; `SnippetFileFailure.path`/`.reason` carry only a manifest-declared file path string and a parse-failure sentence.
+- **Storage**: `SnippetStore` holds every applied extension's snippets and failures only in memory, in `snippetsByExtension` and `failures`; none of these three files writes to disk. The snippet files themselves are read from wherever the extension is installed, resolved through `ExtensionResourcePath` (adtoolkit://cookbook/workspace/extensions/manifest/extension-resource-path).
+- **Transmission**: Not applicable — none of `ExtensionSnippet.swift`, `SnippetFile.swift`, or `SnippetStore.swift` performs network I/O.
+- **Retention**: `SnippetStore.withdraw(extensionIdentifier:)` is what removes an extension's snippets and failures from memory (withdraw-removes-snippets-and-failures); nothing here is retained beyond the store's own in-memory lifetime and that call.
+- The containment check `apply-refuses-escaping-path` enforces exists precisely to stop a maliciously declared `path` — the escaping-path tests' own comments cite `../../../.ssh/config` as the motivating example — from being read as though it were a snippet and typed into a user's document; `SnippetStore.apply` records that refusal as a failure rather than reading the file.
+

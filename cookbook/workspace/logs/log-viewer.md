@@ -1,33 +1,32 @@
 ---
 id: 29b3f716-ad00-4aff-9dd4-fc7c2e5cf17d
-title: Log Viewer
-domain: agenticdevelopertoolkit://cookbook/workspace/logs/log-viewer
+title: "Log Viewer"
+domain: adtoolkit://cookbook/workspace/logs/log-viewer
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'A themed log view paired with a toolbar: pause, clear, and a themed
-  connection-status indicator, hosting any log controller.'
+summary: "A themed log view paired with a toolbar: pause, clear, and a themed connection-status indicator, hosting any log controller."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- log-view
-- toolbar
-- status-indicator
-- streaming
+  - log-view
+  - toolbar
+  - status-indicator
+  - streaming
 depends-on:
-- agenticdevelopertoolkit://cookbook/workspace/logs/log-view
+  - adtoolkit://cookbook/workspace/logs/log-view
 related:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Log Viewer
@@ -124,6 +123,7 @@ this component itself renders, lays out, and wires around that hosted view.
   either dimension.
 - **status-dot-fixed-size**: The status dot MUST be sized to a fixed
   `8×8pt`, independent of any theme size scaling.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -193,14 +193,7 @@ this component itself renders, lays out, and wires around that hosted view.
   not a touch surface, so the template's 44×44pt touch-target guidance
   does not apply; the toolbar buttons get no explicit width/height beyond
   the themed secondary button's own title-driven intrinsic size.
-- **contrast**: NEEDS REVIEW: Not implemented in source. The status dot's
-  `.success`/`.warning`/`.danger` fills and the status label's
-  `.secondaryText`-on-`.windowBackground` text pairing resolve from
-  whichever theme palette is active at runtime, so whether a given
-  theme's resolved color pair meets a target contrast ratio (3:1 for the
-  non-text dot, 4.5:1 for the caption-sized label text) can't be determined
-  by inspecting the component alone; auditing each concrete palette's
-  resolved colors against the platform's contrast guidance would settle it.
+- **contrast**: the status dot's `.success`/`.warning`/`.danger` fills and the status label's `.secondaryText`-on-`.windowBackground` text pairing MUST come from the active theme palette; the component performs no contrast check of its own (see Design Decisions).
 
 ## Conformance Test Vectors
 
@@ -231,6 +224,7 @@ this component itself renders, lays out, and wires around that hosted view.
 | log-view-controller-024 | connection-state-in-text | Trigger the connected, connecting, and error states in turn. | The status label's text/tooltip read `Connected`, `Connecting…`, and the error string respectively — never the same string across states, and never conveyed by dot color alone. |
 | log-view-controller-025 | lifecycle-start, lifecycle-stop | Add the component's view to a window, let it appear, remove it from the window (disappear), then re-add it and let it appear again. | The controller's start operation is called twice and its stop operation is called once, in appear → disappear → appear order. |
 | log-view-controller-026 | default-start-size-floor | Override `minimumContentSize` to `1000×700` (larger than `900×600` on both dimensions), load the view, inspect the root view's initial frame. | Initial frame size equals `1000×700`, not `900×600`. |
+| log-view-controller-027 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -451,14 +445,14 @@ state change have to land in the same place or one overwrites the other
 with the previous theme's colours."
 **Approved**: pending
 
-**Decision** (AppKit/macOS): Use `ThemedSecondaryButton` for Pause and Clear
+**Decision**: (AppKit/macOS) Use `ThemedSecondaryButton` for Pause and Clear
 instead of `ThemedButton` (the accent-filled pill button).
 **Rationale**: The source comment states two accent-filled pills in a toolbar
 "would claim more emphasis than a log's controls deserve," so lower-emphasis
 secondary styling was chosen deliberately.
 **Approved**: pending
 
-**Decision** (AppKit/macOS): Use `ThemedSeparatorView` for the toolbar/log
+**Decision**: (AppKit/macOS) Use `ThemedSeparatorView` for the toolbar/log
 divider instead of an `NSBox` separator.
 **Rationale**: The source comment states an `NSBox` separator "draws a system
 hairline, which is the one line in this window the palette could not
@@ -473,17 +467,23 @@ view to its fitting size after its async layout pass — "a 1pt-wide
 window."
 **Approved**: pending
 
-**Decision** (AppKit/macOS): Give the pause/clear buttons no explicit
+**Decision**: (AppKit/macOS) Give the pause/clear buttons no explicit
 width/height constraint.
 **Rationale**: The source comment states `ThemedSecondaryButton` measures the
 title it is about to draw, in the theme's own button font, and grows past
 its stock 68×22 minimum rather than clipping at a large size scale.
 **Approved**: pending
 
+**Decision**: The status dot and status label colors resolve from whichever theme palette is active, and the component performs no contrast check of its own; no contrast calculation appears in the logging window sources.
+**Rationale**: Whether a given theme's resolved pair meets a target ratio (3:1 for the non-text dot, 4.5:1 for the caption-sized label) can only be judged per palette. Closing the gap means auditing each concrete palette's resolved colors against the platform's contrast guidance, or adding a palette-level contrast test.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | Accessibility |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
@@ -492,7 +492,7 @@ its stock 68×22 minimum rather than clipping at a large size scale.
 | [rtl-layout-support](agenticdevelopercookbook://compliance/internationalization#rtl-layout-support) | passed | Internationalization |
 | [text-expansion-tolerance](agenticdevelopercookbook://compliance/internationalization#text-expansion-tolerance) | passed | Internationalization |
 
-Statuses rest on: Pause/Clear exposing their `NSButton` title as an accessible name and sitting in the standard key-view loop (screen-reader-support, keyboard-navigable); the status dot/label pairing's resolved contrast being undeterminable from `LogViewController.swift` alone, per the open question on `contrast` (contrast-ratio); `Pause`/`Resume`/`Clear`/`Connected`/`Connecting…` being `String` literals with no key scheme (string-externalization, no-hardcoded-strings); and the toolbar's `leadingAnchor`/`trailingAnchor` constraints plus unconstrained button widths accommodating RTL mirroring and translated-text growth (rtl-layout-support, text-expansion-tolerance).
+Statuses rest on: `LogViewController` delegating all stream state and actions to the `LogController` contract and hosting a `LogView`, owning only toolbar layout and indicator painting (separation-of-concerns); no test file referencing `LogViewController` existing under the repository's test targets, where only `LogViewTests` (for the hosted `LogView`) and `LogBufferTests` exist (unit-test-coverage); Pause/Clear exposing their `NSButton` title as an accessible name and sitting in the standard key-view loop (screen-reader-support, keyboard-navigable); the status dot/label pairing's resolved contrast being undeterminable from `LogViewController.swift` alone, per the pending contrast decision (contrast-ratio); `Pause`/`Resume`/`Clear`/`Connected`/`Connecting…` being `String` literals with no key scheme (string-externalization, no-hardcoded-strings); and the toolbar's `leadingAnchor`/`trailingAnchor` constraints plus unconstrained button widths accommodating RTL mirroring and translated-text growth (rtl-layout-support, text-expansion-tolerance).
 
 ## Change History
 
@@ -502,3 +502,5 @@ Statuses rest on: Pause/Clear exposing their `NSButton` title as an accessible n
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/logs/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the contrast NEEDS REVIEW marker against source: no contrast check exists, restated as current behavior with a pending decision; added separation-of-concerns (passed) and unit-test-coverage (failed, no LogViewController tests). |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

@@ -1,35 +1,34 @@
 ---
 id: 47eb19ef-2c42-4a52-a60b-54b6f01c8791
-title: AI Plugin
-domain: agenticdevelopertoolkit://cookbook/ai/plugins/ai-plugin
+title: "AI Plugin"
+domain: adtoolkit://cookbook/ai/plugins/ai-plugin
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The contract every AI provider plugin implements: describe one chat request
-  and decode its response stream.'
+summary: "The contract every AI provider plugin implements: describe one chat request and decode its response stream."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin-runtime
-- protocol
+  - ai-plugin-runtime
+  - protocol
 depends-on:
-- agenticdevelopertoolkit://cookbook/ai/chat/chat-context
-- agenticdevelopertoolkit://cookbook/ai/plugins/request-spec
-- agenticdevelopertoolkit://cookbook/ai/plugins/stream-event
+  - adtoolkit://cookbook/ai/chat/chat-context
+  - adtoolkit://cookbook/ai/plugins/request-spec
+  - adtoolkit://cookbook/ai/plugins/stream-event
 related:
-- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-manager
-- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-transport
-- agenticdevelopertoolkit://cookbook/ai/plugins/plugin-descriptor
+  - adtoolkit://cookbook/ai/plugins/plugin-manager
+  - adtoolkit://cookbook/ai/plugins/plugin-transport
+  - adtoolkit://cookbook/ai/plugins/plugin-descriptor
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # AI Plugin

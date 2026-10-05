@@ -1,34 +1,34 @@
 ---
 id: 96bc198e-c726-476a-bc4a-ddc1d5c0c2f8
-title: Delete Entity Section
-domain: agenticdevelopertoolkit://cookbook/adh/hub/admin/delete-entity-section
+title: "Delete Entity Section"
+domain: adtoolkit://cookbook/adh/hub/admin/delete-entity-section
 type: recipe
-version: 1.4.0
+version: 1.4.2
 status: review
 language: en
-created: '2026-07-03'
-modified: '2026-09-27'
+created: 2026-07-03
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "The Danger-zone disclosure for an entity's settings pane — neutral until disclosed, red once open, and a two-phase (acknowledge then type-to-confirm) delete."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- forms
-- destructive
-- confirmation
-- disclosure
-- settings
+  - forms
+  - destructive
+  - confirmation
+  - disclosure
+  - settings
 ingredients:
-- agenticdevelopertoolkit://recipes/disclosure
-- agenticdevelopertoolkit://recipes/button
-- agenticdevelopertoolkit://recipes/dialog
+  - agenticdevelopertoolkit://recipes/disclosure
+  - agenticdevelopertoolkit://recipes/button
+  - agenticdevelopertoolkit://recipes/dialog
 depends-on: []
 related:
-- agenticdevelopertoolkit://recipes/field-group
-- agenticdevelopertoolkit://cookbook/ui/navigation/focused-topic-detail
+  - agenticdevelopertoolkit://recipes/field-group
+  - adtoolkit://cookbook/ui/navigation/focused-topic-detail
 references: []
 approved-by: ""
 approved-date: ""
@@ -305,7 +305,7 @@ Dialog · phase "warn"                    Dialog · phase "confirm"
   `delete-entity-section` (regenerate `sources.generated.ts` via
   `gen-sources.py` after source changes); verify responsively via Playwright at
   375 / 768 / 1440. Shared across every focused-topic-detail settings route
-  (`agenticdevelopertoolkit://cookbook/ui/navigation/focused-topic-detail`), usually as the final
+  (`adtoolkit://cookbook/ui/navigation/focused-topic-detail`), usually as the final
   group in a settings pane below the `FieldGroup`s.
 - **AppKit/UIKit**: On macOS, build the disclosure from an `NSButton` with
   `bezelStyle = .disclosure` (there is no `NSDisclosureButton` class) toggling a
@@ -411,16 +411,20 @@ consistent no matter which verb a caller passes.
 
 | Check | Status | Category |
 |---|---|---|
-| [recipe-formatting](agenticdevelopercookbook://compliance/artifact-formatting/recipe-formatting#recipe-formatting) | passed | Artifact Formatting |
-| [no-raw-hex-or-important](agenticdevelopercookbook://compliance/project-guidelines/ui#no-raw-hex-or-important) | passed | Project Guidelines UI |
-| [shared-components-only](agenticdevelopercookbook://compliance/project-guidelines/ui#shared-components-only) | passed | Project Guidelines UI |
-| [destructive-double-gated](agenticdevelopercookbook://compliance/safety/destructive-actions#destructive-double-gated) | passed | Safety |
-| [confirm-input-labeled](agenticdevelopercookbook://compliance/accessibility/forms#confirm-input-labeled) | passed | Accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
+| [platform-theming](agenticdevelopercookbook://compliance/platform-compliance#platform-theming) | passed | Platform Compliance |
+| [focus-management](agenticdevelopercookbook://compliance/accessibility#focus-management) | passed | Accessibility |
+| [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
+
+`separation-of-concerns` passes: `delete-entity-section.tsx` renders the disclosure and two-phase dialog only; the destructive action is the caller-supplied `onConfirm`, and any navigation after deletion is the caller's. `unit-test-coverage` is `partial`: `deleteEntitySection.test.tsx` covers the default and reversible wording through both dialog phases, the archive versus trash glyph, the "Archiving…" busy label, and the non-Error rejection fallback, and the two busy/failure tests type the identifier only as a step toward clicking confirm, but no test asserts that the confirm button stays disabled until the typed text matches, or exercises the empty-`confirmValue` guard. `platform-theming` passes: every color in source is an `apt-*` token class with no raw hex value or `!important`. `focus-management` passes: the confirm flow rides the shared `Dialog` primitive with no override of its focus handling, and the type-to-confirm `Input` is labeled by a screen-reader-only `Label htmlFor`. `no-hardcoded-strings` fails: the copy ("Do you wish to proceed?", "Permanently", "This cannot be undone") is English JSX literal text with no translation call.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.4.2 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |
+| 1.4.1 | 2026-10-04 | Mike Fullerton | Add separation-of-concerns and unit-test-coverage compliance. |
 | 1.4.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/admin/. |
 | 1.3.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.3.0 | 2026-09-23 | Mike Fullerton | Lint pass: added disable-actions-while-busy and select-article-from-first-letter requirements with new test vectors (T17-T19), and extended call-onconfirm-once-enabled/surface-error-inline/reset-on-cancel-or-success to spell out the gerund-based busy label, the non-Error fallback message, and that a reset never collapses the Disclosure nor auto-clears a stale error; aligned T11's banned-phrase list with avoid-permanence-claims-when-reversible and set explicit `entityNoun` inputs on T12/T16; replaced the ad hoc `{Entity}` placeholder with `{entityNoun}` throughout; replaced the undefined "rdid" jargon with "the entity's unique identifier"; added a Design Decision for the reversible `actionVerb` variant and a note on why `ingredients` points to sibling recipes; corrected the WinUI 3 failure path (`args.Cancel = true` then `deferral.Complete()`) and the AppKit notes (no `NSDisclosureButton`; a sheet, not a chained `NSAlert`, for the type-to-confirm phase). |

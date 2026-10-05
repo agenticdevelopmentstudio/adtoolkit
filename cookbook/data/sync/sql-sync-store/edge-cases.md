@@ -1,0 +1,24 @@
+
+- **Never-prepared store**: `cursor` MUST return nothing and `registrations` MUST return an empty map (both bootstrap the schema); `status`, `registeredResources`, `liveRows` and `liveRow` MUST surface the underlying database's "no such table" error, because they read on the pool without bootstrapping.
+- **Empty batch**: `apply` with an empty change list and a cursor `c` MUST store `c` with no row changes; `apply` with an empty change list and no cursor MUST change nothing.
+- **Change with no data**: an upsert MUST store `'{}'` as `data`; a staged upsert with no data MUST store and enqueue an empty object.
+- **Negative or oversized syncVersion**: `apply` MUST accept any string the standard integer parser accepts, including a leading `+` or `-`; a value outside the 64-bit range MUST raise an `invalidChange` error.
+- **Local delete of a row never stored**: MUST create no mirror row, and MUST still enqueue a delete op with an empty `base_version`.
+- **Upsert coalesced onto a pending delete**: the op MUST become an upsert with payload `{}` merged with the new data, keeping the original `op_id` and `base_version`.
+- **Stage while the row's op is inflight**: a new op MUST be inserted carrying the mirror's current `sync_version`, which is still the pre-push version until `complete` adopts the server's; how the server treats that base version belongs to the server's sync backend.
+- **`pendingOps` with limit 0**: MUST return no ops and mark nothing inflight.
+- **Negative `pendingOps` limit**: MUST return every `pending` and `inflight` op and mark them all inflight, because a negative limit is treated as no limit; the store does not validate the limit.
+- **Negative `liveRows` limit**: MUST return every live row from `offset`, for the same reason; capping the limit is documented as the caller's job (a host's listing endpoint).
+- **Undecodable outbox payload or mirror data**: decoding MUST raise a decoding error out of `pendingOps`, `liveRows` or `liveRow`; `pendingOps` rolls back its inflight marking.
+- **Result for an unknown opId**: applied and rejected results MUST be silent no-ops; a conflict result MUST write an audit row with an empty `resource` and `row_id`.
+- **Applied result with no new version**: MUST delete the outbox row and leave `sync_version` unchanged.
+- **Projected resource with an invalid name**: MUST NOT be validated by the mirror-table-name mapping, because claimed resources never name a JSON mirror table.
+- **Purge of a mix of registered and unregistered resources**: MUST truncate only the registered ones, but MUST run the quarantine and deregistration statements for every named resource (no-ops for unknown ones).
+- **Concurrent mutating calls**: MUST execute one at a time in submission order.
+- **Concurrent read during a mutating write**: MUST see the last committed state (a consistent snapshot), never a half-applied batch.
+- **Nested use from inside the caller's write**: calling the ordinary `stage` from inside the caller's own write transaction would deadlock the writer; the caller MUST use the same-connection variant there, as its documentation states.
+- **Database deadline or lock timeout**: the underlying bounded database MUST eject an operation that exceeds its read or write deadline (10 s and 60 s by default) with a deadline-exceeded error, and fail a write that waits on a lock longer than its busy timeout (5 s by default); the store re-raises either error and its transaction rolls back.
+- **Disk full or I/O error**: the underlying database error MUST propagate to the caller and the transaction MUST roll back.
+- **Cancellation**: a cancelled caller awaiting a mutating operation MUST still see the operation run to completion.
+- **Offline / unreachable server**: not applicable to this component; it performs no network I/O, and offline edits accumulate in the outbox until the engine pushes them.
+

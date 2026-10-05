@@ -1,0 +1,3 @@
+
+Reads every billing knob together as one immutable snapshot, once per pass rather than per session, so one session cannot derive at a 15-minute cutoff and the next at 60. Values live in the host's settings table under the host's key set and are read live, so a change applies on the next pass with no restart. Text is turned into values by the shared raw-setting rules and clamped to the shared limits on read. The apply operation writes whichever billing keys a request carries inside one write transaction and returns the snapshot now in force. Changing the effective idle cutoff makes the derived history stale, so every derived session's watermark is forgotten and re-split at the new cutoff.
+

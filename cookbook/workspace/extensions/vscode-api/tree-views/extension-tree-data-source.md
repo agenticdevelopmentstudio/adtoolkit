@@ -1,41 +1,35 @@
 ---
 id: 95e26bae-21cb-4f99-8d28-724beca8ae1d
-title: Extension Tree Data Source
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source
+title: "Extension Tree Data Source"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-data-source
 type: ingredient
-version: 1.1.0
+version: 1.1.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The pull-based seam a contributed tree pane calls into a registered TreeDataProvider:
-  asynchronous children, activation, title/message/multi-select chrome, and provider-replacement
-  handover.'
+summary: "The pull-based seam a contributed tree pane calls into a registered TreeDataProvider: asynchronous children, activation, title/message/multi-select chrome, and provider-replacement handover."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extension-host
-- vscode-api
-- tree-view
-- protocol
+  - extension-host
+  - vscode-api
+  - tree-view
+  - protocol
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionTreeDataSource.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/Tree/ContributedTreeItem.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadTreeViews.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadTreeViewsTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/ExtensionTreeDataSource.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/Tree/ContributedTreeItem.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/MainThreadTreeViews.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitMacOSTests/Extensions/MainThreadTreeViewsTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Tree Data Source
@@ -46,11 +40,11 @@ This ingredient is a class-only, single-thread-confined protocol: the seam a con
 
 Reading children is asynchronous because upstream's `TreeDataProvider.getChildren` returns `ProviderResult<T[]>` — `T[] | undefined | null | Thenable<...>` (`vscode.d.ts`) — and the thenable case is the common one, since a provider that reads a file or runs a process is usually the reason a tree exists; a tree view cannot wait, so the caller asks, draws what it has, and redraws when the answer lands. One conforming instance is held per registered view id, by the adaptor, for the extension's lifetime; a shared, identity-based object is required because the caller assigns the three callback properties directly onto the instance it holds, and a copied value would not reach the same object the conformer mutates.
 
-Every operation in this protocol traffics in a host-side tree item value — reducing a `vscode.TreeItem` to what a tree row can draw, keyed by the extension's own element handle (not upstream's optional `TreeItem.id`). That value type is a collaborator consulted for grounding but is out of this recipe's scope, as is the one production conformer given among the sources, and the pane (`agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view`) that is this protocol's one given caller.
+Every operation in this protocol traffics in a host-side tree item value — reducing a `vscode.TreeItem` to what a tree row can draw, keyed by the extension's own element handle (not upstream's optional `TreeItem.id`). That value type is a collaborator consulted for grounding but is out of this recipe's scope, as is the one production conformer given among the sources, and the pane (`adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view`) that is this protocol's one given caller.
 
 ## Behavioral Requirements
 
-- **main-thread-confinement**: This protocol MUST be confined to a single thread; every property read/write and every method call on a conforming instance MUST execute on that thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 - **class-only-conformance**: A conforming type MUST be a reference type — a shared, identity-based object; the caller assigns `onDidChangeTreeData`, `onDidChangeChrome`, and `onProviderReplaced` directly onto the instance it holds, which a copied value could not support.
 - **children-signature**: Reading children MUST be an asynchronous operation that returns the children of the item named by `parent`, or the roots when `parent` is unset, as an array of tree item values.
 - **children-empty-on-failure**: Reading children MUST answer with an empty array for every failure a conforming provider can produce: a provider that threw, a thenable that rejected, a provider that answered a non-array, and a call made against a registration that has since been disposed. A conformer MUST NOT propagate a thrown error to the caller through this operation, since it has no error-display surface for a tree row.
@@ -96,13 +90,14 @@ Not applicable — this is the pull-based seam a contributed tree pane calls int
 | etds-008 | expand-collapse-reporting | `didExpand(branch)` then `didCollapse(branch)` for a drawn branch row | The extension's `onDidExpandElement` then `onDidCollapseElement` each fire once, carrying that branch's own element — traced to `MainThreadTreeViewsTests.expandingAndCollapsingFireTheirEventsWithTheElement` |
 | etds-009 | provider-replacement-ordering, replacement-instance-arrives-unwired | A second `TreeDataProvider` is registered for a view id an existing instance already holds live | `onProviderReplaced` fires on the outgoing instance with the new instance, before the outgoing instance is invalidated; the new instance's `onDidChangeTreeData`/`onDidChangeChrome`/`onProviderReplaced` are all `nil` at that point — traced to `MainThreadTreeViews.swift`'s `adopt(_:for:)`, corroborated by `MainThreadTreeViewsTests.aSecondRegistrationForTheSameViewIDTakesOver` |
 | etds-010 | children-empty-on-failure | A conforming provider's `getChildren` throws, or its thenable rejects, or it answers a non-array, or the request targets a disposed registration | `children(of:)` resolves to an empty array in every one of the four cases — traced directly to the protocol's own doc comment enumerating them; only the "malformed registration" and "disposed registration" cases are exercised individually among the given tests (`MainThreadTreeViewsTests.registeringSomethingThatIsNotATreeDataProviderThrows`, `.disposingTheRegistrationRetractsTheDataSource`) — no test in the given sources isolates a thrown `getChildren` or a rejected thenable specifically |
+| etds-011 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
 - **Null/empty input**: `parent == nil` on `children(of:)` MUST be read as "give me the roots," not as an error or an empty request (MUST, per **children-signature**).
-- **Null/empty input**: `title == nil` and `message == nil` are both meaningful, non-error values — `nil` title means "use the manifest name" and `nil` message means "show no banner" — neither MUST be treated as an unset/error state by the caller (MUST, per **title-fallback-semantics**, **message-is-supplementary-banner**).
+- **Null/empty input**: `title == nil` and `message == nil` are both meaningful, non-error values — `nil` title means "use the manifest name" and `nil` message means "show no banner" — each MUST NOT be treated as an unset/error state by the caller (MUST, per **title-fallback-semantics**, **message-is-supplementary-banner**).
 - **Boundary values**: `children(of:)` answering an empty array for a genuinely childless branch is indistinguishable, at this protocol's boundary, from every failure case in **children-empty-on-failure** — the source documents this as deliberate (see Design Decisions), not a boundary the caller can resolve by inspecting the answer alone.
-- **Concurrent access**: this protocol's single-thread confinement serializes entry into every property access and method call on a conforming instance, but does not serialize the asynchronous work inside reading children itself — two concurrent calls for different parents against the same instance MAY have their underlying provider work interleave, and the protocol declares no de-duplication for two concurrent calls against the *same* parent (a caller that wants that guarantee, as the tree pane does, MUST implement it itself; see `agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view`).
+- **Concurrent access**: this protocol's single-thread confinement serializes entry into every property access and method call on a conforming instance, but does not serialize the asynchronous work inside reading children itself — two concurrent calls for different parents against the same instance MAY have their underlying provider work interleave, and the protocol declares no de-duplication for two concurrent calls against the *same* parent (a caller that wants that guarantee, as the tree pane does, MUST implement it itself; see `adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view`).
 - **Concurrent access**: a call already awaiting an answer from the outgoing instance when `onProviderReplaced` fires has no protocol-level ordering; its outcome is the conformer's, per `in-flight-request-during-replacement`.
 - **Error states**: no operation in this protocol is declared to throw; reading children's only channel for any failure is the empty-array answer in **children-empty-on-failure**, and none of `activate(_:)`, `selectionDidChange(to:)`, `visibilityDidChange(to:)`, `didExpand(_:)`, or `didCollapse(_:)` has any failure channel at all — each is a plain, non-throwing notification (MUST, as declared).
 - **Offline or disconnected state**: not applicable to this protocol directly. Reading children is asynchronous specifically because a provider commonly performs I/O (reading a file, running a process) to answer it, but that I/O happens on the far side of this seam, inside the extension's own `TreeDataProvider` implementation — this protocol declares no network call, no timeout, and no retry of its own; any bound on how long a caller waits is imposed by the caller (the tree pane's own budget, out of this recipe's scope).
@@ -152,8 +147,9 @@ Not applicable: this protocol contains no log call — it has no executable body
 - **SwiftUI**: not applicable to this file — `ExtensionTreeDataSource.swift` imports only `Foundation`, with no SwiftUI dependency. A SwiftUI port of this seam would replace the two settable closures `onDidChangeTreeData`/`onDidChangeChrome` with `@Observable`/`@Published` state (or an `AsyncStream<String?>`) a `List`/`OutlineGroup` view model subscribes to, keep `children(of:)` as an `async` method called from a `Task` per expanded node, and represent `onProviderReplaced` as a one-shot `AsyncStream<any TreeDataSource>` the holder awaits once to rebind — the same "assign once per instance" discipline this protocol requires, expressed idiomatically.
 - **Compose**: model as a Kotlin `interface TreeDataSource` with `suspend fun children(of: Item?): List<Item>` and `fun activate(item: Item)`, confined to the main dispatcher to mirror `@MainActor`; replace `title`/`message`/`allowsMultipleSelection` with `StateFlow`s the caller collects instead of settable closures, and replace `onDidChangeTreeData`/`onDidChangeChrome` with `SharedFlow<String?>`/`SharedFlow<Unit>` the caller collects — Compose's idiomatic substitute for an assignable callback slot — while `onProviderReplaced` becomes a `SharedFlow<TreeDataSource>` collected exactly once per instance, preserving **replacement-callback-rewiring-required**.
 - **React/Web**: model as an interface exposing `children(parent: Item | null): Promise<Item[]>` and `activate(item: Item): void`, plus an `EventTarget`-style pair of callback props (or a small pub/sub object) standing in for `onDidChangeTreeData`/`onDidChangeChrome`, and a `replace` callback prop standing in for `onProviderReplaced`; a component holding the source subscribes in a `useEffect` whose cleanup un-subscribes, and re-subscribes to the replacement inside the `replace` callback, matching **replacement-callback-rewiring-required**.
-- **AppKit / UIKit**: this recipe's own platform. `ExtensionTreeDataSource.swift` declares a `@MainActor`, class-only (`AnyObject`) Swift protocol and is part of the `AgenticToolkitMacOS` framework target (macOS only; no iOS target packages this file); `@MainActor` is where **main-thread-confinement** comes from here, and `AnyObject` is where **class-only-conformance** comes from. Its one given caller among the sources is `ExtensionTreeViewController.swift` (`NSOutlineView`-backed, `agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view`), and its one given conformer is `ExtensionTreeModel` in `MainThreadTreeViews.swift`; both are `@MainActor`-isolated. `children(of:)` is declared `async`, matching **children-signature**. Every operation traffics in `ContributedTreeItem` (`packages/apple/AgenticToolkit/macOS/Features/Extensions/Tree/ContributedTreeItem.swift`), a `Sendable`, `Equatable`, `Identifiable` struct keyed by `id` (the extension's own element handle, `elementID`). `MainThreadTreeViews.swift`'s `adopt(_:for:)` confirms **provider-replacement-ordering** is implemented as documented: it calls `replaced.onProviderReplaced?(model)` and only then `replaced.invalidate()`.
+- **AppKit / UIKit**: this recipe's own platform. `ExtensionTreeDataSource.swift` declares a `@MainActor`, class-only (`AnyObject`) Swift protocol and is part of the `AgenticToolkitMacOS` framework target (macOS only; no iOS target packages this file); `@MainActor` is where **confines-to-ui-thread** comes from here, and `AnyObject` is where **class-only-conformance** comes from. Its one given caller among the sources is `ExtensionTreeViewController.swift` (`NSOutlineView`-backed, `adtoolkit://cookbook/workspace/extensions/vscode-api/tree-views/extension-tree-view`), and its one given conformer is `ExtensionTreeModel` in `MainThreadTreeViews.swift`; both are `@MainActor`-isolated. `children(of:)` is declared `async`, matching **children-signature**. Every operation traffics in `ContributedTreeItem` (`packages/apple/AgenticToolkit/macOS/Features/Extensions/Tree/ContributedTreeItem.swift`), a `Sendable`, `Equatable`, `Identifiable` struct keyed by `id` (the extension's own element handle, `elementID`). `MainThreadTreeViews.swift`'s `adopt(_:for:)` confirms **provider-replacement-ordering** is implemented as documented: it calls `replaced.onProviderReplaced?(model)` and only then `replaced.invalidate()`.
 - **WinUI 3**: model this seam as a C# interface `IExtensionTreeDataSource` — `Task<IReadOnlyList<ContributedTreeItem>> GetChildrenAsync(ContributedTreeItem? parent)`, `void Activate(ContributedTreeItem item)`, `string? Title { get; }`, `string? Message { get; }`, `bool AllowsMultipleSelection { get; }` — with the three settable closures replaced by C# events: `event Action<string?>? TreeDataChanged`, `event Action? ChromeChanged`, `event Action<IExtensionTreeDataSource>? ProviderReplaced`. Events support `+=`/`-=` naturally, but **replacement-callback-rewiring-required** still applies: whoever takes over a replacement instance must subscribe its own handlers to that instance's events, including `ProviderReplaced` again, or a further replacement has nowhere to go. Drive a `Microsoft.UI.Xaml.Controls.TreeView` from `GetChildrenAsync` exactly as the companion `ExtensionTreeViewController` recipe's WinUI note describes (populate `TreeViewNode.Children` lazily inside `TreeView.Expanding`). Fire `ProviderReplaced` from whatever registry class plays the role of `MainThreadTreeViews`, immediately before that registry drops its own reference to the retiring instance, mirroring `adopt(_:for:)`'s "fire, then invalidate" order from **provider-replacement-ordering**.
+- **confines-to-ui-thread** (scope): The rule covers every property read or write and every method call on a conforming instance.
 
 ## Reference Implementations
 
@@ -189,6 +185,8 @@ Not applicable: this protocol contains no log call — it has no executable body
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.2 | 2026-10-04 | Mike Fullerton | Spec-local UI-thread confinement ids folded into the shared confines-to-ui-thread requirement, with a test vector; scope detail is in Platform Notes. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/tree-views/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from ExtensionTreeDataSource.swift; documented `in-flight-request-during-replacement` |

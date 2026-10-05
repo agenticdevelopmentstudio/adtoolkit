@@ -1,37 +1,37 @@
 ---
 id: da69d02d-a3a9-4018-a90a-becee268624a
-title: Monitor Overall Status
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/overall
+title: "Monitor Overall Status"
+domain: adtoolkit://cookbook/status/service/monitor/overall
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure rollup deriving the four-value overall-status verdict from per-endpoint health checks, plus the public headline fold for non-endpoint problems.
+summary: "Pure rollup deriving the four-value overall-status verdict from per-endpoint health checks, plus the public headline fold for non-endpoint problems."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- status
-- rollup
-- pure-function
-- server
+  - monitor
+  - status
+  - rollup
+  - pure-function
+  - server
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/health
+  - adtoolkit://cookbook/status/service/monitor/health
 references:
-- packages/web/packages/status-server/src/monitor/overall.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/overall.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/app.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/overall.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/overall.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/app.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Monitor Overall Status
@@ -67,7 +67,7 @@ This module is the status backend's endpoint-health-to-headline rollup step. It 
 
 ### Purity and Exports
 
-- **pure-synchronous-functions**: The base rollup and the public headline fold MUST be synchronous, side-effect-free operations whose return value is computed only from their arguments; neither MUST perform I/O, logging, or mutation of the per-endpoint list.
+- **pure-synchronous-functions**: The base rollup and the public headline fold MUST be synchronous, side-effect-free operations whose return value is computed only from their arguments; each MUST NOT perform I/O, logging, or mutation of the per-endpoint list.
 - **exported-surface**: The overall-status vocabulary MUST be exported as a type, and the base rollup and the public headline fold MUST both be exported as named operations, from this module.
 
 ## Appearance
@@ -107,7 +107,7 @@ Not applicable — this is a pure status-rollup function, not a visual component
 - **Null and empty input**: an empty per-endpoint list MUST yield `"unknown"` from the base rollup, and from the public headline fold regardless of the non-endpoint-problem flag (empty-statuses-is-unknown, public-overall-base, non-endpoint-problem-never-lifts-unknown; status-server-monitor-overall-001, -011) — MUST. The per-endpoint list is typed as a list of health values, so there is no absent-element case at the type level; the non-endpoint-problem flag is a required boolean with no default, and the source performs no runtime check that a caller actually supplied a boolean — this is a caller precondition enforced by the type signature, not unvalidated input this operation's purpose calls for validating, since the public headline fold has exactly one caller in this codebase (external), which always supplies a computed boolean — MUST.
 - **Boundary values**: a single-element per-endpoint list is the minimum non-empty boundary; `["down"]` MUST return `"major_outage"` from the base rollup (a match-all check over one element is trivially satisfied by all-down-is-major-outage), and `["degraded"]` or `["healthy"]` MUST return `"degraded"` or `"operational"` respectively (any-down-or-degraded-is-degraded, all-healthy-is-operational) — MUST. There is no declared maximum length on the per-endpoint list; the source imposes no upper-bound check, and both the match-all and match-any checks are evaluated over the full list regardless of length — MUST (no length ceiling exists to violate).
 - **Concurrent access**: The base rollup and the public headline fold are synchronous, pure computations over their own arguments, with no shared mutable state, no module-level variable, and no suspension point of their own; any number of concurrent callers MUST NOT interleave in a way that changes any single call's result (pure-synchronous-functions) — MUST.
-- **Error states**: neither operation contains an exception boundary, a raised error, or a dependency of its own — no network call, no database access, no file I/O — so there is no error path in this module for either operation to raise or swallow; under any input satisfying the declared parameter types, neither operation MUST throw — MUST.
+- **Error states**: neither operation contains an exception boundary, a raised error, or a dependency of its own — no network call, no database access, no file I/O — so there is no error path in this module for either operation to raise or swallow; under any input satisfying the declared parameter types, each operation MUST NOT throw.
 - **Offline or disconnected state**: not applicable — the base rollup and the public headline fold make no network connection of their own to lose; they consume already-computed health values and a boolean flag that a caller external to this module derives from network- and database-backed state before calling either operation.
 
 ## Configuration
@@ -191,6 +191,7 @@ Not applicable: this module contains no logging call of any kind; the base rollu
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/service/monitor/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

@@ -1,35 +1,35 @@
 ---
 id: f5f0f19f-065e-4484-8c81-e591eee6db3c
-title: Response History
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/response-history
+title: "Response History"
+domain: adtoolkit://cookbook/status/dashboard/state/response-history
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: State that polls the portfolio-wide response-time history for the last
-  N hours every 60 seconds
+summary: "State that polls the portfolio-wide response-time history for the last N hours every 60 seconds"
 platforms:
-- web
+  - typescript
+  - web
 tags: []
 depends-on:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/api
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/history
+  - adtoolkit://cookbook/status/dashboard/state/history
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Response History
 
 ## Overview
 
-Response History is state in the status dashboard that loads the portfolio-wide response-time history over the last `hours` hours, for the overview graph. It wraps one shared-cache read keyed by the window length. It requests `/response-history?hours=<hours>` through the dashboard's status API client (see [status-web-api](agenticdevelopertoolkit://cookbook/status/dashboard/api)), polls every 60 seconds, and returns the read result typed as `ResponseHistory`. Its one caller in the package is the overview stats view, which passes the selected span's `hours` (24, 168, 720 or 2160) and draws `data.points` as the "avg response" sparkline, falling back to an empty array while no data is loaded. It is the portfolio-level sibling of [status-web-hooks-use-history](agenticdevelopertoolkit://cookbook/status/dashboard/state/history), which loads one service's checks.
+Response History is state in the status dashboard that loads the portfolio-wide response-time history over the last `hours` hours, for the overview graph. It wraps one shared-cache read keyed by the window length. It requests `/response-history?hours=<hours>` through the dashboard's status API client (see [status-web-api](adtoolkit://cookbook/status/dashboard/api)), polls every 60 seconds, and returns the read result typed as `ResponseHistory`. Its one caller in the package is the overview stats view, which passes the selected span's `hours` (24, 168, 720 or 2160) and draws `data.points` as the "avg response" sparkline, falling back to an empty array while no data is loaded. It is the portfolio-level sibling of [status-web-hooks-use-history](adtoolkit://cookbook/status/dashboard/state/history), which loads one service's checks.
 
 ## Behavioral Requirements
 
@@ -54,7 +54,7 @@ Response History is state in the status dashboard that loads the portfolio-wide 
 - **no-other-hook-policy**: Apart from the refresh interval, Response History MUST NOT set its own freshness window, cache retention window, retry policy, background-refresh policy, or refresh-on-returning-focus policy; those behaviors MUST come from the host cache context's defaults and the shared cache mechanism's own defaults.
 - **no-timeout**: Response History MUST NOT impose its own request timeout; a request that never settles leaves the read in its fetching state until the client or environment ends it.
 - **no-persistence**: Response History MUST NOT write history to any durable store; results live only in the in-memory shared cache.
-- **client-only-module**: Response History has no server-only or universal-rendering variant; it requires a live client execution context.
+- **client-only**: Response History MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 - **single-threaded-ordering**: Response History runs on a single execution thread; concurrent uses with the same `hours` MUST share one cache entry and are deduplicated by the shared cache rather than by Response History.
 
 ## Appearance
@@ -86,6 +86,7 @@ There is no dedicated test file for this concept; these vectors are derived from
 | use-response-history-009 | query-key | Start using Response History with `hours` = 24, then switch to `hours` = 720 | Two fetches, one per window; returning to `24` within the cache's lifetime serves the cached 24-hour data |
 | use-response-history-010 | raw-fetch-not-json-helper | Response History with `hours` = 24; inspect the request | No `Content-Type` header is added by Response History |
 | use-response-history-011 | single-threaded-ordering | Two components both use Response History with `hours` = 24, sharing one cache context | One fetch is made; both receive the same `data` |
+| use-response-history-012 | client-only | Load Response History in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -154,6 +155,7 @@ Not applicable: Response History makes no log calls; failures reach the caller o
 - **Compose**: Start from a `ViewModel` exposing `StateFlow<UiState>`. Map an `hours` flow with `flatMapLatest` into a `flow { while (true) { emit(fetch()); delay(60_000) } }`, using Ktor `HttpClient` or Retrofit for the GET and `kotlinx.serialization` with `List<Double?>` for `points`. Collect with `stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), …)` so polling stops when no one observes, the analogue of polling only while in use. `flatMapLatest` cancels the previous window's request, whereas the source lets it land in its own key.
 - **AppKit / UIKit**: Use the same `URLSession` and `Codable` stack as SwiftUI, driven from a view controller or `@MainActor` model that owns a polling `Task`, cancels it on window change or `viewDidDisappear`, and pauses on `NSApplication.didResignActiveNotification` / `UIApplication.didEnterBackgroundNotification` to mirror the hidden-tab pause.
 - **WinUI 3**: Start from a view model implementing `INotifyPropertyChanged` (or CommunityToolkit.Mvvm's `ObservableObject` with `[ObservableProperty]`) that exposes `ResponseHistory? History`, `bool IsLoading`, and `Exception? Error`, with `ResponseHistory` as a record `(double Hours, List<double?> Points)`. Fetch with a shared `HttpClient.GetAsync($"{basePath}/response-history?hours={hours.ToString(CultureInfo.InvariantCulture)}")`; the invariant culture keeps `1.5` from becoming `1,5`. When `response.IsSuccessStatusCode` is false, throw `new HttpRequestException($"response-history {(int)response.StatusCode}")`. Otherwise deserialize with `JsonSerializer.DeserializeAsync<ResponseHistory>` using `JsonSerializerDefaults.Web`. Poll with a `PeriodicTimer(TimeSpan.FromSeconds(60))` inside an `async Task` loop cancelled by a `CancellationTokenSource` when `hours` changes or the page unloads, or with a `DispatcherQueueTimer` whose `Interval` is 60 seconds. Expose `Points` as `ObservableCollection<double?>` or a `List` for chart binding, and marshal updates through the `DispatcherQueue`. The differences from the source: .NET has no query cache or deduplication, so keep a `Dictionary<double, ResponseHistory>`; `HttpClient.Timeout` defaults to 100 seconds, whereas the source has none; a failed poll should keep the previous `History` to match the source's graceful degradation; and pausing while the window is minimized needs `Window.VisibilityChanged`, because the hidden-tab pause does not carry over.
+- **client-only**: On the web, the module opens with the `"use client"` directive.
 
 ## Reference Implementations
 
@@ -217,7 +219,8 @@ Not applicable: Response History makes no log calls; failures reach the caller o
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial recipe extracted from `use-response-history.ts` |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial recipe extracted from `use-response-history.ts` |
 </content>

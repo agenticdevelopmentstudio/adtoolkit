@@ -1,0 +1,72 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "4d7ed9a3-c6d8-491b-911a-cf257fde1c38",
+    "title": "Daemon AI Chat",
+    "domain": "adtoolkit://cookbook/ai/chat/daemon-ai-chat",
+    "type": "ingredient",
+    "version": "1.1.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-23",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Headless one-shot completion entry point that resolves the host's selected AI provider, dispatches to its .aiplugin (gated by a local-inference RAM guard for loopback models) or falls back to a zero-config claude -p CLI call, and returns one accumulated reply string.",
+    "platforms": [
+      "swift",
+      "macos"
+    ],
+    "tags": [
+      "ai-plugin",
+      "ai-plugin-runtime",
+      "daemon",
+      "headless-completion",
+      "inference-guard",
+      "cli-fallback"
+    ],
+    "depends-on": [
+      "adtoolkit://cookbook/ai/plugins/ai-plugin",
+      "adtoolkit://cookbook/ai/plugins/plugin-descriptor",
+      "adtoolkit://cookbook/ai/chat/chat-context",
+      "adtoolkit://cookbook/ai/plugins/request-spec",
+      "adtoolkit://cookbook/ai/plugins/stream-event",
+      "adtoolkit://cookbook/ai/providers/provider-configuration",
+      "adtoolkit://cookbook/ai/providers/provider-config-keys",
+      "adtoolkit://cookbook/ai/providers/daemon-provider-resolver",
+      "adtoolkit://cookbook/ai/models/local/local-inference-guard"
+    ],
+    "related": [
+      "adtoolkit://cookbook/ai/plugins/plugin-manager"
+    ],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "names_hosts": "The component shells out to the `claude` CLI and passes the literal model alias `haiku`; both are values it sends.",
+  "synced": "b0116310047d60ec",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

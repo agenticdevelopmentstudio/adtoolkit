@@ -1,0 +1,68 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "14ca2162-b5ec-48bb-95a0-90577e7c9810",
+    "title": "SQL Sync Store",
+    "domain": "adtoolkit://cookbook/data/sync/sql-sync-store",
+    "type": "ingredient",
+    "version": "1.2.0",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "SQLite-backed store implementation: JSON mirror tables, a coalescing outbox, a cursor and a conflicts audit, with optional typed mirror projections.",
+    "platforms": [
+      "swift",
+      "macos",
+      "ios"
+    ],
+    "tags": [
+      "sync",
+      "offline",
+      "persistence",
+      "sqlite"
+    ],
+    "depends-on": [
+      "adtoolkit://cookbook/data/sync/sync-engine"
+    ],
+    "related": [
+      "adtoolkit://cookbook/data/sync/sync-engine",
+      "adtoolkit://cookbook/data/sync/offline-sync-client"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/SyncGRDB/GRDBSyncStore.swift",
+      "packages/apple/AgenticToolkit/SyncGRDB/SyncMirrorProjection.swift",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncGRDBTests/GRDBSyncStoreTests.swift",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncGRDBTests/SyncMirrorProjectionTests.swift"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "92f5dadc9089edd4",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

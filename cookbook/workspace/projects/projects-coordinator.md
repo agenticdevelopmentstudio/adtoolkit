@@ -1,61 +1,53 @@
 ---
 id: 2469d716-84aa-4984-9e71-4cfe49d05854
-title: Projects Coordinator
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/projects-coordinator
+title: "Projects Coordinator"
+domain: adtoolkit://cookbook/workspace/projects/projects-coordinator
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The project registry feature — owns the database-backed list of known
-  git repositories, drives the background scan that reconciles it against disk,
-  and registers the app-level open/scan commands and menu items.
+summary: "The project registry feature — owns the database-backed list of known git repositories, drives the background scan that reconciles it against disk, and registers the app-level open/scan commands and menu items."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- coordinator
-- scanning
-- command-palette
+  - git
+  - projects
+  - coordinator
+  - scanning
+  - command-palette
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-database
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-reconciler
-- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo-scanner
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-chooser-window
-- agenticdevelopertoolkit://cookbook/workspace/projects/project-scan-progress-window
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/tabs-window
+  - adtoolkit://cookbook/workspace/projects/git-repo
+  - adtoolkit://cookbook/workspace/projects/project-database
+  - adtoolkit://cookbook/workspace/projects/project-reconciler
+  - adtoolkit://cookbook/workspace/projects/git-repo-scanner
+  - adtoolkit://cookbook/workspace/projects/project-chooser-window
+  - adtoolkit://cookbook/workspace/projects/project-scan-progress-window
+  - adtoolkit://cookbook/ui/layout/composable-tabs/tabs-window
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectReconciler.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepoScanner.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectChooserWindow.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectScanProgressWindow.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWindowManager.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/UserSettings+Projects.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppFeature.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/AppShell/MenuContribution.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/SystemIntegration/WindowManager/WindowManager.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsWindowController.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepo.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectDatabase.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectReconciler.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepoScanner.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectChooserWindow.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectScanProgressWindow.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectWindowManager.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/UserSettings+Projects.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/AppShell/AppFeature.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/AppShell/AppCommand.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/AppShell/MenuContribution.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/SystemIntegration/WindowManager/WindowManager.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsWindowController.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Loggable.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Projects Coordinator
@@ -201,25 +193,8 @@ notification.
 - **loggable-conformance**: The coordinator MUST expose a single shared
   logger for its own log messages, independent of any instance,
   following the same logging convention used across this codebase.
-- **database-read-failure-unsignaled**: NEEDS REVIEW: Not implemented in
-  source. Both construction's initial load and reloading discard any
-  thrown database-read error with no logging call and no way for a
-  caller to distinguish "the registry is genuinely empty" from "the read
-  just failed" — unlike every other database failure path in this file,
-  which each log at error level (renaming, opening a project, and all
-  three scan-finishing loops). What is missing: a log call, or a way for
-  a caller to detect a failed reload versus an empty result. What would
-  settle it: either addition, or a doc comment stating the silence is
-  intentional because a failed read is expected to be transient and
-  self-correcting on the next reload.
-- **stop-checkpoint-failure-unsignaled**: NEEDS REVIEW: Not implemented
-  in source. Stopping's checkpoint call discards a checkpoint failure
-  with no logging call at all, the only write-adjacent database call in
-  this file that neither logs nor otherwise surfaces its outcome. What
-  is missing: a log call on the caught path, matching the pattern every
-  other database call in this file follows. What would settle it: adding
-  one, or a doc comment stating why a failed checkpoint at shutdown
-  needs no signal.
+- **database-read-failure-unsignaled**: both construction's initial load and reloading discard any thrown database-read error with no logging call, falling back to an empty list on construction and to the previous list on reload; a caller cannot distinguish "the registry is genuinely empty" from "the read failed", unlike every other database failure path in this file, which logs at error level (see Design Decisions).
+- **stop-checkpoint-failure-unsignaled**: stopping's checkpoint call discards a checkpoint failure with no logging call, the only write-adjacent database call in this file that neither logs nor otherwise surfaces its outcome (see Design Decisions).
 - **scan-task-not-tracked**: The background scan-and-reconcile
   continuation started by scanning is not stored, awaited, or
   cancellable: stopping and terminating can both run while it is in
@@ -239,6 +214,7 @@ notification.
   scan-finishing step's own comment that "the summary and what the user
   was told disagree" is the bug its per-row error handling fixes; the
   failure is visible only in the log.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -282,6 +258,7 @@ test.
 | git-client-projects-projects-coordinator-016 | terminate-casts-opener-for-language-services | Terminate a coordinator whose window-opening delegate is a project window manager. | shutting down all language services is awaited on that instance. |
 | git-client-projects-projects-coordinator-017 | terminate-casts-opener-for-language-services | Terminate a coordinator whose window-opening delegate is unset, or a project-opening stand-in that is not a project window manager. | the method returns immediately; no shutdown call is made anywhere. |
 | git-client-projects-projects-coordinator-018 | stop-checkpoint-failure-unsignaled | Stop a coordinator where checkpointing the database throws. | no log call is made; stopping returns normally (see **stop-checkpoint-failure-unsignaled**). |
+| git-client-projects-projects-coordinator-019 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -450,7 +427,7 @@ stopping's failed checkpoint, make no log call at all — see
   layout (`Ctrl+Alt+P` for Open Project, mirroring the macOS
   `[.command, .option]` combination). Back `database` with the same
   SQLite file through `Microsoft.Data.Sqlite` (see
-  `agenticdevelopertoolkit://cookbook/workspace/projects/project-database`'s WinUI
+  `adtoolkit://cookbook/workspace/projects/project-database`'s WinUI
   bullet for the schema/migration port) and call its `Checkpoint()`
   equivalent from `Stop()`, logging any exception there explicitly to
   close **stop-checkpoint-failure-unsignaled** rather than reproducing the
@@ -523,6 +500,14 @@ takes effect on the next scan rather than the next launch"
 (`ProjectsCoordinator.swift`).
 **Approved**: pending
 
+**Decision**: A failed database read in construction or reload is discarded without a log call: the result falls back to an empty list on construction and to the existing list on reload (`database-read-failure-unsignaled`).
+**Rationale**: The source reads through `try?` in both places, so an empty registry and a failed read look identical to callers. Closing it needs a log call, a way for the caller to detect a failed reload, or a comment stating the silence is intentional because a failed read is transient and self-correcting on the next reload.
+**Approved**: pending
+
+**Decision**: Stopping discards a checkpoint failure without any log call (`stop-checkpoint-failure-unsignaled`).
+**Rationale**: The source calls the database checkpoint through `try?` on the stop path, unlike the sibling database calls that log. Closing it means a log call on the caught path matching those siblings, or a comment explaining why a failed checkpoint at shutdown needs no signal.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -543,7 +528,7 @@ and all window presentation to `ProjectOpening`/`ProjectChooserWindow`/
 project only as "a row, not a file." unit-test-coverage fails because no
 test file exists anywhere in the repository for this type (no
 `ProjectsCoordinatorTests.swift`), so every behavior documented above,
-including the open questions and gaps above, is currently unverified by any
+including the pending decisions and gaps above, is currently unverified by any
 automated test. explicit-error-handling is partial because four of the six
 database-touching call sites (`rename`, `openProject`, and `finishScan`'s
 insert/update/delete loops) catch and log their failure, but two — the
@@ -566,6 +551,8 @@ call in a scan fails.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved two NEEDS REVIEW markers against source: initial/reload database reads and the stop checkpoint use try? with no logging; restated as current behavior with pending decisions. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

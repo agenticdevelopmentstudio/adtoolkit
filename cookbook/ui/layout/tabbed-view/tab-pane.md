@@ -1,36 +1,34 @@
 ---
 id: a30725ca-fa2f-4a04-8cb0-8beddf264a0a
-title: Tab Pane
-domain: agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view/tab-pane
+title: "Tab Pane"
+domain: adtoolkit://cookbook/ui/layout/tabbed-view/tab-pane
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A tab-bar item that draws one session as a stacked card - agent,
-  status, session, directory, branch, summary - and recedes from the
-  workspace edge as it stands further from the selected tab.
+summary: "A tab-bar item that draws one session as a stacked card - agent, status, session, directory, branch, summary - and recedes from the workspace edge as it stands further from the selected tab."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- tabs
-- tab-bar
-- view-controller
-- card
+  - tabs
+  - tab-bar
+  - view-controller
+  - card
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/ui/layout/tabbed-view
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references:
-- https://developer.apple.com/design/human-interface-guidelines
-- https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/design/human-interface-guidelines
+  - https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html
+approved-by: ""
+approved-date: ""
 ---
 
 # Tab Pane
@@ -38,7 +36,7 @@ approved-date: ''
 ## Overview
 
 The component represents one session as a tab-bar item inside
-[the tabbed view](agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view). It
+[the tabbed view](adtoolkit://cookbook/ui/layout/tabbed-view). It
 conforms to a stacked-item interface, so the hosting bar can tell it apart
 from a plain title string: it carries selection (highlighted state) and how
 far it stands from the selected tab (stack depth), and it draws itself as a
@@ -159,6 +157,7 @@ polls for its own content.
 - **component-does-not-poll-its-data-source**: The component MUST NOT
   re-fetch or observe the data source on its own; content MUST change only
   in response to an explicit reload call.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -277,6 +276,7 @@ polls for its own content.
 | tab-pane-036 | directory-text | The data source returns a working directory outside the current user's home, e.g. `/tmp/repo/.claude/worktrees/tabs`; reload | The directory label reads that path unabbreviated |
 | tab-pane-037 | context-menu-is-delegated | Delegate is nil (or set but returns nil for the event); a menu-triggering event fires | Requesting a context menu falls back to the platform's standard context menu |
 | tab-pane-038 | header-text; session-text; branch-visibility; summary-visibility; title-and-preferred-content-size | Reload once with short content (agent `"C"`, no model, session `"s"`, branch `"b"`, no summary), then again after every field changes and grows past the maximum width | The agent, session, and branch labels follow the new values; the summary label becomes shown once a summary appears; the preferred content size's width moves from the minimum to the maximum between the two calls |
+| tab-pane-039 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -549,6 +549,8 @@ two surfaces are meant to read as one.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | partial | Accessibility |
 | [reduced-motion](agenticdevelopercookbook://compliance/accessibility#reduced-motion) | failed | Accessibility |
@@ -556,6 +558,8 @@ two surfaces are meant to read as one.
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | Internationalization |
 
 `screen-reader-support` and `keyboard-navigable` are `partial` because the card has no focus behavior or accessibility role of its own, no combined accessibility label across its fields, and the close button's `accessibilityDescription` is an unlocalized literal (see **close-button-callback** and the Localization section above); `reduced-motion` and `touch-target-size` are `failed` on the confirmed absence of a Reduce Motion check and a fixed `14`pt close-button hit area below the 44pt minimum; `string-externalization` is `failed` on the hardcoded `Close` literal.
+
+Separation-of-concerns is passed: `TabPaneViewController` is a thin controller that forwards a `TabPaneDataSource` and `TabPaneDelegate` to `TabPaneView`, which owns all drawing; the controller adds no layout or data policy of its own. Unit-test-coverage is passed: `TabPaneViewControllerTests.swift` has 27 tests covering reload, nil model, sizing and width cap, directory abbreviation, status-symbol replacement, accessibility identifiers, close button side, selection, stack depth and painting, close callback, and the delegate context menu.
 
 ## Change History
 
@@ -567,3 +571,5 @@ two surfaces are meant to read as one.
 | 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/tabbed-view/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added Compliance rows for separation-of-concerns and unit-test-coverage |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

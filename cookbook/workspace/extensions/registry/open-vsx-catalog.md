@@ -1,37 +1,35 @@
 ---
 id: 1bbc9593-4064-4e79-8bce-08b3cf00c13d
-title: Open VSX Catalog
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/open-vsx-catalog
+title: "Open VSX Catalog"
+domain: adtoolkit://cookbook/workspace/extensions/registry/open-vsx-catalog
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Decoded models of Open VSX search and detail responses, with URL-shaped fields
-  kept as strings and a pure installability verdict.
+summary: "Decoded models of Open VSX search and detail responses, with URL-shaped fields kept as strings and a pure installability verdict."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- open-vsx
-- catalog
-- decoding
-- installability
+  - extensions
+  - open-vsx
+  - catalog
+  - decoding
+  - installability
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/OpenVSXCatalogTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/OpenVSXCatalog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/OpenVSXCatalogTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Extensions/VSCodeEngineRange.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SemanticVersion.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Open VSX Catalog

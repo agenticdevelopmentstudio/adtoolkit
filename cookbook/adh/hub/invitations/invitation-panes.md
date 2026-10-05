@@ -1,34 +1,33 @@
 ---
 id: a9222936-8474-4073-8581-d314a258bf0a
-title: Invitation Panes
-domain: agenticdevelopertoolkit://cookbook/adh/hub/invitations/invitation-panes
+title: "Invitation Panes"
+domain: adtoolkit://cookbook/adh/hub/invitations/invitation-panes
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Three master-detail admin panes (Requests, Pending Users, Invites) with
-  per-pane columns, admin notes, and Pending Users' Send/Add actions.
+summary: "Three master-detail admin panes (Requests, Pending Users, Invites) with per-pane columns, admin notes, and Pending Users' Send/Add actions."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- master-detail
-- table
-- invitations
-- users
+  - master-detail
+  - table
+  - invitations
+  - users
 depends-on:
-- agenticdevelopertoolkit://recipes/list-with-details-pane
-- agenticdevelopertoolkit://cookbook/adh/hub/invitations/send-invitation-modal
-- agenticdevelopertoolkit://recipes/add-users-modal
+  - agenticdevelopertoolkit://recipes/list-with-details-pane
+  - adtoolkit://cookbook/adh/hub/invitations/send-invitation-modal
+  - agenticdevelopertoolkit://recipes/add-users-modal
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Invitation Panes
@@ -43,7 +42,7 @@ built on a shared master-detail list-with-details layout
 columns, an empty label, a storage key, and a shared "Admin notes" toolbar action. The
 Pending Users pane additionally offers "Send invitation" and "Add users" actions that
 open the send-invitation modal
-(agenticdevelopertoolkit://cookbook/adh/hub/invitations/send-invitation-modal) and the add-users
+(adtoolkit://cookbook/adh/hub/invitations/send-invitation-modal) and the add-users
 modal (agenticdevelopertoolkit://recipes/add-users-modal).
 
 None of the three panes fetch data, persist anything, or own the notes/history UI:
@@ -501,45 +500,45 @@ logged (see Design Decisions).
 
 ## Design Decisions
 
-Decision: `SendInvitationModal` closes only when the caller's `onSend` promise
+**Decision**: `SendInvitationModal` closes only when the caller's `onSend` promise
 resolves; on rejection it stays open and the rejection reason is discarded.
-Rationale: per the source's own comment, this keeps the failure visible to the
+**Rationale**: per the source's own comment, this keeps the failure visible to the
 admin (the modal does not vanish) and keeps the send retryable, at the cost of
 not surfacing the actual error to the admin or to any log.
-Approved: pending
+**Approved**: pending
 
-Decision: `SendInvitationModal` is remounted via a `key` built from the joined
+**Decision**: `SendInvitationModal` is remounted via a `key` built from the joined
 seed emails and phones, rather than reseeded through props alone.
-Rationale: forces the modal's internal recipient/note state to reset whenever a
+**Rationale**: forces the modal's internal recipient/note state to reset whenever a
 new selection opens Send, instead of leaking a stale selection's edits into the
 next one.
-Approved: pending
+**Approved**: pending
 
-Decision: the "Admin notes" modal's `open` is derived from
+**Decision**: the "Admin notes" modal's `open` is derived from
 `rows.find(row => row.id === notesForId) != null` rather than from
 `notesForId != null` directly.
-Rationale: prevents the modal from opening for a `notesForId` that no longer
+**Rationale**: prevents the modal from opening for a `notesForId` that no longer
 names a row present in `rows` — e.g. the row was deleted or filtered out
 between selecting notes and the modal's render.
-Approved: pending
+**Approved**: pending
 
-Decision: `InvitationInvitesPane`'s detail panel renders only
+**Decision**: `InvitationInvitesPane`'s detail panel renders only
 `renderNotesAndHistory`, while `InvitationRequestsPane`'s and
 `InvitationPendingUsersPane`'s detail panels prepend their own Source/Note
 fields.
-Rationale: traced directly to the source — a sent invite's row already exposes
+**Rationale**: traced directly to the source — a sent invite's row already exposes
 name/email/sentBy/sentDate as table columns, leaving nothing pane-specific for
 the detail panel beyond notes/history, unlike a request or pending user, which
 carry a `source`/note field that is not itself a table column.
-Approved: pending
+**Approved**: pending
 
-Decision: `InvitationRequestsPane`'s note fallback uses `r.note || "—"` while
+**Decision**: `InvitationRequestsPane`'s note fallback uses `r.note || "—"` while
 `InvitationPendingUsersPane`'s uses `u.lastNote ?? "—"`.
-Rationale: not stated in the source; this reads as an inconsistency between two
+**Rationale**: not stated in the source; this reads as an inconsistency between two
 otherwise parallel detail panels rather than a deliberate design choice (see
 Edge Cases, "Note-fallback quirk"). Documented here as a known discrepancy
 rather than idealized away.
-Approved: pending
+**Approved**: pending
 
 ## Compliance
 
@@ -551,6 +550,7 @@ Approved: pending
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | Internationalization |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
 | [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | failed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 Statuses rest on this file's own sections: Accessibility documents that
 `passes-required-aria-label` is this file's one direct, forced contribution
@@ -563,6 +563,8 @@ presentation (passed); and Edge Cases/Design Decisions show the `onSend`
 rejection reason is discarded via `() => undefined` with no log or rethrow
 (failed, see `reports-send-rejection-reason`).
 
+`unit-test-coverage` is `partial`: no test file for `invitation-panes.tsx` exists under the `adh-ui` test targets (`packages/web/packages/adh-ui/src/__tests__/` holds tests for other blocks only); the only coverage is indirect, through `packages/web/packages/features/ecosystems/src/EcosystemInvitationPanes.test.tsx`, which renders the three panes via their ecosystem wrappers and pins the header placement above the scrollable grid, so the `onSend` rejection handling and the `aria-label` values are untested.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -571,3 +573,5 @@ rejection reason is discarded via `() => undefined` with no log or rethrow
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: named the exact per-pane Source/Note labels and fields, added delete-confirm-copy and null-date-dash requirements plus a SHOULD requirement for reporting the send-rejection reason, added a remount-key-collision edge case and tightened vector 022, added missing test vectors, reconciled Appearance's class list with Accessibility Options, filled in Localization string keys and the shared Name/Phone/Email row, linked the WinUI 3 ResizableSplit mention, stated date columns render as received, and replaced the Compliance table with real catalog checks. |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/invitations/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Add separation-of-concerns and unit-test-coverage compliance. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | Legacy recipe citations restored to the legacy recipes' own agenticdevelopertoolkit://recipes/ domains; the adtoolkit://recipes/ form named nothing. |

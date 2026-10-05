@@ -1,29 +1,28 @@
 ---
 id: 9d2d3132-0853-4e3a-8e81-503356e4585d
-title: Stale Monitors
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/stale-monitors
+title: "Stale Monitors"
+domain: adtoolkit://cookbook/status/dashboard/logic/stale-monitors
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Pure selection of monitors continuously down for at least 7 days, offered
-  to the operator as retire candidates, longest-down first
+summary: "Pure selection of monitors continuously down for at least 7 days, offered to the operator as retire candidates, longest-down first"
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on:
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/live-types
+  - adtoolkit://cookbook/status/dashboard/logic/live-types
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/board-staleness
+  - adtoolkit://cookbook/status/dashboard/logic/board-staleness
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Stale Monitors
@@ -34,7 +33,7 @@ approved-date: ''
 
 Per the module header, this is "the AMBIGUOUS half of ghost cleanup, and only that half". A monitor whose project or host provably stopped existing is deleted by the backend cycle (`retireUnclaimedMonitors` in the status server's `src/monitor/sync`) and never reaches this function. What remains is a monitor still claimed by a live deploy project but DOWN for a week: that may be a site nobody turned off or an outage nobody fixed, so it is surfaced for the operator to decide rather than removed. DNS resolution selects nothing in either direction; it is carried through only so the UI can word its confirm prompt.
 
-The input rows are `LiveServiceDTO` values from the live snapshot ([Live Types](agenticdevelopertoolkit://cookbook/status/dashboard/logic/live-types)). The sole production call site is the `StaleMonitorsBanner` component, which calls the function with a day-floored clock and turns each row into a retire button backed by `deleteEndpoint(slug)`.
+The input rows are `LiveServiceDTO` values from the live snapshot ([Live Types](adtoolkit://cookbook/status/dashboard/logic/live-types)). The sole production call site is the `StaleMonitorsBanner` component, which calls the function with a day-floored clock and turns each row into a retire button backed by `deleteEndpoint(slug)`.
 
 ## Behavioral Requirements
 
@@ -123,7 +122,7 @@ All vectors use `NOW = Date.parse("2026-06-26T00:00:00.000Z")` and a base servic
 - **`nowMs` that is `NaN`**: Every age is non-finite, so the result MUST be `[]`.
 - **`thresholdMs` of 0 or negative**: Every down service whose finite age is at least `thresholdMs` MUST be selected (with 0, every onset at or before `nowMs`); the function does not validate the threshold. The sole caller never passes one.
 - **`thresholdMs` of `NaN`**: `ageMs < NaN` is `false`, so every down service with a finite age MUST be selected. This is a fact of the comparison; the argument is typed `number` and the only caller uses the default.
-- **`thresholdMs` of `Infinity`**: No service MUST be selected.
+- **`thresholdMs` of `Infinity`**: Every service MUST be left unselected.
 - **Empty-string `error`**: `detail` MUST be `""`, not the status-code or `"down"` fallback, because `??` only replaces `null` and `undefined`.
 - **Equal ages**: Rows MUST keep their relative input order.
 - **Host that no longer resolves**: The row MUST still be offered, with `dnsOk false`; DNS is explanatory only.
@@ -233,6 +232,7 @@ Not applicable: the module makes no log calls.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from source |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from source |

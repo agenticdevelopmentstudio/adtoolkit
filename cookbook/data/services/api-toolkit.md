@@ -1,30 +1,32 @@
 ---
 id: 7add8e4b-922e-4518-aa45-79bf56cdf8bc
-title: API Toolkit
-domain: agenticdevelopertoolkit://cookbook/data/services/api-toolkit
+title: "API Toolkit"
+domain: adtoolkit://cookbook/data/services/api-toolkit
 type: ingredient
-version: 1.1.0
+version: 1.1.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
 summary: "Same-origin request building, generated-endpoint lookup, schema-derived examples and field descriptions, and generic-CRUD headless logic for API browsing and data-table editing."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- crud
-- api
-- metadata
-- headless
+  - crud
+  - api
+  - metadata
+  - headless
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/crud/crud-table
-- agenticdevelopertoolkit://cookbook/ui/crud/crud-record-form
+  - adtoolkit://cookbook/ui/crud/crud-table
+  - adtoolkit://cookbook/ui/crud/crud-record-form
 references: []
+approved-by: ""
+approved-date: ""
 ---
 
 # API Toolkit
@@ -79,7 +81,7 @@ readiness.
 - **request-headers**: the request builder MUST set `Content-Type:
   application/json` only when a body is actually attached, and MUST set
   `Authorization: Bearer <token>` only when a token argument is supplied;
-  neither header MUST be present when its precondition is absent.
+  each header MUST NOT be present when its precondition is absent.
 - **mutating-methods**: the mutating-method check MUST return true for every
   HTTP method except `GET`, `HEAD`, and `OPTIONS`, and MUST return false for
   those three.
@@ -638,6 +640,8 @@ credential leak vector, so the source trades away snippet convenience
 
 | Version | Date | Author | Summary |
 |---|---|---|---|
+| 1.1.2 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to data/services/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation, documenting the shared headless logic of `@agentic-toolkit/api-explorer` and `@agentic-toolkit/crud`; records `executeRequest`'s network-failure propagation and absent request timeout. |

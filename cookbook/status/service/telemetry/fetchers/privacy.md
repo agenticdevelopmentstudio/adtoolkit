@@ -1,0 +1,6 @@
+
+- **Data collected**: `glitchtip.ts` reads GlitchTip issue metadata (title, culprit, level, count, user count, timestamps, a permalink, and a project slug/name) — application error data, not end-user personal data. `posthog.ts` reads only aggregate, anonymous counts (`count()`/`count(DISTINCT person_id)` over `$pageview` events); per the file's own comment, this is a deliberate privacy-first design — "no person data ever leaves PostHog into here." Both files also hold their provider's bearer credential (`GLITCHTIP_API_TOKEN`, `POSTHOG_API_KEY`) for the duration of one `fetch()` call.
+- **Storage**: neither file writes to persistent storage; both are PURE with respect to storage, per each file's own header comment. Persisting a fetch's results is `collect.ts`'s and the `Store<T>` port's job, external to these two files.
+- **Transmission**: every outbound call in both files sends its provider credential as an `Authorization: Bearer` header, never in a query string or request body; the transport scheme (`http://` vs `https://`) is whatever the caller-supplied `GLITCHTIP_URL`/`POSTHOG_HOST` value specifies — neither file validates or enforces `https://`.
+- **Retention**: neither file caches, persists, or retains a credential or a fetched item beyond the lifetime of one `fetch()` call; there is no in-memory cache of any kind in either file.
+

@@ -1,0 +1,13 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| status-server-monitor-endpoint-kinds-001 | endpoint-kind-vocabulary | Read the endpoint-kind vocabulary | Length 6; joined as `'http,frontend,admin,health,custom,dns'` |
+| status-server-monitor-endpoint-kinds-002 | endpoint-kind-type | Assign a value of `'http'` to the endpoint-kind type; assign a value of `'staging'` to it | The first assignment is accepted; the second is rejected because `'staging'` is not a member of the endpoint-kind vocabulary |
+| status-server-monitor-endpoint-kinds-003 | compile-time-immutability | Attempt to append `'extra'` to the vocabulary through the ordinary typed interface, then bypass the type system and append it anyway, then read the vocabulary's length | The ordinary attempt is rejected at construction time; the bypassed attempt succeeds, and the vocabulary's length is `7` afterward, confirming the underlying value is not frozen at runtime |
+| status-server-monitor-endpoint-kinds-004 | type-guard-membership | Check membership for `'dns'`; for `'http'` | Both resolve `true` |
+| status-server-monitor-endpoint-kinds-005 | type-guard-membership | Check membership for `'DNS'`; for an empty string; for `'unknown'` | All resolve `false` |
+| status-server-monitor-endpoint-kinds-006 | type-guard-membership | Check membership for `'httpz'`; for `'adminx'` | Both resolve `false` — a superstring of a valid kind is not itself a valid kind |
+| status-server-monitor-endpoint-kinds-007 | type-guard-narrowing | Hold a plain string value of `'admin'`; check its membership, and only within that passing branch, treat it as the narrowed endpoint-kind type | The narrowed use is accepted only inside the passing branch; the same use outside that branch, on the still-plain-string value, is rejected |
+| status-server-monitor-endpoint-kinds-008 | non-deploy-kinds-reexport | Read the non-deploy kind set from this module and separately from the deploy-platform engine's classifier, compare identity; then check membership of `'health'`, `'custom'`, `'dns'`, `'http'`, `'frontend'`, `'admin'` | The two reads are the same object; the first three checks resolve `true` and the last three resolve `false` — the same six kinds the classifier's own "needs wiring" cases exercise against the identical non-deploy kind set |
+| status-server-monitor-endpoint-kinds-009 | no-side-effects | Load the module with the network, logging, and file-system facilities spied, then check membership several times | Zero recorded calls on any spy, both at load time and after every membership check |
+

@@ -1,34 +1,33 @@
 ---
 id: a7653559-cb70-43db-a75c-d032e4f599b3
-title: Integer Field View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/integer-field-view
+title: "Integer Field View"
+domain: adtoolkit://cookbook/ui/settings/rows/integer-field-view
 type: ingredient
-version: 1.2.0
+version: 1.2.4
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row forwarding to a generic number field view, pairing a title
-  label with a bounded, locale-aware integer text field.
+summary: "A settings row forwarding to a generic number field view, pairing a title label with a bounded, locale-aware integer text field."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- form-control
-- range
-- numeric
+  - settings
+  - form-control
+  - range
+  - numeric
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view
+  - adtoolkit://cookbook/ui/settings/rows/number-field-view
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/captioned-slider-view
+  - adtoolkit://cookbook/ui/settings/rows/checkbox-view
+  - adtoolkit://cookbook/ui/settings/rows/captioned-slider-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Integer Field View
@@ -51,7 +50,7 @@ The wrapped number field view's own behavior — theming, activation and
 delegate wiring, layout when a fixed label width is set, locale-aware
 parsing, clamping, revert-on-invalid, and external-change sync — is
 documented in full at
-`agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view`, which this
+`adtoolkit://cookbook/ui/settings/rows/number-field-view`, which this
 recipe depends on. This recipe documents only what this component itself
 contributes: constructing and forwarding to that wrapped view, exposing
 its constituent views, and the construction/thread-confinement
@@ -63,7 +62,7 @@ The wrapped number field view's own requirements — label/field
 construction, theming, activation and delegate wiring, fixed-label-width
 layout, locale-aware parsing, clamping, revert-on-invalid, and
 external-change sync — are documented at
-`agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view#behavioral-requirements`. The requirements
+`adtoolkit://cookbook/ui/settings/rows/number-field-view#behavioral-requirements`. The requirements
 below are this component's own: what it does to construct, forward to, and
 expose that wrapped view.
 
@@ -88,13 +87,12 @@ expose that wrapped view.
 - **forwards-label-width**: Component's initializer MUST pass its own
   label-width parameter (default none) through unchanged to the wrapped
   view.
-- **requires-view-model-at-construction**: Component MUST support
-  construction only through its designated initializer, which requires a
-  view model; construction via a bare/default construction path or a
-  serialization/decoding-based construction path MUST both trigger a fatal
-  error.
-- **confines-to-ui-thread**: Component MUST be usable only on the UI
-  thread.
+- **requires-view-model-at-construction**: Component MUST be constructible
+  only with a view model supplied at construction time; construction paths
+  that could produce an instance without one (e.g. a bare/default
+  construction path or a serialization/decoding-based construction path)
+  MUST be rejected (see Platform Notes for the mechanism the source uses).
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -173,7 +171,7 @@ expose that wrapped view.
   the fixed field width (52pt default here, per **default-field-width**),
   constrained onto the wrapped field's own width by the wrapped view's own
   fixed-width requirement (see
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view#requirements/fixes-field-width`).
+  `adtoolkit://cookbook/ui/settings/rows/number-field-view#requirements/fixes-field-width`).
 
 ## Conformance Test Vectors
 
@@ -187,7 +185,7 @@ expose that wrapped view.
 | integer-field-view-006 | forwards-label-width | Construct the component with a label width of 80 | The wrapped field's label width constraint is 80 and the label is right-aligned |
 | integer-field-view-007 | requires-view-model-at-construction | Attempt construction via a serialization/decoding-based construction path (no view model available) | The call traps with a fatal error (a platform-level runtime trap, not an ordinary in-process assertion); no instance is returned |
 | integer-field-view-008 | requires-view-model-at-construction | Attempt construction via the bare/default construction path (no view model supplied) | The call traps with a fatal error (a platform-level runtime trap, not an ordinary in-process assertion); no instance is returned |
-| integer-field-view-009 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (compile-time on platforms with static isolation checking such as Swift's `@MainActor`, runtime-checked otherwise) |
+| integer-field-view-009 | confines-to-ui-thread | Attempt to construct or mutate the component from off the UI thread | Rejected by the platform's UI-thread confinement enforcement (at build time or by a runtime check); the component's state is unchanged |
 
 Vector integer-field-view-009 is a static, code-inspection check (a compile-/runtime-enforced thread confinement), not a vector observed by running the program; a port lacking equivalent enforcement should document the gap rather than fabricate a runtime trap.
 
@@ -197,22 +195,22 @@ Vector integer-field-view-009 is a static, code-inspection check (a compile-/run
   parameter; the type system rules out a missing value. The wrapped field's
   own revert-on-empty-text behavior — an empty text-field value fails the
   parse the same as any other unparseable text — is documented at
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view#edge-cases`.
+  `adtoolkit://cookbook/ui/settings/rows/number-field-view#edge-cases`.
 - **Boundary values**: Clamping at the minimum/maximum, and skipping the
   clamp when the minimum exceeds the maximum, is entirely the wrapped
   view's behavior; see
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view#edge-cases`.
+  `adtoolkit://cookbook/ui/settings/rows/number-field-view#edge-cases`.
   This component only supplies those bounds, via the view model's own
   minimum/maximum values (**wraps-number-field-view**).
 - **Out-of-range magnitude and fractional/locale-formatted text**: Parsing
   — POSIX-first with a locale-aware fallback, magnitude-exactness rejection,
   and fractional rejection — is entirely the wrapped view's behavior; see
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view#edge-cases`.
+  `adtoolkit://cookbook/ui/settings/rows/number-field-view#edge-cases`.
 - **Concurrent access**: Not applicable — this component MUST be usable
   only on the UI thread (**confines-to-ui-thread**), so all construction
   and mutation is serialized to that thread. The wrapped view carries the
   same confinement independently; see
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view#edge-cases`.
+  `adtoolkit://cookbook/ui/settings/rows/number-field-view#edge-cases`.
 - **Error states**: Not applicable — every operation in source
   (construction, forwarding, and end-of-editing handling) is synchronous
   and non-throwing; no error-producing path appears in this file.
@@ -222,7 +220,7 @@ Vector integer-field-view-009 is a static, code-inspection check (a compile-/run
 - **Overwritten external observer**: This is entirely the wrapped view's
   behavior — its initializer, not this component's, unconditionally
   assigns the view model's external-change handler; see
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view#edge-cases`.
+  `adtoolkit://cookbook/ui/settings/rows/number-field-view#edge-cases`.
 - **Delegate reassignment**: Because the text field's editing delegate is
   set to the wrapped view, not this component, a caller that reassigns the
   editing delegate to something else silently disables commit-on-editing-
@@ -359,13 +357,13 @@ source.
   its own locale-aware `NumberFormatter`-equivalent parsing has no fallback
   ordering to reproduce this source's
   parses-locale-aware-integer-text/POSIX-first behavior (see
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view#requirements/parses-posix-integer-first`),
+  `adtoolkit://cookbook/ui/settings/rows/number-field-view#requirements/parses-posix-integer-first`),
   so a value written by this source's POSIX `settingsFieldString` can read
   differently under a non-en-US Windows locale; and `NumberBox.Minimum`/
   `Maximum`, when both set with `Minimum > Maximum`, has no documented
   skip-the-clamp behavior matching
   skips-clamp-on-contradictory-bounds (see
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view#requirements/skips-clamp-on-contradictory-bounds`)
+  `adtoolkit://cookbook/ui/settings/rows/number-field-view#requirements/skips-clamp-on-contradictory-bounds`)
   — a WinUI port needs an explicit `Minimum > Maximum` check before relying
   on `NumberBox`'s own clamping.
 
@@ -384,7 +382,7 @@ source.
   field is still exactly this call" — the generic view generalizes to
   optional, one-sided bounds that the range view model (which requires
   both) cannot express, so the behavior moved there (see
-  `agenticdevelopertoolkit://cookbook/ui/settings/rows/number-field-view`) while
+  `adtoolkit://cookbook/ui/settings/rows/number-field-view`) while
   this component stayed as the compatible entry point.
   **Approved**: pending
 - **Decision**: Default the field width to 52pt in this component's
@@ -396,7 +394,7 @@ source.
   own, narrower, pre-existing default, kept for source fidelity to callers
   that relied on it.
   **Approved**: pending
-- **Decision (AppKit)**: Keep this component's own end-of-editing handler
+- **Decision**: (AppKit) Keep this component's own end-of-editing handler
   even though the text field's editing delegate is set to the wrapped
   view, not to this component itself.
   **Rationale**: Per the source's own comment, this method is "kept because
@@ -417,6 +415,9 @@ source.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
+
+`unit-test-coverage` is `partial` because `ConfigurationContributionPointTests.swift` (`integerFieldViewForwardsItsDelegateCallback`) constructs an `IntegerFieldView`, ends editing with "7" and with "99", and asserts the setting commits 7 and clamps to the maximum of 10; there is no dedicated test file, and the initial display, external-change resync and non-numeric revert paths are covered only through the number field it forwards to.
 
 ## Change History
 
@@ -426,3 +427,7 @@ source.
 | 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: move NumberFieldView<Int>'s own requirements, test vectors, edge cases, and design decisions out to the number-field-view recipe and cite it via depends-on/related, keeping only IntegerFieldView's own forwarding requirements; rewrite the wraps-number-field-view and arranges-single-child test vectors to assert observable outcomes (clamp visible on textField, label/textField frames) instead of the private wrapped view's internals; rename defaults-field-width-to-52-points to default-field-width and move the 52pt value into the requirement body; drop the redundant macos tag and backfill related with sibling recipe domains; reformat Design Decisions to the **Decision**/**Rationale**/**Approved** form and drop the now-inaccurate requirement-count decision; state NumberBox's POSIX-parsing and contradictory-bounds divergences in the WinUI 3 note and drop its "(the reason this recipe exists)" aside; remap Compliance citations to the catalog; backfill the missing 1.0.0 Change History row; fix the Accessibility section's dangling citation to the now-external fixes-field-width requirement |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage Compliance row, judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
+| 1.2.3 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |
+| 1.2.4 | 2026-10-04 | Mike Fullerton | requires-view-model-at-construction uses the one wording its sibling row specs share. |

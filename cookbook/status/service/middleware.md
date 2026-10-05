@@ -1,43 +1,42 @@
 ---
 id: d1098650-e0d0-4d4b-9bbc-3ceeac8635fe
-title: Status Server Middleware
-domain: agenticdevelopertoolkit://cookbook/status/service/middleware
+title: "Status Server Middleware"
+domain: adtoolkit://cookbook/status/service/middleware
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Hono middleware binding an AuthGate's resolution to 401/403 (requireAuth/requireAdmin)
-  and a fixed-window per-key limiter guarding the pre-auth surface.
+summary: "Hono middleware binding an AuthGate's resolution to 401/403 (requireAuth/requireAdmin) and a fixed-window per-key limiter guarding the pre-auth surface."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- auth
-- server
-- rate-limit
-- middleware
+  - auth
+  - server
+  - rate-limit
+  - middleware
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/security/authentication
-- agenticdevelopercookbook://guidelines/implementing/security/authorization
-- agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
-- agenticdevelopercookbook://guidelines/implementing/networking/error-responses
+  - agenticdevelopercookbook://guidelines/implementing/security/authentication
+  - agenticdevelopercookbook://guidelines/implementing/security/authorization
+  - agenticdevelopercookbook://guidelines/implementing/networking/rate-limiting
+  - agenticdevelopercookbook://guidelines/implementing/networking/error-responses
 related:
-- agenticdevelopertoolkit://cookbook/status/service/auth
+  - adtoolkit://cookbook/status/service/auth
 references:
-- packages/web/packages/status-server/src/middleware/auth.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/middleware/rate-limit.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/auth/port.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/auth-gate.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/rate-limit.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/auth.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/api-tokens.int.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/middleware/auth.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/middleware/rate-limit.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/auth/port.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/auth-gate.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/rate-limit.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/auth.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/api-tokens.int.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Middleware
@@ -174,7 +173,7 @@ addressed explicitly rather than left to "platform best practices."
   MUST derive `tier` exclusively from the `AuthGate`'s resolution and the
   Hono context variable it wrote; MUST NOT read a tier, role, or admin claim
   directly from a request header, cookie value, or query parameter.
-- **no-credential-logging**: Neither `auth.ts` nor `rate-limit.ts` MUST log
+- **no-credential-logging**: `auth.ts` and `rate-limit.ts` MUST NOT log
   the `Authorization` header's value, the resolved bearer string, or any
   other per-request credential. The one `console.error` call in
   `rate-limit.ts` logs only a live bucket count and the fixed `50_000`
@@ -491,6 +490,7 @@ returns a substring of one header with no further extraction.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Restored inverted prohibitions: a 'Neither … MUST' rule now reads 'MUST NOT'. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

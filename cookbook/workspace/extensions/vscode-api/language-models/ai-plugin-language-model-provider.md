@@ -1,19 +1,17 @@
 ---
 id: a602608c-c061-44b6-a7ab-829e798d6b0c
-title: AI Plugin Language Model Provider
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
+title: "AI Plugin Language Model Provider"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/language-models/ai-plugin-language-model-provider
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The production ExtensionLanguageModelProviding conformer: lists every configured
-  AI-plugin model as a vscode.lm chat model and streams sendRequest through the existing
-  AIPlugin/PluginTransport path.'
+summary: "The production ExtensionLanguageModelProviding conformer: lists every configured AI-plugin model as a vscode.lm chat model and streams sendRequest through the existing AIPlugin/PluginTransport path."
 platforms:
   - swift
   - macos
@@ -24,14 +22,14 @@ tags:
   - language-model
   - streaming
 depends-on:
-  - agenticdevelopertoolkit://cookbook/ai/providers/provider-configuration
-  - agenticdevelopertoolkit://cookbook/ai/plugins/plugin-manager
-  - agenticdevelopertoolkit://cookbook/ai/plugins/plugin-descriptor
-  - agenticdevelopertoolkit://cookbook/ai/chat/chat-context
-  - agenticdevelopertoolkit://cookbook/ai/models/model-catalog
-  - agenticdevelopertoolkit://cookbook/ai/plugins/plugin-transport
-  - agenticdevelopertoolkit://cookbook/ai/plugins/stream-event
-  - agenticdevelopertoolkit://cookbook/ai/plugins/ai-plugin
+  - adtoolkit://cookbook/ai/providers/provider-configuration
+  - adtoolkit://cookbook/ai/plugins/plugin-manager
+  - adtoolkit://cookbook/ai/plugins/plugin-descriptor
+  - adtoolkit://cookbook/ai/chat/chat-context
+  - adtoolkit://cookbook/ai/models/model-catalog
+  - adtoolkit://cookbook/ai/plugins/plugin-transport
+  - adtoolkit://cookbook/ai/plugins/stream-event
+  - adtoolkit://cookbook/ai/plugins/ai-plugin
 related: []
 references:
   - packages/apple/AgenticToolkit/macOS/Features/Extensions/VSCodeAPI/AIPluginLanguageModelProvider.swift (agenticdevelopertoolkit)
@@ -225,6 +223,7 @@ stream.
   response MUST send the request with the stale model name unchanged,
   leaving the plugin's own request builder and the provider to reject it;
   any such rejection surfaces to the caller as the stream's error.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -259,6 +258,7 @@ Not applicable — this is the extension host's production language-model provid
 | ai-plugin-language-model-provider-015 | stream-cancellation-propagation | The consumer of a streamed response stops iterating early (cancels) | The stream's termination handler fires and cancels the wrapping unit of work, which cancels the plugin transport stream it awaits |
 | ai-plugin-language-model-provider-016 | justification-recorded-only, justification-privacy, no-log-when-justification-absent | Stream a response once with justification `"need vision"` and once with no justification, both otherwise routed to a configuration whose plugin fails to load | The info log line is produced exactly once, only on the present-justification call, with the extension identifier logged in the clear and the justification logged as redacted; neither call's routing to the plugin-unavailable error differs based on the justification's presence or content |
 | ai-plugin-language-model-provider-017 | model-name-membership | A configuration's template is updated to drop `"model-a"` from its model list, but a previously-issued descriptor id still names `"model-a"`; stream a response with that stale descriptor id | No dedicated test exists in the given sources; the resolution logic shows neither step checks the parsed model name against the current template's model list, so the request proceeds to the plugin's own request builder with the stale model name — demonstrating the open question rather than resolving it |
+| ai-plugin-language-model-provider-018 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -348,7 +348,7 @@ No other event in this file is logged: neither the unknown-model error nor the p
 
 ## Design Decisions
 
-**Decision** (Swift implementation): a descriptor's id is `"<configuration UUID>/<model>"`, and the split when resolving a configuration uses the FIRST `"/"` only.
+**Decision**: (Swift implementation) a descriptor's id is `"<configuration UUID>/<model>"`, and the split when resolving a configuration uses the FIRST `"/"` only.
 **Rationale**: a UUID never contains `"/"`, so the split point is unambiguous, and splitting on the first occurrence rather than the last preserves a model name that itself contains `"/"` — several gateways use such names — stated directly in the source's own documentation.
 **Approved**: pending
 
@@ -380,6 +380,7 @@ No other event in this file is logged: neither the unknown-model error nor the p
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/language-models/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

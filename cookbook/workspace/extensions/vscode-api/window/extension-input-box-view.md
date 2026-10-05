@@ -1,32 +1,31 @@
 ---
 id: b85dc186-31e9-472b-99ea-2c097fc926c8
-title: Extension Input Box
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
+title: "Extension Input Box"
+domain: adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-input-box-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Presents one VS Code showInputBox request: an optional title and prompt,
-  a text or secure field, and live validation.'
+summary: "Presents one VS Code showInputBox request: an optional title and prompt, a text or secure field, and live validation."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- form-control
-- text-input
-- validation
+  - extensions
+  - form-control
+  - text-input
+  - validation
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
+  - adtoolkit://cookbook/workspace/extensions/vscode-api/window/extension-quick-pick-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Input Box
@@ -104,6 +103,7 @@ assigns.
 - **panel-size-from-fitted-layout**: Component MUST set the panel's
   preferred size to a fixed width of 480pt and a height equal to the root
   view's fitted content height, floored at 72pt.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -204,6 +204,7 @@ assigns.
 | extension-input-box-view-controller-023 | panel-size-from-fitted-layout | Load the view with content whose fitted content height is 160pt | The panel's preferred size is 480×160 |
 | extension-input-box-view-controller-024 | model-gated-acceptance | `model.value == ""`, `model.canAccept == true`; press Return | `onAccept("")` is invoked exactly once — an empty value is still accepted, not treated as nothing entered |
 | extension-input-box-view-controller-025 | escape-cancellation | With the component on screen, press Escape in a window that is not the component's window | `onCancel()` is not invoked |
+| extension-input-box-view-controller-026 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -478,6 +479,7 @@ Not applicable: this component makes no logging call.
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [native-controls-preference](agenticdevelopercookbook://compliance/platform-compliance#native-controls-preference) | passed | platform-compliance |
 | [platform-design-language](agenticdevelopercookbook://compliance/platform-compliance#platform-design-language) | passed | platform-compliance |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | accessibility |
@@ -496,6 +498,8 @@ theme-role color change alone, with no non-color cue and no in-source
 measurement of the resulting contrast ratio (see the Differentiate
 Without Color entry under Accessibility Options).
 
+`unit-test-coverage` is partial: the input box's model is covered by `ExtensionInputBoxModelTests.swift`, its `vscode.window` bridge by `MainThreadWindowInputBoxTests.swift`, and `ExtensionPickerWindowControllerTests.swift` checks that the hosting window is sized to the controller's own preferred content size, but no test constructs `ExtensionInputBoxViewController` to drive the validation label, password masking, or Return/Escape handling.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -505,3 +509,5 @@ Without Color entry under Accessibility Options).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/vscode-api/window/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added a unit-test-coverage compliance row judged from the test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

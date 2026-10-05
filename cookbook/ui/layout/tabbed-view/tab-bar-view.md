@@ -1,30 +1,29 @@
 ---
 id: 5c0cc9f5-bc89-4e06-8d24-3db6424ff075
-title: Tab Bar View
-domain: agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view/tab-bar-view
+title: "Tab Bar View"
+domain: adtoolkit://cookbook/ui/layout/tabbed-view/tab-bar-view
 type: ingredient
-version: 1.2.0
+version: 1.3.1
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Edge-docked pill tab bar for the multi-edge tabbed view, with selection
-  restyling and vertical card stacking.
+summary: "Edge-docked pill tab bar for the multi-edge tabbed view, with selection restyling and vertical card stacking."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- tabs
-- tab-bar
+  - tabs
+  - tab-bar
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/layout/tabbed-view
+  - adtoolkit://cookbook/ui/layout/tabbed-view
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Tab Bar View
@@ -183,19 +182,13 @@ icon.
   in addition to its select and close notifications, for a caller to
   observe tab reordering.
 
-- **onreorder-never-fires**: NEEDS REVIEW: Not implemented. The bar
-  declares a reorder notification and documents it as firing "after the
-  user finishes dragging a tab to a new index," and the tabbed view wires
-  that notification straight to its own delegate callback — but nothing in
-  the bar itself ever invokes it; there is no drag-and-drop or
-  keyboard-driven reordering mechanism anywhere in this concept, and an
-  item list's only path to a new order is a caller directly setting new
-  items, which does not go through the reorder notification at all. What is
-  missing: the interaction — a pointer drag or a keyboard equivalent — that
-  determines a target index and invokes the reorder notification. What
-  would settle it: an implementation of a drag interaction, or confirmation
-  that reordering is a future, not-yet-built feature and the notification
-  exists ahead of it.
+- **bar-never-fires-reorder**: The bar MUST NOT invoke its reorder
+  notification on its own: it provides no drag or keyboard interaction that
+  determines a target index, so the notification is declared and forwarded by
+  the owner but is only ever fired by the owner's own programmatic move
+  operation, never by the bar. A caller sets a new order by supplying new
+  items or by calling that move operation.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -336,6 +329,8 @@ icon.
 | tab-bar-view-037 | selecting-a-tab-restyles-its-button | The tab button's highlighted state is set to `false` | The tab's background becomes transparent; its title's color role becomes `secondaryText`; its close icon's tint becomes `tertiaryText` |
 | tab-bar-view-038 | declares-reorder-callback | A new bar is constructed | Its reorder notification is a settable, externally observable property |
 | tab-bar-view-041 | vertical-edge-cards-overlap-and-order-by-distance | A left-edge bar, 3 hosted items at indices 0,1,2; index 1 selected | Between the tied depth-1 neighbors (indices 0 and 2), index 0's wrapper view ends up more frontmost than index 2's, per the descending-index tie-break; index 1 (depth 0, selected) is frontmost of all three |
+| tab-bar-view-042 | bar-never-fires-reorder | A bar with three items; the user clicks a tab, presses its close control, and drags a tab toward a new position | Select and close fire; the reorder notification never fires |
+| tab-bar-view-043 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -395,7 +390,7 @@ icon.
 | `hostController` | Content reference (optional, held weakly) | None | Parent a content-hosting item's content is added to; unset means hosted content is never parented (see Edge Cases). |
 | `onSelect` | Callback (tab id, optional) | None | Invoked when a tab is clicked, or when an assistive-technology press activates one. |
 | `onClose` | Callback (tab id, optional) | None | Invoked when a tab's close control is activated. |
-| `onReorder` | Callback (tab id and new index, optional) | None | Declared for a caller to observe reordering; never invoked by this concept itself (see the open question on onreorder-never-fires). |
+| `onReorder` | Callback (tab id and new index, optional) | None | Declared for a caller to observe reordering; never invoked by this concept itself (see **bar-never-fires-reorder** and the matching Design Decision). |
 
 ## Deep Linking
 
@@ -605,10 +600,16 @@ can land inside `closeButton`'s frame; the close control is reached
 separately, as its own republished accessibility child. (AppKit/UIKit.)
 **Approved**: pending
 
+**Decision**: The bar declares a reorder callback but never fires it; there is no drag-to-reorder or keyboard reordering interaction.
+**Rationale**: Checked `TabBarView.swift`: `onReorder` is declared and `MultiTabbedViewController.swift` wires it to the delegate's `didReorderTab`, but the bar contains no drag-session or key handling that invokes it; the owner's `moveTab(id:to:on:)` reorders programmatically and notifies the delegate itself. Closing the gap would take a pointer drag (and keyboard equivalent) that computes a target index and calls `onReorder`.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | failed | Accessibility |
 | [dynamic-type-support](agenticdevelopercookbook://compliance/accessibility#dynamic-type-support) | partial | Accessibility |
@@ -631,6 +632,8 @@ defers to. String-externalization is failed because the close button's
 "Close Tab" accessibility description is a hardcoded English literal (see
 Localization).
 
+Separation-of-concerns is passed: `TabBarView` only lays out and styles tab buttons and reports select, close and reorder intent through callbacks, leaving selection, ordering and persistence policy to its owner (`MultiTabbedViewController`). Unit-test-coverage is partial: `TabBarAccessibilityTests.swift`, `TabBarStartInsetTests.swift`, `TabCardStackTests.swift` and `MultiTabbedHostedItemTests.swift` exercise the start inset, accessibility publication, card stacking and hosted-item wrapping, but nothing tests the thickness floors, alignment, spacing or the close callback directly.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -640,3 +643,5 @@ Localization).
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/tabbed-view/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Restated onReorder behavior as current (bar never fires reorder) with a pending decision; added Compliance rows for separation-of-concerns and unit-test-coverage |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

@@ -1,44 +1,39 @@
 ---
 id: d274abfa-3696-4fd0-b3e8-cff6fdffb825
-title: Secret Storing
-domain: agenticdevelopertoolkit://cookbook/ai/plugins/secret-storing
+title: "Secret Storing"
+domain: adtoolkit://cookbook/ai/plugins/secret-storing
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: An interface that indirects an AI-plugin host's credential storage
-  away from its concrete backing store, with a secure-storage-backed
-  production implementation and a one-time pre-pin legacy-service cleanup
-  path.
+summary: "An interface that indirects an AI-plugin host's credential storage away from its concrete backing store, with a secure-storage-backed production implementation and a one-time pre-pin legacy-service cleanup path."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- ai-plugin
-- secrets
-- credential-storage
-- protocol
+  - ai-plugin
+  - secrets
+  - credential-storage
+  - protocol
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ai/chat/daemon-ai-chat
-- agenticdevelopertoolkit://cookbook/ai/providers/provider-config-keys
+  - adtoolkit://cookbook/ai/chat/daemon-ai-chat
+  - adtoolkit://cookbook/ai/providers/provider-config-keys
 references:
-- packages/apple/AgenticToolkit/AIPluginKit/SecretStoring.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/KeychainHelper.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/KeychainHelperTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIPluginKitTestSupport.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/AIPluginKit/SecretStoring.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/KeychainHelper.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/KeychainHelperTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/AIPluginKitTestSupport.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/DaemonAIChat.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AIPluginKitTests/DaemonAIChatTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/AIPluginKit/AIProviderConfigKeys.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Secret Storing
@@ -132,23 +127,7 @@ never touch the real secure store.
   so a test double can be substituted without touching the real secure
   store — see Design Decisions for the rationale and the one production
   call site (the daemon's chat-completion operation) that follows it.
-- **same-key-concurrent-mutation**: NEEDS REVIEW: Not implemented in
-  source. When two concurrent calls target set for the same key (or a
-  concurrent set/delete pair on the same key), the outcome is unspecified:
-  the production implementation's underlying write path performs a plain
-  delete followed by a fresh add with no lock or compare-and-swap, so a
-  losing writer's add can fail — making that set call return failure for
-  otherwise well-formed input — or a concurrent get on the same key can
-  observe a transient false-negative between the internal delete and the
-  re-add. Neither the interface nor the production implementation states an
-  ordering guarantee for concurrent same-key access (contrast with
-  delete-legacy, whose serialization requirement is documented explicitly).
-  What is missing: a documented ordering rule (e.g. last-writer-wins with
-  retry, or a required external per-key lock) for concurrent set/delete
-  calls sharing a key. Evidence that would settle it: a production call
-  site that mutates the same key from more than one concurrency domain, or
-  an explicit statement of the intended guarantee from the type's
-  maintainers.
+- **same-key-concurrent-mutation**: When two concurrent calls target set for the same key (or a concurrent set/delete pair on the same key), the outcome is unspecified: the production implementation's underlying write path performs a plain delete followed by a fresh add with no lock or compare-and-swap, so a losing writer's add can fail (making that set call return failure for otherwise well-formed input) or a concurrent get on the same key can observe a transient false negative between the internal delete and the re-add. Neither the interface nor the production implementation states an ordering guarantee for concurrent same-key access (contrast with delete-legacy, whose serialization requirement is documented explicitly).
 
 ## Appearance
 
@@ -185,7 +164,7 @@ and its production implementation, not a visual component.
 | secret-storing-012 | deletelegacy-restores-pinned-service | Pin the active service identifier to "com.example.host"; call delete-legacy for key; read the active service identifier immediately after the call returns | Equals "com.example.host" — the value held immediately before the call |
 | secret-storing-013 | deletelegacy-idempotent | Call delete-legacy for a key never stored under the legacy service | Returns success |
 | secret-storing-014 | interface-over-concrete-usage | Inspect the chat-completion operation's parameter type for its injected secret store, and its tests' fixtures | Parameter type is the abstract secret-store interface, never the concrete production implementation; every test call site substitutes the in-memory test double |
-| secret-storing-015 | same-key-concurrent-mutation (open question) | Issue set("A") and set("B") for the same key from two concurrent tasks with no external lock | Per the underlying store's internal delete-then-add write path, the losing task's add can fail, making that set call return failure for well-formed input — demonstrating the open question; no test in the given sources exercises this concurrent scenario |
+| secret-storing-015 | same-key-concurrent-mutation | Issue set("A") and set("B") for the same key from two concurrent tasks with no external lock | Per the underlying store's internal delete-then-add write path, the losing task's add can fail, making that set call return failure for well-formed input — demonstrating the unspecified ordering; no test in the given sources exercises this concurrent scenario |
 
 ## Edge Cases
 
@@ -205,8 +184,8 @@ and its production implementation, not a visual component.
   oversized payload, set returns failure through the same not-successful
   path any other secure-storage failure takes — no length validation
   happens in this component before that point.
-- **Concurrent access — same key**: this is the open question in
-  Behavioral Requirements (same-key-concurrent-mutation); concurrent
+- **Concurrent access — same key**: see
+  Behavioral Requirements (same-key-concurrent-mutation) and its Design Decision; concurrent
   set/delete calls targeting the *same* key have no documented ordering
   guarantee and can produce a spurious failure result or a transient
   false-negative read.
@@ -333,10 +312,15 @@ this component makes itself.
 **Rationale**: the documented contract describes intended behavior of a host outside this repository (elsewhere referred to as the daemon's settings/config layer), not a contract this component's own code implements. Recorded here rather than turned into a formal requirement on the secret-store interface itself, since an interface method cannot enforce how its callers choose between setting an empty value and deleting.
 **Approved**: pending
 
+**Decision**: Concurrent same-key set and delete calls have no ordering guarantee.
+**Rationale**: The production write path is a delete followed by an add with no lock, so a losing writer can fail and a concurrent read can see a transient miss; closing the gap takes a documented ordering rule (for example last-writer-wins with retry, or a required external per-key lock), prompted by a production call site that mutates one key from several concurrency domains or by the maintainers stating the intended guarantee.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
 |-------|--------|----------|
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 | [secure-storage](agenticdevelopercookbook://compliance/security#secure-storage) | passed | Security |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
 | [data-minimization](agenticdevelopercookbook://compliance/privacy-and-data#data-minimization) | passed | Privacy And Data |
@@ -344,12 +328,15 @@ this component makes itself.
 | [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | partial | Reliability |
 | [explicit-error-handling](agenticdevelopercookbook://compliance/best-practices#explicit-error-handling) | partial | Best Practices |
 
-`secure-storage` passes because the production conformance stores every secret in the OS Keychain, scoped by service and optional access group, with no plaintext fallback. `separation-of-concerns` passes because `SecretStoring` cleanly separates "what backs this store" (Keychain vs. in-memory fake) from "what key format to use" (the caller's job, e.g. `AIProviderConfigKeys`). `data-minimization` passes because the type stores exactly the caller-given secret per caller-given key, with no additional copying, logging, or derived data. `idempotent-operations` passes because `delete` and `deleteLegacy` are both explicitly documented and implemented as idempotent (see `delete-idempotent`, `deletelegacy-idempotent`). `data-integrity` is partial because of the open question this recipe records: concurrent `set`/`delete` calls sharing a key have no documented ordering guarantee, so a well-formed write can spuriously fail (see `same-key-concurrent-mutation`). `explicit-error-handling` is partial because `set`/`delete`/`deleteLegacy` signal failure only via a `Bool`, discarding the underlying `OSStatus` reason, and because `deleteLegacy`'s required external serialization (`deletelegacy-caller-serialization`) is documented but not enforced by any type in the given sources.
+`secure-storage` passes because the production conformance stores every secret in the OS Keychain, scoped by service and optional access group, with no plaintext fallback. `separation-of-concerns` passes because `SecretStoring` cleanly separates "what backs this store" (Keychain vs. in-memory fake) from "what key format to use" (the caller's job, e.g. `AIProviderConfigKeys`). `data-minimization` passes because the type stores exactly the caller-given secret per caller-given key, with no additional copying, logging, or derived data. `idempotent-operations` passes because `delete` and `deleteLegacy` are both explicitly documented and implemented as idempotent (see `delete-idempotent`, `deletelegacy-idempotent`). `data-integrity` is partial because of the gap this spec records: concurrent `set`/`delete` calls sharing a key have no documented ordering guarantee, so a well-formed write can spuriously fail (see `same-key-concurrent-mutation`). `explicit-error-handling` is partial because `set`/`delete`/`deleteLegacy` signal failure only via a `Bool`, discarding the underlying `OSStatus` reason, and because `deleteLegacy`'s required external serialization (`deletelegacy-caller-serialization`) is documented but not enforced by any type in the given sources.
+
+`unit-test-coverage` is partial: no test targets `KeychainSecretStore` in `SecretStoring.swift` itself (including `deleteLegacy`, the service swap), but `KeychainHelperTests.swift` covers the `KeychainHelper` it delegates to (set then get, overwrite on the same key, deleting an absent key, empty and unicode values), and `AIPluginKitTestSupport.swift` supplies an in-memory fake secret store used by `DaemonAIChatTests.swift`, which exercises callers of the interface.
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the same-key-concurrent-mutation NEEDS REVIEW marker as current behavior plus a pending Design Decision; added unit-test-coverage compliance (partial). |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ai/plugins/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-23 | Mike Fullerton | Initial creation |

@@ -1,32 +1,31 @@
 ---
 id: 3b602118-9299-483b-bf4d-62c9d525833d
-title: Window Frame Manager
-domain: agenticdevelopertoolkit://cookbook/ui/windows/window-frame-manager
+title: "Window Frame Manager"
+domain: adtoolkit://cookbook/ui/windows/window-frame-manager
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A service that saves and restores window frames per screen set,
-  top-left anchored, with pure frame math and screen matching.
+summary: "A service that saves and restores window frames per screen set, top-left anchored, with pure frame math and screen matching."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-management
-- screens
-- persistence
+  - window-management
+  - screens
+  - persistence
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/windows/screen-manager
+  - adtoolkit://cookbook/ui/windows/screen-manager
 related:
-- agenticdevelopertoolkit://cookbook/ui/windows/single-window-controller
+  - adtoolkit://cookbook/ui/windows/single-window-controller
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Window Frame Manager
@@ -392,12 +391,7 @@ this from its own move/resize/close callbacks).
   visibility as a boolean under a key of the form `WindowVisible_<id>`,
   both qualified by the window-state namespace, so state survives app
   relaunch.
-- **storage-failure-signal**: NEEDS REVIEW: Not implemented in source. The
-  window-state storage protocol has no error channel; the default backend
-  returns nothing for undecodable data (restore then applies the default
-  frame and the next save overwrites the blob) and silently skips a write
-  whose encoding fails, with no log. Settle by deciding whether load/save
-  failures must be logged or surfaced to the window frame manager.
+- **storage-failure-signal**: The window-state storage seam does not report load or save failures: the protocol has no error channel, and the default backend returns nothing for undecodable data (restore then applies the default frame and the next save overwrites the blob) and silently skips a write whose encoding fails, with no log.
 
 ## Appearance
 
@@ -697,6 +691,10 @@ calls and storage failures are not logged.
 **Rationale**: This is the source's behavior when the window intersects no provided screen; it means tests with mock screens and an off-screen window can receive a real `NSScreen`. Recorded as a known quirk, not a chosen rule.
 **Approved**: pending
 
+**Decision**: Window-state storage load and save failures are absorbed without a log or a signal to the window frame manager.
+**Rationale**: `UserDefaultsWindowStateStorage` decodes with `try?` and returns nil on failure and skips a write when `try?` encoding fails, `SettingsStoreWindowStateStorage` delegates to a settings store with the same absorbing behavior, and `WindowFrameManager` logs only placement events. Closing it means deciding whether failures are logged or surfaced and then widening the `WindowStateStorage` protocol.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -719,6 +717,7 @@ separation-of-concerns passes because frame math (`FrameCalculator`), screen mat
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the storage-failure-signal marker as current behavior (UserDefaults/settings-store backends absorb codec failures) with a pending Design Decision. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/windows/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation from `WindowFrameManager.swift`, `FrameCalculator.swift`, `PersistedWindowState.swift`, `ScreenFingerprint.swift`, `ScreenInfo.swift`, `RealScreenProvider.swift`, `ScreenMatcher.swift`, `WindowPosition.swift` and their tests |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from `WindowFrameManager.swift`, `FrameCalculator.swift`, `PersistedWindowState.swift`, `ScreenFingerprint.swift`, `ScreenInfo.swift`, `RealScreenProvider.swift`, `ScreenMatcher.swift`, `WindowPosition.swift` and their tests |

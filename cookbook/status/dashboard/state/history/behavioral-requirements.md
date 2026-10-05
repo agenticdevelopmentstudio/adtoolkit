@@ -1,0 +1,25 @@
+
+- **hook-signature**: History MUST accept exactly one argument, `slug` (a string or none), identifying the service whose history is requested.
+- **return-value**: History MUST return the shared cache's query result unchanged (fields such as `data`, `error`, `isLoading`, `isError`, `status`, `refetch`), adding no fields of its own.
+- **client-source**: History MUST obtain its HTTP client from the app's API context, which supplies the status API client from the nearest provider, or the same-origin default client (base path `/api`) when no provider is mounted.
+- **query-key**: The query MUST be cached under the key `["history", slug]`, so each distinct slug (including no slug) has its own cache entry.
+- **disabled-without-slug**: When `slug` is none or the empty string, the query MUST be disabled and MUST NOT issue any request.
+- **enabled-with-slug**: When `slug` is a non-empty string, the query MUST be enabled and MUST fetch according to the shared cache's policy.
+- **request-path**: Each fetch MUST call the client's raw request method with the relative path `/history?service=<encoded slug>&hours=24`, which the client resolves against its base path (by default producing `/api/history?service=<encoded slug>&hours=24`).
+- **slug-encoding**: The slug MUST be percent-encoded before being placed in the `service` query parameter.
+- **fixed-window**: The `hours` query parameter MUST always be the literal `24`; History exposes no way to request a different window.
+- **request-init**: Each fetch MUST be issued with no added request options, so it is a default GET with no added headers, body, or cancellation signal from History.
+- **raw-fetch-not-json-helper**: History MUST use the client's raw request method, not its JSON-body helper, so that helper's `Content-Type` header, its error-detail extraction, and its "no-content response becomes an empty result" handling do not apply.
+- **non-ok-error**: When the response is not ok, the query's read step MUST fail with an error whose message is `history <status>` (for example `history 503`), placing the query in its error state.
+- **error-detail-dropped**: On a non-ok response History MUST NOT read the response body; any `error` or `message` detail the server returns is not included in the failure.
+- **success-body**: When the response is ok, the query's read step MUST resolve with the parsed response body, typed as `HistoryResponse` without runtime shape validation.
+- **parse-failure**: When an ok response's body is not valid JSON, the parse failure MUST propagate as the query's error.
+- **network-failure**: When the request itself fails (network failure or unreachable host), the failure MUST propagate unchanged as the query's error.
+- **history-response-shape**: A successful result is declared as `HistoryResponse` with fields `service` (string), `hours` (number), and `checks` (a `HistoryCheck` array).
+- **history-check-shape**: Each `HistoryCheck` is declared with fields `status` (`"healthy" | "degraded" | "down" | "unknown"`), `responseTimeMs` (number or none), `statusCode` (number or none), `error` (string or none), and `checkedAt` (string).
+- **no-hook-level-policy**: History MUST NOT set its own freshness window, cache retention window, retry count, automatic refresh interval, or refresh-on-returning-focus behavior; caching, retry, and refresh behavior MUST come entirely from the shared cache's host-supplied and library defaults.
+- **no-timeout**: History MUST NOT impose its own request timeout; a request that never settles leaves the query pending until the client or runtime ends it.
+- **no-persistence**: History MUST NOT write history to any durable store; results live only in the in-memory shared cache.
+- **client-only**: Health Check History MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
+- **single-threaded-ordering**: History runs on a single execution thread; concurrent reads with the same slug MUST share one cache entry and are deduplicated by the shared cache rather than by History itself.
+

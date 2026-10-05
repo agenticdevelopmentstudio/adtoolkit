@@ -1,0 +1,11 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.0.0 | 2026-09-23 | Mike Fullerton | Initial ingredient recipe for ThemePreviewView, covering the chrome/list/controls/status/terminal sample builders, the embedded SwatchGridView composition, TerminalAppearance resolution, and open questions on accessibility grouping and demo-content localization for review. |
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: renamed all 30 requirements to subject-only kebab-case; moved private-implementation citations (`Self.pinToEdges`, `fill(_:with:)`, the arranged-subview teardown call) out of requirements and into AppKit Platform Notes; fixed the Overview's sample-card count and the terminal-font exemption in semantic-palette-derivation; corrected test vectors 028 and 030 and grounded empty-initial-state to cover the background paint for vector 002; reformatted Design Decisions to the bold three-line convention, dropped the requirement-count decision, and reworded the badge decision to record the Badge-ingredient duplication as a known DRY gap; relabeled Localization as proposed keys; rewrote the WinUI 3 and React/Web platform notes to scope theming to the given ColorTheme instead of the app's active theme; moved the misplaced cookbook `references` entry to `related` and deduped `swatch-grid-view`; and reworked Compliance to title-case categories, drop the two inapplicable accessibility checks, and add a sourcing sentence. |
+| 1.1.1 | 2026-09-23 | Mike Fullerton | Compliance: removed rows for checks absent from the cookbook catalog, remapped meaningful-labels to screen-reader-support |
+| 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage Compliance row, judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

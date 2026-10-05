@@ -1,47 +1,41 @@
 ---
 id: 03a30e6b-8c8c-40d3-8135-078d4fd351ce
-title: Project Settings
-domain: agenticdevelopertoolkit://cookbook/workspace/projects/project-settings
+title: "Project Settings"
+domain: adtoolkit://cookbook/workspace/projects/project-settings
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Declares the Projects feature''s three persisted settings: repo-scan
-  skip patterns, active-pane outline, and pointer-follows-focus.'
+summary: "Declares the Projects feature's three persisted settings: repo-scan skip patterns, active-pane outline, and pointer-follows-focus."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- projects
-- settings
-- storage-keys
+  - git
+  - projects
+  - settings
+  - storage-keys
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/projects/git-repo-scanner
+  - adtoolkit://cookbook/workspace/projects/git-repo-scanner
 references:
-- packages/apple/AgenticToolkit/macOS/Features/Projects/UserSettings+Projects.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/StorableSetting.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStore.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStorageProviders/UserDefaultsSettingsStorageProvider.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepoScanner.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsActivePane.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/SettingsStore/UserDefaultsSettingsStoreTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/UserSettings+Projects.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/UserSetting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/StorableSetting.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStore.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/SettingsStorageProviders/UserDefaultsSettingsStorageProvider.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/GitRepoScanner.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/Features/Projects/ProjectsCoordinator.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/macOS/UI/ViewControllers/ComposableTabs/ComposableTabsActivePane.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/SettingsStore/UserDefaultsSettingsStoreTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Project Settings
@@ -63,7 +57,7 @@ own; a shared settings-storage layer supplies that behavior, and a shared
 storage provider supplies the persistence mechanics. This recipe covers
 those collaborators only for the contract they give these three settings —
 their own general contract belongs to a collaborator's own recipe (the
-[Git Repo Scanner](agenticdevelopertoolkit://cookbook/workspace/projects/git-repo-scanner)
+[Git Repo Scanner](adtoolkit://cookbook/workspace/projects/git-repo-scanner)
 recipe already covers the scanner that consumes the skip-patterns
 setting). The code that reads the skip-patterns setting and constructs a
 scanner from it, the settings panel that edits all three, and the
@@ -386,4 +380,4 @@ Not applicable: this file makes no logging call of its own.
 |---------|------|--------|---------|
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/projects/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

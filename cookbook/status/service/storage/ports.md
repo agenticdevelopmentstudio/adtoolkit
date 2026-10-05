@@ -1,27 +1,26 @@
 ---
 id: 1c240b7a-21b3-4a89-b24f-a5bf5cf5f37b
-title: Status Server Storage Boundary
-domain: agenticdevelopertoolkit://cookbook/status/service/storage/ports
+title: "Status Server Storage Boundary"
+domain: adtoolkit://cookbook/status/service/storage/ports
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Storage port interface for status-server: persists configuration, auth,
-  health checks, deployments, issues, and telemetry via plain domain types.'
+summary: "Storage port interface for status-server: persists configuration, auth, health checks, deployments, issues, and telemetry via plain domain types."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Storage Boundary

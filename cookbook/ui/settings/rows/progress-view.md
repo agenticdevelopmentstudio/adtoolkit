@@ -1,38 +1,36 @@
 ---
 id: ea2dae31-1020-4930-aa12-15f7d04967a5
-title: Progress View
-domain: agenticdevelopertoolkit://cookbook/ui/settings/rows/progress-view
+title: "Progress View"
+domain: adtoolkit://cookbook/ui/settings/rows/progress-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A settings row wrapping a single progress indicator, switching
-  between a determinate bar and an indeterminate animation as its underlying
-  value changes.
+summary: "A settings row wrapping a single progress indicator, switching between a determinate bar and an indeterminate animation as its underlying value changes."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- status-indicator
-- progress
+  - settings
+  - status-indicator
+  - progress
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/checkbox-view
-- agenticdevelopertoolkit://cookbook/ui/settings/rows/button-view
-- agenticdevelopertoolkit://cookbook/ui/settings/layout/explanation-view
+  - adtoolkit://cookbook/ui/settings/rows/checkbox-view
+  - adtoolkit://cookbook/ui/settings/rows/button-view
+  - adtoolkit://cookbook/ui/settings/layout/explanation-view
 references:
-- https://developer.apple.com/documentation/appkit/nsprogressindicator
-- https://developer.apple.com/documentation/uikit/uiprogressview
-- https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.controls.progressbar.isindeterminate
-- https://developer.mozilla.org/en-US/docs/Web/HTML/Element/progress
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/documentation/appkit/nsprogressindicator
+  - https://developer.apple.com/documentation/uikit/uiprogressview
+  - https://learn.microsoft.com/en-us/uwp/api/windows.ui.xaml.controls.progressbar.isindeterminate
+  - https://developer.mozilla.org/en-US/docs/Web/HTML/Element/progress
+approved-by: ""
+approved-date: ""
 ---
 
 # Progress View
@@ -79,8 +77,7 @@ as long as the view exists.
   applying updates from **tracks-progress-changes** for as long as the
   view instance is retained (see Platform Notes for the exact subscription
   mechanism).
-- **confines-to-ui-thread**: The component MUST be usable only from the UI
-  thread.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -422,6 +419,8 @@ source gives it no other placement to describe.
 |-------|--------|----------|
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | failed | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | passed | Accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 `contrast-ratio` is `passed` because `ProgressView` sets no color of its
 own — all rendering is `NSProgressIndicator`'s unmodified system chrome,
@@ -433,6 +432,8 @@ Label requirements in Accessibility above, no accessibility label or
 title-UI-element link connects `progressIndicator` to `viewModel.title`, so
 `ProgressView` plainly does not implement this check today.
 
+`separation-of-concerns` passes because `ProgressView` only maps the view model's optional `progress` onto its indicator (a value means determinate at that value with animation stopped, `nil` means indeterminate with animation started) through one Combine subscription; the progress itself is produced elsewhere. No test in the repository's test targets constructs `ProgressView`, so `unit-test-coverage` is `failed`: a search of `AgenticToolkitMacOSTests` and the other test targets for the type name finds nothing.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -442,3 +443,5 @@ title-UI-element link connects `progressIndicator` to `viewModel.title`, so
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/rows/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns and unit-test-coverage Compliance rows, judged from the source and test targets. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

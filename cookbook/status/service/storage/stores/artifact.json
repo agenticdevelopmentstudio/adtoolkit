@@ -1,0 +1,92 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "82524881-6da8-42fe-85a9-388651ee085d",
+    "title": "Status Server Stores",
+    "domain": "adtoolkit://cookbook/status/service/storage/stores",
+    "type": "ingredient",
+    "version": "1.0.2",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-09-27",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The status backend's libSQL/Drizzle persistence layer: 13 store factories composed by `createLibsqlStorage`, plus one shared predicate helper, and the atomic guards, chunked bulk writes, and reconciliation sweeps that keep the schema honest under a monitor cycle that polls and a webhook that pushes concurrently.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "status-server",
+      "libsql",
+      "drizzle",
+      "persistence",
+      "storage-ports"
+    ],
+    "depends-on": [
+      "agenticdevelopercookbook://guidelines/implementing/data/database",
+      "agenticdevelopercookbook://guidelines/implementing/data/transactions-and-concurrency",
+      "agenticdevelopercookbook://guidelines/implementing/data/foreign-keys",
+      "agenticdevelopercookbook://guidelines/implementing/security/sensitive-data"
+    ],
+    "related": [
+      "adtoolkit://cookbook/status/service/storage/libsql",
+      "adtoolkit://cookbook/status/service/storage/ports",
+      "adtoolkit://cookbook/status/service/auth"
+    ],
+    "references": [
+      "packages/web/packages/status-server/src/libsql/stores/auth-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/token-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/device-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/health-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/history-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/issue-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/observation-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/owned-deploys.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/peer-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/deploy-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/board-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/config-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/maintenance-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/stores/telemetry-store.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/libsql/index.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/storage/ports.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/issue-sources.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/last-admin-guard.int.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/upsert-deployments.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/deploy-upsert-guard.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/telemetry-errors-store.int.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/device-flow.int.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/site-delete-purge.int.test.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "1c4e2883b9aebdc3",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

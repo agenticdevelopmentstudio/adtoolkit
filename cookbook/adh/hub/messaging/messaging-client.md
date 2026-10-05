@@ -1,39 +1,36 @@
 ---
 id: b976c0d2-084c-4a47-928a-14e33983077f
-title: Messaging Client
-domain: agenticdevelopertoolkit://cookbook/adh/hub/messaging/messaging-client
+title: "Messaging Client"
+domain: adtoolkit://cookbook/adh/hub/messaging/messaging-client
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The client-side contract for the Hub''s Messaging feature: a data-source operation set
-  for status/templates/log/send, the wire types those operations carry, and the rail navigation,
-  provider-status banners, and placeholder-gated send form built on top of them.'
+summary: "The client-side contract for the Hub's Messaging feature: a data-source operation set for status/templates/log/send, the wire types those operations carry, and the rail navigation, provider-status banners, and placeholder-gated send form built on top of them."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- hub
-- messaging
-- data-source
-- forms
-- templates
+  - hub
+  - messaging
+  - data-source
+  - forms
+  - templates
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/ui/navigation/htdv
+  - adtoolkit://cookbook/ui/navigation/htdv
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Messaging/MessagingModels.swift (apple)
-- packages/apple/AgenticToolkit/Hub/Features/Messaging/MessagingTopic.swift (apple)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/MessagingTopicTests.swift
-  (apple)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Hub/Features/Messaging/MessagingModels.swift (apple)
+  - packages/apple/AgenticToolkit/Hub/Features/Messaging/MessagingTopic.swift (apple)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/MessagingTopicTests.swift (apple)
+approved-by: ""
+approved-date: ""
 ---
 
 # Messaging Client
@@ -463,7 +460,7 @@ carrying its own copy of the regex.
 specifically so this "plain, non-isolated struct" can call it synchronously; sharing the one scan
 keeps the model and the send form from ever disagreeing on placeholder syntax, at the cost of a
 model type depending on its topic/controller type rather than the more usual direction.
-**Applies to**: Swift/Apple — the `nonisolated` mechanism that makes the synchronous cross-file
+Platform scope: Swift/Apple — the `nonisolated` mechanism that makes the synchronous cross-file
 call safe is Swift-specific; a port on another platform can share the same scan with a plain
 function call and no isolation annotation.
 **Approved**: pending
@@ -512,6 +509,7 @@ no signal that its display is incomplete.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Design Decisions keep the Decision / Rationale / Approved triple; each decision's platform line is folded into its rationale. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/messaging/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

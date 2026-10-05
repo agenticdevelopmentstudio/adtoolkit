@@ -1,40 +1,37 @@
 ---
 id: b2cf12e3-71de-4d87-9216-d5e8d604169c
-title: Extension Host
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/host/extension-host
+title: "Extension Host"
+domain: adtoolkit://cookbook/workspace/extensions/host/extension-host
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: "Runs one VS Code web extension's JavaScript in its own JavaScript execution\
-  \ context, wires its per-extension installation and eight vscode namespace adaptors,\
-  \ reconciles the running set against the registry by code identity, and records\
-  \ every unimplemented API member an extension reaches for."
+summary: "Runs one VS Code web extension's JavaScript in its own JavaScript execution context, wires its per-extension installation and eight vscode namespace adaptors, reconciles the running set against the registry by code identity, and records every unimplemented API member an extension reaches for."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- extension-host
-- not-implemented-ledger
+  - extensions
+  - extension-host
+  - not-implemented-ledger
 depends-on:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
-- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-registry
+  - adtoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+  - adtoolkit://cookbook/workspace/extensions/registry/extension-registry
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
-- agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-registry
+  - adtoolkit://cookbook/workspace/extensions/manifest/activation-event-matcher
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-resource-path
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+  - adtoolkit://cookbook/workspace/extensions/registry/extension-registry
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Host
@@ -101,7 +98,7 @@ All three roles are confined to a single execution context; the host, and every 
 - **workspace-scan-depth-and-entry-capped**: Scanning the workspace roots MUST stop descending into a directory once the walk's depth reaches the depth limit (6) and MUST stop collecting once the number of found entries reaches the entry limit (20,000).
 - **workspace-scan-skips-generated-directories**: Scanning the workspace roots MUST skip descending into any directory named in the skipped-directory-names set (`.build`, `.git`, `.svn`, `.venv`, `DerivedData`, `Pods`, `__pycache__`, `build`, `dist`, `node_modules`, `target`, `vendor`).
 - **workspace-scan-includes-dotfiles**: Scanning the workspace roots MUST NOT skip hidden files while walking, so dotfile-based `workspaceContains:` patterns (`.vscode/launch.json`, `.eslintrc*`) remain matchable.
-- **workspace-scan-incomplete-signal**: NEEDS REVIEW: Not implemented in source. Scanning the workspace roots resolves each directory entry's directory-or-file status, defaulting to "not a directory" on any failure and continuing the walk with no signal that the walk is now incomplete. The completed-scan result carries no incompleteness flag comparable to the extension registry's own nil-on-incomplete-scan contract, so a `workspaceContains:` extension can be told a pattern does not match a workspace the scan never actually finished reading, with nothing anywhere recording that the answer might be wrong.
+- **workspace-scan-failure-is-silent**: Scanning the workspace roots MUST resolve each directory entry's directory-or-file status, defaulting to "not a directory" on any failure and continuing the walk; the completed-scan result carries no incompleteness flag, so the answer to a `workspaceContains:` pattern is always presented as complete even when the walk could not read every entry.
 - **webview-panel-claim-order-deterministic**: Restoring a webview panel MUST resolve a webview view-type contested by more than one installed extension by sorting claimants by identifier and choosing the first, and MUST log when more than one claimant exists.
 - **contributed-view-resolved-by-manifest-ownership**: Resolving a contributed webview view or tree view MUST resolve strictly to the single extension named as its owner in the manifest, never by a claims-based contest, since a contributed view's ownership was already declared in the manifest.
 - **contributed-view-will-appear-is-a-broadcast**: A contributed view about to appear MUST notify every installed extension's activation-trigger check for that view being shown, unlike the owner-only resolution operations, because `onView:` may be declared by any extension against any view id, including one it does not own.
@@ -180,7 +177,7 @@ Not applicable — this is a JavaScript execution runtime, its per-extension ins
 - **Error states — a `.then` getter that throws**: A thenable whose `.then` property getter itself throws leaves calling activate to go through the pending-exception path rather than through the shim's completion callback, and is reported as a failure rather than left to hang the activation forever (verified against the real underlying JavaScript engine, per the source's own comment).
 - **Error states — adaptor spells a namespace wrong**: Defining a vscode member with a namespace the shim's table does not have is the *adaptor's* bug, not the extension's; the apply-or-withdraw operation withdraws the bad definition and logs it with the calling adaptor's own file and line, so the member stays a not-implemented stub on every later activation rather than failing every future activate call identically.
 - **Offline/disconnected**: Not applicable in the networking sense — this component performs no networking of its own; the closest analogue is a workspace that closes mid-scan, covered above under concurrent access.
-- **Error states — incomplete workspace scan**: see the open question on workspace-scan-incomplete-signal above.
+- **Error states — incomplete workspace scan**: see the design decision on the silent workspace-scan failure above.
 
 ## Configuration
 
@@ -294,6 +291,10 @@ Subsystem: the app's bundle identifier (falling back to a placeholder when unset
 **Rationale**: Activation is asynchronous, so a user pressing the same activation-triggering command twice before the extension finishes activating queues two dispatches, each carrying its own arguments. A `guard`-based admission ticket let only the first dispatch pass and silently dropped the second on the floor; forwarding on its own merits regardless of whether the token is still present ensures every invocation is honored.
 **Approved**: pending
 
+**Decision**: The workspace scan has no incompleteness signal: an unreadable directory entry is treated as a file and the walk continues, and the completed scan carries no flag comparable to the extension registry's nil-on-incomplete-scan contract.
+**Rationale**: `ExtensionHostInstaller.scan(roots:)` reads each entry's `isDirectoryKey` with `try?` and defaults to `false`, so a `workspaceContains:` extension can be told a pattern does not match a workspace the scan never finished reading. Closing it would mean having the scan return a completeness flag (as `ExtensionRegistry` does) and having the trigger check withhold a negative answer when the flag is false; the source does neither today.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -314,3 +315,4 @@ Subsystem: the app's bundle identifier (falling back to a placeholder when unset
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/host/. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved the workspace-scan NEEDS REVIEW marker as current behavior (scan failure is silent) and recorded the missing completeness signal as a pending decision. |

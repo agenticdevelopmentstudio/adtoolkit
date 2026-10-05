@@ -1,62 +1,59 @@
 ---
 id: 201572ee-2e0f-4839-94f5-252f8044c4bf
-title: Ecosystems
-domain: agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
+title: "Ecosystems"
+domain: adtoolkit://cookbook/adh/hub/ecosystems/ecosystems
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Ecosystems ("Products") domain logic: listing, creating, renaming, and
-  deleting a reverse-domain-identified product row, its child ecosystems and
-  settings, and its feature-provisioning catalog, unified by the rdid
-  slug/address contract.'
+summary: "Ecosystems (\"Products\") domain logic: listing, creating, renaming, and deleting a reverse-domain-identified product row, its child ecosystems and settings, and its feature-provisioning catalog, unified by the rdid slug/address contract."
 platforms:
-- swift
-- macos
-- ios
-- typescript
-- web
+  - swift
+  - macos
+  - ios
+  - typescript
+  - web
 tags:
-- hub
-- ecosystems
-- products
-- rdid
-- slug
-- forms
-- features
+  - hub
+  - ecosystems
+  - products
+  - rdid
+  - slug
+  - forms
+  - features
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/data/services/auth/auth-client
+  - adtoolkit://cookbook/data/services/auth/auth-client
 references:
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsDataSource.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsModels.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsModule.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemTopic.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemSettingsTopic.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/HubError.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/HubError+Wrap.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/EcosystemsModuleTests.swift (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystems/ecosystems.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystems/identifiers.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystems/use-workspace-default-ecosystem.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystems/ecosystem-invitations.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystems/ecosystem-features.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystems/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystems/__tests__/ecosystems.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystems/__tests__/use-workspace-default-ecosystem.test.tsx (agenticdevelopertoolkit)
-- packages/web/packages/data/src/ecosystems/__tests__/ecosystem-features.test.tsx (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsDataSource.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsModels.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemsModule.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemTopic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Ecosystems/EcosystemSettingsTopic.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/HubError.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/HubError+Wrap.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/RailPath.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/Slug.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Hub/Features/Support/FormDetails.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitHubTests/EcosystemsModuleTests.swift (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystems/ecosystems.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystems/identifiers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystems/use-workspace-default-ecosystem.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystems/ecosystem-invitations.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystems/ecosystem-features.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystems/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystems/__tests__/ecosystems.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystems/__tests__/use-workspace-default-ecosystem.test.tsx (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/ecosystems/__tests__/ecosystem-features.test.tsx (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Ecosystems
@@ -361,7 +358,7 @@ has no counterpart for it in these sources.
   before returning them.
 - **eco-invitations-notes-history-gated-on-subject**: The row-notes and
   row-history queries MUST be disabled while no subject id is given —
-  neither MUST run for an empty subject id.
+  neither query may run for an empty subject id.
 - **eco-invitations-save-notes-invalidates-notes-and-history**: Saving
   notes, on success, MUST invalidate both the matching notes cache entry
   and the matching history cache entry for the same subject.
@@ -467,12 +464,10 @@ has no counterpart for it in these sources.
   pass the add and remove lists through as given — it does not deduplicate
   keys or reject a key present in both; because adds run first, such a key
   is provisioned and then removed.
-- **features-mutation-null-id**: NEEDS REVIEW: Not implemented in source.
-  The feature-provisioning mutations accept an ecosystem id that may be
-  absent but proceed without a guard, so a mutation fired before the id
-  resolves sends a request to a path segment holding a literal
-  absent-marker instead of failing fast client-side; a guard (or a
-  non-optional parameter) would settle it.
+- **features-mutation-null-id-unguarded**: the feature-provisioning mutations accept an
+  ecosystem id that may be absent and MUST proceed without a guard; a mutation fired before the id
+  resolves sends its request to a path segment holding a literal absent-marker rather than failing
+  fast on the client.
 
 ## Appearance
 
@@ -627,7 +622,7 @@ owns accessibility presentation.
   client-side refusal.
 - **Feature hooks with no ecosystem id**: the provisioned-features query
   MUST NOT fetch while the id is nothing/undefined/empty; the mutations do
-  not guard it (see the open question on features-mutation-null-id).
+  not guard it (see the features-mutation-null-id-unguarded requirement).
 - **Concurrent feature changes**: the removals inside one batch apply run
   in parallel; they touch distinct keys, so their completion order does not
   affect the result, and the list is re-read once on settle. Two sessions
@@ -1020,6 +1015,12 @@ kept so the owner can see what is coming; the picker disables them and the
 backend refuses to provision them, so the client needs no filter.
 **Approved**: pending
 
+**Decision**: the feature-provisioning mutations have no client-side guard against an absent ecosystem id and will send a request with a literal absent-marker in the path.
+
+**Rationale**: the id is optional in the mutation signature and nothing checks it before use; closing the gap would take either a guard that rejects the call before any request is made or a non-optional id parameter.
+
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -1090,13 +1091,13 @@ a hidden one. `fault-tolerance` **partial**: `useApplyFeatureChange`
 keeps going past a failed removal and reports it by name rather than
 aborting, and `FeatureSubscriptionTier` is an open string so an unknown
 tier cannot break parsing; but the feature mutation hooks accept a
-nullable `ecosystemId` and send it unguarded (see the open question on
-features-mutation-null-id).
+nullable `ecosystemId` and send it unguarded (see the features-mutation-null-id-unguarded requirement).
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolve open-question markers against the code; restate unimplemented behavior as current behavior with pending Decisions. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/ecosystems/. |
 | 1.1.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-24 | Claude | Add the web feature picker data (`ecosystem-features.ts`): catalog with "Coming soon" entries, provisioned list, batch add, 404-tolerant remove, all-settled apply; correct `ecosystemIdForSlug`'s null-result fallback and the cache-settings note. |

@@ -1,58 +1,53 @@
 ---
 id: 7984f592-a12d-49da-806c-ff39d9557998
-title: Status Server Board
-domain: agenticdevelopertoolkit://cookbook/status/service/board
+title: "Status Server Board"
+domain: adtoolkit://cookbook/status/service/board
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Status backend''s board fold: the pure functions under `src/board/`
-  that reduce deploy, HTTP/DNS, platform-health, GlitchTip-error, and roster
-  facts into one `Board` (a Problems list, an Activity feed, an overall
-  indicator, and the set of currently monitored targets), plus the target-key
-  minting, ownership resolution, and ledger-reconciliation entrypoint that
-  keep every board sub-system agreeing on one spelling of "which target".'
+summary: "Status backend's board fold: the pure functions under `src/board/` that reduce deploy, HTTP/DNS, platform-health, GlitchTip-error, and roster facts into one `Board` (a Problems list, an Activity feed, an overall indicator, and the set of currently monitored targets), plus the target-key minting, ownership resolution, and ledger-reconciliation entrypoint that keep every board sub-system agreeing on one spelling of \"which target\"."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitoring
-- status
-- deploy
-- activity-feed
-- pure-function
+  - monitoring
+  - status
+  - deploy
+  - activity-feed
+  - pure-function
 depends-on:
-- agenticdevelopercookbook://guidelines/implementing/networking/pagination
-- agenticdevelopercookbook://guidelines/implementing/networking/idempotency-keys
-- agenticdevelopercookbook://guidelines/implementing/testing/testing
+  - agenticdevelopercookbook://guidelines/implementing/networking/pagination
+  - agenticdevelopercookbook://guidelines/implementing/networking/idempotency-keys
+  - agenticdevelopercookbook://guidelines/implementing/testing/testing
 related:
-- agenticdevelopertoolkit://cookbook/status/service/auth
+  - adtoolkit://cookbook/status/service/auth
 references:
-- packages/web/packages/status-server/src/board/target-key.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/ownership.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/derive-activity.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/derive.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/facts.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/reconcile.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/board/types.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-target-key.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-ownership.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-deploy.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-endpoint.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-errors.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-monitoring.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-regressions.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-activity.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-activity-page.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/board-facts.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/board/target-key.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/ownership.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/derive-problems.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/derive-activity.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/derive.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/facts.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/reconcile.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/board/types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-target-key.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-ownership.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-deploy.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-endpoint.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-errors.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-monitoring.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-regressions.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-activity.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-activity-page.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/board-facts.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Board
@@ -272,8 +267,7 @@ a deep-equal result — the property the regression suite in
 
 - **activity-row-ids**: `deployRowId(deploymentId, step)` MUST mint
   `"deploy:${deploymentId}:${step}"` and `issueRowId(event, step, atMs)`
-  MUST mint `"issue:${event.target}:${step}:${atMs}:${event.id}"`; neither
-  id MUST ever be built from a mutable field (target, `createdAtMs`,
+  MUST mint `"issue:${event.target}:${step}:${atMs}:${event.id}"`; each id MUST NOT be built from a mutable field (target, `createdAtMs`,
   branch, or project name for a deploy row).
 - **activity-union**: `deriveActivity` MUST emit the union of every
   `deployEvents` row at or after the effective floor (`fromMs` or
@@ -647,6 +641,7 @@ returning `null`/being excluded rather than being silently misinterpreted.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Inverted prohibitions (none/neither/no X MUST) restated as MUST NOT. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

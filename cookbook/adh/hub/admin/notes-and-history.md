@@ -1,32 +1,31 @@
 ---
 id: b2c3bfad-cfd1-4a0f-bfbf-89f5d3712700
-title: Notes and History
-domain: agenticdevelopertoolkit://cookbook/adh/hub/admin/notes-and-history
+title: "Notes and History"
+domain: adtoolkit://cookbook/adh/hub/admin/notes-and-history
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
 created: 2026-09-23
-modified: '2026-09-27'
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Presentational detail-panel section rendering a subject's admin notes and
-  history, each with independent loading, empty, and populated states.
+summary: "Presentational detail-panel section rendering a subject's admin notes and history, each with independent loading, empty, and populated states."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- component
-- notes
-- history
-- detail-panel
-- ui
+  - component
+  - notes
+  - history
+  - detail-panel
+  - ui
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Notes and History
@@ -40,7 +39,7 @@ component itself never fetches anything. Notes and history are independent:
 each has its own optional loading flag, so a slow history fetch never
 withholds already-loaded notes, and vice versa.
 
-## Types
+### Types
 
 - **Admin note** fields: `id`, `content`, `author`, `addedDate`,
   `modifiedDate`, `subjectTable`, `subjectId`. The component reads only
@@ -413,6 +412,7 @@ synchronously from its parameters with no side effect to log.
 | [string-externalization](agenticdevelopercookbook://compliance/internationalization#string-externalization) | failed | Internationalization |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
 | [locale-aware-formatting](agenticdevelopercookbook://compliance/internationalization#locale-aware-formatting) | partial | Internationalization |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | Best Practices |
 
 `platform-theming`/`separation-of-concerns` pass on every color in source
 using the `apt-*` token vocabulary with no raw hex value or `!important`,
@@ -429,6 +429,8 @@ strings are English JSX literals with no translation call;
 arrive pre-formatted from `invitations-types.ts` (see Types) and the
 component itself performs no formatting of its own.
 
+`unit-test-coverage` fails: no test file for `notes-and-history.tsx` exists under the `adh-ui` test targets (`packages/web/packages/adh-ui/src/__tests__/` holds tests for other blocks only).
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -438,3 +440,5 @@ component itself performs no formatting of its own.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/admin/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Add separation-of-concerns and unit-test-coverage compliance. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | Matches its type's shape: required fields, title heading, and only the type's own sections. |

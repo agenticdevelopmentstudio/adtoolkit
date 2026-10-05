@@ -1,0 +1,9 @@
+
+| Version | Date | Author | Summary |
+|---------|------|--------|---------|
+| 1.1.0 | 2026-09-23 | Mike Fullerton | Lint pass: moved private source identifiers (`buttonInset`, `NSView.pinToEdges`) and AppKit-specific mechanics (`constraint-based-layout-only`, `help-button-momentary-type`) out of requirement bodies and into Platform Notes; merged and renamed condition-laden requirement names to subject-only form (`help-button-visibility`, `presenter-reassignment`, `shows-help-button-toggle`); promoted the implicit keyboard-focus guarantee to a named requirement (`help-button-keyboard-focusable`) with a conformance vector; moved the stale-presenter-callback observation out of Design Decisions (it was a bug, not an approved choice) and left it as the single Edge Case description; trimmed the popover edge case to what this component guarantees; reformatted Design Decisions to the bold three-line form; fixed Compliance statuses and pruned Compliance rows to checks that exist in the catalog; named concrete conformance-vector fixtures (Solarized Dark/Light, `ThemeManager.selectTheme(id:)`) and precise call sequences; removed the unsupported WinUI 3 parenthetical; and listed related ingredients in frontmatter. |
+| 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
+| 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
+| 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/layout/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Restated help-button contrast requirement as current behavior with a pending decision; added Compliance rows |
+| 1.3.1 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

@@ -1,35 +1,33 @@
 ---
 id: d4be0c36-834c-41aa-af89-478eaf660e0f
-title: Extension Update Check
-domain: agenticdevelopertoolkit://cookbook/workspace/extensions/registry/extension-update-check
+title: "Extension Update Check"
+domain: adtoolkit://cookbook/workspace/extensions/registry/extension-update-check
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Concurrently asks an Open VSX registry whether each installed extension has
-  a newer, actually-installable version, without one failed lookup failing the rest.
+summary: "Concurrently asks an Open VSX registry whether each installed extension has a newer, actually-installable version, without one failed lookup failing the rest."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- extensions
-- update-check
-- openvsx-registry
-- semantic-versioning
+  - extensions
+  - update-check
+  - openvsx-registry
+  - semantic-versioning
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/workspace/extensions/manifest/extension-manifest
+  - adtoolkit://cookbook/workspace/extensions/manifest/extension-manifest
 references:
-- packages/apple/AgenticToolkit/Core/Extensions/ExtensionUpdateCheck.swift (apple)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionUpdateCheckTests.swift
-  (apple)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Extensions/ExtensionUpdateCheck.swift (apple)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Extensions/ExtensionUpdateCheckTests.swift (apple)
+approved-by: ""
+approved-date: ""
 ---
 
 # Extension Update Check
@@ -336,7 +334,7 @@ raises a distinct, typed error instead of silently falling through to "no
 update" (inline comment; test `incomparableVersionsThrow`).
 **Approved**: pending
 
-**Decision** (Swift implementation): Run every extension's registry lookup
+**Decision**: (Swift implementation) Run every extension's registry lookup
 concurrently via `withTaskGroup`, and restore a deterministic order
 afterward by explicitly sorting both result arrays by identifier, rather
 than relying on any ordering the task group provides or checking
@@ -404,7 +402,7 @@ and empty input, and the dotted-publisher addressing case.
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: removed source line-number citations; recipes cite files and symbols, not lines. |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/extensions/registry/. |

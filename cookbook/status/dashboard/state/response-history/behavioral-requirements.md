@@ -1,0 +1,25 @@
+
+- **hook-signature**: Response History MUST accept exactly one argument, `hours: number`, the length of the history window in hours.
+- **return-value**: Response History MUST return the read result object unchanged (fields such as `data`, `error`, `isLoading`, `isError`, `status`, a manual refetch operation), adding no fields of its own.
+- **client-source**: Response History MUST obtain its HTTP client from the dashboard's status API client accessor, which returns the client supplied by the nearest provider, or the same-origin default client (base path `/api`) when no provider is mounted.
+- **query-key**: The read MUST be cached under a key holding the literal `"response-history"` and the `hours` value, so each distinct window length has its own cache entry.
+- **always-enabled**: The read MUST NOT set an enabled condition; it fetches whenever Response History starts being used, for any `hours` value.
+- **request-path**: Each fetch MUST call the client's raw fetch operation with the relative path `/response-history?hours=<hours>`, which the client resolves against its base path (by default producing `/api/response-history?hours=<hours>`).
+- **hours-interpolation**: The `hours` value MUST be interpolated into the query string by plain string conversion, with no percent-encoding, rounding, or range check (so `24` becomes `hours=24` and `1.5` becomes `hours=1.5`).
+- **no-buckets-parameter**: The request MUST NOT include a `buckets` query parameter; the number of points in the series is chosen by the backend `/response-history` route.
+- **request-init**: Each fetch MUST be issued with no extra request options, so it is a default GET with no added headers, body, or abort signal from Response History.
+- **raw-fetch-not-json-helper**: Response History MUST use the client's raw fetch operation, not its JSON-decoding helper, so the helper's `Content-Type` header, its error-detail extraction, and its 204-as-`undefined` handling do not apply.
+- **non-ok-error**: When the response's `ok` flag is false, the read MUST fail with an error whose message is `response-history <status>` (for example `response-history 401`), placing the read in its error state.
+- **error-detail-dropped**: On a non-ok response Response History MUST NOT read the response body; any `error` or `message` detail the server returns is not included in the thrown error.
+- **success-body**: When the response is ok, the read MUST resolve with the parsed JSON body, typed as `ResponseHistory` without runtime schema validation.
+- **parse-failure**: When an ok response's body is not valid JSON, that parse failure MUST propagate as the read's error.
+- **network-failure**: When the fetch call rejects (network failure or unreachable host), the failure MUST propagate unchanged as the read's error.
+- **response-history-shape**: A successful result is declared as the exported shape `ResponseHistory` with fields `hours: number` and `points: (number | null)[]`.
+- **points-semantics**: Each entry of `points` is the average response time in milliseconds of UP checks for one time bucket, ordered oldest to newest, and `null` means the bucket had no data or every check in it was down; Response History MUST pass these values through without reordering, filling, or filtering.
+- **polling-interval**: Response History MUST refresh on a 60,000 ms interval, so while it is in use it refetches the history every 60 seconds.
+- **no-other-hook-policy**: Apart from the refresh interval, Response History MUST NOT set its own freshness window, cache retention window, retry policy, background-refresh policy, or refresh-on-returning-focus policy; those behaviors MUST come from the host cache context's defaults and the shared cache mechanism's own defaults.
+- **no-timeout**: Response History MUST NOT impose its own request timeout; a request that never settles leaves the read in its fetching state until the client or environment ends it.
+- **no-persistence**: Response History MUST NOT write history to any durable store; results live only in the in-memory shared cache.
+- **client-only**: Response History MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
+- **single-threaded-ordering**: Response History runs on a single execution thread; concurrent uses with the same `hours` MUST share one cache entry and are deduplicated by the shared cache rather than by Response History.
+

@@ -1,0 +1,31 @@
+
+- **renders-header-line**: The component MUST render a header line above the bubble, showing the session's breadcrumb trail (`attribution.context` and `attribution.name`).
+- **shows-icon-only-with-attribution**: The component MUST include the source application's icon in the header only when `message.attribution` is non-nil; a message with no attribution MUST render the header with no icon.
+- **icon-wired-only-when-jump-provided**: The component MUST set the app icon's target/action, tooltip, and accessibility label only when `actions.onJump` is non-nil; when `actions.onJump` is nil the icon MUST render with no target and no tooltip.
+- **jump-invokes-callback**: Clicking the app icon, when wired, MUST invoke `actions.onJump` with the row's message.
+- **renders-bubble-without-inline-timestamp**: The component MUST embed the chat bubble component (see `adtoolkit://cookbook/ai/chat/chat-window/chat-bubble-view`) with its inline timestamp disabled, so the bubble never draws its own timestamp.
+- **renders-own-timestamp**: The component MUST render the message's timestamp in its own label, on its own line below the bubble (or below the delivery indicator, when one is present).
+- **aligns-by-role**: The component MUST align the header, bubble, and timestamp against the trailing edge when `message.role == .user`, and against the leading edge for any other role.
+- **reserves-icon-column**: The component MUST reserve an outer margin of 44pt (8pt inset + 28pt icon + 8pt gap) on both sides for the icon column, regardless of which side's icon is actually filled.
+- **caps-bubble-width**: The component's max-bubble-width calculation MUST return `max(rowWidth - 88, 80)` (the row width minus both 44pt icon columns, floored at 80pt).
+- **select-on-mouse-down**: The component MUST invoke `actions.onSelect` with the message when a press begins within the row's bounds and `actions.onSelect` is set, and MUST also forward the event to the default view's own press handling so a container behind the row still observes the press.
+- **open-on-double-click**: The component MUST invoke `actions.onOpen` with the message when a press is released within the row's bounds, `actions.onOpen` is set, and that release completes the second of two rapid clicks.
+- **single-click-does-not-open**: The component MUST NOT invoke `actions.onOpen` when a release completes only a single click, and MUST instead forward that release event to the default view's own handling.
+- **toggle-expand-delegates**: The component MUST invoke `actions.onToggleExpanded` with the message whenever the embedded bubble's own expand/collapse toggle fires.
+- **bubble-text-selectable**: The component MUST configure the embedded bubble with `isTextSelectable: true`.
+- **row-is-primary-hit-target**: The component's hit-testing MUST return the row itself for any point within its bounds, except a point that hits a descendant of the bubble, or (when `actions.onJump` is set) a descendant of the app icon, in which case it MUST return that descendant; a point outside the row's bounds MUST return nothing.
+- **hover-fill-when-pressable**: When the pointer enters the row, the component MUST apply a hover fill (the theme's `.selection` color at 18% alpha) only when `actions.onOpen` is set and the row, or a descendant of it, is the frontmost view under the pointer at that location.
+- **hover-fill-clears-on-exit**: When the pointer exits the row, the component MUST clear the hover fill unconditionally.
+- **pointing-cursor-when-pressable**: The component MUST show a pointing-hand cursor covering its full bounds when `actions.onOpen` is set, and MUST show no special cursor otherwise.
+- **selection-frame**: Setting `isSelected` to `true` MUST draw a 2pt border in the theme's `.selection` color around the row; setting it to `false` MUST remove the border (width 0, no color); setting it to its current value MUST be a no-op.
+- **delivery-sending-shows-indicator**: When `message.delivery == .sending`, the component MUST insert an animated instance of the typing indicator component (see `adtoolkit://cookbook/ai/chat/chat-window/typing-indicator-view`) between the bubble and the timestamp, and MUST start its animation.
+- **delivery-failed-shows-reason**: When `message.delivery == .failed(reason)`, the component MUST insert a word-wrapping label between the bubble and the timestamp showing `reason`, using the theme's caption font and `.danger` color, and MUST NOT show a typing indicator.
+- **delivery-settled-no-extra-view**: When `message.delivery == .settled`, the component MUST insert no view between the bubble and the timestamp, and the timestamp MUST attach directly below the bubble.
+- **remeasure-failure-label-width**: Whenever the row's layout pass runs, the component MUST re-set the failure label's maximum layout width to the label's actual frame width, and invalidate its cached natural size, whenever the two differ and the frame has a non-zero width.
+- **reflect-theme-live**: The component MUST observe active theme/palette changes and re-apply the header's theme, the timestamp's and failure label's font and color, the hover fill, and the selection frame whenever the palette changes.
+- **expose-truncation-state**: The component's `isTruncated` property MUST reflect the embedded bubble's own `isTruncated` value.
+- **expose-expandable-state**: The component's `isExpandable` property MUST reflect the embedded bubble's own `isExpandable` value.
+- **expose-expanded-state**: The component's `isExpanded` property MUST get and set through to the embedded bubble's own `isExpanded` property.
+- **fixed-corner-radius**: The row's own background MUST have an 8pt corner radius, set once at initialization.
+- **no-storyboard-init**: The component MUST NOT support construction through platform-archival deserialization; that construction path MUST be unavailable at compile time and MUST terminate the process if reached at runtime regardless.
+

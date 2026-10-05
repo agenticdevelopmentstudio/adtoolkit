@@ -1,31 +1,30 @@
 ---
 id: ae44bde0-fcb3-49ff-9c8e-83ca6d3c5f69
-title: Status Server
-domain: agenticdevelopertoolkit://cookbook/status/service/status-server
+title: "Status Server"
+domain: adtoolkit://cookbook/status/service/status-server
 type: ingredient
-version: 1.0.3
+version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: HTTP API server for monitoring deployment health with periodic status checks,
-  single-flight scheduling, and cached status summaries.
+summary: "HTTP API server for monitoring deployment health with periodic status checks, single-flight scheduling, and cached status summaries."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- http-api
-- monitoring
-- scheduler
-- caching
+  - http-api
+  - monitoring
+  - scheduler
+  - caching
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server
@@ -59,7 +58,7 @@ Status server is an HTTP API built on OpenAPIHono that provides real-time and hi
 - **scheduler-manual-flag**: The `cycle` callback MUST receive a context object with `manual: boolean` that is true for out-of-band manual runs and false for periodic/boot ticks; this lets cycles apply different work (e.g., full deploy sync on manual vs. cheaper periodic check).
 - **scheduler-staleness-signal**: Scheduler MUST track staleness: `cycleStale()` returns true when no cycle has COMPLETED within the staleness window (default 5× interval, minimum 5 minutes, measured from the last completed cycle, or from `start()` before the first one), and false while stopped or never started. `/health` uses it to report a wedged loop as 503 instead of green.
 - **scheduler-next-cycle-grid**: `nextCycleAt()` MUST return the next firing time computed from the current interval grid ANCHOR (when `start()`, `runNow()` or `runNowDetached()` last armed the timer), not from the timestamp of the last completed cycle, and MUST return null while stopped; this keeps client-side countdown counters aligned even when cycles run at variable pace.
-- **abandoned-cycle-last-cycle-at**: NEEDS REVIEW: Not implemented in source. The `cycleTimeoutMs` doc comment declares that an abandoned cycle does NOT advance `lastCycleAt`, but `tick` sets `last = new Date()` after the awaited cycle resolves with no check of `cycleSeq`, so an abandoned cycle that later resolves does advance it.
+- **abandoned-cycle-last-cycle-at**: An abandoned cycle that later resolves DOES advance the last-cycle timestamp: the tick sets it after the awaited cycle resolves with no check of the cycle sequence number, contrary to the cycle-timeout doc comment that an abandoned cycle does not advance it.
 - **scheduler-concurrency**: The scheduler runs on the single-threaded JS event loop; `inFlight` flips in `tick`'s first synchronous slice, so the check-then-start in `runNowDetached` cannot interleave with another caller. There is no retry, backoff or cancellation of a cycle: a thrown cycle is logged as `cycle failed:` and the next tick runs on schedule.
 
 ## Appearance
@@ -224,6 +223,10 @@ All logging is plain `console.error`; there is no logger subsystem or category.
 
 **Approved**: pending
 
+**Decision**: An abandoned cycle that resolves late advances the last-cycle timestamp, contradicting the cycle-timeout doc comment.
+**Rationale**: It stands today because the tick does not compare the cycle sequence number before setting the timestamp. Closing it needs that check (or a corrected doc comment) and a test with a late-resolving abandoned cycle.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -257,7 +260,8 @@ Error response handling: All HTTP errors are returned in the format `{error: {me
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
-| 1.0.0 | 2026-09-24 | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |
 | 1.0.1 | 2026-09-24 | Claude | Add WinUI 3 translation guidance |
 | 1.0.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.3 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
+| 1.1.0 | 2026-10-04 | Mike Fullerton | Resolved abandoned-cycle-last-cycle-at marker as current behavior plus pending decision |

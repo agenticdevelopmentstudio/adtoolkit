@@ -1,0 +1,3 @@
+
+A bounded key-value store that forgets whatever was used longest ago. It is for state that is cheap to hold a few of and expensive to fetch again, such as the transcripts a reader is flicking between, where keeping every one ever seen would grow without limit and keeping none would refetch on every visit. Reads and writes are constant time; eviction scans for the stalest entry, linear in the capacity, and runs only when an insert overflows. At the capacities this is meant for (tens), that scan is cheaper than the linked list that would avoid it. All operations are serialized by one lock, so a background fetch can fill it while a foreground reader consults it.
+

@@ -1,26 +1,26 @@
 ---
 id: b7397142-dfab-4ea4-983e-3f0fdcc17fac
-title: Activity History
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/activity-history
+title: "Activity History"
+domain: adtoolkit://cookbook/status/dashboard/state/activity-history
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Paginates server-side activity history, with shed-row absorption and an
-  auto-fetch budget
+summary: "Paginates server-side activity history, with shed-row absorption and an auto-fetch budget"
 platforms:
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related: []
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Activity History
@@ -78,6 +78,7 @@ This logic manages the fetching and merging of historical activity rows beyond t
 - **no-persistent-storage**: This logic MUST NOT persist history, cursor, or any state to durable client storage; all state is in-memory and is discarded on page reload or when `enabled: false`.
 - **no-cap-history-array**: This logic MUST NOT impose a maximum size limit on the `rows` list; its size is implicitly bounded by the reader's ability to scroll and the 90-day server retention window.
 - **uncapped-justification**: An uncapped list is correct because its size is bounded by what the reader can actually reach (a page costs a scroll gesture plus a budget reset), sorting large lists (a few thousand rows) takes milliseconds, and evicting rows would create holes in the middle of the feed that the shed-absorption effect works to prevent.
+- **client-only**: Activity History MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 
 ## Appearance
 
@@ -105,6 +106,7 @@ Not applicable — this logic manages in-memory state and server communication, 
 | vector-008 | enabled-filtering, epoch-validation, abort-on-unmount | `enabled` is set to `false` while a fetch is in flight | The history list is cleared to empty; the in-flight fetch is aborted; any response to the aborted fetch is discarded; state is reset to defaults |
 | vector-009 | loadOlder-stable-identity | The `loadOlder` reference is captured; the hook is re-rendered with a new `live` value; the reference is captured again | Both references are the same function object |
 | vector-010 | request-headers, response-type | `loadOlder` is called; the server responds with a page carrying rows and a next cursor of `atMs: 1234567890`, `id: "next"` | The request includes the header `accept: application/json`; `rows` is updated; the internal cursor is set to the returned cursor |
+| vector-011 | client-only | Load Activity History in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -165,6 +167,7 @@ Not applicable: this logic makes no log calls; a caught fetch error, including i
 - **Swift / iOS / macOS**: A port would use `@State` properties for `rows`, `loading`, `exhausted`, `error`, `autoBudgetSpent`; plain stored (non-`@State`) properties for cursor, fetch count, flags, abort, and epoch; `URLSession` with `DispatchSourceTimer` or `Task.sleep` for the 20-second timeout; and a publisher-based refresh loop (Combine or async/await) to drive the shed effect when `live` changes. The merge, sort, and guard logic is identical.
 - **Kotlin / Android**: A port would use `mutableStateOf` in Compose or `StateFlow`/`LiveData` in traditional Android; `kotlinx.coroutines.Job` and `withTimeoutOrNull` for timeout; `OkHttpClient` for the network request; and a `LaunchedEffect` or `CoroutineScope` to drive the shed effect. Replace `useStatusApi()` with the platform's HTTP client.
 - **C# / WinUI 3**: A port would use `ObservableCollection<ActivityRow>` for `rows`, `bool` properties with `INotifyPropertyChanged` for state, `System.Net.Http.HttpClient` with `CancellationTokenSource` for timeout, `Task.Delay` for the 20-second timeout, and `PropertyChanged` events to drive the shed effect. The XAML binding system replaces React's hook dependency tracking. Merge and cursor logic is identical. No localStorage equivalent is needed (in-memory only).
+- **client-only**: On the web, the module opens with the `"use client"` directive.
 
 ## Reference Implementations
 
@@ -243,5 +246,6 @@ Not applicable: this logic makes no log calls; a caught fetch error, including i
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |

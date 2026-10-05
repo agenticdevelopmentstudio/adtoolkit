@@ -1,0 +1,18 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| text-edit-view-001 | constructs-plain-text-field | Construct with any view model | The text field is constructed with the view model's value as its string value |
+| text-edit-view-002 | supports-text-field-substitution | Define a variant overriding the control-construction extension point to return a secure text-entry control | The variant compiles and constructing it produces a text field of the overridden type, with the row layout, theming, and commit wiring unchanged |
+| text-edit-view-003 | arranges-row-layout | Construct with any view model | The label and the text field are both part of a single row that is pinned to the component's edges; no other layout container appears |
+| text-edit-view-004 | expands-text-field-to-fill-row | Inspect the text field's sizing behavior relative to the row's spacer after construction | The text field is configured to absorb the row's leftover width, not the spacer (see Design Decisions for the exact mechanism and value) |
+| text-edit-view-005 | wires-text-field-action | Any initialized component | The text field's edit-completion signal is routed to the component itself; invoking it reaches the component's edit-commit handler, which can write to the committed value (see Platform Notes for the specific mechanism) |
+| text-edit-view-006 | initializes-from-view-model | View model's title is "Server Name", value is "prod-1" | After construction, the label's text is "Server Name" and the text field's value is "prod-1" |
+| text-edit-view-007 | commits-value-on-change | Committed value is "old"; set the text field's value to "new" and trigger its edit-completion signal | The committed value is "new" after the call |
+| text-edit-view-008 | skips-redundant-commits | Committed value is "same"; set the text field's value to "same" and trigger its edit-completion signal, observing writes via a recording spy or observer registered on the committed value | The spy/observer records zero additional writes to the committed value after the call |
+| text-edit-view-009 | syncs-on-external-change | After construction, externally change the view model's title and value, then trigger its change notification | The label's text and the text field's value both update to reflect the new view-model state |
+| text-edit-view-010 | applies-theme-styling | Construct the component, then trigger a theme change | The text field's font equals the theme's body-role font and its text color equals the theme's primary-text color, both immediately after construction and again after the theme change |
+| text-edit-view-011 | restyles-existing-placeholder | After construction, set the field's placeholder text to "Enter value", then trigger a theme change | The placeholder's color equals the theme's placeholder-text color and its font equals the theme's body-role font |
+| text-edit-view-012 | exposes-constituent-views | Construct the component, then access its label and its text field from outside the component | Both properties are accessible and return the same instances built during construction |
+| text-edit-view-017 | claims-sole-onchange-observer | Register an observer callback on the view model's change notification, then construct a component against that same view model | The view model's change notification now points at the component's own handler; invoking it no longer calls the previously registered callback |
+| text-edit-view-018 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
+

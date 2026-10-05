@@ -1,0 +1,3 @@
+
+Holds the latest billing state (clients, projects, running timers, recent segments, the overview, the last error, the last-updated time) and publishes a change signal. Views are consumers: they subscribe to the signal, read the state, and write only through the model's methods, each of which refreshes, so an edit in one window reaches every other. It is written against a billing service interface, so a host supplies an IPC client or a test fake. State is sticky through failure: a failed refresh sets the error and keeps the last good lists. Polling is cheap when nothing is on screen: only the running timers are read. A write that starts while a refresh is reading makes that refresh drop its answers, so a stale read never rolls a write back on screen.
+

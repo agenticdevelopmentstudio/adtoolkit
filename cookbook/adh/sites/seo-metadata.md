@@ -1,31 +1,30 @@
 ---
 id: 0a627830-a764-4f44-8300-faf4279089a1
-title: SEO Metadata
-domain: agenticdevelopertoolkit://cookbook/adh/sites/seo-metadata
+title: "SEO Metadata"
+domain: adtoolkit://cookbook/adh/sites/seo-metadata
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Per-site canonical, Open Graph, Twitter card, robots and sitemap metadata
-  derived from a site registry.
+summary: "Per-site canonical, Open Graph, Twitter card, robots and sitemap metadata derived from a site registry."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- seo
-- metadata
-- site-registry
+  - seo
+  - metadata
+  - site-registry
 depends-on: []
 related:
-- site-wordmark
+  - site-wordmark
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # SEO Metadata

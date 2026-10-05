@@ -1,37 +1,35 @@
 ---
 id: aaf56f9b-896b-4f74-9e18-1ef4116270a9
-title: Window Contexts
-domain: agenticdevelopertoolkit://cookbook/system/system-windows/window-contexts
+title: "Window Contexts"
+domain: adtoolkit://cookbook/system/system-windows/window-contexts
 type: ingredient
-version: 1.1.0
+version: 1.2.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Named window contexts: a persisted store, a manager that parks and
-  restores windows, fingerprint re-matching, and an observable model for
-  switching between groups of windows.'
+summary: "Named window contexts: a persisted store, a manager that parks and restores windows, fingerprint re-matching, and an observable model for switching between groups of windows."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- window-management
-- system-windows
-- window-matching
-- persistence
+  - window-management
+  - system-windows
+  - window-matching
+  - persistence
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/system/system-windows/window-context-model
-- agenticdevelopertoolkit://cookbook/system/system-windows/system-windows-engine
-- agenticdevelopertoolkit://cookbook/system/system-windows/matching/title-heuristics
+  - adtoolkit://cookbook/system/system-windows/window-context-model
+  - adtoolkit://cookbook/system/system-windows/system-windows-engine
+  - adtoolkit://cookbook/system/system-windows/matching/title-heuristics
 references:
-- https://developer.apple.com/documentation/coregraphics/cgwindowid
-- https://man7.org/linux/man-pages/man2/flock.2.html
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/documentation/coregraphics/cgwindowid
+  - https://man7.org/linux/man-pages/man2/flock.2.html
+approved-by: ""
+approved-date: ""
 ---
 
 # Window Contexts
@@ -84,7 +82,7 @@ The data types these operate on — a window context and a window snapshot — t
 - **store-load-all-skips**: Loading all contexts MUST skip any context whose file is missing, unreadable, or undecodable, logging "Skipping context <id>: <error>" at error level, rather than failing the whole load.
 - **store-load-all-state-error**: Loading all contexts MUST propagate the error when `state.json` itself cannot be read or decoded.
 - **store-save-all-content**: Saving all contexts MUST, under one lock, write every context's file and then write `state.json` with `activeContextID` and `contextIDs` equal to the contexts' IDs in the given order.
-- **save-all-not-atomic**: NEEDS REVIEW: Not implemented in source. The documentation says saving all contexts "updates the contexts state atomically", but each file is written independently; a failure on the Nth context throws after earlier context files are already replaced and before `state.json` is written, leaving disk partially updated. No rollback or journal exists; evidence that would settle it is whether the "atomically" contract is intended across files (a temp-directory swap) or only per file.
+- **save-all-not-atomic**: Saving all contexts writes each context file independently, although the documentation says it updates the contexts state atomically. A failure on the Nth context throws after earlier context files are already replaced and before the state file is written, leaving disk partially updated; no rollback or journal exists.
 - **store-save-all-no-prune**: Saving all contexts MUST NOT delete context files for IDs absent from the given list; orphan removal happens only through deleting a context by `id`.
 - **store-list-files**: Listing context files MUST return `[]` when `<root>/contexts` is absent, MUST return the UUIDs parsed from every `*.json` filename whose stem is a valid UUID (ignoring other files), and MUST throw `readFailed` when the directory cannot be listed. The order MUST be treated as unspecified (directory listing order).
 - **store-remove-all**: Removing everything MUST delete `<root>` recursively when it exists, without taking the lock, and propagate the underlying error unwrapped.
@@ -137,7 +135,7 @@ The data types these operate on — a window context and a window snapshot — t
 - **parking-position**: Parking MUST move a window's origin to x = (the minimum `minX` across all screens, or 0 when there are none) − `parkingMargin` (`30000`), keeping y equal to the snapshot's saved-frame y.
 - **frame-capture-guard**: A window whose live frame does not overlap any screen horizontally MUST NOT have that frame saved, so a parked or clamped position never becomes a restore target.
 - **window-ops-best-effort**: Park (move), restore (set frame), and focus calls to the window controller MUST NOT throw out of the manager; their failures are discarded — parking is declared best-effort, and accessibility failures are swallowed.
-- **restore-failure-silent**: NEEDS REVIEW: Not implemented in source. A failed restore or un-park (setting a window's frame) when restoring windows to their saved positions or when removing a window is discarded with no log, return value, or error, so a window can stay parked 30000 points off every screen with no signal to the caller or user; parking's best-effort guarantee (window-ops-best-effort) covers only parking. Settled by deciding whether restore failures should be logged, counted, or surfaced.
+- **restore-failure-silent**: A failed restore or un-park (setting a window's frame) when restoring windows to saved positions or removing a window is discarded with no log, return value or error, so a window can stay parked 30000 points off every screen with no signal to the caller or user. The best-effort guarantee (window-ops-best-effort) covers only parking.
 
 ### Manager: re-matching
 
@@ -149,7 +147,7 @@ The data types these operate on — a window context and a window snapshot — t
 - **launch-rematching**: Performing launch re-matching MUST return no value without enumerating windows when the has-stale-windows flag is false, and otherwise run re-matching, apply the result, and return it.
 - **assign-to-snapshot**: Assigning a window to a snapshot MUST set the snapshot's `windowID`, `title` (the live window's title, or `""` when the ID is not live), and `lastSeen`, park when required, and persist; it MUST throw `contextNotFound` for an unknown context and `windowNotInAnyContext(windowID:)` when the snapshot ID is not in that context.
 - **assign-batch**: Assigning windows to snapshots in a batch MUST return 0 for an empty list without enumerating windows; otherwise enumerate windows once, apply each resolvable assignment as assign-to-snapshot does, skip unresolvable ones silently, persist once when at least one applied (a persistence failure is logged, not thrown), and return the count applied.
-- **assignment-window-unvalidated**: NEEDS REVIEW: Not implemented in source. Assign-to-snapshot and assign-batch never check that the window ID is live or not already on another snapshot, unlike the check add-window-snapshot performs; auto-assigning all remaining matches builds each assignment from an item's top candidate independently, so two dormant snapshots sharing a top candidate both receive the same window ID. Settled by deciding whether a window may back two snapshots and, if not, which assignment wins.
+- **assignment-window-unvalidated**: Assign-to-snapshot and assign-batch do not check that the window ID is live or not already on another snapshot, unlike add-window-snapshot. Auto-assigning all remaining matches builds each assignment from an item's top candidate independently, so two dormant snapshots sharing a top candidate both receive the same window ID.
 - **remove-dormant**: Removing a dormant snapshot MUST remove the snapshot by its stable ID (whether dormant or live) and persist; it MUST throw `contextNotFound` for an unknown context and MUST succeed without change when the snapshot ID is absent.
 - **dormant-snapshots**: Listing dormant snapshots MUST return every snapshot with an absent `windowID`, with its context's ID, name, and color, in context order then snapshot order.
 - **score-window**: Scoring a window against a fingerprint MUST return the window matcher's score unchanged.
@@ -196,7 +194,7 @@ The data types these operate on — a window context and a window snapshot — t
 - **model-settings-write**: Each settings setter MUST update the observable `settings` and write the whole value to persisted user settings in one step; setting Dock visibility MUST NOT change the application's activation policy.
 - **model-hidden-apps**: Adding a hidden app MUST ignore a name already present (exact match) and otherwise append it and sort the list; removing a hidden app MUST remove every exact match.
 - **model-observer-events**: The model's window-observer delegate callbacks arrive off the model's coordination context and MUST each hop back onto it before calling the manager: a window-destroyed event marks the window dormant, a window-created event tries dormant-snapshot matching and then custom rules, a window-title-changed event updates the title, an app-terminated event marks the app's windows dormant, and an app-launched event re-matches the app's dormant windows.
-- **observer-event-ordering**: NEEDS REVIEW: Not implemented in source. Each delegate callback spawns an independent unit of work on the model's coordination context, and the source states no ordering between them, so a rapid app-terminated then app-launched event (or window-destroyed then window-created for a recycled ID) has no ordering guarantee beyond the scheduler's behavior. Settled by confirming the observer delivers events on a single thread and that work enqueued there is relied on to run in first-in-first-out order, or by serializing events through one queue.
+- **observer-event-ordering**: Each observer delegate callback spawns an independent unit of work on the model's coordination context, and the source states no ordering between them, so a rapid app-terminated then app-launched event (or window-destroyed then window-created for a recycled ID) has no ordering guarantee beyond the scheduler's behavior.
 - **model-observation-start**: Starting window observation MUST do nothing when observation is disabled, and otherwise create a window observer over the window manager, make the model its delegate, and start it; stopping window observation MUST stop and release it.
 
 ## Appearance
@@ -403,11 +401,11 @@ Window-controller failures (move, set frame, focus) and notification authorizati
 **Rationale**: Per the `parkingMargin` doc comment, a parked window "can never land on a real screen (even on multi-monitor layouts)", and moving keeps the window's app, Space, and size intact, so restoring is a single set-frame; y is kept so a window restores in place.
 **Approved**: pending
 
-**Decision** (Apple platforms): A live frame is captured into `savedFrame` only while it overlaps a screen horizontally.
+**Decision**: (Apple platforms) A live frame is captured into `savedFrame` only while it overlaps a screen horizontally.
 **Rationale**: Per `captureFrameIfOnScreen`, a parked position or an OS-clamped park move "can never be persisted as the restore target"; the horizontal-only test avoids mixing CoreGraphics top-left y with AppKit bottom-left y.
 **Approved**: pending
 
-**Decision** (Apple platforms): On load, a persisted window ID is invalidated when it is missing only if its app has a live window, and always when it now belongs to another app.
+**Decision**: (Apple platforms) On load, a persisted window ID is invalidated when it is missing only if its app has a live window, and always when it now belongs to another app.
 **Rationale**: `CGWindowID`s are not stable across restarts; the comment in `reconcilePersistedWindowIDs` explains that an app with zero live windows "may still be mid-launch", and clearing its IDs would orphan valid windows.
 **Approved**: pending
 
@@ -423,7 +421,7 @@ Window-controller failures (move, set frame, focus) and notification authorizati
 **Rationale**: The `addCustomHeuristicRule` doc comment calls out "no phantom rule" after a failed write; context operations instead keep the in-memory change and surface `persistenceFailed`, so a failed write leaves memory ahead of disk until the next successful persist.
 **Approved**: pending
 
-**Decision** (Apple platforms): Writes are serialized with an inter-process `flock` on `<root>/.lock`, reads are unlocked, and each file is replaced atomically.
+**Decision**: (Apple platforms) Writes are serialized with an inter-process `flock` on `<root>/.lock`, reads are unlocked, and each file is replaced atomically.
 **Rationale**: The store's doc comment names concurrent write corruption as the risk and keeps reads unlocked "for performance"; per-file atomic replace keeps each file whole for a concurrent reader.
 **Approved**: pending
 
@@ -431,12 +429,28 @@ Window-controller failures (move, set frame, focus) and notification authorizati
 **Rationale**: Per `isOwnWindow`, matching the owner name "silently fails when a host's display name differs from its process name"; the PID is host-name-independent.
 **Approved**: pending
 
-**Decision** (Apple platforms): Test environments disable notifications, observation, and seeding, and the notification step checks the bundle identifier first.
+**Decision**: (Apple platforms) Test environments disable notifications, observation, and seeding, and the notification step checks the bundle identifier first.
 **Rationale**: The source notes `UNUserNotificationCenter.current()` "crashes outside of a bundled app"; each switch is separate so a host can disable one without the others.
 **Approved**: pending
 
 **Decision**: `reconcileBehavior` is stored but not consulted by launch reconciliation.
 **Rationale**: The model persists the setting for a host's settings UI; `performLaunchReconciliation()` implements the `prompt` behavior unconditionally, so honoring `auto` or `ignore` is the host's responsibility.
+**Approved**: pending
+
+**Decision**: Saving all contexts is atomic per file only; a mid-way failure leaves disk partially updated.
+**Rationale**: It stands today because there is no rollback or journal. Closing it needs a decision on whether the atomic contract spans files (a temp-directory swap) or only each file, and a failure-injection test.
+**Approved**: pending
+
+**Decision**: Restore and un-park failures are silent.
+**Rationale**: It stands today because frame-set results are discarded. Closing it needs a decision on whether restore failures are logged, counted or surfaced, and a test.
+**Approved**: pending
+
+**Decision**: Window assignment is unvalidated, so one window can back two snapshots.
+**Rationale**: It stands today because only add-window-snapshot validates. Closing it needs a decision on whether a window may back two snapshots and, if not, which assignment wins, and a test.
+**Approved**: pending
+
+**Decision**: Observer events are handled as independent units of work with no stated ordering.
+**Rationale**: It stands today because ordering relies on the scheduler. Closing it needs confirmation that the observer delivers on a single thread and that enqueued work runs first-in-first-out, or serializing events through one queue.
 **Approved**: pending
 
 ## Compliance
@@ -459,6 +473,7 @@ Window-controller failures (move, set frame, focus) and notification authorizati
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved four NEEDS REVIEW markers as current behavior plus pending decisions |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to system/system-windows/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
-| 1.0.0 | 2026-09-24 | | Initial creation |
+| 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

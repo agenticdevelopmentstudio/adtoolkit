@@ -1,29 +1,28 @@
 ---
 id: b14c03d8-1b93-41e0-9f92-76a81171cee9
-title: Deploy Projects State
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/deploy-projects
+title: "Deploy Projects State"
+domain: adtoolkit://cookbook/status/dashboard/state/deploy-projects
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Cached state and fetch operations for the status dashboard's deploy-projects
-  snapshot and unconfigured partition, with a fresh-fetch latch.
+summary: "Cached state and fetch operations for the status dashboard's deploy-projects snapshot and unconfigured partition, with a fresh-fetch latch."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/api
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/api
+  - adtoolkit://cookbook/status/dashboard/api
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Deploy Projects State
@@ -37,7 +36,7 @@ Deploy Projects is the status dashboard's client for the backend's deploy-projec
 - a shared fresh-fetch latch and its arming operation;
 - the cached state itself, which caches the snapshot under the cache key `["deploy-projects"]`.
 
-All requests go through the injected status API client (see [status-web-api](agenticdevelopertoolkit://cookbook/status/dashboard/api)), so paths are relative to the host's API base.
+All requests go through the injected status API client (see [status-web-api](adtoolkit://cookbook/status/dashboard/api)), so paths are relative to the host's API base.
 
 ## Behavioral Requirements
 
@@ -81,7 +80,7 @@ All requests go through the injected status API client (see [status-web-api](age
 - **latch-disarm-on-success**: The cached state's fetch MUST disarm the latch only after the deploy-projects read resolves successfully.
 - **latch-kept-on-failure**: When the deploy-projects read fails, the latch MUST stay in its prior state, so a retry of a failed fresh fetch is again fresh.
 - **latch-scope**: The latch MUST be shared by every instance of the cached state in the running process (one per page load), and it MUST NOT affect the unconfigured-partition read or direct callers of the deploy-projects read, which choose `fresh` explicitly.
-- **latch-arm-during-flight**: NEEDS REVIEW: Not implemented in source. An arm made while a fetch is already in flight is cleared when that fetch succeeds (the fetch sets the latch to false unconditionally, not only when it consumed an armed latch), so the documented contract "any fetch after arming requests `?fresh=1`" is unmet with no signal; settling it needs a decision on whether the success path should clear only the arm it read (for example a generation counter).
+- **latch-arm-during-flight**: Any fetch started after arming MUST request fresh data. A fetch that succeeds clears the arm latch unconditionally, so an arm made while a fetch is already in flight is cleared when that fetch succeeds and the next fetch does not request fresh data; no signal reports this.
 
 ### The cached state
 
@@ -92,8 +91,7 @@ All requests go through the injected status API client (see [status-web-api](age
 - **hook-client-source**: The cached state MUST obtain its status API client from the app's API context.
 - **hook-return**: The cached state MUST return the query result unchanged, so failures from the deploy-projects read surface as the query's error and error status.
 - **hook-retry-policy**: The cached state MUST NOT set its own retry option; retry count and backoff are the shared cache's host-supplied defaults.
-- **client-only**: This state has no server-only or universal-rendering variant; it requires a live client execution context.
-
+- **client-only**: Deploy Projects State MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 ### Ordering and concurrency
 
 - **single-threaded**: All latch reads and writes MUST happen on a single execution thread; interleaving occurs only across the wait for the network request.
@@ -139,6 +137,7 @@ No test in the source exercises this module directly; `use-config-status.dom.tes
 | deploy-projects-016 | hook-return, deploy-projects-http-error | Cached-state fetch returns `status: 503`, retries disabled | Result status is error, error message is `deploy-projects 503` |
 | deploy-projects-017 | latch-scope | Latch armed; call the unconfigured-partition read | Path is `/deploy-projects/unconfigured`; latch remains armed |
 | deploy-projects-018 | dedup-by-query-key | Two concurrent readers of the cached state under one shared cache | One request is sent |
+| deploy-projects-019 | client-only | Load Deploy Projects State in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -255,6 +254,10 @@ Not applicable: the concept contains no logging calls; failures surface only as 
 
 **Approved**: pending
 
+**Decision**: The arm latch is cleared by every successful fetch, not only by a fetch that consumed an armed latch, so an arm made during an in-flight fetch is lost.
+**Rationale**: It stands today because the success path sets the latch to false without comparing what it read. Closing it needs a decision on clearing only the arm the fetch consumed (for example a generation counter) and a test that arms during a fetch.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -271,6 +274,8 @@ The module separates transport (the injected `StatusApiClient`), request shaping
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved latch-arm-during-flight marker as current behavior plus pending decision |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

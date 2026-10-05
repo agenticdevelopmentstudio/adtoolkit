@@ -1,37 +1,36 @@
 ---
 id: 9b95bde8-c47e-40a4-a21c-4a84c23ddbf1
-title: Status Server Monitor Deploy View
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-view
+title: "Status Server Monitor Deploy View"
+domain: adtoolkit://cookbook/status/service/monitor/deploy-view
 type: ingredient
 version: 1.0.2
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Derives a deploy row's logical tier from its branch, classifies which deploys
-  represent a real environment, and builds the debug/live links a deploy row exposes.
+summary: "Derives a deploy row's logical tier from its branch, classifies which deploys represent a real environment, and builds the debug/live links a deploy row exposes."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- deploy
-- environment
-- server
+  - monitor
+  - deploy
+  - environment
+  - server
 depends-on: []
 related: []
 references:
-- packages/web/packages/status-server/src/monitor/deploy-view.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/deploy-env.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/url.ts (agenticdevelopertoolkit)
-- packages/web/packages/deploy-platform/src/canon/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/deploy-view.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/deploy-env.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/url.ts (agenticdevelopertoolkit)
+  - packages/web/packages/deploy-platform/src/canon/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Status Server Monitor Deploy View

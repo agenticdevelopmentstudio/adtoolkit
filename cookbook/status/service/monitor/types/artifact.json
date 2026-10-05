@@ -1,0 +1,80 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "5edf4567-65dd-40d7-814e-8604ee70f131",
+    "title": "Monitor Types",
+    "domain": "adtoolkit://cookbook/status/service/monitor/types",
+    "type": "ingredient",
+    "version": "1.1.1",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "The shared record vocabulary for the monitor's read routes — a service status record, daily and per-service uptime records, a deployment record, history check records, and integration check records, plus the shared health, overall, and deploy status vocabulary.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "monitor",
+      "types",
+      "dto",
+      "server"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/status/service/monitor/health",
+      "adtoolkit://cookbook/status/service/monitor/overall",
+      "adtoolkit://cookbook/status/service/monitor/deploy-status",
+      "adtoolkit://cookbook/status/service/monitor/provider-deploy",
+      "adtoolkit://cookbook/status/service/monitor/integrations",
+      "adtoolkit://cookbook/status/service/monitor/live-types"
+    ],
+    "references": [
+      "packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/overall.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/self-check-stability.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/uptime.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/openapi/paths/reads.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/reads.int.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/self-check-stability.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/timestamp-validation.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-web/src/types.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-web/src/lib/deploy-status-parity.test.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "6c71bb957663887b",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

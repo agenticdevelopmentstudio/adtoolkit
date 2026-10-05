@@ -1,62 +1,58 @@
 ---
 id: 6263d5af-d0c7-456b-903a-762581ae5dbb
-title: Projects
-domain: agenticdevelopertoolkit://cookbook/adh/hub/projects
+title: "Projects"
+domain: adtoolkit://cookbook/adh/hub/projects
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Projects (work-tracking) domain logic: boards, cards, iterations, programs,
-  milestones, status updates, templates, triage, cross-board search, activity, comments,
-  and artifacts, plus a payload-less live-change wake, wired to a typed project data
-  surface.'
+summary: "Projects (work-tracking) domain logic: boards, cards, iterations, programs, milestones, status updates, templates, triage, cross-board search, activity, comments, and artifacts, plus a payload-less live-change wake, wired to a typed project data surface."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- hub
-- projects
-- work-items
-- kanban
-- iterations
-- programs
-- milestones
-- triage
-- sse
+  - hub
+  - projects
+  - work-items
+  - kanban
+  - iterations
+  - programs
+  - milestones
+  - triage
+  - sse
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/adh/hub/ecosystems/ecosystems
+  - adtoolkit://cookbook/adh/hub/ecosystems/ecosystems
 references:
-- packages/web/packages/data/src/projects/activity.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/artifacts.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/comments.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/iterations.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/live.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/milestones.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/programs.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/projects.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/search.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/status-updates.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/templates.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/triage.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/wire.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/work-items.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/stream/index.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/__tests__/projects.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/__tests__/search.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/__tests__/live.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/data/src/projects/__tests__/programs-milestones-health.test.ts
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/data/src/projects/activity.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/artifacts.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/comments.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/iterations.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/live.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/milestones.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/programs.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/projects.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/search.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/status-updates.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/templates.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/triage.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/wire.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/work-items.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/http.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/client-helpers.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/stream/index.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/__tests__/projects.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/__tests__/search.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/__tests__/live.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/data/src/projects/__tests__/programs-milestones-health.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Projects

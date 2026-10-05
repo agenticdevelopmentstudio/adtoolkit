@@ -1,29 +1,28 @@
 ---
 id: 728521cd-aaaa-48bb-92b3-273c8467cee8
-title: Configuration Status
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/logic/config-status
+title: "Configuration Status"
+domain: adtoolkit://cookbook/status/dashboard/logic/config-status
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A status-board wrapper over the shared endpoint classifier that folds
-  a paused monitoring switch into the engine's single opt-out flag.
+summary: "A status-board wrapper over the shared endpoint classifier that folds a paused monitoring switch into the engine's single opt-out flag."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/dashboard/logic/auto-configure
-- agenticdevelopertoolkit://cookbook/status/dashboard/state/config-status
+  - adtoolkit://cookbook/status/dashboard/logic/auto-configure
+  - adtoolkit://cookbook/status/dashboard/state/config-status
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Configuration Status

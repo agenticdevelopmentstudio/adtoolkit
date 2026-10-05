@@ -1,0 +1,68 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "7ba98112-0f6d-4236-ab6b-aa18b72d76bd",
+    "title": "Status Server Monitor Provider Deploy",
+    "domain": "adtoolkit://cookbook/status/service/monitor/provider-deploy",
+    "type": "ingredient",
+    "version": "1.0.3",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "ProviderDeploy data shape, the trust-boundary timestamp parser toValidDate, and providerDeployToDTO, which shapes a provider deploy into the wire DeploymentDTO.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [
+      "monitor",
+      "deploy",
+      "pure-function",
+      "server"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/status/service/monitor/deploy-status",
+      "adtoolkit://cookbook/status/service/monitor/deploy-view"
+    ],
+    "references": [
+      "packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/timestamp-validation.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/test/deploy-env.test.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/deploy-view.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)",
+      "packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "66e43d78e1c51b5c",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

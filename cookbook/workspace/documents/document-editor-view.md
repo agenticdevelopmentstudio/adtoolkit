@@ -1,35 +1,34 @@
 ---
 id: 4205c688-865a-4d74-890d-f803ee66fdcb
-title: Document Editor
-domain: agenticdevelopertoolkit://cookbook/workspace/documents/document-editor-view
+title: "Document Editor"
+domain: adtoolkit://cookbook/workspace/documents/document-editor-view
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: A component for one editor pane, owning its file selection and breadcrumb,
-  offering per-pane display-option overrides, and routing opens outward.
+summary: "A component for one editor pane, owning its file selection and breadcrumb, offering per-pane display-option overrides, and routing opens outward."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- document
-- editor
-- pane
+  - document
+  - editor
+  - pane
 depends-on:
-- agenticdevelopertoolkit://cookbook/workspace/documents/breadcrumb-view
-- agenticdevelopertoolkit://cookbook/workspace/files/file-editor-view
+  - adtoolkit://cookbook/workspace/documents/breadcrumb-view
+  - adtoolkit://cookbook/workspace/files/file-editor-view
 related:
-- agenticdevelopertoolkit://cookbook/workspace/documents/breadcrumb-view
-- agenticdevelopertoolkit://cookbook/workspace/files/file-editor-view
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - adtoolkit://cookbook/workspace/documents/breadcrumb-view
+  - adtoolkit://cookbook/workspace/files/file-editor-view
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Document Editor
@@ -93,6 +92,7 @@ This component is one editor inside one pane of one tab. It hosts a breadcrumb a
 
 - **breadcrumb-selection-routes-out**: A URL chosen through the breadcrumb (a crumb, or a file from its popover) MUST be reported through the open-request callback, not opened directly in this editor.
 - **editor-open-request-routes-out**: A URL the hosted file editor resolves and reports through its open-file callback MUST be reported through the open-request callback, not opened directly in this editor.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -168,6 +168,7 @@ This component is one editor inside one pane of one tab. It hosts a breadcrumb a
 | devc-034 | breadcrumb-selection-routes-out | Install a callback on the open-request callback; invoke the breadcrumb's selection callback with a URL | The open-request callback is called with that URL; the displayed file is unchanged |
 | devc-035 | editor-open-request-routes-out | Install a callback on the open-request callback; invoke the hosted content's open-file callback with a URL | The open-request callback is called with that URL |
 | devc-038 | construction-title-change | Install a callback on the title-change callback; construct the component whose pane-state store has the file-URL key set to an existing file's path | The callback is called during construction |
+| devc-039 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -282,8 +283,12 @@ Not applicable: no logging call appears anywhere in this file.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | Accessibility |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | Internationalization |
 | [state-recovery](agenticdevelopercookbook://compliance/reliability#state-recovery) | partial | Reliability |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | Best Practices |
 
 The `screen-reader-support` status is partial: the reset button's and each toggle's accessibility labels and identifiers are set explicitly (see Accessibility, **toggle-accessibility-identifiers**, **reset-accessibility-identity**), but this file posts no accessibility notification of its own when the displayed file changes, so any announcement to a screen reader depends entirely on the enclosing chrome (see Accessibility, Announce state changes). The `no-hardcoded-strings` status is failed because six user-facing strings in this file are hardcoded English literals with no localization mechanism (see Localization). The `state-recovery` status is partial because this file specifies only that it reads and writes one key on a caller-supplied `PaneStateStore`; the actual durability guarantee belongs to whichever concrete store the caller supplies (see Privacy, Storage).
+
+`separation-of-concerns` passes because `DocumentEditorViewController` owns only one pane's selection, persisted file path and options rows; text storage, saving, language services and the editor surface are injected collaborators (`TextDocumentStore`, `TextDocumentSaveScheduler`, `ProjectLanguageServices`) and the crumb strip is `BreadcrumbView`. `unit-test-coverage` is partial: `DocumentEditorViewControllerTests.swift` covers the title, persistence, restore, clearing, the options gear and per-pane override isolation, but the title-change callback and breadcrumb-driven navigation are not exercised.
 
 ## Change History
 
@@ -294,3 +299,5 @@ The `screen-reader-support` status is partial: the reset button's and each toggl
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to workspace/documents/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added separation-of-concerns (passed) and unit-test-coverage (partial) compliance rows. |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

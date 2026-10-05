@@ -1,33 +1,31 @@
 ---
 id: 071e67a8-54a7-4f8b-b747-e6384713efde
-title: RDID Editor
-domain: agenticdevelopertoolkit://cookbook/adh/hub/identifiers/rdid-editor
+title: "RDID Editor"
+domain: adtoolkit://cookbook/adh/hub/identifiers/rdid-editor
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
 created: 2026-09-23
-modified: '2026-09-27'
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'The one control for editing a type-prefixed rdid: a fixed, non-editable
-  `<type>.<scope>.` prefix as static text plus a lowercase-normalized input for the
-  leaf.'
+summary: "The one control for editing a type-prefixed rdid: a fixed, non-editable `<type>.<scope>.` prefix as static text plus a lowercase-normalized input for the leaf."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- form
-- input
-- rdid
-- identifier
+  - form
+  - input
+  - rdid
+  - identifier
 depends-on: []
 related:
-- agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
+  - agenticdevelopercookbook://guidelines/cookbook/ui/platform-design-languages
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # RDID Editor
@@ -154,12 +152,10 @@ shared hint/error footnote component — see the Overview.
   (**marks-input-invalid-on-error**, **omits-invalid-attribute-without-error**);
   the disabled state maps to the native disabled state, which assistive
   technology announces natively.
-- **minimum-tap-target**: NEEDS REVIEW: Not implemented in source. The
-  input's fixed height is 36px, with no minimum width enforced beyond
-  filling its row; whether that meets or is exempt from a 44×44
-  touch-target guideline requires measuring the rendered control against
-  the platform's guideline (see the referenced platform-design-languages
-  guidance) with the ecosystem's actual viewport/pointer usage in mind.
+- **minimum-tap-target-unverified**: the input's fixed height is 36px, with no minimum width
+  enforced beyond filling its row; the component performs no touch-target check of its own, and
+  whether it meets or is exempt from a 44x44 touch-target guideline has not been measured against
+  the platform's guideline (see the referenced platform-design-languages guidance).
 - Error announcement to assistive technology: not linked. The shared
   footnote component accepts an identifier specifically so a caller can
   point the field's description at the rendered error text, but the
@@ -167,12 +163,10 @@ shared hint/error footnote component — see the Overview.
   description link to the input. A screen-reader user hears the invalid
   state but has no programmatic link to the error message itself
   (tracked as a pending Design Decision below).
-- **minimum-contrast-ratio**: NEEDS REVIEW: Not implemented in source.
-  The prefix's muted-text color role on the field background resolves at
-  runtime from the theme's semantic role variables; whether that pairing
-  meets a minimum contrast ratio for small text cannot be determined
-  from this component's source alone — it requires inspecting the
-  resolved token values.
+- **minimum-contrast-ratio-unverified**: the prefix's muted-text color role on the field background
+  resolves at runtime from the theme's semantic role variables; the component performs no contrast
+  check of its own, and whether the pairing meets a minimum contrast ratio for small text depends on
+  the resolved token values.
 - Differentiate without color: satisfied — the invalid state is conveyed
   by the error text itself (**shows-error-in-place-of-hint** swaps in the
   error message, not just a color change) and by the invalid-state
@@ -439,6 +433,18 @@ console output, no logger import).
   Accessibility).
   **Approved**: pending
 
+**Decision**: the editor's input is a fixed 36px tall with no minimum-tap-target enforcement, and conformance to a 44x44 touch-target guideline has not been measured.
+
+**Rationale**: meeting or being exempt from the guideline depends on the ecosystem's actual viewport and pointer usage; closing the gap takes measuring the rendered control against the platform guideline and raising the height if it falls short.
+
+**Approved**: pending
+
+**Decision**: the prefix's muted-text over field-background contrast is delegated to the active theme; the component does not verify a minimum contrast ratio.
+
+**Rationale**: the colors resolve at runtime from semantic role variables, so conformance can only be checked against the resolved token values; closing the gap takes inspecting those tokens (or a theme-level contrast test) for small text.
+
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -447,6 +453,8 @@ console output, no logger import).
 | [keyboard-navigable](agenticdevelopercookbook://compliance/accessibility#keyboard-navigable) | passed | Accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | Accessibility |
 | [touch-target-size](agenticdevelopercookbook://compliance/accessibility#touch-target-size) | partial | Accessibility |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | Best Practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | passed | Best Practices |
 
 `screen-reader-support` is partial because the input's label is
 programmatically associated but the error text is never linked via
@@ -455,6 +463,8 @@ attaches no custom key handlers to the native `<input>`; `contrast-ratio` and
 `touch-target-size` are partial because the source authors color tokens and a
 fixed `h-9` height without resolving them against an actual theme or measured
 touch target.
+
+`separation-of-concerns` passes: `rdid-editor.tsx` is a controlled input over the shared `Input` and `FieldFootnote` components; it holds no data-fetching or persistence and only lowercases the edited leaf before handing it to `onChange`. `unit-test-coverage` passes: `rdidEditor.test.tsx` covers the fixed prefix with leaf-only lowercased editing, the empty-prefix whole-value mode, the error shown in place of the hint, and the hint when there is no error; the accessibility gaps recorded as pending Design Decisions (tap target, contrast) are not exercised by any test.
 
 ## Change History
 
@@ -465,3 +475,4 @@ touch target.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to adh/hub/identifiers/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolve open-question markers against the code; restate unimplemented behavior as current behavior with pending Decisions; add required compliance checks. |

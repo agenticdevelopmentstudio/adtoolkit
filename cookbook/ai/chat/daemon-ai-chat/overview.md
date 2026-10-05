@@ -1,0 +1,12 @@
+
+This component is a non-instantiable namespace holding only static operations, whose single entry point is a headless host's reusable "ask the model one question" path — used by any daemon feature that needs a one-shot completion (session summaries, AI oversight, and similar) so every caller drives the exact same runtime rather than duplicating it. It takes a system prompt, a user prompt, a token budget, a CLI model name, and a timeout, plus injectable collaborators for reading provider settings, running the plugin, running the CLI, reading secrets, and guarding local inference.
+
+The entry point chooses between two paths using the config-id-keyed registry the app syncs and reads back through the provider resolver:
+
+- **Plugin path** (a configuration is selected): loads that configuration's plugin bundle, asks it to *describe* the request as a request spec, and drives it through the same transport the host's interactive chat backend uses. The model comes from the configuration's own stored value, falling back to the plugin descriptor's default.
+- **CLI default** (no configuration selected): a `claude -p` subprocess — a zero-config path that needs no API key, so daemon features work before any provider has been configured.
+
+When the plugin path's configuration points at a loopback model server (e.g. a local Ollama instance), the entry point additionally consults an injectable local-inference guard at two points — before the plugin loads (verdicting the configuration's *stored* model) and again inside the plugin path (verdicting the *effective* model, once the descriptor's default is known) — to refuse or defer a local model load that would exceed a RAM budget, and serializes allowed local completions process-wide so two host features cannot trigger two model loads at once. Remote providers and the CLI path bypass the guard entirely; opting out of the guard disables both checkpoints unconditionally.
+
+Every collaborator the entry point touches — the plugin runtime (plugin load + run), the CLI runner (the CLI subprocess), the settings reader (the provider-registry reader), and the secret store (secure, Keychain-backed on Apple platforms) — is an injectable parameter with a production default, so the two dispatch paths, the guard's two checkpoints, and the template-scoped secret-resolution logic can all be exercised hermetically in tests without a real bundle, network call, subprocess, or secure-storage entry.
+

@@ -1,0 +1,3 @@
+
+# Typed Window Content
+

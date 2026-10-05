@@ -1,36 +1,34 @@
 ---
 id: a41760b2-4ffd-413b-970f-c0373c9bd3b6
-title: Settings Panel List
-domain: agenticdevelopertoolkit://cookbook/ui/settings/settings-panel-list
+title: "Settings Panel List"
+domain: adtoolkit://cookbook/ui/settings/settings-panel-list
 type: ingredient
-version: 1.2.0
+version: 1.2.2
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The sidebar of a settings split view - maps panels to sectioned rows,
-  filters them by search query, and bridges row selection back to the selected
-  panel.
+summary: "The sidebar of a settings split view - maps panels to sectioned rows, filters them by search query, and bridges row selection back to the selected panel."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- settings
-- sidebar
-- search
-- split-view
+  - settings
+  - sidebar
+  - search
+  - split-view
 depends-on:
-- agenticdevelopertoolkit://cookbook/ui/navigation/topic-list
-- agenticdevelopertoolkit://cookbook/ui/settings/settings-panel
+  - adtoolkit://cookbook/ui/navigation/topic-list
+  - adtoolkit://cookbook/ui/settings/settings-panel
 related:
-- agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/settings-view
+  - adtoolkit://cookbook/ui/layout/composable-tabs/settings-view
 references:
-- https://developer.apple.com/design/human-interface-guidelines/lists-and-tables
-approved-by: ''
-approved-date: ''
+  - https://developer.apple.com/design/human-interface-guidelines/lists-and-tables
+approved-by: ""
+approved-date: ""
 ---
 
 # Settings Panel List
@@ -107,6 +105,7 @@ panels by index no matter what the search field currently hides.
   MUST parse that identifier as an integer and MUST yield no panel when
   the identifier is not a valid integer or falls outside the panel list's
   bounds.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -115,18 +114,18 @@ panels by index no matter what the search field currently hides.
   cell factories, and this component overrides none of that layout.
 - **Padding**: Not set by this component; inherited unmodified from the
   ancestor's own layout metrics — see
-  `agenticdevelopertoolkit://cookbook/ui/navigation/topic-list#appearance`
+  `adtoolkit://cookbook/ui/navigation/topic-list#appearance`
   for the insets this component renders with.
 - **Font**: Not set by this component; inherited unmodified from the same
   layout metrics — see
-  `agenticdevelopertoolkit://cookbook/ui/navigation/topic-list#appearance`.
+  `adtoolkit://cookbook/ui/navigation/topic-list#appearance`.
 - **Background**: Not set by this component; inherited unmodified — the
   ancestor's theme-application step paints the view, content stack,
   header, footer, and list/scroll background. See
-  `agenticdevelopertoolkit://cookbook/ui/navigation/topic-list#appearance`.
+  `adtoolkit://cookbook/ui/navigation/topic-list#appearance`.
 - **Foreground/Text**: Not set by this component; inherited unmodified
   from the ancestor's row-rendering step. See
-  `agenticdevelopertoolkit://cookbook/ui/navigation/topic-list#appearance`
+  `adtoolkit://cookbook/ui/navigation/topic-list#appearance`
   for the exact color/state mapping this component's rows use.
 - **Border**: Not set by this component. The ancestor draws a 1pt hairline
   divider above every row in a card except the first, but a plain sidebar
@@ -193,6 +192,7 @@ panels by index no matter what the search field currently hides.
 | cts-panel-list-014 | panel-visibility-report | Set the panel list to `[panelA, panelB]`, search query set to a term matching only `panelB` | Visibility for index 0 is false, for index 1 is true |
 | cts-panel-list-015 | visible-index-report | Set the panel list to `[p0, p1, p2]`, search query set to a term matching only `p0` and `p2` | The visible-index query returns `[0, 2]` |
 | cts-panel-list-016 | row-id-panel-resolution | Select a row whose underlying id is `"1"` for a panel list of `[panelA, panelB]` | The selection callback receives `panelB`; simulating a stale/malformed id (e.g. `"not-a-number"` or `"9"`) resolves to no panel |
+| cts-panel-list-017 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -444,6 +444,9 @@ Not applicable: this component contains no logging call.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | partial | accessibility |
 | [idempotent-operations](agenticdevelopercookbook://compliance/reliability#idempotent-operations) | passed | reliability |
 | [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | failed | best-practices |
+
+`unit-test-coverage` is failed because no test constructs `PanelListViewController`: `SettingsSearchIndexTests.swift` and `SettingsNavigationHistoryTests.swift` test the separate `SettingsSearchIndex` and `SettingsNavigationHistory` types it consumes, but nothing exercises the list's row building, selection callback or search-query filtering.
 
 ## Change History
 
@@ -454,3 +457,5 @@ Not applicable: this component contains no logging call.
 | 1.1.1 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.2 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/settings/. |
+| 1.2.1 | 2026-10-04 | Mike Fullerton | Added unit-test-coverage compliance row (failed: no PanelListViewController tests). |
+| 1.2.2 | 2026-10-04 | Mike Fullerton | UI-thread confinement restated as the shared confines-to-ui-thread requirement, with a test vector; the @MainActor mechanism is in Platform Notes. |

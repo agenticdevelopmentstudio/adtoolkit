@@ -1,46 +1,45 @@
 ---
 id: 82d3214f-620d-4fab-b817-f194d93ac296
-title: SyncEngineTriggers
-domain: agenticdevelopertoolkit://cookbook/data/sync/sync-triggers
+title: "SyncEngineTriggers"
+domain: adtoolkit://cookbook/data/sync/sync-triggers
 type: ingredient
-version: 1.0.2
+version: 1.0.3
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'Kick sources that wake the sync engine: a fixed-interval ticker, a connectivity-restored
-  watcher, and a host-driven manual trigger.'
+summary: "Kick sources that wake the sync engine: a fixed-interval ticker, a connectivity-restored watcher, and a host-driven manual trigger."
 platforms:
-- swift
-- macos
-- ios
+  - swift
+  - macos
+  - ios
 tags:
-- sync
-- offline
-- engine
+  - sync
+  - offline
+  - engine
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/data/sync/sync-engine
-- agenticdevelopertoolkit://cookbook/data/sync/offline-sync-client
+  - adtoolkit://cookbook/data/sync/sync-engine
+  - adtoolkit://cookbook/data/sync/offline-sync-client
 references:
-- packages/apple/AgenticToolkit/Sync/Triggers/PeriodicTriggerSource.swift
-- packages/apple/AgenticToolkit/Sync/Triggers/ConnectivityTriggerSource.swift
-- packages/apple/AgenticToolkit/Sync/Triggers/ManualTriggerSource.swift
-- packages/apple/AgenticToolkit/Sync/SyncProtocols.swift
-- packages/apple/AgenticToolkit/Sync/SyncEvents.swift
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncTests/TriggerSourceTests.swift
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Sync/Triggers/PeriodicTriggerSource.swift
+  - packages/apple/AgenticToolkit/Sync/Triggers/ConnectivityTriggerSource.swift
+  - packages/apple/AgenticToolkit/Sync/Triggers/ManualTriggerSource.swift
+  - packages/apple/AgenticToolkit/Sync/SyncProtocols.swift
+  - packages/apple/AgenticToolkit/Sync/SyncEvents.swift
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitSyncTests/TriggerSourceTests.swift
+approved-by: ""
+approved-date: ""
 ---
 
 # SyncEngineTriggers
 
 ## Overview
 
-The trigger sources are the producers that tell the sync engine when to run a cycle. Each one conforms to the `SyncTriggerSource` protocol (declared in `SyncProtocols.swift`), whose only requirement is a `kicks: AsyncStream<SyncKickReason>` property. A host constructs one or more sources and hands each to `SyncEngine.attach(_:)`, which iterates the stream and calls `kick(reason:)` for every element (see [SyncEngine](agenticdevelopertoolkit://cookbook/data/sync/sync-engine)).
+The trigger sources are the producers that tell the sync engine when to run a cycle. Each one conforms to the `SyncTriggerSource` protocol (declared in `SyncProtocols.swift`), whose only requirement is a `kicks: AsyncStream<SyncKickReason>` property. A host constructs one or more sources and hands each to `SyncEngine.attach(_:)`, which iterates the stream and calls `kick(reason:)` for every element (see [SyncEngine](adtoolkit://cookbook/data/sync/sync-engine)).
 
 Three concrete sources ship:
 
@@ -48,7 +47,7 @@ Three concrete sources ship:
 - `ConnectivityTriggerSource` — yields `.connectivityRestored` each time the network path goes from unsatisfied to satisfied.
 - `ManualTriggerSource` — yields whatever reason the host passes to `fire(_:)`.
 
-`SyncKickReason` (declared in `SyncEvents.swift`) is the value every source emits: `.periodic`, `.connectivityRestored`, `.manual`, or `.hostSpecific(String)`. It is `Sendable` and `Equatable`.
+`SyncKickReason` (declared in `SyncEvents.swift`) is the value every source emits: `.periodic`, `.connectivityRestored`, `.manual`, or `.hostSpecific(String)`. It is an immutable value safe to share across threads and concurrency domains, and it is comparable for equality.
 
 Use these when a host needs the engine to sync on a timer, on network recovery, or on demand (pull-to-refresh, app foregrounding, a push notification) without writing its own stream plumbing.
 
@@ -57,7 +56,7 @@ Use these when a host needs the engine to sync on a timer, on network recovery, 
 ### Shared contract
 
 - **trigger-protocol**: A trigger source MUST expose a read-only `kicks` stream of `SyncKickReason` values; this is the only member `SyncTriggerSource` requires.
-- **trigger-sendable**: Every trigger source type MUST be safe to share across concurrency domains; the protocol inherits `Sendable` and each concrete class declares `@unchecked Sendable`, relying on the stream continuation (and, for connectivity, the monitor queue) for thread safety.
+- **trigger-sendable**: Every trigger source type MUST be safe to share across concurrency domains; each source relies on its stream continuation (and, for connectivity, the monitor's serial queue) for thread safety.
 - **kick-reason-cases**: `SyncKickReason` MUST have exactly four cases: `periodic`, `connectivityRestored`, `manual`, and `hostSpecific` carrying one `String` payload.
 - **kick-reason-equality**: Two `SyncKickReason` values MUST compare equal only when they are the same case and, for `hostSpecific`, carry equal strings.
 - **stream-created-at-init**: Each source MUST create its `kicks` stream and its continuation in its initializer, so the stream exists before any consumer subscribes.
@@ -93,7 +92,7 @@ Use these when a host needs the engine to sync on a timer, on network recovery, 
 - **connectivity-stop-cancels**: `stop()` MUST cancel the path monitor so no further updates are processed.
 - **connectivity-stop-finishes**: `stop()` MUST finish the stream so a consumer's iteration ends, even when called before any path update has arrived.
 - **connectivity-no-deinit**: The connectivity source MUST NOT define a `deinit` teardown; unlike the periodic source, releasing it without calling `stop()` performs no explicit monitor cancellation or stream finish, so hosts call `stop()` themselves.
-- **connectivity-queue-precondition**: A serial queue is a caller precondition. The previous-status flag is `nonisolated(unsafe)` and is read and written by every path update on the supplied queue; the default, `DispatchQueue(label: "ConnectivityTriggerSource")`, is serial, so the flag is ordered. A caller that passes a concurrent queue leaves the flag unordered.
+- **connectivity-queue-precondition**: A serial queue is a caller precondition. The previous-status flag is unsynchronized and is read and written by every path update on the supplied queue; the default, a serial execution queue labelled `ConnectivityTriggerSource`, is serial, so the flag is ordered. A caller that passes a concurrent queue leaves the flag unordered.
 
 ### ManualTriggerSource
 
@@ -137,7 +136,7 @@ Not applicable — this is a set of sync kick-source classes, not a visual compo
 | trig-016 | unbounded-buffer, stream-created-at-init | Manual source; fire 1,000 `.manual` before any iteration; then drain 1,000 | All 1,000 elements are delivered |
 | trig-017 | manual-fire-any-thread | Fire 100 reasons concurrently from 10 tasks | Consumer receives exactly 100 elements; no crash |
 | trig-018 | engine-stop-does-not-stop-source | Attach a periodic source to an engine; call `SyncEngine.stop()`; iterate the source directly | The source keeps yielding `.periodic` until its own `stop()` is called |
-| trig-019 | kick-reason-cases, trigger-protocol, trigger-sendable | Compile a switch over `SyncKickReason` with no default; pass each source across a task boundary as `any SyncTriggerSource` | Compiles with exactly four cases; each source is accepted as `Sendable` |
+| trig-019 | kick-reason-cases, trigger-protocol, trigger-sendable | Enumerate every case of `SyncKickReason` with no default branch; share each source across concurrent tasks as a `SyncTriggerSource` | Exactly four cases are handled; each source is safely shared across threads and concurrency domains |
 | trig-020 | single-consumer | Iterate one source's `kicks` from one task and fire three reasons | That task receives all three in fire order |
 | trig-021 | connectivity-no-deinit | Release a connectivity source without calling `stop()` | No explicit `stop()` runs; the source has no `deinit` |
 | trig-022 | manual-no-stop | Inspect the manual source's public surface | Exposes `kicks`, `init()` and `fire(_:)` only; no `stop()` |
@@ -165,7 +164,7 @@ Not applicable — this is a set of sync kick-source classes, not a visual compo
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
 | `PeriodicTriggerSource.init(interval:)` | `TimeInterval` (seconds) | none (required) | Delay before the first tick and between successive ticks |
-| `ConnectivityTriggerSource.init(queue:)` | `DispatchQueue` | new serial queue labelled `ConnectivityTriggerSource` | Queue on which path updates are delivered and the transition flag is updated |
+| `ConnectivityTriggerSource.init(queue:)` | serial execution queue | new serial queue labelled `ConnectivityTriggerSource` | Queue on which path updates are delivered and the transition flag is updated |
 | `ManualTriggerSource.fire(_:)` | `SyncKickReason` | none (required) | The reason to yield to the consumer |
 
 No environment variables, settings keys, or other injected dependencies are read.
@@ -205,6 +204,8 @@ Not applicable: no source writes log output; the only observable signal is the `
 - **React/Web**: Expose `kicks` as an async iterable backed by a queue (or an `EventTarget`). Periodic: `setTimeout` re-armed after each yield (fixed delay), cleared by `stop()`; a `FinalizationRegistry` is the closest analogue to the Swift `deinit`, but it is not deterministic, so require explicit `stop()`. Connectivity: the `online`/`offline` window events and `navigator.onLine`; `online` already fires only on transition, and there is no initial event. JavaScript is single-threaded, so the previous-status flag has no ordering concern.
 - **AppKit / UIKit**: This is the source platform; the code is framework-agnostic Swift using Swift Concurrency and Network.framework. `PeriodicTriggerSource.swift` drives ticks from an unstructured `Task` with `Task.sleep(for:)` and tears down in `deinit`. `ConnectivityTriggerSource.swift` is the only file in the target that imports Network, using `NWPathMonitor` on a caller-supplied `DispatchQueue` and a `nonisolated(unsafe)` previous-status flag; it works in daemons as well as apps. `ManualTriggerSource.swift` wraps a bare continuation. All three use `AsyncStream.makeStream(of:)` and declare `@unchecked Sendable`; the protocol and `SyncKickReason` live in `SyncProtocols.swift` and `SyncEvents.swift`.
 - **WinUI 3**: Model `kicks` as `IAsyncEnumerable<SyncKickReason>` produced from `System.Threading.Channels.Channel.CreateUnbounded<SyncKickReason>(new UnboundedChannelOptions { SingleReader = true })`; `stop()` becomes `IDisposable.Dispose()` calling `writer.TryComplete()` so `await foreach` ends. Periodic: a `System.Threading.PeriodicTimer` loop in a `Task.Run`, cancelled through a `CancellationTokenSource`; note `PeriodicTimer` is fixed-rate, so for the source's fixed-delay behavior use `await Task.Delay(interval, token)` between writes instead. There is no deterministic `deinit`: require callers to dispose (a finalizer cannot safely await). Connectivity: subscribe to `Windows.Networking.Connectivity.NetworkInformation.NetworkStatusChanged` and read `NetworkInformation.GetInternetConnectionProfile()?.GetNetworkConnectivityLevel() == NetworkConnectivityLevel.InternetAccess` as "satisfied"; the event fires on a thread-pool thread and may fire concurrently, so guard the previous-status flag with a `lock` or `Interlocked.Exchange`, and unsubscribe in `Dispose`. `SyncKickReason` becomes an abstract record with `Periodic`, `ConnectivityRestored`, `Manual`, and `HostSpecific(string Value)` records, which gives value equality. `ObservableCollection` and `INotifyPropertyChanged` do not apply: nothing here is bound to UI.
+- **trigger-sendable**: On Apple platforms the `SyncTriggerSource` protocol inherits `Sendable` and each concrete class declares `@unchecked Sendable`; `SyncKickReason` is `Sendable` and `Equatable`.
+- **connectivity-queue-precondition**: On Apple platforms the previous-status flag is `nonisolated(unsafe)` and the queue is a `DispatchQueue` (default `DispatchQueue(label: "ConnectivityTriggerSource")`).
 
 ## Reference Implementations
 
@@ -247,6 +248,7 @@ Each source does one job behind the one-member `SyncTriggerSource` protocol, and
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.0.3 | 2026-10-04 | Mike Fullerton | Swift-only constructs in normative sections restated as platform-neutral behavior; the Apple mechanism is in Platform Notes. |
 | 1.0.2 | 2026-09-27 | Mike Fullerton | Moved into the concept grouping. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation from the Apple trigger sources |

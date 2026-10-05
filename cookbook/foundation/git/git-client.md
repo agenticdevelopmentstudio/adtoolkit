@@ -1,58 +1,50 @@
 ---
 id: 779ac6ea-9ef5-4fb0-8ed9-dc6b9d617344
-title: Git Client
-domain: agenticdevelopertoolkit://cookbook/foundation/git/git-client
+title: "Git Client"
+domain: adtoolkit://cookbook/foundation/git/git-client
 type: ingredient
 version: 1.1.0
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-09-27
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: 'A git subprocess client: status/branch/worktree/global-config verbs through
-  one bottleneck, with total error mapping, redacted logging and a timeout.'
+summary: "A git subprocess client: status/branch/worktree/global-config verbs through one bottleneck, with total error mapping, redacted logging and a timeout."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- git
-- version-control
-- subprocess
-- logging
-- redaction
-- settings
+  - git
+  - version-control
+  - subprocess
+  - logging
+  - redaction
+  - settings
 depends-on: []
 related: []
 references:
-- packages/apple/AgenticToolkit/Core/Git/GitBranch.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitCaller.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClientConfiguration.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitClientError.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitCommandLog.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitConfigEntry.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitFileStatus.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitStatus.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/Git/GitWorktree.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings+Git.swift (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitClientTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitCommandLogTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitStatusParserTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitBranchParserTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitWorktreeParserTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitConfigEntryParserTests.swift
-  (agenticdevelopertoolkit)
-- packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitClientConfigurationTests.swift
-  (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/apple/AgenticToolkit/Core/Git/GitBranch.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitCaller.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitClient.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitClientConfiguration.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitClientError.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitCommandLog.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitConfigEntry.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitFileStatus.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitStatus.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/Git/GitWorktree.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Core/SettingStorage/UserSettings+Git.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitClientTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitCommandLogTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitStatusParserTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitBranchParserTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitWorktreeParserTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitConfigEntryParserTests.swift (agenticdevelopertoolkit)
+  - packages/apple/AgenticToolkit/Tests/AgenticToolkitCoreTests/Git/GitClientConfigurationTests.swift (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Git Client
@@ -543,7 +535,7 @@ accounting (one identifiable door, one command log, one place to add a
 future limit), not for serializing execution — every verb suspends at
 `SubprocessChannel.run`, so concurrent callers get concurrent child
 processes.
-**Rationale** (Swift actor implementation): A `status` on one repository
+**Rationale**: (Swift actor implementation) A `status` on one repository
 has no reason to wait behind a `worktree list` on another; a struct with a
 shared queue would have serialized them for no benefit.
 **Approved**: pending
@@ -551,7 +543,7 @@ shared queue would have serialized them for no benefit.
 **Decision**: The execution step records and then rethrows a cancellation
 signal unchanged instead of wrapping it in the git client's own error
 outcome.
-**Rationale** (Swift implementation): Wrapping it would break cooperative
+**Rationale**: (Swift implementation) Wrapping it would break cooperative
 cancellation propagation and structured-concurrency cleanup for every
 caller, starting with a SwiftUI `.task` torn down while a `status` call is
 in flight.
@@ -570,7 +562,7 @@ one.
 
 **Decision**: The execution step decodes captured standard output as UTF-8
 first and falls back to ISO Latin-1, never to a lossy-replacement decoding.
-**Rationale** (Swift implementation): Swift's lossy `String(decoding:)`
+**Rationale**: (Swift implementation) Swift's lossy `String(decoding:)`
 would substitute U+FFFD for any byte git could not express in UTF-8 and
 hand the parser a path matching nothing on disk, while a Latin-1 fallback
 re-reads the whole capture losslessly, at the cost of mojibake only on the
@@ -579,7 +571,7 @@ rare capture that is not valid UTF-8.
 
 **Decision**: Parsing status slices and counts each porcelain record in
 UTF-8 bytes, never by character.
-**Rationale** (Swift implementation): A path beginning with a combining
+**Rationale**: (Swift implementation) A path beginning with a combining
 mark merges with the preceding separator into one grapheme cluster under
 Swift's `Character`-based counting, which previously consumed a byte of
 the path along with the separator and yielded an empty path that trapped
@@ -597,7 +589,7 @@ can act on.
 
 **Decision**: The `max(1, ...)` timeout clamp lives only in the
 settings-derived configuration path, not in the plain constructor.
-**Rationale** (Swift implementation): The settings-derived path
+**Rationale**: (Swift implementation) The settings-derived path
 (`fromSettings()`) is where a user-editable settings value reaches, where
 zero or a negative number is a user-entry mistake that must not produce an
 instantly-expiring budget; a directly-constructed configuration (as tests

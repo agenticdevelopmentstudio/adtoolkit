@@ -1,0 +1,19 @@
+
+| ID | Requirements | Input | Expected |
+|----|-------------|-------|----------|
+| git-client-projects-user-settings-projects-001 | skip-patterns-key | Read the skip-patterns setting's name | equals the string `"projectScanSkipPatterns"` |
+| git-client-projects-user-settings-projects-002 | skip-patterns-default | Read the skip-patterns setting's default value | equals `["Library", "Music", "Pictures", "Movies", "Dropbox", "* Dropbox", "Google Drive"]` |
+| git-client-projects-user-settings-projects-003 | highlight-active-pane-key, highlight-active-pane-default | Read the active-pane-highlight setting's name and default value | name equals `"highlight_active_pane"`; default value equals `true` |
+| git-client-projects-user-settings-projects-004 | follows-mouse-key, follows-mouse-default | Read the pointer-follows-focus setting's name and default value | name equals `"active_pane_follows_mouse"`; default value equals `false` |
+| git-client-projects-user-settings-projects-005 | value-round-trip | Set the skip-patterns setting's value to `["Archive*"]`, then read it back | equals `["Archive*"]` |
+| git-client-projects-user-settings-projects-006 | value-round-trip | Set the active-pane-highlight setting's value to `false`, then read it back | equals `false` |
+| git-client-projects-user-settings-projects-007 | array-setting-json-encoded | Set the skip-patterns setting's value to `["Foo"]`, then inspect the raw object the backing store holds under `"projectScanSkipPatterns"` | the stored object is binary data, not a native list; JSON-decoding that data as a list of strings yields `["Foo"]` |
+| git-client-projects-user-settings-projects-008 | bool-settings-natively-stored | Set the active-pane-highlight setting's value to `false`, then inspect the raw object the backing store holds under `"highlight_active_pane"` | the stored object casts directly to boolean (`false`), not binary data |
+| git-client-projects-user-settings-projects-009 | removal-reverts-to-default | Set the pointer-follows-focus setting's value to `true`, remove it, then read its value | equals `false` (its default value) |
+| git-client-projects-user-settings-projects-010 | existence-check | Before any write, check whether the active-pane-highlight setting exists in the store; then set its value to `false` and check again | first check returns `false`; second check returns `true` |
+| git-client-projects-user-settings-projects-011 | not-secure | Read the secure-storage flag on all three settings | each equals `false` |
+| git-client-projects-user-settings-projects-012 | corrupt-data-falls-back-to-default | Store a JSON payload that does not decode as a list of strings (for example an encoded object, not an array) directly under `"projectScanSkipPatterns"` in the backing store, then read the setting's value | returns the skip-patterns setting's default value, with no thrown error |
+| git-client-projects-user-settings-projects-013 | change-notification | Subscribe to the active-pane-highlight setting's observable current-value projection, then set its value to `false` | the subscriber observes `false` synchronously, before the statement that performed the write returns |
+| git-client-projects-user-settings-projects-014 | no-pattern-validation | Set the skip-patterns setting's value to `["", "not [a valid glob", "dup", "dup"]` | all four entries are accepted and persisted verbatim, in order, with no filtering or deduplication |
+| git-client-projects-user-settings-projects-015 | main-thread-confinement | From code compiled with strict concurrency checking, attempt to read the active-pane-highlight setting's value from a background execution context with no explicit hand-off to the main context | fails to compile, because a main-thread-confined member cannot be accessed synchronously off the main thread |
+

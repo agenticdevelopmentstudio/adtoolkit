@@ -1,0 +1,6 @@
+
+- **Data collected**: this component collects nothing itself; it documents the shapes of data other modules collect and expose, most notably `peerInsert`'s raw fleet-peer `token`, the API-token secret minted by `POST /tokens`, and the GitHub OAuth `code`/`state` query parameters on `/auth/github/callback`.
+- **Storage**: this component performs no storage of its own; it only declares which persisted-row schemas (`PeerRow`, `ApiTokenMeta`) are safe to return, by construction excluding the raw secret from every response schema except the one-time `POST /tokens` `201` body.
+- **Transmission**: the documented request schemas accept the raw `peerInsert.token` and the OAuth `code` on write; the documented response schemas never echo a raw secret back except that single `201` create response — every other read of a peer or a token is redacted (`hasToken: boolean`, or `ApiTokenMeta` with no `token` field at all).
+- **Retention**: this component documents the fields that carry a secret's lifecycle (`ApiTokenMeta.expiresAt`, `ApiTokenMeta.revokedAt`, and `DELETE /tokens/{id}`'s revoke operation) without implementing any of that retention itself — actual storage and expiry enforcement live in the routes and storage modules this recipe's `related` field points at.
+

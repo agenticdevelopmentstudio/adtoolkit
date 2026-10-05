@@ -1,28 +1,27 @@
 ---
 id: 9ff57831-bdf9-47ad-b009-bcc1de59d5f4
-title: Telemetry State
-domain: agenticdevelopertoolkit://cookbook/status/dashboard/state/telemetry
+title: "Telemetry State"
+domain: adtoolkit://cookbook/status/dashboard/state/telemetry
 type: ingredient
-version: 1.1.0
+version: 1.2.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: State that polls the configured telemetry source every 60 s, persists
-  each snapshot to a persistent cache, and returns live, cached or empty data.
+summary: "State that polls the configured telemetry source every 60 s, persists each snapshot to a persistent cache, and returns live, cached or empty data."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags: []
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/telemetry
+  - adtoolkit://cookbook/status/service/telemetry
 references: []
-approved-by: ''
-approved-date: ''
+approved-by: ""
+approved-date: ""
 ---
 
 # Telemetry State
@@ -66,7 +65,7 @@ This is the source variant currently wired in the composition root; an alternati
 
 - **live-request**: The live source's read MUST issue one request to `/telemetry` with no request options (a `GET` to `<basePath>/telemetry`).
 - **live-http-error**: A non-2xx response MUST make the live source's read reject with an error whose message is `telemetry <status>` (for example `telemetry 502`).
-- **live-body-cast**: A 2xx response body MUST be parsed as JSON and returned as a snapshot object by cast, with no shape validation; a body that is not JSON rejects the read with the JSON parse error. The response shape is owned by the backend `/telemetry` route (see [Status Server Telemetry](agenticdevelopertoolkit://cookbook/status/service/telemetry)).
+- **live-body-cast**: A 2xx response body MUST be parsed as JSON and returned as a snapshot object by cast, with no shape validation; a body that is not JSON rejects the read with the JSON parse error. The response shape is owned by the backend `/telemetry` route (see [Status Server Telemetry](adtoolkit://cookbook/status/service/telemetry)).
 
 ### Cache hydration
 
@@ -89,7 +88,7 @@ This is the source variant currently wired in the composition root; an alternati
 - **cache-fallback**: When the read has no data and the cache load produced a snapshot, the state MUST return that cached snapshot.
 - **empty-fallback**: When the read has no data and the cache load produced `null` (or has not run yet), the state MUST return the empty snapshot.
 - **data-retained-on-error**: After at least one successful fetch in the shared cache, a later failed poll MUST leave the previous data in place (the platform keeps the last data on error), so the state keeps returning the last live snapshot rather than the cached one.
-- **telemetry-failure-signal**: NEEDS REVIEW: Not implemented in source. The state returns only the snapshot and discards the read's error and loading/fetching flags, so a source that has never answered is indistinguishable from "zero errors, zero traffic" (the empty snapshot), and a cached or retained snapshot carries no staleness flag beyond its own `generatedAt`; some consumer tests mock the state with `stale` and `offline` fields that the state never returns. Settling this needs the owner to decide whether the state's contract should expose an error or staleness signal.
+- **telemetry-failure-signal**: The state MUST return only the telemetry snapshot. It discards the read's error and loading flags, so a source that has never answered is indistinguishable from zero errors and zero traffic (the empty snapshot), and a cached or retained snapshot carries no staleness flag beyond its own generation time; consumer tests that mock the state with stale and offline fields describe fields the state never returns.
 
 ### Concurrency and side effects
 
@@ -97,6 +96,7 @@ This is the source variant currently wired in the composition root; an alternati
 - **per-instance-cache-io**: Each mounted state instance MUST perform its own cache load on mount and its own cache save per new data value, so two mounted consumers read the cache twice and write the same snapshot twice.
 - **side-effects**: The state's only side effects MUST be the source's network reads (one `GET /telemetry` per poll today) and the cache reads and writes under the key `adh-telemetry-v1`; it MUST NOT log, emit analytics, or mutate server state.
 - **no-timeout-no-cancel**: The state MUST NOT impose its own request timeout or cancellation; the live source passes no cancellation signal to its request, so an in-flight request is not aborted by the platform's cancellation mechanism.
+- **client-only**: Telemetry State MUST run only in a live client execution context; it has no server-only or universal-rendering variant.
 
 ## Appearance
 
@@ -131,6 +131,7 @@ Not applicable — this is a data state, not a visual component.
 | telemetry-015 | shared-poll, per-instance-cache-io | Two consumers use this state under one shared cache; source resolves `B` | One source fetch; both return `B`; the cache write is called twice with the same value |
 | telemetry-016 | poll-cadence | State mounted, document visible, first fetch resolved; advance time 60000 ms | A second source fetch occurs |
 | telemetry-017 | empty-snapshot | Construct the empty snapshot twice | Two distinct objects, each deep-equal to `{ generatedAt: "", errors: [], analytics: [] }` |
+| telemetry-018 | client-only | Load Telemetry State in a server-only rendering context | It is unavailable there: the module is marked for client execution only |
 
 ## Edge Cases
 
@@ -225,6 +226,10 @@ Not applicable: the source contains no log calls; the cache adapter swallows sto
 **Rationale**: `TELEMETRY_POLL_MS = 60_000` with `retry: 1` bounds each poll to at most two requests to `/telemetry`, which on the live path makes the server poll GlitchTip and PostHog; the source records no further rationale for the specific values.
 **Approved**: pending
 
+**Decision**: The telemetry state exposes no error or staleness signal; a never-answered source looks like an empty snapshot.
+**Rationale**: It stands today because the state's contract is the snapshot alone. Closing it needs the owner to decide whether the contract should expose an error or staleness signal, and tests for both.
+**Approved**: pending
+
 ## Compliance
 
 | Check | Status | Category |
@@ -242,6 +247,8 @@ The hook depends only on the source and cache ports; transport, persistence and 
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.2.1 | 2026-10-04 | Mike Fullerton | One client-only requirement, worded the same across the dashboard state specs, with a test vector; the web module's "use client" directive is noted in Platform Notes. |
+| 1.2.0 | 2026-10-04 | Mike Fullerton | Resolved telemetry-failure-signal marker as current behavior plus pending decision |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/dashboard/state/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

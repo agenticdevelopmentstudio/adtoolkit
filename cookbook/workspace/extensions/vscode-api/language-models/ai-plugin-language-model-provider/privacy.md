@@ -1,0 +1,6 @@
+
+- **Data collected**: the provider itself collects no data beyond what its callers already hand it: `justification` (free text an extension supplies explaining why it wants a model) and `extensionIdentifier` are read only to log them, per **justification-recorded-only**. `messages` (the conversation) and the resolved configuration's values are forwarded into the request the plugin builds, but not retained by this type. No credential or secret value is read or handled here — those are resolved and injected by the provider-configuration resolver/store, which this type calls but does not duplicate.
+- **Storage**: the provider performs no storage of its own; the saved provider-configuration list is owned and persisted elsewhere.
+- **Transmission**: `messages`, the resolved model name, and the resolved configuration's values are transmitted to the external provider, but the transmission itself is performed by the plugin transport/the loaded plugin, not by this component directly.
+- **Retention**: this component retains nothing beyond the lifetime of one streamed-response call's local variables; the one value it logs (`justification`) persists only per the logging system's own system-level retention policy, which this component does not configure.
+

@@ -1,54 +1,51 @@
 ---
 id: 5edf4567-65dd-40d7-814e-8604ee70f131
-title: Monitor Types
-domain: agenticdevelopertoolkit://cookbook/status/service/monitor/types
+title: "Monitor Types"
+domain: adtoolkit://cookbook/status/service/monitor/types
 type: ingredient
-version: 1.1.0
+version: 1.1.1
 status: review
 language: en
-created: '2026-09-24'
-modified: '2026-09-27'
+created: 2026-09-24
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: The shared record vocabulary for the monitor's read routes — a service
-  status record, daily and per-service uptime records, a deployment record,
-  history check records, and integration check records, plus the shared health,
-  overall, and deploy status vocabulary.
+summary: "The shared record vocabulary for the monitor's read routes — a service status record, daily and per-service uptime records, a deployment record, history check records, and integration check records, plus the shared health, overall, and deploy status vocabulary."
 platforms:
-- typescript
-- web
+  - typescript
+  - web
 tags:
-- monitor
-- types
-- dto
-- server
+  - monitor
+  - types
+  - dto
+  - server
 depends-on: []
 related:
-- agenticdevelopertoolkit://cookbook/status/service/monitor/health
-- agenticdevelopertoolkit://cookbook/status/service/monitor/overall
-- agenticdevelopertoolkit://cookbook/status/service/monitor/deploy-status
-- agenticdevelopertoolkit://cookbook/status/service/monitor/provider-deploy
-- agenticdevelopertoolkit://cookbook/status/service/monitor/integrations
-- agenticdevelopertoolkit://cookbook/status/service/monitor/live-types
+  - adtoolkit://cookbook/status/service/monitor/health
+  - adtoolkit://cookbook/status/service/monitor/overall
+  - adtoolkit://cookbook/status/service/monitor/deploy-status
+  - adtoolkit://cookbook/status/service/monitor/provider-deploy
+  - adtoolkit://cookbook/status/service/monitor/integrations
+  - adtoolkit://cookbook/status/service/monitor/live-types
 references:
-- packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/overall.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/self-check-stability.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/monitor/uptime.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/src/openapi/paths/reads.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/reads.int.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/self-check-stability.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-server/test/timestamp-validation.test.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/types.ts (agenticdevelopertoolkit)
-- packages/web/packages/status-web/src/lib/deploy-status-parity.test.ts (agenticdevelopertoolkit)
-approved-by: ''
-approved-date: ''
+  - packages/web/packages/status-server/src/monitor/types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/health.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/overall.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/deploy-status.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/provider-deploy.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/integrations.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/self-check-stability.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/monitor/uptime.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/routes/reads.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/src/openapi/paths/reads.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/reads.int.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/self-check-stability.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-server/test/timestamp-validation.test.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/types.ts (agenticdevelopertoolkit)
+  - packages/web/packages/status-web/src/lib/deploy-status-parity.test.ts (agenticdevelopertoolkit)
+approved-by: ""
+approved-date: ""
 ---
 
 # Monitor Types
@@ -187,7 +184,7 @@ Not applicable: the module contains no log call of any kind — it declares data
 ## Design Decisions
 
 **Decision**: This recipe documents `HistoryCheck`/`HistoryResponse` as this file's declared contract for a `/history`-shaped response, even though the actual producer, `queryHistory` in `routes/reads.ts` (outside this file), returns a separately-declared inline type shape rather than importing and returning `HistoryResponse` by name.
-**Rationale**: TypeScript's structural typing means the JSON payload the route serves still matches `HistoryResponse`'s shape, as confirmed in **types-005**'s Conformance Test Vector, but the producer's own return type is looser (a plain `status: string` rather than `HealthStatus | "unknown"`), so a future change to that producer could emit a status value this file's own type does not permit, with no compiler error to catch it. Per source fidelity this is stated as an observed fact about the current codebase — the open question on **history-response-not-referenced-by-name** — rather than fixed or invented away, since fixing the producer is outside this file's own source.
+**Rationale**: TypeScript's structural typing means the JSON payload the route serves still matches `HistoryResponse`'s shape, as confirmed in **types-005**'s Conformance Test Vector, but the producer's own return type is looser (a plain `status: string` rather than `HealthStatus | "unknown"`), so a future change to that producer could emit a status value this file's own type does not permit, with no compiler error to catch it. Per source fidelity this is stated as an observed fact about the current codebase — an open question — rather than fixed or invented away, since fixing the producer is outside this file's own source.
 **Approved**: pending
 
 **Decision**: `BuildPhase` and `DeployPhase` are imported from `./deploy-status` for use as `DeploymentDTO` field types but are deliberately not re-exported by name, unlike `HealthStatus`, `OverallStatus`, and `DeployStatus`, which are.
@@ -211,12 +208,13 @@ Not applicable: the module contains no log call of any kind — it declares data
 | [data-integrity](agenticdevelopercookbook://compliance/reliability#data-integrity) | passed | Reliability |
 | [health-observability](agenticdevelopercookbook://compliance/reliability#health-observability) | passed | Reliability |
 
-`separation-of-concerns` passes because this file declares wire shapes only, importing nothing from a route, a DB store, or a provider fetcher, and exporting no function or value of its own — construction (`serviceDtos`, `deploymentDtos`, `buildUptime`, `queryHistory` in `routes/reads.ts`; `providerDeployToDTO` in `provider-deploy.ts`; `runIntegrationsCheck` in `integrations.ts`) is entirely the concern of other files. `unit-test-coverage` is partial: no test file targets `types.ts` directly, since it declares no function to unit-test, and while `self-check-stability.test.ts` constructs `IntegrationCheck` literals directly and `timestamp-validation.test.ts` asserts against a real `DeploymentDTO` value returned by `providerDeployToDTO`, no test anywhere constructs or asserts against a `HistoryResponse`/`HistoryCheck` value by name — consistent with the open question on **history-response-not-referenced-by-name** in Design Decisions, since the one producer that would exercise it returns a different, unnamed inline type instead. `data-integrity` passes because every field on every interface this file declares is non-optional (per **service-status-dto-all-fields-required**, **deployment-dto-all-fields-required**, and the rest of the all-fields-required requirements), so a value omitting a field fails structural typing at compile time; the one caveat is `status-web`'s independent mirror, which is a different file's declaration, not this one's, and is documented as an external drift risk rather than a defect here. `health-observability` passes because several fields exist expressly so a consumer can judge data freshness rather than trust a value blindly: `lastCheckedAt`/`checkedAt` timestamp each check, and `phaseConfirmedAt` — per its own comment — turns an in-flight deploy phase into "a claim with a freshness deadline, not a fact."
+`separation-of-concerns` passes because this file declares wire shapes only, importing nothing from a route, a DB store, or a provider fetcher, and exporting no function or value of its own — construction (`serviceDtos`, `deploymentDtos`, `buildUptime`, `queryHistory` in `routes/reads.ts`; `providerDeployToDTO` in `provider-deploy.ts`; `runIntegrationsCheck` in `integrations.ts`) is entirely the concern of other files. `unit-test-coverage` is partial: no test file targets `types.ts` directly, since it declares no function to unit-test, and while `self-check-stability.test.ts` constructs `IntegrationCheck` literals directly and `timestamp-validation.test.ts` asserts against a real `DeploymentDTO` value returned by `providerDeployToDTO`, no test anywhere constructs or asserts against a `HistoryResponse`/`HistoryCheck` value by name — consistent with the open question in Design Decisions about the history producer not returning `HistoryResponse` by name, since the one producer that would exercise it returns a different, unnamed inline type instead. `data-integrity` passes because every field on every interface this file declares is non-optional (per **service-status-dto-all-fields-required**, **deployment-dto-all-fields-required**, and the rest of the all-fields-required requirements), so a value omitting a field fails structural typing at compile time; the one caveat is `status-web`'s independent mirror, which is a different file's declaration, not this one's, and is documented as an external drift risk rather than a defect here. `health-observability` passes because several fields exist expressly so a consumer can judge data freshness rather than trust a value blindly: `lastCheckedAt`/`checkedAt` timestamp each check, and `phaseConfirmedAt` — per its own comment — turns an in-flight deploy phase into "a claim with a freshness deadline, not a fact."
 
 ## Change History
 
 | Version | Date | Author | Summary |
 |---------|------|--------|---------|
+| 1.1.1 | 2026-10-04 | Mike Fullerton | Prose no longer cites a requirement id that does not exist. |
 | 1.1.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to status/service/monitor/. |
 | 1.0.1 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.0.0 | 2026-09-24 | Mike Fullerton | Initial creation |

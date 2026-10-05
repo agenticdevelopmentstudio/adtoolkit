@@ -1,0 +1,55 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "ca7205d2-31c0-424a-95a2-a356bed30187",
+    "title": "Live Snapshot",
+    "domain": "adtoolkit://cookbook/status/dashboard/state/live-snapshot",
+    "type": "ingredient",
+    "version": "1.2.3",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Cached state, shared per API client, that feeds the latest live snapshot from a server-push stream with a 60 s poll fallback.",
+    "platforms": [
+      "typescript",
+      "web"
+    ],
+    "tags": [],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/status/dashboard/api",
+      "adtoolkit://cookbook/status/dashboard/state/board"
+    ],
+    "references": [],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "4b8564ad5b13f65b",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

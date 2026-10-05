@@ -1,0 +1,67 @@
+{
+  "format": 1,
+  "meta": {
+    "id": "ea580796-8b16-4832-b11d-ad3cae991ecd",
+    "title": "Database",
+    "domain": "adtoolkit://cookbook/data/storage/database",
+    "type": "ingredient",
+    "version": "1.2.0",
+    "status": "review",
+    "language": "en",
+    "created": "2026-09-24",
+    "modified": "2026-10-04",
+    "author": "Mike Fullerton",
+    "copyright": "2026 Mike Fullerton",
+    "license": "MIT",
+    "summary": "Deadline-bounded SQLite connection pool (one writer, many readers, runaway-query ejection, lane metrics) plus the app's shared storage-directory naming.",
+    "platforms": [
+      "swift",
+      "macos",
+      "ios"
+    ],
+    "tags": [
+      "database",
+      "sqlite",
+      "persistence"
+    ],
+    "depends-on": [],
+    "related": [
+      "adtoolkit://cookbook/data/sync/sync-engine",
+      "adtoolkit://cookbook/data/sync/offline-sync-client",
+      "adtoolkit://cookbook/adh/hub/content/markdown-store",
+      "adtoolkit://cookbook/workspace/projects/project-database"
+    ],
+    "references": [
+      "packages/apple/AgenticToolkit/Database/BoundedDatabase.swift",
+      "packages/apple/AgenticToolkit/Database/AppStorageLocation.swift",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitDatabaseTests/BoundedDatabaseTests.swift",
+      "packages/apple/AgenticToolkit/Tests/AgenticToolkitDatabaseTests/AppStorageLocationTests.swift"
+    ],
+    "approved-by": "",
+    "approved-date": ""
+  },
+  "synced": "d380f60352e73bc6",
+  "parts": [
+    {"part": "intro"},
+    {"part": "overview", "heading": "Overview"},
+    {"part": "behavioral-requirements", "heading": "Behavioral Requirements"},
+    {"part": "appearance", "heading": "Appearance"},
+    {"part": "states", "heading": "States"},
+    {"part": "accessibility", "heading": "Accessibility"},
+    {"part": "conformance-test-vectors", "heading": "Conformance Test Vectors"},
+    {"part": "edge-cases", "heading": "Edge Cases"},
+    {"part": "configuration", "heading": "Configuration"},
+    {"part": "deep-linking", "heading": "Deep Linking"},
+    {"part": "localization", "heading": "Localization"},
+    {"part": "accessibility-options", "heading": "Accessibility Options"},
+    {"part": "feature-flags", "heading": "Feature Flags"},
+    {"part": "analytics", "heading": "Analytics"},
+    {"part": "privacy", "heading": "Privacy"},
+    {"part": "logging", "heading": "Logging"},
+    {"part": "platform-notes", "heading": "Platform Notes"},
+    {"part": "reference-implementations", "heading": "Reference Implementations"},
+    {"part": "design-decisions", "heading": "Design Decisions"},
+    {"part": "compliance", "heading": "Compliance"},
+    {"part": "history", "heading": "Change History"}
+  ]
+}

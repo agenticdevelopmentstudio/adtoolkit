@@ -1,32 +1,31 @@
 ---
 id: 52e34f70-c3d8-4ec6-a753-d9d3cea11789
-title: Composable Tabs View Registry
-domain: agenticdevelopertoolkit://cookbook/ui/layout/composable-tabs/view-registry
+title: "Composable Tabs View Registry"
+domain: adtoolkit://cookbook/ui/layout/composable-tabs/view-registry
 type: ingredient
-version: 1.2.0
+version: 1.3.0
 status: review
 language: en
-created: '2026-09-23'
-modified: '2026-09-27'
+created: 2026-09-23
+modified: 2026-10-04
 author: Mike Fullerton
 copyright: 2026 Mike Fullerton
 license: MIT
-summary: Per-project factory registry that vends a composable-tabs pane's content
-  by view id, falling back to a numbered placeholder pane.
+summary: "Per-project factory registry that vends a composable-tabs pane's content by view id, falling back to a numbered placeholder pane."
 platforms:
-- swift
-- macos
+  - swift
+  - macos
 tags:
-- registry
-- view-factory
-- placeholder
+  - registry
+  - view-factory
+  - placeholder
 depends-on: []
 related: []
 references:
-- https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html
-- https://developer.apple.com/documentation/appkit/nsviewcontroller
-approved-by: ''
-approved-date: ''
+  - https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html
+  - https://developer.apple.com/documentation/appkit/nsviewcontroller
+approved-by: ""
+approved-date: ""
 ---
 
 # Composable Tabs View Registry
@@ -130,6 +129,7 @@ this recipe.
   the switch.
 - **placeholder-title-centering**: The placeholder pane MUST center its
   title label both horizontally and vertically within its container.
+- **confines-to-ui-thread**: The component MUST be usable only on the UI thread.
 
 ## Appearance
 
@@ -186,13 +186,7 @@ this recipe.
 - **Minimum tap target**: Not applicable. The container and title are not
   tappable controls; the source treats both as inert display content, not
   a button or a control with a hit target.
-- **contrast**: NEEDS REVIEW: Not implemented in source. The chart-series
-  colors and the primary-text color are theme-derived tokens whose actual
-  RGB values are chosen per theme, so whether the primary-text title
-  reaches a sufficient contrast ratio (WCAG 1.4.3, 4.5:1) against a
-  chart-series tint at 15% opacity cannot be computed from this component
-  alone; resolvable only by auditing each shipped theme's chart-series and
-  primary-text token values against that threshold.
+- **contrast**: The component performs no contrast check of its own. The placeholder pane's chart-series tint (at 15% opacity) and its primary-text title are theme-derived tokens, so whether the title reaches a sufficient ratio (for example the 4.5:1 of WCAG 1.4.3) against the tint depends on each shipped theme's token values.
 
 ## Conformance Test Vectors
 
@@ -222,6 +216,8 @@ this recipe.
 | CTVR-22 | placeholder-retint | Load a placeholder, then switch the active theme | The container's tint is recomputed against the new theme's chart-series color list |
 | CTVR-23 | placeholder-title-centering | Load a placeholder's view and lay it out | The title's center point equals the container's center point |
 | CTVR-25 | stale-tint-persistence | Load a placeholder under a theme with a non-empty chart-series color list, note the container's tint, then switch to a theme whose chart-series color list is empty | The container's background remains the tint set under the prior theme, unchanged |
+| CTVR-26 | contrast | Placeholder pane under a theme whose chart-series color is close to its primary text color | The title is drawn in the primary-text color over the series tint; no contrast adjustment is applied. |
+| CTVR-27 | confines-to-ui-thread | Use the component from a thread other than the UI thread | The use is rejected, at build time or by a runtime check; the component's state is unchanged |
 
 ## Edge Cases
 
@@ -432,6 +428,7 @@ Both messages interpolate the view id's raw value, logged as public data.
   theme change. Logging replaces `Loggable`/`OSLog` with
   `Microsoft.Extensions.Logging.ILogger<ComposableTabsViewRegistry>`, using
   the same category-equals-type-name convention.
+- **UI-thread confinement**: `confines-to-ui-thread` — the registry, its descriptor context and the placeholder pane are declared `@MainActor`, so use from off the main actor fails to compile.
 
 ## Reference Implementations
 
@@ -481,6 +478,9 @@ Both messages interpolate the view id's raw value, logged as public data.
   pane's rows live to one decision in one place, instead of a key every
   factory has to spell the same way.
   **Approved**: pending
+- **Decision**: The placeholder pane draws its primary-text title over a 15% chart-series tint with no contrast check.
+  **Rationale**: The token values are chosen per theme outside this component, so the pairing cannot be computed here; closing the gap means auditing each shipped theme's chart-series and primary-text tokens against 4.5:1.
+  **Approved**: pending
 
 ## Compliance
 
@@ -489,6 +489,8 @@ Both messages interpolate the view id's raw value, logged as public data.
 | [screen-reader-support](agenticdevelopercookbook://compliance/accessibility#screen-reader-support) | passed | accessibility |
 | [contrast-ratio](agenticdevelopercookbook://compliance/accessibility#contrast-ratio) | partial | accessibility |
 | [no-hardcoded-strings](agenticdevelopercookbook://compliance/internationalization#no-hardcoded-strings) | failed | internationalization |
+| [separation-of-concerns](agenticdevelopercookbook://compliance/best-practices#separation-of-concerns) | passed | best-practices |
+| [unit-test-coverage](agenticdevelopercookbook://compliance/best-practices#unit-test-coverage) | partial | best-practices |
 
 `screen-reader-support` passes because the placeholder's only text, "Pane N", is
 also its default AppKit accessibility label, with nothing shown that the
@@ -500,6 +502,8 @@ source alone. `no-hardcoded-strings`
 fails because `PlaceholderPaneViewController`'s title is the literal
 `"Pane \(paneNumber)"`, with no localization mechanism, per Localization.
 
+`separation-of-concerns` passes because `ComposableTabsViewRegistry` only holds view descriptors and vends pane content on request, leaving what each view does to its provider and arrangement to the controller. `unit-test-coverage` is `partial`: no test file targets the registry itself, but `ProjectPaneContentTests.swift`, `ComposableTabsPaneHostTests.swift`, `ProjectDrawerTests.swift` and others register and resolve views through it.
+
 ## Change History
 
 | Version | Date | Author | Summary |
@@ -510,3 +514,4 @@ fails because `PlaceholderPaneViewController`'s title is the literal
 | 1.1.2 | 2026-09-24 | Mike Fullerton | Phase 6 lint: re-audited open-question markers against the marker rules; kept markers are one-line named bullets. |
 | 1.1.3 | 2026-09-25 | Mike Fullerton | Moved into the library cookbook; added Reference Implementations. |
 | 1.2.0 | 2026-09-27 | Mike Fullerton | Platform-neutral description; platform specifics in Platform Notes; moved to ui/layout/composable-tabs/. |
+| 1.3.0 | 2026-10-04 | Mike Fullerton | Resolved the contrast NEEDS REVIEW marker as current behavior (no contrast check) with a vector and a pending decision; added separation-of-concerns (passed) and unit-test-coverage (partial) compliance rows. Added the confines-to-ui-thread requirement and vector. |
