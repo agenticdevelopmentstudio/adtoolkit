@@ -200,7 +200,7 @@ public enum BillingRollup {
                 let settled = try settleDay(projectDay, database: database)
                 rolled.count += settled.changed
                 rolled.days.insert(projectDay)
-                if settled.changed > 0 { followUps.formUnion(after(projectDay, later: settled.later)) }
+                if settled.changed > 0 { followUps.formUnion(around(projectDay, settled: settled)) }
             }
         }
         rolled.count += try settleCascading(followUps, database: database)
@@ -394,21 +394,33 @@ public enum BillingRollup {
         })
     }
 
+    /// The days to settle again once `projectDay` changed: those `after` it,
+    /// and the earlier days whose app time its runs reach (Ruling 21). An
+    /// earlier day settles from later days' segments, never their ranges,
+    /// so it changes at most once more and the cascade still ends.
+    private static func around(_ projectDay: BillingProjectDay, settled: Settled) -> Set<BillingProjectDay> {
+        after(projectDay, later: settled.later).union(settled.earlier.filter { $0 < projectDay.day }.map {
+            BillingProjectDay(projectId: projectDay.projectId, day: $0)
+        })
+    }
+
     /// Settles `seeds`, each in its own write transaction (nested in the
     /// caller's when there is one), earliest day first; every day that
     /// changes settles the days after it too. A day only defers to earlier
     /// days and to frozen entries, so a cascade that moves forward from the
-    /// earliest seed reaches a fixed point. Returns how many entries changed.
+    /// earliest seed reaches a fixed point; an earlier day it sends back to
+    /// (Ruling 21) depends only on later days' segments, so it settles once
+    /// more at most. Returns how many entries changed.
     @discardableResult
     static func settleCascading(_ seeds: Set<BillingProjectDay>, database: any BillingPersistence) throws -> Int {
         var pending = seeds
         var changed = 0
         while let next = pending.min(by: earlier) {
             pending.remove(next)
-            var settled: (changed: Int, later: Set<String>) = (0, [])
+            var settled = Settled()
             try database.transaction { settled = try settleDay(next, database: database) }
             changed += settled.changed
-            if settled.changed > 0 { pending.formUnion(after(next, later: settled.later)) }
+            if settled.changed > 0 { pending.formUnion(around(next, settled: settled)) }
         }
         return changed
     }
@@ -463,21 +475,60 @@ public enum BillingRollup {
         return try neighborhood(BillingProjectDay(projectId: entry.projectId, day: entry.day), database: database)
     }
 
+    /// What settling one day did: how many entries it wrote, the later days
+    /// that defer to it, and the earlier days whose app time it may now
+    /// claim (or no longer claims), to settle again.
+    struct Settled {
+        var changed = 0
+        var later: Set<String> = []
+        var earlier: Set<String> = []
+    }
+
+    /// The Claude-side time an unfrozen entry can hold (Ruling 21): its own
+    /// Claude segments', and those of the frozen entries it is heir to — the
+    /// root it supplements, or that root's other supplements. Whatever else
+    /// it owns is app time, which yields to a Claude claim of any day.
+    private static func claudeShield(
+        root rootId: String, segments: [BillingSegmentDTO], frozen: [StoredBillingEntry],
+        segmentsOf: [String: [BillingSegmentDTO]]
+    ) -> [BillingRange] {
+        let relatives = frozen.filter { $0.entry.id == rootId || $0.entry.supplementsEntryId == rootId }
+        let held = segments + relatives.flatMap { segmentsOf[$0.entry.id] ?? [] }
+        return BillingRange.intervals(of: held.filter { !isAppSegment($0) })
+    }
+
+    /// The root a new supplement of `entry` would follow, and whose frozen
+    /// relatives make up its shield.
+    private static func rootId(of entry: BillingEntryDTO) -> String {
+        entry.supplementsEntryId ?? entry.id
+    }
+
+    /// The order a day grants claims in: oldest first; on a tie a root
+    /// before its supplements, then by group — the id only last.
+    private static func order(_ entry: BillingEntryDTO) -> (String, Int, String, String) {
+        (entry.createdAt, entry.supplementsEntryId == nil ? 0 : 1, entry.groupKey, entry.id)
+    }
+
     // swiftlint:disable function_body_length cyclomatic_complexity
     /// Decides who bills each second of one project's day, and writes every
     /// entry the rollup still owns to match. The one ownership rule (Rulings
-    /// 18 and 20), so that every second bills exactly once, whatever order
-    /// it arrived, froze, reopened or moved in, and whichever day each entry
-    /// is listed on:
+    /// 18, 20, 21 and 22), so that every second bills exactly once, whatever
+    /// order it arrived, froze, reopened or moved in, and whichever day each
+    /// entry is listed on:
     ///
     /// 1. A **frozen** entry owns exactly its recorded `billed_ranges` — or,
     ///    recorded never, its segments' intervals — and never changes. That
     ///    holds on every day its time overlaps, not only the day it is
     ///    listed on: a run moved to another day keeps its time here.
-    /// 2. An **earlier day** comes first: what an unfrozen entry listed on
-    ///    an earlier day owns (a run that crossed midnight) is taken here.
-    ///    Unfrozen entries on later days defer to this one, and are
-    ///    returned in `later` to settle again once this day changes.
+    /// 2. An **earlier day** comes first for Claude time: what an unfrozen
+    ///    entry listed on an earlier day owns of its Claude-side time (a run
+    ///    that crossed midnight) is taken here. Its *app* time is not: app
+    ///    claims come last across days too (Ruling 21), so this day's Claude
+    ///    runs claim it, and the earlier day, settling, yields what any later
+    ///    day's open Claude segments hold. Unfrozen entries on later days
+    ///    defer to this one, and are returned in `later` to settle again once
+    ///    this day changes; earlier days holding app time that this day's
+    ///    runs may reach are returned in `earlier`.
     /// 3. An **unfrozen** entry claims its segments' intervals. Time a frozen
     ///    entry's segments hold but that entry does not own (it gave the
     ///    overlap to a run that has since moved, or the run it gave time to
@@ -488,30 +539,53 @@ public enum BillingRollup {
     ///    every Claude-side claim first (oldest entry first), then every app
     ///    claim — at either granularity, so app time is always the
     ///    **residual** and bills only what no Claude run does. Orphans
-    ///    waiting on a new supplement come after both passes.
+    ///    waiting on a new supplement come after both passes, so an open
+    ///    entry's app claim outranks time a frozen entry gave away (Ruling 22).
     ///
-    /// The caller holds the write transaction. Returns how many entries were
-    /// written, created or removed, and the later days to settle again.
-    static func settleDay(
-        _ projectDay: BillingProjectDay, database: any BillingPersistence
-    ) throws -> (changed: Int, later: Set<String>) {
+    /// The caller holds the write transaction.
+    static func settleDay(_ projectDay: BillingProjectDay, database: any BillingPersistence) throws -> Settled {
         let stored = try database.billingEntriesOnDay(projectId: projectDay.projectId, day: projectDay.day)
-        guard !stored.isEmpty else { return (0, []) }
+        guard !stored.isEmpty else { return Settled() }
         var attached: [String: [BillingSegmentDTO]] = [:]
         for item in stored { attached[item.entry.id] = try database.billingSegmentsForEntry(id: item.entry.id) }
         let byId = Dictionary(stored.map { ($0.entry.id, $0) }, uniquingKeysWith: { first, _ in first })
         let frozen = stored.filter { isFrozen($0.entry) }
-        let open = stored.filter { !isFrozen($0.entry) }.sorted { lhs, rhs in
-            (lhs.entry.createdAt, lhs.entry.id) < (rhs.entry.createdAt, rhs.entry.id)
-        }
+        let open = stored.filter { !isFrozen($0.entry) }.sorted { order($0.entry) < order($1.entry) }
 
+        let others = try neighbors(of: projectDay, stored: stored, attached: attached, database: database)
+        var segmentsOf = attached
+        for item in others { segmentsOf[item.entry.id] = try database.billingSegmentsForEntry(id: item.entry.id) }
+        let allFrozen = frozen + others.filter { isFrozen($0.entry) }
+
+        var settled = Settled()
+        // Everything owned outside this day's open entries but the earlier
+        // days' app time, which this day's own Claude segments may claim.
         var taken: [BillingRange] = []
-        var later: Set<String> = []
-        for item in try neighbors(of: projectDay, stored: stored, attached: attached, database: database) {
-            if isFrozen(item.entry) || item.entry.day < projectDay.day {
-                taken = BillingRange.union(taken, try ownedRanges(item, database: database))
+        var earlierApp: [BillingRange] = []
+        // What later days' open runs hold, which this day's app time yields.
+        var laterClaude: [BillingRange] = []
+        for item in others {
+            let segments = segmentsOf[item.entry.id] ?? []
+            if isFrozen(item.entry) {
+                taken = BillingRange.union(taken, try ownedRanges(item, segments: segments, database: database))
+            } else if item.entry.day < projectDay.day {
+                let owned = try ownedRanges(item, segments: segments, database: database)
+                let shield = claudeShield(
+                    root: rootId(of: item.entry), segments: segments, frozen: allFrozen, segmentsOf: segmentsOf
+                )
+                let app = BillingRange.subtract(owned, shield)
+                taken = BillingRange.union(taken, BillingRange.intersect(owned, shield))
+                earlierApp = BillingRange.union(earlierApp, app)
+                // Its app time is what this day's runs reach into: settle it
+                // again once they change.
+                if !app.isEmpty || segments.contains(where: isAppSegment) {
+                    settled.earlier.insert(item.entry.day)
+                }
             } else {
-                later.insert(item.entry.day)
+                settled.later.insert(item.entry.day)
+                laterClaude = BillingRange.union(
+                    laterClaude, BillingRange.intervals(of: segments.filter { !isAppSegment($0) })
+                )
             }
         }
         for item in frozen {
@@ -520,8 +594,10 @@ public enum BillingRollup {
             )
         }
 
-        // What each open entry claims, Claude-side and app apart.
+        // What each open entry claims: its own Claude-side time, the
+        // Claude-side time it inherits as heir, and app time, apart.
         var claims: [String: [BillingRange]] = [:]
+        var heirClaims: [String: [BillingRange]] = [:]
         var appClaims: [String: [BillingRange]] = [:]
         var sources: [String: [BillingSegmentDTO]] = [:]
         for item in open {
@@ -548,7 +624,7 @@ public enum BillingRollup {
             let heir = byId[rootId].flatMap { isFrozen($0.entry) ? nil : $0 }
                 ?? open.first { $0.entry.supplementsEntryId == rootId }
             if let heir {
-                claims[heir.entry.id] = BillingRange.union(claims[heir.entry.id] ?? [], claudeSide)
+                heirClaims[heir.entry.id] = BillingRange.union(heirClaims[heir.entry.id] ?? [], claudeSide)
                 appClaims[heir.entry.id] = BillingRange.union(appClaims[heir.entry.id] ?? [], appSide)
                 sources[heir.entry.id, default: []] += from
             } else {
@@ -558,32 +634,59 @@ public enum BillingRollup {
             }
         }
 
-        // Open entries' Claude-side claims, then their app claims; a new
-        // supplement's orphans last, after every open entry — the time was
-        // given away when it froze, and an entry still open that wants it
-        // (a reopened app entry, say) takes it back first.
-        let roots = Set(orphaned.keys).union(appOrphaned.keys).sorted()
+        // Open entries' Claude-side claims: an entry's own runs reach into
+        // an earlier day's app time (Ruling 21); time it inherits does not,
+        // because the earlier day yields only what later runs hold.
         var owns: [String: [BillingRange]] = [:]
-        var rootOwns: [String: [BillingRange]] = [:]
-        for pass in [claims, appClaims] {
-            for item in open {
-                let granted = BillingRange.subtract(pass[item.entry.id] ?? [], taken)
-                taken = BillingRange.union(taken, granted)
-                owns[item.entry.id] = BillingRange.union(owns[item.entry.id] ?? [], granted)
-            }
+        for item in open {
+            let own = BillingRange.subtract(claims[item.entry.id] ?? [], taken)
+            let inherited = BillingRange.subtract(
+                heirClaims[item.entry.id] ?? [], BillingRange.union(taken, earlierApp)
+            )
+            let granted = BillingRange.union(own, inherited)
+            taken = BillingRange.union(taken, granted)
+            owns[item.entry.id] = granted
         }
-        for pass in [orphaned, appOrphaned] {
-            for rootId in roots {
-                let granted = BillingRange.subtract(pass[rootId] ?? [], taken)
-                taken = BillingRange.union(taken, granted)
-                rootOwns[rootId] = BillingRange.union(rootOwns[rootId] ?? [], granted)
-            }
+        taken = BillingRange.union(taken, earlierApp)
+        // Then app claims, minus what a later day's run holds outside the
+        // entry's own Claude-side shield — the part that day takes as app.
+        for item in open {
+            let shield = claudeShield(
+                root: rootId(of: item.entry), segments: attached[item.entry.id] ?? [], frozen: allFrozen,
+                segmentsOf: segmentsOf
+            )
+            let yielded = BillingRange.subtract(laterClaude, shield)
+            let granted = BillingRange.subtract(appClaims[item.entry.id] ?? [], BillingRange.union(taken, yielded))
+            taken = BillingRange.union(taken, granted)
+            owns[item.entry.id] = BillingRange.union(owns[item.entry.id] ?? [], granted)
+        }
+        // A new supplement's orphans last, after every open entry, app claims
+        // included. Ruling 22: the time was given away when its entry froze,
+        // so an entry still open that covers it — a reopened app entry, or an
+        // app span over a run since re-derived — takes it first. Granting the
+        // orphan before app claims would make a reopened app entry bill only
+        // the part its frozen run never gave away (900 seconds, not 1800).
+        let roots = Set(orphaned.keys).union(appOrphaned.keys).compactMap { byId[$0]?.entry }
+            .sorted { order($0) < order($1) }.map(\.id)
+        var rootOwns: [String: [BillingRange]] = [:]
+        for rootId in roots {
+            let granted = BillingRange.subtract(orphaned[rootId] ?? [], taken)
+            taken = BillingRange.union(taken, granted)
+            rootOwns[rootId] = granted
+        }
+        for rootId in roots {
+            let shield = claudeShield(root: rootId, segments: [], frozen: allFrozen, segmentsOf: segmentsOf)
+            let yielded = BillingRange.subtract(laterClaude, shield)
+            let granted = BillingRange.subtract(appOrphaned[rootId] ?? [], BillingRange.union(taken, yielded))
+            taken = BillingRange.union(taken, granted)
+            rootOwns[rootId] = BillingRange.union(rootOwns[rootId] ?? [], granted)
         }
 
-        var changed = 0
         for item in open {
-            changed += try write(item, owns: owns[item.entry.id] ?? [], attached: attached[item.entry.id] ?? [],
-                                 sources: sources[item.entry.id] ?? [], database: database)
+            settled.changed += try write(
+                item, owns: owns[item.entry.id] ?? [], attached: attached[item.entry.id] ?? [],
+                sources: sources[item.entry.id] ?? [], database: database
+            )
         }
         for rootId in roots {
             guard let root = byId[rootId], let granted = rootOwns[rootId], !granted.isEmpty else { continue }
@@ -598,10 +701,11 @@ public enum BillingRollup {
                 supplementsEntryId: entry.id, createdAt: now, updatedAt: now
             ), descriptionEdited: false)
             guard try database.upsertBillingEntry(supplement.entry, overwrite: .rollupOwned) else { continue }
-            changed += try write(supplement, owns: granted, attached: [], sources: orphanSources[rootId] ?? [],
-                                 database: database)
+            settled.changed += try write(
+                supplement, owns: granted, attached: [], sources: orphanSources[rootId] ?? [], database: database
+            )
         }
-        return (changed, later)
+        return settled
     }
     // swiftlint:enable function_body_length cyclomatic_complexity
 
