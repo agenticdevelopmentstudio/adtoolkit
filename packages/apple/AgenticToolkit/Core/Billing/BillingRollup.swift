@@ -28,9 +28,9 @@ public struct BillingRollupOptions: Sendable, Equatable {
 /// Late work on a frozen day becomes a supplemental entry you can see.
 ///
 /// Who bills each second is decided per project day by `settleDay`: frozen
-/// entries own what they recorded, Claude-side entries own the rest of their
-/// runs, and app entries own the residual — so every second of the day's
-/// time bills exactly once.
+/// entries own what they recorded, Claude-side time owns the rest of its
+/// runs, and app time owns the residual — so every second bills exactly once,
+/// on whichever day each entry is listed.
 public enum BillingRollup {
 
     public enum RollupError: LocalizedError {
@@ -71,7 +71,7 @@ public enum BillingRollup {
         let rolled = try roll(try database.billingRollupCandidates(ids: nil), options: options, database: database)
         let days = try recomputing.map { try projectDays(of: $0, database: database) }
             ?? Set(try database.billingEntryDays())
-        return rolled.count + (try settle(days.subtracting(rolled.days), database: database))
+        return rolled.count + (try settleCascading(days.subtracting(rolled.days), database: database))
     }
 
     /// The same pass restricted to named segments — what the Billing Activity
@@ -181,14 +181,13 @@ public enum BillingRollup {
         // One write transaction per project day: every slot's segments are
         // attached, then the day's ownership is settled, so no reader ever
         // sees time attached but not yet billed once.
-        var dayOrder: [BillingProjectDay] = []
+        // Earliest day first: a day bills around the days before it, so those
+        // are settled before it is.
         var slotsByDay: [BillingProjectDay: [Slot]] = [:]
-        for slot in order {
-            if slotsByDay[slot.projectDay] == nil { dayOrder.append(slot.projectDay) }
-            slotsByDay[slot.projectDay, default: []].append(slot)
-        }
+        for slot in order { slotsByDay[slot.projectDay, default: []].append(slot) }
         var rolled = Rolled()
-        for projectDay in dayOrder {
+        var followUps: Set<BillingProjectDay> = []
+        for projectDay in slotsByDay.keys.sorted(by: earlier) {
             try database.transaction {
                 var attached = 0
                 for slot in slotsByDay[projectDay] ?? [] where try attach(
@@ -198,10 +197,13 @@ public enum BillingRollup {
                     attached += 1
                 }
                 guard attached > 0 else { return }
-                rolled.count += try settleDay(projectDay, database: database)
+                let settled = try settleDay(projectDay, database: database)
+                rolled.count += settled.changed
                 rolled.days.insert(projectDay)
+                if settled.changed > 0 { followUps.formUnion(after(projectDay, later: settled.later)) }
             }
         }
+        rolled.count += try settleCascading(followUps, database: database)
         return rolled
     }
 
@@ -368,105 +370,223 @@ public enum BillingRollup {
         return days
     }
 
-    /// Settles the day of `entryId`'s entry, if it exists, in its own write
-    /// transaction.
-    private static func settleDay(ofEntry entryId: String, database: any BillingPersistence) throws {
-        try database.transaction { try settleDayInTransaction(ofEntry: entryId, database: database) }
+    /// Total order on project days: by project, then calendar day.
+    private static func earlier(_ lhs: BillingProjectDay, _ rhs: BillingProjectDay) -> Bool {
+        (lhs.projectId, lhs.day) < (rhs.projectId, rhs.day)
     }
 
-    /// The same, for a caller already holding the write transaction.
-    private static func settleDayInTransaction(ofEntry entryId: String, database: any BillingPersistence) throws {
-        guard let entry = try database.billingEntry(id: entryId) else { return }
-        try settleDay(BillingProjectDay(projectId: entry.projectId, day: entry.day), database: database)
+    /// The calendar day after `day` (`YYYY-MM-DD`).
+    private static func dayAfter(_ day: String) -> String? {
+        guard let noon = UTCTimestamp.epochSeconds(day + "T12:00:00Z") else { return nil }
+        return String(UTCTimestamp.string(epochSeconds: noon + 86_400).prefix(10))
     }
 
-    /// Settles each day in its own write transaction, in a stable order.
-    private static func settle(_ days: Set<BillingProjectDay>, database: any BillingPersistence) throws -> Int {
+    /// The days to settle again once `projectDay` changed: the next calendar
+    /// day (a run crossing midnight reaches into it) and every later day
+    /// whose entries overlap it. Always later, so a cascade only moves on.
+    private static func after(
+        _ projectDay: BillingProjectDay, later: Set<String>
+    ) -> Set<BillingProjectDay> {
+        var days = later
+        if let next = dayAfter(projectDay.day) { days.insert(next) }
+        return Set(days.filter { $0 > projectDay.day }.map {
+            BillingProjectDay(projectId: projectDay.projectId, day: $0)
+        })
+    }
+
+    /// Settles `seeds`, each in its own write transaction (nested in the
+    /// caller's when there is one), earliest day first; every day that
+    /// changes settles the days after it too. A day only defers to earlier
+    /// days and to frozen entries, so a cascade that moves forward from the
+    /// earliest seed reaches a fixed point. Returns how many entries changed.
+    @discardableResult
+    static func settleCascading(_ seeds: Set<BillingProjectDay>, database: any BillingPersistence) throws -> Int {
+        var pending = seeds
         var changed = 0
-        for projectDay in days.sorted(by: { ($0.projectId, $0.day) < ($1.projectId, $1.day) }) {
-            try database.transaction { changed += try settleDay(projectDay, database: database) }
+        while let next = pending.min(by: earlier) {
+            pending.remove(next)
+            var settled: (changed: Int, later: Set<String>) = (0, [])
+            try database.transaction { settled = try settleDay(next, database: database) }
+            changed += settled.changed
+            if settled.changed > 0 { pending.formUnion(after(next, later: settled.later)) }
         }
         return changed
     }
 
+    /// The time an entry owns as its neighbours see it: its recorded ranges,
+    /// or, recorded never, its segments' intervals.
+    private static func ownedRanges(
+        _ stored: StoredBillingEntry, segments: [BillingSegmentDTO]? = nil, database: any BillingPersistence
+    ) throws -> [BillingRange] {
+        if let ranges = stored.billedRanges { return BillingRange.decode(ranges) }
+        if let segments { return BillingRange.intervals(of: segments) }
+        return BillingRange.intervals(of: try database.billingSegmentsForEntry(id: stored.entry.id))
+    }
+
+    /// The entries listed on other days whose time may overlap `projectDay`'s:
+    /// its window is the span of every segment and recorded range of its own
+    /// entries — the ranges kept from before, so time a day just gave up is
+    /// still in it.
+    private static func neighbors(
+        of projectDay: BillingProjectDay, stored: [StoredBillingEntry],
+        attached: [String: [BillingSegmentDTO]], database: any BillingPersistence
+    ) throws -> [StoredBillingEntry] {
+        let span = stored.flatMap { item in
+            BillingRange.intervals(of: attached[item.entry.id] ?? [])
+                + (item.billedRanges.map(BillingRange.decode) ?? [])
+        }
+        guard let start = span.map(\.start).min(), let end = span.map(\.end).max() else { return [] }
+        return try database.billingEntriesOverlapping(
+            projectId: projectDay.projectId,
+            from: UTCTimestamp.string(epochSeconds: start), until: UTCTimestamp.string(epochSeconds: end)
+        ).filter { $0.entry.day != projectDay.day }
+    }
+
+    /// `projectDay` and every day listing an entry that overlaps it: what an
+    /// entry freezing, reopening, moving or going away there can change.
+    private static func neighborhood(
+        _ projectDay: BillingProjectDay, database: any BillingPersistence
+    ) throws -> Set<BillingProjectDay> {
+        let stored = try database.billingEntriesOnDay(projectId: projectDay.projectId, day: projectDay.day)
+        var attached: [String: [BillingSegmentDTO]] = [:]
+        for item in stored { attached[item.entry.id] = try database.billingSegmentsForEntry(id: item.entry.id) }
+        let others = try neighbors(of: projectDay, stored: stored, attached: attached, database: database)
+        return Set(others.map { BillingProjectDay(projectId: $0.entry.projectId, day: $0.entry.day) })
+            .union([projectDay])
+    }
+
+    /// The neighborhood of `entryId`'s day; empty when there is no such entry.
+    private static func neighborhood(
+        ofEntry entryId: String, database: any BillingPersistence
+    ) throws -> Set<BillingProjectDay> {
+        guard let entry = try database.billingEntry(id: entryId) else { return [] }
+        return try neighborhood(BillingProjectDay(projectId: entry.projectId, day: entry.day), database: database)
+    }
+
+    // swiftlint:disable function_body_length cyclomatic_complexity
     /// Decides who bills each second of one project's day, and writes every
-    /// entry the rollup still owns to match. The one ownership rule (Ruling
-    /// 18), so that every second of the day's time bills exactly once,
-    /// whatever order it arrived, froze, reopened or moved in:
+    /// entry the rollup still owns to match. The one ownership rule (Rulings
+    /// 18 and 20), so that every second bills exactly once, whatever order
+    /// it arrived, froze, reopened or moved in, and whichever day each entry
+    /// is listed on:
     ///
     /// 1. A **frozen** entry owns exactly its recorded `billed_ranges` — or,
-    ///    recorded never, its segments' intervals — and never changes.
-    /// 2. An **unfrozen** entry claims its segments' intervals. Time a frozen
+    ///    recorded never, its segments' intervals — and never changes. That
+    ///    holds on every day its time overlaps, not only the day it is
+    ///    listed on: a run moved to another day keeps its time here.
+    /// 2. An **earlier day** comes first: what an unfrozen entry listed on
+    ///    an earlier day owns (a run that crossed midnight) is taken here.
+    ///    Unfrozen entries on later days defer to this one, and are
+    ///    returned in `later` to settle again once this day changes.
+    /// 3. An **unfrozen** entry claims its segments' intervals. Time a frozen
     ///    entry's segments hold but that entry does not own (it gave the
     ///    overlap to a run that has since moved, or the run it gave time to
     ///    has reopened) is claimed by its heir: the unfrozen root it
-    ///    supplements, else that root's open supplement.
-    /// 3. Claims are granted minus everything already owned: the frozen
-    ///    ranges first, then the Claude-side entries oldest first, then the
-    ///    app entries, which are therefore the **residual** — app time bills
-    ///    only what no Claude run does.
-    /// 4. Orphaned time with no heir gets a new supplement of its root.
+    ///    supplements, else that root's open supplement. With no heir, a new
+    ///    supplement of the root claims it.
+    /// 4. Claims are granted minus everything already owned, in two passes:
+    ///    every Claude-side claim first (oldest entry first), then every app
+    ///    claim — at either granularity, so app time is always the
+    ///    **residual** and bills only what no Claude run does. Orphans
+    ///    waiting on a new supplement come after both passes.
     ///
     /// The caller holds the write transaction. Returns how many entries were
-    /// written, created or removed.
-    @discardableResult
-    static func settleDay(_ projectDay: BillingProjectDay, database: any BillingPersistence) throws -> Int {
+    /// written, created or removed, and the later days to settle again.
+    static func settleDay(
+        _ projectDay: BillingProjectDay, database: any BillingPersistence
+    ) throws -> (changed: Int, later: Set<String>) {
         let stored = try database.billingEntriesOnDay(projectId: projectDay.projectId, day: projectDay.day)
-        guard !stored.isEmpty else { return 0 }
+        guard !stored.isEmpty else { return (0, []) }
         var attached: [String: [BillingSegmentDTO]] = [:]
         for item in stored { attached[item.entry.id] = try database.billingSegmentsForEntry(id: item.entry.id) }
         let byId = Dictionary(stored.map { ($0.entry.id, $0) }, uniquingKeysWith: { first, _ in first })
         let frozen = stored.filter { isFrozen($0.entry) }
         let open = stored.filter { !isFrozen($0.entry) }.sorted { lhs, rhs in
-            let left = (isAppGroupKey(lhs.entry.groupKey) ? 1 : 0, lhs.entry.createdAt, lhs.entry.id)
-            let right = (isAppGroupKey(rhs.entry.groupKey) ? 1 : 0, rhs.entry.createdAt, rhs.entry.id)
-            return left < right
+            (lhs.entry.createdAt, lhs.entry.id) < (rhs.entry.createdAt, rhs.entry.id)
         }
 
         var taken: [BillingRange] = []
+        var later: Set<String> = []
+        for item in try neighbors(of: projectDay, stored: stored, attached: attached, database: database) {
+            if isFrozen(item.entry) || item.entry.day < projectDay.day {
+                taken = BillingRange.union(taken, try ownedRanges(item, database: database))
+            } else {
+                later.insert(item.entry.day)
+            }
+        }
         for item in frozen {
-            let ranges = item.billedRanges.map(BillingRange.decode)
-                ?? BillingRange.intervals(of: attached[item.entry.id] ?? [])
-            taken = BillingRange.union(taken, ranges)
+            taken = BillingRange.union(
+                taken, try ownedRanges(item, segments: attached[item.entry.id] ?? [], database: database)
+            )
         }
 
+        // What each open entry claims, Claude-side and app apart.
         var claims: [String: [BillingRange]] = [:]
+        var appClaims: [String: [BillingRange]] = [:]
         var sources: [String: [BillingSegmentDTO]] = [:]
         for item in open {
-            claims[item.entry.id] = BillingRange.intervals(of: attached[item.entry.id] ?? [])
-            sources[item.entry.id] = attached[item.entry.id] ?? []
+            let segments = attached[item.entry.id] ?? []
+            claims[item.entry.id] = BillingRange.intervals(of: segments.filter { !isAppSegment($0) })
+            appClaims[item.entry.id] = BillingRange.intervals(of: segments.filter(isAppSegment))
+            sources[item.entry.id] = segments
         }
         // Orphans with no heir yet, by the root a new supplement would follow.
         var orphaned: [String: [BillingRange]] = [:]
+        var appOrphaned: [String: [BillingRange]] = [:]
         var orphanSources: [String: [BillingSegmentDTO]] = [:]
         for item in frozen {
             let segments = attached[item.entry.id] ?? []
             let orphan = BillingRange.subtract(BillingRange.intervals(of: segments), taken)
             guard !orphan.isEmpty else { continue }
+            let claudeSide = BillingRange.intersect(
+                orphan, BillingRange.intervals(of: segments.filter { !isAppSegment($0) })
+            )
+            let appSide = BillingRange.subtract(orphan, claudeSide)
+            // Only the segments the orphaned time came from describe it.
+            let from = segments.filter { !BillingRange.intersect(BillingRange.intervals(of: [$0]), orphan).isEmpty }
             let rootId = item.entry.supplementsEntryId.flatMap { byId[$0] == nil ? nil : $0 } ?? item.entry.id
             let heir = byId[rootId].flatMap { isFrozen($0.entry) ? nil : $0 }
                 ?? open.first { $0.entry.supplementsEntryId == rootId }
             if let heir {
-                claims[heir.entry.id] = BillingRange.union(claims[heir.entry.id] ?? [], orphan)
-                sources[heir.entry.id, default: []] += segments
+                claims[heir.entry.id] = BillingRange.union(claims[heir.entry.id] ?? [], claudeSide)
+                appClaims[heir.entry.id] = BillingRange.union(appClaims[heir.entry.id] ?? [], appSide)
+                sources[heir.entry.id, default: []] += from
             } else {
-                orphaned[rootId] = BillingRange.union(orphaned[rootId] ?? [], orphan)
-                orphanSources[rootId, default: []] += segments
+                orphaned[rootId] = BillingRange.union(orphaned[rootId] ?? [], claudeSide)
+                appOrphaned[rootId] = BillingRange.union(appOrphaned[rootId] ?? [], appSide)
+                orphanSources[rootId, default: []] += from
+            }
+        }
+
+        // Open entries' Claude-side claims, then their app claims; a new
+        // supplement's orphans last, after every open entry — the time was
+        // given away when it froze, and an entry still open that wants it
+        // (a reopened app entry, say) takes it back first.
+        let roots = Set(orphaned.keys).union(appOrphaned.keys).sorted()
+        var owns: [String: [BillingRange]] = [:]
+        var rootOwns: [String: [BillingRange]] = [:]
+        for pass in [claims, appClaims] {
+            for item in open {
+                let granted = BillingRange.subtract(pass[item.entry.id] ?? [], taken)
+                taken = BillingRange.union(taken, granted)
+                owns[item.entry.id] = BillingRange.union(owns[item.entry.id] ?? [], granted)
+            }
+        }
+        for pass in [orphaned, appOrphaned] {
+            for rootId in roots {
+                let granted = BillingRange.subtract(pass[rootId] ?? [], taken)
+                taken = BillingRange.union(taken, granted)
+                rootOwns[rootId] = BillingRange.union(rootOwns[rootId] ?? [], granted)
             }
         }
 
         var changed = 0
         for item in open {
-            let owns = BillingRange.subtract(claims[item.entry.id] ?? [], taken)
-            taken = BillingRange.union(taken, owns)
-            changed += try write(item, owns: owns, attached: attached[item.entry.id] ?? [],
+            changed += try write(item, owns: owns[item.entry.id] ?? [], attached: attached[item.entry.id] ?? [],
                                  sources: sources[item.entry.id] ?? [], database: database)
         }
-        for rootId in orphaned.keys.sorted() {
-            guard let root = byId[rootId] else { continue }
-            let owns = BillingRange.subtract(orphaned[rootId] ?? [], taken)
-            guard !owns.isEmpty else { continue }
-            taken = BillingRange.union(taken, owns)
+        for rootId in roots {
+            guard let root = byId[rootId], let granted = rootOwns[rootId], !granted.isEmpty else { continue }
             let now = UTCTimestamp.now()
             let entry = root.entry
             let supplement = StoredBillingEntry(entry: BillingEntryDTO(
@@ -478,11 +598,12 @@ public enum BillingRollup {
                 supplementsEntryId: entry.id, createdAt: now, updatedAt: now
             ), descriptionEdited: false)
             guard try database.upsertBillingEntry(supplement.entry, overwrite: .rollupOwned) else { continue }
-            changed += try write(supplement, owns: owns, attached: [], sources: orphanSources[rootId] ?? [],
+            changed += try write(supplement, owns: granted, attached: [], sources: orphanSources[rootId] ?? [],
                                  database: database)
         }
-        return changed
+        return (changed, later)
     }
+    // swiftlint:enable function_body_length cyclomatic_complexity
 
     /// Writes one unfrozen entry as owning `owns`, or removes it when it owns
     /// nothing, holds no segment, no supplement points at it and its words
@@ -506,13 +627,13 @@ public enum BillingRollup {
         let billed = BillingRounding.billedSeconds(
             rawSeconds: raw, roundingMinutes: entry.roundingMinutes, mode: entry.roundingMode
         )
-        let bounds = attached.isEmpty
-            ? (owns.first.map { UTCTimestamp.string(epochSeconds: $0.start) } ?? entry.startedAt,
-               owns.last.map { UTCTimestamp.string(epochSeconds: $0.end) } ?? entry.endedAt)
-            // The latest *end*, not the end of the segment that starts last:
-            // parallel sessions overlap, and a short one starting late would
-            // otherwise cut the entry's end hours early.
-            : (attached.map(\.startedAt).min() ?? "", attached.map(\.endedAt).max() ?? "")
+        // Everything it holds and everything it owns — an heir's inherited
+        // time included. The latest *end*, not the end of the segment that
+        // starts last: parallel sessions overlap, and a short one starting
+        // late would otherwise cut the entry's end hours early.
+        let starts = attached.map(\.startedAt) + owns.map { UTCTimestamp.string(epochSeconds: $0.start) }
+        let ends = attached.map(\.endedAt) + owns.map { UTCTimestamp.string(epochSeconds: $0.end) }
+        let bounds = (starts.min() ?? entry.startedAt, ends.max() ?? entry.endedAt)
         let computed = Figures(
             startedAt: bounds.0, endedAt: bounds.1, raw: raw, billed: billed,
             amount: amountCents(billedSeconds: billed, rateCents: entry.rateCents)
@@ -624,7 +745,7 @@ public enum BillingRollup {
     @discardableResult
     public static func recomputeOwnedEntries(database: any BillingPersistence, only: Set<String>? = nil) throws -> Int {
         let days = try only.map { try projectDays(of: $0, database: database) } ?? Set(try database.billingEntryDays())
-        return try settle(days, database: database)
+        return try settleCascading(days, database: database)
     }
 
     // MARK: - Money
@@ -664,11 +785,18 @@ public enum BillingRollup {
         // leave it owning time that is gone. Settled in its own transaction
         // first, so a save refused below as stale leaves the fresh figures
         // for the editor to reload; and again under the save's write lock.
-        if !dto.id.isEmpty { try settleDay(ofEntry: dto.id, database: database) }
+        if !dto.id.isEmpty {
+            try settleCascading(try neighborhood(ofEntry: dto.id, database: database), database: database)
+        }
         var saved: BillingEntryDTO?
         try database.transaction {
-            if !dto.id.isEmpty { try settleDayInTransaction(ofEntry: dto.id, database: database) }
+            var seeds = dto.id.isEmpty ? [] : try neighborhood(ofEntry: dto.id, database: database)
+            try settleCascading(seeds, database: database)
             let existing = dto.id.isEmpty ? nil : try database.billingEntry(id: dto.id)
+            // Settling removes an entry left owning and holding nothing (its
+            // time was re-derived away). Saving the editor's stale copy would
+            // bring it back as a hand-made entry billing time that is gone.
+            if !dto.id.isEmpty, existing == nil { throw RollupError.unknownEntry(dto.id) }
             if let existing, existing.locked { throw RollupError.entryIsLocked(dto.id) }
             let currentStatus = existing?.status ?? BillingStatus.unbilled.rawValue
             guard dto.status == currentStatus else {
@@ -717,12 +845,12 @@ public enum BillingRollup {
             }
             if descriptionChanged { try database.markBillingEntryDescriptionEdited(id: entry.id) }
             // A figure edit freezes the entry at the ranges it owned; a moved
-            // entry takes them to its new day. Both days are settled again.
-            var days: Set<BillingProjectDay> = [BillingProjectDay(projectId: entry.projectId, day: entry.day)]
-            if let existing { days.insert(BillingProjectDay(projectId: existing.projectId, day: existing.day)) }
-            for projectDay in days.sorted(by: { ($0.projectId, $0.day) < ($1.projectId, $1.day) }) {
-                try settleDay(projectDay, database: database)
-            }
+            // entry takes them to its new day. Both days, and every day
+            // overlapping either, are settled again.
+            seeds.formUnion(try neighborhood(
+                BillingProjectDay(projectId: entry.projectId, day: entry.day), database: database
+            ))
+            try settleCascading(seeds, database: database)
             saved = try database.billingEntry(id: entry.id) ?? entry
         }
         guard let saved else { throw RollupError.unknownEntry(dto.id) }
@@ -767,10 +895,13 @@ public enum BillingRollup {
             // time out of the totals and free it to be billed again.
             let frozen = try database.billingFrozenSupplementCount(of: id)
             guard frozen == 0 else { throw RollupError.entryHasFrozenSupplements(id: id, count: frozen) }
+            let seeds = try neighborhood(
+                BillingProjectDay(projectId: existing.projectId, day: existing.day), database: database
+            )
             try database.deleteBillingEntry(id: id)
             // Its segments re-roll on the next pass; what it owned is free
-            // again now, for the entries still on its day.
-            try settleDay(BillingProjectDay(projectId: existing.projectId, day: existing.day), database: database)
+            // again now, for the entries on its day and every day it overlaps.
+            try settleCascading(seeds, database: database)
         }
     }
 
@@ -784,12 +915,13 @@ public enum BillingRollup {
         // Freezing keeps the ranges the entry owns at that moment, so the day
         // is settled first (see `saveEntry`). An entry that settling removes
         // owned nothing and held nothing: it is reported unknown.
-        try settleDay(ofEntry: entryId, database: database)
+        try settleCascading(try neighborhood(ofEntry: entryId, database: database), database: database)
         var result: BillingEntryDTO?
         // Read and write under one write lock, so the row written is the row
         // as it is now — never a snapshot a rollup pass has since grown.
         try database.transaction {
-            try settleDayInTransaction(ofEntry: entryId, database: database)
+            var seeds = try neighborhood(ofEntry: entryId, database: database)
+            try settleCascading(seeds, database: database)
             guard let existing = try database.billingEntry(id: entryId) else {
                 throw RollupError.unknownEntry(entryId)
             }
@@ -826,9 +958,11 @@ public enum BillingRollup {
                 entryId: entryId, field: "status",
                 oldValue: existing.status, newValue: status.rawValue, source: source
             )
-            // A reopened entry is unfrozen again: it and every other unfrozen
-            // entry on its day are settled against what is frozen now.
-            try settleDay(BillingProjectDay(projectId: existing.projectId, day: existing.day), database: database)
+            // A reopened entry is unfrozen again: it and every unfrozen entry
+            // on its day, or on a day it overlaps, are settled against what
+            // is frozen now.
+            seeds.formUnion(try neighborhood(ofEntry: entryId, database: database))
+            try settleCascading(seeds, database: database)
             result = try database.billingEntry(id: entryId) ?? updated
         }
         guard let result else { throw RollupError.unknownEntry(entryId) }
@@ -934,6 +1068,11 @@ public struct BillingRange: Sendable, Equatable {
             if cursor < range.end { pieces.append(BillingRange(start: cursor, end: range.end)) }
         }
         return pieces
+    }
+
+    /// Every second in both `lhs` and `rhs`.
+    public static func intersect(_ lhs: [BillingRange], _ rhs: [BillingRange]) -> [BillingRange] {
+        subtract(lhs, subtract(lhs, rhs))
     }
 
     /// Seconds covered, overlaps counted once.

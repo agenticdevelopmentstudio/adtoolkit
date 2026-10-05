@@ -186,6 +186,11 @@ public protocol BillingPersistence {
     func billingOpenSupplement(of entryId: String) throws -> StoredBillingEntry?
     /// Every entry on one project's day, supplements included, oldest first.
     func billingEntriesOnDay(projectId: String, day: String) throws -> [StoredBillingEntry]
+    /// Every entry of the project, on any day, whose time may fall in
+    /// `[from, until)` (canonical UTC stamps): by its own bounds, by a segment
+    /// it holds, or as the supplement of an entry holding one. A superset is
+    /// fine; the caller decides ownership from ranges.
+    func billingEntriesOverlapping(projectId: String, from: String, until: String) throws -> [StoredBillingEntry]
     /// Every project day that has at least one entry.
     func billingEntryDays() throws -> [BillingProjectDay]
     /// Records the intervals an entry bills (see `StoredBillingEntry.billedRanges`).
