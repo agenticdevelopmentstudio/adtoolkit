@@ -79,6 +79,24 @@ public struct StoredBillingEntry: Sendable, Equatable {
     }
 }
 
+/// The description parts a set of sessions yields, and which of them could
+/// not be titled.
+public struct BillingSessionTitles: Sendable, Equatable {
+    /// Distinct titles, newest session first, then an "in repo, repo" part
+    /// for the repos the app spans worked in.
+    public let titles: [String]
+    /// The ids whose rows no longer exist: a session with no row at all, or
+    /// an `app:` id whose span is gone. A description built while any of
+    /// these is missing would silently drop their part. A row that exists but
+    /// has no title yet is not missing — it loses nothing.
+    public let missing: Set<String>
+
+    public init(titles: [String], missing: Set<String>) {
+        self.titles = titles
+        self.missing = missing
+    }
+}
+
 /// One project's day: the unit billing ownership is settled over.
 public struct BillingProjectDay: Sendable, Hashable {
     public let projectId: String
@@ -108,12 +126,19 @@ public protocol BillingPersistence {
     var billingSettingsKeys: BillingSettingsKeys { get }
     func setting(for key: String) throws -> String?
     func setSetting(_ key: String, _ value: String) throws
-    /// Runs `body` as one write transaction: all of it lands, or none.
-    func transaction(_ body: () throws -> Void) throws
+    /// Runs `body` as one write transaction: all of it lands, or none, and
+    /// what it returns is returned.
+    @discardableResult
+    func transaction<T>(_ body: () throws -> T) throws -> T
     /// Forgets every derived session's watermark, so all derived time is
     /// re-split on the next pass. Returns how many sessions were reset.
     @discardableResult
     func resetBillingDerivationOfDerivedSessions() throws -> Int
+    /// Forgets the watermark of every derived session and app span whose time
+    /// `projectId` claims — the ones that read its idle cutoff — so they are
+    /// re-split on the next pass. Returns how many rows were reset.
+    @discardableResult
+    func resetBillingDerivation(projectId: String) throws -> Int
 
     // MARK: Clients
 
@@ -181,7 +206,6 @@ public protocol BillingPersistence {
     func upsertBillingEntry(_ dto: BillingEntryDTO, overwrite: BillingEntryOverwrite) throws -> Bool
     func deleteBillingEntry(id: String) throws
     func billingFrozenSupplementCount(of entryId: String) throws -> Int
-    func billingStoredEntry(id: String) throws -> StoredBillingEntry?
     func billingEntryForSlot(projectId: String, day: String, groupKey: String) throws -> StoredBillingEntry?
     func billingOpenSupplement(of entryId: String) throws -> StoredBillingEntry?
     /// Every entry on one project's day, supplements included, oldest first.
@@ -193,6 +217,14 @@ public protocol BillingPersistence {
     func billingEntriesOverlapping(projectId: String, from: String, until: String) throws -> [StoredBillingEntry]
     /// Every project day that has at least one entry.
     func billingEntryDays() throws -> [BillingProjectDay]
+    /// The project days a settle could still change: those with an open
+    /// entry (unlocked and auto), and those with a frozen entry holding a
+    /// placeable segment that is not inside one of that entry's own billed
+    /// ranges. `nil` ranges cover every segment (the entry then owns its
+    /// segments' intervals, so it orphans nothing). An all-frozen day whose
+    /// every segment its owner already bills is a guaranteed no-op and left
+    /// out. A superset is fine.
+    func billingUnsettledDays() throws -> [BillingProjectDay]
     /// Records the intervals an entry bills (see `StoredBillingEntry.billedRanges`).
     func setBillingEntryBilledRanges(id: String, ranges: String) throws
     /// Deletes an entry only if it is unlocked, auto, holds no segment, no
@@ -208,12 +240,9 @@ public protocol BillingPersistence {
     func billingSegmentsForEntry(id: String) throws -> [BillingSegmentDTO]
     func attachSegments(ids: [String], toEntry entryId: String) throws
     func appendBillingAudit(entryId: String, field: String, oldValue: String, newValue: String, source: String) throws
-    func billingSessionTitles(sessionIds: [String]) throws -> [String]
-    /// The ids in `sessionIds` whose rows no longer exist: a session with no
-    /// row at all, or an `app:` id whose span is gone. A description built
-    /// while any of these is missing would silently drop their part. A row
-    /// that exists but has no title yet does not count — it loses nothing.
-    func billingUntitledSessionIds(sessionIds: [String]) throws -> Set<String>
+    /// What titles the given sessions, read once per source: `sessions` for
+    /// Claude ids, `activity_span` for `app:` ids.
+    func billingSessionTitles(sessionIds: [String]) throws -> BillingSessionTitles
 
     // MARK: Assignment and overview
 

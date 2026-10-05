@@ -47,4 +47,16 @@ final class ActivityRunsTests: XCTestCase {
         ])
         XCTAssertEqual(merged, [ActivityRuns.Span(start: "2026-09-22T10:00:00Z", end: "2026-09-22T12:00:00Z")])
     }
+
+    /// Review F57: the one subtract billing's ranges and app runs share.
+    func testSubtractCutsHolesAndDropsEmptySpans() {
+        let pieces = ActivityRuns.subtract(
+            [Span(start: 0, end: 100), Span(start: 200, end: 200), Span(start: 150, end: 120)],
+            [Span(start: 10, end: 20), Span(start: 15, end: 30), Span(start: 90, end: 300)]
+        )
+        XCTAssertEqual(pieces, [Span(start: 0, end: 10), Span(start: 30, end: 90)])
+        XCTAssertEqual(
+            ActivityRuns.intersect([Span(start: 0, end: 100)], [Span(start: 50, end: 150)]), [Span(start: 50, end: 100)]
+        )
+    }
 }

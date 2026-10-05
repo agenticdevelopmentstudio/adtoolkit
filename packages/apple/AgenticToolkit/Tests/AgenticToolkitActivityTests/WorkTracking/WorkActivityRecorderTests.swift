@@ -74,10 +74,15 @@ private final class SamplingInputTrigger: ContextTrigger, PresenceSampling {
     let requiredPermission: ContextPermission = .none
     var onEvent: ((ContextEventDetail, Date) -> Void)?
     var present: Bool?
-    init(present: Bool?) { self.present = present }
+    var silence: TimeInterval?
+    init(present: Bool?, silence: TimeInterval? = nil) {
+        self.present = present
+        self.silence = silence
+    }
     func start() throws {}
     func stop() {}
     func samplePresence() -> Bool? { present }
+    func sampleSilence() -> TimeInterval? { silence }
 }
 
 private final class Counter: @unchecked Sendable {
@@ -206,6 +211,27 @@ final class WorkActivityRecorderTests: XCTestCase {
         clock.addTimeInterval(60); rec.heartbeat(); rec.drainWrites()
         XCTAssertEqual(store.spans.count, 1)
         XCTAssertEqual(store.spans[0].lastSeenAt, "", "started while the user was away: no heartbeat")
+    }
+
+    /// Review F1: a restart mid-absence opens the idle row at the last input,
+    /// so the absence the restart split is not left with a billable gap.
+    func testStartMidAbsenceOpensTheIdleRowAtTheLastInput() {
+        let rec = WorkActivityRecorder(
+            triggers: .init(focus: FakeContextTrigger(kind: .appFocus),
+                            input: SamplingInputTrigger(present: false, silence: 600),
+                            session: FakeContextTrigger(kind: .session),
+                            lifecycle: FakeContextTrigger(kind: .appLifecycle)),
+            allowlist: AppAllowlist(preferences: .default),
+            resolver: WorkingPathResolver(knownRoots: { [] }),
+            store: store, now: { [unowned self] in self.clock })
+        rec.start()
+        rec.drainWrites()
+        XCTAssertEqual(store.idle.count, 1)
+        XCTAssertEqual(store.idle.first?.from, UTCTimestamp.string(from: clock.addingTimeInterval(-600)))
+        XCTAssertEqual(store.idle.first?.until, "")
+        rec.stop()
+        rec.drainWrites()
+        XCTAssertEqual(store.idle.first?.until, UTCTimestamp.string(from: clock))
     }
 
     func testAStuckOpenIdleIsClosedWhenTheNextIdleOpens() {

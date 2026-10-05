@@ -94,6 +94,28 @@ public enum ActivityRuns {
     public static func unionLength<Stamp: Comparable & AdditiveArithmetic>(_ intervals: [Span<Stamp>]) -> Stamp {
         union(intervals).reduce(.zero) { $0 + ($1.end - $1.start) }
     }
+
+    /// `lhs` with every instant of `holes` taken out, as half-open spans:
+    /// sorted, non-empty and non-overlapping. Empty or inverted spans on
+    /// either side cover nothing.
+    public static func subtract<Stamp: Comparable>(_ lhs: [Span<Stamp>], _ holes: [Span<Stamp>]) -> [Span<Stamp>] {
+        let cuts = union(holes.filter { $0.end > $0.start })
+        var pieces: [Span<Stamp>] = []
+        for span in union(lhs.filter { $0.end > $0.start }) {
+            var cursor = span.start
+            for cut in cuts where cut.end > cursor && cut.start < span.end {
+                if cut.start > cursor { pieces.append(Span(start: cursor, end: cut.start)) }
+                cursor = max(cursor, cut.end)
+            }
+            if cursor < span.end { pieces.append(Span(start: cursor, end: span.end)) }
+        }
+        return pieces
+    }
+
+    /// Every instant in both `lhs` and `rhs`.
+    public static func intersect<Stamp: Comparable>(_ lhs: [Span<Stamp>], _ rhs: [Span<Stamp>]) -> [Span<Stamp>] {
+        subtract(lhs, subtract(lhs, rhs))
+    }
 }
 
 extension ActivityRuns.Span: Sendable where Stamp: Sendable {}

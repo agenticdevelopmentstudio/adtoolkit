@@ -107,9 +107,8 @@ public enum BillingPrefs {
     /// re-select.
     @discardableResult
     public static func apply(_ fields: [String: String], database: any BillingPersistence) throws -> Snapshot {
-        var result: Snapshot?
         let allowed = database.billingSettingsKeys.all
-        try database.transaction {
+        return try database.transaction {
             let before = try snapshot(database)
             for (key, value) in fields where allowed.contains(key) {
                 try database.setSetting(key, value)
@@ -118,8 +117,7 @@ public enum BillingPrefs {
             if after.idleCutoffSeconds != before.idleCutoffSeconds {
                 try database.resetBillingDerivationOfDerivedSessions()
             }
-            result = after
+            return after
         }
-        return try result ?? snapshot(database)
     }
 }

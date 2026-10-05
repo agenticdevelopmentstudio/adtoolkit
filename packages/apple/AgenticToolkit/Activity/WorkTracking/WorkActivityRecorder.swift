@@ -96,8 +96,17 @@ public final class WorkActivityRecorder {
         // Presence as it is now, not assumed: a restart while the user is away
         // must not heartbeat the span as if they were here until the first
         // input tick (up to its interval later) says otherwise.
-        inputActive = (triggers.input as? any PresenceSampling)?.samplePresence() ?? true
+        let presence = triggers.input as? any PresenceSampling
+        inputActive = presence?.samplePresence() ?? true
         lastResumedAt = nil
+        // Started mid-absence (a restart while the user is away): the idle
+        // row starts at the last input, so the absence the stop or crash
+        // split stays one, with no billable gap at the restart. A no-op when
+        // a row is still open.
+        if !inputActive, let silence = presence?.sampleSilence() {
+            let from = UTCTimestamp.string(from: now().addingTimeInterval(-silence))
+            write { try $0.openIdleInterval(from: from) }
+        }
         let wired: [any ContextTrigger] = [triggers.focus, triggers.input, triggers.session, triggers.lifecycle]
         for trigger in wired {
             trigger.onEvent = { [weak self] detail, date in

@@ -37,6 +37,8 @@ public protocol InputStatisticsSource: AnyObject {
 @MainActor
 public protocol PresenceSampling: AnyObject {
     func samplePresence() -> Bool?
+    /// How long input has been quiet right now; `nil` when it cannot tell.
+    func sampleSilence() -> TimeInterval?
 }
 
 @MainActor
@@ -202,6 +204,13 @@ public final class InputActivityTrigger: ContextTrigger, PresenceSampling {
     /// without emitting anything.
     public func samplePresence() -> Bool? {
         Self.silence(in: source.sample()) < idleThreshold
+    }
+
+    /// The current silence, read straight from the source; `nil` when the
+    /// source supplied no reading at all.
+    public func sampleSilence() -> TimeInterval? {
+        let silence = Self.silence(in: source.sample())
+        return silence == .greatestFiniteMagnitude ? nil : silence
     }
 
     /// How long the machine has been quiet: the *most recent* of the four

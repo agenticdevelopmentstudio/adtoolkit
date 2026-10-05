@@ -119,12 +119,11 @@ public enum BillingStore {
 
         let now = UTCTimestamp.now()
         let id = dto.id.isEmpty ? UUID().uuidString : dto.id
-        var stored: BillingProjectDTO?
         // One transaction: the new cutoff and the reset it demands land
         // together. Committed apart, a failed reset left the cutoff saved and
         // history still split at the old one — with nothing to retry it, since
         // the next save sees no change.
-        try database.transaction {
+        return try database.transaction {
             let existing = dto.id.isEmpty ? nil : try database.billingProject(id: dto.id)
             // A client id that no longer resolves becomes nil rather than dangling.
             let clientId = try dto.clientId.flatMap {
@@ -141,14 +140,17 @@ public enum BillingStore {
             try database.upsertBillingProject(project)
             // A changed cutoff changes where every run of this project splits.
             // Unlocked days re-derive; locked entries keep their segments.
-            if let existing, existing.idleCutoffMinutes != project.idleCutoffMinutes {
-                _ = try database.resetBillingDerivationOfDerivedSessions()
+            // Compared as the cutoff in force, not the raw override: setting
+            // the override to the global value changes no split. Only the
+            // time this project claims read its cutoff, so only it re-derives.
+            if let existing {
+                let global = try BillingPrefs.snapshot(database).idleCutoffSeconds
+                if cutoffSeconds(for: existing, default: global) != cutoffSeconds(for: project, default: global) {
+                    try database.resetBillingDerivation(projectId: project.id)
+                }
             }
-            stored = project
+            return project
         }
-        // Unreachable: the body either set `stored` or threw out of `transaction`.
-        guard let stored else { throw BillingError.missingName }
-        return stored
     }
 
     /// The idle cutoff for work claimed by `project`: its override, else the
@@ -354,20 +356,39 @@ public enum BillingStore {
             projectRoot: span.repoRoot, branch: span.branch, database: database
         )
         let cutoff = Self.cutoffSeconds(for: project, default: defaultCutoffSeconds)
+        // Widened by the input lag on both sides: an idle row that ends just
+        // before the span, or starts just after it, may be one absence with a
+        // row inside it (a restart split them), and the cutoff measures the
+        // whole absence.
+        let lag = BillingDerivation.inputLagSeconds
+        let idle = try database.billingIdleIntervals(
+            from: UTCTimestamp.epochSeconds(span.startedAt).map { UTCTimestamp.string(epochSeconds: $0 - lag) }
+                ?? span.startedAt,
+            to: span.endedAt.isEmpty ? "" : UTCTimestamp.epochSeconds(span.endedAt)
+                .map { UTCTimestamp.string(epochSeconds: $0 + lag) } ?? span.endedAt
+        )
         // The opt-out, as for sessions: no new trace, and a run left open by
-        // an earlier pass is closed with no time rather than shown Running
-        // forever.
+        // an earlier pass is closed where its run ends once the span is
+        // treated as finished — keeping the time it accrued — or, when no run
+        // covers it any more, at its own start with no time.
         guard resolution.projectId != nil || trackUnassigned else {
             let open = try database.runningBillingSegments(origin: BillingSegmentDTO.autoOrigin)
                 .filter { $0.sessionId == span.sessionId }
+            let finished = BillingDerivation.appRuns(
+                spanStart: span.startedAt, spanEnd: span.endedAt.isEmpty ? now : span.endedAt, idle: idle,
+                cutoffSeconds: cutoff, now: now
+            )
             for segment in open {
-                try database.closeBillingSegment(id: segment.id, endedAt: segment.startedAt, seconds: 0)
+                let run = finished.first { $0.startedAt <= segment.startedAt && segment.startedAt < $0.endedAt }
+                let end = run?.endedAt ?? segment.startedAt
+                try database.closeBillingSegment(
+                    id: segment.id, endedAt: end, seconds: UTCTimestamp.seconds(from: segment.startedAt, to: end)
+                )
             }
             try database.markAppSpanBillingDerived(spanId: span.id, at: span.endedAt)
             return 0
         }
 
-        let idle = try database.billingIdleIntervals(from: span.startedAt, to: span.endedAt)
         let runs = BillingDerivation.appRuns(
             spanStart: span.startedAt, spanEnd: span.endedAt, idle: idle,
             cutoffSeconds: cutoff, now: now
@@ -386,14 +407,35 @@ public enum BillingStore {
         let written = try database.replaceDerivedSegments(
             sessionId: span.sessionId, runs: runs, context: context, historyStartsAt: nil
         )
-        // Stamped with `endedAt` as read at selection: an open span stamps ""
-        // and is re-selected every pass until it closes. So does a closed span
-        // that an idle interval still open overlaps: that idle was measured up
-        // to `now`, and once it grows past the cutoff the time it covers must
-        // come back out — which only happens if the span is derived again.
-        let idleStillOpen = idle.contains { $0.idleUntil.isEmpty }
-        try database.markAppSpanBillingDerived(spanId: span.id, at: idleStillOpen ? "" : span.endedAt)
+        try database.markAppSpanBillingDerived(
+            spanId: span.id,
+            at: staysPending(span, idle: idle, cutoffSeconds: cutoff, now: now) ? "" : span.endedAt
+        )
         return written
+    }
+
+    /// Whether a span must be derived again on a later pass, so it is stamped
+    /// `""` rather than with its `endedAt` (as read at selection):
+    /// - an open span, until it closes;
+    /// - a closed span younger than the input lag: the idle row for its tail
+    ///   lands up to that late, backdated, and must still be cut;
+    /// - a closed span an open idle row overlaps, until that row has run past
+    ///   the cutoff (and the lag): it was measured up to `now`, and the time
+    ///   it covers comes out only once it grows past the cutoff. After that
+    ///   the output is fixed, however long the row stays open (a screen lock
+    ///   never closes it).
+    static func staysPending(
+        _ span: BillingAppSpanRow, idle: [BillingIdleInterval], cutoffSeconds: Int, now: String
+    ) -> Bool {
+        guard !span.endedAt.isEmpty else { return true }
+        let lag = BillingDerivation.inputLagSeconds
+        guard let nowSeconds = UTCTimestamp.epochSeconds(now) else { return true }
+        if let ended = UTCTimestamp.epochSeconds(span.endedAt), nowSeconds - ended <= lag { return true }
+        return idle.contains { interval in
+            guard interval.idleUntil.isEmpty else { return false }
+            guard let from = UTCTimestamp.epochSeconds(interval.idleFrom) else { return true }
+            return nowSeconds - from < cutoffSeconds + lag
+        }
     }
 
     /// Closes this session's open derived runs without writing anything new:

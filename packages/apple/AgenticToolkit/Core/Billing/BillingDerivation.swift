@@ -30,6 +30,12 @@ public enum BillingDerivation {
     /// The cutoff used when the caller supplies a nonsensical one.
     public static let defaultCutoffSeconds = 15 * 60
 
+    /// How late an idle row can land relative to the input it describes: the
+    /// input trigger's 60 s threshold plus one 30 s poll. Two idle rows this
+    /// close are one absence (a daemon restart splits one in two), and a
+    /// closed span younger than this may still gain the row for its tail.
+    public static let inputLagSeconds = 90
+
     /// - Parameters:
     ///   - activityTimestamps: UTC ISO-8601, any order; ambient event types are
     ///     already excluded by the caller (the host decides which events count as activity).
@@ -107,8 +113,10 @@ public enum BillingDerivation {
 
     /// Splits one app-activity span into runs at its idle gaps.
     ///
-    /// An idle interval of at least `cutoffSeconds` is cut out of the span
-    /// (an open one counts as idle until `now`); shorter idles stay billed.
+    /// An absence of at least `cutoffSeconds` is cut out of the span (an open
+    /// idle row counts as idle until `now`); shorter idles stay billed. Idle
+    /// rows no more than `inputLagSeconds` apart are one absence, so a restart
+    /// that split it into two short rows does not make it billable.
     /// An open span (`spanEnd == ""`) runs to `now`, and its last run stays
     /// open unless an open idle past the cutoff ends it — then it closes at
     /// the idle's start, the last input. Any unparsable timestamp yields no
@@ -132,7 +140,7 @@ public enum BillingDerivation {
         }
         guard end > start else { return [] }
 
-        var gaps: [ActivityRuns.Span<Int>] = []
+        var rows: [ActivityRuns.Span<Int>] = []
         for interval in idle {
             guard let from = UTCTimestamp.epochSeconds(interval.idleFrom) else { return [] }
             let until: Int
@@ -142,21 +150,24 @@ public enum BillingDerivation {
                 guard let parsed = UTCTimestamp.epochSeconds(interval.idleUntil) else { return [] }
                 until = parsed
             }
-            guard until - from >= cutoff else { continue }
-            let clippedStart = max(from, start)
-            let clippedEnd = min(until, end)
-            if clippedEnd > clippedStart {
-                gaps.append(ActivityRuns.Span(start: clippedStart, end: clippedEnd))
-            }
+            if until > from { rows.append(ActivityRuns.Span(start: from, end: until)) }
         }
 
-        var pieces: [ActivityRuns.Span<Int>] = []
-        var cursor = start
-        for gap in ActivityRuns.union(gaps) {
-            if gap.start > cursor { pieces.append(ActivityRuns.Span(start: cursor, end: gap.start)) }
-            cursor = max(cursor, gap.end)
+        // Rows within `inputLagSeconds` of each other are one absence split
+        // by a restart: the cutoff applies to the whole absence, the cut only
+        // to the rows that recorded it.
+        var gaps: [ActivityRuns.Span<Int>] = []
+        var cluster: [ActivityRuns.Span<Int>] = []
+        for row in ActivityRuns.union(rows) {
+            if let first = cluster.first, let last = cluster.last, row.start - last.end > inputLagSeconds {
+                if last.end - first.start >= cutoff { gaps += cluster }
+                cluster = []
+            }
+            cluster.append(row)
         }
-        if end > cursor { pieces.append(ActivityRuns.Span(start: cursor, end: end)) }
+        if let first = cluster.first, let last = cluster.last, last.end - first.start >= cutoff { gaps += cluster }
+
+        let pieces = ActivityRuns.subtract([ActivityRuns.Span(start: start, end: end)], gaps)
 
         return pieces.map { piece in
             // A piece reaching `now` on an open span means no gap ends at
