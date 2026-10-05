@@ -2,8 +2,9 @@ import AppKit
 import AgenticToolkitCoreMacOS
 import AgenticToolkitLaunch
 
-/// The standard first-run dialog: a fixed-size, closable window with the
-/// subclass's content above a Cancel/Confirm row. Closing it is Cancel.
+/// The standard first-run dialog: a fixed-size, closable window with an
+/// optional headline message, the subclass's content, and a Cancel/Confirm
+/// row. Closing it is Cancel.
 ///
 /// Subclass and override the titles, `makeContentView()`, `isConfirmEnabled`
 /// and `jobsForConfirm()`; call `updateConfirmEnabled()` when your content changes.
@@ -28,6 +29,9 @@ open class FirstRunDialog: NSWindowController, NSWindowDelegate {
 
     public let confirmButton = NSButton(title: "", target: nil, action: nil)
     public let cancelButton = NSButton(title: "", target: nil, action: nil)
+    /// The headline above the content; nil when the dialog was given no message.
+    public private(set) var messageLabel: NSTextField?
+    private let message: String?
     private let modal: any ModalSession
     private var continuation: CheckedContinuation<Result, Never>?
     /// Bumped by every runModal() and complete(); a queued run-loop block does
@@ -35,7 +39,14 @@ open class FirstRunDialog: NSWindowController, NSWindowDelegate {
     private var generation = 0
     private var inModal = false
 
-    public init(modal: any ModalSession = ApplicationModalSession()) {
+    /// Space around the window's content and between its parts.
+    public static let inset: CGFloat = 24
+    public static let spacing: CGFloat = 20
+
+    /// `message`, when given, is a headline above the content: a greeting on
+    /// first run, say, that a later visit to the same dialog leaves out.
+    public init(message: String? = nil, modal: any ModalSession = ApplicationModalSession()) {
+        self.message = message
         self.modal = modal
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 480, height: 300),
                               styleMask: [.titled, .closable], backing: .buffered, defer: false)
@@ -60,12 +71,20 @@ open class FirstRunDialog: NSWindowController, NSWindowDelegate {
         confirmButton.action = #selector(confirmClicked)
         confirmButton.keyEquivalent = "\r"
         let buttons = NSStackView(views: [NSView(), cancelButton, confirmButton])
-        let stack = NSStackView(views: [makeContentView(), buttons])
+        var parts: [NSView] = [makeContentView(), buttons]
+        if let message {
+            let label = NSTextField(wrappingLabelWithString: message)
+            label.font = .systemFont(ofSize: 22, weight: .semibold)
+            messageLabel = label
+            parts.insert(label, at: 0)
+        }
+        let stack = NSStackView(views: parts)
         stack.orientation = .vertical
         stack.alignment = .leading
-        stack.spacing = 16
-        stack.edgeInsets = NSEdgeInsets(top: 20, left: 20, bottom: 20, right: 20)
-        buttons.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -40).isActive = true
+        stack.spacing = Self.spacing
+        stack.edgeInsets = NSEdgeInsets(top: Self.inset, left: Self.inset, bottom: Self.inset, right: Self.inset)
+        buttons.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -2 * Self.inset).isActive = true
+        messageLabel?.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -2 * Self.inset).isActive = true
         window.contentView = stack
         window.setContentSize(stack.fittingSize)
         updateConfirmEnabled()

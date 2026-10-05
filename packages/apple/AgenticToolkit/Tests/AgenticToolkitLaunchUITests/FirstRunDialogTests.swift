@@ -64,6 +64,26 @@ private func waitForEnter(_ session: RecordingSession) async throws {
         #expect(window.title == "Sample")
     }
 
+    @Test func noMessageMeansContentFirst() throws {
+        let dialog = SampleDialog(modal: RecordingSession())
+        #expect(dialog.messageLabel == nil)
+        let stack = try #require(dialog.window?.contentView as? NSStackView)
+        #expect((stack.arrangedSubviews.first as? NSTextField)?.stringValue == "content")
+    }
+
+    @Test func messageIsAHeadlineAboveTheContent() throws {
+        let dialog = SampleDialog(message: "Welcome to Sample", modal: RecordingSession())
+        let label = try #require(dialog.messageLabel)
+        #expect(label.stringValue == "Welcome to Sample")
+        let stack = try #require(dialog.window?.contentView as? NSStackView)
+        #expect(stack.arrangedSubviews.first === label)
+        let content = try #require(stack.arrangedSubviews.dropFirst().first as? NSTextField)
+        #expect(content.stringValue == "content")
+        let labelSize = try #require(label.font).pointSize
+        let contentSize = try #require(content.font).pointSize
+        #expect(labelSize > contentSize)
+    }
+
     @Test func buttonsUseOverriddenTitlesAndEnablement() {
         let dialog = SampleDialog(modal: RecordingSession())
         #expect(dialog.cancelButton.title == "Not now")
