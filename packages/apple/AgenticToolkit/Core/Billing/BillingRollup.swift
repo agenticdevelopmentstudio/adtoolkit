@@ -189,18 +189,24 @@ public enum BillingRollup {
         var followUps: Set<BillingProjectDay> = []
         for projectDay in slotsByDay.keys.sorted(by: earlier) {
             try database.transaction {
-                var attached = 0
-                for slot in slotsByDay[projectDay] ?? [] where try attach(
-                    grouped[slot] ?? [], to: slot, project: projects[slot.projectId] ?? nil,
-                    options: options, database: database
-                ) {
-                    attached += 1
+                // The days of the entries that took time: the slot's own,
+                // or another where a frozen owner's open supplement is
+                // listed (it may have been moved off the slot's day).
+                var receivers: Set<BillingProjectDay> = []
+                for slot in slotsByDay[projectDay] ?? [] {
+                    if let day = try attach(
+                        grouped[slot] ?? [], to: slot, project: projects[slot.projectId] ?? nil,
+                        options: options, database: database
+                    ) {
+                        receivers.insert(BillingProjectDay(projectId: slot.projectId, day: day))
+                    }
                 }
-                guard attached > 0 else { return }
-                let settled = try settleDay(projectDay, database: database)
-                rolled.count += settled.changed
-                rolled.days.insert(projectDay)
-                if settled.changed > 0 { followUps.formUnion(around(projectDay, settled: settled)) }
+                for receiver in receivers.sorted(by: earlier) {
+                    let settled = try settleDay(receiver, database: database)
+                    rolled.count += settled.changed
+                    rolled.days.insert(receiver)
+                    if settled.changed > 0 { followUps.formUnion(around(receiver, settled: settled)) }
+                }
             }
         }
         rolled.count += try settleCascading(followUps, database: database)
@@ -212,7 +218,9 @@ public enum BillingRollup {
 
     /// Attaches one group's segments to the entry that should hold them,
     /// creating it if there is none. The figures are `settleDay`'s, written
-    /// right after in the same transaction. Returns whether anything attached.
+    /// right after in the same transaction. Returns the day the receiving
+    /// entry is listed on — not always the slot's: a frozen owner's open
+    /// supplement can sit on another — or nil when nothing attached.
     ///
     /// The segments are re-read inside the caller's write transaction. Read
     /// on a snapshot, a Mark Billed committed in between was undone by the
@@ -224,7 +232,7 @@ public enum BillingRollup {
         project: BillingProjectDTO?,
         options: BillingRollupOptions,
         database: any BillingPersistence
-    ) throws -> Bool {
+    ) throws -> String? {
         // Still unattached, still billable, still where they were grouped:
         // another writer may have rolled, re-derived or reassigned them, or
         // deleted the project, since the candidate read.
@@ -234,7 +242,7 @@ public enum BillingRollup {
             return segment.projectId == slot.projectId && segment.repoId == original.repoId
                 && segment.startedAt == original.startedAt && segment.tz == original.tz
         }
-        guard !fresh.isEmpty else { return false }
+        guard !fresh.isEmpty else { return nil }
 
         let owner = try slotOwner(slot, database: database)
 
@@ -251,13 +259,15 @@ public enum BillingRollup {
         }
 
         let entryId: String
+        let day: String
         if let target {
             entryId = target.entry.id
+            day = target.entry.day
             // A legacy `''` day entry is re-keyed the first time it takes time.
             if target.entry.supplementsEntryId == nil, target.entry.groupKey != slot.groupKey {
                 guard try database.upsertBillingEntry(
                     rewritten(target.entry, groupKey: slot.groupKey), overwrite: .rollupOwned
-                ) else { return false }
+                ) else { return nil }
             }
         } else {
             let entry = try compose(
@@ -265,11 +275,12 @@ public enum BillingRollup {
             )
             // The entry row goes in first: a segment may only point at an
             // entry that exists.
-            guard try database.upsertBillingEntry(entry, overwrite: .rollupOwned) else { return false }
+            guard try database.upsertBillingEntry(entry, overwrite: .rollupOwned) else { return nil }
             entryId = entry.id
+            day = entry.day
         }
         try database.attachSegments(ids: fresh.map(\.id), toEntry: entryId)
-        return true
+        return day
     }
 
     /// The entry owning `slot`. A day entry written before day keys carried
@@ -566,6 +577,14 @@ public enum BillingRollup {
         var laterClaude: [BillingRange] = []
         for item in others {
             let segments = segmentsOf[item.entry.id] ?? []
+            // An earlier day holding app time — in any entry, frozen or open,
+            // root or supplement — is what this day's runs reach into: it
+            // yields to them, and takes back what they let go (an orphan of
+            // a frozen entry there has no other way to be settled). Settle it
+            // again whenever this day changes.
+            if item.entry.day < projectDay.day, segments.contains(where: isAppSegment) {
+                settled.earlier.insert(item.entry.day)
+            }
             if isFrozen(item.entry) {
                 taken = BillingRange.union(taken, try ownedRanges(item, segments: segments, database: database))
             } else if item.entry.day < projectDay.day {
@@ -576,11 +595,8 @@ public enum BillingRollup {
                 let app = BillingRange.subtract(owned, shield)
                 taken = BillingRange.union(taken, BillingRange.intersect(owned, shield))
                 earlierApp = BillingRange.union(earlierApp, app)
-                // Its app time is what this day's runs reach into: settle it
-                // again once they change.
-                if !app.isEmpty || segments.contains(where: isAppSegment) {
-                    settled.earlier.insert(item.entry.day)
-                }
+                // App time it owns through a frozen relative's segment.
+                if !app.isEmpty { settled.earlier.insert(item.entry.day) }
             } else {
                 settled.later.insert(item.entry.day)
                 laterClaude = BillingRange.union(
