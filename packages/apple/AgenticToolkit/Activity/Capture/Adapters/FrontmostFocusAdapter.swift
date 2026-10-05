@@ -65,6 +65,12 @@ public final class FrontmostFocusAdapter: FocusSource {
     public var onAccessibilityRevoked: (@MainActor () -> Void)?
     /// Set on the first denied read; see ``onAccessibilityRevoked``.
     public private(set) var accessibilityRevoked = false
+    /// Which apps are worth a window read at all, by bundle id; `nil` reads
+    /// every app. A host that discards readings of most apps (Stenographer
+    /// keeps only its tracked-app allowlist) sets this so a browser or chat
+    /// app in front costs no AX traffic and no address-bar walk — it is still
+    /// reported, app-only.
+    public var shouldReadWindows: ((String) -> Bool)?
 
     public init(readsWindows: Bool = true) {
         self.readsWindows = readsWindows
@@ -120,7 +126,11 @@ public final class FrontmostFocusAdapter: FocusSource {
         guard let a = apps.frontmostApplication else { return }
         let pid = a.processIdentifier
         let bundleID = a.bundleIdentifier ?? "unknown"
-        var reading = readsWindows && !accessibilityRevoked ? windowReader(pid, bundleID) : WindowReading()
+        // An app that has just quit can still be the cached frontmost one when
+        // a late AX notification arrives. Reading it is wasted at best, and the
+        // terminal lookup is an Apple Event to an app that is gone.
+        let reads = readsWindows && !a.isTerminated && (shouldReadWindows?(bundleID) ?? true)
+        var reading = reads && !accessibilityRevoked ? windowReader(pid, bundleID) : WindowReading()
         if reading.accessDenied {
             revokeAccessibility()
             reading = WindowReading()
@@ -129,7 +139,7 @@ public final class FrontmostFocusAdapter: FocusSource {
         // working directory is asked for over Apple Events instead — but only
         // once Accessibility has had its turn, so an app that really does have
         // a document is never charged the round-trip.
-        let documentPath = readsWindows && !accessibilityRevoked
+        let documentPath = reads && !accessibilityRevoked
             ? (reading.documentPath ?? terminals?.workingDirectory(forBundleID: bundleID))
             : nil
         onFocus?(WindowFocus(app: AppInfo(bundleID: bundleID,
@@ -163,29 +173,30 @@ public final class FrontmostFocusAdapter: FocusSource {
 
     /// `bundleID` is passed in rather than re-derived from the pid because it
     /// selects how the address bar is read — see ``BrowserAddressReader``.
-    nonisolated static func focusedWindow(pid: pid_t, bundleID: String) -> WindowReading {
-        let appEl = AXUIElementCreateApplication(pid)
-        // Bound the AX messaging round-trip: a hung/unresponsive frontmost
-        // app must not stall the main run loop indefinitely.
-        AXUIElementSetMessagingTimeout(appEl, 1.0)
-        var winRef: CFTypeRef?
-        // Verify the returned CF type before casting: a soft return here beats
-        // an `as!` trap crashing the daemon's main thread if a frontmost app's
-        // AX server ever answers kAXFocusedWindowAttribute with an off-type value.
-        let status = AXUIElementCopyAttributeValue(appEl, kAXFocusedWindowAttribute as CFString, &winRef)
+    ///
+    /// Every element read is bounded first (``BoundedAX``): a hung or
+    /// unresponsive frontmost app must not stall the main run loop for AX's
+    /// six-second default on each of the window, focused-element and browser
+    /// reads.
+    nonisolated static func focusedWindow(pid: pid_t, bundleID: String, ax: BoundedAX = .live,
+                                          windowID: (AXUIElement) -> CGWindowID = liveWindowID)
+        -> WindowReading {
+        let appEl = ax.bound(AXUIElementCreateApplication(pid))
+        // The element read verifies the CF type before casting: a soft return
+        // beats an `as!` trap crashing the daemon's main thread if a frontmost
+        // app's AX server ever answers kAXFocusedWindowAttribute off-type.
+        let (status, window) = ax.element(appEl, kAXFocusedWindowAttribute)
         // The grant is gone: stop here, before a second AX call stalls tccd again.
         if deniesAccess(status) { return WindowReading(accessDenied: true) }
-        guard status == .success, let winRef, CFGetTypeID(winRef) == AXUIElementGetTypeID() else { return WindowReading() }
-        let w = winRef as! AXUIElement   // safe: type-id verified above
-        var tRef: CFTypeRef?; AXUIElementCopyAttributeValue(w, kAXTitleAttribute as CFString, &tRef)
-        var dRef: CFTypeRef?; AXUIElementCopyAttributeValue(w, kAXDocumentAttribute as CFString, &dRef)
-        var wid: CGWindowID = 0
-        _ = _AXUIElementGetWindow(w, &wid)
+        guard let w = window else { return WindowReading() }
+        let tRef = ax.attribute(w, kAXTitleAttribute).1
+        let dRef = ax.attribute(w, kAXDocumentAttribute).1
+        let wid = windowID(w)
 
         // A window that names no document may still be showing one: some apps
         // hang it on the focused element instead. Asked for only in that case,
         // so an app that answered on the window pays nothing.
-        let rawDocument = (dRef as? String) ?? focusedElementDocument(appEl)
+        let rawDocument = (dRef as? String) ?? focusedElementDocument(appEl, ax: ax)
 
         // `kAXDocumentAttribute` is answered with a file URL by document apps
         // and with a page URL by Chromium browsers; `WindowAddress` is what
@@ -194,9 +205,16 @@ public final class FrontmostFocusAdapter: FocusSource {
         // any app that is not a browser at all.
         let address = WindowAddress(rawDocument: rawDocument)
         let url = address?.urlString
-            ?? BrowserAddressReader.address(inWindow: w, bundleID: bundleID)
+            ?? BrowserAddressReader.address(inWindow: w, bundleID: bundleID, ax: ax)
         return WindowReading(windowID: wid, title: (tRef as? String) ?? "",
                              documentPath: address?.filePath, url: url)
+    }
+
+    /// The window's `CGWindowID` through the SPI; 0 when it will not say.
+    nonisolated static func liveWindowID(_ window: AXUIElement) -> CGWindowID {
+        var wid: CGWindowID = 0
+        _ = _AXUIElementGetWindow(window, &wid)
+        return wid
     }
 
     /// The document named by the app's *focused element*, for apps that hang it
@@ -220,17 +238,11 @@ public final class FrontmostFocusAdapter: FocusSource {
     /// Two tabs open on the *same* directory still collapse into one reading.
     /// That is the intended answer: the directory is the context being
     /// recorded, and two views of one project are one context.
-    nonisolated static func focusedElementDocument(_ appElement: AXUIElement) -> String? {
-        var focused: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(appElement, kAXFocusedUIElementAttribute as CFString,
-                                            &focused) == .success,
-              let focused, CFGetTypeID(focused) == AXUIElementGetTypeID()
-        else { return nil }
-        var document: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(focused as! AXUIElement,   // safe: type-id verified
-                                            kAXDocumentAttribute as CFString,
-                                            &document) == .success
-        else { return nil }
+    nonisolated static func focusedElementDocument(_ appElement: AXUIElement,
+                                                   ax: BoundedAX = .live) -> String? {
+        guard let focused = ax.element(appElement, kAXFocusedUIElementAttribute).1 else { return nil }
+        let (status, document) = ax.attribute(focused, kAXDocumentAttribute)
+        guard status == .success else { return nil }
         return document as? String
     }
 }

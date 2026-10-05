@@ -34,12 +34,33 @@ final class RepoLocatorTests: XCTestCase {
             "/wt/meta/worktrees/b/HEAD": "ref: refs/heads/rel\n"]))
         XCTAssertEqual(locator.locate("/wt/b"), RepoLocation(root: "/wt", branch: "rel"))
     }
-    func testSubmoduleMatchesGitCommonDirParent() {
-        let locator = RepoLocator(fileSystem: fs(dirs: [], files: [
+    /// Review F12: a submodule bills to its superproject, as `GitProjectRoot`
+    /// resolves it, not to a directory inside the superproject's `.git`.
+    func testSubmoduleResolvesToItsSuperproject() {
+        let locator = RepoLocator(fileSystem: fs(dirs: ["/super/.git"], files: [
+            "/super/.git/HEAD": "ref: refs/heads/main\n",
             "/super/sub/.git": "gitdir: ../.git/modules/sub\n",
             "/super/.git/modules/sub/HEAD": "ref: refs/heads/dev\n"]))
-        XCTAssertEqual(locator.locate("/super/sub/a.swift"),
-                       RepoLocation(root: "/super/.git/modules", branch: "dev"))
+        XCTAssertEqual(locator.locate("/super/sub/a.swift"), RepoLocation(root: "/super", branch: "main"))
+    }
+    func testSubmoduleOfALinkedWorktreeResolvesToTheMainRepo() {
+        let locator = RepoLocator(fileSystem: fs(dirs: [], files: [
+            "/wt/b/.git": "gitdir: /src/app/.git/worktrees/b\n",
+            "/src/app/.git/worktrees/b/commondir": "../..\n",
+            "/src/app/.git/worktrees/b/HEAD": "ref: refs/heads/b\n",
+            "/wt/b/external/kit/.git": "gitdir: ../../../../src/app/.git/worktrees/b/modules/external/kit\n",
+            "/src/app/.git/worktrees/b/modules/external/kit/HEAD": "ref: refs/heads/kit-branch\n"]))
+        XCTAssertEqual(locator.locate("/wt/b/external/kit/Sources/a.swift"),
+                       RepoLocation(root: "/src/app", branch: "b"))
+    }
+    func testNestedSubmodulesClimbToTheTopmostSuperproject() {
+        let locator = RepoLocator(fileSystem: fs(dirs: ["/super/.git"], files: [
+            "/super/.git/HEAD": "ref: refs/heads/main\n",
+            "/super/a/.git": "gitdir: ../.git/modules/a\n",
+            "/super/.git/modules/a/HEAD": "ref: refs/heads/x\n",
+            "/super/a/b/.git": "gitdir: ../../.git/modules/a/modules/b\n",
+            "/super/.git/modules/a/modules/b/HEAD": "ref: refs/heads/y\n"]))
+        XCTAssertEqual(locator.locate("/super/a/b/f"), RepoLocation(root: "/super", branch: "main"))
     }
     func testRealGitWorktreeAndSubmoduleMatchCommonDir() throws {
         let base = (NSTemporaryDirectory() as NSString).appendingPathComponent("rl-\(UUID().uuidString)")
@@ -69,7 +90,10 @@ final class RepoLocatorTests: XCTestCase {
         _ = try git(main, "worktree", "add", "-q", "-b", "feat", wt)
         _ = try git(main, "submodule", "add", "-q", subSrc, "sub")
         for dir in [main, wt, main + "/sub"] {
-            let common = try git(dir, "rev-parse", "--path-format=absolute", "--git-common-dir")
+            // A submodule is billed to its superproject, so its expected root
+            // is the superproject's common-dir parent (what GitProjectRoot gives).
+            let owner = dir == main + "/sub" ? main : dir
+            let common = try git(owner, "rev-parse", "--path-format=absolute", "--git-common-dir")
             let expected = (common as NSString).deletingLastPathComponent
             // git reports /private/var/...; Foundation's symlink resolution drops /private.
             func bare(_ p: String?) -> String? { p.map { $0.hasPrefix("/private/") ? String($0.dropFirst(8)) : $0 } }

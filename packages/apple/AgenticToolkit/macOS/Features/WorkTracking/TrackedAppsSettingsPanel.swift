@@ -4,7 +4,6 @@ import UniformTypeIdentifiers
 import AgenticToolkitCore
 import AgenticToolkitCoreUI
 import AgenticToolkitCoreMacOS
-import AgenticToolkitMacOS
 
 /// Settings → Tracked Apps: whether app time is recorded, whether the
 /// Accessibility grant that lets it be attributed is in place, which apps
@@ -44,7 +43,8 @@ public final class TrackedAppsSettingsPanel: ComposableSettings.SettingsPanelVie
                 status: @escaping @MainActor () async -> WorkTrackingStatus?,
                 recheck: @escaping @MainActor () async -> WorkTrackingStatus?,
                 openAccessibilitySettings: @escaping @MainActor () -> Void = TrackedAppsSettingsPanel.openPrivacyPane,
-                chooseApp: @escaping @MainActor () -> (bundleId: String, name: String)? = TrackedAppsSettingsPanel.chooseApplication) {
+                chooseApp: @escaping @MainActor () -> (bundleId: String, name: String)?
+                    = TrackedAppsSettingsPanel.chooseApplication) {
         self.settings = settings
         self.status = status
         self.recheck = recheck
@@ -78,10 +78,11 @@ public final class TrackedAppsSettingsPanel: ComposableSettings.SettingsPanelVie
     }
 
     /// Preferences after toggling one row.
-    static func toggling(_ bundleId: String, on: Bool, in prefs: WorkTrackingPreferences) -> WorkTrackingPreferences {
+    static func toggling(_ bundleId: String, on isOn: Bool,
+                         in prefs: WorkTrackingPreferences) -> WorkTrackingPreferences {
         var next = prefs
         let isDefault = AppAllowlist.defaults.contains { $0.bundleId == bundleId }
-        if on {
+        if isOn {
             next.removedBundleIds.removeAll { $0 == bundleId }
         } else if isDefault {
             next.removedBundleIds.append(bundleId)
@@ -283,8 +284,8 @@ public final class TrackedAppsSettingsPanel: ComposableSettings.SettingsPanelVie
         }
     }
 
-    private func apply(toggling bundleId: String, on: Bool) {
-        write(Self.toggling(bundleId, on: on, in: settings.preferences))
+    private func apply(toggling bundleId: String, on isOn: Bool) {
+        write(Self.toggling(bundleId, on: isOn, in: settings.preferences))
     }
 
     private func addTapped() {

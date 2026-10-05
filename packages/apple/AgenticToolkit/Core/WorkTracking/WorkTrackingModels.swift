@@ -51,6 +51,15 @@ public struct WorkTrackingStatus: Codable, Sendable, Equatable {
     public static let degradedNotice = "Tracking without Accessibility — time is unassigned."
 }
 
+/// How a work-tracking list reply says "that failed" (review F25) — the same
+/// convention as `BillingWire.readFailedRow`.
+public enum WorkTrackingWire {
+    /// The snake-case key of the one-element list a failed list read replies.
+    public static let readFailedKey = "work_tracking_read_failed"
+    /// The whole element: `{"work_tracking_read_failed":true}`.
+    public static let readFailedRow = Data("{\"\(readFailedKey)\":true}".utf8)
+}
+
 /// The daemon's `settings` keys for work tracking.
 public enum WorkTrackingSettingsKeys {
     public static let enabled = "activity_enabled"

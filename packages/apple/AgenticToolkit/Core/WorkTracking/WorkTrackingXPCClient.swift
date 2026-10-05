@@ -58,21 +58,56 @@ public final class WorkTrackingXPCClient<Transport: WorkTrackingXPCTransport>: W
         } }
     }
 
+    /// How long Check Again waits. The daemon answers only after its live
+    /// Accessibility check, and without the grant that check stalls on tccd
+    /// for about ten seconds — a shorter wait drops the "denied" it is about to
+    /// send and shows "Unknown" instead (review F24).
+    public static var recheckTimeout: TimeInterval { 15 }
+
     public func recheckPermissions() async -> WorkTrackingStatus? {
-        await status { try await self.transport.callData(timeout: 5, retries: 0) {
+        await status { try await self.transport.callData(timeout: Self.recheckTimeout, retries: 0) {
             $0.workTrackingRecheckPermissions(reply: $1)
         } }
     }
 
+    /// nil when the daemon is unreachable or replied
+    /// ``WorkTrackingWire/readFailedRow`` — a failed read is never "none".
     public func spans(since: String?, limit: Int) async -> [ActivitySpanDTO]? {
-        try? await transport.callDecodingArray(ActivitySpanDTO.self, timeout: nil, retries: 0) {
-            $0.workTrackingSpans(since: since, limit: limit, reply: $1)
+        guard let rows = try? await transport.callDecodingArray(
+            WorkTrackingListRow<ActivitySpanDTO>.self, timeout: nil, retries: 0, {
+                $0.workTrackingSpans(since: since, limit: limit, reply: $1)
+            }) else { return nil }
+        var spans: [ActivitySpanDTO] = []
+        for row in rows {
+            guard case .value(let span) = row else { return nil }
+            spans.append(span)
         }
+        return spans
     }
 
     /// Empty data (the daemon's "failed") or an unreadable body is nil.
     private func status(_ call: () async throws -> Data) async -> WorkTrackingStatus? {
         guard let data = try? await call(), !data.isEmpty else { return nil }
         return try? Self.makeReplyDecoder().decode(WorkTrackingStatus.self, from: data)
+    }
+}
+
+/// One element of a work-tracking list reply: a row, or
+/// `WorkTrackingWire.readFailedRow`.
+enum WorkTrackingListRow<T: Decodable>: Decodable {
+    case value(T)
+    case readFailed
+
+    /// The reply decoder reads snake case, so the sentinel's key arrives
+    /// camel-cased.
+    private enum Key: String, CodingKey { case workTrackingReadFailed }
+
+    init(from decoder: Decoder) throws {
+        if let container = try? decoder.container(keyedBy: Key.self),
+           (try? container.decode(Bool.self, forKey: .workTrackingReadFailed)) == true {
+            self = .readFailed
+        } else {
+            self = .value(try T(from: decoder))
+        }
     }
 }

@@ -103,6 +103,37 @@ final class FrontmostElementObserverTests: XCTestCase {
         XCTAssertEqual(accessibility.subscribes, 1, "no retry, and no re-ask on the next activation")
     }
 
+    // MARK: - Title changes (review F44)
+
+    @MainActor
+    func testABurstOfTitleChangesIsOneReRead() async throws {
+        let observer = FrontmostElementObserver(accessibility: CountingAccessibility(result: .failed),
+                                                retryDelays: [], titleCoalescing: .milliseconds(50))
+        defer { observer.stop() }
+        observer.start()
+        var reads = 0
+        observer.onChange = { reads += 1 }
+        for _ in 0..<5 { observer.notifyChanged(kAXTitleChangedNotification) }
+        XCTAssertEqual(reads, 0, "a title change waits for its burst to end")
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(reads, 1, "five spinner frames, one window read")
+    }
+
+    @MainActor
+    func testAFocusMoveIsReadAtOnceAndAnswersAWaitingTitleChange() async throws {
+        let observer = FrontmostElementObserver(accessibility: CountingAccessibility(result: .failed),
+                                                retryDelays: [], titleCoalescing: .milliseconds(50))
+        defer { observer.stop() }
+        observer.start()
+        var reads = 0
+        observer.onChange = { reads += 1 }
+        observer.notifyChanged(kAXTitleChangedNotification)
+        observer.notifyChanged(kAXFocusedUIElementChangedNotification)
+        XCTAssertEqual(reads, 1)
+        try await Task.sleep(for: .milliseconds(300))
+        XCTAssertEqual(reads, 1, "the focus read already saw the new title")
+    }
+
     // MARK: - Inside one subscribe
 
     @MainActor
@@ -146,7 +177,48 @@ final class FrontmostElementObserverTests: XCTestCase {
         XCTAssertEqual(adds.count, FrontmostElementObserver.notifications.count)
     }
 
+    @MainActor
+    func testTheMessagingTimeoutIsSetBeforeTheFirstRegistration() {
+        // Every registration messages the target app. Without a timeout on
+        // the element first, a hung frontmost app holds the main actor for
+        // AX's six-second default per notification.
+        let calls = CallLog()
+        let accessibility = SystemFrontmostElementAX(
+            create: { _ in (.success, NSObject()) },
+            add: { _, _, name, _ in calls.entries.append("add \(name)"); return .failure },
+            createApplication: { pid in calls.entries.append("create"); return AXUIElementCreateApplication(pid) },
+            setTimeout: { _, seconds in calls.entries.append("timeout \(seconds)"); return .success }
+        )
+        _ = accessibility.subscribe(
+            pid: 4242, notifications: FrontmostElementObserver.notifications, context: Self.context)
+        XCTAssertEqual(Array(calls.entries.prefix(2)), ["create", "timeout 1.0"])
+        XCTAssertEqual(calls.entries.filter { $0.hasPrefix("add") }.count,
+                       FrontmostElementObserver.notifications.count)
+    }
+
+    @MainActor
+    func testAnAppThatDoesNotAnswerEndsTheSubscribeAtTheFirstCall() {
+        // `.cannotComplete` is the app missing the messaging timeout. Three
+        // more registrations would wait three more timeouts on a hung app.
+        let adds = CallCounter()
+        let accessibility = SystemFrontmostElementAX(
+            create: { _ in (.success, NSObject()) },
+            add: { _, _, _, _ in adds.count += 1; return .cannotComplete },
+            setTimeout: { _, _ in .success }
+        )
+        let result = accessibility.subscribe(
+            pid: 4242, notifications: FrontmostElementObserver.notifications, context: Self.context)
+        guard case .failed = result else { return XCTFail("expected .failed, got \(result)") }
+        XCTAssertEqual(adds.count, 1, "no registration is attempted after the app fails to answer")
+    }
+
     private static var context: UnsafeMutableRawPointer { UnsafeMutableRawPointer(bitPattern: 0x1)! }
+}
+
+/// Records the AX calls made inside one `subscribe`, in order.
+@MainActor
+private final class CallLog {
+    var entries: [String] = []
 }
 
 /// Counts the AX calls made inside one `subscribe`.

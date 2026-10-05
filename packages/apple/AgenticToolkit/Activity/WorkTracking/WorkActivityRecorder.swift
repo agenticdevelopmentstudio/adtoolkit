@@ -14,13 +14,19 @@ public final class WorkActivityRecorder {
         public var input: any ContextTrigger
         public var session: any ContextTrigger
         public var lifecycle: any ContextTrigger
+        /// The focus reader, when it can be told which apps to read windows
+        /// of. The recorder points it at its allowlist, so an app it would
+        /// throw away is never read.
+        public var windowReads: FrontmostFocusAdapter?
 
         public init(focus: any ContextTrigger, input: any ContextTrigger,
-                    session: any ContextTrigger, lifecycle: any ContextTrigger) {
+                    session: any ContextTrigger, lifecycle: any ContextTrigger,
+                    windowReads: FrontmostFocusAdapter? = nil) {
             self.focus = focus
             self.input = input
             self.session = session
             self.lifecycle = lifecycle
+            self.windowReads = windowReads
         }
 
         /// The production set. `readsWindows: false` without the AX grant.
@@ -31,11 +37,20 @@ public final class WorkActivityRecorder {
         ) -> Triggers {
             let adapter = FrontmostFocusAdapter(readsWindows: readsWindows)
             adapter.onAccessibilityRevoked = onAccessibilityRevoked
-            return Triggers(focus: AppFocusTrigger(source: adapter),
+            // The recorder reads neither the document's metadata nor the
+            // executable path, so neither is paid for on each focus change.
+            return Triggers(focus: AppFocusTrigger(source: adapter, metadata: NoDocumentMetadata(),
+                                                   executablePath: { _ in nil }),
                      input: InputActivityTrigger(interval: 30, idleThreshold: 60),
                      session: SessionTrigger(),
-                     lifecycle: AppLifecycleTrigger())
+                     lifecycle: AppLifecycleTrigger(),
+                     windowReads: adapter)
         }
+    }
+
+    /// Answers no metadata without touching the filesystem.
+    struct NoDocumentMetadata: DocumentMetadataReading {
+        func metadata(forPath path: String) -> DocumentMetadata? { nil }
     }
 
     private let triggers: Triggers
@@ -51,6 +66,11 @@ public final class WorkActivityRecorder {
 
     private var builder = ActivitySpanBuilder()
     private var current: ActivitySpanDTO?
+    /// The open span's title changed since it was last written. A retitle is
+    /// held in memory and written with the next heartbeat or the close, not on
+    /// every change: a title that animates (a terminal spinner) would
+    /// otherwise be an UPDATE per frame for a span whose repo never moved.
+    private var titleUnwritten = false
     private var lastFocus: AppFocusDetail?
     private var inputActive = true
     /// When input last resumed this run. The next idle closes any interval
@@ -58,6 +78,11 @@ public final class WorkActivityRecorder {
     /// to land would otherwise leave one idle open forever, and every span
     /// after it would wait on it to derive.
     private var lastResumedAt: String?
+    /// An idle row this run opened and has not closed. The input trigger's
+    /// first tick reports the absence `start()` already recorded; splitting
+    /// the row there would cut one absence into two, each of which can fall
+    /// under a billing cutoff that the whole absence crosses.
+    private var idleOpen = false
     private var running = false
     /// Not main-actor isolated only so `deinit` can invalidate it; every other
     /// access is on the main actor.
@@ -99,6 +124,8 @@ public final class WorkActivityRecorder {
         let presence = triggers.input as? any PresenceSampling
         inputActive = presence?.samplePresence() ?? true
         lastResumedAt = nil
+        idleOpen = false
+        filterWindowReads()
         // Started mid-absence (a restart while the user is away): the idle
         // row starts at the last input, so the absence the stop or crash
         // split stays one, with no billable gap at the restart. A no-op when
@@ -106,6 +133,7 @@ public final class WorkActivityRecorder {
         if !inputActive, let silence = presence?.sampleSilence() {
             let from = UTCTimestamp.string(from: now().addingTimeInterval(-silence))
             write { try $0.openIdleInterval(from: from) }
+            idleOpen = true
         }
         let wired: [any ContextTrigger] = [triggers.focus, triggers.input, triggers.session, triggers.lifecycle]
         for trigger in wired {
@@ -142,6 +170,7 @@ public final class WorkActivityRecorder {
             write { try $0.closeIdleInterval(until: until) }
         }
         inputActive = true
+        idleOpen = false
         builder = ActivitySpanBuilder()
         lastFocus = nil
         running = false
@@ -150,7 +179,10 @@ public final class WorkActivityRecorder {
     /// Replaces the allowlist and re-evaluates the current focus.
     public func update(allowlist: AppAllowlist) {
         self.allowlist = allowlist
+        filterWindowReads()
         if running, let lastFocus { handleFocus(lastFocus, at: now(), remember: false) }
+        // An app just allowed was last read app-only; read its window now.
+        if running { triggers.windowReads?.poll() }
     }
 
     /// Test seam: feeds an event as if a trigger emitted it.
@@ -160,8 +192,9 @@ public final class WorkActivityRecorder {
             handleFocus(focus, at: date, remember: true)
         case .appLifecycle(let lifecycle):
             guard lifecycle.change == .terminated else { return }
-            apply(builder.appTerminated(bundleId: lifecycle.bundleID, at: date))
-            if lastFocus?.bundleID == lifecycle.bundleID { lastFocus = nil }
+            apply(builder.appTerminated(bundleId: lifecycle.bundleID, pid: lifecycle.pid, at: date))
+            // The same copy only: another one sharing the bundle id is still running.
+            if lastFocus?.bundleID == lifecycle.bundleID, lastFocus?.pid == lifecycle.pid { lastFocus = nil }
         case .session(let session):
             switch session.change {
             case .lock: apply(builder.suspend(.locked, at: date))
@@ -174,6 +207,10 @@ public final class WorkActivityRecorder {
             switch input.change {
             case .inactive:
                 inputActive = false
+                // Already recorded: the absence is the one the row open now
+                // describes, so there is nothing to close or reopen.
+                guard !idleOpen else { return }
+                idleOpen = true
                 let from = UTCTimestamp.string(from: date)
                 // Anything still open ended when input last resumed (or now, if
                 // it never did this run). A no-op when the last close landed.
@@ -182,6 +219,7 @@ public final class WorkActivityRecorder {
                 write { try $0.openIdleInterval(from: from) }
             case .active:
                 inputActive = true
+                idleOpen = false
                 let until = UTCTimestamp.string(from: date)
                 lastResumedAt = until
                 write { try $0.closeIdleInterval(until: until) }
@@ -194,6 +232,7 @@ public final class WorkActivityRecorder {
 
     /// Test seam: one heartbeat tick.
     func heartbeat() {
+        writeTitleIfChanged()
         guard let current, inputActive else { return }
         let id = current.id
         let at = UTCTimestamp.string(from: now())
@@ -219,7 +258,8 @@ public final class WorkActivityRecorder {
                                             title: focus.windowTitle ?? "")
         let attribution = SpanAttribution(bundleId: app.bundleId, appName: app.name,
                                           windowTitle: focus.windowTitle ?? "", workingPath: resolved.path,
-                                          repoRoot: resolved.repo?.root ?? "", branch: resolved.repo?.branch ?? "")
+                                          repoRoot: resolved.repo?.root ?? "", branch: resolved.repo?.branch ?? "",
+                                          pid: focus.pid)
         apply(builder.focus(attribution, at: date))
     }
 
@@ -227,6 +267,7 @@ public final class WorkActivityRecorder {
         for command in commands {
             switch command {
             case .open(let attribution, let date):
+                titleUnwritten = false
                 let span = ActivitySpanDTO(bundleId: attribution.bundleId, appName: attribution.appName,
                                            windowTitle: attribution.windowTitle, workingPath: attribution.workingPath,
                                            repoRoot: attribution.repoRoot, branch: attribution.branch,
@@ -235,6 +276,7 @@ public final class WorkActivityRecorder {
                 write { try $0.openActivitySpan(span) }
             case .close(let date):
                 guard let closing = current else { continue }
+                writeTitleIfChanged()
                 current = nil
                 let ended = UTCTimestamp.string(from: date)
                 write { try $0.closeActivitySpan(id: closing.id, endedAt: ended) }
@@ -242,10 +284,23 @@ public final class WorkActivityRecorder {
                 guard var span = current else { continue }
                 span.windowTitle = title
                 current = span
-                let id = span.id
-                write { try $0.retitleActivitySpan(id: id, title: title) }
+                titleUnwritten = true
             }
         }
+    }
+
+    /// Window reads only for apps this recorder keeps.
+    private func filterWindowReads() {
+        let allowlist = allowlist
+        triggers.windowReads?.shouldReadWindows = { allowlist.app(for: $0) != nil }
+    }
+
+    private func writeTitleIfChanged() {
+        guard titleUnwritten, let span = current else { return }
+        titleUnwritten = false
+        let id = span.id
+        let title = span.windowTitle
+        write { try $0.retitleActivitySpan(id: id, title: title) }
     }
 
     private func write(_ operation: @escaping @Sendable (any ActivityPersistence) throws -> Void) {

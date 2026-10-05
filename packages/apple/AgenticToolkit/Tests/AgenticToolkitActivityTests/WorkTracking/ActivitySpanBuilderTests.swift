@@ -38,6 +38,16 @@ final class ActivitySpanBuilderTests: XCTestCase {
         XCTAssertEqual(b.appTerminated(bundleId: "x", at: t1), [.close(at: t1)])
         XCTAssertNil(b.open)
     }
+    func testQuittingAnotherCopyWithTheSameBundleIDLeavesTheSpanOpen() {
+        // Xcode and Xcode-beta share com.apple.dt.Xcode; quitting the beta
+        // must not close the span of the Xcode still being worked in.
+        let xcode = SpanAttribution(bundleId: "x", appName: "Xcode", workingPath: "/r", repoRoot: "/r",
+                                    branch: "main", pid: 100)
+        var b = ActivitySpanBuilder(); _ = b.focus(xcode, at: t0)
+        XCTAssertEqual(b.appTerminated(bundleId: "x", pid: 200, at: t1), [])
+        XCTAssertEqual(b.open, xcode)
+        XCTAssertEqual(b.appTerminated(bundleId: "x", pid: 100, at: t1), [.close(at: t1)])
+    }
     func testStrayResumeWhileOpenIsIgnored() {
         var b = ActivitySpanBuilder(); _ = b.focus(xcodeApp, at: t0)
         XCTAssertEqual(b.resume(.locked, at: t1), [])

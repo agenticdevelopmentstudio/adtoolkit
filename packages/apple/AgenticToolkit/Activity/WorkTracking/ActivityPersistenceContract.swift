@@ -1,3 +1,5 @@
+// AgenticToolkitCore is macOS-only, so this is too (review F29).
+#if os(macOS)
 import Foundation
 import AgenticToolkitCore
 
@@ -36,6 +38,9 @@ public enum ActivityPersistenceContract {
             ("recovery with idle", recoveryWithIdle),
             ("recovery ignores late idle", recoveryIgnoresLateIdle),
             ("recovery leaves closed spans", recoveryLeavesClosedSpans),
+            ("recovery does not count deleted spans", recoveryDoesNotCountDeletedSpans),
+            ("re-close keeps first close", reCloseKeepsFirstClose),
+            ("duplicate id throws", duplicateIdThrows),
             ("listing", listing)
         ]
         for (name, check) in checks {
@@ -150,6 +155,37 @@ public enum ActivityPersistenceContract {
         if ended != at(60) { out.append("closed span changed to \(ended ?? "nil")") }
     }
 
+    /// Review F31: a span recovered to under a second is deleted, and a
+    /// deleted span is not a recovered one.
+    private static func recoveryDoesNotCountDeletedSpans(_ store: any ActivityPersistence,
+                                                         _ out: inout [String]) throws {
+        try store.openActivitySpan(span("short"))
+        try store.openActivitySpan(span("long", start: 100))
+        try store.touchActivitySpan(id: "long", at: at(200))
+        let count = try store.recoverActivity(now: at(3600))
+        if count != 1 { out.append("expected 1 span recovered (the other was deleted), got \(count)") }
+    }
+
+    /// Review F33: closing a closed span keeps its first end.
+    private static func reCloseKeepsFirstClose(_ store: any ActivityPersistence, _ out: inout [String]) throws {
+        try store.openActivitySpan(span("a"))
+        try store.closeActivitySpan(id: "a", endedAt: at(60))
+        try store.closeActivitySpan(id: "a", endedAt: at(120))
+        let ended = try endedAt(store, "a")
+        if ended != at(60) { out.append("re-close moved the end to \(ended ?? "nil")") }
+    }
+
+    /// Review F33: an id is a span's identity; opening it twice is refused.
+    private static func duplicateIdThrows(_ store: any ActivityPersistence, _ out: inout [String]) throws {
+        try store.openActivitySpan(span("a"))
+        do {
+            try store.openActivitySpan(span("a", start: 10))
+            out.append("a second span with the same id was accepted")
+        } catch {}
+        let count = try store.activitySpans(since: at(-10), limit: 10).count
+        if count != 1 { out.append("expected 1 stored span, got \(count)") }
+    }
+
     private static func listing(_ store: any ActivityPersistence, _ out: inout [String]) throws {
         try store.openActivitySpan(span("mid", start: 100))
         try store.closeActivitySpan(id: "mid", endedAt: at(160))
@@ -162,3 +198,4 @@ public enum ActivityPersistenceContract {
         if limited != ["live", "mid"] { out.append("limit not respected: \(limited)") }
     }
 }
+#endif

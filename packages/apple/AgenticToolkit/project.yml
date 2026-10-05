@@ -1270,6 +1270,7 @@ aggregateTargets:
       - AgenticToolkitHub-macOS
       - AgenticToolkitHubService-macOS
       - AgenticToolkitHubUI-macOS
+      - AgenticToolkitActivity-macOS
 
   # The spec files this store under "macOS, iOS", and `AgenticToolkitMarkdown-iOS`
   # existed but was reachable from no aggregate and no scheme — so nothing ever
@@ -1288,6 +1289,7 @@ aggregateTargets:
       - AgenticToolkitHub-iOS
       - AgenticToolkitHubService-iOS
       - AgenticToolkitHubUI-iOS
+      - AgenticToolkitActivity-iOS
 
   AgenticToolkitMacOSTestsAll:
     targets:
@@ -1334,6 +1336,8 @@ aggregateTargets:
       - AgenticToolkitHubServiceTests
       - AgenticToolkitHubUI-macOS
       - AgenticToolkitHubUITests
+      - AgenticToolkitActivity-macOS
+      - AgenticToolkitActivityTests
 
 schemes:
   AgenticToolkitDatabase:

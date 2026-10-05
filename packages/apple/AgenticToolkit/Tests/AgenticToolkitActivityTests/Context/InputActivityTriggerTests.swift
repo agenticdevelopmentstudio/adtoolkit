@@ -12,6 +12,19 @@ private final class ScriptedInputSource: InputStatisticsSource {
     }
 }
 
+/// Silence measured from a settable moment of last input against a shared clock.
+@MainActor
+private final class ClockedInputSource: InputStatisticsSource {
+    var clock: InputActivityTriggerTests.Box?
+    var lastInputAt: TimeInterval = 0
+    func sample() -> InputSample {
+        let silence = max(0, (clock?.now ?? 0) - lastInputAt)
+        return InputSample(secondsSinceKey: silence, secondsSinceMouseMove: silence,
+                           secondsSinceClick: silence, secondsSinceScroll: silence,
+                           keyCount: 0, mouseCount: 0)
+    }
+}
+
 @MainActor
 final class InputActivityTriggerTests: XCTestCase {
     /// Every reading the same, so a test that only cares about presence says
@@ -146,6 +159,51 @@ final class InputActivityTriggerTests: XCTestCase {
         // 995 − 60. Not 815 (the poll's view of it), and not 700 (the gap
         // between the two ticks that noticed).
         XCTAssertEqual(try XCTUnwrap(d.idleSeconds), 935, accuracy: 0.001)
+    }
+
+    func testAReturnIsDatedAtTheFirstInputEvenWhenTypingNeverStops() throws {
+        // The user is away, comes back at t=1000 and types straight through, so
+        // every reading after the return shows (almost) no silence. The trigger
+        // is driven at whatever cadence it asks for; the resumption must land
+        // within that cadence of the real return, not one presence interval late.
+        let source = ClockedInputSource()
+        let clock = Box(now: 0)
+        source.clock = clock
+        source.lastInputAt = -900
+        let t = InputActivityTrigger(interval: 30, awayInterval: 1, idleThreshold: 180,
+                                     source: source, now: { clock.date })
+        var captured: [(ContextEventDetail, Date)] = []
+        t.onEvent = { captured.append(($0, $1)) }
+        try t.start()
+        defer { t.stop() }
+        t.tick()                                       // inactive, found at t=0
+        XCTAssertEqual(t.pollInterval, 1, "away, so polling fast")
+        while captured.count < 2, clock.now < 2_000 {
+            clock.now += t.pollInterval
+            if clock.now >= 1_000 { source.lastInputAt = clock.now }   // typing continuously
+            t.tick()
+        }
+        XCTAssertEqual(captured.count, 2)
+        guard case .input(let d) = captured[1].0 else { return XCTFail("wrong detail kind") }
+        XCTAssertEqual(d.change, .active)
+        XCTAssertLessThanOrEqual(captured[1].1.timeIntervalSince1970, 1_001,
+                                 "the return was dated a whole poll interval late")
+        XCTAssertEqual(t.pollInterval, 30, "back to the presence cadence once the user is here")
+    }
+
+    func testInputOfAnyKindCountsAsPresence() throws {
+        // A long drag or a right click moves none of the four named readings.
+        let (t, _, _) = trigger([InputSample(secondsSinceKey: 900, secondsSinceMouseMove: 900,
+                                             secondsSinceClick: 900, secondsSinceScroll: 900,
+                                             keyCount: 0, mouseCount: 0, secondsSinceAnyInput: 2)],
+                                threshold: 180)
+        var captured: [ContextEventDetail] = []
+        t.onEvent = { d, _ in captured.append(d) }
+        try t.start()
+        t.tick()
+        guard case .input(let d) = captured[0] else { return XCTFail("wrong detail kind") }
+        XCTAssertEqual(d.change, .active)
+        XCTAssertEqual(t.samplePresence(), true)
     }
 
     func testThresholdAppliesAtTheNextTickWithoutRestarting() throws {
@@ -283,7 +341,8 @@ final class InputActivityTriggerTests: XCTestCase {
         for (name, seconds) in [("key", first.secondsSinceKey),
                                 ("mouse move", first.secondsSinceMouseMove),
                                 ("click", first.secondsSinceClick),
-                                ("scroll", first.secondsSinceScroll)] {
+                                ("scroll", first.secondsSinceScroll),
+                                ("any input", first.secondsSinceAnyInput)] {
             let value = try XCTUnwrap(seconds, "\(name) idle time")
             XCTAssertGreaterThanOrEqual(value, 0, "\(name) idle time cannot run backwards")
             XCTAssertTrue(value.isFinite, "\(name) idle time must be a real reading")

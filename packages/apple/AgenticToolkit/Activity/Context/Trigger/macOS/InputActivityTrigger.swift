@@ -8,14 +8,20 @@ public struct InputSample: Sendable, Equatable {
     public let secondsSinceMouseMove: Double?
     public let secondsSinceClick: Double?
     public let secondsSinceScroll: Double?
+    /// Seconds since input of *any* kind — drags, right and middle clicks and
+    /// modifier changes included, which the four named readings miss. Not
+    /// stored on its own; it only takes part in deciding how long the machine
+    /// has been quiet.
+    public let secondsSinceAnyInput: Double?
     /// Monotonic lifetime counters — meaningful only as differences.
     public let keyCount: Int64?
     public let mouseCount: Int64?
 
     public init(secondsSinceKey: Double?, secondsSinceMouseMove: Double?,
                 secondsSinceClick: Double?, secondsSinceScroll: Double?,
-                keyCount: Int64?, mouseCount: Int64?) {
+                keyCount: Int64?, mouseCount: Int64?, secondsSinceAnyInput: Double? = nil) {
         self.secondsSinceKey = secondsSinceKey
+        self.secondsSinceAnyInput = secondsSinceAnyInput
         self.secondsSinceMouseMove = secondsSinceMouseMove
         self.secondsSinceClick = secondsSinceClick
         self.secondsSinceScroll = secondsSinceScroll
@@ -53,8 +59,14 @@ public final class SystemInputStatisticsSource: InputStatisticsSource {
             secondsSinceClick: CGEventSource.secondsSinceLastEventType(state, eventType: .leftMouseDown),
             secondsSinceScroll: CGEventSource.secondsSinceLastEventType(state, eventType: .scrollWheel),
             keyCount: Int64(CGEventSource.counterForEventType(state, eventType: .keyDown)),
-            mouseCount: Int64(CGEventSource.counterForEventType(state, eventType: .mouseMoved)))
+            mouseCount: Int64(CGEventSource.counterForEventType(state, eventType: .mouseMoved)),
+            secondsSinceAnyInput: CGEventSource.secondsSinceLastEventType(state, eventType: Self.anyInput))
     }
+
+    /// `kCGAnyInputEventType`, `((CGEventType)(~0))` in CGEventTypes.h. Its raw
+    /// value is also `kCGEventTapDisabledByUserInput`'s, so the initialiser
+    /// resolves to a real case and the unwrap cannot trap (as `IdleAdapter`).
+    static let anyInput = CGEventType(rawValue: ~0)!
 }
 
 /// Reports when the user leaves this machine and when they come back.
@@ -97,6 +109,13 @@ public final class InputActivityTrigger: ContextTrigger, PresenceSampling {
     public var idleThreshold: TimeInterval
 
     private let interval: TimeInterval
+    /// How often to poll while the user is away. The resumption is dated at
+    /// the tick that sees input, less the silence on it; a user who types
+    /// straight through after returning leaves no silence to subtract, so the
+    /// tick's own lateness is the error. At the 30 s idle cadence that error
+    /// lengthened every absence by up to 30 s, enough to push a break just
+    /// under a billing cutoff over it.
+    private let awayInterval: TimeInterval
     private let source: any InputStatisticsSource
     private let now: () -> Date
     private var timer: Timer?
@@ -118,10 +137,12 @@ public final class InputActivityTrigger: ContextTrigger, PresenceSampling {
     private var inactiveSince: Date?
 
     public init(interval: TimeInterval = 30,
+                awayInterval: TimeInterval = 1,
                 idleThreshold: TimeInterval = TimeInterval(InactivityThreshold.defaultSeconds),
                 source: any InputStatisticsSource = SystemInputStatisticsSource(),
                 now: @escaping () -> Date = { Date() }) {
         self.interval = interval
+        self.awayInterval = min(awayInterval, interval)
         self.idleThreshold = idleThreshold
         self.source = source
         self.now = now
@@ -133,7 +154,18 @@ public final class InputActivityTrigger: ContextTrigger, PresenceSampling {
         lastEmitted = nil
         wasActive = nil
         inactiveSince = nil
-        let t = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+        schedule(every: interval)
+    }
+
+    /// The cadence the trigger is polling at now (test seam): `interval` while
+    /// the user is present, `awayInterval` while they are away.
+    private(set) var pollInterval: TimeInterval = 0
+
+    private func schedule(every seconds: TimeInterval) {
+        guard isRunning, seconds != pollInterval || timer == nil else { return }
+        timer?.invalidate()
+        pollInterval = seconds
+        let t = Timer(timeInterval: seconds, repeats: true) { [weak self] _ in
             MainActor.assumeIsolated { self?.tick() }
         }
         // .common so ticks keep arriving while a menu or window drag has the
@@ -146,6 +178,7 @@ public final class InputActivityTrigger: ContextTrigger, PresenceSampling {
         isRunning = false
         timer?.invalidate()
         timer = nil
+        pollInterval = 0
         lastEmitted = nil
         wasActive = nil
         inactiveSince = nil
@@ -165,6 +198,8 @@ public final class InputActivityTrigger: ContextTrigger, PresenceSampling {
         // found. Without it, a daemon started while the user was already away
         // records nothing until they come back, and the timeline cannot tell
         // an idle machine from one that was switched off.
+        // Away: poll fast, so the return is seen within a second of it.
+        defer { schedule(every: wasActive == false ? awayInterval : interval) }
         guard let previouslyActive = wasActive else {
             wasActive = isActive
             if isActive {
@@ -213,8 +248,9 @@ public final class InputActivityTrigger: ContextTrigger, PresenceSampling {
         return silence == .greatestFiniteMagnitude ? nil : silence
     }
 
-    /// How long the machine has been quiet: the *most recent* of the four
-    /// event classes, because any one of them means somebody is there.
+    /// How long the machine has been quiet: the *most recent* of the event
+    /// readings, any-input included, because any one of them means somebody
+    /// is there.
     /// Readings the system did not supply are ignored rather than counted as
     /// silence — a missing figure is not evidence of absence.
     ///
@@ -223,7 +259,8 @@ public final class InputActivityTrigger: ContextTrigger, PresenceSampling {
     /// tells us nothing must not be able to assert that somebody is present.
     private static func silence(in sample: InputSample) -> TimeInterval {
         let readings = [sample.secondsSinceKey, sample.secondsSinceMouseMove,
-                        sample.secondsSinceClick, sample.secondsSinceScroll].compactMap { $0 }
+                        sample.secondsSinceClick, sample.secondsSinceScroll,
+                        sample.secondsSinceAnyInput].compactMap { $0 }
         return readings.min() ?? .greatestFiniteMagnitude
     }
 

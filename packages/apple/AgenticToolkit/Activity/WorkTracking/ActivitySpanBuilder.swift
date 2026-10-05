@@ -9,9 +9,14 @@ public struct SpanAttribution: Sendable, Equatable {
     public let workingPath: String
     public let repoRoot: String
     public let branch: String
+    /// The process the reading came from. Not part of ``key``: it only says
+    /// *which* copy of an app a quit belongs to, because two copies can share
+    /// a bundle id (Xcode and Xcode-beta are both `com.apple.dt.Xcode`).
+    public let pid: Int32?
 
     public init(bundleId: String, appName: String, windowTitle: String = "", workingPath: String = "",
-                repoRoot: String = "", branch: String = "") {
+                repoRoot: String = "", branch: String = "", pid: Int32? = nil) {
+        self.pid = pid
         self.bundleId = bundleId
         self.appName = appName
         self.windowTitle = windowTitle
@@ -61,11 +66,20 @@ public struct ActivitySpanBuilder: Sendable {
         return closed + [.open(attribution, at: date)]
     }
 
-    public mutating func appTerminated(bundleId: String, at date: Date) -> [SpanCommand] {
+    /// An app quit. Matched on the process when both sides know it, so quitting
+    /// one copy of an app does not close the span of another copy that shares
+    /// its bundle id; on the bundle id alone when either side does not.
+    public mutating func appTerminated(bundleId: String, pid: Int32? = nil, at date: Date) -> [SpanCommand] {
         var commands: [SpanCommand] = []
-        if open?.bundleId == bundleId { commands = closeOpen(at: date) }
-        if lastFocus?.bundleId == bundleId { lastFocus = nil }
+        if let open, Self.matches(open, bundleId: bundleId, pid: pid) { commands = closeOpen(at: date) }
+        if let lastFocus, Self.matches(lastFocus, bundleId: bundleId, pid: pid) { self.lastFocus = nil }
         return commands
+    }
+
+    private static func matches(_ attribution: SpanAttribution, bundleId: String, pid: Int32?) -> Bool {
+        guard attribution.bundleId == bundleId else { return false }
+        guard let pid, let own = attribution.pid else { return true }
+        return pid == own
     }
 
     public mutating func suspend(_ reason: SpanSuspension, at date: Date) -> [SpanCommand] {

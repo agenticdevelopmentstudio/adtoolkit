@@ -92,6 +92,15 @@ final class WorkTrackingXPCClientTests: XCTestCase {
         XCTAssertEqual(transport.calls.last?.retries, 0)
     }
 
+    /// Review F24: the recheck outlasts the ~10 s tccd stall of a missing grant.
+    func testRecheckWaitsLongerThanTheAccessibilityStall() async {
+        transport.data = wire(WorkTrackingStatus(enabled: true))
+        _ = await client.recheckPermissions()
+        let timeout = try? XCTUnwrap(transport.calls.last?.timeout ?? nil)
+        XCTAssertGreaterThan(timeout ?? 0, 10)
+        XCTAssertEqual(transport.calls.last?.retries, 0)
+    }
+
     func testSpansDecodeNewestFirstAsSent() async {
         func literal(_ id: String, _ start: String) -> Data {
             Data("""
@@ -104,6 +113,16 @@ final class WorkTrackingXPCClientTests: XCTestCase {
         XCTAssertEqual(spans?.map(\.id), ["b", "a"])
         XCTAssertEqual(spans?.first?.bundleId, "com.x")
         XCTAssertEqual(spans?.first?.startedAt, "2026-10-03T10:00:00Z")
+    }
+
+    /// Review F25: a failed read is not "no activity".
+    func testAFailedSpansReadIsNilNotEmpty() async {
+        transport.rows = [WorkTrackingWire.readFailedRow]
+        let failed = await client.spans(since: nil, limit: 10)
+        XCTAssertNil(failed)
+        transport.rows = []
+        let none = await client.spans(since: nil, limit: 10)
+        XCTAssertEqual(none, [])
     }
 
     @MainActor

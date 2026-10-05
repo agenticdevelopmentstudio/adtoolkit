@@ -10,7 +10,16 @@ import AgenticToolkitPermissions
 private struct FakeRunningApps: RunningAppsProvider {
     var runningApplications: [NSRunningApplication] { [NSRunningApplication.current] }
     func runningApplications(withBundleIdentifier bundleID: String) -> [NSRunningApplication] { [] }
-    var frontmostApplication: NSRunningApplication? { NSRunningApplication.current }
+    var frontmostApplication: NSRunningApplication? { LiveCurrentApp() }
+}
+
+/// The test process's identity, reported as running. `emit()` skips an app
+/// that has quit, and a bare `NSRunningApplication` subclass reads as quit.
+private final class LiveCurrentApp: NSRunningApplication, @unchecked Sendable {
+    override var bundleIdentifier: String? { NSRunningApplication.current.bundleIdentifier }
+    override var localizedName: String? { NSRunningApplication.current.localizedName }
+    override var processIdentifier: pid_t { NSRunningApplication.current.processIdentifier }
+    override var isTerminated: Bool { false }
 }
 
 /// A frontmost app that claims to be iTerm2, so the terminal path is the one
@@ -20,12 +29,27 @@ private final class FakeTerminalApp: NSRunningApplication, @unchecked Sendable {
     override var bundleIdentifier: String? { "com.googlecode.iterm2" }
     override var localizedName: String? { "iTerm2" }
     override var processIdentifier: pid_t { 4242 }
+    override var isTerminated: Bool { false }
 }
 
 private struct FakeTerminalApps: RunningAppsProvider {
     var runningApplications: [NSRunningApplication] { [] }
     func runningApplications(withBundleIdentifier bundleID: String) -> [NSRunningApplication] { [] }
     var frontmostApplication: NSRunningApplication? { FakeTerminalApp() }
+}
+
+/// The same terminal, caught after it quit but while still cached frontmost.
+private final class QuitTerminalApp: NSRunningApplication, @unchecked Sendable {
+    override var bundleIdentifier: String? { "com.googlecode.iterm2" }
+    override var localizedName: String? { "iTerm2" }
+    override var processIdentifier: pid_t { 4242 }
+    override var isTerminated: Bool { true }
+}
+
+private struct QuitTerminalApps: RunningAppsProvider {
+    var runningApplications: [NSRunningApplication] { [] }
+    func runningApplications(withBundleIdentifier bundleID: String) -> [NSRunningApplication] { [] }
+    var frontmostApplication: NSRunningApplication? { QuitTerminalApp() }
 }
 
 private final class RecordingProbe: AutomationProbing, @unchecked Sendable {
@@ -113,6 +137,49 @@ final class FrontmostFocusAdapterReadsWindowsTests: XCTestCase {
         XCTAssertNil(seen?.documentPath)
         XCTAssertEqual(probe.calls, 0)
         XCTAssertEqual(runner.calls, 0)
+    }
+
+    func testAnAppThatHasQuitIsNeitherReadNorAskedOverAppleEvents() {
+        var reads = 0
+        let probe = RecordingProbe()
+        let runner = RecordingRunner()
+        let adapter = FrontmostFocusAdapter(
+            readsWindows: true,
+            windowReader: { _, _ in reads += 1; return .init(title: "T") },
+            apps: QuitTerminalApps(),
+            terminals: TerminalWorkingDirectoryReader(probe: probe, runner: runner))
+        var seen: WindowFocus?
+        adapter.onFocus = { seen = $0 }
+        adapter.emit()
+        XCTAssertEqual(reads, 0, "an AX read of a process that is gone")
+        XCTAssertEqual(probe.calls, 0)
+        XCTAssertEqual(runner.calls, 0)
+        XCTAssertEqual(seen?.app.bundleID, "com.googlecode.iterm2", "the focus itself still flows")
+        XCTAssertNil(seen?.documentPath)
+    }
+
+    /// Review F47: an app the host will discard costs no window read.
+    func testAnAppTheHostDoesNotWantIsReadAppOnly() {
+        var reads = 0
+        let probe = RecordingProbe()
+        let runner = RecordingRunner()
+        let adapter = FrontmostFocusAdapter(
+            readsWindows: true,
+            windowReader: { _, _ in reads += 1; return .init(title: "T") },
+            apps: FakeTerminalApps(),
+            terminals: TerminalWorkingDirectoryReader(probe: probe, runner: runner))
+        var asked: [String] = []
+        adapter.shouldReadWindows = { asked.append($0); return false }
+        var seen: WindowFocus?
+        adapter.onFocus = { seen = $0 }
+        adapter.emit()
+        XCTAssertEqual(asked, ["com.googlecode.iterm2"])
+        XCTAssertEqual(reads, 0)
+        XCTAssertEqual(runner.calls, 0)
+        XCTAssertEqual(seen?.title, "")
+        adapter.shouldReadWindows = { _ in true }
+        adapter.emit()
+        XCTAssertEqual(reads, 1)
     }
 
     // MARK: - Accessibility withdrawn mid-run

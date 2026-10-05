@@ -39,6 +39,18 @@ final class TerminalWorkingDirectoryReaderTests: XCTestCase {
         }
     }
 
+    func testEverySupportedTerminalsScriptCannotLaunchIt() {
+        // `tell application` launches an app that is not running; a read that
+        // races the terminal's quit must find it gone, not bring it back.
+        for family in Reader.Family.allCases {
+            let guardLine = "if application id \"\(family.targetBundleID)\" is running then"
+            guard let guardRange = family.script.range(of: guardLine),
+                  let tellRange = family.script.range(of: "tell application id")
+            else { return XCTFail("\(family) sends its Apple Event without checking the app is running") }
+            XCTAssertLessThan(guardRange.lowerBound, tellRange.lowerBound)
+        }
+    }
+
     // MARK: - Spending the one consent
 
     func testAnUnknownAppIsNeverAskedAndNeverProbed() {

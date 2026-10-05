@@ -12,8 +12,9 @@ public struct RepoLocation: Sendable, Equatable {
 
 /// Finds the innermost git repo at or above a path, and its branch, by reading
 /// `.git` directly. Deliberately spawns no `git` process: it runs on every
-/// focus change. (`GitProjectRoot` in Core shells out and resolves to the
-/// *main* working tree; billing here wants the checkout the window is in.)
+/// focus change. It answers what `GitProjectRoot` in Core answers by shelling
+/// out: a linked worktree resolves to its main repo, a submodule to its
+/// superproject — with the branch of the checkout the window is in.
 public struct RepoLocator: Sendable {
     public struct FileSystem: Sendable {
         public enum Kind: Sendable { case directory, file, missing }
@@ -68,6 +69,9 @@ public struct RepoLocator: Sendable {
                 guard let gitDir = gitDir(fromFile: gitPath, workTree: current) else {
                     return RepoLocation(root: current, branch: "")
                 }
+                if isSubmodule(gitDir: gitDir), let enclosing = superproject(of: current) {
+                    return enclosing
+                }
                 return location(gitDir: gitDir, fallbackRoot: current)
             case .missing:
                 break
@@ -81,10 +85,9 @@ public struct RepoLocator: Sendable {
 
     /// `root` is the parent of the git COMMON dir, exactly what the daemon's
     /// `resolveRepoRoot` (`git rev-parse --git-common-dir`) yields, so a linked
-    /// worktree bills to its main repo. Git parity includes a submodule, whose
-    /// gitdir (`<super>/.git/modules/<name>`) has no `commondir`: its root is
-    /// `<super>/.git/modules`. Odd, but it is what the daemon produces.
-    /// `branch` comes from the worktree's own HEAD (`gitDir/HEAD`).
+    /// worktree bills to its main repo. A submodule never reaches here — see
+    /// ``superproject(of:)``. `branch` comes from the worktree's own HEAD
+    /// (`gitDir/HEAD`).
     private func location(gitDir: String, fallbackRoot: String) -> RepoLocation {
         // A gitdir with no readable HEAD (a dangling worktree) is not a git dir:
         // its parent would be bogus, so attribute to the directory holding `.git`.
@@ -99,6 +102,28 @@ public struct RepoLocator: Sendable {
         var root = (commonDir as NSString).deletingLastPathComponent
         if root.isEmpty { root = fallbackRoot }
         return RepoLocation(root: (root as NSString).standardizingPath, branch: branch(headPath: gitDir + "/HEAD"))
+    }
+
+    /// A submodule's gitdir lives in its superproject's git dir, under
+    /// `modules/` (`<super>/.git/modules/<name>`, or
+    /// `<super>/.git/worktrees/<wt>/modules/<name>` for a linked worktree's),
+    /// and — unlike a linked worktree's — has no `commondir`.
+    private func isSubmodule(gitDir: String) -> Bool {
+        gitDir.contains("/modules/") && fileSystem.read(gitDir + "/commondir") == nil
+            && fileSystem.read(gitDir + "/HEAD") != nil
+    }
+
+    /// The repo enclosing a submodule's work tree, located the same way, so a
+    /// submodule bills where `GitProjectRoot` (and so billing repos and the
+    /// session `project_root`) put it: the topmost superproject's main work
+    /// tree. A submodule's own gitdir has no `commondir`, so taking its parent
+    /// as the root named a directory inside the superproject's `.git`, which
+    /// no billing repo can ever equal. Nested submodules climb one level per
+    /// call until a repo that is not one answers.
+    private func superproject(of workTree: String) -> RepoLocation? {
+        let parent = (workTree as NSString).deletingLastPathComponent
+        guard !parent.isEmpty, parent != workTree else { return nil }
+        return locate(parent)
     }
 
     private func gitDir(fromFile gitFile: String, workTree: String) -> String? {

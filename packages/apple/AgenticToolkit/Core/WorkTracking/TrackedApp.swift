@@ -1,5 +1,4 @@
 import Foundation
-import AgenticToolkitCore
 
 /// How a tracked app's working path is found.
 public enum PathResolverKind: String, Sendable, Codable { case document, editor, terminal, none }

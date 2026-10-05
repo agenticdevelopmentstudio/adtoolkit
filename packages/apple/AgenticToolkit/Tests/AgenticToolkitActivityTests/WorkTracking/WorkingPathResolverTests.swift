@@ -1,3 +1,4 @@
+#if os(macOS)
 import XCTest
 @testable import AgenticToolkitActivity
 
@@ -59,4 +60,40 @@ final class WorkingPathResolverTests: XCTestCase {
     func testEmptyDocumentPathFallsBackToTitle() {
         XCTAssertEqual(resolver().workingPath(kind: .editor, documentPath: "", title: "x — app"), "/src/app")
     }
+
+    // MARK: - Review F19: a folder name with a hyphen in it
+
+    func testAFolderNamedWithAHyphenIsMatchedWhole() {
+        let r = resolver(["/Users/me/Development/Client - Website", "/Users/me/replica/Website"])
+        for title in ["Client - Website", "Client - Website – Main.kt", "Main.kt — Client - Website",
+                      "main.ts - Client - Website - Visual Studio Code"] {
+            XCTAssertEqual(r.workingPath(kind: .editor, documentPath: nil, title: title),
+                           "/Users/me/Development/Client - Website", title)
+        }
+    }
+
+    // MARK: - Review F20: decorated terminal titles
+
+    func testATerminalTitleOfAHomeRelativePathIsExpanded() {
+        XCTAssertEqual(resolver().workingPath(kind: .terminal, documentPath: nil, title: "~/Development/clientA"),
+                       NSHomeDirectory() + "/Development/clientA")
+        XCTAssertEqual(resolver().workingPath(kind: .terminal, documentPath: nil, title: "~"), NSHomeDirectory())
+    }
+
+    func testATerminalTitleDropsUserAtHostAndSuffixes() {
+        XCTAssertEqual(resolver().workingPath(kind: .terminal, documentPath: nil, title: "me@host:~/src/x"),
+                       NSHomeDirectory() + "/src/x")
+        XCTAssertEqual(resolver().workingPath(kind: .terminal, documentPath: nil,
+                                              title: "/Volumes/Work/clientB — -zsh — 80x24"),
+                       "/Volumes/Work/clientB")
+        XCTAssertEqual(resolver().workingPath(kind: .terminal, documentPath: nil, title: "-zsh — me@mac:/src/app"),
+                       "/src/app")
+    }
+
+    func testATerminalTitleResolvesToItsRepo() {
+        let r = resolver().attribution(kind: .terminal, documentPath: nil, title: "me@mac:/src/app/Sources — zsh")
+        XCTAssertEqual(r.path, "/src/app/Sources")
+        XCTAssertEqual(r.repo?.root, "/src/app")
+    }
 }
+#endif

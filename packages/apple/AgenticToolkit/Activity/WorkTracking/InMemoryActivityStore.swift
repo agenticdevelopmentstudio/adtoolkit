@@ -1,3 +1,5 @@
+// AgenticToolkitCore is macOS-only, so this is too (review F29).
+#if os(macOS)
 import Foundation
 import AgenticToolkitCore
 
@@ -30,12 +32,18 @@ public final class InMemoryActivityStore: ActivityPersistence, @unchecked Sendab
         set { lock.withLock { storedIdle = newValue } }
     }
 
+    /// A reused id throws, as the SQL store's primary key does (review F33).
     public func openActivitySpan(_ span: ActivitySpanDTO) throws {
-        lock.withLock { storedSpans.append(span) }
+        try lock.withLock {
+            guard !storedSpans.contains(where: { $0.id == span.id }) else {
+                throw InMemoryActivityStoreError.duplicateSpanId(span.id)
+            }
+            storedSpans.append(span)
+        }
     }
 
     public func closeActivitySpan(id: String, endedAt: String) throws {
-        lock.withLock { close(id: id, endedAt: endedAt) }
+        _ = lock.withLock { close(id: id, endedAt: endedAt) }
     }
 
     public func retitleActivitySpan(id: String, title: String) throws {
@@ -66,14 +74,15 @@ public final class InMemoryActivityStore: ActivityPersistence, @unchecked Sendab
     public func recoverActivity(now: String) throws -> Int {
         lock.withLock {
             let openIdleFrom = storedIdle.filter { $0.until.isEmpty }.map(\.from)
-            let open = storedSpans.filter(\.isOpen)
-            for span in open {
+            var closed = 0
+            for span in storedSpans.filter(\.isOpen) {
                 let end = ActivityRecovery.recoveredEnd(startedAt: span.startedAt, lastSeenAt: span.lastSeenAt,
                                                         openIdleFrom: openIdleFrom)
-                close(id: span.id, endedAt: end)
+                // A sub-second span is deleted, not closed, so it is not counted (review F31).
+                if close(id: span.id, endedAt: end) == .closed { closed += 1 }
             }
             for index in storedIdle.indices where storedIdle[index].until.isEmpty { storedIdle[index].until = now }
-            return open.count
+            return closed
         }
     }
 
@@ -106,13 +115,21 @@ public final class InMemoryActivityStore: ActivityPersistence, @unchecked Sendab
         lock.withLock { storedSpans.filter(\.isOpen) }
     }
 
-    /// Caller holds the lock.
-    private func close(id: String, endedAt: String) {
-        guard let index = storedSpans.firstIndex(where: { $0.id == id }) else { return }
+    /// Caller holds the lock. Only an open span is closed — a re-close keeps
+    /// the first end, as the SQL store's `AND ended_at = ''` does (review F33).
+    @discardableResult
+    private func close(id: String, endedAt: String) -> ActivitySpanClose {
+        guard let index = storedSpans.firstIndex(where: { $0.id == id && $0.isOpen }) else { return .none }
         if UTCTimestamp.seconds(from: storedSpans[index].startedAt, to: endedAt) < 1 {
             storedSpans.remove(at: index)
-        } else {
-            storedSpans[index].endedAt = endedAt
+            return .deleted
         }
+        storedSpans[index].endedAt = endedAt
+        return .closed
     }
 }
+
+public enum InMemoryActivityStoreError: Error, Equatable {
+    case duplicateSpanId(String)
+}
+#endif

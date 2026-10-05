@@ -51,15 +51,22 @@ public final class TerminalWorkingDirectoryReader {
         /// way `AXUIElementSetMessagingTimeout` bounds the Accessibility
         /// round-trip next door — a wedged terminal must not hold the daemon's
         /// main run loop open indefinitely.
+        ///
+        /// `if application id … is running` first, because `tell application`
+        /// *launches* an app that is not running: a read racing the terminal's
+        /// quit would otherwise relaunch it and hold the main actor through
+        /// the launch. The check itself sends no Apple Event.
         public var script: String {
             switch self {
             case .iTerm2:
                 """
-                with timeout of 2 seconds
-                    tell application id "com.googlecode.iterm2"
-                        tell current session of current window to get variable named "path"
-                    end tell
-                end timeout
+                if application id "com.googlecode.iterm2" is running then
+                    with timeout of 2 seconds
+                        tell application id "com.googlecode.iterm2"
+                            tell current session of current window to get variable named "path"
+                        end tell
+                    end timeout
+                end if
                 """
             }
         }

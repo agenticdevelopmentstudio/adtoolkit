@@ -2,6 +2,7 @@
 import XCTest
 @testable import AgenticToolkitActivity
 import AgenticToolkitCore
+import AgenticToolkitMacOS
 
 /// `InMemoryActivityStore` is final, so a failing store wraps one.
 private final class FailingOpenStore: ActivityPersistence, @unchecked Sendable {
@@ -85,6 +86,29 @@ private final class SamplingInputTrigger: ContextTrigger, PresenceSampling {
     func sampleSilence() -> TimeInterval? { silence }
 }
 
+/// Records each retitle written.
+private final class RetitleCountingStore: ActivityPersistence, @unchecked Sendable {
+    let inner = InMemoryActivityStore()
+    private let lock = NSLock()
+    private var titles: [String] = []
+    var retitles: [String] { lock.withLock { titles } }
+    func openActivitySpan(_ span: ActivitySpanDTO) throws { try inner.openActivitySpan(span) }
+    func closeActivitySpan(id: String, endedAt: String) throws { try inner.closeActivitySpan(id: id, endedAt: endedAt) }
+    func retitleActivitySpan(id: String, title: String) throws {
+        lock.withLock { titles.append(title) }
+        try inner.retitleActivitySpan(id: id, title: title)
+    }
+    func touchActivitySpan(id: String, at: String) throws { try inner.touchActivitySpan(id: id, at: at) }
+    func openIdleInterval(from: String) throws { try inner.openIdleInterval(from: from) }
+    func closeIdleInterval(until: String) throws { try inner.closeIdleInterval(until: until) }
+    func recoverActivity(now: String) throws -> Int { try inner.recoverActivity(now: now) }
+    func pruneActivity(endedBefore before: String) throws -> Int { try inner.pruneActivity(endedBefore: before) }
+    func activitySpans(since: String, limit: Int) throws -> [ActivitySpanDTO] {
+        try inner.activitySpans(since: since, limit: limit)
+    }
+    func openActivitySpans() throws -> [ActivitySpanDTO] { try inner.openActivitySpans() }
+}
+
 private final class Counter: @unchecked Sendable {
     private let lock = NSLock()
     private var value = 0
@@ -114,8 +138,9 @@ final class WorkActivityRecorderTests: XCTestCase {
             store: store, now: { [unowned self] in self.clock }, timeZone: { TimeZone(identifier: "UTC")! })
     }
 
-    private static func focusDetail(_ bundle: String, path: String?, title: String = "w") -> ContextEventDetail {
-        .appFocus(AppFocusDetail(bundleID: bundle, appName: bundle, pid: 1, executablePath: nil,
+    private static func focusDetail(_ bundle: String, path: String?, title: String = "w",
+                                    pid: Int32 = 1) -> ContextEventDetail {
+        .appFocus(AppFocusDetail(bundleID: bundle, appName: bundle, pid: pid, executablePath: nil,
                                  windowID: nil, windowTitle: title, documentPath: path,
                                  documentSize: nil, documentModifiedAt: nil, documentType: nil, url: nil))
     }
@@ -157,7 +182,35 @@ final class WorkActivityRecorderTests: XCTestCase {
         focus("com.apple.dt.Xcode", path: "/r/a.swift", title: "a", at: 0)
         focus("com.apple.dt.Xcode", path: "/r/b.swift", title: "b", at: 30)
         XCTAssertEqual(store.spans.count, 1)
+        XCTAssertEqual(recorder.currentSpan?.windowTitle, "b")
+        recorder.heartbeat(); recorder.drainWrites()
         XCTAssertEqual(store.spans[0].windowTitle, "b")
+    }
+
+    /// Review F44: an animating title is one write per heartbeat, not one per frame.
+    func testAnAnimatingTitleIsWrittenOncePerHeartbeat() {
+        let counting = RetitleCountingStore()
+        let rec = WorkActivityRecorder(
+            triggers: Self.triggers(), allowlist: AppAllowlist(preferences: .default),
+            resolver: WorkingPathResolver(knownRoots: { [] }), store: counting,
+            now: { [unowned self] in self.clock })
+        rec.handle(Self.focusDetail("com.apple.dt.Xcode", path: nil, title: "⠋ claude"), at: clock)
+        for (i, frame) in ["⠙", "⠹", "⠸", "⠼", "⠴"].enumerated() {
+            rec.handle(Self.focusDetail("com.apple.dt.Xcode", path: nil, title: "\(frame) claude"),
+                       at: clock.addingTimeInterval(Double(i + 1)))
+        }
+        rec.drainWrites()
+        XCTAssertEqual(counting.retitles.count, 0, "no write per frame")
+        rec.heartbeat(); rec.drainWrites()
+        XCTAssertEqual(counting.retitles.count, 1)
+        rec.heartbeat(); rec.drainWrites()
+        XCTAssertEqual(counting.retitles.count, 1, "nothing new to write")
+        rec.handle(Self.focusDetail("com.apple.dt.Xcode", path: nil, title: "⠦ claude"),
+                   at: clock.addingTimeInterval(10))
+        rec.handle(Self.focusDetail("com.apple.Safari", path: nil), at: clock.addingTimeInterval(11))
+        rec.drainWrites()
+        XCTAssertEqual(counting.retitles, ["⠴ claude", "⠦ claude"], "the close writes the last title first")
+        XCTAssertEqual(counting.inner.spans.first?.windowTitle, "⠦ claude")
     }
 
     func testLockClosesAndUnlockReopens() {
@@ -177,6 +230,36 @@ final class WorkActivityRecorderTests: XCTestCase {
                         at: clock.addingTimeInterval(60))
         recorder.drainWrites()
         XCTAssertFalse(store.spans[0].isOpen)
+    }
+
+    /// Review F21: a quit is matched on the process, not the bundle id alone.
+    func testQuittingAnotherCopyOfTheAppLeavesItsSpanOpen() {
+        recorder.handle(Self.focusDetail("com.apple.dt.Xcode", path: "/r/a.swift", pid: 100), at: clock)
+        recorder.handle(.appLifecycle(AppLifecycleDetail(change: .terminated, bundleID: "com.apple.dt.Xcode",
+                                                         appName: "Xcode-beta", pid: 200)),
+                        at: clock.addingTimeInterval(60))
+        recorder.drainWrites()
+        XCTAssertTrue(store.spans[0].isOpen, "the beta's quit closed the span of the Xcode still in use")
+        XCTAssertNotNil(recorder.currentSpan)
+    }
+
+    /// Review F47: the recorder tells the focus reader which apps it keeps.
+    func testWindowReadsAreLimitedToTheAllowlist() {
+        let adapter = FrontmostFocusAdapter(readsWindows: false, windowReader: { _, _ in .init() },
+                                            apps: RealRunningAppsProvider())
+        var triggers = Self.triggers()
+        triggers.windowReads = adapter
+        let rec = WorkActivityRecorder(
+            triggers: triggers, allowlist: AppAllowlist(preferences: .default),
+            resolver: WorkingPathResolver(knownRoots: { [] }), store: store,
+            now: { [unowned self] in self.clock })
+        rec.start()
+        defer { rec.stop() }
+        XCTAssertEqual(adapter.shouldReadWindows?("com.apple.dt.Xcode"), true)
+        XCTAssertEqual(adapter.shouldReadWindows?("com.apple.Safari"), false)
+        rec.update(allowlist: AppAllowlist(preferences: WorkTrackingPreferences(
+            enabled: true, addedBundleIds: ["com.apple.Safari"], removedBundleIds: [], retentionDays: 90)))
+        XCTAssertEqual(adapter.shouldReadWindows?("com.apple.Safari"), true)
     }
 
     func testIdleIntervalsAreWritten() {
@@ -232,6 +315,28 @@ final class WorkActivityRecorderTests: XCTestCase {
         rec.stop()
         rec.drainWrites()
         XCTAssertEqual(store.idle.first?.until, UTCTimestamp.string(from: clock))
+    }
+
+    /// Review F2: the input trigger's first tick reports the absence `start()`
+    /// already recorded. It must not split that one absence into two rows,
+    /// each short enough to slip under a billing cutoff the whole one crosses.
+    func testTheFirstIdleTickAfterAMidAbsenceStartKeepsOneAbsence() {
+        let rec = WorkActivityRecorder(
+            triggers: .init(focus: FakeContextTrigger(kind: .appFocus),
+                            input: SamplingInputTrigger(present: false, silence: 600),
+                            session: FakeContextTrigger(kind: .session),
+                            lifecycle: FakeContextTrigger(kind: .appLifecycle)),
+            allowlist: AppAllowlist(preferences: .default),
+            resolver: WorkingPathResolver(knownRoots: { [] }),
+            store: store, now: { [unowned self] in self.clock })
+        rec.start()
+        defer { rec.stop() }
+        rec.handle(Self.input(.inactive, idle: 630), at: clock.addingTimeInterval(30))
+        rec.handle(Self.input(.active, idle: 900), at: clock.addingTimeInterval(300))
+        rec.drainWrites()
+        XCTAssertEqual(store.idle.count, 1, "one absence, one row")
+        XCTAssertEqual(store.idle.first?.from, UTCTimestamp.string(from: clock.addingTimeInterval(-600)))
+        XCTAssertEqual(store.idle.first?.until, UTCTimestamp.string(from: clock.addingTimeInterval(300)))
     }
 
     func testAStuckOpenIdleIsClosedWhenTheNextIdleOpens() {

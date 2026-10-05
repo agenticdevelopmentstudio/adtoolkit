@@ -1,6 +1,5 @@
 import XCTest
-@testable import AgenticToolkitActivity
-import AgenticToolkitCore
+@testable import AgenticToolkitCore
 
 final class AppAllowlistTests: XCTestCase {
     func testDefaultsAreAllowedAndOthersAreNot() {
@@ -17,7 +16,8 @@ final class AppAllowlistTests: XCTestCase {
         XCTAssertEqual(list.app(for: "org.example.Editor")?.resolver, .editor)
     }
     func testSublimeMergeIsAGitClientWithNoPath() {
-        XCTAssertEqual(AppAllowlist(preferences: .default).app(for: "com.sublimemerge")?.resolver, PathResolverKind.none)
+        XCTAssertEqual(AppAllowlist(preferences: .default).app(for: "com.sublimemerge")?.resolver,
+                       PathResolverKind.none)
     }
     func testDefaultBundleIdsAreUnique() {
         XCTAssertEqual(Set(AppAllowlist.defaults.map(\.bundleId)).count, AppAllowlist.defaults.count)

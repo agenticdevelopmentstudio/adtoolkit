@@ -1,6 +1,6 @@
 #if os(macOS)
 import XCTest
-@testable import AgenticToolkitActivity
+@testable import AgenticToolkitMacOS
 import AgenticToolkitCore
 
 @MainActor
@@ -21,13 +21,27 @@ private final class Gate {
         await withCheckedContinuation { waiting.append($0) }
     }
     func complete(_ index: Int, with status: WorkTrackingStatus?) { waiting[index].resume(returning: status) }
-    func waitForCalls(_ n: Int) async {
-        while waiting.count < n { await Task.yield() }
+    func waitForCalls(_ count: Int) async {
+        while waiting.count < count { await Task.yield() }
     }
 }
 
 @MainActor
 final class TrackedAppsSettingsPanelTests: XCTestCase {
+    /// Every panel here writes through `UserSettings.shared`; an in-memory
+    /// store keeps those writes out of the test host's real defaults
+    /// (review F62).
+    private var previousSettings: UserSettings?
+
+    override func setUp() async throws {
+        previousSettings = UserSettings.shared
+        UserSettings.shared = UserSettings(with: InMemorySettingsStorageProvider())
+    }
+
+    override func tearDown() async throws {
+        if let previousSettings { UserSettings.shared = previousSettings }
+    }
+
     func testRowsAreDefaultsPlusAddedWithRemovedUnchecked() {
         let prefs = WorkTrackingPreferences(enabled: true, addedBundleIds: ["org.e.Editor"],
                                             removedBundleIds: ["com.apple.Terminal"], retentionDays: 90)
@@ -44,7 +58,8 @@ final class TrackedAppsSettingsPanelTests: XCTestCase {
     }
 
     func testTogglingAnAddedAppOffRemovesIt() {
-        let prefs = WorkTrackingPreferences(enabled: true, addedBundleIds: ["org.e.Editor"], removedBundleIds: [], retentionDays: 90)
+        let prefs = WorkTrackingPreferences(enabled: true, addedBundleIds: ["org.e.Editor"], removedBundleIds: [],
+                                            retentionDays: 90)
         XCTAssertEqual(TrackedAppsSettingsPanel.toggling("org.e.Editor", on: false, in: prefs).addedBundleIds, [])
     }
 
@@ -59,8 +74,10 @@ final class TrackedAppsSettingsPanelTests: XCTestCase {
     }
 
     func testAccessibilityTextHasThreeStates() {
-        XCTAssertEqual(TrackedAppsSettingsPanel.accessibilityText(WorkTrackingStatus(accessibility: .granted)), "Granted")
-        XCTAssertEqual(TrackedAppsSettingsPanel.accessibilityText(WorkTrackingStatus(accessibility: .denied)), "Not granted")
+        XCTAssertEqual(TrackedAppsSettingsPanel.accessibilityText(WorkTrackingStatus(accessibility: .granted)),
+                       "Granted")
+        XCTAssertEqual(TrackedAppsSettingsPanel.accessibilityText(WorkTrackingStatus(accessibility: .denied)),
+                       "Not granted")
         XCTAssertEqual(TrackedAppsSettingsPanel.accessibilityText(nil), "Unknown — press Check Again")
     }
 
@@ -121,7 +138,8 @@ final class TrackedAppsSettingsPanelTests: XCTestCase {
     func testFailureTextHiddenAtZeroAndExactOtherwise() {
         XCTAssertNil(TrackedAppsSettingsPanel.failureText(nil))
         XCTAssertNil(TrackedAppsSettingsPanel.failureText(WorkTrackingStatus(writeFailures: 0, lastError: "x")))
-        XCTAssertEqual(TrackedAppsSettingsPanel.failureText(WorkTrackingStatus(writeFailures: 3, lastError: "disk full")),
+        let failed = WorkTrackingStatus(writeFailures: 3, lastError: "disk full")
+        XCTAssertEqual(TrackedAppsSettingsPanel.failureText(failed),
                        "3 writes failed — last: disk full")
     }
 
@@ -163,7 +181,8 @@ final class TrackedAppsSettingsPanelTests: XCTestCase {
     }
 
     func testCardWiringWritesSettings() {
-        let settings = WorkTrackingUserSettings(prefix: "test.\(UUID())")
+        let prefix = "test.\(UUID())"
+        let settings = WorkTrackingUserSettings(prefix: prefix)
         let panel = makePanel(chooseApp: { (bundleId: "org.e.Editor", name: "Editor") }, settings: settings)
         let card = panel.appsCardForTesting
         card?.onAdd?()
@@ -174,6 +193,8 @@ final class TrackedAppsSettingsPanelTests: XCTestCase {
         XCTAssertEqual(settings.removedBundleIds.value, [])
         card?.onToggle?("org.e.Editor", "track", false)
         XCTAssertEqual(settings.addedBundleIds.value, [])
+        let keys = UserDefaults.standard.dictionaryRepresentation().keys
+        XCTAssertFalse(keys.contains { $0.hasPrefix(prefix) }, "the test leaves nothing in the real defaults")
     }
 
     func testSupersededGrantRecheckIsInheritedByNewerRefresh() async {

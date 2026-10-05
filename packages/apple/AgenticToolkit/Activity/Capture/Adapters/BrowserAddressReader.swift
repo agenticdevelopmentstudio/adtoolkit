@@ -61,25 +61,28 @@ enum BrowserAddressReader {
 
     /// The address shown by `window`, or `nil` if this app is not a browser
     /// this reader knows, or the bar could not be found.
-    static func address(inWindow window: AXUIElement, bundleID: String) -> String? {
+    /// `window` must already be bounded; every child the walk reads is
+    /// bounded by `ax` before its first read.
+    static func address(inWindow window: AXUIElement, bundleID: String, ax: BoundedAX = .live) -> String? {
         guard let family = Family.forBundleID(bundleID) else { return nil }
-        return find(in: window, family: family, depth: 0)
+        return find(in: window, family: family, depth: 0, ax: ax)
     }
 
-    private static func find(in element: AXUIElement, family: Family, depth: Int) -> String? {
+    private static func find(in element: AXUIElement, family: Family, depth: Int, ax: BoundedAX) -> String? {
         if depth > maxDepth { return nil }
-        if let value = address(of: element, family: family) { return value }
-        guard let children = attribute(element, kAXChildrenAttribute) as? [AXUIElement] else {
-            return nil
-        }
-        for child in children {
-            if let value = find(in: child, family: family, depth: depth + 1) { return value }
+        if let value = address(of: element, family: family, ax: ax) { return value }
+        for child in ax.children(element) {
+            if let value = find(in: child, family: family, depth: depth + 1, ax: ax) { return value }
         }
         return nil
     }
 
     /// Whether this one element *is* the address bar, and what it holds.
-    private static func address(of element: AXUIElement, family: Family) -> String? {
+    private static func address(of element: AXUIElement, family: Family, ax: BoundedAX) -> String? {
+        func attribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
+            let (error, value) = ax.attribute(element, name)
+            return error == .success ? value : nil
+        }
         guard let role = attribute(element, kAXRoleAttribute) as? String else { return nil }
         switch family {
         case .safari:
@@ -112,14 +115,6 @@ enum BrowserAddressReader {
         if value.contains("://") { return true }
         guard let dot = value.firstIndex(of: "."), dot != value.startIndex else { return false }
         return value.index(after: dot) != value.endIndex && !value.hasPrefix(" ")
-    }
-
-    private static func attribute(_ element: AXUIElement, _ name: String) -> CFTypeRef? {
-        var ref: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, name as CFString, &ref) == .success else {
-            return nil
-        }
-        return ref
     }
 }
 #endif

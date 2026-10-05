@@ -3,27 +3,6 @@
 import AppKit
 import ApplicationServices
 
-/// Fires whenever the frontmost app moves focus *within itself* — to another
-/// of its windows, to another tab, to another pane.
-///
-/// Nothing else was watching for this. `FrontmostFocusAdapter` re-reads on
-/// `NSWorkspace.didActivateApplicationNotification`, which is an app becoming
-/// frontmost and says nothing about what happens afterwards, and on the
-/// toolkit's window-lifecycle title changes, which only arrive if a window's
-/// title actually changed and only after a `listAllWindows()` geometry match
-/// finds the window it belongs to. Between them, switching iTerm2 windows
-/// produced no reading at all — the toolkit does subscribe to
-/// `kAXFocusedWindowChangedNotification`, but uses it solely to attach title
-/// observers to the newly focused window and never tells its delegate — and
-/// switching iTerm2 *tabs* produced one only if the window title happened to
-/// change as a side effect. The focus that was recorded was whatever had been
-/// true at the last app switch, which reads as the log lagging by minutes when
-/// it is really not observing at all.
-///
-/// Scoped to the frontmost app, and re-pointed as that changes, because that
-/// is the only app whose internal focus can alter what the frontmost reading
-/// is. Watching every running app would multiply the notification traffic by
-/// the number of apps open to learn nothing more.
 /// What one attempt to subscribe to an app's notifications came to.
 enum FrontmostElementSubscription {
     /// Subscribed; the handle is what `unsubscribe` takes back.
@@ -50,16 +29,31 @@ final class SystemFrontmostElementAX: FrontmostElementAX {
     typealias Create = (pid_t) -> (AXError, AnyObject?)
     /// `AXObserverAddNotification` for one notification name.
     typealias Add = (AnyObject, AXUIElement, String, UnsafeMutableRawPointer) -> AXError
+    /// `AXUIElementCreateApplication`.
+    typealias CreateApplication = (pid_t) -> AXUIElement
+    /// `AXUIElementSetMessagingTimeout`.
+    typealias SetTimeout = (AXUIElement, Float) -> AXError
+
+    /// How long one registration may wait on the target app. AX's default is
+    /// six seconds, and every `AXObserverAddNotification` messages the target:
+    /// a hung frontmost app held the main actor for 4 × 6 s.
+    nonisolated static let messagingTimeout: Float = BoundedAX.timeout
 
     private let create: Create
     private let add: Add
+    private let createApplication: CreateApplication
+    private let setTimeout: SetTimeout
 
-    /// The two AX calls are injectable so a test can count them; the
+    /// The AX calls are injectable so a test can count and order them; the
     /// defaults are the real ones.
     init(create: @escaping Create = SystemFrontmostElementAX.liveCreate,
-         add: @escaping Add = SystemFrontmostElementAX.liveAdd) {
+         add: @escaping Add = SystemFrontmostElementAX.liveAdd,
+         createApplication: @escaping CreateApplication = { AXUIElementCreateApplication($0) },
+         setTimeout: @escaping SetTimeout = { AXUIElementSetMessagingTimeout($0, $1) }) {
         self.create = create
         self.add = add
+        self.createApplication = createApplication
+        self.setTimeout = setTimeout
     }
 
     nonisolated static func liveCreate(_ pid: pid_t) -> (AXError, AnyObject?) {
@@ -85,16 +79,27 @@ final class SystemFrontmostElementAX: FrontmostElementAX {
     /// The first `.apiDisabled` ends it: Accessibility is not granted, every
     /// further registration would be one more trip through `tccd` to learn
     /// the same thing, and a burst of those is what freezes the machine.
+    ///
+    /// The first `.cannotComplete` ends it too: the app did not answer within
+    /// the messaging timeout, and asking it three more times would only wait
+    /// three more timeouts on a hung app. What registered before it is kept,
+    /// as any partial success is; with nothing registered it is a failed
+    /// attach, so the observer's retry asks again later.
     func subscribe(pid: pid_t, notifications: [String], context: UnsafeMutableRawPointer)
         -> FrontmostElementSubscription {
         let (made, created) = create(pid)
         if made == .apiDisabled { return .apiDisabled }
         guard made == .success, let created else { return .failed }
-        let app = AXUIElementCreateApplication(pid)
+        let app = createApplication(pid)
+        // Before the first registration: the timeout is per element, and each
+        // registration messages the app. Set later, the first one waits AX's
+        // six-second default on a hung app.
+        _ = setTimeout(app, Self.messagingTimeout)
         var registered = false
         for name in notifications {
             let result = add(created, app, name, context)
             if result == .apiDisabled { return .apiDisabled }
+            if result == .cannotComplete { break }
             if result == .success { registered = true }
         }
         guard registered else { return .failed }
@@ -110,6 +115,27 @@ final class SystemFrontmostElementAX: FrontmostElementAX {
     }
 }
 
+/// Fires whenever the frontmost app moves focus *within itself* — to another
+/// of its windows, to another tab, to another pane.
+///
+/// Nothing else was watching for this. `FrontmostFocusAdapter` re-reads on
+/// `NSWorkspace.didActivateApplicationNotification`, which is an app becoming
+/// frontmost and says nothing about what happens afterwards, and on the
+/// toolkit's window-lifecycle title changes, which only arrive if a window's
+/// title actually changed and only after a `listAllWindows()` geometry match
+/// finds the window it belongs to. Between them, switching iTerm2 windows
+/// produced no reading at all — the toolkit does subscribe to
+/// `kAXFocusedWindowChangedNotification`, but uses it solely to attach title
+/// observers to the newly focused window and never tells its delegate — and
+/// switching iTerm2 *tabs* produced one only if the window title happened to
+/// change as a side effect. The focus that was recorded was whatever had been
+/// true at the last app switch, which reads as the log lagging by minutes when
+/// it is really not observing at all.
+///
+/// Scoped to the frontmost app, and re-pointed as that changes, because that
+/// is the only app whose internal focus can alter what the frontmost reading
+/// is. Watching every running app would multiply the notification traffic by
+/// the number of apps open to learn nothing more.
 @MainActor
 public final class FrontmostElementObserver {
     /// Called on the main run loop each time the frontmost app moves its own
@@ -122,6 +148,14 @@ public final class FrontmostElementObserver {
     private var retryTask: Task<Void, Never>?
     private let accessibility: any FrontmostElementAX
     private let delays: [Duration]
+    /// Title changes are coalesced to one re-read per this long. A title is
+    /// not a focus move, and some titles never stop moving: Claude Code's
+    /// spinner retitles its terminal about once a second for as long as it
+    /// works, and each one cost a full window read and a span write. The
+    /// three focus notifications are still delivered at once.
+    private let titleCoalescing: Duration
+    private var pendingTitle: Task<Void, Never>?
+    nonisolated static let titleCoalescingInterval: Duration = .seconds(2)
 
     /// True until `start()`, after `stop()`, and once Accessibility turns out
     /// not to be granted: no AX call is made while it holds. A queued
@@ -162,9 +196,11 @@ public final class FrontmostElementObserver {
         self.init(accessibility: SystemFrontmostElementAX(), retryDelays: Self.retryDelays)
     }
 
-    init(accessibility: any FrontmostElementAX, retryDelays: [Duration]) {
+    init(accessibility: any FrontmostElementAX, retryDelays: [Duration],
+         titleCoalescing: Duration = FrontmostElementObserver.titleCoalescingInterval) {
         self.accessibility = accessibility
         self.delays = retryDelays
+        self.titleCoalescing = titleCoalescing
     }
 
     public func start() {
@@ -247,12 +283,34 @@ public final class FrontmostElementObserver {
     private func detach() {
         retryTask?.cancel()
         retryTask = nil
+        pendingTitle?.cancel()
+        pendingTitle = nil
         if let observer { accessibility.unsubscribe(observer) }
         observer = nil
         observedPID = nil
     }
 
-    fileprivate func notifyChanged() { onChange?() }
+    /// A focus move re-reads at once (and answers any title change waiting
+    /// behind it); a title change re-reads at most once per
+    /// ``titleCoalescing``, at its end, so the last title of a burst is read.
+    func notifyChanged(_ notification: String) {
+        guard !stopped else { return }
+        guard notification == kAXTitleChangedNotification as String else {
+            pendingTitle?.cancel()
+            pendingTitle = nil
+            onChange?()
+            return
+        }
+        guard pendingTitle == nil else { return }
+        let wait = titleCoalescing
+        pendingTitle = Task { [weak self] in
+            try? await Task.sleep(for: wait)
+            guard !Task.isCancelled, let self else { return }
+            self.pendingTitle = nil
+            guard !self.stopped else { return }
+            self.onChange?()
+        }
+    }
 }
 
 /// The C callback AX requires. A free function because `AXObserverCreate`
@@ -268,6 +326,7 @@ private func axObserverCallback(_ observer: AXObserver, _ element: AXUIElement,
                                 _ context: UnsafeMutableRawPointer?) {
     guard let context else { return }
     let target = Unmanaged<FrontmostElementObserver>.fromOpaque(context).takeUnretainedValue()
-    MainActor.assumeIsolated { target.notifyChanged() }
+    let name = notification as String
+    MainActor.assumeIsolated { target.notifyChanged(name) }
 }
 #endif

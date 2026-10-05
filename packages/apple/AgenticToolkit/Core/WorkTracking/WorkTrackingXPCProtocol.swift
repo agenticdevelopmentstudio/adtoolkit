@@ -13,5 +13,7 @@ import Foundation
     /// replies the new status.
     func workTrackingRecheckPermissions(reply: @escaping (Data) -> Void)
     /// Newest first; one encoded `ActivitySpanDTO` each. `since` nil = any.
+    /// A read that failed replies the one element `WorkTrackingWire.readFailedRow`,
+    /// so a failure never reads as "no activity".
     func workTrackingSpans(since: String?, limit: Int, reply: @escaping ([Data]) -> Void)
 }
