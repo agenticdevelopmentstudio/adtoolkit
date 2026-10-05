@@ -26,4 +26,21 @@ final class TimestampParsingTests: XCTestCase {
         XCTAssertNil(TimestampParsing.parse("not a date"))
         XCTAssertNil(TimestampParsing.parse("2026-13-99"))
     }
+
+    // MARK: - parseISO8601 (review F54)
+
+    func testISO8601AcceptsBothInternetForms() throws {
+        let fractional = try XCTUnwrap(TimestampParsing.parseISO8601("2026-10-01T00:00:00.250Z"))
+        let plain = try XCTUnwrap(TimestampParsing.parseISO8601("2026-10-01T00:00:00Z"))
+        XCTAssertEqual(fractional.timeIntervalSince(plain), 0.25, accuracy: 0.001)
+        XCTAssertNotNil(TimestampParsing.parseISO8601("2026-10-01T02:00:00+02:00"))
+    }
+
+    /// A bound a caller sends must carry its zone, so the SQLite shape that
+    /// `parse` reads from storage is refused here.
+    func testISO8601RefusesTheZonelessAndTheMalformed() {
+        for text in ["", "2026-10-01 00:00:00", "2026-10-01", "yesterday", "2026-13-01T00:00:00Z"] {
+            XCTAssertNil(TimestampParsing.parseISO8601(text), text)
+        }
+    }
 }

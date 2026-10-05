@@ -26,6 +26,18 @@ public enum TimestampParsing {
         return sqliteDateTime.date(from: text)
     }
 
+    /// Parse an ISO-8601 instant typed by a person or sent by a client — with or
+    /// without fractional seconds — and nothing else: the SQLite shape is
+    /// refused, because a bound a caller sends must say which zone it is in.
+    ///
+    /// The one validator for a `since` a daemon's API accepts, so a CLI that
+    /// checks a flag before sending it and the daemon that reads it can never
+    /// disagree about what is well-formed (review F54).
+    public static func parseISO8601(_ text: String) -> Date? {
+        guard !text.isEmpty else { return nil }
+        return isoFractional.date(from: text) ?? isoPlain.date(from: text)
+    }
+
     // ISO8601DateFormatter is thread-safe for parsing once `formatOptions` are set, but
     // Foundation doesn't mark it Sendable; `nonisolated(unsafe)` opts these shared,
     // never-mutated instances out of Swift 6's concurrency checks.

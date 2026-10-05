@@ -108,6 +108,95 @@ final class SettingsSnapshotPushTests: XCTestCase {
         XCTAssertEqual(bodies.count, 1)
     }
 
+    /// Counts sends; every one fails, and — like DaemonKit's XPCClient against
+    /// a missing Mach service — each failed send's next connection fires the
+    /// reconnect handler before the failure comes back.
+    private final class DroppingReceiver: @unchecked Sendable {
+        private let lock = NSLock()
+        private var sendCount = 0
+        var reconnect: (@Sendable () -> Void)?
+        var sends: Int { lock.withLock { sendCount } }
+        func take() async -> Bool {
+            lock.withLock { sendCount += 1 }
+            reconnect?()
+            try? await Task.sleep(for: .milliseconds(20))
+            return false
+        }
+    }
+
+    /// Review F11: a reconnect fired by the push's own failing attempts must not
+    /// restart it, or the bounded retry never gives up and the push loops for as
+    /// long as the receiver is gone.
+    func testAReconnectDuringAFailingPushDoesNotRestartIt() async throws {
+        let receiver = DroppingReceiver()
+        let push = SettingsSnapshotPush(
+            label: "Test", logger: logger, backoffs: [0, 1_000_000, 1_000_000],
+            reconnectDelay: { _ in 60_000_000_000 },
+            snapshot: { Data("{}".utf8) },
+            send: { _ in await receiver.take() },
+            registerReconnect: { receiver.reconnect = $0 }
+        )
+        push.start(makeObservers: { _ in [] })
+        try await Task.sleep(for: .milliseconds(600))
+        let sends = receiver.sends
+        let failures = push.consecutiveFailures
+        push.stop()
+        XCTAssertEqual(sends, 3, "one bounded push of three attempts, then it gives up")
+        XCTAssertEqual(failures, 1)
+    }
+
+    /// After failed pushes a reconnect waits, and the wait grows per failure.
+    func testAReconnectAfterFailedPushesBacksOffMoreEachTime() async {
+        let receiver = Received(failures: 2)
+        let delays = DelayLog()
+        var reconnect: (@Sendable () -> Void)?
+        let push = SettingsSnapshotPush(
+            label: "Test", logger: logger, backoffs: [0],
+            reconnectDelay: { failures in delays.append(failures); return 1_000_000 },
+            snapshot: { Data("{}".utf8) },
+            send: { await receiver.take($0) },
+            registerReconnect: { reconnect = $0 }
+        )
+        push.start(makeObservers: { _ in [] })
+        await push.awaitPendingPush()
+        XCTAssertEqual(push.consecutiveFailures, 1)
+
+        reconnect?()
+        await settle(push)
+        XCTAssertEqual(push.consecutiveFailures, 2)
+
+        reconnect?()
+        await settle(push)
+        XCTAssertEqual(push.consecutiveFailures, 0, "the third push lands")
+        XCTAssertEqual(delays.values, [1, 2], "each reconnect waited, for one more failure than the last")
+
+        reconnect?()
+        await settle(push)
+        XCTAssertEqual(delays.values, [1, 2], "after a success a reconnect pushes at once")
+        let bodies = await receiver.bodies
+        XCTAssertEqual(bodies.count, 2)
+        push.stop()
+    }
+
+    func testTheDefaultReconnectDelayDoublesToACap() {
+        let delay = SettingsSnapshotPush.defaultReconnectDelay
+        XCTAssertEqual((1...8).map { delay($0) / 1_000_000_000 }, [1, 2, 4, 8, 16, 30, 30, 30])
+    }
+
+    private final class DelayLog: @unchecked Sendable {
+        private let lock = NSLock()
+        private var log: [Int] = []
+        var values: [Int] { lock.withLock { log } }
+        func append(_ value: Int) { lock.withLock { log.append(value) } }
+    }
+
+    /// Lets the reconnect hop onto the main actor, then awaits what it started.
+    private func settle(_ push: SettingsSnapshotPush) async {
+        for _ in 0..<5 { await Task.yield() }
+        try? await Task.sleep(for: .milliseconds(10))
+        await push.awaitPendingPush()
+    }
+
     func testEncodesWithSortedKeys() {
         let body = SettingsSnapshotPush.encodeSorted(["b": "2", "a": "1"])
         XCTAssertEqual(body, Data(#"{"a":"1","b":"2"}"#.utf8))
