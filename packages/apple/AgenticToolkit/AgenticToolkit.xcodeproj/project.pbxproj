@@ -1049,6 +1049,7 @@
 		750147665D21A4AA50DE2086 /* ReopenOnLaunchPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681EFC1ADD4D0922585CDB04 /* ReopenOnLaunchPolicy.swift */; };
 		75C332FA1A4AECFAB4A24BDC /* KnownTerminals.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4874F102533FD511EBD497B7 /* KnownTerminals.swift */; };
 		75D11752DBF8D2879910A86C /* LSPCompletionDelegateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0C90ACA8F695F1DBE8CD6F /* LSPCompletionDelegateTests.swift */; };
+		75F77AC6E43B3A9374846227 /* RowAlertTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A57D720698EE23E94639BFE3 /* RowAlertTests.swift */; };
 		75F8C6F71566C91B8AF975D1 /* FeatureFlagsAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 503F40D6991D4F1C4A8A6153 /* FeatureFlagsAdapter.swift */; };
 		760A0C73CF4F847471C1002B /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 8D9E9E85B457923CE892CEC2 /* OpenAPIRuntime */; };
 		7615FF8024E558C25212CCEF /* HTDVController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C8EA09F59EA16290707027 /* HTDVController.swift */; };
@@ -1751,6 +1752,7 @@
 		C91C4E310897138DB0DE5A2A /* ContextCollector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19992C3C989036CF95A70398 /* ContextCollector.swift */; };
 		C931C613454849F55251596B /* LegacyThemePersistenceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF283A265D5ADF577159C01E /* LegacyThemePersistenceTests.swift */; };
 		C9462412D0700CE3C3D2FBAD /* ComposableTabsLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 501F5C38DE7AEF4AB2D504C0 /* ComposableTabsLayout.swift */; };
+		C95428B356B2842509E1A7F7 /* RowAlert.swift in Sources */ = {isa = PBXBuildFile; fileRef = 401B152147E26A9668848B8D /* RowAlert.swift */; };
 		C986B4B6E853A8302562F650 /* ContextEventDay.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDF685CCE4C7F06DD7E4D08F /* ContextEventDay.swift */; };
 		C992F5D313604032A9ABF1C1 /* MonitorLevel+Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 251C761E984828AB55B95546 /* MonitorLevel+Theme.swift */; };
 		CA269927A2C05060E0D239BB /* KeychainSecureSettingsStorageProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EFFAA37CE8334ABDAEEFAEE6 /* KeychainSecureSettingsStorageProviderTests.swift */; };
@@ -4715,6 +4717,7 @@
 		3FDE08823A8E4C933B3323CD /* MoneyTotals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyTotals.swift; sourceTree = "<group>"; };
 		3FF269EB56990555CD840AF9 /* AppearanceSettingsPanelViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceSettingsPanelViewController.swift; sourceTree = "<group>"; };
 		3FFE4D22F091B65284C53A0E /* PaneHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneHost.swift; sourceTree = "<group>"; };
+		401B152147E26A9668848B8D /* RowAlert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RowAlert.swift; sourceTree = "<group>"; };
 		4022EDA6F732787F524E37D5 /* HoverCardPopoverController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HoverCardPopoverController.swift; sourceTree = "<group>"; };
 		402324FCBC578003C0A2B9E0 /* ThemeUIReExports.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeUIReExports.swift; sourceTree = "<group>"; };
 		403CA7FA2F8D1F70D36E7449 /* GitClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitClient.swift; sourceTree = "<group>"; };
@@ -5324,6 +5327,7 @@
 		A524B6BDBE63514E871C940A /* UniversalControlPlacementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UniversalControlPlacementTests.swift; sourceTree = "<group>"; };
 		A555A3D1B9A0FC23DB677272 /* LanguageServerRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageServerRegistry.swift; sourceTree = "<group>"; };
 		A57011263424E4AA2CE87F54 /* ColorPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorPickerView.swift; sourceTree = "<group>"; };
+		A57D720698EE23E94639BFE3 /* RowAlertTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RowAlertTests.swift; sourceTree = "<group>"; };
 		A5A6CCA7870DBDB74A35168A /* FontPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontPickerView.swift; sourceTree = "<group>"; };
 		A5AB7B995521327485428570 /* SettingsStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsStore.swift; sourceTree = "<group>"; };
 		A5C4C6929FAC8A8A1FFD7675 /* ScreenInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenInfo.swift; sourceTree = "<group>"; };
@@ -6973,6 +6977,7 @@
 				840CCD8786140B660EF490DF /* ConfirmCancelControl.swift */,
 				B4C87939516A070CC66803F4 /* Placeholder.swift */,
 				6804416B0D2AB235CA39ED14 /* RGBAColor+NSColor.swift */,
+				401B152147E26A9668848B8D /* RowAlert.swift */,
 				075F7B05F5991A77DC055B40 /* SessionBreadcrumbView.swift */,
 				58B42732D65820FB4A3D3C95 /* SessionHeaderView.swift */,
 				14A12FAD7FB557E5CE6CE800 /* TerminalAppIcon.swift */,
@@ -10238,6 +10243,7 @@
 			isa = PBXGroup;
 			children = (
 				768F7C74EBACCA21B475C0B6 /* PlaceholderTests.swift */,
+				A57D720698EE23E94639BFE3 /* RowAlertTests.swift */,
 				795528B73B6C95474173DCF9 /* SessionBreadcrumbViewTests.swift */,
 			);
 			name = AgenticToolkitCoreMacOSTests;
@@ -13805,6 +13811,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				CE77BFF484BE837D14389B6A /* PlaceholderTests.swift in Sources */,
+				75F77AC6E43B3A9374846227 /* RowAlertTests.swift in Sources */,
 				956DF0EE4268AC9C50804CCB /* SessionBreadcrumbViewTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -14479,6 +14486,7 @@
 				2574598DAD92C7B1127E0465 /* Placeholder.swift in Sources */,
 				90FE61ED333010F1B933C4FF /* QuietWindowPresentation.swift in Sources */,
 				9B04CDC955CED31768F4E7FE /* RGBAColor+NSColor.swift in Sources */,
+				C95428B356B2842509E1A7F7 /* RowAlert.swift in Sources */,
 				6BB4F6E73F21E0104231BB26 /* SemanticPalette+SwiftUI.swift in Sources */,
 				7E171786A9DCC866DAA32F54 /* SessionBreadcrumbView.swift in Sources */,
 				F5ECAD734FE04D012F65DCF3 /* SessionHeaderView.swift in Sources */,

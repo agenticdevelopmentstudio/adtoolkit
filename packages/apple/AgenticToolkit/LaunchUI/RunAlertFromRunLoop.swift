@@ -15,7 +15,8 @@ public func runAlertFromRunLoop(
         // A menubar app has no active window at launch; without this the modal
         // can start behind the frontmost app.
         NSApp.activateUnlessQuiet()
-        return $0.runModal()
+        // Buttons in one row, however many there are.
+        return RowAlert.runModal($0)
     }
 ) async -> NSApplication.ModalResponse {
     await withCheckedContinuation { continuation in
