@@ -147,9 +147,7 @@ public enum ClaudeAuthCLI {
     /// not answer for whichever account that terminal happened to be billing.
     private static func childEnvironment() -> [String: String] {
         var env = ProcessInfo.processInfo.environment
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let extras = ["\(home)/.local/bin", "/usr/local/bin", "/opt/homebrew/bin"]
-        env["PATH"] = (extras + [env["PATH"] ?? "/usr/bin:/bin"]).joined(separator: ":")
+        env["PATH"] = ClaudeCLI.searchPath(inheritedPath: env["PATH"])
         env["AGENTIC_TOOLKIT_HEADLESS"] = "1"
         env["CLAUDE_CODE_OAUTH_TOKEN"] = nil
         env["ANTHROPIC_API_KEY"] = nil

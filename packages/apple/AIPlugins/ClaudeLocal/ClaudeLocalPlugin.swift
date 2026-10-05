@@ -19,6 +19,7 @@ public final class ClaudeLocalPlugin: NSObject, AIPlugin, @unchecked Sendable {
 
         var environment = ProcessInfo.processInfo.environment
         let home = FileManager.default.homeDirectoryForCurrentUser.path
+        // Mirrors ClaudeCLI.searchPath; this plugin links only AIPluginKit, so it keeps its own copy.
         let searchPaths = ["\(home)/.local/bin", "/usr/local/bin", "/opt/homebrew/bin"]
         environment["PATH"] = (searchPaths + [environment["PATH"] ?? "/usr/bin:/bin"]).joined(separator: ":")
 

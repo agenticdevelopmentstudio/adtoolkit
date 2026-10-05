@@ -598,16 +598,19 @@ def build_pkg(
     *,
     identifier: str,
     version: str,
-    scripts: Path,
     distribution: str,
     identity: str | None,
     dest: Path,
     run: Runner,
     extra_packages: Sequence[Path] = (),
+    scripts: Path | None = None,
 ) -> Path:
     """Build the component pkg from a *staged, non-relocatable* root so that
     Installer always targets the copy at `/Applications`, never "upgrading"
     some other same-bundle-ID copy in place (e.g. a DerivedData build).
+
+    `scripts` is the pkg's install-scripts directory; None builds a
+    payload-only pkg (no `--scripts` argument at all).
     """
     with tempfile.TemporaryDirectory(prefix="macos_release_pkg_") as tmp:
         tmp_path = Path(tmp)
@@ -634,18 +637,16 @@ def build_pkg(
             plistlib.dump(component_entries, f)
 
         component = tmp_path / COMPONENT_PKG
-        component_result = run(
-            [
-                "pkgbuild",
-                "--root", str(root),
-                "--component-plist", str(component_plist),
-                "--install-location", "/Applications",
-                "--scripts", str(scripts),
-                "--identifier", identifier,
-                "--version", version,
-                str(component),
-            ]
-        )
+        component_argv = [
+            "pkgbuild",
+            "--root", str(root),
+            "--component-plist", str(component_plist),
+            "--install-location", "/Applications",
+        ]
+        if scripts is not None:
+            component_argv += ["--scripts", str(scripts)]
+        component_argv += ["--identifier", identifier, "--version", version, str(component)]
+        component_result = run(component_argv)
         if component_result.returncode != 0:
             raise RuntimeError(component_result.stderr)
 

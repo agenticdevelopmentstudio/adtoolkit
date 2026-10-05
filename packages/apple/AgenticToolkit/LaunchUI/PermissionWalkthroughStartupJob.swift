@@ -13,7 +13,10 @@ public struct PermissionWalkthroughStartupJob: StartupJob {
 
     @MainActor public func run(context: StartupJobContext) async throws {
         let walkthrough = make()
+        // The walkthrough's Done button holds its target weakly: keep it alive
+        // until it reports done, or an optimized build can free it mid-window.
         await withCheckedContinuation { cont in walkthrough.runIfNeeded { cont.resume() } }
+        withExtendedLifetime(walkthrough) {}
     }
 }
 

@@ -913,6 +913,24 @@ def test_build_pkg_writes_distribution_and_copies_extra_packages(tmp_path):
     assert seen["has_sign"] is True
 
 
+def test_build_pkg_without_scripts_is_payload_only(tmp_path):
+    app = tmp_path / "A.app"
+    app.mkdir()
+    argvs: list[list[str]] = []
+
+    def run(argv):
+        argvs.append(list(argv))
+        if argv[0] == "pkgbuild" and "--analyze" in argv:
+            with Path(argv[-1]).open("wb") as f:
+                plistlib.dump([{"RootRelativeBundlePath": "A.app"}], f)
+        return subprocess.CompletedProcess(argv, 0, "", "")
+
+    mr.build_pkg(app, identifier="com.x", version="1.0", distribution="<x/>",
+                 identity=None, dest=tmp_path / "A.pkg", run=run)
+    component = [a for a in argvs if a[0] == "pkgbuild" and "--analyze" not in a]
+    assert len(component) == 1 and "--scripts" not in component[0]
+
+
 def test_build_pkg_stages_app_via_ditto_before_analyzing(tmp_path):
     # Fix round 1, Important 3: the app must be staged into a temp root via
     # `ditto` (keeping symlinks) before pkgbuild ever sees it, so the

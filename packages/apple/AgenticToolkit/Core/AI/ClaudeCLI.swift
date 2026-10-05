@@ -71,6 +71,20 @@ public enum ClaudeCLI {
         return names.sorted { key($0).lexicographicallyPrecedes(key($1)) }.reversed()
     }
 
+    /// The PATH a `claude` child needs: a GUI app inherits only the system
+    /// directories, and an npm-installed `claude` is a `#!/usr/bin/env node`
+    /// script. Order: `claudeDirectory` (when given), `~/.local/bin`,
+    /// `/usr/local/bin`, `/opt/homebrew/bin`, then the inherited PATH.
+    public static func searchPath(
+        claudeDirectory: String? = nil,
+        home: URL = FileManager.default.homeDirectoryForCurrentUser,
+        inheritedPath: String? = ProcessInfo.processInfo.environment["PATH"]
+    ) -> String {
+        let extras = ["\(home.path)/.local/bin", "/usr/local/bin", "/opt/homebrew/bin"]
+        return (([claudeDirectory].compactMap { $0 }) + extras + [inheritedPath ?? "/usr/bin:/bin"])
+            .joined(separator: ":")
+    }
+
     /// Runs `claude -p` with `prompt` on stdin and returns trimmed stdout.
     ///
     /// Robustness: stdout/stderr are drained CONCURRENTLY with the run (a child writing
@@ -98,9 +112,7 @@ public enum ClaudeCLI {
         process.standardError = stderrPipe
 
         var env = ProcessInfo.processInfo.environment
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        let extras = ["\(home)/.local/bin", "/usr/local/bin", "/opt/homebrew/bin"]
-        env["PATH"] = (extras + [env["PATH"] ?? "/usr/bin:/bin"]).joined(separator: ":")
+        env["PATH"] = searchPath()
         // Mark this as a programmatic/headless claude invocation so a session
         // tracker's hooks (which this child process inherits) can tell it apart
         // from a real interactive user session and not record it — e.g.
