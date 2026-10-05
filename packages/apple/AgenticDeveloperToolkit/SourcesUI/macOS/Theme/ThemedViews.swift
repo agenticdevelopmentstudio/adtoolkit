@@ -80,6 +80,31 @@ public final class ThemedLabel: NSTextField, Themeable {
         textColor = palette.nsColor(role)
         font = weight.map { palette.font(textRole, weight: $0) } ?? palette.font(textRole)
     }
+
+    /// A label that wraps onto as many lines as its text needs, at `width`
+    /// points — a paragraph or a headline rather than a caption.
+    ///
+    /// `lineBreakMode` and `maximumNumberOfLines` are ignored while the cell is
+    /// in single-line mode, which is the plain init's default, so all four
+    /// settings are needed. `preferredMaxLayoutWidth` is what a `fittingSize`
+    /// measures the height at; without it the label measures as one long line.
+    public static func wrapping(
+        _ string: String,
+        width: CGFloat,
+        role: ThemeRole = .primaryText,
+        textRole: TextRole = .body,
+        weight: FontWeight? = nil
+    ) -> ThemedLabel {
+        let label = ThemedLabel(string: string, role: role, textRole: textRole, weight: weight)
+        label.cell?.wraps = true
+        label.cell?.usesSingleLineMode = false
+        label.lineBreakMode = .byWordWrapping
+        label.maximumNumberOfLines = 0
+        label.preferredMaxLayoutWidth = width
+        label.setContentCompressionResistancePriority(.required, for: .vertical)
+        label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        return label
+    }
 }
 
 /// A label that emphasises the characters a filter matched.
@@ -230,6 +255,18 @@ public final class ThemedButton: NSButton, Themeable {
 
 @MainActor
 public extension NSButton {
+
+    /// Paint a stock checkbox's title in the theme's text color and body font.
+    ///
+    /// The box itself is drawn by the window's appearance (pinned with
+    /// ``SemanticPalette/standardAppearance``), but its title takes the
+    /// system label color and font unless it is given an attributed one.
+    func applyCheckboxTheme(_ palette: SemanticPalette, textRole: TextRole = .body) {
+        attributedTitle = NSAttributedString(string: title, attributes: [
+            .foregroundColor: palette.primaryTextColor,
+            .font: palette.font(textRole)
+        ])
+    }
 
     /// Paint a stock push button as the *secondary* action of a themed dialog
     /// (Cancel/Close, sitting beside a blue default button).

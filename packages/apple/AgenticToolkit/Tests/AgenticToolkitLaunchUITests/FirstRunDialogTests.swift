@@ -2,6 +2,8 @@ import AppKit
 import Testing
 import AgenticToolkitLaunch
 @testable import AgenticToolkitLaunchUI
+import AgenticToolkitCore
+import AgenticToolkitCoreMacOS
 
 @MainActor
 private final class RecordingSession: ModalSession {
@@ -89,9 +91,55 @@ private func waitForEnter(_ session: RecordingSession) async throws {
         #expect(dialog.cancelButton.title == "Not now")
         #expect(dialog.confirmButton.title == "Install")
         #expect(!dialog.confirmButton.isEnabled)
+        #expect(dialog.confirmButton.alphaValue < 1, "a disabled Confirm is faded")
         dialog.checked = true
         dialog.updateConfirmEnabled()
         #expect(dialog.confirmButton.isEnabled)
+        #expect(dialog.confirmButton.alphaValue == 1)
+    }
+
+    /// The window, headline and buttons are painted from the theme, not the system.
+    @Test func paintedFromTheTheme() throws {
+        let dialog = SampleDialog(message: "Welcome to Sample", modal: RecordingSession())
+        let palette = ThemePaletteObserver.currentPalette
+        let window = try #require(dialog.window)
+        #expect(window.backgroundColor == palette.windowBackgroundColor)
+        #expect(window.appearance?.name == palette.standardAppearance?.name)
+        #expect(dialog.messageLabel is ThemedLabel)
+        #expect(dialog.messageLabel?.textColor == palette.primaryTextColor)
+        for button in [dialog.cancelButton, dialog.confirmButton] {
+            #expect(!button.isBordered, "a stock bezel ignores the theme")
+            #expect(button.attributedTitle.attribute(.font, at: 0, effectiveRange: nil) as? NSFont
+                    == palette.font(.button))
+        }
+    }
+
+    /// Every part sits inside the window's margins, and a headline longer than
+    /// the content wraps instead of running past the right edge.
+    @Test func partsStayInsideTheMargins() throws {
+        let long = String(repeating: "A long welcome headline that must wrap. ", count: 4)
+        for dialog in [SampleDialog(modal: RecordingSession()),
+                       SampleDialog(message: long, modal: RecordingSession())] {
+            let content = try #require(dialog.window?.contentView as? NSStackView)
+            content.layoutSubtreeIfNeeded()
+            let inner = content.bounds.insetBy(dx: FirstRunDialog.inset, dy: FirstRunDialog.inset)
+                .insetBy(dx: -0.5, dy: -0.5)
+            for part in content.arrangedSubviews + [dialog.cancelButton, dialog.confirmButton] {
+                let frame = part.convert(part.alignmentRect(forFrame: part.bounds), to: content)
+                #expect(inner.contains(frame), "\(type(of: part)) \(frame) leaves \(inner)")
+            }
+        }
+    }
+
+    @Test func buttonsFitTheirTitlesAndShareAHeight() throws {
+        let dialog = SampleDialog(modal: RecordingSession())
+        dialog.window?.contentView?.layoutSubtreeIfNeeded()
+        for button in [dialog.cancelButton, dialog.confirmButton] {
+            #expect(button.frame.height == FirstRunDialog.buttonHeight)
+            #expect(button.frame.width >= FirstRunDialog.minimumButtonWidth)
+            #expect(button.frame.width >= button.attributedTitle.size().width)
+        }
+        #expect(dialog.cancelButton.frame.maxX < dialog.confirmButton.frame.minX, "Confirm is rightmost")
     }
 
     @Test func confirmAfterModalEndedOnItsOwnDoesNotAbortAnother() async throws {

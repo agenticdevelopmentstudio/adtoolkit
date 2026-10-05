@@ -1,10 +1,16 @@
 import AppKit
+import AgenticToolkitCore
 import AgenticToolkitCoreMacOS
 import AgenticToolkitLaunch
 
 /// The standard first-run dialog: a fixed-size, closable window with an
 /// optional headline message, the subclass's content, and a Cancel/Confirm
-/// row. Closing it is Cancel.
+/// row, all in the app's theme. Closing it is Cancel.
+///
+/// The window is as wide as the content's fitting width (at least
+/// `minimumContentWidth`) plus `inset` each side; give wrapping labels in the
+/// content a `preferredMaxLayoutWidth` (``ThemedLabel/wrapping(_:width:role:textRole:weight:)``)
+/// so that width is the one they wrap at.
 ///
 /// Subclass and override the titles, `makeContentView()`, `isConfirmEnabled`
 /// and `jobsForConfirm()`; call `updateConfirmEnabled()` when your content changes.
@@ -59,9 +65,28 @@ open class FirstRunDialog: NSWindowController, NSWindowDelegate {
     @available(*, unavailable)
     public required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
+    /// The narrowest the content column gets, whatever the content asks for.
+    public static let minimumContentWidth: CGFloat = 432
+    /// The Cancel/Confirm buttons' size: painted borderless by the theme, they
+    /// have no bezel padding of their own.
+    public static let buttonHeight: CGFloat = 28
+    public static let minimumButtonWidth: CGFloat = 88
+    static let buttonTitlePadding: CGFloat = 32
+    /// A disabled Confirm, faded as `ThemedActionButton` fades: the theme's paint
+    /// does not change with `isEnabled`.
+    static let disabledAlpha: CGFloat = 0.45
+
+    /// Painted from the theme: the window's backdrop and appearance, the
+    /// headline, and both buttons, repainted on every theme change.
     private func buildContent() {
         guard let window else { return }
         window.title = dialogTitle
+        themeObserver = ThemePaletteObserver { [weak window] palette in
+            // Stock controls (the subclass's checkboxes) draw from the
+            // appearance, so it follows the theme's backdrop.
+            window?.appearance = palette.standardAppearance
+            window?.backgroundColor = palette.windowBackgroundColor
+        }
         cancelButton.title = cancelTitle
         cancelButton.target = self
         cancelButton.action = #selector(cancelClicked)
@@ -70,11 +95,19 @@ open class FirstRunDialog: NSWindowController, NSWindowDelegate {
         confirmButton.target = self
         confirmButton.action = #selector(confirmClicked)
         confirmButton.keyEquivalent = "\r"
+        themeButton(cancelButton) { $0.applySecondaryActionTheme($1) }
+        themeButton(confirmButton) { $0.applyPrimaryActionTheme($1) }
         let buttons = NSStackView(views: [NSView(), cancelButton, confirmButton])
-        var parts: [NSView] = [makeContentView(), buttons]
+        buttons.spacing = 12
+
+        // One column width for every part, fixed before layout: the content
+        // decides it, and the headline wraps to it rather than widening the
+        // window to its one-line length.
+        let content = makeContentView()
+        let width = max(content.fittingSize.width, Self.minimumContentWidth)
+        var parts: [NSView] = [content, buttons]
         if let message {
-            let label = NSTextField(wrappingLabelWithString: message)
-            label.font = .systemFont(ofSize: 22, weight: .semibold)
+            let label = ThemedLabel.wrapping(message, width: width, textRole: .title)
             messageLabel = label
             parts.insert(label, at: 0)
         }
@@ -83,14 +116,31 @@ open class FirstRunDialog: NSWindowController, NSWindowDelegate {
         stack.alignment = .leading
         stack.spacing = Self.spacing
         stack.edgeInsets = NSEdgeInsets(top: Self.inset, left: Self.inset, bottom: Self.inset, right: Self.inset)
-        buttons.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -2 * Self.inset).isActive = true
-        messageLabel?.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -2 * Self.inset).isActive = true
+        stack.setCustomSpacing(Self.inset + Self.spacing / 2, after: content)
+        for part in parts { part.widthAnchor.constraint(equalToConstant: width).isActive = true }
         window.contentView = stack
         window.setContentSize(stack.fittingSize)
         updateConfirmEnabled()
     }
 
-    public func updateConfirmEnabled() { confirmButton.isEnabled = isConfirmEnabled }
+    private var themeObserver: ThemePaletteObserver?
+
+    private func themeButton(_ button: NSButton, paint: @escaping @MainActor (NSButton, SemanticPalette) -> Void) {
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.heightAnchor.constraint(equalToConstant: Self.buttonHeight).isActive = true
+        let width = button.widthAnchor.constraint(equalToConstant: Self.minimumButtonWidth)
+        width.isActive = true
+        button.observeTheme { button, palette in
+            paint(button, palette)
+            width.constant = max(Self.minimumButtonWidth,
+                                 ceil(button.attributedTitle.size().width) + Self.buttonTitlePadding)
+        }
+    }
+
+    public func updateConfirmEnabled() {
+        confirmButton.isEnabled = isConfirmEnabled
+        confirmButton.alphaValue = confirmButton.isEnabled ? 1 : Self.disabledAlpha
+    }
 
     public func runModal() async -> Result {
         guard continuation == nil else {
