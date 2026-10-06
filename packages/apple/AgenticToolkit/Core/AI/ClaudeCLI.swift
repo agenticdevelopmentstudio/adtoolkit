@@ -72,8 +72,8 @@ public enum ClaudeCLI {
     }
 
     /// The PATH a `claude` child needs: a GUI app inherits only the system
-    /// directories, and an npm-installed `claude` is a `#!/usr/bin/env node`
-    /// script. Order: `claudeDirectory` (when given), `~/.local/bin`,
+    /// directories, and an npm-installed `claude` is a script whose shebang
+    /// looks `node` up on PATH. Order: `claudeDirectory` (when given), `~/.local/bin`,
     /// `/usr/local/bin`, `/opt/homebrew/bin`, then the inherited PATH.
     /// Repeated directories keep only their first (highest-priority) place.
     public static func searchPath(
@@ -90,7 +90,7 @@ public enum ClaudeCLI {
     }
 
     /// The directory holding `binaryPath`, so a script-installed `claude`
-    /// (`#!/usr/bin/env node`) finds the `node` that sits beside it.
+    /// (an `env node` shebang) finds the `node` that sits beside it.
     public static func directory(ofBinary binaryPath: String) -> String {
         URL(fileURLWithPath: binaryPath).deletingLastPathComponent().path
     }

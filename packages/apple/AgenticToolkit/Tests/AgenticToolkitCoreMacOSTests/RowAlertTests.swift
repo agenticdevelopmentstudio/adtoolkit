@@ -82,7 +82,10 @@ private func removeSkipCancel() -> NSAlert {
         alert.addButton(withTitle: "Don't Save")
         let panel = RowAlertPanel(alert)
         #expect(panel.buttons[1].keyEquivalent == "\u{1b}")
-        #expect(panel.buttons[2].keyEquivalent == "")
+        // NSAlert gives "Don't Save" its own ⌘D, which the panel keeps; only
+        // Escape is Cancel's alone.
+        #expect(panel.buttons[0].keyEquivalent != "\u{1b}")
+        #expect(panel.buttons[2].keyEquivalent != "\u{1b}")
     }
 
     @Test func aNonzeroTagIsTheResponseAndZeroFallsBackToPosition() {

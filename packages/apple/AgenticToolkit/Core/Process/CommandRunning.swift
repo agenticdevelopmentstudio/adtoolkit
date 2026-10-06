@@ -41,8 +41,9 @@ extension CommandRunning {
 /// child writes (no 64 KB pipe-buffer deadlock).
 ///
 /// A command that cannot be launched at all reports status -1 with the error
-/// text rather than crashing. A command with no `/` in its name is resolved
-/// through `/usr/bin/env`.
+/// text rather than crashing. A command with no `/` in its name is looked up
+/// on the child's `PATH` (the replacement environment's, when one is given),
+/// as a shell would, and fails to launch when no directory holds it.
 public struct ProcessCommandRunner: CommandRunning {
     /// Backstop for a wedged helper so a caller fails instead of hanging
     /// forever; the default is far past any legitimate helper run.
@@ -71,7 +72,7 @@ public struct ProcessCommandRunner: CommandRunning {
 
     private static func captureBlocking(_ argv: [String], environment: [String: String]?,
                                         backstop: TimeInterval) -> (status: Int32, stdout: String, stderr: String) {
-        guard let process = makeProcess(argv) else { return (-1, "", "empty command") }
+        guard let process = makeProcess(argv, environment: environment) else { return (-1, "", "empty command") }
         if let environment { process.environment = environment }
         do {
             let outcome = try CommandRunner.runToCompletion(process, timeout: backstop)
@@ -84,17 +85,26 @@ public struct ProcessCommandRunner: CommandRunning {
         }
     }
 
-    private static func makeProcess(_ argv: [String]) -> Process? {
+    private static func makeProcess(_ argv: [String], environment: [String: String]? = nil) -> Process? {
         guard let executable = argv.first else { return nil }
         let process = Process()
-        if executable.contains("/") {
-            process.executableURL = URL(fileURLWithPath: executable)
-            process.arguments = Array(argv.dropFirst())
-        } else {
-            process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-            process.arguments = argv
-        }
+        let searchPath = (environment ?? ProcessInfo.processInfo.environment)["PATH"]
+        process.executableURL = URL(fileURLWithPath: resolve(executable, searchPath: searchPath))
+        process.arguments = Array(argv.dropFirst())
         return process
+    }
+
+    /// `name` itself when it holds a `/` or no `PATH` directory has an
+    /// executable by that name (the launch then fails with the error text);
+    /// otherwise the first match on `searchPath`.
+    static func resolve(_ name: String, searchPath: String?) -> String {
+        guard !name.contains("/") else { return name }
+        let directories = (searchPath ?? "/usr/bin:/bin:/usr/sbin:/sbin").split(separator: ":")
+        for directory in directories where !directory.isEmpty {
+            let candidate = "\(directory)/\(name)"
+            if FileManager.default.isExecutableFile(atPath: candidate) { return candidate }
+        }
+        return name
     }
 
     private static func runBlocking(_ argv: [String], backstop: TimeInterval) -> (status: Int32, output: String) {

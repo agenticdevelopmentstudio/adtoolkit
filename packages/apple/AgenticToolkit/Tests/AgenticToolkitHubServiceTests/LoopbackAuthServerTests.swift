@@ -2,6 +2,9 @@ import Network
 import XCTest
 @testable import AgenticToolkitHubService
 
+/// Test ports sit in 38_811–38_821, below macOS's ephemeral range (49152 and
+/// up): a port in that range can already be the local end of any app's
+/// outgoing connection, and the bind then fails with `noFreePort`.
 final class LoopbackAuthServerTests: XCTestCase {
     private static let dismissURL = URL(string: "adh://auth-callback")!
 
@@ -24,7 +27,7 @@ final class LoopbackAuthServerTests: XCTestCase {
     /// is a browser navigation, so its `User-Agent` is the one the backend
     /// bound the code to.
     func testDeliversTheCodeAndTheBrowsersUserAgent() async throws {
-        let server = try await makeServer(ports: [51_811], nonce: "n-deliver")
+        let server = try await makeServer(ports: [38_811], nonce: "n-deliver")
         defer { server.shutdown() }
 
         async let response = LoopbackTestClient().get(
@@ -43,7 +46,7 @@ final class LoopbackAuthServerTests: XCTestCase {
     /// The code arrives in the URL *fragment*, which no server ever sees —
     /// the capture page's only job is to move it somewhere one can.
     func testCapturePageMovesTheFragmentOntoTheDoneRoute() async throws {
-        let server = try await makeServer(ports: [51_812], nonce: "n-capture")
+        let server = try await makeServer(ports: [38_812], nonce: "n-capture")
         defer { server.shutdown() }
 
         let text = try await LoopbackTestClient().get(
@@ -60,7 +63,7 @@ final class LoopbackAuthServerTests: XCTestCase {
     /// per-attempt nonce is what makes "a code arrived" mean "the code this
     /// attempt asked for".
     func testARequestWithTheWrongNonceIsRefusedAndDeliversNothing() async throws {
-        let server = try await makeServer(ports: [51_813], nonce: "n-gate")
+        let server = try await makeServer(ports: [38_813], nonce: "n-gate")
         defer { server.shutdown() }
 
         let refused = try await LoopbackTestClient().get(
@@ -81,7 +84,7 @@ final class LoopbackAuthServerTests: XCTestCase {
     }
 
     func testTheCapturePageAlsoRequiresTheNonce() async throws {
-        let server = try await makeServer(ports: [51_814], nonce: "n-cb")
+        let server = try await makeServer(ports: [38_814], nonce: "n-cb")
         defer { server.shutdown() }
 
         let text = try await LoopbackTestClient().get(port: server.port, target: "/cb", userAgent: nil)
@@ -89,7 +92,7 @@ final class LoopbackAuthServerTests: XCTestCase {
     }
 
     func testAProviderErrorInsteadOfACodeThrowsMissingOAuthCode() async throws {
-        let server = try await makeServer(ports: [51_815], nonce: "n-error")
+        let server = try await makeServer(ports: [38_815], nonce: "n-error")
         defer { server.shutdown() }
 
         _ = try await LoopbackTestClient().get(
@@ -108,7 +111,7 @@ final class LoopbackAuthServerTests: XCTestCase {
     // MARK: outcome is one-shot
 
     func testAbortCancelsTheWait() async throws {
-        let server = try await makeServer(ports: [51_816], nonce: "n-abort")
+        let server = try await makeServer(ports: [38_816], nonce: "n-abort")
         defer { server.shutdown() }
 
         server.abort()
@@ -123,7 +126,7 @@ final class LoopbackAuthServerTests: XCTestCase {
     /// The browser session always ends *after* the code has been handed over,
     /// so a late abort must not turn a success into a cancellation.
     func testALateAbortCannotUndoADeliveredCode() async throws {
-        let server = try await makeServer(ports: [51_817], nonce: "n-late")
+        let server = try await makeServer(ports: [38_817], nonce: "n-late")
         defer { server.shutdown() }
 
         _ = try await LoopbackTestClient().get(
@@ -139,28 +142,28 @@ final class LoopbackAuthServerTests: XCTestCase {
     // MARK: binding
 
     func testReturnURLPinsTheBoundPortAndCarriesTheNonce() async throws {
-        let server = try await makeServer(ports: [51_818], nonce: "n-return")
+        let server = try await makeServer(ports: [38_818], nonce: "n-return")
         defer { server.shutdown() }
 
-        XCTAssertEqual(server.port, 51_818)
-        XCTAssertEqual(server.returnURL, URL(string: "http://127.0.0.1:51818/cb?n=n-return"))
+        XCTAssertEqual(server.port, 38_818)
+        XCTAssertEqual(server.returnURL, URL(string: "http://127.0.0.1:38818/cb?n=n-return"))
     }
 
     func testASecondServerFallsThroughToTheNextPort() async throws {
-        let ports: [UInt16] = [51_819, 51_820]
+        let ports: [UInt16] = [38_819, 38_820]
         let first = try await makeServer(ports: ports)
         defer { first.shutdown() }
         let second = try await makeServer(ports: ports)
         defer { second.shutdown() }
 
-        XCTAssertEqual(first.port, 51_819)
-        XCTAssertEqual(second.port, 51_820)
+        XCTAssertEqual(first.port, 38_819)
+        XCTAssertEqual(second.port, 38_820)
     }
 
     /// The allow-list is the backend's, so there is no fallback port to
     /// invent when all three are busy — the attempt has to fail visibly.
     func testEveryPortTakenIsAnError() async throws {
-        let ports: [UInt16] = [51_821]
+        let ports: [UInt16] = [38_821]
         let holder = try await makeServer(ports: ports)
         defer { holder.shutdown() }
 
