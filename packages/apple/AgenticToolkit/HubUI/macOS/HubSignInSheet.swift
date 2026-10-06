@@ -45,6 +45,7 @@ private final class SignInSheetController: NSViewController {
         self.model = model
         self.onClose = onClose
         super.init(nibName: nil, bundle: nil)
+        model.onSignedIn = { [weak self] _ in self?.close() }
     }
 
     @available(*, unavailable)
@@ -73,7 +74,6 @@ private final class SignInSheetController: NSViewController {
             cancel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -20)
         ])
         view = container
-        model.onSignedIn = { [weak self] _ in self?.close() }
     }
 
     @objc private func cancelPressed() { close() }

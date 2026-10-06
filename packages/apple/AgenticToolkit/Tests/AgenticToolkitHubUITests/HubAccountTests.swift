@@ -150,6 +150,16 @@ struct HubAccountTests {
         #expect(calls == 2)
     }
 
+    @Test("an onClose fired synchronously does not leave the latch stuck")
+    func synchronousCloseDoesNotLatch() {
+        var calls = 0
+        let account = make(FakeSession(), presenter: { _, _, onClose in calls += 1; onClose(); return true })
+        let anchor = AccountPresentationAnchor(NSObject())
+        account.presentSignIn(from: anchor)
+        account.presentSignIn(from: anchor)
+        #expect(calls == 2)
+    }
+
     @Test("a presenter that cannot present does not latch")
     func failedPresentDoesNotLatch() {
         var calls = 0

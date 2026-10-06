@@ -64,7 +64,10 @@ public final class HubAccount: Account {
     public func presentSignIn(from anchor: AccountPresentationAnchor) {
         guard !isPresenting else { return }
         let model = SignInViewModel(session: session, passkeys: passkeys, social: social)
-        isPresenting = presenter(model, anchor) { [weak self] in self?.isPresenting = false }
+        // Latch first: an onClose fired synchronously must not be overwritten.
+        isPresenting = true
+        let presented = presenter(model, anchor) { [weak self] in self?.isPresenting = false }
+        if !presented { isPresenting = false }
     }
 
     public func signOut() async {

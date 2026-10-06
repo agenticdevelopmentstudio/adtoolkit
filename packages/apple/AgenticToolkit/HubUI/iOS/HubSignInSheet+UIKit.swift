@@ -19,6 +19,12 @@ public enum HubSignInSheet {
             log.warning("sign-in requested with no view controller to present from")
             return false
         }
+        // UIKit silently drops a present() when the presenter is already
+        // presenting or is not in a window; no close callback would ever fire.
+        guard presenter.presentedViewController == nil, presenter.viewIfLoaded?.window != nil else {
+            log.warning("sign-in requested but the presenter cannot present right now")
+            return false
+        }
         let signIn = SignInViewController(viewModel: model)
         let closer = SheetCloser(onClose: onClose)
         signIn.navigationItem.leftBarButtonItem = UIBarButtonItem(
