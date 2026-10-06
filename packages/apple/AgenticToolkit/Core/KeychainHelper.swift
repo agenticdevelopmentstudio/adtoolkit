@@ -24,9 +24,10 @@ public enum KeychainHelper {
     /// retired identifiers here lets `get` find one and re-store it under the
     /// current service, the same shape as the access-group recovery below.
     ///
-    /// The legacy item is read and never deleted. It belongs to the old
-    /// identity, another install may still be using it, and a secret is not
-    /// something to destroy on a guess.
+    /// Recovering a legacy item leaves it where it is: another install may
+    /// still be using it. `delete` removes it too, because a secret the user
+    /// cleared must stay cleared — otherwise the next `get` would recover the
+    /// old copy and bring the cleared secret back.
     nonisolated(unsafe) public static var legacyServices: [String] = []
 
     /// Builds the base generic-password query for an account key. When an access
@@ -54,7 +55,7 @@ public enum KeychainHelper {
     @discardableResult
     public static func set(_ value: String, forKey key: String) -> Bool {
         let data = Data(value.utf8)
-        delete(forKey: key)
+        deleteItem(makeQuery(account: key))
 
         var query = makeQuery(account: key)
         query[kSecValueData as String] = data
@@ -126,11 +127,23 @@ public enum KeychainHelper {
         return String(data: data, encoding: .utf8)
     }
 
-    /// Deletes the Keychain item for the given account key.
+    /// Deletes the Keychain item for the given account key, along with any
+    /// copy under a retired service (``legacyServices``) that `get` would
+    /// otherwise recover.
     @discardableResult
     public static func delete(forKey key: String) -> Bool {
-        let query = makeQuery(account: key)
+        var deleted = deleteItem(makeQuery(account: key))
+        for legacyService in legacyServices {
+            deleted = deleteItem(makeQuery(account: key, service: legacyService)) && deleted
+            if accessGroup != nil {
+                deleted = deleteItem(makeQuery(account: key, accessGroup: nil, service: legacyService)) && deleted
+            }
+        }
+        return deleted
+    }
 
+    @discardableResult
+    private static func deleteItem(_ query: [String: Any]) -> Bool {
         let status = SecItemDelete(query as CFDictionary)
         return status == errSecSuccess || status == errSecItemNotFound
     }

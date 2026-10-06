@@ -10,7 +10,9 @@ import Security
 /// Tests do NOT mutate `KeychainHelper.service` (it's a global static), so
 /// the test keychain service is whatever the test host's bundle identifier
 /// resolves to at runtime. Isolation is per-account-key, not per-service.
-@Suite("KeychainHelper")
+/// Serialized: the retired-service tests append to the global
+/// `KeychainHelper.legacyServices`, which the other tests read.
+@Suite("KeychainHelper", .serialized)
 struct KeychainHelperTests {
 
     private func uniqueKey(_ prefix: String = "kctest") -> String {
@@ -131,5 +133,54 @@ struct KeychainHelperTests {
         #expect(KeychainHelper.delete(forKey: keyA))
         #expect(KeychainHelper.get(forKey: keyA) == nil)
         #expect(KeychainHelper.get(forKey: keyB) == "beta")
+    }
+
+    // MARK: - Retired services
+
+    /// Stores `value` straight under `service`, as an old build would have.
+    private func storeRaw(_ value: String, forKey key: String, service: String) {
+        var query = KeychainHelper.makeQuery(account: key, accessGroup: nil, service: service)
+        query[kSecValueData as String] = Data(value.utf8)
+        SecItemAdd(query as CFDictionary, nil)
+    }
+
+    private func rawExists(_ key: String, service: String) -> Bool {
+        var query = KeychainHelper.makeQuery(account: key, accessGroup: nil, service: service)
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
+        return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
+    }
+
+    /// Appends a unique retired service and removes it afterwards; other
+    /// tests' keys never match it, so they are unaffected.
+    private func withRetiredService(_ body: (String) -> Void) {
+        let retired = "kctest.retired.\(UUID().uuidString)"
+        KeychainHelper.legacyServices.append(retired)
+        defer { KeychainHelper.legacyServices.removeAll { $0 == retired } }
+        body(retired)
+    }
+
+    @Test("get recovers a secret stored under a retired service and leaves the old copy")
+    func getRecoversRetired() {
+        let key = uniqueKey("retired")
+        withRetiredService { retired in
+            storeRaw("old-key", forKey: key, service: retired)
+            defer { KeychainHelper.delete(forKey: key) }
+            #expect(KeychainHelper.get(forKey: key) == "old-key")
+            #expect(rawExists(key, service: retired))
+        }
+    }
+
+    @Test("delete also removes the retired copy, so a cleared secret stays cleared")
+    func deleteRemovesRetired() {
+        let key = uniqueKey("cleared")
+        withRetiredService { retired in
+            storeRaw("old-key", forKey: key, service: retired)
+            #expect(KeychainHelper.get(forKey: key) == "old-key")
+
+            #expect(KeychainHelper.delete(forKey: key))
+            #expect(!rawExists(key, service: retired))
+            #expect(KeychainHelper.get(forKey: key) == nil)
+            #expect(!KeychainHelper.exists(forKey: key))
+        }
     }
 }
