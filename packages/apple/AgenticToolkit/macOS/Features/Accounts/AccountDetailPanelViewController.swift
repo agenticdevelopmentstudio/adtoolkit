@@ -10,16 +10,18 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
     static let restoringText = "Checking sign-in…"
     private static let log = Logger(subsystem: "com.agentic-cookbook.toolkit", category: "accounts")
 
+    private static let wrapWidth: CGFloat = 360
+
     let account: any Account
     private let openURL: @MainActor (URL) -> Void
 
-    let summaryLabel = ThemedLabel.wrapping("", width: 360, role: .secondaryText, textRole: .body)
+    let summaryLabel = ThemedLabel.wrapping("", width: wrapWidth, role: .secondaryText, textRole: .body)
     let statusLabel = ThemedLabel(string: restoringText, role: .secondaryText, textRole: .body)
     let spinner = NSProgressIndicator()
     let avatarView = AccountAvatarView()
     let nameLabel = ThemedLabel(role: .primaryText, textRole: .title)
     let emailLabel = ThemedLabel(role: .secondaryText, textRole: .body)
-    let messageLabel = ThemedLabel.wrapping("", width: 360, role: .danger, textRole: .caption)
+    let messageLabel = ThemedLabel.wrapping("", width: wrapWidth, role: .danger, textRole: .caption)
     private(set) lazy var loginButton = ThemedActionButton(
         title: "Login", style: .primary, target: self, action: #selector(loginPressed))
     private(set) lazy var signupButton = ThemedActionButton(
@@ -91,6 +93,7 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
         group.addSettingSubview(column)
         addGroup(group)
 
+        // This panel is the account's one observer; assigning replaces any earlier one.
         account.onChange = { [weak self] in self?.render() }
         render()
     }

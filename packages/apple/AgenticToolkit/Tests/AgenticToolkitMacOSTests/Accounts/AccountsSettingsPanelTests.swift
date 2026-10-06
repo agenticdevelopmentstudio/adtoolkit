@@ -141,6 +141,30 @@ struct AccountDetailPanelTests {
         #expect(detail.loginButton.isHidden && detail.signupButton.isHidden)
     }
 
+    @Test("signed in then busy keeps the user showing, Logout disabled")
+    func signedInThenBusy() {
+        let account = FakeAccount(id: "a", displayName: "Alpha")
+        account.state = .signedIn(AccountUser(id: "u", name: "Ada Lovelace", email: "ada@x.y", avatarURL: nil))
+        let detail = makeDetail(account)
+        account.state = .busy
+        #expect(!detail.nameLabel.isHidden)
+        #expect(detail.nameLabel.stringValue == "Ada Lovelace")
+        #expect(!detail.logoutButton.isHidden)
+        #expect(!detail.logoutButton.isEnabled)
+    }
+
+    @Test("busy then signed out clears the identity")
+    func busyThenSignedOut() {
+        let account = FakeAccount(id: "a", displayName: "Alpha")
+        account.state = .signedIn(AccountUser(id: "u", name: "Ada Lovelace", email: "ada@x.y", avatarURL: nil))
+        let detail = makeDetail(account)
+        account.state = .busy
+        account.state = .signedOut
+        #expect(!detail.loginButton.isHidden)
+        #expect(detail.nameLabel.isHidden)
+        #expect(detail.avatarView.user == nil)
+    }
+
     @Test("busy disables every button and shows the spinner")
     func busy() {
         let account = FakeAccount(id: "a", displayName: "Alpha")

@@ -39,7 +39,7 @@ open class AccountsSettingsPanelViewController: ComposableSettings.SettingsPanel
         ["account", "login", "sign in", "sign up", "logout"] + registry.accounts.map(\.displayName)
     }
 
-    public override func viewDidLoad() {
+    open override func viewDidLoad() {
         super.viewDidLoad()
         footer.addButton.isEnabled = false
         footer.isRemoveEnabled = false

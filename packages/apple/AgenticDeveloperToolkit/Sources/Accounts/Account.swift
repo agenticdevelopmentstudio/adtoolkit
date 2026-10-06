@@ -60,7 +60,9 @@ public protocol Account: AnyObject {
     var message: String? { get }
     /// Where to sign up on the web; `nil` hides Signup.
     var signupURL: URL? { get }
-    /// Fires after any change to `state` or `message`.
+    /// Fires after any change to `state` or `message`. A single slot: the
+    /// accounts UI that shows the account is its one observer and sets this,
+    /// so assigning it again replaces the earlier observer.
     var onChange: @MainActor () -> Void { get set }
 
     func presentSignIn(from anchor: AccountPresentationAnchor)
