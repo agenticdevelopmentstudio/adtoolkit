@@ -33,4 +33,36 @@ final class WorkTrackingModelsTests: XCTestCase {
             writeFailures: 2, lastError: "disk full")
         XCTAssertEqual(try decoder.decode(WorkTrackingStatus.self, from: encoder.encode(status)), status)
     }
+
+    /// Review D1: a stored grant holds only under the signature it was
+    /// recorded under; a denial holds under any.
+    func testAStoredGrantIsTrustedOnlyUnderItsOwnSignature() throws {
+        let store = SettingsDictionary()
+        try WorkTrackingPrefs.setLastAccessibility(.granted, signer: "A", store)
+        XCTAssertEqual(try WorkTrackingPrefs.trustedAccessibility(store, signer: "A"), .granted)
+        XCTAssertEqual(try WorkTrackingPrefs.trustedAccessibility(store, signer: "B"), .unknown)
+        XCTAssertEqual(try WorkTrackingPrefs.trustedAccessibility(store, signer: nil), .unknown)
+        XCTAssertEqual(try WorkTrackingPrefs.lastAccessibility(store), .granted, "the raw answer is kept")
+
+        try WorkTrackingPrefs.setLastAccessibility(.granted, signer: nil, store)
+        XCTAssertEqual(try WorkTrackingPrefs.trustedAccessibility(store, signer: ""), .unknown,
+                       "no recorded signature matches nothing, an empty one included")
+
+        try WorkTrackingPrefs.setLastAccessibility(.denied, signer: "A", store)
+        XCTAssertEqual(try WorkTrackingPrefs.trustedAccessibility(store, signer: "B"), .denied)
+    }
+
+    /// The signature the grant is checked against is readable from a signed
+    /// test host, and asks nothing of TCC.
+    func testOwnDesignatedRequirementIsReadable() {
+        XCTAssertFalse(OwnCodeSignature.designatedRequirement()?.isEmpty ?? true)
+    }
+}
+
+/// Work-tracking settings in a dictionary.
+private final class SettingsDictionary: WorkTrackingSettingsStore {
+    private var values: [String: String] = [:]
+    func setting(for key: String) throws -> String? { values[key] }
+    func setSetting(_ key: String, _ value: String) throws { values[key] = value }
+    func transaction<T>(_ body: () throws -> T) throws -> T { try body() }
 }

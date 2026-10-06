@@ -175,6 +175,7 @@
 		0720689C99FC7EC599BD8ABF /* TrackedApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = D50EA72EB67C37C376AE89B1 /* TrackedApp.swift */; };
 		0735CF8D76787A4070720F80 /* StorageTokensTopic.swift in Sources */ = {isa = PBXBuildFile; fileRef = F74CEE085DE3B4173571FF22 /* StorageTokensTopic.swift */; };
 		07501F145925E28E1C3D80C5 /* SemanticVersionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69DC46D4A5E4C909C1E2591F /* SemanticVersionTests.swift */; };
+		07547148B38A51CF4B9EDB92 /* OwnCodeSignature.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59FD05236641898241499CA8 /* OwnCodeSignature.swift */; };
 		0757FC51446B91F1FF696E52 /* AgenticToolkitCoreMacOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 61310A916E242BA60A9FE8C1 /* AgenticToolkitCoreMacOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0763D51F3D795C2021676638 /* AIProviderDefaultsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99572D154FCFAEA2C295B83A /* AIProviderDefaultsTests.swift */; };
 		077162A8A32ADFD9713F342B /* ScriptingHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BA5D9118A1080C5EE9E8FD9 /* ScriptingHost.swift */; };
@@ -4945,6 +4946,7 @@
 		59B9F581D2326484455EDB8A /* TrackedAppsSettingsPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackedAppsSettingsPanel.swift; sourceTree = "<group>"; };
 		59BFBF7566BA54AF0F53A382 /* NSImage+Symbol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSImage+Symbol.swift"; sourceTree = "<group>"; };
 		59CBBE68BA85449BAECFA075 /* ScreenSet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenSet.swift; sourceTree = "<group>"; };
+		59FD05236641898241499CA8 /* OwnCodeSignature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OwnCodeSignature.swift; sourceTree = "<group>"; };
 		5A434D0DF608A6D2C0E5237A /* GitStatusProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitStatusProvider.swift; sourceTree = "<group>"; };
 		5A8FD9AFFEBBCE6635F75C66 /* WebviewHostDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebviewHostDocument.swift; sourceTree = "<group>"; };
 		5A9BBC13EDD6FC1F94F155E3 /* JITAvailabilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JITAvailabilityTests.swift; sourceTree = "<group>"; };
@@ -7702,6 +7704,7 @@
 			isa = PBXGroup;
 			children = (
 				33619129A89D9B7E57F49FDB /* JITAvailability.swift */,
+				59FD05236641898241499CA8 /* OwnCodeSignature.swift */,
 				621D5A1AE85E269317BABEDE /* UpstreamDivergence.swift */,
 				ED70B85162A49071846BF25F /* UpstreamDivergenceLedger.swift */,
 			);
@@ -13810,6 +13813,7 @@
 				9D0EDE5E4875C66A08E1FEDD /* OpenAIModelCatalog.swift in Sources */,
 				91BEEBE1E2D9BA94D526CBBF /* OpenVSXCatalog.swift in Sources */,
 				91A24E26ECBADCAF3585FB85 /* OpenVSXClient.swift in Sources */,
+				07547148B38A51CF4B9EDB92 /* OwnCodeSignature.swift in Sources */,
 				C00A5236F047A81A0F0166B0 /* PendingTeardowns.swift in Sources */,
 				79B85D29D231E764971F8D40 /* PeriodicRefresher.swift in Sources */,
 				6A09192ADFE913E5088DEB34 /* RawSetting.swift in Sources */,

@@ -26,9 +26,17 @@ public protocol WorkTrackingPersistence: ActivityPersistence, WorkTrackingSettin
 /// Every other path — `start()`, a recovered preference read, a recovering
 /// `apply` — trusts the stored answer, a stored `.granted` included (review
 /// N1: a grant can be gone by the next launch, after a re-sign or a revoke
-/// while the daemon was down, and asking then is exactly the freeze). A
-/// stale grant is learned from the window read's own `kAXErrorAPIDisabled`
-/// (`accessibilityRevoked()`), never by asking.
+/// while the daemon was down, and asking then is exactly the freeze).
+///
+/// A stored grant is trusted only under the code signature it was recorded
+/// under (review D1): TCC keys a grant to the designated requirement, so a
+/// re-signed build — the usual way a grant goes stale — starts app-only and
+/// makes no AX call at all; `recheckAccessibility()` restores window reads.
+/// A grant revoked in System Settings while the daemon was down, under the
+/// same signature, cannot be told apart without an AX call of some kind. It
+/// is learned from the first window read's `kAXErrorAPIDisabled`
+/// (`accessibilityRevoked()`): one bounded read, after which the focus
+/// adapter makes no AX call again.
 @MainActor
 public final class WorkTrackingController {
     public typealias AccessibilityCheck = @MainActor () async -> WorkTrackingAccessibility
@@ -72,6 +80,9 @@ public final class WorkTrackingController {
 
     public nonisolated let database: any WorkTrackingPersistence
     private let checkAccessibility: AccessibilityCheck
+    /// This build's designated requirement, read once: the signature a
+    /// stored grant must have been recorded under to be trusted.
+    private let signer: String?
     private let makeRecorder: MakeRecorder?
     private let loadPrefs: LoadPrefs
     private let retryDelay: RetryDelay
@@ -99,9 +110,11 @@ public final class WorkTrackingController {
                 makeRecorder: MakeRecorder? = nil,
                 loadPrefs: @escaping LoadPrefs = { try WorkTrackingPrefs.load($0) },
                 retryDelay: @escaping RetryDelay = WorkTrackingController.defaultRetryDelay,
-                now: @escaping @Sendable () -> Date = Date.init) {
+                now: @escaping @Sendable () -> Date = Date.init,
+                signer: () -> String? = OwnCodeSignature.designatedRequirement) {
         self.database = database
         self.checkAccessibility = checkAccessibility
+        self.signer = signer()
         self.makeRecorder = makeRecorder
         self.loadPrefs = loadPrefs
         self.retryDelay = retryDelay
@@ -240,8 +253,10 @@ public final class WorkTrackingController {
 
     /// The start policy: the stored answer is trusted as is — AX is never
     /// asked here, not even to confirm a stored grant (review N1). A grant
-    /// that has gone stale surfaces as the window read's `kAXErrorAPIDisabled`,
-    /// which lands in `accessibilityRevoked()` without asking either.
+    /// recorded under another signature was already read as `.unknown`
+    /// (review D1); one revoked under this signature surfaces as the window
+    /// read's `kAXErrorAPIDisabled`, which lands in `accessibilityRevoked()`
+    /// without asking either.
     private func startTrustingTheStoredAnswer() {
         guard !stopped, preferences.enabled, recorder == nil else { return }
         startRecorder()
@@ -335,7 +350,7 @@ public final class WorkTrackingController {
 
     private func storedAccessibility() -> WorkTrackingAccessibility {
         do {
-            return try WorkTrackingPrefs.lastAccessibility(database)
+            return try WorkTrackingPrefs.trustedAccessibility(database, signer: signer)
         } catch {
             Self.logFailure("reading the AX answer", error)
             return .unknown
@@ -345,7 +360,7 @@ public final class WorkTrackingController {
     private func storeAccessibility(_ answer: WorkTrackingAccessibility) {
         accessibility = answer
         do {
-            try WorkTrackingPrefs.setLastAccessibility(answer, database)
+            try WorkTrackingPrefs.setLastAccessibility(answer, signer: signer, database)
         } catch {
             Self.logFailure("storing the AX answer", error)
         }

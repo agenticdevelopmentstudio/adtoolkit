@@ -50,9 +50,31 @@ public enum WorkTrackingPrefs {
         return WorkTrackingAccessibility(rawValue: raw) ?? .unknown
     }
 
-    public static func setLastAccessibility(_ value: WorkTrackingAccessibility,
+    /// Records an answer and the code signature it was given under (see
+    /// `OwnCodeSignature.designatedRequirement()`), both in one transaction.
+    public static func setLastAccessibility(_ value: WorkTrackingAccessibility, signer: String?,
                                             _ store: some WorkTrackingSettingsStore) throws {
-        try store.setSetting(WorkTrackingSettingsKeys.accessibilityLastStatus, value.rawValue)
+        try store.transaction {
+            try store.setSetting(WorkTrackingSettingsKeys.accessibilityLastStatus, value.rawValue)
+            try store.setSetting(WorkTrackingSettingsKeys.accessibilitySigner, signer ?? "")
+        }
+    }
+
+    /// The stored answer as far as `signer` may rely on it without asking:
+    /// a stored `.granted` holds only for the signature it was recorded under.
+    /// TCC keys a grant to the code's designated requirement, so a grant
+    /// recorded by a build signed otherwise (or by a build whose signature
+    /// could not be read, or before signatures were recorded) is not known to
+    /// hold, and reads `.unknown` — window reads stay off, and nothing has to
+    /// make an AX call to find out (review D1). A denial needs no signature:
+    /// trusting it never calls AX.
+    public static func trustedAccessibility(_ store: some WorkTrackingSettingsStore,
+                                            signer: String?) throws -> WorkTrackingAccessibility {
+        let answer = try lastAccessibility(store)
+        guard answer == .granted else { return answer }
+        let recorded = try store.setting(for: WorkTrackingSettingsKeys.accessibilitySigner) ?? ""
+        guard let signer, !signer.isEmpty, recorded == signer else { return .unknown }
+        return .granted
     }
 
     // MARK: - Private

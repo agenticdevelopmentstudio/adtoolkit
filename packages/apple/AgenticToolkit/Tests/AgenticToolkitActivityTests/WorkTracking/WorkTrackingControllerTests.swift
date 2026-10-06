@@ -108,6 +108,9 @@ private struct BuiltRecorder {
 @MainActor
 final class WorkTrackingControllerTests: XCTestCase {
     private var store: MemoryWorkTrackingStore!
+    /// This build's signature, as the controller under test reads it.
+    static let signer = "identifier \"com.example.test\" and anchor apple generic"
+    var signer: String? = WorkTrackingControllerTests.signer
     var axCalls = 0
     var axAnswer: WorkTrackingAccessibility = .granted
     /// Runs inside the AX check, before it answers: the seam for races.
@@ -161,7 +164,8 @@ final class WorkTrackingControllerTests: XCTestCase {
                 return try WorkTrackingPrefs.load(database)
             },
             retryDelay: { _ in delay },
-            now: now)
+            now: now,
+            signer: { [signer] in signer })
     }
 
     /// Lets the controller's deferred main-actor work run.
@@ -183,7 +187,7 @@ final class WorkTrackingControllerTests: XCTestCase {
     // MARK: - AX policy at start
 
     func testDisabledStartNeverChecksAX() async throws {
-        try WorkTrackingPrefs.setLastAccessibility(.granted, store)
+        try WorkTrackingPrefs.setLastAccessibility(.granted, signer: Self.signer, store)
         let ctl = controller()
         await ctl.start()
         XCTAssertEqual(axCalls, 0, "tracking off: AX is never asked, even after a stored grant")
@@ -193,7 +197,7 @@ final class WorkTrackingControllerTests: XCTestCase {
 
     func testUngrantedStartsWithoutWindowReads() async throws {
         try WorkTrackingPrefs.save(enabledPrefs(), store)
-        try WorkTrackingPrefs.setLastAccessibility(.denied, store)
+        try WorkTrackingPrefs.setLastAccessibility(.denied, signer: Self.signer, store)
         await controller().start()
         XCTAssertEqual(axCalls, 0, "a denied answer is never re-asked at start")
         XCTAssertEqual(builtReadsWindows, [false])
@@ -214,7 +218,7 @@ final class WorkTrackingControllerTests: XCTestCase {
     /// from a process without it stalls tccd and freezes the machine.
     func testGrantedLastTimeIsTrustedAtStartNeverReAsked() async throws {
         try WorkTrackingPrefs.save(enabledPrefs(), store)
-        try WorkTrackingPrefs.setLastAccessibility(.granted, store)
+        try WorkTrackingPrefs.setLastAccessibility(.granted, signer: Self.signer, store)
         axAnswer = .denied
         let ctl = controller()
         await ctl.start()
@@ -230,7 +234,7 @@ final class WorkTrackingControllerTests: XCTestCase {
     /// read's own denial, still without asking.
     func testAXTrustIsNeverAskedOnStartRestartOrPrefsRetry() async throws {
         try WorkTrackingPrefs.save(enabledPrefs(), store)
-        try WorkTrackingPrefs.setLastAccessibility(.granted, store)
+        try WorkTrackingPrefs.setLastAccessibility(.granted, signer: Self.signer, store)
         axAnswer = .denied
 
         let first = controller()
@@ -262,6 +266,74 @@ final class WorkTrackingControllerTests: XCTestCase {
         XCTAssertEqual(try WorkTrackingPrefs.lastAccessibility(store), .denied)
         XCTAssertEqual(axCalls, 0, "the revocation never asks either")
         retrying.stop()
+    }
+
+    /// Review D1: TCC keys a grant to the designated requirement, so a grant
+    /// recorded by a build signed otherwise (Apple Development → Developer
+    /// ID) may be gone. It is not trusted: the recorder starts app-only, and
+    /// nothing — no trust check, no window read — makes an AX call.
+    func testAGrantRecordedUnderAnotherSignatureStartsAppOnlyWithoutAsking() async throws {
+        try WorkTrackingPrefs.save(enabledPrefs(), store)
+        try WorkTrackingPrefs.setLastAccessibility(.granted, signer: "identifier \"old\"", store)
+        let ctl = controller()
+        await ctl.start()
+        XCTAssertEqual(axCalls, 0)
+        XCTAssertEqual(builtReadsWindows, [false], "an unconfirmed grant makes no window read")
+        XCTAssertEqual(ctl.status().accessibility, .unknown)
+        ctl.stop()
+    }
+
+    /// A grant stored before signatures were recorded, or by a build whose
+    /// signature could not be read, is not known to hold either.
+    func testAGrantWithNoRecordedSignatureIsNotTrusted() async throws {
+        try WorkTrackingPrefs.save(enabledPrefs(), store)
+        try store.setSetting(WorkTrackingSettingsKeys.accessibilityLastStatus, "granted")
+        let ctl = controller()
+        await ctl.start()
+        XCTAssertEqual(axCalls, 0)
+        XCTAssertEqual(builtReadsWindows, [false])
+        ctl.stop()
+    }
+
+    /// An unreadable signature of our own confirms no grant at all.
+    func testAnUnreadableOwnSignatureTrustsNoGrant() async throws {
+        try WorkTrackingPrefs.save(enabledPrefs(), store)
+        try WorkTrackingPrefs.setLastAccessibility(.granted, signer: Self.signer, store)
+        signer = nil
+        let ctl = controller()
+        await ctl.start()
+        XCTAssertEqual(axCalls, 0)
+        XCTAssertEqual(builtReadsWindows, [false])
+        ctl.stop()
+    }
+
+    /// The unconfirmed grant is restored by the explicit recheck, which then
+    /// records it under this signature so the next start trusts it.
+    func testARecheckReconfirmsAGrantUnderThisSignature() async throws {
+        try WorkTrackingPrefs.save(enabledPrefs(), store)
+        try WorkTrackingPrefs.setLastAccessibility(.granted, signer: "identifier \"old\"", store)
+        let ctl = controller()
+        await ctl.start()
+        _ = await ctl.recheckAccessibility()
+        XCTAssertEqual(axCalls, 1)
+        XCTAssertEqual(builtReadsWindows, [false, true], "the confirmed grant restarts with window reads")
+        ctl.stop()
+
+        let next = controller()
+        await next.start()
+        XCTAssertEqual(axCalls, 1, "the next start trusts it without asking")
+        XCTAssertEqual(builtReadsWindows, [false, true, true])
+        next.stop()
+    }
+
+    /// Turning tracking on records the answer under this signature.
+    func testTurningOnRecordsTheAnswerUnderThisSignature() async throws {
+        let ctl = controller()
+        await ctl.start()
+        _ = try await ctl.apply(enabledPrefs())
+        XCTAssertEqual(try store.setting(for: WorkTrackingSettingsKeys.accessibilitySigner), Self.signer)
+        XCTAssertEqual(try WorkTrackingPrefs.trustedAccessibility(store, signer: Self.signer), .granted)
+        ctl.stop()
     }
 
     // MARK: - apply
@@ -326,7 +398,7 @@ final class WorkTrackingControllerTests: XCTestCase {
 
     func testRecheckRestartsWithWindowReadsWhenGranted() async throws {
         try WorkTrackingPrefs.save(enabledPrefs(), store)
-        try WorkTrackingPrefs.setLastAccessibility(.denied, store)
+        try WorkTrackingPrefs.setLastAccessibility(.denied, signer: Self.signer, store)
         let ctl = controller()
         await ctl.start()
         axAnswer = .granted
@@ -341,7 +413,7 @@ final class WorkTrackingControllerTests: XCTestCase {
 
     func testRecheckWithUnchangedAnswerKeepsTheRecorder() async throws {
         try WorkTrackingPrefs.save(enabledPrefs(), store)
-        try WorkTrackingPrefs.setLastAccessibility(.denied, store)
+        try WorkTrackingPrefs.setLastAccessibility(.denied, signer: Self.signer, store)
         let ctl = controller()
         await ctl.start()
         axAnswer = .denied
@@ -354,7 +426,7 @@ final class WorkTrackingControllerTests: XCTestCase {
     func testRecheckRestartDrainsTheOldRecorderFirst() async throws {
         recorderStore = SlowCloseStore(store)
         try WorkTrackingPrefs.save(enabledPrefs(), store)
-        try WorkTrackingPrefs.setLastAccessibility(.denied, store)
+        try WorkTrackingPrefs.setLastAccessibility(.denied, signer: Self.signer, store)
         let ctl = controller()
         await ctl.start()
         focusXcode(built[0], at: Date().addingTimeInterval(-120))
@@ -372,7 +444,7 @@ final class WorkTrackingControllerTests: XCTestCase {
 
     func testRevokedAccessibilityStoresDeniedAndRestartsAppOnlyWithoutAskingAX() async throws {
         try WorkTrackingPrefs.save(enabledPrefs(), store)
-        try WorkTrackingPrefs.setLastAccessibility(.granted, store)
+        try WorkTrackingPrefs.setLastAccessibility(.granted, signer: Self.signer, store)
         axAnswer = .granted
         let ctl = controller()
         await ctl.start()
@@ -427,7 +499,7 @@ final class WorkTrackingControllerTests: XCTestCase {
     func testPrefsLoadFailureAtStartIsRetriedAndRecoversTrustingTheStoredGrant() async throws {
         struct Broken: Error {}
         try WorkTrackingPrefs.save(enabledPrefs(), store)
-        try WorkTrackingPrefs.setLastAccessibility(.granted, store)
+        try WorkTrackingPrefs.setLastAccessibility(.granted, signer: Self.signer, store)
         prefsLoadError = Broken()
         retryDelay = 0.01
         let ctl = controller()
@@ -446,7 +518,7 @@ final class WorkTrackingControllerTests: XCTestCase {
     func testARetryNeverReAsksAStoredDenial() async throws {
         struct Broken: Error {}
         try WorkTrackingPrefs.save(enabledPrefs(), store)
-        try WorkTrackingPrefs.setLastAccessibility(.denied, store)
+        try WorkTrackingPrefs.setLastAccessibility(.denied, signer: Self.signer, store)
         prefsLoadError = Broken()
         retryDelay = 0.01
         let ctl = controller()
@@ -463,7 +535,7 @@ final class WorkTrackingControllerTests: XCTestCase {
     func testAnApplyWhileStillUnreadableTrustsAStoredDenial() async throws {
         struct Broken: Error {}
         try WorkTrackingPrefs.save(enabledPrefs(), store)
-        try WorkTrackingPrefs.setLastAccessibility(.denied, store)
+        try WorkTrackingPrefs.setLastAccessibility(.denied, signer: Self.signer, store)
         prefsLoadError = Broken()
         let ctl = controller()
         await ctl.start()

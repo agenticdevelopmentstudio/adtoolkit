@@ -67,6 +67,8 @@ public enum WorkTrackingSettingsKeys {
     public static let removedBundleIds = "activity_removed_bundle_ids"  // JSON array
     public static let retentionDays = "activity_retention_days"
     public static let accessibilityLastStatus = "activity_ax_last_status"
+    /// The designated requirement `accessibilityLastStatus` was answered under.
+    public static let accessibilitySigner = "activity_ax_signer"
 }
 
 /// The prefix of a billing segment's session id when an app span made it.
