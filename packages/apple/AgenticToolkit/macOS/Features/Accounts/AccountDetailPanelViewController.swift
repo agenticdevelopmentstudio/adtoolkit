@@ -13,7 +13,7 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
     private static let wrapWidth: CGFloat = 360
 
     let account: any Account
-    private let openURL: @MainActor (URL) -> Void
+    private let openURL: @MainActor (URL) -> Bool
 
     let summaryLabel = ThemedLabel.wrapping("", width: wrapWidth, role: .secondaryText, textRole: .body)
     let statusLabel = ThemedLabel(string: restoringText, role: .secondaryText, textRole: .body)
@@ -36,7 +36,8 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
     /// who is signing out rather than flashing the signed-out controls.
     private var lastUser: AccountUser?
 
-    init(account: any Account, openURL: @escaping @MainActor (URL) -> Void = { _ = NSWorkspace.shared.open($0) }) {
+    /// `openURL` returns whether the URL opened; `false` is logged.
+    init(account: any Account, openURL: @escaping @MainActor (URL) -> Bool = { NSWorkspace.shared.open($0) }) {
         self.account = account
         self.openURL = openURL
         super.init(with: ComposableSettings.SettingsPanelDescriptor(
@@ -156,7 +157,9 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
             Self.log.error("signup pressed with no signup URL for \(self.account.id, privacy: .public)")
             return
         }
-        openURL(url)
+        if !openURL(url) {
+            Self.log.error("signup URL failed to open: \(url.absoluteString, privacy: .public)")
+        }
     }
 
     func logout() async {

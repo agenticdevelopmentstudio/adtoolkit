@@ -46,7 +46,13 @@ public final class AppCoordinator {
         self.workspaces = workspaces
         self.registry = registry
         self.appearance = appearance
-        session.onChange = { [weak self] state in self?.sessionChanged(state) }
+        // Chain, never replace: a `HubAccount` built first already observes
+        // the session, and it must keep hearing every change.
+        let prior = session.onChange
+        session.onChange = { [weak self] state in
+            prior(state)
+            self?.sessionChanged(state)
+        }
         workspaces.onChange = { [weak self] state in self?.workspaceChanged(state) }
     }
 

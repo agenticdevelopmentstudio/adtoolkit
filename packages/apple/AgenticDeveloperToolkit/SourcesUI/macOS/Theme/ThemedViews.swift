@@ -380,8 +380,12 @@ public final class ThemedActionButton: NSButton, Themeable {
     /// disabled Save looked exactly like an enabled one. Fading the whole
     /// control keeps fill, outline and title in step whatever the style.
     public override var isEnabled: Bool {
-        didSet { alphaValue = isEnabled ? 1 : 0.45 }
+        didSet { alphaValue = isEnabled ? 1 : Self.disabledAlpha }
     }
+
+    /// The alpha a disabled themed button fades to; the one source for every
+    /// control that must fade in step with it.
+    public static let disabledAlpha: CGFloat = 0.45
 
     public override var intrinsicContentSize: NSSize {
         let title = attributedTitle.size()

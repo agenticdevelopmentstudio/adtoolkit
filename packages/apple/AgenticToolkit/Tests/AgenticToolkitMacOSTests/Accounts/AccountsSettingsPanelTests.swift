@@ -94,9 +94,10 @@ struct AccountsSettingsPanelTests {
 struct AccountDetailPanelTests {
     private func makeDetail(
         _ account: FakeAccount,
-        opened: ((URL) -> Void)? = nil
+        opened: ((URL) -> Void)? = nil,
+        opens: Bool = true
     ) -> AccountDetailPanelViewController {
-        let detail = AccountDetailPanelViewController(account: account, openURL: { opened?($0) })
+        let detail = AccountDetailPanelViewController(account: account, openURL: { opened?($0); return opens })
         _ = detail.view
         return detail
     }
@@ -215,6 +216,15 @@ struct AccountDetailPanelTests {
         let detail = makeDetail(account, opened: { opened = $0 })
         detail.signup()
         #expect(opened == account.signupURL)
+    }
+
+    @Test("a Signup URL that fails to open is attempted and does not crash")
+    func signupOpenFails() {
+        let account = FakeAccount(id: "a", displayName: "Alpha")
+        var attempts: [URL] = []
+        let detail = makeDetail(account, opened: { attempts.append($0) }, opens: false)
+        detail.signup()
+        #expect(attempts == [account.signupURL].compactMap { $0 })
     }
 
     @Test("Logout signs the account out")

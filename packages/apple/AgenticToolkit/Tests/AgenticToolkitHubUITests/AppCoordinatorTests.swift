@@ -79,7 +79,10 @@ final class AppCoordinatorTests: XCTestCase {
         }
     }
 
-    private func makeHarness(session: Session? = nil) -> Harness {
+    private func makeHarness(
+        session: Session? = nil,
+        beforeCoordinator: (SessionController) -> Void = { _ in }
+    ) -> Harness {
         let stub = StubClientTransport()
         let store = InMemorySessionStore(session)
         let environment = HubEnvironment(
@@ -99,6 +102,7 @@ final class AppCoordinatorTests: XCTestCase {
             provider: WorkspacesAdapter(environment: environment),
             defaults: isolated.defaults
         )
+        beforeCoordinator(sessionController)
         let coordinator = AppCoordinator(
             environment: environment,
             session: sessionController,
@@ -120,6 +124,21 @@ final class AppCoordinatorTests: XCTestCase {
         harness.stub.on(.get, "/me/workspace-prefs", status: 200, json: #"{"prefs":{}}"#)
         harness.stub.on(.get, "/me/appearance", status: 200, json: #"{"prefs":{"colorMode":"dark"}}"#)
         return harness
+    }
+
+    // MARK: observer chaining
+
+    /// A `HubAccount` built before the coordinator already observes the
+    /// session; the coordinator must chain onto it, not replace it.
+    func testCoordinatorBuiltAfterAnAccountLeavesTheAccountObserving() async {
+        var account: HubAccount?
+        let harness = makeHarness { sessionController in
+            account = HubAccount(session: sessionController, presenter: { _, _, _ in true })
+        }
+        XCTAssertEqual(account?.state, .restoring)
+        await harness.coordinator.start()
+        XCTAssertEqual(harness.coordinator.phase, .signIn)
+        XCTAssertEqual(account?.state, .signedOut)
     }
 
     // MARK: launch

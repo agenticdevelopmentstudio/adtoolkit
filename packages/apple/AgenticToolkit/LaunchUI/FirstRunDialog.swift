@@ -72,9 +72,6 @@ open class FirstRunDialog: NSWindowController, NSWindowDelegate {
     public static let buttonHeight: CGFloat = 28
     public static let minimumButtonWidth: CGFloat = 88
     static let buttonTitlePadding: CGFloat = 32
-    /// A disabled Confirm, faded as `ThemedActionButton` fades: the theme's paint
-    /// does not change with `isEnabled`.
-    static let disabledAlpha: CGFloat = 0.45
 
     /// Painted from the theme: the window's backdrop and appearance, the
     /// headline, and both buttons, repainted on every theme change.
@@ -139,7 +136,7 @@ open class FirstRunDialog: NSWindowController, NSWindowDelegate {
 
     public func updateConfirmEnabled() {
         confirmButton.isEnabled = isConfirmEnabled
-        confirmButton.alphaValue = confirmButton.isEnabled ? 1 : Self.disabledAlpha
+        confirmButton.alphaValue = confirmButton.isEnabled ? 1 : ThemedActionButton.disabledAlpha
     }
 
     public func runModal() async -> Result {

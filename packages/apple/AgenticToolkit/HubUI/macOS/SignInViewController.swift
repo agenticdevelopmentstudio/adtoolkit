@@ -30,11 +30,11 @@ extension NSStackView {
 }
 
 /// A stock push button (so a Return key equivalent still works) that fades
-/// when disabled, at the same 0.45 alpha `ThemedActionButton` uses, so a
+/// when disabled, at `ThemedActionButton.disabledAlpha`, so a
 /// disabled button never keeps its accent fill.
 final class FadingColumnButton: NSButton {
     override var isEnabled: Bool {
-        didSet { alphaValue = isEnabled ? 1 : 0.45 }
+        didSet { alphaValue = isEnabled ? 1 : ThemedActionButton.disabledAlpha }
     }
 }
 
