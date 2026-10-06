@@ -95,7 +95,6 @@ public enum ClaudeCLI {
         URL(fileURLWithPath: binaryPath).deletingLastPathComponent().path
     }
 
-
     /// Runs `claude -p` with `prompt` on stdin and returns trimmed stdout.
     ///
     /// Robustness: stdout/stderr are drained CONCURRENTLY with the run (a child writing
