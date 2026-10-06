@@ -159,7 +159,7 @@ public struct VSIXInstaller: Sendable {
         let expectedDigest = digest
         let expectedSignature = signature
         let expectedPublicKey = publicKey
-        return try await BlockingWork.run {
+        return try await BlockingWork.run(enforcedQoS: .default) {
             let verification = try VSIXArchive.verify(
                 archive,
                 expectedDigest: expectedDigest,

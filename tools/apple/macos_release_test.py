@@ -844,6 +844,23 @@ def test_render_distribution_gates_the_os_on_the_minimum_version():
     assert "allowed-os-versions" not in ungated
 
 
+def test_render_distribution_must_close_names_each_app_on_the_main_pkg_ref():
+    xml = mr.render_distribution(
+        title="S", identifier="com.x", version="1.0", pkg_ref="S.pkg",
+        optional_choices=[], installation_check_js=None,
+        must_close=["com.x.app", "com.x.other"],
+    )
+    root = ET.fromstring(xml)
+    apps = [a.get("id") for a in root.findall("pkg-ref[@id='com.x']/must-close/app")]
+    assert apps == ["com.x.app", "com.x.other"]
+
+    without = mr.render_distribution(
+        title="S", identifier="com.x", version="1.0", pkg_ref="S.pkg",
+        optional_choices=[], installation_check_js=None,
+    )
+    assert "must-close" not in without
+
+
 def test_render_distribution_raises_when_check_js_contains_cdata_terminator():
     with pytest.raises(ValueError, match=r"\]\]>"):
         mr.render_distribution(

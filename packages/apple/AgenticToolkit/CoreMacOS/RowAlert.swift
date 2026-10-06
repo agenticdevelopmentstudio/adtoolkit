@@ -22,17 +22,19 @@ public enum RowAlert {
 /// The row layout of a three-or-more-button alert, the traditional macOS
 /// arrangement (Cancel … Skip Remove):
 ///
-/// - a button titled "Cancel" goes alone at the far left and answers Escape;
+/// - a button whose key equivalent is Escape (else one titled "Cancel") goes
+///   alone at the far left and answers Escape;
 /// - the others sit together on the right, the first (the default, answering
 ///   Return) rightmost and each later one to the left of the one before.
 ///
-/// Only the alert's text, icon and buttons are shown; it has no accessory view
-/// or suppression button.
+/// Each button keeps its key equivalent, modifier mask and tag. Only the
+/// alert's text, icon and buttons are shown; it has no accessory view or
+/// suppression button.
 @MainActor
 public final class RowAlertPanel: NSObject {
     public let window: NSPanel
-    /// The buttons in the alert's order, so index `i` answers
-    /// `alertFirstButtonReturn + i`.
+    /// The buttons in the alert's order. A click answers the button's tag when
+    /// it is nonzero, else `alertFirstButtonReturn + i` for index `i`.
     public let buttons: [NSButton]
     /// How a click ends the alert. Tests replace it; live it stops the modal.
     var respond: (NSApplication.ModalResponse) -> Void = { NSApp.stopModal(withCode: $0) }
@@ -72,24 +74,35 @@ public final class RowAlertPanel: NSObject {
         let row = NSStackView()
         row.orientation = .horizontal
         row.spacing = 12
-        let cancelIndex = buttons.indices.dropFirst().first { buttons[$0].title == "Cancel" }
+        // Escape answers the button that already claims it, else "Cancel".
+        let escapeKey = "\u{1b}"
+        let escapeIndex = alert.buttons.firstIndex { $0.keyEquivalent == escapeKey }
+            ?? alert.buttons.firstIndex { $0.title == "Cancel" }
         for (index, button) in buttons.enumerated() {
+            let source = alert.buttons[index]
             button.bezelStyle = .push
-            button.tag = index
+            button.keyEquivalent = source.keyEquivalent
+            button.keyEquivalentModifierMask = source.keyEquivalentModifierMask
+            button.tag = source.tag
             button.target = self
             button.action = #selector(clicked(_:))
             button.widthAnchor.constraint(greaterThanOrEqualToConstant: Self.minimumButtonWidth).isActive = true
         }
-        if let cancelIndex {
-            buttons[cancelIndex].keyEquivalent = "\u{1b}"
-            row.addView(buttons[cancelIndex], in: .leading)
+        if let escapeIndex {
+            buttons[escapeIndex].keyEquivalent = escapeKey
+            row.addView(buttons[escapeIndex], in: .leading)
         }
         // Trailing views lay out left to right, so the last-added button goes
         // in first and the default ends up rightmost.
-        for (index, button) in buttons.enumerated().reversed() where index != cancelIndex {
+        for (index, button) in buttons.enumerated().reversed() where index != escapeIndex {
             row.addView(button, in: .trailing)
         }
-        buttons.first?.keyEquivalent = "\r"
+        // NSAlert already marks its first button as the default; only fill in
+        // Return when nothing the alert gave us claims it.
+        if let first = buttons.first, !buttons.contains(where: { $0.keyEquivalent == "\r" }),
+           first.keyEquivalent.isEmpty {
+            first.keyEquivalent = "\r"
+        }
 
         let column = NSStackView(views: [text, row])
         column.orientation = .vertical
@@ -125,7 +138,12 @@ public final class RowAlertPanel: NSObject {
     }
 
     @objc private func clicked(_ sender: NSButton) {
-        respond(NSApplication.ModalResponse(
-            rawValue: NSApplication.ModalResponse.alertFirstButtonReturn.rawValue + sender.tag))
+        respond(Self.response(forTag: sender.tag, at: buttons.firstIndex(of: sender) ?? 0))
+    }
+
+    /// A button's own tag when it set one, else its position in the alert.
+    static func response(forTag tag: Int, at index: Int) -> NSApplication.ModalResponse {
+        NSApplication.ModalResponse(
+            rawValue: tag != 0 ? tag : NSApplication.ModalResponse.alertFirstButtonReturn.rawValue + index)
     }
 }

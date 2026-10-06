@@ -518,6 +518,7 @@ def render_distribution(
     installation_check_js: str | None,
     allow_external_scripts: bool = False,
     minimum_os_version: str | None = None,
+    must_close: Sequence[str] = (),
 ) -> str:
     """Render a productbuild Distribution.xml.
 
@@ -535,6 +536,11 @@ def render_distribution(
     `minimum_os_version` (the app's LSMinimumSystemVersion) emits
     `<allowed-os-versions>`, so Installer refuses the package up front on an
     older macOS instead of installing an app that cannot launch there.
+
+    `must_close` lists bundle ids that must not be running while the main
+    component installs. Installer asks the user to quit each one first (and
+    can quit it itself), so a payload-only pkg never swaps a bundle out from
+    under a running copy that would go on serving the old code.
     """
     if installation_check_js and "]]>" in installation_check_js:
         raise ValueError("installation_check_js must not contain the CDATA terminator ']]>'")
@@ -586,6 +592,13 @@ def render_distribution(
         lines.append("    </choice>")
 
     lines.append(f'    <pkg-ref id="{esc(identifier)}" version="{esc(version)}">{esc(pkg_ref)}</pkg-ref>')
+    if must_close:
+        lines.append(f'    <pkg-ref id="{esc(identifier)}">')
+        lines.append("        <must-close>")
+        for app_id in must_close:
+            lines.append(f'            <app id="{esc(app_id)}"/>')
+        lines.append("        </must-close>")
+        lines.append("    </pkg-ref>")
     for choice_id, _title, _description, choice_pkg in optional_choices:
         lines.append(f'    <pkg-ref id="{esc(choice_id)}">{esc(choice_pkg)}</pkg-ref>')
 

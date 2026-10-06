@@ -43,12 +43,19 @@ public enum BlockingWork {
     /// boundary in each direction. A caller holding something that is not —
     /// `Process`, for one — passes the parts it is built from and builds it
     /// inside the closure.
+    ///
+    /// `enforcedQoS` pins the block itself to a class, whatever the caller's
+    /// is. Without it a block submitted from the main thread inherits
+    /// user-interactive QoS, and work that then waits on threads of a lower
+    /// class — `CommandRunner`'s drain threads run at default — is a priority
+    /// inversion the system reports as a hang risk.
     public static func run<T: Sendable>(
         qos: DispatchQoS.QoSClass = .userInitiated,
+        enforcedQoS: DispatchQoS? = nil,
         _ work: @escaping @Sendable () throws -> T
     ) async throws -> T {
         try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: qos).async {
+            submit(qos: qos, enforcedQoS: enforcedQoS) {
                 continuation.resume(with: Result { try work() })
             }
         }
@@ -64,12 +71,22 @@ public enum BlockingWork {
     /// the two by whether the call is in a `try` position.
     public static func run<T: Sendable>(
         qos: DispatchQoS.QoSClass = .userInitiated,
+        enforcedQoS: DispatchQoS? = nil,
         _ work: @escaping @Sendable () -> T
     ) async -> T {
         await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: qos).async {
+            submit(qos: qos, enforcedQoS: enforcedQoS) {
                 continuation.resume(returning: work())
             }
+        }
+    }
+
+    private static func submit(qos: DispatchQoS.QoSClass, enforcedQoS: DispatchQoS?,
+                               _ block: @escaping @Sendable () -> Void) {
+        if let enforcedQoS {
+            DispatchQueue.global(qos: qos).async(qos: enforcedQoS, flags: .enforceQoS, execute: block)
+        } else {
+            DispatchQueue.global(qos: qos).async(execute: block)
         }
     }
 }

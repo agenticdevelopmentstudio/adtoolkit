@@ -8,6 +8,11 @@ import AgenticToolkitCoreMacOS
 /// will not re-enter the main queue underneath one. A run-loop block is not a
 /// main-queue block, so the modal session can drain the queue. Same pattern as
 /// `PermissionWalkthrough.presentFromRunLoop` and `ModalProgressPanel.begin`.
+///
+/// With the default `run`, three or more buttons are shown by `RowAlertPanel`,
+/// which has limits: an alert's accessory view and suppression button are not
+/// shown (use a custom `run` for those), and the response is each button's tag
+/// when nonzero, else its position (`alertFirstButtonReturn` + index).
 @MainActor
 public func runAlertFromRunLoop(
     _ alert: NSAlert,

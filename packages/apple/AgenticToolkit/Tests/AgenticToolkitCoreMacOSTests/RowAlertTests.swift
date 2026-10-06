@@ -57,6 +57,47 @@ private func removeSkipCancel() -> NSAlert {
         #expect(answers == [.alertFirstButtonReturn, .alertSecondButtonReturn, .alertThirdButtonReturn])
     }
 
+    @Test func buttonsKeepTheirKeyEquivalentsAndModifiers() {
+        let alert = removeSkipCancel()
+        alert.buttons[1].keyEquivalent = "s"
+        alert.buttons[1].keyEquivalentModifierMask = [.command]
+        let panel = RowAlertPanel(alert)
+        #expect(panel.buttons[1].keyEquivalent == "s")
+        #expect(panel.buttons[1].keyEquivalentModifierMask == [.command])
+    }
+
+    @Test func escapeGoesToTheButtonThatClaimsIt() {
+        let alert = removeSkipCancel()
+        alert.buttons[2].keyEquivalent = ""
+        alert.buttons[1].keyEquivalent = "\u{1b}"
+        let panel = RowAlertPanel(alert)
+        #expect(panel.buttons[1].keyEquivalent == "\u{1b}")
+        #expect(panel.buttons[2].keyEquivalent == "")
+    }
+
+    @Test func escapeFallsBackToTheButtonTitledCancel() {
+        let alert = NSAlert()
+        alert.addButton(withTitle: "Save")
+        alert.addButton(withTitle: "Cancel")
+        alert.addButton(withTitle: "Don't Save")
+        let panel = RowAlertPanel(alert)
+        #expect(panel.buttons[1].keyEquivalent == "\u{1b}")
+        #expect(panel.buttons[2].keyEquivalent == "")
+    }
+
+    @Test func aNonzeroTagIsTheResponseAndZeroFallsBackToPosition() {
+        let alert = removeSkipCancel()
+        alert.buttons[0].tag = 77
+        alert.buttons[1].tag = 0
+        let panel = RowAlertPanel(alert)
+        var answers: [NSApplication.ModalResponse] = []
+        panel.respond = { answers.append($0) }
+        panel.buttons.forEach { $0.performClick(nil) }
+        #expect(answers == [NSApplication.ModalResponse(rawValue: 77),
+                            .alertSecondButtonReturn,
+                            NSApplication.ModalResponse(rawValue: alert.buttons[2].tag)])
+    }
+
     @Test func showsTheAlertsText() {
         let panel = RowAlertPanel(removeSkipCancel())
         let labels = allSubviews(of: panel.window.contentView).compactMap { ($0 as? NSTextField)?.stringValue }

@@ -75,15 +75,26 @@ public enum ClaudeCLI {
     /// directories, and an npm-installed `claude` is a `#!/usr/bin/env node`
     /// script. Order: `claudeDirectory` (when given), `~/.local/bin`,
     /// `/usr/local/bin`, `/opt/homebrew/bin`, then the inherited PATH.
+    /// Repeated directories keep only their first (highest-priority) place.
     public static func searchPath(
         claudeDirectory: String? = nil,
         home: URL = FileManager.default.homeDirectoryForCurrentUser,
         inheritedPath: String? = ProcessInfo.processInfo.environment["PATH"]
     ) -> String {
         let extras = ["\(home.path)/.local/bin", "/usr/local/bin", "/opt/homebrew/bin"]
-        return (([claudeDirectory].compactMap { $0 }) + extras + [inheritedPath ?? "/usr/bin:/bin"])
+        let inherited = (inheritedPath ?? "/usr/bin:/bin").split(separator: ":").map(String.init)
+        var seen = Set<String>()
+        return (([claudeDirectory].compactMap { $0 }) + extras + inherited)
+            .filter { !$0.isEmpty && seen.insert($0).inserted }
             .joined(separator: ":")
     }
+
+    /// The directory holding `binaryPath`, so a script-installed `claude`
+    /// (`#!/usr/bin/env node`) finds the `node` that sits beside it.
+    public static func directory(ofBinary binaryPath: String) -> String {
+        URL(fileURLWithPath: binaryPath).deletingLastPathComponent().path
+    }
+
 
     /// Runs `claude -p` with `prompt` on stdin and returns trimmed stdout.
     ///
@@ -112,7 +123,7 @@ public enum ClaudeCLI {
         process.standardError = stderrPipe
 
         var env = ProcessInfo.processInfo.environment
-        env["PATH"] = searchPath()
+        env["PATH"] = searchPath(claudeDirectory: directory(ofBinary: claudePath))
         // Mark this as a programmatic/headless claude invocation so a session
         // tracker's hooks (which this child process inherits) can tell it apart
         // from a real interactive user session and not record it — e.g.

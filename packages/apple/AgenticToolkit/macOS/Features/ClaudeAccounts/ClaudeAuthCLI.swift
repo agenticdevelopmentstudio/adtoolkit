@@ -97,7 +97,7 @@ public enum ClaudeAuthCLI {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: executable)
         process.arguments = arguments
-        process.environment = childEnvironment()
+        process.environment = childEnvironment(executable: executable)
 
         let stdinPipe = Pipe(), stdoutPipe = Pipe(), stderrPipe = Pipe()
         process.standardInput = stdinPipe
@@ -145,9 +145,13 @@ public enum ClaudeAuthCLI {
     /// may itself have been launched from a terminal carrying a credential of
     /// its own in the environment, and a panel about the machine-wide login must
     /// not answer for whichever account that terminal happened to be billing.
-    private static func childEnvironment() -> [String: String] {
+    ///
+    /// `PATH` leads with `executable`'s own directory, so a script-installed
+    /// `claude` finds the `node` beside it.
+    static func childEnvironment(executable: String) -> [String: String] {
         var env = ProcessInfo.processInfo.environment
-        env["PATH"] = ClaudeCLI.searchPath(inheritedPath: env["PATH"])
+        env["PATH"] = ClaudeCLI.searchPath(
+            claudeDirectory: ClaudeCLI.directory(ofBinary: executable), inheritedPath: env["PATH"])
         env["AGENTIC_TOOLKIT_HEADLESS"] = "1"
         env["CLAUDE_CODE_OAUTH_TOKEN"] = nil
         env["ANTHROPIC_API_KEY"] = nil
