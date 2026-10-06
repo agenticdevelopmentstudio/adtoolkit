@@ -9,7 +9,8 @@ public enum StartupJobOrder: Int, Sendable, Comparable {
 }
 
 /// Runs a command as root. One instance serves a whole queue, so a runner that
-/// caches authorization (the AppleScript one does, per process) prompts once.
+/// caches authorization prompts once (the AppleScript one reuses a single
+/// compiled script, which is what macOS's authorization grace is tied to).
 public protocol PrivilegedRunner: Sendable {
     @MainActor func run(_ argv: [String]) async throws
 }

@@ -1,47 +1,58 @@
+import AppKit
 import Testing
 @testable import AgenticToolkitLaunchUI
 
 @Suite struct AppleScriptPrivilegedRunnerTests {
     @Test func quotesEveryWord() {
         let argv = ["/bin/ln", "-sf", "/Applications/My App.app/steno", "/usr/local/bin/steno"]
-        let expected = #"do shell script "'/bin/ln' '-sf' '/Applications/My App.app/steno' "#
-            + #"'/usr/local/bin/steno'" with administrator privileges"#
-        #expect(AppleScriptPrivilegedRunner.script(for: argv) == expected)
+        #expect(AppleScriptPrivilegedRunner.shellCommand(for: argv)
+            == "'/bin/ln' '-sf' '/Applications/My App.app/steno' '/usr/local/bin/steno'")
     }
 
-    @Test func escapesSingleQuotesAndAppleScriptSpecials() {
-        let script = AppleScriptPrivilegedRunner.script(for: ["/bin/echo", #"it's "x" \ y"#])
-        #expect(script == #"do shell script "'/bin/echo' 'it'\\''s \"x\" \\ y'" with administrator privileges"#)
+    @Test func escapesSingleQuotesOnly() {
+        // The command is an AppleScript parameter, not source: `"` and `\`
+        // pass through untouched.
+        let command = AppleScriptPrivilegedRunner.shellCommand(for: ["/bin/echo", #"it's "x" \ y"#])
+        #expect(command == #"'/bin/echo' 'it'\''s "x" \ y'"#)
     }
 
     @Test func newlineStaysInsideSingleQuotes() {
-        let script = AppleScriptPrivilegedRunner.script(for: ["/bin/echo", "a\nb"])
-        #expect(script == "do shell script \"'/bin/echo' 'a\nb'\" with administrator privileges")
+        #expect(AppleScriptPrivilegedRunner.shellCommand(for: ["/bin/echo", "a\nb"]) == "'/bin/echo' 'a\nb'")
     }
 
     @Test func loneSingleQuoteArgument() {
-        let script = AppleScriptPrivilegedRunner.script(for: ["'"])
-        #expect(script == #"do shell script "''\\'''" with administrator privileges"#)
+        #expect(AppleScriptPrivilegedRunner.shellCommand(for: ["'"]) == #"''\'''"#)
     }
 
     @Test func substitutionsStayInert() {
-        let script = AppleScriptPrivilegedRunner.script(for: ["/bin/echo", "$(rm -rf /)", "`id`"])
-        #expect(script == #"do shell script "'/bin/echo' '$(rm -rf /)' '`id`'" with administrator privileges"#)
+        let command = AppleScriptPrivilegedRunner.shellCommand(for: ["/bin/echo", "$(rm -rf /)", "`id`"])
+        #expect(command == "'/bin/echo' '$(rm -rf /)' '`id`'")
     }
 
     @Test func quoteWithCombiningMarkIsStillEscaped() {
-        let script = AppleScriptPrivilegedRunner.script(for: ["a'\u{301}b"])
-        #expect(script == "do shell script \"'a'\\\\''\u{301}b'\" with administrator privileges")
+        #expect(AppleScriptPrivilegedRunner.shellCommand(for: ["a'\u{301}b"]) == "'a'\\''\u{301}b'")
     }
 
-    @Test func doubleQuoteWithCombiningMarkIsStillEscaped() {
-        let script = AppleScriptPrivilegedRunner.script(for: ["a\"\u{301}b"])
-        #expect(script == "do shell script \"'a\\\"\u{301}b'\" with administrator privileges")
+    @Test @MainActor func handlerCompiles() {
+        let script = NSAppleScript(source: AppleScriptPrivilegedRunner.handlerSource)
+        var error: NSDictionary?
+        #expect(script?.compileAndReturnError(&error) == true)
+        #expect(error == nil)
     }
 
-    @Test func backslashWithCombiningMarkIsStillEscaped() {
-        let script = AppleScriptPrivilegedRunner.script(for: ["a\\\u{301}b"])
-        #expect(script == "do shell script \"'a\\\\\u{301}b'\" with administrator privileges")
+    /// The handler mechanism, proven with a harmless twin that echoes its
+    /// parameter instead of elevating: the event reaches the handler by name
+    /// and delivers the command intact, quotes and all.
+    @Test @MainActor func handlerEventDeliversTheCommand() throws {
+        let name = AppleScriptPrivilegedRunner.handlerName
+        let echo = NSAppleScript(source: "on \(name)(command)\nreturn command\nend \(name)")
+        let script = try #require(echo)
+        let command = AppleScriptPrivilegedRunner.shellCommand(for: ["/bin/echo", #"it's "x" \ y"#])
+        var error: NSDictionary?
+        let result = script.executeAppleEvent(
+            AppleScriptPrivilegedRunner.handlerEvent(command: command), error: &error)
+        #expect(error == nil)
+        #expect(result.stringValue == command)
     }
 
     @Test @MainActor func nulArgumentThrowsBeforeAnyPrompt() async {
