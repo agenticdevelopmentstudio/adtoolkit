@@ -840,6 +840,7 @@
 		58DE534BA56300F760157AB7 /* WorkGroupsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14D79B17B7A4A814634CF92D /* WorkGroupsView.swift */; };
 		58EFA7EA66263265E0EA338A /* ProviderTypeFacet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7FB6082368D23714EF4DFFA /* ProviderTypeFacet.swift */; };
 		590106531F868A7760EECD64 /* EcosystemConfigTopicsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494106605469CA8AC9F2B1D4 /* EcosystemConfigTopicsTests.swift */; };
+		595A0FC0191A1334137FEF60 /* SignInSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 375AFDA20995CB05210954C1 /* SignInSession.swift */; };
 		595B5E0F33B1141D5120D5A9 /* AgenticToolkitHubService-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 398FCDDBD556655D5F2C53D0 /* AgenticToolkitHubService-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		59B6153A2432EA31186A3B70 /* ProjectsWindowControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 931C426EF3D8D45D35C8F887 /* ProjectsWindowControllerTests.swift */; };
 		59E1A8B3D9A5C604FD4E45DE /* HubPermissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82A5A8F3A23FA0BDA066E3F4 /* HubPermissions.swift */; };
@@ -1242,6 +1243,7 @@
 		85C8F2790AADB40B2CBFEF5A /* DisplayIdentity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B451DF37249D5E26234141C9 /* DisplayIdentity.swift */; };
 		860E4FC293DF1965C7862D45 /* BoundedAX.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4EC222384A1D04209BA19B6 /* BoundedAX.swift */; };
 		861483571C04FD406EF17AAE /* VSIXInstallerFileSystemFailureTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F82E8E1CF8659CACA48F89B8 /* VSIXInstallerFileSystemFailureTests.swift */; };
+		8618037FE430244C21F44AA3 /* StubSignInSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F77C25E5EB7A3DB5C0581B6 /* StubSignInSession.swift */; };
 		863F0215C68929562CD09AD2 /* TriggerRowPresenterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 77641158C9573D8CB6A71EA7 /* TriggerRowPresenterTests.swift */; };
 		86471C4DFC420DC8F286C7B7 /* DocumentEditorViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4650713BBD6C7ECBD00D83CA /* DocumentEditorViewController.swift */; };
 		86728DCA86A8B089C0E88DF2 /* MCPServerRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CC8209B3A718CFBD2C709A9 /* MCPServerRegistry.swift */; };
@@ -1350,6 +1352,7 @@
 		917169E897A3FAD6DA99028A /* MCPChipsBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74925FD9DA16DA1C1650F4CE /* MCPChipsBarView.swift */; };
 		917ED099271216F4F28E38F7 /* GitStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59AA2DB0B9F43DA04BD8316B /* GitStatus.swift */; };
 		91910DAD180C2CA4394D497F /* AgenticToolkitCoreUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A6A6F1AF7704D404EE128D5 /* AgenticToolkitCoreUI.framework */; };
+		919729FEBDC2A83173C1EE7F /* StubSignInSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F77C25E5EB7A3DB5C0581B6 /* StubSignInSession.swift */; };
 		91A24E26ECBADCAF3585FB85 /* OpenVSXClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B6A4882DA2E90AF1FED7672 /* OpenVSXClient.swift */; };
 		91A927D6EBCAC62F43D614E1 /* ProjectTabSelectionMemoryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC940E761A2C9BE35285A0A1 /* ProjectTabSelectionMemoryTests.swift */; };
 		91B7ADF523F37406515F65F1 /* LegacyDirectoryMigration.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B479BB74D70A5C35DC89B9 /* LegacyDirectoryMigration.swift */; };
@@ -1391,6 +1394,7 @@
 		9709B403268C861E6B071F07 /* ProjectDetailPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9425A62FE395822D7D1439A /* ProjectDetailPanel.swift */; };
 		9725396EB291F206DEFB7F63 /* BucketsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAABC8B755C9D3DCA18CB84D /* BucketsModels.swift */; };
 		97369AE07858C9D1A5BAEB8A /* MarkdownNoteStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8EBD7DE07EAE6D4F575B42 /* MarkdownNoteStorage.swift */; };
+		973D9CFA8F58623BFC31F63F /* StubSignInSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98BF28E11A14A1E3A031FA36 /* StubSignInSessionTests.swift */; };
 		97573BE4BA06E0BA559482F0 /* SettingsWindowCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7384AD8B1E1C9D20C362EFAA /* SettingsWindowCommands.swift */; };
 		97B09C37617DACB8A2545422 /* Deadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0CC9D5671DA1AC1CA636C0C /* Deadline.swift */; };
 		97B47A508D465C03F31D271D /* AgenticToolkitPermissions.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BF04ADB42980B9D5DE44BF46 /* AgenticToolkitPermissions.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -1888,6 +1892,7 @@
 		D4B134F4318F31AB42F75D1D /* BillingActivityViewControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D3018C220EA95F1AB708432 /* BillingActivityViewControllerTests.swift */; };
 		D4C317E5EBB237CD28B13701 /* AgenticToolkitPermissions.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF04ADB42980B9D5DE44BF46 /* AgenticToolkitPermissions.framework */; };
 		D4F15B07A7CE9D66FBA47081 /* ClaudeCodeKeychainItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1870ABC5153BB5CC3A5501BE /* ClaudeCodeKeychainItem.swift */; };
+		D55A7CE313D755A3B353B9CA /* SignInSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 375AFDA20995CB05210954C1 /* SignInSession.swift */; };
 		D55F3443B679F8A3B762A49F /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE8834890BAD21FA7B296D5A /* JSONValue.swift */; };
 		D5CDEE1E2049864337C4FE58 /* AIPluginKitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED359566B6228E80AD5790E7 /* AIPluginKitTests.swift */; };
 		D5CEBA9410FF2989F7A653F2 /* FileEditorState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C3B4495F3EFAF3056B2D303 /* FileEditorState.swift */; };
@@ -4748,6 +4753,7 @@
 		3737B4624425CEFF209B1D7D /* VSIXArchiveTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSIXArchiveTests.swift; sourceTree = "<group>"; };
 		373B9325F0329ED3F5332452 /* ExtensionTreePaneLoadingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionTreePaneLoadingTests.swift; sourceTree = "<group>"; };
 		3743531D39F6822BCA8AAD05 /* DisplayDocumentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayDocumentStore.swift; sourceTree = "<group>"; };
+		375AFDA20995CB05210954C1 /* SignInSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInSession.swift; sourceTree = "<group>"; };
 		37718166474897B008990D27 /* ToggleSerializerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToggleSerializerTests.swift; sourceTree = "<group>"; };
 		377F378363D7C5429B3F0656 /* AppStorageLocation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppStorageLocation.swift; sourceTree = "<group>"; };
 		37836BD300050CA744399708 /* SemanticVersion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticVersion.swift; sourceTree = "<group>"; };
@@ -4809,6 +4815,7 @@
 		3F3E98FAC4584B9490DD7714 /* ScreenSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenSnapshot.swift; sourceTree = "<group>"; };
 		3F60AC90190F9171055091FE /* UTCTimestamp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTCTimestamp.swift; sourceTree = "<group>"; };
 		3F6D7DD97EFDFD8C7049B1AE /* ExpiringMemoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpiringMemoTests.swift; sourceTree = "<group>"; };
+		3F77C25E5EB7A3DB5C0581B6 /* StubSignInSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubSignInSession.swift; sourceTree = "<group>"; };
 		3F8F7575CC256A33DE68437B /* SettingsSnapshotPush.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsSnapshotPush.swift; sourceTree = "<group>"; };
 		3FDE08823A8E4C933B3323CD /* MoneyTotals.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyTotals.swift; sourceTree = "<group>"; };
 		3FF269EB56990555CD840AF9 /* AppearanceSettingsPanelViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppearanceSettingsPanelViewController.swift; sourceTree = "<group>"; };
@@ -5388,6 +5395,7 @@
 		985193AF903CF5BD0E25B3E5 /* EditableTableCardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableTableCardTests.swift; sourceTree = "<group>"; };
 		987598EA55542AE43DD4E99B /* HelpContentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpContentTests.swift; sourceTree = "<group>"; };
 		98B13923596E2430488F463B /* SpacingControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacingControl.swift; sourceTree = "<group>"; };
+		98BF28E11A14A1E3A031FA36 /* StubSignInSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StubSignInSessionTests.swift; sourceTree = "<group>"; };
 		990C30C3DAFBC4CB96C4C2CB /* CapturePermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapturePermission.swift; sourceTree = "<group>"; };
 		99225A14BFC8D831A257177D /* PendingTeardownsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingTeardownsTests.swift; sourceTree = "<group>"; };
 		99572D154FCFAEA2C295B83A /* AIProviderDefaultsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderDefaultsTests.swift; sourceTree = "<group>"; };
@@ -7962,7 +7970,9 @@
 				064172AD29BB6BE81A2F7F9A /* PasskeyAssertionProvider.swift */,
 				3A4FEBCABBDC39A364BDD1E4 /* SessionController.swift */,
 				7DBE1A7C0E8F8329052D887F /* SignInConfiguration.swift */,
+				375AFDA20995CB05210954C1 /* SignInSession.swift */,
 				9CDC9B0B2105E4D905A709BB /* SocialSignInProvider.swift */,
+				3F77C25E5EB7A3DB5C0581B6 /* StubSignInSession.swift */,
 				97751DCABCE8593C014B5F7F /* WebAuthnJSON.swift */,
 			);
 			path = Session;
@@ -9316,6 +9326,7 @@
 				91B5D6EA36F77DBE0FD97E15 /* ResolvedTransportSourceTests.swift */,
 				CEC6D96BE48D7839126D8E0B /* SessionControllerTests.swift */,
 				0D82C3FCADD13F76B1006773 /* SignInConfigurationTests.swift */,
+				98BF28E11A14A1E3A031FA36 /* StubSignInSessionTests.swift */,
 				2647EF562ED9812A7CE1F532 /* WebAuthnJSONTests.swift */,
 				30D8BF83AB6844057FB7D28D /* WorkspaceControllerTests.swift */,
 				37B18FF4555F6331DC271213 /* WorkspaceResolverTests.swift */,
@@ -14203,9 +14214,11 @@
 				8C6D3CB0CADFE9B03DD86119 /* ServerBagsAdapter.swift in Sources */,
 				7927D9315B859E3F4B699F1D /* SessionController.swift in Sources */,
 				92B6B1FA940C152071613115 /* SignInConfiguration.swift in Sources */,
+				595A0FC0191A1334137FEF60 /* SignInSession.swift in Sources */,
 				9A93523DBEC0A2DE5D72A5B5 /* SigninAppsAdapter.swift in Sources */,
 				8A8F650CA020681B96A570E3 /* SocialSignInProvider.swift in Sources */,
 				DF68F98B59AD753DA2C2F241 /* StorageTokensAdapter.swift in Sources */,
+				8618037FE430244C21F44AA3 /* StubSignInSession.swift in Sources */,
 				142A032E8EFA8F8ADEE71729 /* WebAuthnJSON.swift in Sources */,
 				5EFF5757CCD6E9EE06A709DD /* WorkspaceController.swift in Sources */,
 				F61623C31A163EABFE5DADF2 /* WorkspaceResolver.swift in Sources */,
@@ -14901,9 +14914,11 @@
 				C347E6F51F3226CA13D79A97 /* ServerBagsAdapter.swift in Sources */,
 				C6E67BEA73648AF98A5B4A17 /* SessionController.swift in Sources */,
 				DA5C67A986AF209BD2D9C620 /* SignInConfiguration.swift in Sources */,
+				D55A7CE313D755A3B353B9CA /* SignInSession.swift in Sources */,
 				847475C6C7C4ED5434068BD0 /* SigninAppsAdapter.swift in Sources */,
 				60FC88CDFBD139EC05F28284 /* SocialSignInProvider.swift in Sources */,
 				D6E7B82BAEFE3346053AC2D2 /* StorageTokensAdapter.swift in Sources */,
+				919729FEBDC2A83173C1EE7F /* StubSignInSession.swift in Sources */,
 				7B02532766C65E2FBAAAFB89 /* WebAuthnJSON.swift in Sources */,
 				EC646AAB130035779EAF5E05 /* WorkspaceController.swift in Sources */,
 				8AB30F9FC8B14E3225EA8866 /* WorkspaceResolver.swift in Sources */,
@@ -15044,6 +15059,7 @@
 				1FDE279A0B62B7EA688A0480 /* SessionControllerTests.swift in Sources */,
 				ACED98AF85DAD06347D4762C /* SignInConfigurationTests.swift in Sources */,
 				9A2D09C284554E1984E8117B /* StubClientTransport.swift in Sources */,
+				973D9CFA8F58623BFC31F63F /* StubSignInSessionTests.swift in Sources */,
 				30FECDB875F50EF75EDF14BF /* TestDefaults.swift in Sources */,
 				EEB52956853752F82F9C3903 /* Waiting.swift in Sources */,
 				CD3F6099543A39924A876006 /* WebAuthnJSONTests.swift in Sources */,
