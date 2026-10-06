@@ -32,11 +32,45 @@ private final class FakeSession: SignInSession {
     ) async throws -> HubUser {
         StubSignInSession.sampleUser
     }
+
+    /// What the next web sign-in does: succeed as `ada`, or throw.
+    var webOutcome: Result<HubUser, any Error> = .success(ada)
+    var webCalls = 0
+    var stateDuringWeb: AccountState?
+    /// When set, a web sign-in waits here until the test resumes it.
+    var webGate: CheckedContinuation<Void, Never>?
+    var holdsWeb = false
+
+    func signInWithWeb(using session: any SocialSignInProvider) async throws -> HubUser {
+        webCalls += 1
+        stateDuringWeb = account?.state
+        if holdsWeb { await withCheckedContinuation { webGate = $0 } }
+        switch webOutcome {
+        case .success(let user):
+            state = .signedIn(user)
+            return user
+        case .failure(let error):
+            state = .signedOut
+            throw error
+        }
+    }
+
     func signOut() async {
         signOutCount += 1
         stateDuringSignOut = account?.state
         state = .signedOut
     }
+}
+
+/// The fake session never hands the browser on, so this is never asked.
+private struct UnusedBrowser: SocialSignInProvider {
+    func authenticate(_ request: SocialSignInRequest) async throws -> SocialSignInResult {
+        throw CancellationError()
+    }
+}
+
+private struct Offline: LocalizedError {
+    var errorDescription: String? { "The hub is unreachable." }
 }
 
 private let adaAvatar = URL(string: "https://x.y/a.png")
@@ -45,13 +79,15 @@ private let ada = HubUser(id: "u1", email: "ada@x.y", name: "Ada Lovelace", slug
 @Suite("HubAccount")
 @MainActor
 struct HubAccountTests {
-    private func make(
-        _ session: FakeSession,
-        presenter: @escaping HubSignInPresenter = { _, _, _ in true }
-    ) -> HubAccount {
-        let account = HubAccount(session: session, presenter: presenter)
+    private func make(_ session: FakeSession) -> HubAccount {
+        let account = HubAccount(session: session, browser: UnusedBrowser())
         session.account = account
         return account
+    }
+
+    /// Lets the account's sign-in task run to completion.
+    private func settle(_ account: HubAccount) async {
+        for _ in 0..<50 where account.state == .busy { await Task.yield() }
     }
 
     @Test("identity and copy")
@@ -128,45 +164,59 @@ struct HubAccountTests {
         #expect(account.state == .signedOut)
     }
 
-    @Test("a second presentSignIn while a sheet is up is ignored")
-    func singleSheet() {
-        var calls = 0
-        let account = make(FakeSession(), presenter: { _, _, _ in calls += 1; return true })
-        let anchor = AccountPresentationAnchor(NSObject())
-        account.presentSignIn(from: anchor)
-        account.presentSignIn(from: anchor)
-        #expect(calls == 1)
+    @Test("Login signs in on the web, busy until it lands")
+    func webSignIn() async {
+        let session = FakeSession()
+        let account = make(session)
+        account.presentSignIn(from: AccountPresentationAnchor(NSObject()))
+        #expect(account.state == .busy)
+        await settle(account)
+        #expect(session.webCalls == 1)
+        #expect(session.stateDuringWeb == .busy)
+        let expected = AccountUser(id: "u1", name: "Ada Lovelace", email: "ada@x.y", avatarURL: adaAvatar)
+        #expect(account.state == .signedIn(expected))
+        #expect(account.message == nil)
     }
 
-    @Test("closing the sheet lets Login present again")
-    func reopenAfterClose() {
-        var calls = 0
-        var close: (@MainActor () -> Void)?
-        let account = make(FakeSession(), presenter: { _, _, onClose in calls += 1; close = onClose; return true })
-        let anchor = AccountPresentationAnchor(NSObject())
-        account.presentSignIn(from: anchor)
-        close?()
-        account.presentSignIn(from: anchor)
-        #expect(calls == 2)
+    @Test("closing the browser sheet returns to signed out with no message")
+    func webCancelled() async {
+        let session = FakeSession()
+        session.webOutcome = .failure(CancellationError())
+        let account = make(session)
+        account.presentSignIn(from: AccountPresentationAnchor(NSObject()))
+        await settle(account)
+        #expect(account.state == .signedOut)
+        #expect(account.message == nil)
     }
 
-    @Test("an onClose fired synchronously does not leave the latch stuck")
-    func synchronousCloseDoesNotLatch() {
-        var calls = 0
-        let account = make(FakeSession(), presenter: { _, _, onClose in calls += 1; onClose(); return true })
-        let anchor = AccountPresentationAnchor(NSObject())
-        account.presentSignIn(from: anchor)
-        account.presentSignIn(from: anchor)
-        #expect(calls == 2)
+    @Test("a failed web sign-in shows why")
+    func webFailed() async {
+        let session = FakeSession()
+        session.webOutcome = .failure(Offline())
+        let account = make(session)
+        account.presentSignIn(from: AccountPresentationAnchor(NSObject()))
+        await settle(account)
+        #expect(account.state == .signedOut)
+        #expect(account.message == SessionController.userMessage(for: Offline()))
     }
 
-    @Test("a presenter that cannot present does not latch")
-    func failedPresentDoesNotLatch() {
-        var calls = 0
-        let account = make(FakeSession(), presenter: { _, _, _ in calls += 1; return false })
+    @Test("a second Login while the browser is up is ignored, then Login works again")
+    func singleWebSignIn() async {
+        let session = FakeSession()
+        session.holdsWeb = true
+        session.webOutcome = .failure(CancellationError())
+        let account = make(session)
         let anchor = AccountPresentationAnchor(NSObject())
         account.presentSignIn(from: anchor)
+        for _ in 0..<50 where session.webGate == nil { await Task.yield() }
         account.presentSignIn(from: anchor)
-        #expect(calls == 2)
+        #expect(session.webCalls == 1)
+        session.webGate?.resume()
+        session.webGate = nil
+        await settle(account)
+        session.holdsWeb = false
+        account.presentSignIn(from: anchor)
+        await settle(account)
+        #expect(session.webCalls == 2)
     }
 }

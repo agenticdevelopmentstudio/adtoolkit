@@ -321,6 +321,37 @@ final class SessionControllerTests: XCTestCase {
         XCTAssertEqual(items["return"], "http://127.0.0.1:8517/cb?n=nonce-1")
     }
 
+    func testWebSignInOpensTheHostedPageAndExchangesItsCode() async throws {
+        let harness = makeHarness()
+        harness.stub.on(.post, "/oauth/signin/exchange", json: Self.authJSON)
+        let starts = StartURLs()
+        let social = CannedSocial(userAgent: "Mozilla/5.0 (Macintosh) Safari/605.1.15", startURLs: starts)
+        let user = try await harness.controller.signInWithWeb(using: social)
+        XCTAssertEqual(user, Self.ada)
+        XCTAssertEqual(harness.controller.state, .signedIn(Self.ada))
+        let components = try XCTUnwrap(URLComponents(url: try XCTUnwrap(starts.last), resolvingAgainstBaseURL: false))
+        XCTAssertEqual(components.path, "/oauth/signin/authorize")
+        let items = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map { ($0.name, $0.value ?? "") })
+        XCTAssertEqual(items["return"], "http://127.0.0.1:8517/cb?n=nonce-1")
+        XCTAssertNil(items["providerId"])
+        let request = harness.stub.lastRequest(.post, "/oauth/signin/exchange")
+        XCTAssertEqual(request?.headerFields[.userAgent], "Mozilla/5.0 (Macintosh) Safari/605.1.15")
+        XCTAssertEqual(harness.stub.lastBody(.post, "/oauth/signin/exchange")?["code"] as? String, "code-1")
+    }
+
+    func testCancelledWebSignInStaysSignedOutAndExchangesNothing() async {
+        let harness = makeHarness()
+        let social = CannedSocial(failure: CancellationError())
+        do {
+            _ = try await harness.controller.signInWithWeb(using: social)
+            XCTFail("expected CancellationError")
+        } catch {
+            XCTAssertTrue(error is CancellationError)
+        }
+        XCTAssertEqual(harness.controller.state, .signedOut)
+        XCTAssertEqual(harness.stub.requestCount(.post, "/oauth/signin/exchange"), 0)
+    }
+
     func testSocialSignInWithoutACodeFails() async {
         let harness = makeHarness()
         let social = CannedSocial(failure: SessionControllerError.missingOAuthCode)

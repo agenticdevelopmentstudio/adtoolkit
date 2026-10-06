@@ -2,13 +2,6 @@ import AgenticDeveloperToolkit
 import AgenticToolkitHubService
 import Foundation
 
-/// Shows a sign-in UI for `model` from `anchor` and calls `onClose` once it
-/// is gone (signed in or cancelled). Returns `false` when it could not
-/// present (the anchor resolved to nothing).
-public typealias HubSignInPresenter = @MainActor (
-    SignInViewModel, AccountPresentationAnchor, _ onClose: @escaping @MainActor () -> Void
-) -> Bool
-
 extension AccountUser {
     /// The hub user as an accounts UI shows them. The name follows
     /// `AccountMenuModel.avatarLabel`, the one authority for name → slug →
@@ -24,7 +17,9 @@ extension AccountUser {
 }
 
 /// The Agentic Developer Hub as an `Account`: maps a `SignInSession` onto
-/// the generic account states and presents the hub's own sign-in screen.
+/// the generic account states and signs in on the hub's hosted login page in
+/// a browser sheet — the page offers every method (password, passkey, MFA,
+/// social), so the app shows no sign-in screen of its own.
 @MainActor
 public final class HubAccount: Account {
     public let id = "agentic-developer-hub"
@@ -36,21 +31,14 @@ public final class HubAccount: Account {
     public var onChange: @MainActor () -> Void = {}
 
     private let session: any SignInSession
-    private let passkeys: any PasskeyAssertionProvider
-    private let social: any SocialSignInProvider
-    private let presenter: HubSignInPresenter
-    private var isPresenting = false
+    private let browser: any SocialSignInProvider
+    private var signingIn: Task<Void, Never>?
 
-    public init(
-        session: any SignInSession,
-        passkeys: any PasskeyAssertionProvider = PasskeyAssertion(),
-        social: any SocialSignInProvider = WebAuthSocialSignIn(),
-        presenter: @escaping HubSignInPresenter = HubSignInSheet.present
-    ) {
+    /// `browser` runs the hosted page's round-trip; the default opens it in
+    /// an `ASWebAuthenticationSession` sheet on the key window.
+    public init(session: any SignInSession, browser: any SocialSignInProvider = WebAuthSocialSignIn()) {
         self.session = session
-        self.passkeys = passkeys
-        self.social = social
-        self.presenter = presenter
+        self.browser = browser
         // Chain, never replace: the live controller's onChange already has an
         // owner (the app coordinator), and it must keep hearing every change.
         let prior = session.onChange
@@ -61,13 +49,34 @@ public final class HubAccount: Account {
         apply(session.state)
     }
 
+    /// Busy while the browser sheet is up. Closing the sheet is a cancel and
+    /// says nothing; any other failure lands signed out with its message. The
+    /// browser sheet finds its own window, so `anchor` is unused.
     public func presentSignIn(from anchor: AccountPresentationAnchor) {
-        guard !isPresenting else { return }
-        let model = SignInViewModel(session: session, passkeys: passkeys, social: social)
-        // Latch first: an onClose fired synchronously must not be overwritten.
-        isPresenting = true
-        let presented = presenter(model, anchor) { [weak self] in self?.isPresenting = false }
-        if !presented { isPresenting = false }
+        guard signingIn == nil else { return }
+        set(state: .busy, message: nil)
+        signingIn = Task { [weak self] in
+            guard let self else { return }
+            do {
+                _ = try await session.signInWithWeb(using: browser)
+                finishSigningIn(failure: nil)
+            } catch is CancellationError {
+                finishSigningIn(failure: nil)
+            } catch {
+                finishSigningIn(failure: SessionController.userMessage(for: error))
+            }
+        }
+    }
+
+    private func finishSigningIn(failure: String?) {
+        signingIn = nil
+        // A failure never demotes a live session, so its message only shows
+        // when the session is signed out.
+        if let failure, session.state == .signedOut {
+            set(state: .signedOut, message: failure)
+        } else {
+            apply(session.state)
+        }
     }
 
     public func signOut() async {

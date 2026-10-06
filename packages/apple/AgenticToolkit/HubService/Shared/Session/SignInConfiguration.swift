@@ -125,4 +125,24 @@ public struct SignInConfiguration: Sendable, Equatable {
         }
         return url
     }
+
+    /// `{backend}/oauth/signin/authorize?clientId=…&return={returnURL}` — the
+    /// hosted sign-in page, the way the `adh` CLI signs in. A browser that
+    /// already holds the hub's SSO cookie is sent straight back to `returnURL`
+    /// with `#code=<code>`; any other lands on the central login page, which
+    /// offers every method (password, passkey, MFA, social) and returns the
+    /// same way. The return contract is the social one, so the same loopback
+    /// listener and nonce receive it (see ``socialStartURL(provider:returnURL:)``).
+    public func webSignInStartURL(returnURL: URL) -> URL {
+        var components = URLComponents(url: backendURL, resolvingAgainstBaseURL: false)
+        components?.path = "/oauth/signin/authorize"
+        components?.queryItems = [
+            URLQueryItem(name: "clientId", value: clientID),
+            URLQueryItem(name: "return", value: returnURL.absoluteString)
+        ]
+        guard let url = components?.url else {
+            preconditionFailure("could not build web sign-in URL from \(backendURL)")
+        }
+        return url
+    }
 }

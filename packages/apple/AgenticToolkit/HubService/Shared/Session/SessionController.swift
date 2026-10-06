@@ -232,13 +232,31 @@ public final class SessionController {
         _ provider: SocialProvider,
         using session: any SocialSignInProvider
     ) async throws -> HubUser {
+        let configuration = self.configuration
+        return try await signInThroughBrowser(using: session) { returnURL in
+            configuration.socialStartURL(provider: provider, returnURL: returnURL)
+        }
+    }
+
+    /// Signs in on the hub's hosted login page (`/oauth/signin/authorize`),
+    /// which comes back exactly as a social provider does, so it shares the
+    /// round-trip, the `User-Agent` forwarding and the one transport retry.
+    public func signInWithWeb(using session: any SocialSignInProvider) async throws -> HubUser {
+        let configuration = self.configuration
+        return try await signInThroughBrowser(using: session) { returnURL in
+            configuration.webSignInStartURL(returnURL: returnURL)
+        }
+    }
+
+    private func signInThroughBrowser(
+        using session: any SocialSignInProvider,
+        makeStartURL: @escaping @Sendable (URL) -> URL
+    ) async throws -> HubUser {
         try await attemptingSignIn {
             let configuration = self.configuration
             let result = try await session.authenticate(
                 SocialSignInRequest(
-                    makeStartURL: { returnURL in
-                        configuration.socialStartURL(provider: provider, returnURL: returnURL)
-                    },
+                    makeStartURL: makeStartURL,
                     callbackScheme: configuration.callbackScheme,
                     dismissURL: configuration.callbackURL
                 )

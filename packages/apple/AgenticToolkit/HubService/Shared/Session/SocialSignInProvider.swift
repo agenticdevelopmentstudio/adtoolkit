@@ -22,7 +22,9 @@ public struct SocialSignInResult: Sendable, Equatable {
 /// is not known until the loopback listener has actually bound a port — the
 /// provider owns that, so the provider finishes the URL.
 public struct SocialSignInRequest: Sendable {
-    /// Loopback return URL → the backend's `/oauth/signin/start` URL.
+    /// Loopback return URL → the backend URL the browser opens
+    /// (`/oauth/signin/start` for a provider, `/oauth/signin/authorize` for
+    /// the hosted login page).
     public let makeStartURL: @Sendable (URL) -> URL
     /// The scheme whose appearance ends the browser session (`adh`).
     public let callbackScheme: String

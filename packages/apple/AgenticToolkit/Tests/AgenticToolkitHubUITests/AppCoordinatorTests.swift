@@ -133,7 +133,7 @@ final class AppCoordinatorTests: XCTestCase {
     func testCoordinatorBuiltAfterAnAccountLeavesTheAccountObserving() async {
         var account: HubAccount?
         let harness = makeHarness { sessionController in
-            account = HubAccount(session: sessionController, presenter: { _, _, _ in true })
+            account = HubAccount(session: sessionController)
         }
         XCTAssertEqual(account?.state, .restoring)
         await harness.coordinator.start()

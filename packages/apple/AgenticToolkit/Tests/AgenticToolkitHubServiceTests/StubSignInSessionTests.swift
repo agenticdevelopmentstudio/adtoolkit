@@ -86,6 +86,16 @@ struct StubSignInSessionTests {
         #expect(social.calls == 0)
     }
 
+    @Test("web sign-in never calls the browser")
+    func webDoesNotCallBrowser() async throws {
+        let session = StubSignInSession(delay: .zero)
+        let browser = ExplodingSocial()
+        let user = try await session.signInWithWeb(using: browser)
+        #expect(user == StubSignInSession.sampleUser)
+        #expect(session.state == .signedIn(StubSignInSession.sampleUser))
+        #expect(browser.calls == 0)
+    }
+
     @Test("SessionController satisfies SignInSession")
     func conformance() {
         let check: (SessionController) -> any SignInSession = { $0 }

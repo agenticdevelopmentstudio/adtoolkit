@@ -24,8 +24,8 @@ public struct AccountUser: Sendable, Equatable {
     }
 }
 
-/// Where an account stands. `busy` covers work the account started itself
-/// (signing out); sign-in progress lives inside the account's own sheet.
+/// Where an account stands. `busy` covers work the account is doing on its
+/// own — signing in through a browser sheet, signing out.
 public enum AccountState: Sendable, Equatable {
     case restoring
     case signedOut

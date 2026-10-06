@@ -44,6 +44,18 @@ final class SignInConfigurationTests: XCTestCase {
         XCTAssertFalse(url.absoluteString.contains("adh://auth-callback"))
     }
 
+    /// The hosted page takes exactly `clientId` and `return` — the query the
+    /// `adh` CLI sends (`adh-tools/adh/scripts/auth/browser.py`).
+    func testWebSignInStartURLOpensTheHostedPage() throws {
+        let config = SignInConfiguration(clientID: "adh-cli", backendURL: URL(string: "https://api.example.com")!)
+        let url = config.webSignInStartURL(returnURL: URL(string: "http://127.0.0.1:8518/cb?n=abc")!)
+        let components = try XCTUnwrap(URLComponents(url: url, resolvingAgainstBaseURL: false))
+        XCTAssertEqual(components.host, "api.example.com")
+        XCTAssertEqual(components.path, "/oauth/signin/authorize")
+        let items = Dictionary(uniqueKeysWithValues: (components.queryItems ?? []).map { ($0.name, $0.value ?? "") })
+        XCTAssertEqual(items, ["clientId": "adh-cli", "return": "http://127.0.0.1:8518/cb?n=abc"])
+    }
+
     func testFromBundlePrefersEnvironmentOverPlistOverDefault() {
         let bundle = Bundle(for: SignInConfigurationTests.self)   // has no ADHSignInClientId
         XCTAssertEqual(SignInConfiguration.fromBundle(bundle, environment: [:]).clientID, "adh-cli")

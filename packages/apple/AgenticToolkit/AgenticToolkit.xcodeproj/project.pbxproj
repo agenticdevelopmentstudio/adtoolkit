@@ -507,7 +507,6 @@
 		2F03BB35B7CBEA8D912E6CBC /* AgenticToolkitDisplays.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C4549C0F49FF13D5D7E441FE /* AgenticToolkitDisplays.framework */; };
 		2F3F3D3E0CB1E61EE051E301 /* ColorSync.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5879F15C92AE189F6387AEF4 /* ColorSync.framework */; };
 		2F7018CA09E898114B776295 /* ThemeProjectTopicPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C340CF52370B10C851EF9AEA /* ThemeProjectTopicPanel.swift */; };
-		2FDAA32C1F85C49C06BF7109 /* HubSignInSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D40CF48B7C9F52777C2EAD /* HubSignInSheet.swift */; };
 		2FE8510EB5CD584BFD489B26 /* TextGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EBA5978692B9F6B056A8B61 /* TextGeometry.swift */; };
 		3026B15B7983DC1A60A293F0 /* ThemeUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BEBF68C631AE4951A5D9B3F /* ThemeUITests.swift */; };
 		3051FC31A57939D781AC596A /* ModalProgressPanelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 28A91524A0792BA46B58AC03 /* ModalProgressPanelTests.swift */; };
@@ -2076,7 +2075,6 @@
 		EA7FB6C3355B06B56E0E7C10 /* UserSetting.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3D112853E30CE786A73B192 /* UserSetting.swift */; };
 		EA91C1205D9F3BB61BEE999E /* FormDetails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3908B299DFC11D5CFFD3688C /* FormDetails.swift */; };
 		EA95597BAA2E246EBAB3D5C8 /* AgenticToolkitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FF857DF2BB3D2BE006BBA101 /* AgenticToolkitCore.framework */; };
-		EAF1585C6B7D6E7C1FB4158C /* HubSignInSheet+UIKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A3D6000FA44BD3CD34885CE /* HubSignInSheet+UIKit.swift */; };
 		EAF90C9B6B0322555869BC8B /* ModelPickerItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F3F290E11EDE126F6A99DD9 /* ModelPickerItem.swift */; };
 		EB001795D2CDC1DD2E28B44F /* BlockingWorkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEF85732E3B51B68AB067181 /* BlockingWorkTests.swift */; };
 		EB2357A5EA740457D3173555 /* TerminalSessionSplitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4EC9B640A2A45B605AE64DC /* TerminalSessionSplitViewController.swift */; };
@@ -5304,7 +5302,6 @@
 		8A0C90ACA8F695F1DBE8CD6F /* LSPCompletionDelegateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LSPCompletionDelegateTests.swift; sourceTree = "<group>"; };
 		8A1FA7A32E96BB03E2ACD601 /* InputActivityTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputActivityTrigger.swift; sourceTree = "<group>"; };
 		8A221B3241D5E5436EFAE23E /* UsageCollector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageCollector.swift; sourceTree = "<group>"; };
-		8A3D6000FA44BD3CD34885CE /* HubSignInSheet+UIKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HubSignInSheet+UIKit.swift"; sourceTree = "<group>"; };
 		8A3E8854D0696F4BA4125F35 /* AgenticToolkitHubServiceTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgenticToolkitHubServiceTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		8A4140A8576CBFA1D485FEA4 /* BillingUIContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BillingUIContext.swift; sourceTree = "<group>"; };
 		8A4F6C85E90F51FD671515C3 /* LanguageModelMessageVocabularyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageModelMessageVocabularyTests.swift; sourceTree = "<group>"; };
@@ -5645,7 +5642,6 @@
 		C17CD5378F08D914FF09EF18 /* BillingProjectCutoffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BillingProjectCutoffTests.swift; sourceTree = "<group>"; };
 		C18DCBEAB2F005EEAB1BEFB2 /* ExtensionIdentityComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionIdentityComponent.swift; sourceTree = "<group>"; };
 		C1AF85868198DDB4610027CC /* LanguageServerDocumentSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageServerDocumentSync.swift; sourceTree = "<group>"; };
-		C1D40CF48B7C9F52777C2EAD /* HubSignInSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubSignInSheet.swift; sourceTree = "<group>"; };
 		C1D88D7BB9227E357469D096 /* ClaudeCredentialPlacementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeCredentialPlacementTests.swift; sourceTree = "<group>"; };
 		C2013C6FE153DD7C70B1BBF2 /* LSPEditorAnnotationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LSPEditorAnnotationCoordinator.swift; sourceTree = "<group>"; };
 		C25BE90843F62FAFEDDD260F /* UnassignedPanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnassignedPanelTests.swift; sourceTree = "<group>"; };
@@ -7962,7 +7958,6 @@
 				E5D2D7C91E7AE6A05395544B /* Scripting */,
 				B5789D3F4AD20237585F561D /* HubFeature.swift */,
 				E346C6D4DA51F5FD7017E07E /* HubScriptingVocabulary.swift */,
-				C1D40CF48B7C9F52777C2EAD /* HubSignInSheet.swift */,
 				193F8B71A46752B30CF14B11 /* HubUIState.swift */,
 				043577290886D5F1D593BF3E /* MainWindowController.swift */,
 				3A87E4F7A7D53CC98DFA1E8F /* RootViewController.swift */,
@@ -10627,7 +10622,6 @@
 			isa = PBXGroup;
 			children = (
 				B822FFB8DE74977C683E4EC4 /* HubSceneController.swift */,
-				8A3D6000FA44BD3CD34885CE /* HubSignInSheet+UIKit.swift */,
 				BAD13DA74406794B43BCA666 /* RootViewController+UIKit.swift */,
 				E979B5053EDF2EE6CD6787C4 /* SignInViewController+UIKit.swift */,
 			);
@@ -13113,7 +13107,6 @@
 				7CEDFB194AAF30745384B43E /* HubAppComposition.swift in Sources */,
 				A52BC7D64E6C1D14752605BE /* HubLinks.swift in Sources */,
 				C48CFDFD4BDAA570273D6B44 /* HubSceneController.swift in Sources */,
-				EAF1585C6B7D6E7C1FB4158C /* HubSignInSheet+UIKit.swift in Sources */,
 				E4582DB9009C56C5342D24A6 /* LaunchViewController.swift in Sources */,
 				D1A1B1719F3A20B71A40E81C /* LinkOutViewController.swift in Sources */,
 				C696E3949AA57DB256C19E49 /* NotMemberViewController.swift in Sources */,
@@ -13742,7 +13735,6 @@
 				4D11DBFE57E04F6FCB7FCA0C /* HubScriptCommand.swift in Sources */,
 				CA6B51220F978A03AE803527 /* HubScriptCommands.swift in Sources */,
 				E47BD3C4301601A377B4C6CB /* HubScriptingVocabulary.swift in Sources */,
-				2FDAA32C1F85C49C06BF7109 /* HubSignInSheet.swift in Sources */,
 				EDD51B5A744A94FDAE3718C8 /* HubUIState.swift in Sources */,
 				BE118C03749791D4F7D8F58C /* LaunchViewController.swift in Sources */,
 				0D1D74DC20EE01C0CDD7CAB1 /* LinkOutViewController.swift in Sources */,

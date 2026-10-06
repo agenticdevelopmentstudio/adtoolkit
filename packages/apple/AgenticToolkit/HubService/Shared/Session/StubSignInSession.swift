@@ -2,7 +2,7 @@ import Foundation
 
 /// An in-memory `SignInSession` for apps that show sign-in UI before it is
 /// wired to the backend. Any non-empty credentials sign in as `sampleUser`;
-/// passkey and social sign in without touching their providers, so no system
+/// passkey, social and web sign in without touching their providers, so no system
 /// sheet or browser opens. Nothing is persisted.
 @MainActor
 public final class StubSignInSession: SignInSession {
@@ -65,6 +65,10 @@ public final class StubSignInSession: SignInSession {
         _ provider: SocialProvider,
         using session: any SocialSignInProvider
     ) async throws -> HubUser {
+        try await signInSample()
+    }
+
+    public func signInWithWeb(using session: any SocialSignInProvider) async throws -> HubUser {
         try await signInSample()
     }
 

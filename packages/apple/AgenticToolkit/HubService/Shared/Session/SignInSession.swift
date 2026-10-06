@@ -17,6 +17,8 @@ public protocol SignInSession: AnyObject {
         provider: any PasskeyAssertionProvider
     ) async throws -> HubUser
     func signInWithSocial(_ provider: SocialProvider, using session: any SocialSignInProvider) async throws -> HubUser
+    /// Signs in on the hub's hosted login page in a browser sheet.
+    func signInWithWeb(using session: any SocialSignInProvider) async throws -> HubUser
     func signOut() async
 }
 
