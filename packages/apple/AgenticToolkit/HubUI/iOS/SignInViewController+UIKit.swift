@@ -52,7 +52,7 @@ public final class SignInViewController: UIViewController {
             emailField,
             placeholder: "Email, user ID, or phone",
             secure: false,
-            keyboard: .emailAddress,
+            keyboard: .default,
             content: .username
         )
         configure(passwordField, placeholder: "Password", secure: true, keyboard: .default, content: .password)
