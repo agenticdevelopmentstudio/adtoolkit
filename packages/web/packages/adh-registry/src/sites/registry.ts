@@ -398,7 +398,10 @@ export const SITE_BUILD: Partial<Record<SiteId, SiteBuildConfig>> = {
       { source: '/docs/errors', destination: 'https://help.agenticdeveloperhub.com/reference/errors', permanent: true },
       { source: '/docs/webhooks', destination: 'https://help.agenticdeveloperhub.com/reference/webhooks', permanent: true },
       { source: '/docs/changelog', destination: 'https://help.agenticdeveloperhub.com/reference/changelog', permanent: true },
-      { source: '/docs/oauth/:step*', destination: 'https://help.agenticdeveloperhub.com/quickstart/oauth/:step*', permanent: true },
+      // The OAuth step pages were removed on 2026-10-06 (stale: they described a flow the hub never
+      // shipped). The old `/docs/oauth/*` addresses were published, so they land on the section
+      // that held them instead of 404ing.
+      { source: '/docs/oauth/:step*', destination: 'https://help.agenticdeveloperhub.com/quickstart', permanent: true },
     ],
   },
   dashboards: { legacyHomePaths: true },

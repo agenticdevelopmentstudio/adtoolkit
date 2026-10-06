@@ -65,7 +65,7 @@ describe("site build fields", () => {
       { source: "/docs/errors", destination: "https://help.agenticdeveloperhub.com/reference/errors", permanent: true },
       { source: "/docs/webhooks", destination: "https://help.agenticdeveloperhub.com/reference/webhooks", permanent: true },
       { source: "/docs/changelog", destination: "https://help.agenticdeveloperhub.com/reference/changelog", permanent: true },
-      { source: "/docs/oauth/:step*", destination: "https://help.agenticdeveloperhub.com/quickstart/oauth/:step*", permanent: true },
+      { source: "/docs/oauth/:step*", destination: "https://help.agenticdeveloperhub.com/quickstart", permanent: true },
     ]);
   });
 

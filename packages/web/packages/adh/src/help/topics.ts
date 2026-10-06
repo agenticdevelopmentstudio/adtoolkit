@@ -22,7 +22,7 @@ export interface HelpTopic {
   id: HelpTopicId
   /** Row label + breadcrumb crumb. */
   label: string
-  /** Base-relative route slug (NO leading slash), e.g. `quickstart`, `quickstart/oauth/authorize`,
+  /** Base-relative route slug (NO leading slash), e.g. `quickstart`, `mcp/connect`,
    *  `reference/errors`. The help site generates one SSR route per slug; the slug path mirrors the
    *  id path down the tree. */
   slug: string
@@ -61,28 +61,16 @@ export const HELP_TOPICS: HelpTopic[] = [
     view: 'chat',
   },
   {
-    // Placeholder section: no guide content of its own (the old walkthrough was stale and was
-    // removed) — selecting it opens OAuth beneath, so its landing is the children overview, exactly
-    // like Reference. Give it a `contentKey` again when a real quickstart guide is written.
+    // Placeholder: no guide content of its own. The old walkthrough was stale and was removed, and
+    // so (2026-10-06) were the OAuth step pages that used to sit beneath it — they described a
+    // flow the hub never shipped (`client_secret`, `/api/oauth/signin/start?client_id`, a
+    // `temporal.today` host), and a wrong walkthrough costs more than none. Selecting it shows the
+    // description as the EmptyState body. Give it a `contentKey` when a real quickstart guide is
+    // written against the sign-in flow the Client auth panel actually registers.
     id: 'quickstart',
     label: 'Quickstart',
     slug: 'quickstart',
     description: 'Register an app, get a token, and make your first call.',
-    children: [
-      {
-        id: 'oauth',
-        label: 'OAuth',
-        slug: 'quickstart/oauth',
-        description: 'Authorize on behalf of a user with the OAuth 2.0 flow.',
-        children: [
-          { id: 'oauth-overview', label: 'Overview', slug: 'quickstart/oauth/overview', description: 'How the flow fits together.', contentKey: 'oauth-overview' },
-          { id: 'oauth-register-app', label: 'Register app', slug: 'quickstart/oauth/register-app', description: 'Create OAuth credentials.', contentKey: 'oauth-register-app' },
-          { id: 'oauth-authorize', label: 'Authorize', slug: 'quickstart/oauth/authorize', description: 'Send the user to consent.', contentKey: 'oauth-authorize' },
-          { id: 'oauth-token-exchange', label: 'Token exchange', slug: 'quickstart/oauth/token-exchange', description: 'Trade the code for tokens.', contentKey: 'oauth-token-exchange' },
-          { id: 'oauth-refresh', label: 'Refresh', slug: 'quickstart/oauth/refresh', description: 'Keep the session alive.', contentKey: 'oauth-refresh' },
-        ],
-      },
-    ],
   },
   {
     id: 'reference',

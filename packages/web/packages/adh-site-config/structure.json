@@ -162,8 +162,7 @@
           "related": [
             "customers",
             "domains"
-          ],
-          "docs": "quickstart/oauth/overview"
+          ]
         },
         {
           "id": "teamregistry",

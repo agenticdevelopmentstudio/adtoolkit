@@ -9,7 +9,7 @@
 export interface DocsNavLink {
   /** Row label. */
   label: string
-  /** Base-relative slug, no leading slash (e.g. `quickstart`, `oauth/overview`). `''` = the base
+  /** Base-relative slug, no leading slash (e.g. `quickstart`, `hub-features`). `''` = the base
    *  index page. */
   slug: string
 }
@@ -29,16 +29,6 @@ export const DOCS_NAV: DocsNavSection[] = [
     links: [
       { label: 'Quickstart', slug: 'quickstart' },
       { label: 'Hub features', slug: 'hub-features' },
-    ],
-  },
-  {
-    label: 'OAuth',
-    links: [
-      { label: 'Overview', slug: 'oauth/overview' },
-      { label: 'Register app', slug: 'oauth/register-app' },
-      { label: 'Authorize', slug: 'oauth/authorize' },
-      { label: 'Token exchange', slug: 'oauth/token-exchange' },
-      { label: 'Refresh', slug: 'oauth/refresh' },
     ],
   },
   {

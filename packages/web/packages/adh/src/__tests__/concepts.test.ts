@@ -121,8 +121,14 @@ describe('graph helpers', () => {
 })
 
 describe('docs linkage', () => {
-  it('resolves a node by its docs slug (reverse of node.docs)', () => {
-    expect(conceptByDoc('quickstart/oauth/overview')?.id).toBe('authentication')
+  // No node declares `docs` today: the only one that did (`authentication`) pointed at the OAuth
+  // walkthrough removed on 2026-10-06, and a link into a stale page is worse than no link. The
+  // reverse lookup still has to answer honestly for a slug nobody declares.
+  it('conceptByDoc is undefined for a slug no node declares', () => {
+    expect(conceptByDoc('quickstart/oauth/overview')).toBeUndefined()
+    for (const n of allNodes) {
+      if (n.docs) expect(conceptByDoc(n.docs)?.id, `reverse of ${n.id}.docs`).toBe(n.id)
+    }
   })
 
   it('every docs slug is non-empty and maps to at most one node', () => {

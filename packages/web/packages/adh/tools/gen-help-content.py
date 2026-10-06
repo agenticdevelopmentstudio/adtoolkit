@@ -107,7 +107,7 @@ process.stdout.write(JSON.stringify(out))
 
 
 def topic_key(md_path: Path) -> str:
-    """content/oauth/register-app.md -> oauth-register-app"""
+    """content/mcp/tools.md -> mcp-tools"""
     rel = md_path.relative_to(CONTENT_DIR).with_suffix("")
     return "-".join(rel.parts)
 

@@ -62,7 +62,7 @@ function renderLeaf(topic: HelpTopic | null, chatSlot: ReactNode): ReactNode {
 
 /**
  * The server-rendered help master-detail for one route. `slug` is the active base-relative slug
- * (e.g. `quickstart`, `quickstart/oauth/authorize`, `reference/errors`); `basePath` is where the
+ * (e.g. `quickstart`, `mcp/connect`, `reference/errors`); `basePath` is where the
  * surface is mounted (`''` on the help site). `chatSlot` is the client chat island the host app
  * supplies for the `chat` topic (kept in the app so its backend wiring stays out of the shared pkg).
  */

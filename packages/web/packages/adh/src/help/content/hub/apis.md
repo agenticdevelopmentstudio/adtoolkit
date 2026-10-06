@@ -15,7 +15,7 @@ Every screen in the Hub is a resource, and there are two ways to reach it:
   as a curated tool set an AI agent can be handed. Not a mechanical mirror of
   the REST surface: the tools are chosen so an agent can accomplish something
   rather than enumerate everything.
-- **[OAuth](/quickstart/oauth/overview)** — authorize on behalf of a user, for
+- **OAuth** — authorize on behalf of a user, for
   when your code is acting for someone rather than as itself.
 - **Application tokens** — a bearer credential minted against one application,
   reaching one product's project and nothing beyond it.

@@ -18,39 +18,26 @@
 
 import type { ReactNode } from 'react'
 import {
-  AppWindow,
-  ArrowLeftRight,
   Bot,
   Braces,
   FileText,
-  Handshake,
   History,
   LayoutGrid,
   Library,
   Plug,
-  RefreshCw,
   Rocket,
-  Route,
   TriangleAlert,
-  UserCheck,
   Webhook,
 } from 'lucide-react'
 import type { HelpTopicId } from './topics'
 
 // Keyed by the exact HelpTopic.id (see topics.ts). Glyphs read as the topic: the assistant chat is a
-// bot, Quickstart a rocket, OAuth a handshake and its steps the flow (overview=route, register=app
-// window, authorize=user consent, token-exchange=swap, refresh=cycle), Reference a library and its
-// leaves their kind (errors=warning, webhooks=webhook, changelog=history), REST API the braces of a
-// JSON API, MCP a connector plug, Hub Features a grid of capabilities.
+// bot, Quickstart a rocket, Reference a library and its leaves their kind (errors=warning,
+// webhooks=webhook, changelog=history), REST API the braces of a JSON API, MCP a connector plug,
+// Hub Features a grid of capabilities.
 const TOPIC_ICON: Record<string, ReactNode> = {
   chat: <Bot size={16} aria-hidden />,
   quickstart: <Rocket size={16} aria-hidden />,
-  oauth: <Handshake size={16} aria-hidden />,
-  'oauth-overview': <Route size={16} aria-hidden />,
-  'oauth-register-app': <AppWindow size={16} aria-hidden />,
-  'oauth-authorize': <UserCheck size={16} aria-hidden />,
-  'oauth-token-exchange': <ArrowLeftRight size={16} aria-hidden />,
-  'oauth-refresh': <RefreshCw size={16} aria-hidden />,
   reference: <Library size={16} aria-hidden />,
   errors: <TriangleAlert size={16} aria-hidden />,
   webhooks: <Webhook size={16} aria-hidden />,
