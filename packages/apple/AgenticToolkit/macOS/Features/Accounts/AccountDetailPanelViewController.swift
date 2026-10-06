@@ -66,10 +66,20 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
         spinner.controlSize = .small
         spinner.isDisplayedWhenStopped = false
 
+        // A long name or email must truncate, never widen the column: an
+        // unbounded label demands its full intrinsic width and pushes the
+        // settings split view's dividers.
+        for label in [nameLabel, emailLabel] {
+            label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+            label.lineBreakMode = .byTruncatingTail
+        }
+        emailLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
         if let nameColumn = identityRow.arrangedSubviews.last as? NSStackView {
             nameColumn.orientation = .vertical
             nameColumn.alignment = .leading
             nameColumn.spacing = 2
+            let nameWidth = Self.wrapWidth - AccountAvatarView.side - 12
+            nameColumn.widthAnchor.constraint(lessThanOrEqualToConstant: nameWidth).isActive = true
         }
         identityRow.orientation = .horizontal
         identityRow.alignment = .centerY
@@ -86,6 +96,7 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
         column.alignment = .leading
         column.spacing = 12
         column.translatesAutoresizingMaskIntoConstraints = false
+        column.widthAnchor.constraint(lessThanOrEqualToConstant: Self.wrapWidth).isActive = true
 
         // One row holds the whole column so hiding parts never leaves an
         // orphaned row separator behind.

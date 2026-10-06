@@ -29,6 +29,15 @@ extension NSStackView {
     }
 }
 
+/// A stock push button (so a Return key equivalent still works) that fades
+/// when disabled, at the same 0.45 alpha `ThemedActionButton` uses, so a
+/// disabled button never keeps its accent fill.
+final class FadingColumnButton: NSButton {
+    override var isEnabled: Bool {
+        didSet { alphaValue = isEnabled ? 1 : 0.45 }
+    }
+}
+
 /// AppKit sign-in screen (spec §5.2). Renders `SignInViewModel.state`; every
 /// control forwards to a view-model intent. No business logic here.
 public final class SignInViewController: NSViewController, NSTextFieldDelegate {
@@ -78,7 +87,7 @@ public final class SignInViewController: NSViewController, NSTextFieldDelegate {
         target: AnyObject? = nil,
         action: Selector? = nil
     ) -> NSButton {
-        let button = NSButton(title: title, target: target, action: action)
+        let button = FadingColumnButton(title: title, target: target, action: action)
         // These stay stock `NSButton`s rather than `ThemedActionButton`s
         // because two of them carry a Return key equivalent, which AppKit only
         // honours on a stock push button. Painting them from the palette is

@@ -141,6 +141,19 @@ struct AccountDetailPanelTests {
         #expect(detail.loginButton.isHidden && detail.signupButton.isHidden)
     }
 
+    @Test("a very long name and email never widen the detail past its wrap width")
+    func longIdentityStaysBounded() {
+        let account = FakeAccount(id: "a", displayName: "Alpha")
+        let longName = String(repeating: "Wolfeschlegelsteinhausenbergerdorff ", count: 6)
+        let longEmail = String(repeating: "very.long.local.part", count: 8) + "@agenticdeveloperhub.example.com"
+        account.state = .signedIn(AccountUser(id: "u", name: longName, email: longEmail, avatarURL: nil))
+        let detail = makeDetail(account)
+        detail.view.layoutSubtreeIfNeeded()
+        // wrapWidth (360) plus generous room for the group's own insets.
+        #expect(detail.view.fittingSize.width <= 360 + 80)
+        #expect(detail.emailLabel.stringValue == longEmail)
+    }
+
     @Test("signed in then busy keeps the user showing, Logout disabled")
     func signedInThenBusy() {
         let account = FakeAccount(id: "a", displayName: "Alpha")
