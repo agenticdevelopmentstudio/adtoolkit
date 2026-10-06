@@ -21,12 +21,14 @@ public protocol WorkTrackingPersistence: ActivityPersistence, WorkTrackingSettin
 /// **Accessibility is never polled.** Asking for the AX state from a process
 /// without the grant stalls tccd and can freeze the whole machine, so the
 /// check runs only:
-/// - at `start()` (or when a failed preference read recovers), and only when
-///   the last stored answer was `.granted`;
 /// - when the user turns tracking on (`apply` going stored off → on);
 /// - on an explicit `recheckAccessibility()`.
-/// Every other path reuses the stored answer. A grant withdrawn mid-run is
-/// learned from the window read's own `kAXErrorAPIDisabled`, never by asking.
+/// Every other path — `start()`, a recovered preference read, a recovering
+/// `apply` — trusts the stored answer, a stored `.granted` included (review
+/// N1: a grant can be gone by the next launch, after a re-sign or a revoke
+/// while the daemon was down, and asking then is exactly the freeze). A
+/// stale grant is learned from the window read's own `kAXErrorAPIDisabled`
+/// (`accessibilityRevoked()`), never by asking.
 @MainActor
 public final class WorkTrackingController {
     public typealias AccessibilityCheck = @MainActor () async -> WorkTrackingAccessibility
@@ -107,7 +109,7 @@ public final class WorkTrackingController {
     }
 
     /// Host start: recovers open spans, then starts the recorder if enabled.
-    /// Checks AX only if the last stored answer was `granted`. A failed
+    /// Never checks AX: the stored answer decides window reads. A failed
     /// preference read is reported in `status().lastError` and retried with
     /// backoff — never taken to mean "tracking is off".
     public func start() async {
@@ -132,7 +134,7 @@ public final class WorkTrackingController {
         }
         preferences = prefs
         guard prefs.enabled else { return }
-        await startTrustingTheStoredAnswer()
+        startTrustingTheStoredAnswer()
     }
 
     /// Stops the recorder and blocks until its close writes have landed, so a
@@ -177,7 +179,7 @@ public final class WorkTrackingController {
             // `start()` gave up, so nothing else builds the recorder. Not known
             // to be a turn-on, so the stored answer decides: a stored denial
             // is never re-asked (review F22).
-            await startTrustingTheStoredAnswer()
+            startTrustingTheStoredAnswer()
         }
         // Otherwise it was already on with no recorder yet: the pending `start()`
         // builds it from `preferences`, so no check here.
@@ -236,14 +238,11 @@ public final class WorkTrackingController {
 
     // MARK: - Private
 
-    /// The start policy: AX is re-asked only when the stored answer was a
-    /// grant, then the recorder starts unless a stop or apply intervened.
-    private func startTrustingTheStoredAnswer() async {
-        if accessibility == .granted {
-            let answer = await checkAccessibility()
-            storeAccessibility(answer)
-        }
-        // A stop or an `apply` may have landed while the check was out.
+    /// The start policy: the stored answer is trusted as is — AX is never
+    /// asked here, not even to confirm a stored grant (review N1). A grant
+    /// that has gone stale surfaces as the window read's `kAXErrorAPIDisabled`,
+    /// which lands in `accessibilityRevoked()` without asking either.
+    private func startTrustingTheStoredAnswer() {
         guard !stopped, preferences.enabled, recorder == nil else { return }
         startRecorder()
     }
@@ -271,7 +270,7 @@ public final class WorkTrackingController {
         preferences = prefs
         Self.logger.info("work tracking: preferences read after \(attempt) retr(ies)")
         guard prefs.enabled else { return }
-        await startTrustingTheStoredAnswer()
+        startTrustingTheStoredAnswer()
     }
 
     private func notePrefsLoadFailure(_ error: Error) {

@@ -47,10 +47,17 @@ public final class WorkTrackingXPCClient<Transport: WorkTrackingXPCTransport>: W
         let encoder = JSONEncoder()
         encoder.keyEncodingStrategy = .convertToSnakeCase
         guard let body = try? encoder.encode(preferences) else { return nil }
-        return await status { try await self.transport.callData(timeout: 5, retries: 0) {
+        return await status { try await self.transport.callData(timeout: Self.setPreferencesTimeout, retries: 0) {
             $0.workTrackingSetPreferences(body, reply: $1)
         } }
     }
+
+    /// How long a preference push waits. A turn-on (stored off → on) is
+    /// answered only after the daemon's live Accessibility check, which
+    /// stalls on tccd for about ten seconds without the grant — so it gets
+    /// Check Again's wait, or the push times out on a change the daemon
+    /// applied and the app counts a failure (review N4).
+    public static var setPreferencesTimeout: TimeInterval { recheckTimeout }
 
     public func status() async -> WorkTrackingStatus? {
         await status { try await self.transport.callData(timeout: nil, retries: 0) {

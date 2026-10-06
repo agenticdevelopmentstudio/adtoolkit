@@ -191,6 +191,43 @@ final class InputActivityTriggerTests: XCTestCase {
         XCTAssertEqual(t.pollInterval, 30, "back to the presence cadence once the user is here")
     }
 
+    /// Review N5: started mid-absence (a restart at 09:14:30 after leaving at
+    /// 09:00), the user returns ten seconds later, before any tick, and types
+    /// steadily. The first tick comes at the away cadence, so the return is
+    /// dated within a second of it — not at a 30 s tick.
+    func testStartedMidAbsenceAReturnBeforeTheFirstTickIsDatedPromptly() throws {
+        let source = ClockedInputSource()
+        let clock = Box(now: 0)
+        source.clock = clock
+        source.lastInputAt = -870
+        let t = InputActivityTrigger(interval: 30, awayInterval: 1, idleThreshold: 60,
+                                     source: source, now: { clock.date })
+        var captured: [(ContextEventDetail, Date)] = []
+        t.onEvent = { captured.append(($0, $1)) }
+        try t.start()
+        defer { t.stop() }
+        XCTAssertEqual(t.pollInterval, 1, "the first tick comes at the away cadence")
+        func returned() -> Date? {
+            captured.first { if case .input(let d) = $0.0 { return d.change == .active }; return false }?.1
+        }
+        while returned() == nil, clock.now < 100 {
+            clock.now += t.pollInterval
+            if clock.now >= 10 { source.lastInputAt = clock.now }   // back at t=10, typing
+            t.tick()
+        }
+        XCTAssertLessThanOrEqual(returned()?.timeIntervalSince1970 ?? .infinity, 11,
+                                 "the return was dated a whole presence interval late")
+    }
+
+    /// The first tick, finding the user present, settles on the presence cadence.
+    func testAFirstTickWhilePresentSettlesOnThePresenceCadence() throws {
+        let (t, _, _) = trigger([quiet(for: 1)])
+        try t.start()
+        defer { t.stop() }
+        t.tick()
+        XCTAssertEqual(t.pollInterval, 10)
+    }
+
     func testInputOfAnyKindCountsAsPresence() throws {
         // A long drag or a right click moves none of the four named readings.
         let (t, _, _) = trigger([InputSample(secondsSinceKey: 900, secondsSinceMouseMove: 900,

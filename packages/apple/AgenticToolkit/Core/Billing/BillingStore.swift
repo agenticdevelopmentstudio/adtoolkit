@@ -356,10 +356,10 @@ public enum BillingStore {
             projectRoot: span.repoRoot, branch: span.branch, database: database
         )
         let cutoff = Self.cutoffSeconds(for: project, default: defaultCutoffSeconds)
-        // Widened by the input lag on both sides: an idle row that ends just
-        // before the span, or starts just after it, may be one absence with a
-        // row inside it (a restart split them), and the cutoff measures the
-        // whole absence.
+        // Widened by the input lag on both sides. Only rows that overlap or
+        // touch merge into one absence (review N2), so a row the window adds
+        // that is apart from every other changes nothing; the margin only
+        // tolerates a row whose bounds landed a little off the span's.
         let lag = BillingDerivation.inputLagSeconds
         let idle = try database.billingIdleIntervals(
             from: UTCTimestamp.epochSeconds(span.startedAt).map { UTCTimestamp.string(epochSeconds: $0 - lag) }

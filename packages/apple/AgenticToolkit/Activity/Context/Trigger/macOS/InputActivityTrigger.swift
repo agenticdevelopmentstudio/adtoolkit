@@ -154,7 +154,11 @@ public final class InputActivityTrigger: ContextTrigger, PresenceSampling {
         lastEmitted = nil
         wasActive = nil
         inactiveSince = nil
-        schedule(every: interval)
+        // The first tick comes at the away cadence: started while the user is
+        // away (a restart mid-absence), a return must be dated within a
+        // second of it, not up to one full interval late (review N5). That
+        // tick then settles the cadence for the state it finds.
+        schedule(every: awayInterval)
     }
 
     /// The cadence the trigger is polling at now (test seam): `interval` while

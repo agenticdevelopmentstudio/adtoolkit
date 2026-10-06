@@ -339,6 +339,15 @@ final class WorkActivityRecorderTests: XCTestCase {
         XCTAssertEqual(store.idle.first?.until, UTCTimestamp.string(from: clock.addingTimeInterval(300)))
     }
 
+    /// Review N6: a run's first `.inactive` is dated at the tick and carries
+    /// the silence it found. The row opens at the last input, not the tick,
+    /// so the head of the absence is not billed.
+    func testAFirstInactiveReadingOpensTheIdleRowAtTheLastInput() {
+        recorder.handle(Self.input(.inactive, idle: 120), at: clock)
+        recorder.drainWrites()
+        XCTAssertEqual(store.idle.first?.from, UTCTimestamp.string(from: clock.addingTimeInterval(-120)))
+    }
+
     func testAStuckOpenIdleIsClosedWhenTheNextIdleOpens() {
         let failing = FailingFirstIdleCloseStore()
         let rec = WorkActivityRecorder(

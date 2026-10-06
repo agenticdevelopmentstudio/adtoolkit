@@ -31,9 +31,10 @@ public enum BillingDerivation {
     public static let defaultCutoffSeconds = 15 * 60
 
     /// How late an idle row can land relative to the input it describes: the
-    /// input trigger's 60 s threshold plus one 30 s poll. Two idle rows this
-    /// close are one absence (a daemon restart splits one in two), and a
-    /// closed span younger than this may still gain the row for its tail.
+    /// input trigger's 60 s threshold plus one 30 s poll. A closed span
+    /// younger than this may still gain the row for its tail. It is NOT a
+    /// tolerance for merging idle rows (review N2): rows that far apart have
+    /// witnessed input between them, so they are separate absences.
     public static let inputLagSeconds = 90
 
     /// - Parameters:
@@ -114,9 +115,12 @@ public enum BillingDerivation {
     /// Splits one app-activity span into runs at its idle gaps.
     ///
     /// An absence of at least `cutoffSeconds` is cut out of the span (an open
-    /// idle row counts as idle until `now`); shorter idles stay billed. Idle
-    /// rows no more than `inputLagSeconds` apart are one absence, so a restart
-    /// that split it into two short rows does not make it billable.
+    /// idle row counts as idle until `now`); shorter idles stay billed. Only
+    /// rows that overlap or touch are one absence: a restart mid-absence opens
+    /// its row at the last input, overlapping the row the stop or recovery
+    /// closed, so a real absence split by a restart is still cut as one. Rows
+    /// with any gap between them had input between them, and a run of short
+    /// pauses is never summed into one long absence (review N2).
     /// An open span (`spanEnd == ""`) runs to `now`, and its last run stays
     /// open unless an open idle past the cutoff ends it — then it closes at
     /// the idle's start, the last input. Any unparsable timestamp yields no
@@ -153,19 +157,9 @@ public enum BillingDerivation {
             if until > from { rows.append(ActivityRuns.Span(start: from, end: until)) }
         }
 
-        // Rows within `inputLagSeconds` of each other are one absence split
-        // by a restart: the cutoff applies to the whole absence, the cut only
-        // to the rows that recorded it.
-        var gaps: [ActivityRuns.Span<Int>] = []
-        var cluster: [ActivityRuns.Span<Int>] = []
-        for row in ActivityRuns.union(rows) {
-            if let first = cluster.first, let last = cluster.last, row.start - last.end > inputLagSeconds {
-                if last.end - first.start >= cutoff { gaps += cluster }
-                cluster = []
-            }
-            cluster.append(row)
-        }
-        if let first = cluster.first, let last = cluster.last, last.end - first.start >= cutoff { gaps += cluster }
+        // Overlapping or touching rows are one absence (a restart's rows
+        // overlap); each is cut only when it reaches the cutoff on its own.
+        let gaps = ActivityRuns.union(rows).filter { $0.end - $0.start >= cutoff }
 
         let pieces = ActivityRuns.subtract([ActivityRuns.Span(start: start, end: end)], gaps)
 

@@ -88,7 +88,16 @@ final class WorkTrackingXPCClientTests: XCTestCase {
         let decoded = try WorkTrackingXPCClient<ScriptedTransport>.makeReplyDecoder()
             .decode(WorkTrackingPreferences.self, from: body)
         XCTAssertEqual(decoded, prefs)
-        XCTAssertEqual(transport.calls.last?.timeout, .some(.some(5)))
+        XCTAssertEqual(transport.calls.last?.retries, 0)
+    }
+
+    /// Review N4: a turn-on is answered after the daemon's live AX check, so
+    /// the push outlasts the ~10 s tccd stall exactly as Check Again does.
+    func testSetPreferencesWaitsLongerThanTheAccessibilityStall() async {
+        transport.data = wire(WorkTrackingStatus(enabled: true))
+        _ = await client.setPreferences(.default)
+        let timeout = try? XCTUnwrap(transport.calls.last?.timeout ?? nil)
+        XCTAssertGreaterThan(timeout ?? 0, 10)
         XCTAssertEqual(transport.calls.last?.retries, 0)
     }
 

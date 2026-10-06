@@ -209,14 +209,59 @@ final class WorkTrackingControllerTests: XCTestCase {
         XCTAssertEqual(ctl.status().accessibility, .unknown)
     }
 
-    func testGrantedLastTimeIsReCheckedAtStart() async throws {
+    /// Review N1: a stored grant is trusted, never re-asked — the grant may be
+    /// gone (re-signed build, revoked while the daemon was down) and asking
+    /// from a process without it stalls tccd and freezes the machine.
+    func testGrantedLastTimeIsTrustedAtStartNeverReAsked() async throws {
         try WorkTrackingPrefs.save(enabledPrefs(), store)
         try WorkTrackingPrefs.setLastAccessibility(.granted, store)
         axAnswer = .denied
-        await controller().start()
-        XCTAssertEqual(axCalls, 1)
-        XCTAssertEqual(builtReadsWindows, [false])
+        let ctl = controller()
+        await ctl.start()
+        XCTAssertEqual(axCalls, 0, "start never asks for the AX state")
+        XCTAssertEqual(builtReadsWindows, [true], "the stored grant decides window reads")
+        XCTAssertEqual(ctl.status().accessibility, .granted)
+        ctl.stop()
+    }
+
+    /// Review N1: the injected trust check is counted across a first start,
+    /// a restart with `granted` stored, and the prefs-retry recovery path —
+    /// zero calls on all three. A stale grant is corrected by the window
+    /// read's own denial, still without asking.
+    func testAXTrustIsNeverAskedOnStartRestartOrPrefsRetry() async throws {
+        try WorkTrackingPrefs.save(enabledPrefs(), store)
+        try WorkTrackingPrefs.setLastAccessibility(.granted, store)
+        axAnswer = .denied
+
+        let first = controller()
+        await first.start()
+        XCTAssertEqual(axCalls, 0, "first start")
+        first.stop()
+
+        let restarted = controller()
+        await restarted.start()
+        XCTAssertEqual(axCalls, 0, "restart with granted stored")
+        XCTAssertEqual(builtReadsWindows, [true, true])
+        restarted.stop()
+
+        struct Broken: Error {}
+        prefsLoadError = Broken()
+        retryDelay = 0.01
+        let retrying = controller()
+        await retrying.start()
+        try await settle { prefsLoads >= 2 }
+        prefsLoadError = nil
+        try await settle { built.count == 3 }
+        XCTAssertEqual(builtReadsWindows, [true, true, true], "the retry trusts the stored grant")
+        XCTAssertEqual(axCalls, 0, "prefs-retry recovery")
+
+        // The grant was stale: the window read answers kAXErrorAPIDisabled.
+        built[2].onAccessibilityRevoked()
+        try await settle { built.count == 4 }
+        XCTAssertEqual(builtReadsWindows, [true, true, true, false], "revoked: restarted app-only")
         XCTAssertEqual(try WorkTrackingPrefs.lastAccessibility(store), .denied)
+        XCTAssertEqual(axCalls, 0, "the revocation never asks either")
+        retrying.stop()
     }
 
     // MARK: - apply
@@ -268,35 +313,11 @@ final class WorkTrackingControllerTests: XCTestCase {
         XCTAssertEqual(built[0].prefs.addedBundleIds, ["com.example.editor"])
     }
 
-    func testListOnlyApplyWhileStartAwaitsItsCheckDoesNotCheckAgain() async throws {
-        try WorkTrackingPrefs.save(enabledPrefs(), store)
-        try WorkTrackingPrefs.setLastAccessibility(.granted, store)
-        let ctl = controller()
-        duringAXCheck = { [unowned self] in
-            self.duringAXCheck = nil
-            _ = try? await ctl.apply(self.enabledPrefs(added: ["com.example.editor"]))
-        }
-        await ctl.start()
-        XCTAssertEqual(axCalls, 1, "only start's own check")
-        XCTAssertEqual(builtReadsWindows, [true])
-        XCTAssertEqual(built[0].prefs.addedBundleIds, ["com.example.editor"])
-    }
-
     func testStopDuringTheTurnOnCheckBuildsNoRecorder() async throws {
         let ctl = controller()
         await ctl.start()
         duringAXCheck = { ctl.stop() }
         _ = try await ctl.apply(enabledPrefs())
-        XCTAssertEqual(axCalls, 1)
-        XCTAssertEqual(builtReadsWindows, [])
-    }
-
-    func testStopDuringTheStartCheckBuildsNoRecorder() async throws {
-        try WorkTrackingPrefs.save(enabledPrefs(), store)
-        try WorkTrackingPrefs.setLastAccessibility(.granted, store)
-        let ctl = controller()
-        duringAXCheck = { ctl.stop() }
-        await ctl.start()
         XCTAssertEqual(axCalls, 1)
         XCTAssertEqual(builtReadsWindows, [])
     }
@@ -415,8 +436,8 @@ final class WorkTrackingControllerTests: XCTestCase {
         XCTAssertEqual(builtReadsWindows, [], "still failing: still nothing started")
         prefsLoadError = nil
         try await settle { !built.isEmpty }
-        XCTAssertEqual(builtReadsWindows, [true], "recovered with no app push: the stored grant re-checked once")
-        XCTAssertEqual(axCalls, 1)
+        XCTAssertEqual(builtReadsWindows, [true], "recovered with no app push: the stored grant trusted")
+        XCTAssertEqual(axCalls, 0, "the retry path never asks for the AX state (review N1)")
         XCTAssertNil(ctl.status().lastError)
         XCTAssertTrue(ctl.status().enabled)
         ctl.stop()

@@ -211,7 +211,15 @@ public final class WorkActivityRecorder {
                 // describes, so there is nothing to close or reopen.
                 guard !idleOpen else { return }
                 idleOpen = true
-                let from = UTCTimestamp.string(from: date)
+                // A run's first reading is dated at the tick, not backdated,
+                // and carries the silence it found as `idleSeconds` (a
+                // witnessed transition is already dated at the last input and
+                // carries none). The absence began at the last input either
+                // way, so the row opens there — as `start()` does for a
+                // restart mid-absence — and the head of an absence that a
+                // restart inside the idle threshold interrupted is not billed
+                // (review N6).
+                let from = UTCTimestamp.string(from: date.addingTimeInterval(-max(0, input.idleSeconds ?? 0)))
                 // Anything still open ended when input last resumed (or now, if
                 // it never did this run). A no-op when the last close landed.
                 let staleUntil = min(lastResumedAt ?? from, from)

@@ -58,24 +58,46 @@ final class BillingAppRunsTests: XCTestCase {
         XCTAssertEqual(runs, [BillingRun(startedAt: start, endedAt: "2026-10-01T09:10:00Z", seconds: 600),
                               BillingRun(startedAt: "2026-10-01T09:40:00Z", endedAt: end, seconds: 1200)])
     }
-    /// Review F1: a restart mid-absence splits one 20-minute idle into two
-    /// 10-minute rows a minute apart. The absence is past the cutoff, so its
-    /// rows are cut; the minute between them, recorded by no row, stays.
+    /// Review F1: a restart mid-absence. The stop closed the first row at
+    /// 09:20; the new recorder opened its row at the last input, 09:10, so the
+    /// rows overlap and the 21-minute absence is cut as one.
     func testAnAbsenceSplitByARestartIsCutAsOne() {
         let runs = BillingDerivation.appRuns(spanStart: start, spanEnd: end,
             idle: [idle("2026-10-01T09:10:00Z", "2026-10-01T09:20:00Z"),
-                   idle("2026-10-01T09:21:00Z", "2026-10-01T09:31:00Z")], cutoffSeconds: 900, now: now)
+                   idle("2026-10-01T09:10:00Z", "2026-10-01T09:31:00Z")], cutoffSeconds: 900, now: now)
         XCTAssertEqual(runs, [
             BillingRun(startedAt: start, endedAt: "2026-10-01T09:10:00Z", seconds: 600),
-            BillingRun(startedAt: "2026-10-01T09:20:00Z", endedAt: "2026-10-01T09:21:00Z", seconds: 60),
             BillingRun(startedAt: "2026-10-01T09:31:00Z", endedAt: end, seconds: 1740)
         ])
     }
-    /// Two short idles further apart than the input lag are two absences.
-    func testShortIdlesFurtherApartThanTheLagStayBilled() {
+    /// A recovery that closed the old row exactly where the new one opens:
+    /// touching rows are one absence too.
+    func testTouchingIdleRowsAreOneAbsence() {
         let runs = BillingDerivation.appRuns(spanStart: start, spanEnd: end,
             idle: [idle("2026-10-01T09:10:00Z", "2026-10-01T09:20:00Z"),
-                   idle("2026-10-01T09:21:31Z", "2026-10-01T09:31:31Z")], cutoffSeconds: 900, now: now)
+                   idle("2026-10-01T09:20:00Z", "2026-10-01T09:26:00Z")], cutoffSeconds: 900, now: now)
+        XCTAssertEqual(runs.map(\.seconds), [600, 2040])
+    }
+    /// Review N2, its own scenario: idle 10:00-10:08, typing until 10:09:20,
+    /// idle again to 10:17. Each absence is under the cutoff, so both stay
+    /// billed — the 80 s of witnessed input between them splits them.
+    func testTwoShortAbsencesSplitByInputStayBilled() {
+        let runs = BillingDerivation.appRuns(
+            spanStart: "2026-10-01T09:55:00Z", spanEnd: "2026-10-01T10:20:00Z",
+            idle: [idle("2026-10-01T10:00:00Z", "2026-10-01T10:08:00Z"),
+                   idle("2026-10-01T10:09:20Z", "2026-10-01T10:17:00Z")], cutoffSeconds: 900, now: now)
+        XCTAssertEqual(runs.map(\.seconds), [1500], "all 25 minutes billed")
+    }
+    /// Review N2: think 3 min, type 30 s, five times over. No pause reaches
+    /// the cutoff, so none is cut, however long the run of them.
+    func testARunOfShortPausesIsNotOneAbsence() {
+        let base = UTCTimestamp.epochSeconds(start)!
+        let rows = (0..<5).map { index -> BillingIdleInterval in
+            let from = base + 60 + index * 210
+            return idle(UTCTimestamp.string(epochSeconds: from), UTCTimestamp.string(epochSeconds: from + 180))
+        }
+        let runs = BillingDerivation.appRuns(spanStart: start, spanEnd: end, idle: rows,
+                                             cutoffSeconds: 900, now: now)
         XCTAssertEqual(runs.map(\.seconds), [3600])
     }
     private func span(ended: String) -> BillingAppSpanRow {

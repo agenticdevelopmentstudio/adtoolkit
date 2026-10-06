@@ -19,6 +19,13 @@ import OSLog
 /// reconnect after consecutive failed pushes waits ``reconnectDelay``, which
 /// grows with each failure. A change still pushes at once: the user asked.
 ///
+/// **An undelivered push re-tries itself.** A bounded push that gives up while
+/// observing schedules its own re-push after ``reconnectDelay`` (review N3),
+/// rather than waiting for some other call to open a new connection — a
+/// connection the app may not touch for a long time, leaving a change made
+/// while the receiver was down unapplied. A newer push or ``stop()`` cancels
+/// it; a reconnect while it waits is ignored, since it is already coming.
+///
 /// What the snapshot holds, how it is encoded and how it travels are the
 /// caller's; the engine — observe, snapshot, supersede, bounded retry,
 /// re-push on reconnect — is this one copy.
@@ -165,9 +172,17 @@ public final class SettingsSnapshotPush {
             push()
             return
         }
+        scheduleDelayedPush(reason: "reconnect")
+    }
+
+    /// Re-pushes after ``reconnectDelay`` for the current failure count,
+    /// unless a newer push or ``stop()`` cancels it first.
+    private func scheduleDelayedPush(reason: String) {
         let delay = reconnectDelay(failures)
         let (name, failed, waitMs) = (label, failures, delay / 1_000_000)
-        logger.info("\(name, privacy: .public) push: reconnect after \(failed) failure(s); waiting \(waitMs) ms")
+        logger.info(
+            "\(name, privacy: .public) push: \(reason, privacy: .public) after \(failed) failure(s), in \(waitMs) ms"
+        )
         delayedReconnect = Task { [weak self] in
             try? await Task.sleep(nanoseconds: delay)
             guard !Task.isCancelled, let self else { return }
@@ -182,6 +197,9 @@ public final class SettingsSnapshotPush {
         guard finishedGeneration == generation else { return }
         inFlight = false
         failures = delivered ? 0 : failures + 1
+        // Nothing else may open a connection soon, so an undelivered snapshot
+        // schedules its own next attempt (review N3).
+        if !delivered, observing, delayedReconnect == nil { scheduleDelayedPush(reason: "retry") }
     }
 
     private func cancelPending() {
