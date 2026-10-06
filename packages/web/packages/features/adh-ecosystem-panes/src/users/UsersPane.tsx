@@ -8,7 +8,6 @@ import {
   type EcosystemUser,
   type EcosystemUserInput,
 } from "../api/customers";
-import { Users } from "lucide-react";
 import { useResourceList } from "@agentic-toolkit/data";
 import { Field } from "@agenticdevelopertoolkit/ui/blocks";
 import { Input } from "@agenticdevelopertoolkit/ui/components/input";
@@ -65,7 +64,6 @@ export function UsersPane({
     items: users,
     reload: refresh,
     error: loadError,
-    isFetching,
   } = useResourceList<EcosystemUser>(`ecosystem:${ecosystemId ?? ""}:users`, load);
 
   const urlSelection = leaf
@@ -91,38 +89,30 @@ export function UsersPane({
     createLabel: "New user",
   });
 
-  // PUBLISH the users list as a deeper stack level + register the editor's unsaved-work guard.
+  // The table in the pane body IS the list, so the rows are NOT also published as a stack level.
+  // They used to be, and the pane drew the same users twice side by side: a rail column of names
+  // and, beside it, the table (Mike, 2026-10-06: "only the second one should show"). `publish:
+  // false` keeps what the hook is still needed for: the editor's unsaved-work guard on Back and
+  // breadcrumb-up. Opening a row routes through the deep-link leaf (`…/users/<id>`), and the
+  // breadcrumb back to Users clears it, so selection never depended on the column. The column's "+"
+  // moved to the pane's own bar below, as its "New user" button.
   useMasterDetailLevel({
     id: "users-list",
-    title: "Users",
     form,
     items: users,
     getId: (u) => u.id,
     getLabel: (u) => u.displayName || u.email || "—",
-    getSublabel: (u) => u.email || u.externalId || "—",
-    itemIcon: <Users size={16} aria-hidden />,
     newLabel: "New user",
     leaf,
-    // A failed read leaves `users` null forever, so "Loading…" alone would be a spinner that never
-    // resolves in the rail while the error sits in the pane body. Same three-way as the sibling
-    // Applications pane.
-    emptyLabel: loadError
-      ? "Couldn't load users."
-      : users === null
-        ? "Loading…"
-        : "No users yet.",
-    // The spinner before "Users" — the only thing that says a revalidation is running behind rows
-    // the cache already put on screen. `emptyLabel` covers the FIRST read and nothing after.
-    busy: isFetching,
-    onNew: () => setNewOpen(true),
+    publish: false,
   });
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <ApiAffordanceScope>
         <ButtonBar
-          actions={form.actions}
-          showCreate={false}
+          // "New user" opens the create MODAL, never the inline blank editor (`must-create-in-modal`).
+          actions={{ ...form.actions, onCreate: () => setNewOpen(true) }}
           api={{
             path: "/customer/customers/{id}",
             pathValues: { id: form.selectedId },

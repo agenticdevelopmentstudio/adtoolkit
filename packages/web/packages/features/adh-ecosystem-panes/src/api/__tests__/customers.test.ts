@@ -82,3 +82,24 @@ describe("ecosystemUsersApi.update", () => {
     expect(user.externalId).toBe("");
   });
 });
+
+describe("ecosystemUsersApi.list", () => {
+  // The hub names an ecosystem by its rdid while a customer row stores the uuid, so a filter in the
+  // browser matched nothing and every Users pane read "No users yet." The server filters, and it
+  // resolves the rdid itself — the client sends the id exactly as the pane holds it.
+  it("asks the server for the ecosystem's rows, by the id the pane holds", async () => {
+    authedJson.mockResolvedValue([ROW]);
+    const users = await ecosystemUsersApi.list("ecosystem.ads.agenticdeveloperhub");
+    expect(authedJson).toHaveBeenCalledWith(
+      "/api/customer/customers?ecosystemId=ecosystem.ads.agenticdeveloperhub",
+    );
+    // A row whose stored ecosystemId is a uuid is NOT dropped by a second, client-side comparison.
+    expect(users.map((u) => u.id)).toEqual(["u1"]);
+  });
+
+  it("sends no filter when no ecosystem is selected", async () => {
+    authedJson.mockResolvedValue([]);
+    await ecosystemUsersApi.list(undefined);
+    expect(authedJson).toHaveBeenCalledWith("/api/customer/customers");
+  });
+});

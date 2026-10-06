@@ -13,7 +13,7 @@
 
 import type { RequestBody, SuccessBody } from "@agentic-toolkit/adh-api-types";
 import { authedJson, authedRequest } from "@agentic-toolkit/auth/client";
-import { compact, enc, scopeByOwner, sortByText } from "@agentic-toolkit/data";
+import { compact, enc, sortByText } from "@agentic-toolkit/data";
 
 export interface EcosystemUser {
   id: string;
@@ -56,12 +56,17 @@ export function toUser(r: CustomerRow): EcosystemUser {
 
 export const ecosystemUsersApi = {
   async list(ecosystemId?: string): Promise<EcosystemUser[]> {
-    // Generic-CRUD list is unscoped, so narrow to the active ecosystem here.
-    const rows = await authedJson<CustomerRow[]>(BASE);
-    return sortByText(
-      scopeByOwner(rows, ecosystemId, (r) => r.ecosystemId).map(toUser),
-      (u) => u.displayName || u.email,
-    );
+    // The SERVER narrows to the ecosystem, never the browser. This used to fetch every customer and
+    // keep the rows whose `ecosystemId` equalled the pane's — but the hub names an ecosystem by its
+    // RDID (`ecosystem.ads.agenticdeveloperhub`) while a customer row carries the stored UUID, so the
+    // comparison matched nothing and every ecosystem's Users pane read "No users yet." (Mike,
+    // 2026-10-06). It also filtered only the newest 500 rows of the WHOLE table (the backend's list
+    // cap), so even matching ids would have dropped older users. The backend's `?ecosystemId=`
+    // filter resolves an rdid to the stored uuid itself (crud/factory.ts, `ecosystemAddrProp`), and
+    // the cap then applies to this ecosystem's rows alone.
+    const url = ecosystemId ? `${BASE}?ecosystemId=${enc(ecosystemId)}` : BASE;
+    const rows = await authedJson<CustomerRow[]>(url);
+    return sortByText(rows.map(toUser), (u) => u.displayName || u.email);
   },
 
   async get(id: string): Promise<EcosystemUser | null> {
