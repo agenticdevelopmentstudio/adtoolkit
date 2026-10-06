@@ -26,10 +26,11 @@ public enum HubSignInSheet {
             return false
         }
         let signIn = SignInViewController(viewModel: model)
-        let closer = SheetCloser(onClose: onClose)
+        let closer = SheetCloser(model: model, onClose: onClose)
         signIn.navigationItem.leftBarButtonItem = UIBarButtonItem(
             systemItem: .cancel,
-            primaryAction: UIAction { [weak signIn] _ in
+            primaryAction: UIAction { [weak signIn, weak model] _ in
+                model?.cancel()
                 signIn?.dismiss(animated: true) { closer.close() }
             }
         )
@@ -52,8 +53,12 @@ public enum HubSignInSheet {
 private final class SheetCloser: NSObject, UIAdaptivePresentationControllerDelegate {
     nonisolated(unsafe) static var key: UInt8 = 0
     private var onClose: (@MainActor () -> Void)?
+    private weak var model: SignInViewModel?
 
-    init(onClose: @escaping @MainActor () -> Void) { self.onClose = onClose }
+    init(model: SignInViewModel, onClose: @escaping @MainActor () -> Void) {
+        self.model = model
+        self.onClose = onClose
+    }
 
     func close() {
         onClose?()
@@ -61,7 +66,11 @@ private final class SheetCloser: NSObject, UIAdaptivePresentationControllerDeleg
     }
 
     nonisolated func presentationControllerDidDismiss(_ presentationController: UIPresentationController) {
-        MainActor.assumeIsolated { close() }
+        // A swipe down is a cancel too: stop any sign-in still in flight.
+        MainActor.assumeIsolated {
+            model?.cancel()
+            close()
+        }
     }
 }
 #endif

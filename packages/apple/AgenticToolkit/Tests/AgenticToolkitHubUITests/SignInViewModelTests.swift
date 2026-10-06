@@ -182,6 +182,29 @@ final class SignInViewModelTests: XCTestCase {
         XCTAssertEqual(harness.signedIn.values, [Self.ada])
     }
 
+    func testCancelStopsASignInInFlightSoItNeverCompletes() async throws {
+        let session = StubSignInSession(delay: .milliseconds(150))
+        let viewModel = SignInViewModel(
+            session: session,
+            passkeys: FakePasskey(outcome: .respond, calls: Box<Int>()),
+            social: FakeSocial(outcome: .cancel)
+        )
+        let signedIn = Box<HubUser>()
+        viewModel.onSignedIn = { signedIn.append($0) }
+        viewModel.setEmail("a@b.c")
+        viewModel.setPassword("pw")
+        let submit = Task { await viewModel.submitCredentials() }
+        try await Task.sleep(for: .milliseconds(30))
+        XCTAssertTrue(viewModel.state.isBusy)
+        viewModel.cancel()
+        await submit.value
+        try await Task.sleep(for: .milliseconds(250))
+        XCTAssertEqual(session.state, .signedOut)
+        XCTAssertTrue(signedIn.values.isEmpty)
+        XCTAssertFalse(viewModel.state.isBusy)
+        XCTAssertNil(viewModel.state.errorMessage)
+    }
+
     // MARK: MFA
 
     private func enterMfa(_ harness: Harness) async {

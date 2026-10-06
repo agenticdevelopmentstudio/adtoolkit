@@ -24,6 +24,17 @@ private final class ExplodingSocial: SocialSignInProvider, @unchecked Sendable {
 @Suite("StubSignInSession")
 @MainActor
 struct StubSignInSessionTests {
+    @Test("a cancelled sign-in never becomes signed in")
+    func cancelledSignInStaysSignedOut() async throws {
+        let session = StubSignInSession(delay: .milliseconds(100))
+        let attempt = Task { try await session.signIn(email: "x@y.z", password: "pw") }
+        try await Task.sleep(for: .milliseconds(20))
+        attempt.cancel()
+        await #expect(throws: CancellationError.self) { try await attempt.value }
+        try await Task.sleep(for: .milliseconds(200))
+        #expect(session.state == .signedOut)
+    }
+
     @Test("starts signed out")
     func startsSignedOut() {
         #expect(StubSignInSession(delay: .zero).state == .signedOut)

@@ -74,6 +74,9 @@ public final class StubSignInSession: SignInSession {
 
     private func signInSample() async throws -> HubUser {
         if delay > .zero { try await Task.sleep(for: delay) }
+        // A cancelled sign-in must never land as signed in, even when the
+        // cancel arrived as the delay ended.
+        try Task.checkCancellation()
         state = .signedIn(Self.sampleUser)
         return Self.sampleUser
     }

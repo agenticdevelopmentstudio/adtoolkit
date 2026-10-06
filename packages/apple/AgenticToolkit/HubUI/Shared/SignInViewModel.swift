@@ -96,6 +96,7 @@ public final class SignInViewModel {
     private let session: any SignInSession
     private let passkeys: any PasskeyAssertionProvider
     private let social: any SocialSignInProvider
+    private var inFlight: Task<Void, Error>?
 
     public init(session: any SignInSession, passkeys: any PasskeyAssertionProvider, social: any SocialSignInProvider) {
         self.session = session
@@ -125,13 +126,20 @@ public final class SignInViewModel {
         state.infoMessage = nil
     }
 
+    /// Stops the intent in flight (the user closed the sign-in screen), so a
+    /// cancelled sign-in can never complete behind their back.
+    public func cancel() {
+        inFlight?.cancel()
+        inFlight = nil
+    }
+
     // MARK: Intents
 
     public func submitCredentials() async {
         guard state.canSubmitCredentials else { return }
         let email = state.email.trimmingCharacters(in: .whitespacesAndNewlines)
         let password = state.password
-        await run {
+        await run { [self] in
             switch try await session.signIn(email: email, password: password) {
             case .done(let user):
                 onSignedIn(user)
@@ -149,7 +157,7 @@ public final class SignInViewModel {
             return
         }
         let code = state.code.trimmingCharacters(in: .whitespacesAndNewlines)
-        await run {
+        await run { [self] in
             let user = try await session.completeMfa(challenge: challenge, method: method, code: code)
             onSignedIn(user)
         }
@@ -157,7 +165,7 @@ public final class SignInViewModel {
 
     public func sendCode() async {
         guard !state.isBusy, case .mfa(let challenge) = state.mode, state.showsSendCode else { return }
-        await run {
+        await run { [self] in
             try await session.sendMfaSms(challenge: challenge)
             state.infoMessage = Self.codeSentMessage
         }
@@ -172,12 +180,12 @@ public final class SignInViewModel {
                 state.errorMessage = Self.passkeyNeedsEmailMessage
                 return
             }
-            await run {
+            await run { [self] in
                 let user = try await session.signInWithPasskey(identifier: identifier, provider: passkeys)
                 onSignedIn(user)
             }
         case .mfa(let challenge):
-            await run {
+            await run { [self] in
                 let user = try await session.completeMfaWithPasskey(challenge: challenge, provider: passkeys)
                 onSignedIn(user)
             }
@@ -186,7 +194,7 @@ public final class SignInViewModel {
 
     public func signInWithSocial(_ provider: SocialProvider) async {
         guard !state.isBusy else { return }
-        await run {
+        await run { [self] in
             let user = try await session.signInWithSocial(provider, using: social)
             onSignedIn(user)
         }
@@ -197,13 +205,18 @@ public final class SignInViewModel {
     /// Wraps one async intent: busy flag on, messages cleared, errors mapped.
     /// A `CancellationError` (the user dismissed a passkey or web sheet) is
     /// silent by design — nothing went wrong that the user does not know about.
-    private func run(_ body: () async throws -> Void) async {
+    private func run(_ body: @escaping @MainActor @Sendable () async throws -> Void) async {
         state.isBusy = true
         state.errorMessage = nil
         state.infoMessage = nil
         defer { state.isBusy = false }
+        // The body runs in a task the model owns, so `cancel()` can stop it
+        // however the view started the intent.
+        let task = Task { try await body() }
+        inFlight = task
+        defer { if inFlight == task { inFlight = nil } }
         do {
-            try await body()
+            try await task.value
         } catch is CancellationError {
             return
         } catch {

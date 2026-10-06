@@ -76,7 +76,11 @@ private final class SignInSheetController: NSViewController {
         view = container
     }
 
-    @objc private func cancelPressed() { close() }
+    @objc private func cancelPressed() {
+        // Stop a sign-in already in flight so it cannot finish after Cancel.
+        model.cancel()
+        close()
+    }
 
     private func close() {
         guard let sheet = sheetWindow else { return }
