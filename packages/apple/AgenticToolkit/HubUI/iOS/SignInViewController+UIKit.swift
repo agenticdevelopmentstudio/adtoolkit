@@ -48,7 +48,13 @@ public final class SignInViewController: UIViewController {
         super.viewDidLoad()
         view.observeTheme { view, palette in view.backgroundColor = palette.windowBackgroundColor }
 
-        configure(emailField, placeholder: "Email", secure: false, keyboard: .emailAddress, content: .username)
+        configure(
+            emailField,
+            placeholder: "Email, user ID, or phone",
+            secure: false,
+            keyboard: .emailAddress,
+            content: .username
+        )
         configure(passwordField, placeholder: "Password", secure: true, keyboard: .default, content: .password)
         configure(
             codeField,

@@ -464,6 +464,23 @@ final class SignInViewModelTests: XCTestCase {
         XCTAssertEqual(harness.viewModel.state.errorMessage, "The sign-in response did not include a code.")
     }
 
+    // MARK: SignInSession seam
+
+    func testSubmitCredentialsOverStubSessionReportsSampleUser() async {
+        let model = SignInViewModel(
+            session: StubSignInSession(delay: .zero),
+            passkeys: FakePasskey(outcome: .respond, calls: Box<Int>()),
+            social: FakeSocial(outcome: .cancel)
+        )
+        let signedIn = Box<HubUser>()
+        model.onSignedIn = { signedIn.append($0) }
+        model.setEmail("x@y.z")
+        model.setPassword("pw")
+        await model.submitCredentials()
+        XCTAssertEqual(signedIn.values, [StubSignInSession.sampleUser])
+        XCTAssertFalse(model.state.isBusy)
+    }
+
     func testSocialProvidersAreAllFive() {
         XCTAssertEqual(SignInViewModel.socialProviders, [.google, .github, .gitlab, .bitbucket, .apple])
     }

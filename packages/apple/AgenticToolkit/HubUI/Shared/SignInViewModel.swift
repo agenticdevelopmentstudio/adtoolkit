@@ -93,11 +93,11 @@ public final class SignInViewModel {
     public var onChange: @MainActor (State) -> Void = { _ in }
     public var onSignedIn: @MainActor (HubUser) -> Void = { _ in }
 
-    private let session: SessionController
+    private let session: any SignInSession
     private let passkeys: any PasskeyAssertionProvider
     private let social: any SocialSignInProvider
 
-    public init(session: SessionController, passkeys: any PasskeyAssertionProvider, social: any SocialSignInProvider) {
+    public init(session: any SignInSession, passkeys: any PasskeyAssertionProvider, social: any SocialSignInProvider) {
         self.session = session
         self.passkeys = passkeys
         self.social = social

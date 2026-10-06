@@ -107,7 +107,7 @@ public final class SignInViewController: NSViewController, NSTextFieldDelegate {
         backButton.setAccessibilityIdentifier("sign-in.mfa.back")
         messageLabel.setAccessibilityIdentifier("sign-in.message")
         spinner.setAccessibilityIdentifier("sign-in.spinner")
-        emailField.placeholderString = "Email"
+        emailField.placeholderString = "Email, user ID, or phone"
         emailField.delegate = self
         passwordField.placeholderString = "Password"
         passwordField.delegate = self
