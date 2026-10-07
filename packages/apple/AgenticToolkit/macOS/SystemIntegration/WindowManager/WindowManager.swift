@@ -156,12 +156,39 @@ public final class WindowManager {
     /// Re-invoke on reactivation (e.g. a second-launch
     /// `DistributedNotification`) so persisted-visible windows reappear
     /// when an LSUIElement app is re-frontmost.
+    ///
+    /// The first call after an update — a build other than the one that last
+    /// called this — reopens the saved windows unless the policy is `never`,
+    /// whichever build quit and whatever the system's close-on-quit preference
+    /// says. The build is recorded on every call, so a later call in the same
+    /// process (a reactivation) is back to following the policy alone.
     public func restoreOnLaunch() {
         let policy = UserSettings.reopenOnLaunchPolicy.currentValue
-        if policy.shouldReopen(systemDefault: ReopenOnLaunchPolicy.systemDefault) {
+        if policy.shouldReopen(systemDefault: systemKeepsWindows(),
+                               followingUpdate: noteLaunchedBuild()) {
             restoreSavedVisibleWindows()
         }
         reopenRecentsOnLaunch()
+    }
+
+    /// The running build, compared against the one that last restored. A seam
+    /// for tests, which run inside a host whose build never changes.
+    var currentBuild: () -> String = {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
+    }
+
+    /// macOS's keep-windows-on-quit preference. A seam for tests: the real one
+    /// is the machine's global setting.
+    var systemKeepsWindows: () -> Bool = { ReopenOnLaunchPolicy.systemDefault }
+
+    /// Records the running build and answers whether it differs from the one
+    /// recorded before — i.e. whether this launch follows an update.
+    private func noteLaunchedBuild() -> Bool {
+        let build = currentBuild()
+        let last = UserSettings.lastLaunchedBuild.currentValue
+        guard build != last else { return false }
+        UserSettings.shared.set(build, for: UserSettings.lastLaunchedBuild)
+        return true
     }
 
     private func restoreSavedVisibleWindows() {

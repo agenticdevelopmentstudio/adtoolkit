@@ -13,4 +13,12 @@ extension UserSettings {
         "reopenOnLaunchPolicy",
         default: .useSystem
     )
+
+    /// The build (`CFBundleVersion`) that last ran `WindowManager.restoreOnLaunch()`.
+    /// A launch whose build differs follows an update, and restores the windows
+    /// left open whatever the system's close-on-quit preference says (see
+    /// `ReopenOnLaunchPolicy.shouldReopen(systemDefault:followingUpdate:)`).
+    /// Empty until the first launch that records it — which counts as following
+    /// an update, so a build that predates this setting is covered too.
+    public static let lastLaunchedBuild = UserSetting<String>("lastLaunchedBuild", default: "")
 }

@@ -34,9 +34,13 @@ final class WindowManagerRegisterTests: XCTestCase {
 
     private let manager = WindowManager.shared
     private var ids: [String] = []
+    private var savedCurrentBuild: (() -> String)?
+    private var savedSystemKeepsWindows: (() -> Bool)?
 
     override func setUp() async throws {
         try await super.setUp()
+        savedCurrentBuild = manager.currentBuild
+        savedSystemKeepsWindows = manager.systemKeepsWindows
         usePolicy(.always)
     }
 
@@ -46,7 +50,18 @@ final class WindowManagerRegisterTests: XCTestCase {
             manager.frames.clearVisibility(for: id)
         }
         UserSettings.shared.remove(UserSettings.reopenOnLaunchPolicy)
+        UserSettings.shared.remove(UserSettings.lastLaunchedBuild)
+        if let savedCurrentBuild { manager.currentBuild = savedCurrentBuild }
+        if let savedSystemKeepsWindows { manager.systemKeepsWindows = savedSystemKeepsWindows }
         try await super.tearDown()
+    }
+
+    /// A launch of `build` on a machine whose system preference closes windows
+    /// on quit — the macOS default — with the policy left at `useSystem`.
+    private func launch(build: String) {
+        usePolicy(.useSystem)
+        manager.systemKeepsWindows = { false }
+        manager.currentBuild = { build }
     }
 
     private func usePolicy(_ policy: ReopenOnLaunchPolicy) {
@@ -128,6 +143,63 @@ final class WindowManagerRegisterTests: XCTestCase {
 
         XCTAssertFalse(built, "\"Restore windows on launch: Never\" applies to every window")
         XCTAssertEqual(manager.frames.savedVisibility(for: id), true, "the policy leaves the saved state alone")
+    }
+
+    /// An update relaunch puts the windows back even where macOS is set to
+    /// close windows on quit — and even when the build that quit never
+    /// recorded itself (an empty `lastLaunchedBuild`).
+    func testAnUpdateRelaunchReopensWhateverTheSystemPreference() {
+        let id = newID("update")
+        seedVisibility(true, for: id)
+        UserSettings.shared.set("100", for: UserSettings.lastLaunchedBuild)
+        launch(build: "101")
+
+        var window: TestWC?
+        manager.register(id: id) { window = TestWC(windowID: id, behavior: .default) }
+        manager.restoreOnLaunch()
+
+        XCTAssertEqual(window?.isVisible, true, "the window left open before the update is back")
+        XCTAssertEqual(UserSettings.lastLaunchedBuild.currentValue, "101")
+    }
+
+    func testABuildThatNeverRecordedItselfCountsAsAnUpdate() {
+        let id = newID("unrecorded")
+        seedVisibility(true, for: id)
+        UserSettings.shared.remove(UserSettings.lastLaunchedBuild)
+        launch(build: "7")
+
+        var window: TestWC?
+        manager.register(id: id) { window = TestWC(windowID: id, behavior: .default) }
+        manager.restoreOnLaunch()
+
+        XCTAssertEqual(window?.isVisible, true)
+    }
+
+    func testAnOrdinaryRelaunchStillFollowsTheSystemPreference() {
+        let id = newID("samebuild")
+        seedVisibility(true, for: id)
+        UserSettings.shared.set("101", for: UserSettings.lastLaunchedBuild)
+        launch(build: "101")
+
+        var built = false
+        manager.register(id: id) { built = true }
+        manager.restoreOnLaunch()
+
+        XCTAssertFalse(built, "the same build relaunching is a quit the person chose")
+    }
+
+    func testAnUpdateRelaunchStillHonorsNever() {
+        let id = newID("updatenever")
+        seedVisibility(true, for: id)
+        UserSettings.shared.set("100", for: UserSettings.lastLaunchedBuild)
+        launch(build: "101")
+        usePolicy(.never)
+
+        var built = false
+        manager.register(id: id) { built = true }
+        manager.restoreOnLaunch()
+
+        XCTAssertFalse(built, "\"Never\" is the reader's own word, update or not")
     }
 
     func testUnclaimedVisibleFlagIsReportedAndCleared() {

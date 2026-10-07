@@ -20,8 +20,20 @@ public enum ReopenOnLaunchPolicy: String, Codable, Sendable, CaseIterable, Equat
     }
 
     public func shouldReopen(systemDefault: Bool) -> Bool {
+        shouldReopen(systemDefault: systemDefault, followingUpdate: false)
+    }
+
+    /// Whether to reopen, knowing whether this launch follows an update.
+    ///
+    /// **An update relaunch reopens unless the reader said `never`.** The
+    /// system's "Close windows when quitting an application" is about a quit
+    /// the person chose; an update quits the app for them and relaunches it,
+    /// and the windows they left open have to come back as they were. The
+    /// macOS default for that preference is to close windows, so following it
+    /// here left every stock Mac with an empty screen after each update.
+    public func shouldReopen(systemDefault: Bool, followingUpdate: Bool) -> Bool {
         switch self {
-        case .useSystem: return systemDefault
+        case .useSystem: return systemDefault || followingUpdate
         case .always: return true
         case .never: return false
         }
