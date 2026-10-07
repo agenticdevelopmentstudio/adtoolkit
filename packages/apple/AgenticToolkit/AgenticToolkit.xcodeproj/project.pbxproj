@@ -1933,6 +1933,7 @@
 		DAA5BA009BF03B8A4371C9F1 /* AgenticToolkitHTDV-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0BC52FC75BA23DC2B808E306 /* AgenticToolkitHTDV-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		DAE9C57B3CDA4C385859B5AE /* ConversationsSessionFilter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14E9941C074D5D20D2E7A3CC /* ConversationsSessionFilter.swift */; };
 		DAF6E662E74F28A7CAD32A3C /* SettingObservingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6EAAB5CEBC2B48955B96B84 /* SettingObservingTests.swift */; };
+		DB033D8B12740107A57BF115 /* BusyOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFFB20ADD87C2F07DB4BE563 /* BusyOverlayView.swift */; };
 		DB4DA3A8B749076403865BC5 /* VSCodeHeuristic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B271658C1E0CC8ADBD4006A /* VSCodeHeuristic.swift */; };
 		DB87082DDAE1B73B2D4087E2 /* SceneLifecycleQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 060D10610AFB448628CF4190 /* SceneLifecycleQueue.swift */; };
 		DB89813ED3649F01B9EEADEF /* BillingUserSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1CF1E34D8D5036F0DF91C0DE /* BillingUserSettings.swift */; };
@@ -5713,6 +5714,7 @@
 		CF79C0E78583A9A3A7A27053 /* MessagingTopicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagingTopicTests.swift; sourceTree = "<group>"; };
 		CFDA74414E7A1ACA14DDFC1C /* ReconcileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReconcileView.swift; sourceTree = "<group>"; };
 		CFE75D40889E80E42212DF7C /* AccessListsTopic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessListsTopic.swift; sourceTree = "<group>"; };
+		CFFB20ADD87C2F07DB4BE563 /* BusyOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BusyOverlayView.swift; sourceTree = "<group>"; };
 		D02F59D9498253AA3C1D74C7 /* DocumentTabsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DocumentTabsViewController.swift; sourceTree = "<group>"; };
 		D0777E11ECD5C558EE45D8C3 /* ApiTokensAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApiTokensAdapter.swift; sourceTree = "<group>"; };
 		D0904313AC1BEE6662DBB5BC /* ProviderPickerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderPickerTests.swift; sourceTree = "<group>"; };
@@ -6980,6 +6982,7 @@
 		1AD1C35610E9564E711A779D /* CoreUI */ = {
 			isa = PBXGroup;
 			children = (
+				CFFB20ADD87C2F07DB4BE563 /* BusyOverlayView.swift */,
 				8684AD747474C610E8FD7F7C /* DismissibleOverlayView.swift */,
 				EC728C24EE0A7B9F820A1401 /* KeyViewLoop.swift */,
 				59BFBF7566BA54AF0F53A382 /* NSImage+Symbol.swift */,
@@ -14843,6 +14846,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DB033D8B12740107A57BF115 /* BusyOverlayView.swift in Sources */,
 				605961B00BDD0246CECAEAF5 /* DismissibleOverlayView.swift in Sources */,
 				8334265E7964481454C2D3A1 /* KeyViewLoop.swift in Sources */,
 				B3FAE918180E89C2890376EC /* NSImage+Symbol.swift in Sources */,

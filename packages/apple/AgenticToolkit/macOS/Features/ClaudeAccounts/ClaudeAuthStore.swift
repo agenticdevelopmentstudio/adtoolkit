@@ -52,6 +52,10 @@ public final class ClaudeAuthStore {
     /// finish in the middle of a switch, and a flag it cleared would report the
     /// switch done while it was still writing.
     private var busyCount = 0
+    /// The account a switch is moving to, from the moment it starts until its
+    /// reload has landed — by which point `identityChanges` has fired and every
+    /// view ordering accounts by who is logged in has redrawn. Nil otherwise.
+    public private(set) var switchingTo: String?
 
     /// Fires whenever any of the above changed. A view subscribes to it with
     /// Combine.
@@ -313,6 +317,13 @@ public final class ClaudeAuthStore {
             lastError = "Another account change is still finishing — try again in a moment."
             changes.send()
             return false
+        }
+        switchingTo = name
+        // `perform` sends `changes` as it starts, which is what tells a view
+        // this switch began; this one tells it the reload has landed.
+        defer {
+            switchingTo = nil
+            changes.send()
         }
         return await perform {
             try await host.holdingCredentialRounds {
