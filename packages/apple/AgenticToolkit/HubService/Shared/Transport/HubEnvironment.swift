@@ -47,6 +47,18 @@ public final class HubEnvironment {
     private let relay = EnvironmentRelay()
     private var refreshInFlight: Task<Bool, Never>?
 
+    /// Direct HTTPS to the backend and nothing else — for an app that is not
+    /// the hub app and never routes through the adh-daemon. Synchronous,
+    /// since there is no transport to resolve.
+    public static func direct(sessionStore: any SessionStore) -> HubEnvironment {
+        let transport = APITransport.direct()
+        return HubEnvironment(
+            sessionStore: sessionStore,
+            transportSource: StaticTransportSource(transport),
+            initialTransport: transport
+        )
+    }
+
     public static func bootstrap(
         sessionStore: any SessionStore,
         transportSource: any HubTransportSource,

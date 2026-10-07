@@ -1,4 +1,5 @@
 import AgenticDeveloperToolkit
+import AgenticDeveloperHubClient
 import AgenticToolkitHubService
 import Foundation
 
@@ -99,5 +100,22 @@ public final class HubAccount: Account {
         state = newState
         message = newMessage
         onChange()
+    }
+}
+
+extension HubAccount {
+    /// The hub account for an app that is not the hub app: a live
+    /// `SessionController` over direct HTTPS (no adh-daemon), its session kept
+    /// in the Keychain, restored straight away so the account leaves
+    /// `.restoring` on its own.
+    public static func live(
+        sessionStore: any SessionStore = KeychainSessionStore(keyPrefix: "adh.api"),
+        configuration: SignInConfiguration = .fromBundle()
+    ) -> HubAccount {
+        let environment = HubEnvironment.direct(sessionStore: sessionStore)
+        let session = SessionController(environment: environment, configuration: configuration)
+        let account = HubAccount(session: session)
+        Task { await session.restore() }
+        return account
     }
 }

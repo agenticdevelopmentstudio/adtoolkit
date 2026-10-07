@@ -20,6 +20,16 @@ final class HubEnvironmentTests: XCTestCase {
         XCTAssertFalse(env.servedFromCache)
     }
 
+    func testDirectTalksToTheBackendAndStaysThere() async {
+        let env = HubEnvironment.direct(sessionStore: InMemorySessionStore())
+        XCTAssertEqual(env.transportKind, .direct)
+        XCTAssertEqual(env.client.transportKind, .direct)
+
+        let changed = await env.refreshTransport()
+        XCTAssertFalse(changed)
+        XCTAssertEqual(env.transportKind, .direct)
+    }
+
     func testRefreshTransportRebuildsClientOnlyWhenKindChanges() async {
         let stub = StubClientTransport()
         let source = SwitchingTransportSource(initial: .daemon(port: 1, transport: stub))
