@@ -24,13 +24,29 @@ public enum ClaudeKeychainLocation: String, CaseIterable, Sendable, Codable {
     case login
     case shared
 
-    /// What the storage popup calls it — and what the details pane calls the
-    /// keychain a saved account actually turned out to be in.
+    /// Where a credential of `kind` is kept. The kind decides, never the user.
+    ///
+    /// - A **login** stays on this Mac. Its refresh token is single-use and every
+    ///   refresh rotates it, so a login has exactly one holder that keeps
+    ///   working. In iCloud Keychain the same login sat on every Mac, and
+    ///   whichever Mac refreshed it first signed the others out ("Login
+    ///   expired"). Each Mac saves its own logins.
+    /// - A **setup token** goes to every Mac. It never rotates, so any number of
+    ///   holders can use it, and sharing it lets a second Mac measure every
+    ///   account without logging in to each.
+    public static func home(of kind: ClaudeCredentialKind) -> ClaudeKeychainLocation {
+        switch kind {
+        case .oauth: return .login
+        case .longLived: return .shared
+        }
+    }
+
+    /// What the account list and the details pane call the keychain a saved
+    /// credential is in.
     ///
     /// Named for the *consequence* rather than for the API: "login keychain"
     /// and "data-protection keychain" are the true names and tell the user
-    /// nothing about the only thing they are choosing between, which is whether
-    /// a credential leaves this Mac.
+    /// nothing about what matters, which is whether a credential leaves this Mac.
     public var title: String {
         switch self {
         case .login: return "This Mac only (login keychain)"
@@ -68,10 +84,10 @@ public enum ClaudeKeychain {
                 ?? "OSStatus \(status)"
             if status == errSecMissingEntitlement, location == .shared {
                 return "iCloud Keychain isn't available to this build of \(ClaudeAccounts.appName). "
-                    + "Storing tokens on all your Macs needs the Keychain Sharing "
+                    + "Sharing setup tokens with your other Macs needs the Keychain Sharing "
                     + "entitlement, which is granted by the provisioning profile the app "
-                    + "was signed with. Switch storage back to this Mac, or rebuild "
-                    + "\(ClaudeAccounts.appName) with a profile from your developer team."
+                    + "was signed with. Rebuild \(ClaudeAccounts.appName) with a profile "
+                    + "from your developer team."
             }
             if status == errSecUserCanceled || status == errSecAuthFailed {
                 return "You didn't allow \(ClaudeAccounts.appName) to use the keychain, so \(operation) "

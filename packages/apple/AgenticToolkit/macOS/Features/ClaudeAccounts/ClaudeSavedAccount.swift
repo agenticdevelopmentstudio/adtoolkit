@@ -1,15 +1,15 @@
 import AgenticToolkitCore
 import Foundation
+import os
 import Security
 
 /// One credential the app has saved, as it is stored in the Keychain.
 ///
 /// One keychain item per credential, named `"<kind>:<account>"`, holding this as
 /// JSON. One-per-item rather than one big store item is what lets the two
-/// locations hold different sets without merging logic: an account that exists
-/// only in iCloud Keychain is simply an item this Mac hasn't got a local copy
-/// of, and a second Mac picks it up without either side ever writing the other's
-/// item.
+/// locations hold different sets without merging logic: a setup token in iCloud
+/// Keychain is simply an item a second Mac picks up, without either side ever
+/// writing the other's item, while each Mac's logins stay its own.
 ///
 /// A record holds **exactly one** credential, the one its `kind` names. An email
 /// with both a login and a setup token is two records, listed separately,
@@ -122,10 +122,11 @@ public struct ClaudeSavedAccount: Codable, Sendable, Equatable {
 
 /// The app's own credential store, kept in the Keychain.
 ///
-/// Reads **span both locations** and writes go to the one the user chose. That
-/// asymmetry is the point: flipping the storage setting must never make saved
-/// accounts disappear from the list, so every read is a union and every record
-/// remembers where it actually lives.
+/// **Where a credential lives is decided by its kind** (`ClaudeKeychainLocation
+/// .home(of:)`): logins in this Mac's login keychain, setup tokens in iCloud
+/// Keychain. Reads span both, because records saved before that rule may still
+/// be in the other one; `all()` moves them, and every record remembers where it
+/// actually lives.
 public enum ClaudeAccountKeychainStore {
 
     /// One saved credential, which keychain it came out of, and the item it was
@@ -156,13 +157,15 @@ public enum ClaudeAccountKeychainStore {
     /// would hide the local accounts too.
     ///
     /// Legacy bare-name items are migrated here, as a side effect of reading
-    /// them. That is deliberate: with one migration site, every other verb in
-    /// this store deals only with kind-keyed items, instead of each one growing
-    /// a legacy branch of its own.
+    /// them, and so are records in the wrong keychain for their kind
+    /// (`Placement`). That is deliberate: with one migration site, every other
+    /// verb in this store deals only with kind-keyed items in their kind's
+    /// keychain, instead of each one growing a legacy branch of its own.
     public static func all() async throws -> [Located] {
         var found: [Located] = []
         var legacy: [LegacyItem] = []
         var firstFailure: Error?
+        var sharedReachable = true
         for location in ClaudeKeychainLocation.allCases {
             do {
                 let rows = try await ClaudeKeychain.readAll(
@@ -180,16 +183,113 @@ public enum ClaudeAccountKeychainStore {
                 }
             } catch let error as ClaudeKeychain.KeychainError
                         where error.status == errSecMissingEntitlement {
+                if location == .shared { sharedReachable = false }
                 continue
             } catch {
+                if location == .shared { sharedReachable = false }
                 if firstFailure == nil { firstFailure = error }
             }
         }
         found += await migrate(legacy, alreadyStored: Set(found.map(\.account.itemKey)))
         if found.isEmpty, let firstFailure { throw firstFailure }
-        return found.sorted {
+        let placement = Placement(of: found, sharedReachable: sharedReachable) {
+            ClaudeLoginIdentity.current()
+        }
+        return await settle(placement).sorted {
             ($0.account.name, $0.account.kind.title) < ($1.account.name, $1.account.kind.title)
         }
+    }
+
+    /// What `all()` makes of the records it read: which to list as they are,
+    /// which to move to their kind's keychain first, and which to retire.
+    ///
+    /// Logins in iCloud Keychain are what this rule exists to end, and they are
+    /// handled with care: one of them may be another Mac's live login, so it is
+    /// never listed here (this Mac would refresh it, signing the other out) and
+    /// never deleted (that would take the other Mac's saved copy). The one
+    /// exception is a login this Mac is itself logged in as, with no saved copy
+    /// of its own yet: that is this Mac's to claim, and it moves here.
+    struct Placement {
+        /// Already in their kind's keychain, or with nowhere better to go.
+        var settled: [Located] = []
+        /// To be written to their kind's keychain and deleted from this one.
+        var moving: [Located] = []
+        /// Local twins of setup tokens already in iCloud Keychain, to delete.
+        var redundant: [Located] = []
+
+        /// `liveIdentity` is asked only when iCloud Keychain holds a login:
+        /// `~/.claude.json` is most of a megabyte, and a listing with nothing to
+        /// claim has no reason to parse it.
+        init(
+            of found: [Located], sharedReachable: Bool,
+            liveIdentity: () -> ClaudeLoginIdentity
+        ) {
+            let sharedLogins = found.filter { $0.location == .shared && $0.account.kind == .oauth }
+            var claimed: String?
+            if !sharedLogins.isEmpty {
+                let live = liveIdentity()
+                let savedHere = found.contains {
+                    $0.location == .login && $0.account.isLogin(of: live)
+                }
+                if !savedHere {
+                    claimed = ClaudeAccountKeychainStore.savedLogin(for: live, in: sharedLogins)?.itemKey
+                }
+            }
+            for record in found {
+                // A legacy item still addressed by its bare name may hold two
+                // records, and deleting it to move one would lose the other.
+                guard record.itemKey == record.account.itemKey else {
+                    settled.append(record)
+                    continue
+                }
+                switch (record.account.kind, record.location) {
+                case (.oauth, .login), (.longLived, .shared):
+                    settled.append(record)
+                case (.oauth, .shared):
+                    if record.itemKey == claimed { moving.append(record) }
+                case (.longLived, .login):
+                    let twinShared = found.contains {
+                        $0.location == .shared && $0.itemKey == record.itemKey
+                    }
+                    if !sharedReachable {
+                        settled.append(record)
+                    } else if twinShared {
+                        redundant.append(record)
+                    } else {
+                        moving.append(record)
+                    }
+                }
+            }
+        }
+    }
+
+    /// Carries out `placement` and returns what to list. Best-effort, like the
+    /// legacy migration: a record whose move fails is listed from where it is,
+    /// and the next read tries again.
+    private static func settle(_ placement: Placement) async -> [Located] {
+        var listed = placement.settled
+        for record in placement.moving {
+            let home = ClaudeKeychainLocation.home(of: record.account.kind)
+            do {
+                try await write(record.account, to: home)
+                try? await ClaudeKeychain.delete(
+                    service: ClaudeKeychain.savedAccountsService, account: record.itemKey,
+                    location: record.location)
+                listed.append(Located(account: record.account, location: home, itemKey: record.itemKey))
+            } catch {
+                logger.error("""
+                    accounts: couldn't move \(record.itemKey, privacy: .public) to \
+                    \(home.rawValue, privacy: .public): \(error.localizedDescription, privacy: .public)
+                    """)
+                listed.append(record)
+            }
+        }
+        for twin in placement.redundant {
+            try? await ClaudeKeychain.delete(
+                service: ClaudeKeychain.savedAccountsService, account: twin.itemKey,
+                location: twin.location)
+        }
+        return listed
     }
 
     /// Rewrites legacy bare-name items as one item per credential kind, then
@@ -229,19 +329,34 @@ public enum ClaudeAccountKeychainStore {
         return migrated
     }
 
-    /// Stores `account` in `location`, replacing the record of that name *and
-    /// kind* there — the other kind under the same name is untouched.
+    /// Stores `account` in its kind's keychain (`ClaudeKeychainLocation
+    /// .home(of:)`), replacing the record of that name *and kind* there — the
+    /// other kind under the same name is untouched — and returns where it went.
     ///
-    /// A record that already exists in the *other* location is moved, not
-    /// duplicated: two items under one key in two keychains is a record that
-    /// disagrees with itself, and the panel would draw the row twice.
-    public static func save(_ account: ClaudeSavedAccount, to location: ClaudeKeychainLocation) async throws {
-        try await write(account, to: location)
-        for other in ClaudeKeychainLocation.allCases where other != location {
+    /// A setup token's copy on this Mac is deleted once it is in iCloud
+    /// Keychain, so the list never draws it twice. A login's copy in iCloud
+    /// Keychain is NOT deleted: it may be another Mac's saved login, and the
+    /// listing already leaves it out (`Placement`).
+    ///
+    /// A build without the Keychain Sharing entitlement can't reach iCloud
+    /// Keychain at all, and a setup token kept on this Mac still works here, so
+    /// that is where it goes.
+    @discardableResult
+    public static func save(_ account: ClaudeSavedAccount) async throws -> ClaudeKeychainLocation {
+        let home = ClaudeKeychainLocation.home(of: account.kind)
+        do {
+            try await write(account, to: home)
+        } catch let error as ClaudeKeychain.KeychainError
+                    where error.status == errSecMissingEntitlement && home == .shared {
+            try await write(account, to: .login)
+            return .login
+        }
+        if home == .shared {
             try? await ClaudeKeychain.delete(
                 service: ClaudeKeychain.savedAccountsService, account: account.itemKey,
-                location: other)
+                location: .login)
         }
+        return home
     }
 
     /// The one place a record becomes keychain bytes, shared by `save` and the
@@ -256,8 +371,8 @@ public enum ClaudeAccountKeychainStore {
     }
 
     /// Removes one credential from wherever it is. Both locations are asked, so
-    /// a delete cannot leave a copy behind in the one the setting isn't pointing
-    /// at.
+    /// a delete cannot leave behind a copy saved before credentials were kept
+    /// by kind — which the next read would otherwise move back into the list.
     ///
     /// Takes the item key, not a name: a name is two possible records, and
     /// deleting the login when the user selected the setup token is exactly the
@@ -324,8 +439,10 @@ public enum ClaudeAccountKeychainStore {
         case same
         /// The live pair is the newer one: the saved copy gets it.
         case liveNewer
-        /// The saved copy is newer — another Mac sharing it through iCloud
-        /// Keychain refreshed it, which voided the pair Claude Code holds here.
+        /// The saved copy is newer — it was refreshed apart from Claude Code
+        /// (a login claimed from iCloud Keychain, saved there by a build that
+        /// still shared logins, may have been), which voided the pair Claude
+        /// Code holds here.
         case savedNewer
         /// The live pair's refresh token is another saved record's. The identity
         /// in `~/.claude.json` and the credential in Claude Code's item disagree,
@@ -368,11 +485,10 @@ public enum ClaudeAccountKeychainStore {
     /// answers "login expired". This keeps the saved copy on the live one's
     /// current pair.
     ///
-    /// The newer pair wins, in whichever direction that is. A record in iCloud
-    /// Keychain is shared with every Mac signed into the account, and another Mac
-    /// refreshing it voids the pair Claude Code holds here; copying that dead pair
-    /// over the good one would leave the account dead everywhere, so instead the
-    /// newer saved pair is installed into Claude Code's item.
+    /// The newer pair wins, in whichever direction that is. A saved copy
+    /// refreshed apart from Claude Code voided the pair Claude Code holds here;
+    /// copying that dead pair over the good one would leave the account dead, so
+    /// instead the newer saved pair is installed into Claude Code's item.
     ///
     /// Only an EXISTING record is updated. Whether an account is saved at all is
     /// autosave's decision (or the user's), not a side effect of reading it.
@@ -408,8 +524,8 @@ public enum ClaudeAccountKeychainStore {
     ) async throws -> Located {
         var account = saved.account
         account.oauth = oauth
-        try await save(account, to: saved.location)
-        return Located(account: account, location: saved.location, itemKey: saved.itemKey)
+        let location = try await save(account)
+        return Located(account: account, location: location, itemKey: account.itemKey)
     }
 
     /// Makes `oauth` the login Claude Code uses and `accountBlock` the account
@@ -459,6 +575,10 @@ public enum ClaudeAccountKeychainStore {
             throw error
         }
     }
+}
+
+extension ClaudeAccountKeychainStore: Loggable {
+    public static let logger = makeLogger()
 }
 
 extension ClaudeSavedAccount {

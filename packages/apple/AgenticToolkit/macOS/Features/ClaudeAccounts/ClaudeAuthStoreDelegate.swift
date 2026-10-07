@@ -6,9 +6,6 @@ import Foundation
 @MainActor
 public protocol ClaudeAuthStoreDelegate: AnyObject {
 
-    /// Where the next save goes.
-    var saveLocation: ClaudeKeychainLocation { get }
-
     /// Whether a new machine-wide login is saved without asking.
     var autoSavesLogins: Bool { get }
 

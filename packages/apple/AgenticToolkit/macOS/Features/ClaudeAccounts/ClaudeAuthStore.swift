@@ -23,7 +23,7 @@ import os
 /// gear popover all draw the same list, and all three would otherwise each run
 /// their own `list --json`.
 ///
-/// What is the host app's to decide — where saves go, whether logins autosave,
+/// What is the host app's to decide — whether logins autosave,
 /// holding background rounds during a switch, and renewing the target login —
 /// it asks of the `ClaudeAuthStoreDelegate` handed to `start(delegate:)`.
 @MainActor
@@ -31,7 +31,7 @@ public final class ClaudeAuthStore {
 
     public static let shared = ClaudeAuthStore()
 
-    /// Every saved account, from both keychains, plus who is logged in.
+    /// Every saved account, plus who is logged in.
     public private(set) var listing: ClaudeAccountListing = .empty
     /// Whether `listing` has been read at all. Before the first reload lands it
     /// is `.empty` because nothing has looked, not because there is nothing —
@@ -52,12 +52,6 @@ public final class ClaudeAuthStore {
     /// finish in the middle of a switch, and a flag it cleared would report the
     /// switch done while it was still writing.
     private var busyCount = 0
-
-    /// Where the next save goes. Reads always span both keychains, so this
-    /// governs new writes and nothing the user can already see.
-    public var location: ClaudeKeychainLocation {
-        host.saveLocation
-    }
 
     /// Fires whenever any of the above changed. A view subscribes to it with
     /// Combine.
@@ -237,7 +231,7 @@ public final class ClaudeAuthStore {
     @discardableResult
     public func saveLongLivedToken(name: String, token: String) async -> Bool {
         let current = identity
-        return await perform { [location] in
+        return await perform {
             var account = try await ClaudeAccountKeychainStore
                 .find(name: name, kind: .longLived)?.account
                 ?? ClaudeSavedAccount(name: name, kind: .longLived)
@@ -246,7 +240,7 @@ public final class ClaudeAuthStore {
                 account.identity = current.email
                 account.accountUUID = current.uuid
             }
-            try await ClaudeAccountKeychainStore.save(account, to: location)
+            try await ClaudeAccountKeychainStore.save(account)
         }
     }
 
@@ -262,7 +256,7 @@ public final class ClaudeAuthStore {
     public func saveCurrentLogin(silentIfAlreadySaved: Bool) async -> Bool {
         if silentIfAlreadySaved && listing.currentLoginIsSaved { return true }
         let current = identity
-        return await perform { [location] in
+        return await perform {
             guard let oauth = try await ClaudeAccountKeychainStore.currentLogin() else {
                 throw ClaudeCredentialBlobError.noLogin
             }
@@ -274,29 +268,7 @@ public final class ClaudeAuthStore {
             account.identity = current.email
             account.accountUUID = current.uuid
             account.configAccount = ClaudeLoginIdentity.currentAccountBlock()
-            try await ClaudeAccountKeychainStore.save(account, to: location)
-        }
-    }
-
-    /// Moves a saved account into the other keychain.
-    ///
-    /// One `save`, not a hand-rolled read/write/delete: `save(_:to:)` already
-    /// writes the account to the location asked for and then drops it from the
-    /// other, in that order — so a move that fails halfway leaves the credential
-    /// where it was rather than nowhere. Doing it here a second way would be a
-    /// second answer to "how does an account change keychains".
-    ///
-    /// The account is re-read rather than rebuilt from the record the table
-    /// drew: a `ClaudeAccountRecord` is a display view that carries no secret,
-    /// and writing one back would move an account by emptying it.
-    @discardableResult
-    public func move(_ record: ClaudeAccountRecord, to location: ClaudeKeychainLocation) async -> Bool {
-        guard record.location != location else { return true }
-        return await perform {
-            guard let located = try await ClaudeAccountKeychainStore
-                .find(itemKey: record.itemKey)
-            else { throw ClaudeAuthStoreError.noSavedAccount(record.name) }
-            try await ClaudeAccountKeychainStore.save(located.account, to: location)
+            try await ClaudeAccountKeychainStore.save(account)
         }
     }
 
@@ -404,7 +376,7 @@ public final class ClaudeAuthStore {
             var account = target.account
             account.oauth = fresh
             do {
-                try await ClaudeAccountKeychainStore.save(account, to: target.location)
+                try await ClaudeAccountKeychainStore.save(account)
             } catch {
                 Self.logger.error("""
                     accounts: renewed \(name, privacy: .public) but couldn't store it \
@@ -503,7 +475,6 @@ public final class ClaudeAuthStore {
 public enum ClaudeAuthStoreError: Error, LocalizedError {
 
     case noSavedLogin(String)
-    case noSavedAccount(String)
     case savedLoginSpent(String)
     case noSavedProfile(String)
     case renewalUncertain(String, String)
@@ -524,9 +495,6 @@ public enum ClaudeAuthStoreError: Error, LocalizedError {
         case .noSavedLogin(let name):
             return "“\(name)” has no saved login to switch to — only a long-lived "
                 + "token, which bills against the account but can't sign this Mac in as it."
-        case .noSavedAccount(let name):
-            return "“\(name)” isn't in either keychain any more, so there was nothing to "
-                + "move. It may have been deleted on this Mac or on another one."
         }
     }
 }

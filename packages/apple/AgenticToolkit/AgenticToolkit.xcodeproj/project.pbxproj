@@ -147,6 +147,7 @@
 		03270D9D1D7118B2F91BB934 /* EcosystemsModuleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B47643A0690AC7AD7B95641A /* EcosystemsModuleTests.swift */; };
 		0344C60D9C7EBB60BAEADBE1 /* UnassignedPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F63548A0FB8EED4E7A662BE4 /* UnassignedPanel.swift */; };
 		0355F7084A3A11AD8A8EC9B3 /* ClaudeCLIFindBinaryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFBE2DC017DD3FFE87038A1D /* ClaudeCLIFindBinaryTests.swift */; };
+		0359A7B30B0428D75BA494FA /* ClaudeCredentialPlacementTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1D88D7BB9227E357469D096 /* ClaudeCredentialPlacementTests.swift */; };
 		036CB8BC6BCC6B6731434931 /* ContextEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E4C8B1DE216BAFBB990D042 /* ContextEventTests.swift */; };
 		039C20AEAD7CDF8B09D0D484 /* CapturePermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = 990C30C3DAFBC4CB96C4C2CB /* CapturePermission.swift */; };
 		03A177D1AEA9E833D633894E /* ActivitySpanDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D56DB175F5F02CCD812AD0E /* ActivitySpanDTO.swift */; };
@@ -5616,6 +5617,7 @@
 		C17CD5378F08D914FF09EF18 /* BillingProjectCutoffTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BillingProjectCutoffTests.swift; sourceTree = "<group>"; };
 		C18DCBEAB2F005EEAB1BEFB2 /* ExtensionIdentityComponent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionIdentityComponent.swift; sourceTree = "<group>"; };
 		C1AF85868198DDB4610027CC /* LanguageServerDocumentSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageServerDocumentSync.swift; sourceTree = "<group>"; };
+		C1D88D7BB9227E357469D096 /* ClaudeCredentialPlacementTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeCredentialPlacementTests.swift; sourceTree = "<group>"; };
 		C2013C6FE153DD7C70B1BBF2 /* LSPEditorAnnotationCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LSPEditorAnnotationCoordinator.swift; sourceTree = "<group>"; };
 		C25BE90843F62FAFEDDD260F /* UnassignedPanelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnassignedPanelTests.swift; sourceTree = "<group>"; };
 		C2693599D1571C6D1955B4DA /* PermissionMetadataTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionMetadataTests.swift; sourceTree = "<group>"; };
@@ -7158,6 +7160,7 @@
 			children = (
 				7D1E76A8EF785849B123884B /* ClaudeAuthCLITests.swift */,
 				5639C98C5B6F6F748CC17BE8 /* ClaudeCodeKeychainItemTests.swift */,
+				C1D88D7BB9227E357469D096 /* ClaudeCredentialPlacementTests.swift */,
 				3068F74F58A984D50E1BC993 /* ClaudeLiveLoginRecordTests.swift */,
 			);
 			path = ClaudeAccounts;
@@ -14451,6 +14454,7 @@
 				09F33AD6CD9C35E244AD1B8F /* ChatViewScrollTests.swift in Sources */,
 				A8DF7540923378D245BAE5FC /* ClaudeAuthCLITests.swift in Sources */,
 				1145DD05E0EF715958F60EC2 /* ClaudeCodeKeychainItemTests.swift in Sources */,
+				0359A7B30B0428D75BA494FA /* ClaudeCredentialPlacementTests.swift in Sources */,
 				D4A185F53AE147779E74F4F9 /* ClaudeLiveLoginRecordTests.swift in Sources */,
 				2E97781C1E1A76C1B5C1F990 /* ClientsWindowControllerTests.swift in Sources */,
 				63B7B63B831EC39F3594DA6C /* CommandPaletteCoordinatorTests.swift in Sources */,
