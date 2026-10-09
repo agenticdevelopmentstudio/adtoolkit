@@ -158,17 +158,61 @@ public final class WindowManager {
     /// when an LSUIElement app is re-frontmost.
     ///
     /// The first call after an update — a build other than the one that last
-    /// called this — reopens the saved windows unless the policy is `never`,
-    /// whichever build quit and whatever the system's close-on-quit preference
-    /// says. The build is recorded on every call, so a later call in the same
-    /// process (a reactivation) is back to following the policy alone.
+    /// called this from the same copy of the app on disk — reopens the saved
+    /// windows unless the policy is `never`, whichever build quit and whatever
+    /// the system's close-on-quit preference says. The one exception is a quit
+    /// the person chose that the updater used to install
+    /// (`noteUpdateWillInstallOnQuit()`): that follows the policy, like any
+    /// other quit. The build is recorded on every call, so a later call in the
+    /// same process (a reactivation) is back to following the policy alone.
+    ///
+    /// A launch that follows the policy into NOT reopening forgets the windows
+    /// it left shut, so "saved as visible" keeps meaning "open at the last
+    /// quit": a window closed by the system preference sessions ago must not
+    /// come back with the next update. `never` keeps them, as it keeps
+    /// everything.
     public func restoreOnLaunch() {
         let policy = UserSettings.reopenOnLaunchPolicy.currentValue
         if policy.shouldReopen(systemDefault: systemKeepsWindows(),
                                followingUpdate: noteLaunchedBuild()) {
             restoreSavedVisibleWindows()
+        } else if !hasRestoredThisProcess, policy != .never {
+            forgetWindowsLeftShut()
         }
+        hasRestoredThisProcess = true
         reopenRecentsOnLaunch()
+    }
+
+    /// Whether `restoreOnLaunch()` already ran in this process: only the
+    /// launch's own call may forget windows, never a reactivation's, when a
+    /// window can be saved as visible while hidden.
+    var hasRestoredThisProcess = false
+
+    /// The updater installs a downloaded update when the app next quits. That
+    /// quit is the person's own, so the launch after it follows the reopen
+    /// policy rather than counting as an update relaunch. Call it from
+    /// Sparkle's `updater(_:willInstallUpdateOnQuit:immediateInstallationBlock:)`.
+    public func noteUpdateWillInstallOnQuit() {
+        setInstallsOnQuit(true)
+    }
+
+    /// The updater is quitting the app to install and relaunch it: the launch
+    /// after it reopens the windows, even if an install-on-quit was scheduled
+    /// first. Call it from Sparkle's `updaterWillRelaunchApplication(_:)`.
+    public func noteUpdateWillRelaunch() {
+        setInstallsOnQuit(false)
+    }
+
+    private func setInstallsOnQuit(_ installs: Bool) {
+        var copies = UserSettings.updateInstallsOnQuit.currentValue
+        copies[WindowStateNamespace.current] = installs ? true : nil
+        UserSettings.shared.set(copies, for: UserSettings.updateInstallsOnQuit)
+    }
+
+    private func forgetWindowsLeftShut() {
+        for id in frames.visibleWindowIDs() where registry.controller(forID: id)?.window?.isVisible != true {
+            frames.clearVisibility(for: id)
+        }
     }
 
     /// The running build, compared against the one that last restored. A seam
@@ -181,14 +225,24 @@ public final class WindowManager {
     /// is the machine's global setting.
     var systemKeepsWindows: () -> Bool = { ReopenOnLaunchPolicy.systemDefault }
 
-    /// Records the running build and answers whether it differs from the one
-    /// recorded before — i.e. whether this launch follows an update.
+    /// Records the running build for this copy of the app
+    /// (`WindowStateNamespace.current`) and answers whether this launch follows
+    /// an update relaunch: the build differs from the one this copy recorded
+    /// before, and the quit was not one the updater merely installed on.
+    ///
+    /// Keyed per copy because a worktree's debug build and the installed app
+    /// share one bundle identifier, and so one preferences domain: with a
+    /// single shared value each would make the other look like an update.
     private func noteLaunchedBuild() -> Bool {
         let build = currentBuild()
-        let last = UserSettings.lastLaunchedBuild.currentValue
-        guard build != last else { return false }
-        UserSettings.shared.set(build, for: UserSettings.lastLaunchedBuild)
-        return true
+        let copy = WindowStateNamespace.current
+        var builds = UserSettings.lastLaunchedBuilds.currentValue
+        guard builds[copy] != build else { return false }
+        builds[copy] = build
+        UserSettings.shared.set(builds, for: UserSettings.lastLaunchedBuilds)
+        let installedOnQuit = UserSettings.updateInstallsOnQuit.currentValue[copy] == true
+        if installedOnQuit { setInstallsOnQuit(false) }
+        return !installedOnQuit
     }
 
     private func restoreSavedVisibleWindows() {

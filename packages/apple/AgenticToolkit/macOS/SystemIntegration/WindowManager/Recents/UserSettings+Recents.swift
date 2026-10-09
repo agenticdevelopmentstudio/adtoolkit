@@ -14,11 +14,19 @@ extension UserSettings {
         default: .useSystem
     )
 
-    /// The build (`CFBundleVersion`) that last ran `WindowManager.restoreOnLaunch()`.
+    /// The build (`CFBundleVersion`) that last ran `WindowManager.restoreOnLaunch()`,
+    /// per copy of the app on disk (keyed by `WindowStateNamespace.current`).
     /// A launch whose build differs follows an update, and restores the windows
     /// left open whatever the system's close-on-quit preference says (see
     /// `ReopenOnLaunchPolicy.shouldReopen(systemDefault:followingUpdate:)`).
-    /// Empty until the first launch that records it — which counts as following
-    /// an update, so a build that predates this setting is covered too.
-    public static let lastLaunchedBuild = UserSetting<String>("lastLaunchedBuild", default: "")
+    /// Absent until a copy's first launch records it — which counts as
+    /// following an update, so a build that predates this setting is covered too.
+    public static let lastLaunchedBuilds = UserSetting<[String: String]>("lastLaunchedBuilds", default: [:])
+
+    /// The copies of the app (keyed by `WindowStateNamespace.current`) whose
+    /// updater will install a downloaded update when the person next quits —
+    /// a quit of their own, so the launch after it is not an update relaunch.
+    /// Set by `WindowManager.noteUpdateWillInstallOnQuit()`, cleared by
+    /// `noteUpdateWillRelaunch()` and by the launch that reads it.
+    public static let updateInstallsOnQuit = UserSetting<[String: Bool]>("updateInstallsOnQuit", default: [:])
 }
