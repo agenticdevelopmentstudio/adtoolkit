@@ -21,6 +21,15 @@ public final class AppUpdater {
 
     public func checkForUpdates() { controller.checkForUpdates(nil) }
     public var canCheckForUpdates: Bool { controller.updater.canCheckForUpdates }
+
+    /// Whether a found update is downloaded and installed without asking
+    /// (Sparkle's `automaticallyDownloadsUpdates`). Info.plist's
+    /// `SUAutomaticallyUpdate` is only the default; the person's choice is
+    /// saved by Sparkle and wins over it.
+    public var installsUpdatesAutomatically: Bool {
+        get { controller.updater.automaticallyDownloadsUpdates }
+        set { controller.updater.automaticallyDownloadsUpdates = newValue }
+    }
 }
 
 /// Refuses Sparkle's background work when the channel doesn't allow it.
