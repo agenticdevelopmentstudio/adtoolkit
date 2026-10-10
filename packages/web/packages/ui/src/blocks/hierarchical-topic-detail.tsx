@@ -51,6 +51,7 @@ import {
   useSelectedTopicLabel,
   type DetailStripTitle,
 } from "./detail-title"
+import { GUARDED_NAV_ATTR } from "../lib/navigation-guard"
 import { DETAIL_PANE_ATTR } from "../lib/detail-pane"
 import { deepestSelectedLevel, pinAll, pinKeyFor } from "./stack-frontier"
 import { DetailHeaderProvider, DetailHeaderRow } from "./detail-header"
@@ -339,8 +340,11 @@ function TopBar({
                       // everywhere a link does (new tab, long-press, copy). A plain click is still
                       // the stack's: it runs `onClear` through the unsaved-work guard rather than
                       // loading the page again.
+                      // GUARDED_NAV_ATTR: onClear asks the exit guard itself, so a host's document-level
+                      // UnsavedChangesGuard must not intercept the same click and prompt a second time.
                       <a
                         href={c.href}
+                        {...GUARDED_NAV_PROPS}
                         onClick={(e) => {
                           if (isModifiedClick(e)) return
                           e.preventDefault()
@@ -366,6 +370,8 @@ function TopBar({
     </>
   )
 }
+
+const GUARDED_NAV_PROPS = { [GUARDED_NAV_ATTR]: "" }
 
 const CRUMB_LINK =
   "truncate rounded font-mono text-xs tracking-[0.02em] text-apt-text-muted outline-none hover:text-apt-text focus-visible:ring-2 focus-visible:ring-apt-gold/40"

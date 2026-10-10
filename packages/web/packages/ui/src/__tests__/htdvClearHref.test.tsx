@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { HierarchicalTopicDetail, type TopicLevel } from "../blocks/hierarchical-topic-detail";
 import { resetSeededBackStackForTests } from "../hooks/useSeededBackStack";
+import { GUARDED_NAV_ATTR } from "../lib/navigation-guard";
 
 // `clearHref`: a routed host says where each level clears to, and the stack turns that into
 // breadcrumbs that are links, a browser Back that walks up the stack after a deep link, and a
@@ -60,6 +61,14 @@ describe("HierarchicalTopicDetail clearHref breadcrumbs", () => {
     expect(within(nav).getByRole("link", { name: "Acme" })).toHaveAttribute("href", "/planning/acme");
     // The current crumb is where you are, not a link.
     expect(within(nav).queryByRole("link", { name: "Rockets" })).toBeNull();
+  });
+
+  it("marks its crumb links as guarded, since their click handler asks the exit guard itself", () => {
+    renderAt(["acme", "rockets"]);
+    const nav = screen.getByLabelText("Breadcrumb");
+    for (const name of ["Planning", "Acme"]) {
+      expect(within(nav).getByRole("link", { name })).toHaveAttribute(GUARDED_NAV_ATTR);
+    }
   });
 
   it("clears in place on a plain click and leaves a modified click to the browser", () => {
