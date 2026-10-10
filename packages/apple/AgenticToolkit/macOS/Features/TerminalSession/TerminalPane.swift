@@ -5,6 +5,9 @@ extension ComposableTabsViewID {
     /// A pane holding one live shell. The raw value is what persisted
     /// `layout_nodes` rows already name, so it must not change.
     public static let terminal = ComposableTabsViewID("terminal")
+    /// A chat pane that types into the terminal beside it — see
+    /// `TerminalChatViewController`.
+    public static let terminalChat = ComposableTabsViewID("terminal-chat")
 }
 
 extension ComposableTabsViewRegistry {
@@ -36,16 +39,35 @@ extension ComposableTabsViewRegistry {
             return TerminalSessionContentViewController(sessionManager: manager)
         }
     }
+
+    /// Registers the terminal chat pane: a chat whose messages are typed into
+    /// the tab's terminal and whose replies are what that terminal prints,
+    /// passed through the pane's substitutions each way.
+    @MainActor
+    public func registerTerminalChat() {
+        register(
+            .terminalChat,
+            descriptor: .init(
+                displayName: "Chat",
+                symbolName: "bubble.left.and.text.bubble.right",
+                preferredAxis: .horizontal,
+                minimumThickness: 260
+            )
+        ) { context in
+            TerminalChatViewController(stateStore: context.makeStateStore(prefix: "terminalChat"))
+        }
+    }
 }
 
 extension ComposableTabsLayout {
 
-    /// A layout with terminals and nothing else: one to start, as many more as
-    /// the user splits off.
+    /// A layout of terminals: one to start, as many more as the user splits
+    /// off, and chat panes that talk to them.
     @MainActor
     public static func terminalOnly() throws -> ComposableTabsLayout {
         let registry = ComposableTabsViewRegistry()
         registry.registerTerminal(preferredAxis: .horizontal)
+        registry.registerTerminalChat()
         return try ComposableTabsLayout(
             registry: registry,
             spec: .split(
@@ -53,6 +75,7 @@ extension ComposableTabsLayout {
                 children: [.pane(.terminal)],
                 allows: [
                     .unbounded(.terminal, preferredAxis: .horizontal),
+                    .unbounded(.terminalChat),
                     .unbounded(.placeholder)
                 ]
             )

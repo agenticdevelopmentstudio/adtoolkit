@@ -58,6 +58,15 @@ final class ThemedTerminalView: LocalProcessTerminalView {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError() }
 
+    /// Called after each chunk of output from the shell has been drawn into the
+    /// buffer — on the main queue, which is where `LocalProcess` delivers it.
+    var onDataReceived: (() -> Void)?
+
+    override func dataReceived(slice: ArraySlice<UInt8>) {
+        super.dataReceived(slice: slice)
+        onDataReceived?()
+    }
+
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         // Until it is in a window there is no pane to be active in, so this is

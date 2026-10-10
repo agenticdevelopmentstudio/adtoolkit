@@ -71,9 +71,41 @@ public final class TerminalSession: ObservableObject, Identifiable {
         return result.joined(separator: "\n")
     }
 
+    /// Fires each time the shell's output has been drawn into the buffer —
+    /// many times a second while a command prints. Carries nothing: what was
+    /// printed is read from the rendered screen (`screenSnapshot()`), where
+    /// escape sequences and cursor moves have already been applied.
+    public let outputActivity = PassthroughSubject<Void, Never>()
+
+    /// Sends `text` to the shell exactly as if it had been typed.
+    public func sendInput(_ text: String) {
+        terminalView.send(txt: text)
+    }
+
+    /// The terminal's rendered lines and cursor, rows numbered so the same
+    /// line keeps its number as output scrolls older lines away.
+    public func screenSnapshot() -> TerminalScreenSnapshot {
+        let terminal = terminalView.getTerminal()
+        let text = String(bytes: terminal.getBufferAsData(), encoding: .utf8) ?? ""
+        // Every line is written followed by a newline, so the split ends on an
+        // empty string that is not a row.
+        var lines = text.components(separatedBy: "\n")
+        if lines.last == "" { lines.removeLast() }
+        // The screen is the last `rows` lines; the cursor is counted from its top.
+        let screenTop = max(0, lines.count - terminal.getDims().rows)
+        let firstRow = terminal.buffer.totalLinesTrimmed
+        return TerminalScreenSnapshot(
+            lines: lines,
+            firstRow: firstRow,
+            cursorRow: firstRow + screenTop + terminal.buffer.y,
+            isAlternateScreen: terminal.isCurrentBufferAlternate
+        )
+    }
+
     public private(set) lazy var terminalView: LocalProcessTerminalView = {
         let view = ThemedTerminalView(frame: CGRect(x: 0, y: 0, width: 800, height: 600))
         view.processDelegate = processHandler
+        view.onDataReceived = { [weak self] in self?.outputActivity.send() }
         startShellProcess(in: view)
         return view
     }()
