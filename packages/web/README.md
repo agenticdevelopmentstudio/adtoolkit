@@ -63,7 +63,11 @@ need `transpilePackages` in Next.js.
 
 ## Consumer integration
 
-Two patterns, both Next.js 15 + React 19 + TypeScript + Tailwind v4:
+**Requirements:** React 19, TypeScript, Tailwind v4, and a bundler that
+compiles the package source — Next.js or Vite. Next.js is **not** required;
+see [`docs/web/consuming-as-submodule.md`](../../docs/web/consuming-as-submodule.md#requirements-web-packages).
+
+Two patterns (shown for Next.js; Vite wiring is in the submodule doc):
 
 - **Submodule + pnpm workspace federation** — preferred, used by Mike's own
   consumer repos. This repo is checked out as a submodule; the consumer

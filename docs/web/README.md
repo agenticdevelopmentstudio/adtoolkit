@@ -5,6 +5,9 @@
 - [`adoption.md`](adoption.md) — should you adopt the toolkit? Decision
   criteria, the orphan-`node`-process trap that the monorepo conversion
   was meant to defuse, and how to validate the fix.
+- [`consuming-as-submodule.md`](consuming-as-submodule.md) — package
+  requirements (React 19; Next.js or Vite) and submodule wiring for both
+  bundlers.
 - [`next-js-consumer.md`](next-js-consumer.md) — wiring guide for new
   consumers (both submodule + workspace and published-package patterns).
 - [`migrate-consumer.md`](migrate-consumer.md) — 8-step checklist for

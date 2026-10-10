@@ -8,8 +8,10 @@ The toolkit ships as a set of pre-built ESM packages under the
 2. **Published packages from GitHub Packages** (fallback for external
    consumers, optional — only available once Phase 6 publishing is set up).
 
-Both patterns expect a Next.js 15+ App Router app with React 19, TypeScript,
-and Tailwind v4. The packages ship `"use client"` directives at file
+This guide covers Next.js 15+ App Router hosts. Next.js is not a requirement
+of the packages themselves — they need only React 19, TypeScript, and
+Tailwind v4; for Vite hosts see
+[`consuming-as-submodule.md`](consuming-as-submodule.md#vite). The packages ship `"use client"` directives at file
 granularity — Next.js does **not** need `transpilePackages` for them.
 
 ---
