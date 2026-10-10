@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, within } from "@testing-library/rea
 import { HierarchicalTopicDetail, type TopicLevel } from "../blocks/hierarchical-topic-detail";
 import { resetSeededBackStackForTests } from "../hooks/useSeededBackStack";
 import { GUARDED_NAV_ATTR } from "../lib/navigation-guard";
+import type { PaneExitGuard } from "../hooks/useExitGate";
 
 // `clearHref`: a routed host says where each level clears to, and the stack turns that into
 // breadcrumbs that are links, a browser Back that walks up the stack after a deep link, and a
@@ -35,10 +36,10 @@ function levelsAt(path: string[], onClear: ClearFn[] = [vi.fn(), vi.fn()]): Topi
   ];
 }
 
-function renderAt(path: string[], onClear?: ClearFn[]) {
+function renderAt(path: string[], onClear?: ClearFn[], exitGuard: PaneExitGuard | null = null) {
   window.history.replaceState(null, "", ["/planning", ...path].join("/"));
   return render(
-    <HierarchicalTopicDetail levels={levelsAt(path, onClear)} rootLabel="Planning" layoutMode="narrow">
+    <HierarchicalTopicDetail levels={levelsAt(path, onClear)} rootLabel="Planning" layoutMode="narrow" exitGuard={exitGuard}>
       <p>detail</p>
     </HierarchicalTopicDetail>,
   );
@@ -63,11 +64,19 @@ describe("HierarchicalTopicDetail clearHref breadcrumbs", () => {
     expect(within(nav).queryByRole("link", { name: "Rockets" })).toBeNull();
   });
 
-  it("marks its crumb links as guarded, since their click handler asks the exit guard itself", () => {
-    renderAt(["acme", "rockets"]);
+  it("marks its crumb links as guarded when it has an exitGuard, since their click handler asks it", () => {
+    renderAt(["acme", "rockets"], undefined, { isDirty: () => false });
     const nav = screen.getByLabelText("Breadcrumb");
     for (const name of ["Planning", "Acme"]) {
       expect(within(nav).getByRole("link", { name })).toHaveAttribute(GUARDED_NAV_ATTR);
+    }
+  });
+
+  it("leaves its crumb links unmarked without an exitGuard, so a document-level guard still asks", () => {
+    renderAt(["acme", "rockets"]);
+    const nav = screen.getByLabelText("Breadcrumb");
+    for (const name of ["Planning", "Acme"]) {
+      expect(within(nav).getByRole("link", { name })).not.toHaveAttribute(GUARDED_NAV_ATTR);
     }
   });
 

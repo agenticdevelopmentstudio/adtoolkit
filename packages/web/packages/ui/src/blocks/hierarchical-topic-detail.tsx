@@ -260,6 +260,7 @@ function TopBar({
   toolbar,
   help,
   showBreadcrumb,
+  guardedCrumbs,
 }: {
   rootLabel?: string
   /** Where the root crumb leads: level 0's `clearHref`, when it has one. */
@@ -273,6 +274,8 @@ function TopBar({
   toolbar?: ReactNode
   /** Right-justified affordance on the breadcrumb bar (e.g. a help "?" describing the view). */
   help?: ReactNode
+  /** The host passed an `exitGuard`, so a crumb click already asks it. */
+  guardedCrumbs?: boolean
   showBreadcrumb: boolean
 }) {
   // The whole trail; the last entry is current. The leading root deselects everything.
@@ -340,11 +343,12 @@ function TopBar({
                       // everywhere a link does (new tab, long-press, copy). A plain click is still
                       // the stack's: it runs `onClear` through the unsaved-work guard rather than
                       // loading the page again.
-                      // GUARDED_NAV_ATTR: onClear asks the exit guard itself, so a host's document-level
-                      // UnsavedChangesGuard must not intercept the same click and prompt a second time.
+                      // GUARDED_NAV_ATTR, only when the host passed an exitGuard: onClear then asks it
+                      // itself, so a host's document-level UnsavedChangesGuard must not intercept the
+                      // same click and prompt a second time. Without one, that guard is the only prompt.
                       <a
                         href={c.href}
-                        {...GUARDED_NAV_PROPS}
+                        {...(guardedCrumbs ? GUARDED_NAV_PROPS : {})}
                         onClick={(e) => {
                           if (isModifiedClick(e)) return
                           e.preventDefault()
@@ -1150,6 +1154,7 @@ export function HierarchicalTopicDetail({
         toolbar={toolbar}
         help={help}
         showBreadcrumb={showBreadcrumb}
+        guardedCrumbs={exitGuard != null}
       />
       {/* The measured row. Every stack fills it, so ONE ResizeObserver here is the whole view's
           width signal — the mode decision above and the covered stack's fit math below.
