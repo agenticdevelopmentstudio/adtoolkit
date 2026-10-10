@@ -20,6 +20,7 @@ public final class TerminalWorkspaceCoordinator: AppFeature {
 
     public enum CommandID {
         public static let showWindow = "terminalWorkspace.action.showWindow"
+        public static let newTerminal = "terminalWorkspace.action.newTerminal"
     }
 
     private let database: ProjectDatabase
@@ -57,7 +58,18 @@ public final class TerminalWorkspaceCoordinator: AppFeature {
             category: "Terminal",
             run: { [weak self] in self?.showWindow() }
         ))
+        registry.register(AppCommand(
+            id: CommandID.newTerminal,
+            title: "New Terminal",
+            category: "Terminal",
+            run: { [weak self] in self?.newTerminal() }
+        ))
         menuContributions = [
+            MenuContribution(
+                slot: .file, title: "New Terminal",
+                commandID: CommandID.newTerminal, registry: registry,
+                order: 0, key: "t"
+            ),
             MenuContribution(
                 slot: .window, title: "Terminal Window",
                 commandID: CommandID.showWindow, registry: registry,
@@ -72,6 +84,19 @@ public final class TerminalWorkspaceCoordinator: AppFeature {
             windowManager.openProject(try workspaceRepo())
         } catch {
             Self.logger.error("Cannot open the terminal workspace: \(error)")
+        }
+    }
+
+    /// Adds a terminal pane beside the active one in the workspace window,
+    /// opening the window first when it is closed — a window that opens on
+    /// its starting terminal has already done what was asked.
+    public func newTerminal() {
+        guard isWindowOpen, let controller = windowManager.frontWindowController else {
+            showWindow()
+            return
+        }
+        if !controller.addPaneBesideActivePane(showing: .terminal) {
+            RefusalFeedback.announce()
         }
     }
 

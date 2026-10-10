@@ -427,6 +427,23 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         arrangeButton?.state = enabled ? .on : .off
     }
 
+    // MARK: - Adding panes
+
+    /// Splits a pane showing `viewID` off the active pane, along the axis the
+    /// layout spec prefers for it — what the arrange overlay's Add does, for a
+    /// menu command that names the view up front. Returns `false`, changing
+    /// nothing, when the tab has no pane or the spec does not allow another
+    /// one of these beside it.
+    @discardableResult
+    public func addPaneBesideActivePane(showing viewID: ComposableTabsViewID) -> Bool {
+        guard let pane = activePane,
+              let split = pane.parent as? ComposableTabsViewController,
+              let insertion = split.allowedInsertions(beside: pane).first(where: { $0.viewID == viewID })
+        else { return false }
+        split.split(pane, adding: viewID, direction: insertion.preferredAxis == .horizontal ? .right : .below)
+        return true
+    }
+
     // MARK: - Arrange mode and project settings
 
     /// Also the target of the Window ▸ Arrange menu item, reached down the
