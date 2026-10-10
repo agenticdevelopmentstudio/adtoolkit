@@ -71,6 +71,17 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
     private var adoptedForScripting: Set<UUID> = []
     private weak var coordinator: ProjectsCoordinator?
 
+    /// A database handed over by `attach(database:)`, for a host with no
+    /// project registry. Strong where `coordinator` is weak: nothing else in
+    /// such a host owns it on this manager's behalf.
+    private var attachedDatabase: ProjectDatabase?
+
+    /// Where windows persist their tabs and open state — the registry's
+    /// database when there is one, the attached one otherwise.
+    private var database: ProjectDatabase? {
+        attachedDatabase ?? coordinator?.database
+    }
+
     /// One `ProjectController` per open window, keyed the same way
     /// `controllers` is. Built in `openProject(_:)`, dropped in
     /// `observeClose(of:repoID:recordsOpenState:)`.
@@ -143,6 +154,14 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
     public func attach(to coordinator: ProjectsCoordinator) {
         self.coordinator = coordinator
         coordinator.setOpener(self)
+    }
+
+    /// Wires the manager to a database alone, for a host that opens a fixed
+    /// workspace rather than choosing among scanned projects — a terminal-only
+    /// app has no registry, browser or scan, but its window still needs
+    /// somewhere to keep its tabs.
+    public func attach(database: ProjectDatabase) {
+        attachedDatabase = database
     }
 
     /// The frontmost project window, for anything that acts on "the current
@@ -302,7 +321,7 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
             activateApp()
             return
         }
-        guard let database = coordinator?.database else {
+        guard let database else {
             Self.logger.error("Cannot open \(repo.name, privacy: .public): no project database attached")
             return
         }
@@ -502,7 +521,7 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
     }
 
     private func isWindowOpen(repoID: UUID) -> Bool {
-        guard let database = coordinator?.database else { return false }
+        guard let database else { return false }
         do {
             return try database.setting(repoID: repoID, key: Self.openWindowKey) == "1"
         } catch {
@@ -512,7 +531,7 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
     }
 
     private func setWindowOpen(_ isOpen: Bool, repoID: UUID) {
-        guard let database = coordinator?.database else { return }
+        guard let database else { return }
         do {
             try database.setSetting(repoID: repoID, key: Self.openWindowKey, value: isOpen ? "1" : nil)
         } catch {
