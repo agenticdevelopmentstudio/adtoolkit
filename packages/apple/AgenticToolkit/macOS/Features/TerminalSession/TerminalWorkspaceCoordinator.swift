@@ -1,4 +1,5 @@
 import AppKit
+import AIPluginKit
 import AgenticToolkitCore
 import os
 
@@ -35,18 +36,21 @@ public final class TerminalWorkspaceCoordinator: AppFeature {
     ///   - name: The window's title, and the workspace row's name.
     ///   - commandRegistry: Required, as for every feature, so a dropped
     ///     registry is a compile error rather than a menu that lost an item.
+    ///   - pluginManager: The LLM providers persona chat panes run on; nil
+    ///     leaves that pane type out.
     public init(
         database: ProjectDatabase,
         directory: URL = FileManager.default.homeDirectoryForCurrentUser,
         name: String,
         commandRegistry registry: CommandRegistry,
+        pluginManager: AIPluginManager? = nil,
         windowManager: ProjectWindowManager = .shared
     ) throws {
         self.database = database
         self.windowManager = windowManager
         self.directory = directory
         self.name = name
-        try ComposableTabsLayout.install(.terminalOnly())
+        try ComposableTabsLayout.install(.terminalOnly(pluginManager: pluginManager))
         super.init()
 
         windowManager.attach(database: database)

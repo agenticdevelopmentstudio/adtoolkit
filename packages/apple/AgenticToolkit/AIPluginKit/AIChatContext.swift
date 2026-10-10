@@ -72,6 +72,21 @@ public struct AIPluginConfig: Sendable {
 
     /// Convenience accessor for the conventional `model` field.
     public var model: String? { values["model"] }
+
+    /// The key for `builtInTools`.
+    public static let builtInToolsKey = "builtInTools"
+
+    /// `"none"` asks a provider that brings tools of its own — the Claude Code
+    /// CLI reads files and runs commands — to leave them all off, because the
+    /// host supplies the only tools this request may use.
+    public var builtInTools: String? { values[Self.builtInToolsKey] }
+
+    /// A copy with one value replaced.
+    public func setting(_ key: String, to value: String) -> AIPluginConfig {
+        var copy = values
+        copy[key] = value
+        return AIPluginConfig(copy)
+    }
 }
 
 /// Everything a plugin needs to build one chat request: the conversation, the

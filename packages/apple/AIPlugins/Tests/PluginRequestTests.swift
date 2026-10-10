@@ -232,6 +232,9 @@ struct PluginRequestTests {
         #expect(ClaudeLocalPlugin.commandArguments(model: "", systemPrompt: nil)
                 == ["-p", "--output-format", "text"])
         #expect(ClaudeLocalPlugin.commandArguments(model: "", systemPrompt: "") == ["-p", "--output-format", "text"])
+        // The host supplying the tools switches the CLI's own off.
+        #expect(ClaudeLocalPlugin.commandArguments(model: "", systemPrompt: nil, disableBuiltInTools: true)
+                == ["-p", "--output-format", "text", "--tools", ""])
     }
 
     @Test("ClaudeLocal describes a claude -p subprocess, or reports the CLI is absent")

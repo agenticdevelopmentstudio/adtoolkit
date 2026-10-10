@@ -25,7 +25,8 @@ public final class ClaudeLocalPlugin: NSObject, AIPlugin, @unchecked Sendable {
 
         return .command(
             executableURL: URL(fileURLWithPath: claudePath),
-            arguments: Self.commandArguments(model: context.model, systemPrompt: context.systemPrompt),
+            arguments: Self.commandArguments(model: context.model, systemPrompt: context.systemPrompt,
+                                             disableBuiltInTools: context.config.builtInTools == "none"),
             stdin: Data(prompt.utf8),
             environment: environment
         )
@@ -40,8 +41,13 @@ public final class ClaudeLocalPlugin: NSObject, AIPlugin, @unchecked Sendable {
     /// exits non-zero with "Error: Reached max turns (1)" — sometimes returning
     /// no reply at all — even for a one-shot `-p` answer, which surfaces in chat
     /// as a generic failure. Let the CLI use its own turn budget for print mode.
-    static func commandArguments(model: String, systemPrompt: String?) -> [String] {
+    ///
+    /// `disableBuiltInTools` passes `--tools ""`, so the CLI cannot read files
+    /// or run commands itself when the host is supplying the tools.
+    static func commandArguments(model: String, systemPrompt: String?,
+                                 disableBuiltInTools: Bool = false) -> [String] {
         var arguments = ["-p", "--output-format", "text"]
+        if disableBuiltInTools { arguments += ["--tools", ""] }
         if !model.isEmpty { arguments += ["--model", model] }
         if let systemPrompt, !systemPrompt.isEmpty {
             arguments += ["--system-prompt", systemPrompt]

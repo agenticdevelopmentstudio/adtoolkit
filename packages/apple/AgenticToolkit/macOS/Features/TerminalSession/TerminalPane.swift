@@ -1,4 +1,5 @@
 import AppKit
+import AIPluginKit
 import AgenticToolkitCore
 
 extension ComposableTabsViewID {
@@ -8,6 +9,9 @@ extension ComposableTabsViewID {
     /// A chat pane that types into the terminal beside it — see
     /// `TerminalChatViewController`.
     public static let terminalChat = ComposableTabsViewID("terminal-chat")
+    /// A chat with an AI persona that works the terminal through the tab's
+    /// Terminal Chat — see `PersonaTerminalChatViewController`.
+    public static let personaTerminalChat = ComposableTabsViewID("persona-terminal-chat")
 }
 
 extension ComposableTabsViewRegistry {
@@ -48,7 +52,7 @@ extension ComposableTabsViewRegistry {
         register(
             .terminalChat,
             descriptor: .init(
-                displayName: "Chat",
+                displayName: "Terminal Chat",
                 symbolName: "bubble.left.and.text.bubble.right",
                 preferredAxis: .horizontal,
                 minimumThickness: 260
@@ -57,27 +61,55 @@ extension ComposableTabsViewRegistry {
             TerminalChatViewController(stateStore: context.makeStateStore(prefix: "terminalChat"))
         }
     }
+
+    /// Registers the persona terminal chat pane: an AI persona, on one of the
+    /// LLM providers configured in Settings, that runs commands through the
+    /// tab's Terminal Chat.
+    @MainActor
+    public func registerPersonaTerminalChat(pluginManager: AIPluginManager) {
+        register(
+            .personaTerminalChat,
+            descriptor: .init(
+                displayName: "Persona Terminal Chat",
+                symbolName: "person.crop.circle.badge.questionmark",
+                preferredAxis: .horizontal,
+                minimumThickness: 260
+            )
+        ) { context in
+            PersonaTerminalChatViewController(
+                stateStore: context.makeStateStore(prefix: "personaTerminalChat"),
+                pluginManager: pluginManager)
+        }
+    }
 }
 
 extension ComposableTabsLayout {
 
     /// A layout of terminals: one to start, as many more as the user splits
     /// off, and chat panes that talk to them.
+    ///
+    /// - Parameter pluginManager: The LLM providers a persona chat runs on;
+    ///   without one, the persona terminal chat pane is not offered.
     @MainActor
-    public static func terminalOnly() throws -> ComposableTabsLayout {
+    public static func terminalOnly(pluginManager: AIPluginManager? = nil) throws -> ComposableTabsLayout {
         let registry = ComposableTabsViewRegistry()
         registry.registerTerminal(preferredAxis: .horizontal)
         registry.registerTerminalChat()
+        var allows: [ComposableTabsViewAllowance] = [
+            .unbounded(.terminal, preferredAxis: .horizontal),
+            .unbounded(.terminalChat),
+            .unbounded(.placeholder)
+        ]
+        if let pluginManager {
+            registry.registerPersonaTerminalChat(pluginManager: pluginManager)
+            allows.insert(.unbounded(.personaTerminalChat), at: 2)
+        }
         return try ComposableTabsLayout(
             registry: registry,
             spec: .split(
                 axis: .horizontal,
                 children: [.pane(.terminal)],
-                allows: [
-                    .unbounded(.terminal, preferredAxis: .horizontal),
-                    .unbounded(.terminalChat),
-                    .unbounded(.placeholder)
-                ]
+                allows: allows
             )
         )
     }

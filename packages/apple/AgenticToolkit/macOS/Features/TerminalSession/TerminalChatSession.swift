@@ -34,6 +34,12 @@ public final class TerminalChatSession {
     private var outputSubscription: AnyCancellable?
     private var continuation: AsyncStream<ChatEvent>.Continuation?
 
+    /// The caller waiting on output — see ``run(_:settle:timeout:)``.
+    private var currentWait: OutputWait?
+    /// Replies no caller was waiting for, kept until one asks — so output a
+    /// slow command prints after its wait gave up is not lost to the next.
+    private var unclaimedOutput: [String] = []
+
     public init(
         filter: TextSubstitutionFilter = .identity,
         quietPeriod: RunLoop.SchedulerTimeType.Stride = .milliseconds(300)
@@ -59,10 +65,125 @@ public final class TerminalChatSession {
 
     private func reportNewOutput() {
         guard let terminal, let output = tracker.newOutput(in: terminal.screenSnapshot()) else { return }
+        let concealed = filter.concealing(output)
         let id = UUID().uuidString
         continuation?.yield(.responseStarted(messageID: id))
-        continuation?.yield(.responseDelta(messageID: id, text: filter.concealing(output)))
+        continuation?.yield(.responseDelta(messageID: id, text: concealed))
         continuation?.yield(.responseFinished(messageID: id, stopReason: nil))
+        if let currentWait {
+            currentWait.received(concealed)
+        } else {
+            unclaimedOutput.append(concealed)
+        }
+    }
+
+    // MARK: - Driven by another agent
+
+    /// Sends `text` exactly as ``send(_:)`` does — it shows in the transcript
+    /// as typed — and returns what the terminal printed in reply, concealed.
+    ///
+    /// For a caller that is not a person reading the transcript: a persona
+    /// chat whose tool types into this one. The reply is everything reported
+    /// until output has been quiet for `settle`; a command still printing at
+    /// `timeout` returns what it had, marked as still running, and the rest is
+    /// kept for ``waitForOutput(settle:timeout:)``.
+    public func run(
+        _ text: String,
+        settle: Duration = .milliseconds(1500),
+        timeout: Duration = .seconds(60)
+    ) async -> String {
+        guard terminal != nil else { return Self.notConnected }
+        let wait = beginWait(settle: settle, timeout: timeout)
+        send(text)
+        return await wait.result()
+    }
+
+    /// Output reported since the last caller stopped listening, plus whatever
+    /// arrives until it has been quiet for `settle` — for a command that
+    /// outlasted ``run(_:settle:timeout:)``.
+    public func waitForOutput(
+        settle: Duration = .milliseconds(1500),
+        timeout: Duration = .seconds(30)
+    ) async -> String {
+        guard terminal != nil else { return Self.notConnected }
+        return await beginWait(settle: settle, timeout: timeout).result()
+    }
+
+    /// Control-C, then whatever the terminal printed in response.
+    public func interruptAndWait(settle: Duration = .milliseconds(1000)) async -> String {
+        guard terminal != nil else { return Self.notConnected }
+        let wait = beginWait(settle: settle, timeout: .seconds(10))
+        interrupt()
+        return await wait.result()
+    }
+
+    private static let notConnected = "The Terminal Chat is not connected to a terminal."
+
+    /// One caller at a time: a new wait ends the previous one with what it
+    /// had, and starts from the output nobody claimed.
+    private func beginWait(settle: Duration, timeout: Duration) -> OutputWait {
+        currentWait?.finish()
+        let wait = OutputWait(settle: settle, timeout: timeout) { [weak self] finished in
+            if self?.currentWait === finished { self?.currentWait = nil }
+        }
+        for text in unclaimedOutput { wait.received(text) }
+        unclaimedOutput.removeAll()
+        currentWait = wait
+        return wait
+    }
+}
+
+/// Collects replies until they stop coming, then hands them to whoever is
+/// awaiting ``result()``.
+@MainActor
+private final class OutputWait {
+    private var output: [String] = []
+    private var finished: String?
+    private var waiters: [CheckedContinuation<String, Never>] = []
+    private var settleTask: Task<Void, Never>?
+    private var deadlineTask: Task<Void, Never>?
+    private let settle: Duration
+    private let onFinish: (OutputWait) -> Void
+
+    init(settle: Duration, timeout: Duration, onFinish: @escaping (OutputWait) -> Void) {
+        self.settle = settle
+        self.onFinish = onFinish
+        deadlineTask = Task { [weak self] in
+            try? await Task.sleep(for: timeout)
+            guard !Task.isCancelled else { return }
+            self?.finish(stillRunning: true)
+        }
+    }
+
+    func received(_ text: String) {
+        guard finished == nil else { return }
+        output.append(text)
+        settleTask?.cancel()
+        settleTask = Task { [weak self, settle] in
+            try? await Task.sleep(for: settle)
+            guard !Task.isCancelled else { return }
+            self?.finish()
+        }
+    }
+
+    func finish(stillRunning: Bool = false) {
+        guard finished == nil else { return }
+        settleTask?.cancel()
+        deadlineTask?.cancel()
+        var text = output.joined(separator: "\n")
+        if text.isEmpty { text = "(no output)" }
+        if stillRunning {
+            text += "\n[still running — wait for more output, or interrupt it]"
+        }
+        finished = text
+        for waiter in waiters { waiter.resume(returning: text) }
+        waiters.removeAll()
+        onFinish(self)
+    }
+
+    func result() async -> String {
+        if let finished { return finished }
+        return await withCheckedContinuation { waiters.append($0) }
     }
 }
 

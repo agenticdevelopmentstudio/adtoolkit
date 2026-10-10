@@ -13,7 +13,9 @@ import AgenticToolkitCoreMacOS
 public final class TerminalChatViewController: NSViewController {
 
     private let stateStore: PaneStateStore
-    private let session: TerminalChatSession
+    /// What this pane types into its terminal through — public so a persona
+    /// chat in the same tab can drive it (`PersonaTerminalChatViewController`).
+    public let session: TerminalChatSession
     private let viewModel: AIChatViewModel
     private var chatView: ChatView?
 
@@ -82,19 +84,10 @@ public final class TerminalChatViewController: NSViewController {
         }
     }
 
-    /// The first terminal pane in this tab. Reached by walking up to the pane
-    /// holding this content and from there to the tab's root split.
+    /// The first terminal pane in this tab.
     private func siblingTerminal() -> TerminalSession? {
-        var ancestor = parent
-        while let current = ancestor, !(current is ComposableTabsPaneViewController) {
-            ancestor = current.parent
-        }
-        guard let pane = ancestor as? ComposableTabsPaneViewController,
-              let split = pane.host as? ComposableTabsViewController,
-              let root = split.rootSplit() else { return nil }
-        return root.allLeaves().lazy.compactMap {
-            ($0.contentViewController as? TerminalSessionContentViewController)?
-                .sessionManager.selectedSession
+        tabPaneContents().lazy.compactMap {
+            ($0 as? TerminalSessionContentViewController)?.sessionManager.selectedSession
         }.first
     }
 
