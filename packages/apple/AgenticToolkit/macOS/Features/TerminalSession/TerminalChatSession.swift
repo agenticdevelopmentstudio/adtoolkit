@@ -117,6 +117,16 @@ public final class TerminalChatSession {
         return await wait.result()
     }
 
+    /// The last `lines` lines on the terminal's screen, concealed — what is
+    /// there now, prompt included, rather than a reply to anything. Nil when
+    /// there is no terminal.
+    public func screen(lines: Int = 40) -> String? {
+        guard let terminal else { return nil }
+        var rows = terminal.screenSnapshot().lines
+        while rows.last?.trimmingCharacters(in: .whitespaces).isEmpty == true { rows.removeLast() }
+        return filter.concealing(rows.suffix(max(lines, 1)).joined(separator: "\n"))
+    }
+
     private static let notConnected = "The Terminal Chat is not connected to a terminal."
 
     /// One caller at a time: a new wait ends the previous one with what it

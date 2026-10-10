@@ -38,19 +38,22 @@ public final class TerminalWorkspaceCoordinator: AppFeature {
     ///     registry is a compile error rather than a menu that lost an item.
     ///   - pluginManager: The LLM providers persona chat panes run on; nil
     ///     leaves that pane type out.
+    ///   - chatDirectory: Where Terminal Chat panes list themselves for
+    ///     processes outside the app to drive; nil keeps them private.
     public init(
         database: ProjectDatabase,
         directory: URL = FileManager.default.homeDirectoryForCurrentUser,
         name: String,
         commandRegistry registry: CommandRegistry,
         pluginManager: AIPluginManager? = nil,
+        chatDirectory: TerminalChatDirectory? = nil,
         windowManager: ProjectWindowManager = .shared
     ) throws {
         self.database = database
         self.windowManager = windowManager
         self.directory = directory
         self.name = name
-        try ComposableTabsLayout.install(.terminalOnly(pluginManager: pluginManager))
+        try ComposableTabsLayout.install(.terminalOnly(pluginManager: pluginManager, chatDirectory: chatDirectory))
         super.init()
 
         windowManager.attach(database: database)

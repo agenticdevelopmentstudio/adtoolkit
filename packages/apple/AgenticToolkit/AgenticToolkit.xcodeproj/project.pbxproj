@@ -139,6 +139,7 @@
 		01E2A879A5C854C48424576B /* WebviewPanelOptionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FF61C57DC9B8AA565309795 /* WebviewPanelOptionsTests.swift */; };
 		01E5B036BF1837E180CA5965 /* LLMChatWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 398A9B344340B4AD545F6925 /* LLMChatWindowController.swift */; };
 		0278D7F4A7E60DF7788A2F43 /* AIChatCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = FE4D7CD70F49720EA92F1B42 /* AIChatCommands.swift */; };
+		0292FFFA8B9AEA49E19156F2 /* UnixSocketLineServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32844F63CBC62769EA72D5FA /* UnixSocketLineServer.swift */; };
 		02B1889F8EE4558D4F7B1427 /* AgenticToolkitSync.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 085D01FE73EBFAD731A18864 /* AgenticToolkitSync.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		02CE8B8B3EF061F8561BD836 /* AppleScriptRunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 06981BE7678C13904564EBF0 /* AppleScriptRunnerTests.swift */; };
 		02D0D5F6753EB5F00DB23F57 /* IdleAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D9893445907E0736BFFE294 /* IdleAdapter.swift */; };
@@ -791,6 +792,7 @@
 		525C4C42F30BA720E0ABFD49 /* FileTreeNodeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0EC9AF6D58778C0D50626FC6 /* FileTreeNodeTests.swift */; };
 		5268C8A154888A682FEE5AD1 /* FormValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2FD14CBCD4EAFE609DC77D9E /* FormValue.swift */; };
 		52715E038C8796C6C2907431 /* EcosystemsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 211847C4BA1ACD45DE6AF55A /* EcosystemsModels.swift */; };
+		52991F58F83F5A1EC39191B8 /* TerminalChatControlServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6655B07FB6B50B5A90678A22 /* TerminalChatControlServer.swift */; };
 		52C0917FD3836E57377A2126 /* HubError+Wrap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 92BC829BEB60F0C39032D831 /* HubError+Wrap.swift */; };
 		52CB6981F4000DBBED581CCE /* MarkdownReExports.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAF729C4B81A698492FAE06C /* MarkdownReExports.swift */; };
 		52CB8697FA63C09157D8C2C2 /* TerminalAppIcon.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A12FAD7FB557E5CE6CE800 /* TerminalAppIcon.swift */; };
@@ -1084,6 +1086,7 @@
 		74FDEA81E0102287D29214DB /* NotMemberViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 418755F6877DDD1462145B9F /* NotMemberViewController.swift */; };
 		750147665D21A4AA50DE2086 /* ReopenOnLaunchPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 681EFC1ADD4D0922585CDB04 /* ReopenOnLaunchPolicy.swift */; };
 		75C332FA1A4AECFAB4A24BDC /* KnownTerminals.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4874F102533FD511EBD497B7 /* KnownTerminals.swift */; };
+		75CB5C2CF06EBF2B37C7C57D /* TerminalChatControl.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD439D95DB589CE463E44211 /* TerminalChatControl.swift */; };
 		75D11752DBF8D2879910A86C /* LSPCompletionDelegateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A0C90ACA8F695F1DBE8CD6F /* LSPCompletionDelegateTests.swift */; };
 		75F77AC6E43B3A9374846227 /* RowAlertTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A57D720698EE23E94639BFE3 /* RowAlertTests.swift */; };
 		75F8C6F71566C91B8AF975D1 /* FeatureFlagsAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 503F40D6991D4F1C4A8A6153 /* FeatureFlagsAdapter.swift */; };
@@ -4763,6 +4766,7 @@
 		31AD64ABF2407050E373235C /* Launchctl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Launchctl.swift; sourceTree = "<group>"; };
 		31E7501A87831CAE04B1416A /* ExplanationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExplanationView.swift; sourceTree = "<group>"; };
 		31F04A00FAA3D63C0CA839A4 /* SystemWindowContextStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemWindowContextStore.swift; sourceTree = "<group>"; };
+		32844F63CBC62769EA72D5FA /* UnixSocketLineServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UnixSocketLineServer.swift; sourceTree = "<group>"; };
 		334A359CB9C258AC16F98B6F /* StartupJobTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupJobTests.swift; sourceTree = "<group>"; };
 		33619129A89D9B7E57F49FDB /* JITAvailability.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JITAvailability.swift; sourceTree = "<group>"; };
 		339250B6C2715F71635C6744 /* SessionWatcherListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionWatcherListViewModel.swift; sourceTree = "<group>"; };
@@ -5103,6 +5107,7 @@
 		65E84C2ED0A1658E6689EA0B /* InMemorySettingsStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemorySettingsStoreTests.swift; sourceTree = "<group>"; };
 		661D76742109C1DCA61D0E40 /* ClaudeLoginIdentity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeLoginIdentity.swift; sourceTree = "<group>"; };
 		662B67B704A33E2846E02889 /* TerminalSessionGitBranchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalSessionGitBranchTests.swift; sourceTree = "<group>"; };
+		6655B07FB6B50B5A90678A22 /* TerminalChatControlServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalChatControlServer.swift; sourceTree = "<group>"; };
 		665BEB42F5336C92E15F6AFC /* ContextStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextStore.swift; sourceTree = "<group>"; };
 		66646CCA1BE79C55139EC157 /* HubAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubAPI.swift; sourceTree = "<group>"; };
 		6667710358B319E8F16BAB02 /* ProjectsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsCoordinator.swift; sourceTree = "<group>"; };
@@ -5650,6 +5655,7 @@
 		BCA3D49E9451A0F3FD6550C2 /* ClaudeAccountRecord.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAccountRecord.swift; sourceTree = "<group>"; };
 		BCCDF8D1245B02941E37E1AE /* LaunchTestDoubles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchTestDoubles.swift; sourceTree = "<group>"; };
 		BCD4ADABC33A32ACE6641188 /* FrameCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FrameCalculator.swift; sourceTree = "<group>"; };
+		BD439D95DB589CE463E44211 /* TerminalChatControl.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalChatControl.swift; sourceTree = "<group>"; };
 		BD4877687B547D7E30B2DDBB /* WorkTrackingModelsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkTrackingModelsTests.swift; sourceTree = "<group>"; };
 		BD60C48A79E7884AE557E558 /* NotesWindowToolbar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesWindowToolbar.swift; sourceTree = "<group>"; };
 		BD99EC5BB9498AF3F488A4F4 /* LSPEditorAnnotationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LSPEditorAnnotationTests.swift; sourceTree = "<group>"; };
@@ -7421,6 +7427,7 @@
 				140E640DFF31874AD68913AE /* PersonaTerminalChatViewController.swift */,
 				30AD3EAE92B62896687121A9 /* ScriptableTerminalSession.swift */,
 				7615EF17189A8626BE0FE04F /* TerminalAppearance.swift */,
+				6655B07FB6B50B5A90678A22 /* TerminalChatControlServer.swift */,
 				95B66AB16933104BEDEB2731 /* TerminalChatSession.swift */,
 				735DA20BC7E5CF119D3177AE /* TerminalChatToolSource.swift */,
 				7616222E8D110D00B05C0D8D /* TerminalChatViewController.swift */,
@@ -7959,6 +7966,7 @@
 				578D700EFBAAC862EEFF04D3 /* MessageFraming.swift */,
 				25D025A32E9279693AF41E41 /* SubprocessChannel.swift */,
 				01ED1EA8321C688846E3B432 /* SubprocessChannel+Run.swift */,
+				32844F63CBC62769EA72D5FA /* UnixSocketLineServer.swift */,
 				3D328CF5DD6CAF4128E7562E /* WallClockBudget.swift */,
 			);
 			path = RPC;
@@ -8191,6 +8199,7 @@
 		61574521516B9F596BC50FCF /* Terminal */ = {
 			isa = PBXGroup;
 			children = (
+				BD439D95DB589CE463E44211 /* TerminalChatControl.swift */,
 				E403C479B8D283F2FF64C453 /* TerminalOutputTracker.swift */,
 			);
 			path = Terminal;
@@ -13688,6 +13697,7 @@
 				359C09B0DC9DBAC6D3A23E33 /* TabPaneView.swift in Sources */,
 				87EC0533FBC84CF8B982922A /* TabPaneViewController.swift in Sources */,
 				A7729169969C84CBB73A14B3 /* TerminalAppearance.swift in Sources */,
+				52991F58F83F5A1EC39191B8 /* TerminalChatControlServer.swift in Sources */,
 				0B182CD986248AF1A5A6F918 /* TerminalChatSession.swift in Sources */,
 				B41BEFDFEAC40A016C0396F6 /* TerminalChatToolSource.swift in Sources */,
 				4198D1EBC63381E4D0FF1797 /* TerminalChatViewController.swift in Sources */,
@@ -14020,6 +14030,7 @@
 				5D6ED81D172A900CE68BE60E /* SystemWindowInfo.swift in Sources */,
 				B26352730B36119D418BB090 /* SystemWindowMatcher.swift in Sources */,
 				CEB8A20B177FF67FA46E0384 /* SystemWindowSnapshot.swift in Sources */,
+				75CB5C2CF06EBF2B37C7C57D /* TerminalChatControl.swift in Sources */,
 				0A8394F21EA693480E1F3E63 /* TerminalHeuristic.swift in Sources */,
 				B4DC5886FF53BD7B1E5C098E /* TerminalOutputTracker.swift in Sources */,
 				47E72A18BE5B0766465D7210 /* TextFolding.swift in Sources */,
@@ -14032,6 +14043,7 @@
 				AA43AD65DADB12CEEC9B667C /* UTCTimestamp.swift in Sources */,
 				23B84397921B4774CADB4E1F /* UTF8Search.swift in Sources */,
 				F16E424A4DB8B9B03FC32C2F /* UniqueName.swift in Sources */,
+				0292FFFA8B9AEA49E19156F2 /* UnixSocketLineServer.swift in Sources */,
 				3F6B38B7719D423BE2EF3518 /* UpstreamDivergence.swift in Sources */,
 				83F147B5E128E1A40B722E9A /* UpstreamDivergenceLedger.swift in Sources */,
 				636967AFCFC51E5665554384 /* UserDefaultsSettingsStorageProvider.swift in Sources */,

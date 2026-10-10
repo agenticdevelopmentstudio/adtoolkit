@@ -18,14 +18,26 @@ public final class TerminalChatViewController: NSViewController {
     public let session: TerminalChatSession
     private let viewModel: AIChatViewModel
     private var chatView: ChatView?
+    private let directory: TerminalChatDirectory?
+    private let listing: TerminalChatDirectory.Listing?
 
-    public init(stateStore: PaneStateStore) {
+    /// - Parameters:
+    ///   - directory: Where this chat lists itself, under `listing`, for
+    ///     processes outside the app to drive; nil keeps it private.
+    public init(
+        stateStore: PaneStateStore,
+        directory: TerminalChatDirectory? = nil,
+        listing: TerminalChatDirectory.Listing? = nil
+    ) {
         self.stateStore = stateStore
+        self.directory = directory
+        self.listing = listing
         let filter = TextSubstitutionFilter(
             parsing: stateStore.paneStateValue(forKey: Keys.substitutions) ?? "")
         session = TerminalChatSession(filter: filter)
         viewModel = AIChatViewModel(session: session)
         super.init(nibName: nil, bundle: nil)
+        if let directory, let listing { directory.add(session, as: listing) }
     }
 
     @available(*, unavailable)
@@ -144,6 +156,7 @@ extension TerminalChatViewController: PaneOptionsProviding {
 
 extension TerminalChatViewController: PaneContentTeardown {
     public func paneContentWillBeDiscarded() {
+        if let directory, let listing { directory.remove(id: listing.id) }
         session.close()
     }
 }

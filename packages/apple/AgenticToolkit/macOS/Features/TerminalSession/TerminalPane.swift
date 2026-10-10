@@ -47,8 +47,12 @@ extension ComposableTabsViewRegistry {
     /// Registers the terminal chat pane: a chat whose messages are typed into
     /// the tab's terminal and whose replies are what that terminal prints,
     /// passed through the pane's substitutions each way.
+    ///
+    /// - Parameter directory: Where each chat lists itself for processes
+    ///   outside the app to drive (`TerminalChatControlServer`); nil keeps
+    ///   them private to the window.
     @MainActor
-    public func registerTerminalChat() {
+    public func registerTerminalChat(directory: TerminalChatDirectory? = nil) {
         register(
             .terminalChat,
             descriptor: .init(
@@ -58,7 +62,14 @@ extension ComposableTabsViewRegistry {
                 minimumThickness: 260
             )
         ) { context in
-            TerminalChatViewController(stateStore: context.makeStateStore(prefix: "terminalChat"))
+            TerminalChatViewController(
+                stateStore: context.makeStateStore(prefix: "terminalChat"),
+                directory: directory,
+                listing: TerminalChatDirectory.Listing(
+                    id: TerminalChatDirectory.chatID(forNode: context.nodeID),
+                    project: context.project.displayName,
+                    directory: context.workingDirectory,
+                    paneNumber: context.paneNumber))
         }
     }
 
@@ -88,13 +99,19 @@ extension ComposableTabsLayout {
     /// A layout of terminals: one to start, as many more as the user splits
     /// off, and chat panes that talk to them.
     ///
-    /// - Parameter pluginManager: The LLM providers a persona chat runs on;
-    ///   without one, the persona terminal chat pane is not offered.
+    /// - Parameters:
+    ///   - pluginManager: The LLM providers a persona chat runs on; without
+    ///     one, the persona terminal chat pane is not offered.
+    ///   - chatDirectory: Where Terminal Chats list themselves for outside
+    ///     processes to drive; nil keeps them private to the window.
     @MainActor
-    public static func terminalOnly(pluginManager: AIPluginManager? = nil) throws -> ComposableTabsLayout {
+    public static func terminalOnly(
+        pluginManager: AIPluginManager? = nil,
+        chatDirectory: TerminalChatDirectory? = nil
+    ) throws -> ComposableTabsLayout {
         let registry = ComposableTabsViewRegistry()
         registry.registerTerminal(preferredAxis: .horizontal)
-        registry.registerTerminalChat()
+        registry.registerTerminalChat(directory: chatDirectory)
         var allows: [ComposableTabsViewAllowance] = [
             .unbounded(.terminal, preferredAxis: .horizontal),
             .unbounded(.terminalChat),
