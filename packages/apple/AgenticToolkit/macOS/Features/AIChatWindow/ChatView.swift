@@ -12,6 +12,7 @@ public final class ChatView: NSView, NSTextFieldDelegate {
     private let transcriptStack = NSStackView()
     private let inputField = NSTextField()
     private let sendButton = NSButton()
+    private let interruptButton = NSButton()
     private let promptLabel = NSTextField(labelWithString: "")
     private let statusRow = NSStackView()
     private let statusLabel = NSTextField(labelWithString: "")
@@ -103,6 +104,22 @@ public final class ChatView: NSView, NSTextFieldDelegate {
         didSet {
             promptLabel.stringValue = composerPrompt ?? ""
             promptLabel.isHidden = composerPrompt == nil
+        }
+    }
+
+    /// Whether the composer offers an interrupt: a stop button beside Send, and
+    /// Control-C while the composer has focus, both calling
+    /// ``AIChatViewModel/interrupt()``.
+    ///
+    /// Off by default because in an ordinary text field Control-C means nothing,
+    /// and a chat that suddenly gave it a meaning would surprise. A host whose
+    /// other side is a terminal turns it on: there, Control-C is *the* way to
+    /// stop what is running, and a chat standing in for the command line has
+    /// to be able to send it.
+    public var isInterruptEnabled = false {
+        didSet {
+            interruptButton.isHidden = !isInterruptEnabled
+            applyComposerEnablement()
         }
     }
 
@@ -305,7 +322,17 @@ public final class ChatView: NSView, NSTextFieldDelegate {
             view.applySurfaceFill(palette)
         }
 
-        let inputRow = NSStackView(views: [promptLabel, inputField, sendButton])
+        interruptButton.image = NSImage(systemSymbolName: "stop.circle", accessibilityDescription: "Interrupt")
+        interruptButton.symbolConfiguration = .init(pointSize: 18, weight: .regular)
+        interruptButton.isBordered = false
+        interruptButton.toolTip = "Interrupt (⌃C)"
+        interruptButton.target = self
+        interruptButton.action = #selector(interruptTapped)
+        interruptButton.isHidden = true
+        interruptButton.translatesAutoresizingMaskIntoConstraints = false
+        interruptButton.accessibilityID("ai-chat.interrupt-button")
+
+        let inputRow = NSStackView(views: [promptLabel, inputField, interruptButton, sendButton])
         inputRow.orientation = .horizontal
         inputRow.spacing = 10
         inputRow.setCustomSpacing(6, after: promptLabel)
@@ -901,6 +928,9 @@ public final class ChatView: NSView, NSTextFieldDelegate {
         let enabled = isComposerEnabled && viewModel.state != .responding
         inputField.isEnabled = enabled
         sendButton.isEnabled = enabled && !composerText.isEmpty
+        // Not gated on a turn being in flight: that is exactly when there is
+        // something to interrupt.
+        interruptButton.isEnabled = isComposerEnabled
         applyPromptTint(resolvedThemeScope.palette)
         applySendButtonTint(resolvedThemeScope.palette)
         onComposerEnablementChanged?()
@@ -993,9 +1023,37 @@ public final class ChatView: NSView, NSTextFieldDelegate {
         applyComposerEnablement()
     }
 
+    @objc private func interruptTapped() {
+        viewModel.interrupt()
+    }
+
+    /// Control-C and nothing else held — the chord a terminal reads as
+    /// interrupt.
+    private func isInterruptChord(_ event: NSEvent?) -> Bool {
+        guard isInterruptEnabled, isComposerEnabled, let event, event.type == .keyDown else { return false }
+        let held = event.modifierFlags.intersection([.control, .command, .option, .shift])
+        return held == .control && event.charactersIgnoringModifiers?.lowercased() == "c"
+    }
+
+    /// Control-C reaches the window as a key equivalent before the field
+    /// editor ever sees it, so it is caught here rather than as a text command.
+    public override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        if isComposerFocused, isInterruptChord(event) {
+            viewModel.interrupt()
+            return true
+        }
+        return super.performKeyEquivalent(with: event)
+    }
+
     public func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
         if commandSelector == #selector(NSResponder.insertNewline(_:)) {
             sendTapped()
+            return true
+        }
+        // Should Control-C get past the key-equivalent pass, the field editor
+        // finds nothing bound to it and reports a no-op — still the chord.
+        if commandSelector == Selector(("noop:")), isInterruptChord(NSApp.currentEvent) {
+            viewModel.interrupt()
             return true
         }
         return false

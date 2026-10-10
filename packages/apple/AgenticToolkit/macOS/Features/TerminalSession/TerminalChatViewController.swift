@@ -33,6 +33,9 @@ public final class TerminalChatViewController: NSViewController {
         let container = ThemedBackgroundView(role: .windowBackground)
         container.frame = NSRect(x: 0, y: 0, width: 360, height: 500)
         let chatView = ChatView(viewModel: viewModel)
+        // Control-C is how a terminal is stopped, so the chat standing in for
+        // its command line has to be able to send it.
+        chatView.isInterruptEnabled = true
         chatView.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(chatView)
         NSLayoutConstraint.activate([
