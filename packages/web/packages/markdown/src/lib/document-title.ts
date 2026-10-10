@@ -89,6 +89,16 @@ function frontmatterOf(content: string): Record<string, unknown> | null {
   }
 }
 
+/**
+ * Split a document into its frontmatter data and the body after the block. Same regex and
+ * parser as the title derivation, and no Node globals, so it runs in any browser bundle.
+ * A block that is absent, unparseable or not a mapping yields `{}`; the block is still
+ * removed from the body, so the `---` lines never reach rendered output.
+ */
+export function splitFrontmatter(content: string): { body: string; data: Record<string, unknown> } {
+  return { body: content.replace(FRONTMATTER_RE, ''), data: frontmatterOf(content) ?? {} };
+}
+
 /** First argument that is a non-empty (trimmed) string, else null. The backend's
  *  `firstNonEmpty`, verbatim — note it requires a STRING, so `title: 42` states no title and
  *  the search falls through to `name`. */

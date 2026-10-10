@@ -2,7 +2,8 @@
  * Async markdown → HTML pipeline.
  *
  * Stack (matches websites/main/cookbook to avoid duplicate deps):
- *   gray-matter            → strip YAML frontmatter (c5: never leak the --- block)
+ *   splitFrontmatter       → strip YAML frontmatter (c5: never leak the --- block);
+ *                            the `yaml` parser, no Node `Buffer`, so it runs in Vite builds
  *   remark-parse + gfm     → GFM markdown AST (tables, task lists, …)
  *   remark-rehype          → hast (allowDangerousHtml:false → embedded raw HTML
  *                            is DROPPED, never passed through)
@@ -21,7 +22,6 @@
  * The shiki highlighter is created once and cached at module scope.
  */
 
-import matter from 'gray-matter'
 import { unified } from 'unified'
 import remarkParse from 'remark-parse'
 import remarkGfm from 'remark-gfm'
@@ -33,6 +33,7 @@ import rehypeStringify from 'rehype-stringify'
 import rehypeShikiFromHighlighter from '@shikijs/rehype/core'
 import type { Highlighter } from 'shiki'
 import { remarkAdhAlerts } from './remark-adh-alerts'
+import { splitFrontmatter } from './document-title'
 
 // ── Shiki singleton ────────────────────────────────────────────────────────────
 
@@ -203,14 +204,14 @@ function getProcessor(): Promise<ReturnType<typeof buildProcessor>> {
  */
 export async function processMarkdown(raw: string): Promise<ProcessedMarkdown> {
   // c5: strip frontmatter before rendering so the --- block never reaches the body.
-  const { content, data: frontmatter } = matter(raw)
+  const { body: content, data: frontmatter } = splitFrontmatter(raw)
 
   const processor = await getProcessor()
   const result = await processor.process(content)
 
   return {
     html: String(result),
-    frontmatter: frontmatter as Record<string, unknown>,
+    frontmatter,
     title: typeof frontmatter['title'] === 'string' ? frontmatter['title'] : undefined,
   }
 }

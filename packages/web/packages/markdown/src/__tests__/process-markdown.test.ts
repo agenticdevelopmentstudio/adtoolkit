@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { processMarkdown } from '../lib/process-markdown'
 
 // The shiki highlighter + processor are module-level singletons — they init on
@@ -19,6 +19,25 @@ describe('processMarkdown', () => {
     expect(result.html).not.toContain('title: Hello')
     // The --- delimiters must NOT appear either
     expect(result.html).not.toContain('---')
+  })
+
+  // Browser bundles (Vite) have no Node `Buffer`; the frontmatter strip must not need it.
+  it('renders frontmatter documents without a Node Buffer global', async () => {
+    vi.stubGlobal('Buffer', undefined)
+    try {
+      const result = await processMarkdown('---\ntitle: No Buffer\n---\n\n# Body')
+      expect(result.title).toBe('No Buffer')
+      expect(result.html).toContain('Body')
+      expect(result.html).not.toContain('title:')
+    } finally {
+      vi.unstubAllGlobals()
+    }
+  })
+
+  it('returns empty metadata for a document without frontmatter', async () => {
+    const result = await processMarkdown('# Plain')
+    expect(result.frontmatter).toEqual({})
+    expect(result.title).toBeUndefined()
   })
 
   // c4: GFM table extension (remark-gfm)

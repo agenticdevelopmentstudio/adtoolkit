@@ -3232,9 +3232,6 @@ importers:
       '@shikijs/rehype':
         specifier: ^1.0.0
         version: 1.29.2
-      gray-matter:
-        specifier: ^4.0.3
-        version: 4.0.3
       lucide-react:
         specifier: ^1.16.0
         version: 1.34.0(react@19.2.8)

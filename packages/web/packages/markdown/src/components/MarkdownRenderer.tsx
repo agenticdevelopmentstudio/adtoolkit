@@ -38,7 +38,8 @@ export function MarkdownRenderer({ content, wrap = false }: MarkdownRendererProp
       .then((result) => {
         if (!cancelled) setRender({ phase: 'ready', html: result.html })
       })
-      .catch(() => {
+      .catch((err: unknown) => {
+        console.error('MarkdownRenderer: render failed', err)
         if (!cancelled) setRender({ phase: 'error' })
       })
 
