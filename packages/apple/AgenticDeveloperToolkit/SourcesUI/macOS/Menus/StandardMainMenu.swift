@@ -50,6 +50,10 @@ public enum StandardMainMenu {
         /// correct only for an app with nothing to configure.
         public var settings: MainMenuCommand?
 
+        /// The App menu's own commands, after Settings and before Services —
+        /// where macOS apps put app-wide items such as Check for Updates.
+        public var appCommands: [MainMenuCommand]
+
         /// Appended to File, after Close Window.
         public var fileCommands: [MainMenuCommand]
 
@@ -58,6 +62,10 @@ public enum StandardMainMenu {
 
         /// The host's own menus, in bar order, between View and Window.
         public var sections: [Section]
+
+        /// The app's own windows, between Zoom and Bring All to Front. AppKit
+        /// lists the open windows below all of them.
+        public var windowCommands: [MainMenuCommand]
 
         /// Appended to Help. The menu is built either way: AppKit shows its own
         /// search field there.
@@ -74,9 +82,11 @@ public enum StandardMainMenu {
             appName: String,
             about: MainMenuCommand? = nil,
             settings: MainMenuCommand? = nil,
+            appCommands: [MainMenuCommand] = [],
             fileCommands: [MainMenuCommand] = [],
             viewCommands: [MainMenuCommand] = [],
             sections: [Section] = [],
+            windowCommands: [MainMenuCommand] = [],
             helpCommands: [MainMenuCommand] = [],
             includesServices: Bool = true,
             includesFindCommands: Bool = true
@@ -84,9 +94,11 @@ public enum StandardMainMenu {
             self.appName = appName
             self.about = about
             self.settings = settings
+            self.appCommands = appCommands
             self.fileCommands = fileCommands
             self.viewCommands = viewCommands
             self.sections = sections
+            self.windowCommands = windowCommands
             self.helpCommands = helpCommands
             self.includesServices = includesServices
             self.includesFindCommands = includesFindCommands
@@ -134,7 +146,7 @@ public enum StandardMainMenu {
                                            commands: section.commands)))
         }
 
-        let windows = windowMenu()
+        let windows = windowMenu(configuration)
         menu.addItem(container(windows))
         let help = helpMenu(configuration)
         menu.addItem(container(help))
@@ -173,6 +185,11 @@ public enum StandardMainMenu {
         if var settings = configuration.settings {
             settings.identifier = settings.identifier ?? "settings"
             leading.append(settings)
+            leading.append(.separator)
+        }
+
+        if !configuration.appCommands.isEmpty {
+            leading.append(contentsOf: configuration.appCommands)
             leading.append(.separator)
         }
 
@@ -283,15 +300,21 @@ public enum StandardMainMenu {
 
     /// AppKit appends the app's windows below these, once the menu is installed
     /// as `NSApp.windowsMenu`.
-    private static func windowMenu() -> NSMenu {
-        submenu(title: "Window", prefix: "window", commands: [
+    private static func windowMenu(_ configuration: Configuration) -> NSMenu {
+        var commands: [MainMenuCommand] = [
             MainMenuCommand("Minimize", action: #selector(NSWindow.performMiniaturize(_:)),
                             key: "m", identifier: "minimize"),
             MainMenuCommand("Zoom", action: #selector(NSWindow.performZoom(_:)), identifier: "zoom"),
-            .separator,
-            MainMenuCommand("Bring All to Front", action: #selector(NSApplication.arrangeInFront(_:)),
-                            identifier: "bring-all-to-front")
-        ])
+            .separator
+        ]
+        if !configuration.windowCommands.isEmpty {
+            commands.append(contentsOf: configuration.windowCommands)
+            commands.append(.separator)
+        }
+        commands.append(MainMenuCommand("Bring All to Front",
+                                        action: #selector(NSApplication.arrangeInFront(_:)),
+                                        identifier: "bring-all-to-front"))
+        return submenu(title: "Window", prefix: "window", commands: commands)
     }
 
     // MARK: - Help

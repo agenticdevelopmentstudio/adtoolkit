@@ -1014,6 +1014,7 @@
 		6CF33AFD048B1F787A294E22 /* ExtensionEventTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4B9DDA6706B769D9233ECE4 /* ExtensionEventTests.swift */; };
 		6D0BF20C96FFB58CCA2DA019 /* HelpContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFA95BA5018DA1B03D25F0AC /* HelpContent.swift */; };
 		6D1196350DCDDEE8619B4E31 /* StubbedRegistrySession.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC49C2335992A4C0DCE09A99 /* StubbedRegistrySession.swift */; };
+		6D24284A1B769C3B5DAC984A /* MenuContributionCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEF85A42523E8BAB454F496A /* MenuContributionCommands.swift */; };
 		6D314F6F204D34918DA1E5FD /* FirstRunExperience.swift in Sources */ = {isa = PBXBuildFile; fileRef = 064FAE04F37F00C47FA800F7 /* FirstRunExperience.swift */; };
 		6D36928249D1C59F363EFC29 /* DocumentTabsViewControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDC161EA8BCC9DFC0D156775 /* DocumentTabsViewControllerTests.swift */; };
 		6D57E88B5DED4DAA16DDDD65 /* BucketsTopic.swift in Sources */ = {isa = PBXBuildFile; fileRef = D64B53CE7101F3A6779359B2 /* BucketsTopic.swift */; };
@@ -5501,6 +5502,7 @@
 		AE851F9CA31B8ACD20578EF4 /* KeyViewLoopTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyViewLoopTests.swift; sourceTree = "<group>"; };
 		AECD31BC726DD99FF1955D58 /* ReplyOnceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplyOnceTests.swift; sourceTree = "<group>"; };
 		AEDAC41ECF23C8FFA267A474 /* ComposableTabsArrangeOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposableTabsArrangeOverlayView.swift; sourceTree = "<group>"; };
+		AEF85A42523E8BAB454F496A /* MenuContributionCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuContributionCommands.swift; sourceTree = "<group>"; };
 		AF41318049E57FA80D09F0BE /* Money.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Money.swift; sourceTree = "<group>"; };
 		AF83EC0036A5B9DE88298D63 /* ChatSessionState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatSessionState.swift; sourceTree = "<group>"; };
 		AF868123851314DE127D42DE /* TriggerRowPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerRowPresenter.swift; sourceTree = "<group>"; };
@@ -8090,6 +8092,7 @@
 				199F50D682DC96ACB2B6CC40 /* ApplicationShutdownCoordinator.swift */,
 				45BDEB8085D50F4871406DB8 /* ClosureMenuItemTarget.swift */,
 				CCE1D123A34550F079C478CF /* MenuContribution.swift */,
+				AEF85A42523E8BAB454F496A /* MenuContributionCommands.swift */,
 				CDDC1F8466F6201B3ED33EA8 /* NewItemProvider.swift */,
 			);
 			path = AppShell;
@@ -13394,6 +13397,7 @@
 				2E383D52428083FCF7738063 /* MainThreadWorkspace.swift in Sources */,
 				97369AE07858C9D1A5BAEB8A /* MarkdownNoteStorage.swift in Sources */,
 				B59602DDBDB81AC8822E9707 /* MenuContribution.swift in Sources */,
+				6D24284A1B769C3B5DAC984A /* MenuContributionCommands.swift in Sources */,
 				CE5267C7925E07FA262DEB56 /* ModelChooserContent.swift in Sources */,
 				6764183D53E272C742AB5FE6 /* ModelChooserViewController.swift in Sources */,
 				EAF90C9B6B0322555869BC8B /* ModelPickerItem.swift in Sources */,

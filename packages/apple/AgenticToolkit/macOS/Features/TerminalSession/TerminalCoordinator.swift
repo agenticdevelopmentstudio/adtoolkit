@@ -99,8 +99,11 @@ public final class TerminalCoordinator: AppFeature, TerminalSessionWindowLifecyc
         Self.logger.info("Opened terminal window, total: \(self.windowControllers.count, privacy: .public)")
     }
 
+    /// Adds a session to the frontmost terminal window — not only the main
+    /// one, which is nil whenever the app is inactive (a script, a quietly
+    /// launched copy) though its windows are open.
     public func openNewTerminalSession() {
-        if let controller = NSApp.mainWindow?.windowController as? TerminalSessionWindowController {
+        if let controller = frontmostWindowController {
             controller.sessionManager.addSession()
         } else {
             openNewTerminalWindow()

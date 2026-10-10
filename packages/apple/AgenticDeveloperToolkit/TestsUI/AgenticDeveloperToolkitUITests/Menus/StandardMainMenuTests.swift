@@ -110,6 +110,34 @@ struct StandardMainMenuTests {
         #expect(identifiers(of: menu).contains("menu.workspace.sync"))
     }
 
+    /// App-wide commands sit between Settings and Services, and the host's
+    /// windows between Zoom and Bring All to Front, where macOS puts them.
+    @Test("the App and Window menus carry the host's commands in place")
+    func appAndWindowCommands() {
+        var configuration = minimal
+        configuration.settings = MainMenuCommand("Settings…", action: Selector(("showSettings:")), key: ",")
+        configuration.appCommands = [
+            MainMenuCommand("Check for Updates…", action: Selector(("checkForUpdates:")), identifier: "updates")
+        ]
+        configuration.windowCommands = [
+            MainMenuCommand("Terminal Window", action: Selector(("showTerminal:")), key: "1", identifier: "terminal")
+        ]
+        let menu = StandardMainMenu.make(configuration)
+
+        let app = menu.items[0].submenu?.items.map { $0.accessibilityIdentifier() } ?? []
+        let updates = app.firstIndex(of: "menu.app.updates")
+        #expect(updates != nil)
+        #expect(app.firstIndex(of: "menu.app.settings").map { $0 < (updates ?? 0) } == true)
+        #expect(app.firstIndex(of: "menu.app.services").map { $0 > (updates ?? .max) } == true)
+
+        let window = menu.items.first { $0.submenu?.title == "Window" }?.submenu?.items
+            .map { $0.accessibilityIdentifier() } ?? []
+        let terminal = window.firstIndex(of: "menu.window.terminal")
+        #expect(terminal != nil)
+        #expect(window.firstIndex(of: "menu.window.zoom").map { $0 < (terminal ?? 0) } == true)
+        #expect(window.firstIndex(of: "menu.window.bring-all-to-front").map { $0 > (terminal ?? .max) } == true)
+    }
+
     @Test("Help carries the host's commands")
     func helpCommands() {
         var configuration = minimal
