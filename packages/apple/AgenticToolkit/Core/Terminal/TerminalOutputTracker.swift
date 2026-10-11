@@ -48,6 +48,13 @@ public struct TerminalOutputTracker: Sendable {
 
     public init() {}
 
+    /// Reads everything `snapshot` still holds, from its first row — for
+    /// showing what a terminal printed before anyone was listening, its
+    /// startup text among it.
+    public init(fromTopOf snapshot: TerminalScreenSnapshot) {
+        nextRow = snapshot.firstRow
+    }
+
     /// Reads from `snapshot`'s cursor row onward, so history from before the
     /// chat was connected is not replayed as if it were a reply.
     public init(startingAt snapshot: TerminalScreenSnapshot) {

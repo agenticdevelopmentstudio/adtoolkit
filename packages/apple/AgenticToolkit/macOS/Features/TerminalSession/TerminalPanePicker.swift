@@ -4,8 +4,9 @@ import AppKit
 /// asks them to, every click in the window is caught until they do, and the
 /// pane they pick is outlined while the panel confirms it.
 ///
-/// Any pane whose content is ``TerminalPaneConnectable`` with a terminal to
-/// offer can be picked; a click anywhere else says so and keeps waiting.
+/// Any pane whose content is ``TerminalPaneConnectable`` can be picked,
+/// running or not — starting its terminal is the connection's business. A
+/// click anywhere else says so and keeps waiting.
 /// Cancel, or Escape, ends it without a choice.
 ///
 /// Hold on to the picker while it runs — it reports through `onFinish` when
@@ -13,8 +14,8 @@ import AppKit
 @MainActor
 public final class TerminalPanePicker: NSObject {
 
-    /// Called once, when the user picks a terminal.
-    public var onPick: ((ComposableTabsPaneViewController, TerminalSession) -> Void)?
+    /// Called once, when the user picks a terminal pane.
+    public var onPick: ((ComposableTabsPaneViewController, TerminalPaneConnectable) -> Void)?
     /// Called once, when the panel has closed — picked or cancelled.
     public var onFinish: (() -> Void)?
 
@@ -127,17 +128,12 @@ public final class TerminalPanePicker: NSObject {
             message.stringValue = "That isn't a terminal. Click on a terminal to connect to."
             return
         }
-        guard let terminal = connectable.connectableTerminal else {
-            message.stringValue = "That terminal isn't running yet. Click on a running terminal."
-            return
-        }
-
         hasPicked = true
         outline(pane.view)
         message.stringValue = "Connected to \(pane.resolvedTitle)."
         button.title = "OK"
         button.keyEquivalent = "\r"
-        onPick?(pane, terminal)
+        onPick?(pane, connectable)
     }
 
     private func outline(_ view: NSView) {

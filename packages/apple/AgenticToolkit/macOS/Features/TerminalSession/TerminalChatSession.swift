@@ -27,6 +27,9 @@ public final class TerminalChatSession {
     private var tracker = TerminalOutputTracker()
     private var outputSubscription: AnyCancellable?
     private var continuation: AsyncStream<ChatEvent>.Continuation?
+    /// Events from before anything listened — a connection made before the
+    /// transcript subscribed — handed over when it does.
+    private var unsentEvents: [ChatEvent] = []
 
     /// The caller waiting on output — see ``run(_:settle:timeout:)``.
     private var currentWait: OutputWait?
@@ -38,27 +41,33 @@ public final class TerminalChatSession {
         self.quietPeriod = quietPeriod
     }
 
-    /// Connects to `terminal`, or disconnects when it is nil. Only output from
-    /// this moment on is reported — what was already on screen is history, not
-    /// a reply to anything said here.
+    /// Connects to `terminal`, or disconnects when it is nil. What the
+    /// terminal has already printed — its startup text, and the prompt it is
+    /// waiting at — arrives at once as the first reply, so the chat opens on
+    /// what the terminal shows rather than on nothing.
     public func connect(to terminal: TerminalSession?) {
         guard terminal !== self.terminal || terminal == nil else { return }
         outputSubscription = nil
         self.terminal = terminal
         guard let terminal else { return }
 
-        tracker = TerminalOutputTracker(startingAt: terminal.screenSnapshot())
+        tracker = TerminalOutputTracker(fromTopOf: terminal.screenSnapshot())
         outputSubscription = terminal.outputActivity
             .debounce(for: quietPeriod, scheduler: RunLoop.main)
             .sink { [weak self] in self?.reportNewOutput() }
+        reportNewOutput(claimable: false)
     }
 
-    private func reportNewOutput() {
+    /// - Parameter claimable: Whether the output can be a reply a caller of
+    ///   ``run(_:settle:timeout:)`` is waiting for. What was on screen before
+    ///   connecting never is.
+    private func reportNewOutput(claimable: Bool = true) {
         guard let terminal, let output = tracker.newOutput(in: terminal.screenSnapshot()) else { return }
         let id = UUID().uuidString
-        continuation?.yield(.responseStarted(messageID: id))
-        continuation?.yield(.responseDelta(messageID: id, text: output))
-        continuation?.yield(.responseFinished(messageID: id, stopReason: nil))
+        yield(.responseStarted(messageID: id))
+        yield(.responseDelta(messageID: id, text: output))
+        yield(.responseFinished(messageID: id, stopReason: nil))
+        guard claimable else { return }
         if let currentWait {
             currentWait.received(output)
         } else {
@@ -117,6 +126,10 @@ public final class TerminalChatSession {
     }
 
     private static let notConnected = "The Terminal Chat is not connected to a terminal."
+
+    private func yield(_ event: ChatEvent) {
+        if let continuation { continuation.yield(event) } else { unsentEvents.append(event) }
+    }
 
     /// One caller at a time: a new wait ends the previous one with what it
     /// had, and starts from the output nobody claimed.
@@ -194,6 +207,8 @@ extension TerminalChatSession: @preconcurrency ChatSession {
             // Never `.responding`: a shell has no turns, so the composer is
             // never locked waiting for one to end.
             continuation.yield(.stateChanged(.ready))
+            for event in self.unsentEvents { continuation.yield(event) }
+            self.unsentEvents.removeAll()
         }
     }
 

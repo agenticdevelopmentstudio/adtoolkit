@@ -95,14 +95,45 @@ public final class TerminalChatViewController: NSViewController {
         set { stateStore.setPaneStateValue(newValue?.uuidString, forKey: Keys.connectedPane) }
     }
 
+    /// Re-makes the remembered connection, starting that pane's terminal if
+    /// it has not started — a minimized pane never appears to start itself.
     private func reconnect() {
-        guard let connectedPaneID else { return applyConnectionState() }
-        let terminal = tabPanes()
-            .first { $0.nodeID == connectedPaneID }
-            .flatMap { ($0.contentViewController as? TerminalPaneConnectable)?.connectableTerminal }
-        session.connect(to: terminal)
-        applyConnectionState()
+        guard let connectedPaneID,
+              let pane = tabPanes().first(where: { $0.nodeID == connectedPaneID }),
+              let connectable = pane.contentViewController as? TerminalPaneConnectable
+        else { return applyConnectionState() }
+        connect(toPane: pane, connectable)
     }
+
+    /// Connects to `connectable`'s terminal, starting it first if need be, and
+    /// remembers the pane.
+    private func connect(toPane pane: ComposableTabsPaneViewController, _ connectable: TerminalPaneConnectable) {
+        connectedPaneID = pane.nodeID
+        if let terminal = connectable.connectableTerminal {
+            session.connect(to: terminal)
+            return applyConnectionState()
+        }
+        guard !isStarting else { return }
+        isStarting = true
+        applyConnectionState()
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                let terminal = try await connectable.startConnectableTerminal()
+                // The user may have chosen another pane while this one started.
+                if self.connectedPaneID == pane.nodeID { self.session.connect(to: terminal) }
+            } catch {
+                self.startError = error.localizedDescription
+            }
+            self.isStarting = false
+            self.applyConnectionState()
+        }
+    }
+
+    /// A terminal is being started for this chat to connect to.
+    private var isStarting = false
+    /// Why the last start failed, shown until the next attempt.
+    private var startError: String?
 
     private func applyConnectionState() {
         guard let chatView else { return }
@@ -110,7 +141,12 @@ public final class TerminalChatViewController: NSViewController {
         chatView.isComposerEnabled = connected
         chatView.composerPrompt = connected ? "$" : nil
         if connected {
+            startError = nil
             chatView.setStatus(nil, icon: nil)
+        } else if isStarting {
+            chatView.setStatus("Starting the terminal…", icon: nil)
+        } else if let startError {
+            chatView.setStatus("The terminal could not start: \(startError)", icon: nil)
         } else if connectedPaneID != nil {
             chatView.setStatus("Its terminal isn't available yet — or click the link to choose another", icon: nil)
         } else {
@@ -162,11 +198,8 @@ public final class TerminalChatViewController: NSViewController {
         let picker = TerminalPanePicker(window: window) { [weak self] in
             self?.tabPanes() ?? []
         }
-        picker.onPick = { [weak self] pane, terminal in
-            guard let self else { return }
-            self.connectedPaneID = pane.nodeID
-            self.session.connect(to: terminal)
-            self.applyConnectionState()
+        picker.onPick = { [weak self] pane, connectable in
+            self?.connect(toPane: pane, connectable)
         }
         picker.onFinish = { [weak self] in self?.picker = nil }
         self.picker = picker
