@@ -487,6 +487,13 @@ final class SignInViewModelTests: XCTestCase {
         XCTAssertEqual(harness.viewModel.state.errorMessage, "The sign-in response did not include a code.")
     }
 
+    func testSocialRejectionNeverBlamesAPassword() async {
+        let harness = makeHarness(social: .code("abc123"))
+        harness.stub.on(.post, "/oauth/signin/exchange", status: 401, json: #"{"error":{"message":"bad code"}}"#)
+        await harness.viewModel.signInWithSocial(.github)
+        XCTAssertEqual(harness.viewModel.state.errorMessage, "The hub didn't accept that sign-in. Please try again.")
+    }
+
     // MARK: SignInSession seam
 
     func testSubmitCredentialsOverStubSessionReportsSampleUser() async {

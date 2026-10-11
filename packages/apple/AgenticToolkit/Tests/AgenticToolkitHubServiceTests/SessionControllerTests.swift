@@ -556,6 +556,30 @@ final class SessionControllerTests: XCTestCase {
     /// directly or `ClientError`-wrapped).
     private struct UnrecognizedTestError: Error {}
 
+    func testBrowserSignInMessages() {
+        XCTAssertEqual(
+            SessionController.browserSignInMessage(for: SessionError.invalidCredentials),
+            "The hub didn't accept that sign-in. Please try again."
+        )
+        XCTAssertEqual(
+            SessionController.browserSignInMessage(for: LoopbackAuthServerError.noFreePort([1, 2])),
+            "Another sign-in is already in progress. Finish or close it, then try again."
+        )
+        XCTAssertEqual(
+            SessionController.browserSignInMessage(for: LoopbackAuthServerError.wrongPort(requested: 1, bound: 2)),
+            "Couldn't start the sign-in. Please try again."
+        )
+        XCTAssertEqual(
+            SessionController.browserSignInMessage(for: LoopbackAuthServerError.timedOut(300)),
+            "The sign-in took too long and was stopped. Please try again."
+        )
+        // Anything else reads exactly as the password form does.
+        XCTAssertEqual(
+            SessionController.browserSignInMessage(for: URLError(.notConnectedToInternet)),
+            SessionController.userMessage(for: URLError(.notConnectedToInternet))
+        )
+    }
+
     func testUserMessages() {
         XCTAssertEqual(
             SessionController.userMessage(for: SessionError.invalidCredentials),

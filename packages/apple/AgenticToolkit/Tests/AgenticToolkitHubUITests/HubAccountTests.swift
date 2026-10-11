@@ -1,3 +1,4 @@
+import AgenticDeveloperHubClient
 import AgenticDeveloperToolkit
 import AgenticToolkitHubService
 @testable import AgenticToolkitHubUI
@@ -206,7 +207,7 @@ struct HubAccountTests {
         account.presentSignIn(from: AccountPresentationAnchor(NSObject()))
         await settle(account)
         #expect(account.state == .signedOut)
-        #expect(account.message == SessionController.userMessage(for: Offline()))
+        #expect(account.message == SessionController.browserSignInMessage(for: Offline()))
     }
 
     @Test("a second Login while the browser is up is ignored, then Login works again")
@@ -274,5 +275,25 @@ struct HubAccountTests {
         let account = HubAccount(session: FakeSession())
         let browser = account.browser as? WebAuthSocialSignIn
         #expect(browser?.ephemeral == true)
+    }
+
+    @Test("a web sign-in the hub turns down never blames a password")
+    func webRejectedNotPassword() async {
+        let session = FakeSession()
+        session.webOutcome = .failure(SessionError.invalidCredentials)
+        let account = make(session)
+        account.presentSignIn(from: AccountPresentationAnchor(NSObject()))
+        await settle(account)
+        #expect(account.message == "The hub didn't accept that sign-in. Please try again.")
+    }
+
+    @Test("a web sign-in that timed out says so")
+    func webTimedOut() async {
+        let session = FakeSession()
+        session.webOutcome = .failure(LoopbackAuthServerError.timedOut(300))
+        let account = make(session)
+        account.presentSignIn(from: AccountPresentationAnchor(NSObject()))
+        await settle(account)
+        #expect(account.message == "The sign-in took too long and was stopped. Please try again.")
     }
 }

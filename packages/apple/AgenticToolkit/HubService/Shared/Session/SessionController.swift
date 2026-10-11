@@ -346,6 +346,25 @@ public final class SessionController {
         }
     }
 
+    /// The message for a failed browser sign-in — the hosted page or a
+    /// social provider. The user typed no password into this app, so a
+    /// rejection must not read as one; the loopback listener's own failures
+    /// say what actually happened. Everything else reads as `userMessage`.
+    public static func browserSignInMessage(for error: any Error) -> String {
+        let error = unwrapped(error)
+        if let loopback = error as? LoopbackAuthServerError {
+            switch loopback {
+            case .noFreePort: return "Another sign-in is already in progress. Finish or close it, then try again."
+            case .wrongPort: return "Couldn't start the sign-in. Please try again."
+            case .timedOut: return "The sign-in took too long and was stopped. Please try again."
+            }
+        }
+        if case .unauthorized = HubError.from(error) {
+            return "The hub didn't accept that sign-in. Please try again."
+        }
+        return userMessage(for: error)
+    }
+
     // MARK: Private
 
     /// The shared failure policy for every sign-in entry point: on a thrown

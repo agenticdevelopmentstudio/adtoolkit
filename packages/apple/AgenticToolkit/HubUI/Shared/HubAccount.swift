@@ -76,7 +76,7 @@ public final class HubAccount: Account {
             } catch is CancellationError {
                 finishSigningIn(failure: nil)
             } catch {
-                finishSigningIn(failure: SessionController.userMessage(for: error))
+                finishSigningIn(failure: SessionController.browserSignInMessage(for: error))
             }
         }
     }

@@ -194,7 +194,7 @@ public final class SignInViewModel {
 
     public func signInWithSocial(_ provider: SocialProvider) async {
         guard !state.isBusy else { return }
-        await run { [self] in
+        await run(describe: SessionController.browserSignInMessage) { [self] in
             let user = try await session.signInWithSocial(provider, using: social)
             onSignedIn(user)
         }
@@ -205,7 +205,11 @@ public final class SignInViewModel {
     /// Wraps one async intent: busy flag on, messages cleared, errors mapped.
     /// A `CancellationError` (the user dismissed a passkey or web sheet) is
     /// silent by design — nothing went wrong that the user does not know about.
-    private func run(_ body: @escaping @MainActor @Sendable () async throws -> Void) async {
+    /// `describe` words the failure; a browser sign-in passes its own.
+    private func run(
+        describe: @MainActor (any Error) -> String = SessionController.userMessage,
+        _ body: @escaping @MainActor @Sendable () async throws -> Void
+    ) async {
         state.isBusy = true
         state.errorMessage = nil
         state.infoMessage = nil
@@ -220,7 +224,7 @@ public final class SignInViewModel {
         } catch is CancellationError {
             return
         } catch {
-            state.errorMessage = SessionController.userMessage(for: error)
+            state.errorMessage = describe(error)
         }
     }
 }
