@@ -316,6 +316,12 @@ public final class ChatCompletionsStreamTranslator {
         }
         finished = true
         out.append(startIfNeeded())
+        // A pending call that has a name is started now with its buffered
+        // arguments; one with no name is dropped.
+        for key in calls.keys.sorted(by: >) {
+            guard let call = calls[key], call.blockIndex == nil, !call.closed, !call.name.isEmpty else { continue }
+            out.append(startToolBlock(key: key))
+        }
         out.append(closeOpenBlock())
         out.append(event("message_delta", [
             "type": "message_delta",
@@ -330,7 +336,10 @@ public final class ChatCompletionsStreamTranslator {
         guard let text = String(data: line, encoding: .utf8), text.hasPrefix("data:") else { return Data() }
         var payload = text.dropFirst(5)
         if payload.hasPrefix(" ") { payload = payload.dropFirst() }
-        if payload == "[DONE]" { return finish() }
+        if payload == "[DONE]" {
+            buffer = Data()   // nothing after [DONE] may be processed
+            return finish()
+        }
         guard let root = (try? JSONSerialization.jsonObject(with: Data(payload.utf8))) as? [String: Any] else {
             return Data()
         }
@@ -415,7 +424,7 @@ public final class ChatCompletionsStreamTranslator {
     private func key(for call: [String: Any]) -> Int {
         if let index = call["index"] as? Int { return index }
         let id = call["id"] as? String
-        if let last = lastKeylessKey, id == nil || id == "" || calls[last]?.id == id || calls[last]?.id == nil {
+        if let last = lastKeylessKey, id == nil || id == "" || calls[last]?.id == id {
             return last
         }
         let key = nextKeylessKey
@@ -438,31 +447,38 @@ public final class ChatCompletionsStreamTranslator {
             return out   // its block is closed; Anthropic cannot reopen it
         }
         if state.blockIndex == nil {
-            guard state.id != nil || !state.name.isEmpty else {
+            guard !state.name.isEmpty else {
                 calls[key]?.pendingArguments += arguments
                 return out
             }
-            out.append(closeOpenBlock())
-            let index = nextIndex
-            nextIndex += 1
-            calls[key]?.blockIndex = index
-            openIndex = index
-            openTool = key
-            out.append(event("content_block_start", [
-                "type": "content_block_start", "index": index,
-                "content_block": [
-                    "type": "tool_use",
-                    "id": state.id ?? "toolu_" + UUID().uuidString.replacingOccurrences(of: "-", with: ""),
-                    "name": state.name,
-                    "input": [String: Any]()
-                ]
-            ]))
-            let pending = state.pendingArguments + arguments
-            calls[key]?.pendingArguments = ""
-            out.append(argumentsDelta(pending, index: index))
+            out.append(startToolBlock(key: key, extraArguments: arguments))
         } else if let index = state.blockIndex {
             out.append(argumentsDelta(arguments, index: index))
         }
+        return out
+    }
+
+    /// Opens the tool block for `key` (closing any open block first) and
+    /// flushes its buffered arguments as one delta.
+    private func startToolBlock(key: Int, extraArguments: String = "") -> Data {
+        guard let state = calls[key] else { return Data() }
+        var out = closeOpenBlock()
+        let index = nextIndex
+        nextIndex += 1
+        calls[key]?.blockIndex = index
+        openIndex = index
+        openTool = key
+        out.append(event("content_block_start", [
+            "type": "content_block_start", "index": index,
+            "content_block": [
+                "type": "tool_use",
+                "id": state.id ?? "toolu_" + UUID().uuidString.replacingOccurrences(of: "-", with: ""),
+                "name": state.name,
+                "input": [String: Any]()
+            ]
+        ]))
+        out.append(argumentsDelta(state.pendingArguments + extraArguments, index: index))
+        calls[key]?.pendingArguments = ""
         return out
     }
 

@@ -366,11 +366,11 @@ final class AnthropicChatTranslationTests: XCTestCase {
         XCTAssertEqual(names.filter { $0 == "content_block_start" }.count, 3)
     }
 
-    func testKeylessToolCallsSplitOnNewIDAndDelayStartUntilNamed() {
+    func testKeylessIDStartsNewCallEvenWhenCurrentHasNoID() {
         let stream = sse([
-            toolChunk(nil, args: "{\"a\""),                       // no id, no name yet: buffered
-            toolChunk(nil, id: "k0", name: "alpha", args: ":1}"),
-            toolChunk(nil, args: ""),
+            toolChunk(nil, args: "{\"orphan\""),                  // no id, no name: never started, dropped
+            toolChunk(nil, id: "k0", name: "alpha", args: "{\"a\":"),
+            toolChunk(nil, args: "1}"),
             toolChunk(nil, id: "k1", name: "beta", args: "{}")
         ])
         let events = parseEvents(run(stream, byteAtATime: true))
@@ -381,6 +381,29 @@ final class AnthropicChatTranslationTests: XCTestCase {
         let first = events.filter { $0.name == "content_block_delta" && $0.payload["index"] as? Int == 0 }
             .compactMap { ($0.payload["delta"] as? NSDictionary)?["partial_json"] as? String }.joined()
         XCTAssertEqual(first, "{\"a\":1}")
+    }
+
+    func testToolBlockWaitsForNameNotJustID() {
+        let stream = sse([
+            toolChunk(0, id: "c0", args: "{\"a\":"),
+            toolChunk(0, args: "1}"),
+            toolChunk(0, name: "alpha")
+        ])
+        let events = parseEvents(run(stream, byteAtATime: false))
+        XCTAssertEqual(events.map(\.name), [
+            "message_start", "content_block_start", "content_block_delta", "content_block_stop",
+            "message_delta", "message_stop"
+        ])
+        let start = events[1].payload["content_block"] as? NSDictionary
+        XCTAssertEqual(start?["name"] as? String, "alpha")
+        XCTAssertEqual(start?["id"] as? String, "c0")
+        XCTAssertEqual((events[2].payload["delta"] as? NSDictionary)?["partial_json"] as? String, "{\"a\":1}")
+    }
+
+    func testNamelessPendingCallDroppedAtFinish() {
+        let stream = sse([toolChunk(0, id: "c0", args: "{}")])
+        let events = parseEvents(run(stream, byteAtATime: false))
+        XCTAssertEqual(events.map(\.name), ["message_start", "message_delta", "message_stop"])
     }
 
     func testNameArrivingAfterIDIsNotLostWhenStartWaitsForIt() {
@@ -408,15 +431,31 @@ final class AnthropicChatTranslationTests: XCTestCase {
 
     func testCRLFSplitAcrossChunks() {
         let translator = ChatCompletionsStreamTranslator(model: "m", messageID: "msg_1")
-        let line = "data: " + (String(data: json(["choices": [["delta": ["content": "x"]]]]), encoding: .utf8) ?? "")
-        var out = translator.consume(Data(line.utf8))
+        let body = String(data: json(["choices": [["index": 0, "delta": ["content": "x"]]]]), encoding: .utf8) ?? ""
+        var out = translator.consume(Data(("data: " + body).utf8))
+        XCTAssertTrue(out.isEmpty)
         out.append(translator.consume(Data("\r".utf8)))
-        XCTAssertTrue(out.isEmpty || !(String(data: out, encoding: .utf8) ?? "").contains("content_block_delta"))
-        out.append(translator.consume(Data("\n\r\n".utf8)))
+        XCTAssertTrue(out.isEmpty)
+        out.append(translator.consume(Data("\n".utf8)))
+        XCTAssertEqual(parseEvents(out).map(\.name), ["message_start", "content_block_start", "content_block_delta"])
+        let more = translator.consume(Data("\r\n".utf8))   // blank line: nothing
+        XCTAssertTrue(more.isEmpty)
+        let closing = parseEvents(translator.finish())
+        XCTAssertEqual(closing.map(\.name), ["content_block_stop", "message_delta", "message_stop"])
+        let texts = parseEvents(out).compactMap { ($0.payload["delta"] as? NSDictionary)?["text"] as? String }
+        XCTAssertEqual(texts, ["x"])
+    }
+
+    func testLinesAfterDoneInSameChunkNeverProcessed() {
+        let ghostChunk: [String: Any] = ["choices": [["index": 0, "delta": ["content": "ghost"]]]]
+        let ghost = String(data: json(ghostChunk), encoding: .utf8) ?? ""
+        let input = Data(("data: [DONE]\ndata: " + ghost + "\n").utf8)
+        let translator = ChatCompletionsStreamTranslator(model: "m", messageID: "msg_1")
+        var out = translator.consume(input)
         out.append(translator.finish())
         let events = parseEvents(out)
-        let texts = events.compactMap { ($0.payload["delta"] as? NSDictionary)?["text"] as? String }
-        XCTAssertEqual(texts, ["x"])
+        XCTAssertEqual(events.map(\.name), ["message_start", "message_delta", "message_stop"])
+        XCTAssertFalse(events.contains { $0.name == "content_block_delta" })
     }
 
     func testDataAfterDoneIsIgnored() {
