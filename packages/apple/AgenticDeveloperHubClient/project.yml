@@ -19,11 +19,15 @@ settings:
     SKIP_INSTALL: YES
     GENERATE_INFOPLIST_FILE: YES
     DEAD_CODE_STRIPPING: YES
-    ENABLE_TESTABILITY: YES
     CODE_SIGNING_ALLOWED: NO
     CODE_SIGNING_REQUIRED: NO
     CODE_SIGN_IDENTITY: ""
     PRODUCT_NAME: $(TARGET_NAME)
+  configs:
+    # Testability is for the Debug test bundle; in Release it only costs
+    # optimisation of the generated client.
+    Debug:
+      ENABLE_TESTABILITY: YES
 
 packages:
   swift-openapi-runtime:
@@ -56,6 +60,14 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.mikefullerton.AgenticDeveloperHubClient
         SDKROOT: auto
         IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+      configs:
+        # The generated client is about 1,000 operations; unstripped, its local
+        # symbols are most of the binary. Strip them in every Release build,
+        # not only an archive, and keep the exports consumers link against.
+        Release:
+          DEPLOYMENT_POSTPROCESSING: YES
+          STRIP_INSTALLED_PRODUCT: YES
+          STRIP_STYLE: non-global
     dependencies:
       - package: swift-openapi-runtime
         product: OpenAPIRuntime
