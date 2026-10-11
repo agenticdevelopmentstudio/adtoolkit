@@ -13,8 +13,11 @@ import AgenticToolkitCoreUI
 ///   user asks. Lifting it takes the eye on the screen, or the eye in the
 ///   title bar, and the Mac owner's authentication every time.
 /// - **The privacy words** are the vault's, read from the keychain only after
-///   authentication. Until the first unlock the shell has not even started:
-///   with no words known, nothing it printed could be concealed.
+///   authentication. The shell starts when the pane first appears, as any
+///   terminal does — but only once the words are in memory, because with none
+///   known nothing it printed could be concealed. So appearing unlocks the
+///   vault (one prompt, and none if another pane already unlocked it), and the
+///   privacy screen stays up: starting is not showing.
 /// - **Nothing outside the app can read it.** The terminal sits inside a
 ///   ``ConcealedContainerView``, so accessibility clients and screen readers
 ///   find no element there, a scripted view dump stops at it, and while it is
@@ -42,6 +45,9 @@ public final class PrivateTerminalViewController: NSViewController {
     private var cancellables = Set<AnyCancellable>()
     /// An authentication is on screen, so a second click does not stack another.
     private var isAuthenticating = false
+    /// The pane has appeared and asked to start, so reappearing after a
+    /// cancelled prompt does not ask again — the eye is there for that.
+    private var hasAskedToStart = false
 
     /// Whether the contents are on screen.
     public private(set) var isRevealed = false {
@@ -128,8 +134,8 @@ public final class PrivateTerminalViewController: NSViewController {
         vault.$filter
             .receive(on: RunLoop.main)
             .sink { [weak self] filter in
-                guard let self, let filter, self.session.isStarted else { return }
-                self.session.privacyFilter = filter
+                guard let self, let filter, self.session.isStarted || self.hasAskedToStart else { return }
+                self.startOrUpdate(filter: filter)
             }
             .store(in: &cancellables)
 
@@ -142,6 +148,40 @@ public final class PrivateTerminalViewController: NSViewController {
         themeObserver = ThemePaletteObserver(host: view) { [weak self] palette in
             self?.applyAppearance(palette: palette)
         }
+    }
+
+    public override func viewDidAppear() {
+        super.viewDidAppear()
+        startWhenVisible()
+    }
+
+    // MARK: - Starting
+
+    /// Starts the shell the first time the pane is on screen, unlocking the
+    /// words to do it. A cancelled prompt leaves the pane waiting for its eye.
+    private func startWhenVisible() {
+        guard !session.isStarted, !hasAskedToStart else { return }
+        hasAskedToStart = true
+        if let filter = vault.filter { return startOrUpdate(filter: filter) }
+        Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await self.vault.unlock(reason: "start the private terminal")
+                if let filter = self.vault.filter { self.startOrUpdate(filter: filter) }
+            } catch {
+                self.screenMessage.stringValue = error.localizedDescription
+            }
+        }
+    }
+
+    /// Hands the session its words — which starts the shell the first time —
+    /// and tells anything waiting to connect that there is now a terminal.
+    private func startOrUpdate(filter: TextSubstitutionFilter) {
+        let wasStarted = session.isStarted
+        session.privacyFilter = filter
+        guard !wasStarted, session.isStarted else { return }
+        applyRevealState()
+        NotificationCenter.default.post(name: .terminalPaneConnectableDidChange, object: self)
     }
 
     // MARK: - Revealing
@@ -164,7 +204,7 @@ public final class PrivateTerminalViewController: NSViewController {
             defer { self.isAuthenticating = false }
             do {
                 try await self.vault.authenticate(reason: "show the private terminal")
-                self.session.privacyFilter = self.vault.filter
+                if let filter = self.vault.filter { self.startOrUpdate(filter: filter) }
                 self.isRevealed = true
             } catch {
                 self.screenMessage.stringValue = error.localizedDescription
@@ -293,8 +333,8 @@ extension PrivateTerminalViewController: PaneOptionsProviding {
 }
 
 extension PrivateTerminalViewController: TerminalPaneConnectable {
-    /// Offered once the shell is running; before the first unlock there is
-    /// nothing to type into.
+    /// Offered once the shell is running; until the words are unlocked there
+    /// is nothing to type into.
     public var connectableTerminal: TerminalSession? { session.isStarted ? session : nil }
 }
 

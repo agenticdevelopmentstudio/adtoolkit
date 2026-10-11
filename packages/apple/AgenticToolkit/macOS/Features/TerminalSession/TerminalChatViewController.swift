@@ -5,8 +5,10 @@ import AgenticToolkitCoreMacOS
 /// A chat pane that talks to a terminal pane: what is typed here is typed
 /// there, and what the terminal prints comes back as replies.
 ///
-/// Which terminal is the user's choice: Connect to Terminal… in the pane's
-/// Settings puts up a ``TerminalPanePicker`` and they click the one they mean.
+/// Which terminal is the user's choice: the link beside the gear (or Connect
+/// to Terminal… in the pane's Settings) puts up a ``TerminalPanePicker`` and
+/// they click the one they mean. The link shows whether the chat is connected;
+/// clicking it while connected offers to disconnect.
 /// Any pane offering ``TerminalPaneConnectable`` will do — the chat knows
 /// nothing about what kind of terminal it is. The choice is remembered by
 /// pane and re-made when the chat next appears.
@@ -22,6 +24,7 @@ public final class TerminalChatViewController: NSViewController {
     private let directory: TerminalChatDirectory?
     private let listing: TerminalChatDirectory.Listing?
     private var picker: TerminalPanePicker?
+    private var connectableObserver: NSObjectProtocol?
 
     /// - Parameters:
     ///   - directory: Where this chat lists itself, under `listing`, for
@@ -43,6 +46,16 @@ public final class TerminalChatViewController: NSViewController {
         stateStore.setPaneStateValue(nil, forKey: Keys.legacyConnected)
         stateStore.setPaneStateValue(nil, forKey: Keys.legacySubstitutions)
         if let directory, let listing { directory.add(session, as: listing) }
+        // A terminal that starts after this chat appeared — a private one
+        // waiting on its words — is connected to the moment it is there.
+        connectableObserver = NotificationCenter.default.addObserver(
+            forName: .terminalPaneConnectableDidChange, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self, self.session.terminal == nil, self.isViewLoaded, self.view.window != nil else { return }
+                self.reconnect()
+            }
+        }
     }
 
     @available(*, unavailable)
@@ -99,11 +112,46 @@ public final class TerminalChatViewController: NSViewController {
         if connected {
             chatView.setStatus(nil, icon: nil)
         } else if connectedPaneID != nil {
-            chatView.setStatus(
-                "Its terminal isn't available — use Connect to Terminal… in this pane's Settings", icon: nil)
+            chatView.setStatus("Its terminal isn't available yet — or click the link to choose another", icon: nil)
         } else {
-            chatView.setStatus("Not connected — use Connect to Terminal… in this pane's Settings", icon: nil)
+            chatView.setStatus("Not connected — click the link to choose a terminal", icon: nil)
         }
+        (parent as? PaneViewController)?.refreshAccessories()
+    }
+
+    /// The pane this chat is connected to, while it is in the tab.
+    private var connectedPane: ComposableTabsPaneViewController? {
+        guard let connectedPaneID else { return nil }
+        return tabPanes().first { $0.nodeID == connectedPaneID }
+    }
+
+    @objc private func linkPressed(_ sender: Any?) {
+        if session.terminal == nil { connectPressed(sender) } else { confirmDisconnect() }
+    }
+
+    /// Asks before letting go of the terminal: the chat's history stays, but
+    /// nothing more is typed into or read from it.
+    private func confirmDisconnect() {
+        guard let window = view.window else { return }
+        let alert = NSAlert()
+        if let name = connectedPane?.resolvedTitle {
+            alert.messageText = "Disconnect from \(name)?"
+        } else {
+            alert.messageText = "Disconnect from the terminal?"
+        }
+        alert.informativeText = "This chat stops typing into the terminal and reading what it prints."
+        alert.addButton(withTitle: "Disconnect")
+        alert.addButton(withTitle: "Cancel")
+        alert.beginSheetModal(for: window) { [weak self] response in
+            guard response == .alertFirstButtonReturn else { return }
+            MainActor.assumeIsolated { self?.disconnect() }
+        }
+    }
+
+    private func disconnect() {
+        connectedPaneID = nil
+        session.connect(to: nil)
+        applyConnectionState()
     }
 
     /// Closes the Settings sheet and lets the user click the terminal to
@@ -133,6 +181,65 @@ public final class TerminalChatViewController: NSViewController {
     }
 }
 
+extension TerminalChatViewController: PaneAccessoryProviding {
+
+    /// The link beside the gear: whole while connected, broken while not.
+    public func makePaneAccessoryViews() -> [NSView] {
+        let connected = session.terminal != nil
+        let title: String
+        if connected {
+            title = connectedPane.map { "Connected to \($0.resolvedTitle) — click to disconnect" }
+                ?? "Connected — click to disconnect"
+        } else {
+            title = "Not connected — click to choose a terminal"
+        }
+        let button = NSButton(
+            image: connected ? Self.linkedImage(description: title) : Self.unlinkedImage(description: title),
+            target: self, action: #selector(linkPressed(_:)))
+        button.isBordered = false
+        button.toolTip = title
+        button.setAccessibilityLabel(title)
+        button.setAccessibilityValue(connected ? "connected" : "not connected")
+        button.setAccessibilityIdentifier("terminalChat.link")
+        return [button]
+    }
+
+    private static let linkConfiguration = NSImage.SymbolConfiguration(pointSize: 13, weight: .regular)
+
+    private static func linkedImage(description: String) -> NSImage {
+        let image = NSImage(systemSymbolName: "link", accessibilityDescription: description) ?? NSImage()
+        return image.withSymbolConfiguration(linkConfiguration) ?? image
+    }
+
+    /// SF Symbols has no broken link, so it is the link with a slash through
+    /// it, drawn the way the system's own `.slash` variants are.
+    private static func unlinkedImage(description: String) -> NSImage {
+        let link = linkedImage(description: description)
+        let size = link.size
+        let image = NSImage(size: size, flipped: false) { rect in
+            link.draw(in: rect)
+            let slash = NSBezierPath()
+            slash.move(to: NSPoint(x: rect.minX + 1, y: rect.maxY - 1))
+            slash.line(to: NSPoint(x: rect.maxX - 1, y: rect.minY + 1))
+            slash.lineWidth = 1.5
+            slash.lineCapStyle = .round
+            // The template is recoloured as a whole, so cut a gap beside the
+            // slash first and the stroke reads apart from the link behind it.
+            NSGraphicsContext.current?.compositingOperation = .clear
+            slash.lineWidth = 4
+            slash.stroke()
+            NSGraphicsContext.current?.compositingOperation = .sourceOver
+            slash.lineWidth = 1.5
+            NSColor.black.setStroke()
+            slash.stroke()
+            return true
+        }
+        image.isTemplate = true
+        image.accessibilityDescription = description
+        return image
+    }
+}
+
 extension TerminalChatViewController: PaneOptionsProviding {
 
     public func makePaneOptionRows() -> [NSView] {
@@ -146,6 +253,7 @@ extension TerminalChatViewController: PaneOptionsProviding {
 extension TerminalChatViewController: PaneContentTeardown {
     public func paneContentWillBeDiscarded() {
         picker?.cancel()
+        if let connectableObserver { NotificationCenter.default.removeObserver(connectableObserver) }
         if let directory, let listing { directory.remove(id: listing.id) }
         session.close()
     }

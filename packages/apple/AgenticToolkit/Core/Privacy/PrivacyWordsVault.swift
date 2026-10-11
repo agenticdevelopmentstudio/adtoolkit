@@ -19,8 +19,25 @@ public final class PrivacyWordsVault: ObservableObject {
 
     public var isUnlocked: Bool { filter != nil }
 
+    /// The unlock in progress, so every private terminal appearing at once
+    /// waits on one prompt rather than stacking one each.
+    private var pendingUnlock: Task<Void, Error>?
+
     public init(store: PrivacyWordStore) {
         self.store = store
+    }
+
+    /// Reads the words if they are not in memory yet, authenticating to do it;
+    /// already unlocked, it returns at once without asking. For starting a
+    /// private terminal, which needs the words but shows nothing — revealing
+    /// one still goes through ``authenticate(reason:)``, which always asks.
+    public func unlock(reason: String) async throws {
+        if isUnlocked { return }
+        if let pendingUnlock { return try await pendingUnlock.value }
+        let task = Task { try await self.authenticate(reason: reason) }
+        pendingUnlock = task
+        defer { pendingUnlock = nil }
+        try await task.value
     }
 
     /// Authenticates the user and, the first time, reads the words. Every call

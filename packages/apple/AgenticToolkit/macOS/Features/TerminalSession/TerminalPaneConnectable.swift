@@ -13,6 +13,14 @@ public protocol TerminalPaneConnectable: AnyObject {
     var connectableTerminal: TerminalSession? { get }
 }
 
+extension Notification.Name {
+    /// Posted, with the pane content as the object, when a
+    /// ``TerminalPaneConnectable``'s ``TerminalPaneConnectable/connectableTerminal``
+    /// changes — a terminal that starts after its pane appeared, say — so a
+    /// chat waiting on that pane can connect.
+    public static let terminalPaneConnectableDidChange = Notification.Name("TerminalPaneConnectableDidChange")
+}
+
 extension TerminalSessionContentViewController: TerminalPaneConnectable {
     public var connectableTerminal: TerminalSession? { sessionManager.selectedSession }
 }
