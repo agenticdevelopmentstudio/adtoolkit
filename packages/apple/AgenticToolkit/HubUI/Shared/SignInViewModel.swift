@@ -217,12 +217,17 @@ public final class SignInViewModel {
         state.infoMessage = nil
         defer { state.isBusy = false }
         // The body runs in a task the model owns, so `cancel()` can stop it
-        // however the view started the intent.
+        // however the view started the intent, and cancelling the caller's
+        // own task reaches it too.
         let task = Task { try await body() }
         inFlight = task
         defer { if inFlight == task { inFlight = nil } }
         do {
-            try await task.value
+            try await withTaskCancellationHandler {
+                try await task.value
+            } onCancel: {
+                task.cancel()
+            }
         } catch where error is CancellationError || task.isCancelled {
             return
         } catch {

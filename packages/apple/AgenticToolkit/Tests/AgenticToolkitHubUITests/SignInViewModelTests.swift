@@ -497,6 +497,18 @@ final class SignInViewModelTests: XCTestCase {
         XCTAssertFalse(viewModel.state.isBusy)
     }
 
+    func testCancellingTheCallersTaskStopsTheSignIn() async throws {
+        let harness = makeHarness(social: .failsWhenCancelled)
+        let viewModel = harness.viewModel
+        let signIn = Task { await viewModel.signInWithSocial(.google) }
+        try await Task.sleep(for: .milliseconds(30))
+        signIn.cancel()
+        await signIn.value
+        XCTAssertNil(viewModel.state.errorMessage)
+        XCTAssertFalse(viewModel.state.isBusy)
+        XCTAssertEqual(harness.stub.requestCount(.post, "/oauth/signin/exchange"), 0)
+    }
+
     func testSocialCallbackWithoutCodeShowsTheMessage() async {
         let harness = makeHarness(social: .noCode)
         await harness.viewModel.signInWithSocial(.apple)
