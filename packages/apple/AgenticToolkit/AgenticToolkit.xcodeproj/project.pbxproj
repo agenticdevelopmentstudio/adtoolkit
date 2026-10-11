@@ -1878,6 +1878,7 @@
 		D2361BC6A4B952AD152B6C52 /* BundleOwnershipTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B81AAB880046E3AC142CD75 /* BundleOwnershipTests.swift */; };
 		D254C40459B8C42A04CD53E2 /* AccountMenuModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5DB962482E61A83B27DC90DB /* AccountMenuModel.swift */; };
 		D25DB06A6C34C51818ADAEC6 /* AppleScriptRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 759C6D4A2B5B337CA5BAD888 /* AppleScriptRunner.swift */; };
+		D29830B528C177C17F9245BB /* AddRemoveFooterViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C10D9526AD14619DCFCBEA5A /* AddRemoveFooterViewTests.swift */; };
 		D2998A708F3D6875A8EC95FA /* AgenticToolkitCoreMacOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 61310A916E242BA60A9FE8C1 /* AgenticToolkitCoreMacOS.framework */; };
 		D2A727CD3AAD1D539F79B5D3 /* HubFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5789D3F4AD20237585F561D /* HubFeature.swift */; };
 		D2C2365847FFC644964896CD /* ProjectLanguageServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B774952393631C1EBDB56CD /* ProjectLanguageServices.swift */; };
@@ -5636,6 +5637,7 @@
 		C06565E869F681D15040B831 /* LayoutOverrideTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LayoutOverrideTests.swift; sourceTree = "<group>"; };
 		C0834287E30C68BA64EE1A11 /* HubErrorMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubErrorMapping.swift; sourceTree = "<group>"; };
 		C0DC77B8A669145B772CD78A /* ConversationsWorkOutputTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationsWorkOutputTests.swift; sourceTree = "<group>"; };
+		C10D9526AD14619DCFCBEA5A /* AddRemoveFooterViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AddRemoveFooterViewTests.swift; sourceTree = "<group>"; };
 		C13B3B67E709FC040E90EE0F /* ContextEventKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextEventKind.swift; sourceTree = "<group>"; };
 		C14760F58A172DA6D381A4B6 /* DiagnosticTypesTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticTypesTests.swift; sourceTree = "<group>"; };
 		C14B323738F9492A9275261A /* SessionWatcherActionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionWatcherActionHandler.swift; sourceTree = "<group>"; };
@@ -9992,6 +9994,7 @@
 		CF90ACA9F9E239292E9B622C /* ComposableSettings */ = {
 			isa = PBXGroup;
 			children = (
+				C10D9526AD14619DCFCBEA5A /* AddRemoveFooterViewTests.swift */,
 				BB32A367A5F1FBB330432FA5 /* ContactFieldsViewTests.swift */,
 				205FE0167ACD04CD88F99B96 /* EditableTableCardFooterTests.swift */,
 				985193AF903CF5BD0E25B3E5 /* EditableTableCardTests.swift */,
@@ -14506,6 +14509,7 @@
 				3CBCD0A41F04581E70F5932C /* AIRequestBuilderTests.swift in Sources */,
 				B0D7F0678901AE08C79809CF /* AccountAvatarViewTests.swift in Sources */,
 				D8D22F2CD6A49C4F39784FBA /* AccountsSettingsPanelTests.swift in Sources */,
+				D29830B528C177C17F9245BB /* AddRemoveFooterViewTests.swift in Sources */,
 				EC8019B4198DE72AC5C44E4C /* AgenticFileBrowserTests.swift in Sources */,
 				D30B841253F2092E830FE5E6 /* AppFeatureRegistryTests.swift in Sources */,
 				C77BB780B915D9167D042078 /* AppUpdaterConfigurationTests.swift in Sources */,

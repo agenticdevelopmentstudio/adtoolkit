@@ -13,9 +13,10 @@ public final class ThemeSettingsPanelViewController: ComposableSettings.Settings
 
     private let store = ThemeStore()
 
-    /// The +/− control, kept so its "remove" segment can be disabled when the
-    /// selected theme is a built-in (permanent).
-    private var addRemoveControl: NSSegmentedControl?
+    /// The +/− bar under the list; "remove" is disabled when the selected
+    /// theme is a built-in (permanent).
+    let footer = ComposableSettings.AddRemoveFooterView(
+        accessibilityPrefix: "themes.add-remove", separatorAbove: true)
     /// Keeps the footer's enabled state in sync with the selected/active theme.
     private var activeThemeObserver: UserSettingObserver<String>?
 
@@ -59,7 +60,8 @@ public final class ThemeSettingsPanelViewController: ComposableSettings.Settings
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        listViewController.setFooterView(makeFooter())
+        configureFooter()
+        listViewController.setFooterView(footer)
         rebuildPanels(selecting: UserSettings.activeThemeID.value)
         // Selecting a theme row activates it (updating activeThemeID), so this
         // also fires whenever the selection changes — keeping "remove" enabled
@@ -118,20 +120,11 @@ public final class ThemeSettingsPanelViewController: ComposableSettings.Settings
 
     // MARK: - Footer
 
-    private func makeFooter() -> NSView {
-        let addRemove = NSSegmentedControl()
-        addRemove.segmentCount = 2
-        addRemove.setImage(NSImage(systemSymbolName: "plus", accessibilityDescription: "Add theme"), forSegment: 0)
-        addRemove.setImage(NSImage(systemSymbolName: "minus", accessibilityDescription: "Remove theme"), forSegment: 1)
-        addRemove.setWidth(28, forSegment: 0)
-        addRemove.setWidth(28, forSegment: 1)
-        addRemove.trackingMode = .momentary
-        addRemove.segmentStyle = .smallSquare
-        addRemove.target = self
-        addRemove.action = #selector(addRemoveClicked(_:))
-        addRemove.setToolTip("Add a new theme", forSegment: 0)
-        addRemove.setToolTip("Remove the selected theme", forSegment: 1)
-        addRemoveControl = addRemove
+    private func configureFooter() {
+        footer.addButton.toolTip = "Add a new theme"
+        footer.removeButton.toolTip = "Remove the selected theme"
+        footer.onAdd = { [weak self] in self?.addTheme() }
+        footer.onRemove = { [weak self] in self?.removeSelectedTheme() }
 
         let gear = NSPopUpButton(frame: .zero, pullsDown: true)
         gear.bezelStyle = .texturedRounded
@@ -147,25 +140,8 @@ public final class ThemeSettingsPanelViewController: ComposableSettings.Settings
         menu.addItem(actionItem("Export JSON…", #selector(exportJSONAction)))
         gear.menu = menu
         gear.toolTip = "More theme actions"
-
-        let bar = NSStackView()
-        bar.orientation = .horizontal
-        bar.edgeInsets = NSEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
-        bar.spacing = 6
-        bar.addView(addRemove, in: .leading)
-        bar.addView(gear, in: .trailing)
-        bar.translatesAutoresizingMaskIntoConstraints = false
-
-        let separator = ThemedSeparatorView(role: .border)
-        let footer = NSStackView(views: [separator, bar])
-        footer.orientation = .vertical
-        footer.alignment = .leading
-        footer.spacing = 0
-        footer.translatesAutoresizingMaskIntoConstraints = false
-        for sub in [separator, bar] {
-            sub.widthAnchor.constraint(equalTo: footer.widthAnchor).isActive = true
-        }
-        return footer
+        gear.setAccessibilityIdentifier("themes.more")
+        footer.addAccessoryView(gear)
     }
 
     private func actionItem(_ title: String, _ action: Selector) -> NSMenuItem {
@@ -181,18 +157,10 @@ public final class ThemeSettingsPanelViewController: ComposableSettings.Settings
     /// the new panel's `viewWillAppear` updates `activeThemeID`.
     private func updateFooterState(for themeID: String?) {
         let deletable = themeID.flatMap { store.theme(withID: $0) }?.isDeletable ?? false
-        addRemoveControl?.setEnabled(deletable, forSegment: 1)
+        footer.isRemoveEnabled = deletable
     }
 
     // MARK: - Structural actions
-
-    @objc private func addRemoveClicked(_ sender: NSSegmentedControl) {
-        switch sender.selectedSegment {
-        case 0: addTheme()
-        case 1: removeSelectedTheme()
-        default: break
-        }
-    }
 
     private func addTheme() {
         let created = store.addNewTheme(basedOn: selectedTheme ?? BuiltInThemes.solarizedDark)

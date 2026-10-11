@@ -55,11 +55,15 @@ extension ComposableSettings {
         }
 
         private let stack = NSStackView()
+        /// The hairline along the top, when `separatorAbove` asked for one.
+        private(set) var separator: NSView?
 
-        /// - Parameter accessibilityPrefix: `"<prefix>.add"` and
-        ///   `"<prefix>.remove"` become the buttons' identifiers, so a UI test
-        ///   can name them.
-        public init(accessibilityPrefix: String) {
+        /// - Parameters:
+        ///   - accessibilityPrefix: `"<prefix>.add"` and `"<prefix>.remove"`
+        ///     become the buttons' identifiers, so a UI test can name them.
+        ///   - separatorAbove: draws a hairline along the top edge, for a bar
+        ///     under a settings sidebar list, which has no edge of its own.
+        public init(accessibilityPrefix: String, separatorAbove: Bool = false) {
             super.init(frame: .zero)
             translatesAutoresizingMaskIntoConstraints = false
 
@@ -82,9 +86,23 @@ extension ComposableSettings {
             stack.addArrangedSubview(removeButton)
             addSubview(stack)
 
+            var top = topAnchor
+            if separatorAbove {
+                let separator = ThemedSeparatorView(role: .border)
+                separator.translatesAutoresizingMaskIntoConstraints = false
+                addSubview(separator)
+                NSLayoutConstraint.activate([
+                    separator.topAnchor.constraint(equalTo: topAnchor),
+                    separator.leadingAnchor.constraint(equalTo: leadingAnchor),
+                    separator.trailingAnchor.constraint(equalTo: trailingAnchor)
+                ])
+                self.separator = separator
+                top = separator.bottomAnchor
+            }
+
             let inset = SettingsLayout.default[.rowSpacing]
             NSLayoutConstraint.activate([
-                stack.topAnchor.constraint(equalTo: topAnchor, constant: inset),
+                stack.topAnchor.constraint(equalTo: top, constant: inset),
                 stack.leadingAnchor.constraint(equalTo: leadingAnchor, constant: inset),
                 stack.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor, constant: -inset),
                 stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -inset)

@@ -9,7 +9,8 @@ import AgenticToolkitCoreUI
 @MainActor
 open class AccountsSettingsPanelViewController: ComposableSettings.SettingsPanelSplitViewController {
     public let registry: AccountRegistry
-    let footer = ComposableSettings.AddRemoveFooterView(accessibilityPrefix: "accounts.add-remove")
+    let footer = ComposableSettings.AddRemoveFooterView(
+        accessibilityPrefix: "accounts.add-remove", separatorAbove: true)
 
     public init(registry: AccountRegistry) {
         self.registry = registry
@@ -45,25 +46,10 @@ open class AccountsSettingsPanelViewController: ComposableSettings.SettingsPanel
         footer.isRemoveEnabled = false
         footer.addButton.toolTip = "Adding accounts is not available yet"
         footer.removeButton.toolTip = "Removing accounts is not available yet"
-        listViewController.setFooterView(makeFooter())
+        listViewController.setFooterView(footer)
         listViewController.view.setAccessibilityIdentifier("accounts.list")
         registry.onChange = { [weak self] in self?.rebuildPanels() }
         rebuildPanels()
-    }
-
-    /// The footer under the list, with the hairline above it that the LLM
-    /// Providers panel's footer also draws for itself.
-    private func makeFooter() -> NSView {
-        let separator = ThemedSeparatorView(role: .border)
-        let stack = NSStackView(views: [separator, footer])
-        stack.orientation = .vertical
-        stack.alignment = .leading
-        stack.spacing = 0
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        for sub in [separator, footer] {
-            sub.widthAnchor.constraint(equalTo: stack.widthAnchor).isActive = true
-        }
-        return stack
     }
 
     /// Matches the panels to the registry, reusing existing ones by account

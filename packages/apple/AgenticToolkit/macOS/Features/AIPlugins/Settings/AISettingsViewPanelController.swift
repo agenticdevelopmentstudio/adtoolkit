@@ -15,7 +15,9 @@ open class AIPanelViewController: ComposableSettings.SettingsPanelSplitViewContr
 
     public let pluginManager: AIPluginManager
     private let viewModel: LLMProvidersListViewModel
-    private var addRemoveControl: NSSegmentedControl?
+    /// The +/− bar under the list; "remove" is live while a configuration is selected.
+    let footer = ComposableSettings.AddRemoveFooterView(
+        accessibilityPrefix: "providers.add-remove", separatorAbove: true)
     private var selectionObserver: AnyCancellable?
     /// Plugin binaries that failed to load, surfaced as a trailing panel so a bad
     /// signature / ABI mismatch isn't silently invisible until a chat send fails.
@@ -71,7 +73,11 @@ open class AIPanelViewController: ComposableSettings.SettingsPanelSplitViewContr
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        listViewController.setFooterView(makeFooter())
+        footer.addButton.toolTip = "Add a provider"
+        footer.removeButton.toolTip = "Remove the selected provider"
+        footer.onAdd = { [weak self] in self?.viewModel.onRequestAddProvider?() }
+        footer.onRemove = { [weak self] in self?.removeSelected() }
+        listViewController.setFooterView(footer)
 
         // Load the plugin binaries so dlopen failures (bad signature, ABI mismatch)
         // become visible here instead of only surfacing as a generic error when a
@@ -94,9 +100,9 @@ open class AIPanelViewController: ComposableSettings.SettingsPanelSplitViewContr
 
         rebuildPanels(selecting: viewModel.selectedId ?? viewModel.configurations.first?.id)
 
-        // Enable the remove(−) segment only when a configuration is selected.
+        // Enable remove (−) only when a configuration is selected.
         selectionObserver = viewModel.$selectedId.sink { [weak self] id in
-            self?.addRemoveControl?.setEnabled(id != nil, forSegment: 1)
+            self?.footer.isRemoveEnabled = id != nil
         }
     }
 
@@ -208,51 +214,6 @@ open class AIPanelViewController: ComposableSettings.SettingsPanelSplitViewContr
     }
 
     // MARK: - Footer
-
-    private func makeFooter() -> NSView {
-        let addRemove = NSSegmentedControl()
-        addRemove.segmentCount = 2
-        let plus = NSImage(systemSymbolName: "plus", accessibilityDescription: "Add provider")
-        let minus = NSImage(systemSymbolName: "minus", accessibilityDescription: "Remove provider")
-        addRemove.setImage(plus, forSegment: 0)
-        addRemove.setImage(minus, forSegment: 1)
-        addRemove.setWidth(28, forSegment: 0)
-        addRemove.setWidth(28, forSegment: 1)
-        addRemove.trackingMode = .momentary
-        addRemove.segmentStyle = .smallSquare
-        addRemove.target = self
-        addRemove.action = #selector(addRemoveClicked(_:))
-        addRemove.setToolTip("Add a provider", forSegment: 0)
-        addRemove.setToolTip("Remove the selected provider", forSegment: 1)
-        addRemove.setEnabled(viewModel.selectedId != nil, forSegment: 1)
-        addRemoveControl = addRemove
-
-        let bar = NSStackView()
-        bar.orientation = .horizontal
-        bar.edgeInsets = NSEdgeInsets(top: 6, left: 8, bottom: 6, right: 8)
-        bar.spacing = 6
-        bar.addView(addRemove, in: .leading)
-        bar.translatesAutoresizingMaskIntoConstraints = false
-
-        let separator = ThemedSeparatorView(role: .border)
-        let footer = NSStackView(views: [separator, bar])
-        footer.orientation = .vertical
-        footer.alignment = .leading
-        footer.spacing = 0
-        footer.translatesAutoresizingMaskIntoConstraints = false
-        for sub in [separator, bar] {
-            sub.widthAnchor.constraint(equalTo: footer.widthAnchor).isActive = true
-        }
-        return footer
-    }
-
-    @objc private func addRemoveClicked(_ sender: NSSegmentedControl) {
-        switch sender.selectedSegment {
-        case 0: viewModel.onRequestAddProvider?()
-        case 1: removeSelected()
-        default: break
-        }
-    }
 
     private func removeSelected() {
         guard let id = viewModel.selectedId,

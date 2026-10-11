@@ -72,6 +72,13 @@ struct AccountsSettingsPanelTests {
         #expect(panel.footer.removeButton.toolTip == "Removing accounts is not available yet")
     }
 
+    @Test("the list's footer is the shared bar, hairline included")
+    func footerIsShared() {
+        let panel = makePanel([FakeAccount(id: "a", displayName: "Alpha")])
+        #expect(panel.footer.isDescendant(of: panel.listViewController.view))
+        #expect(panel.footer.separator != nil)
+    }
+
     @Test("a registry change rebuilds and reuses existing sub-panels by id")
     func rebuild() {
         let alpha = FakeAccount(id: "a", displayName: "Alpha")
