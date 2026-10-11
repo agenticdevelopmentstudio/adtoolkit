@@ -9,7 +9,6 @@ import os
 final class AccountAvatarView: NSView {
     static let side: CGFloat = 48
     private static var cache: [URL: NSImage] = [:]
-    private static let log = Logger(subsystem: "com.agentic-cookbook.toolkit", category: "accounts")
 
     private let circle = ThemedBackgroundView(role: .accent)
     private let initialsLabel = ThemedLabel(role: .onAccentText, textRole: .heading, weight: .semibold)
@@ -80,8 +79,12 @@ final class AccountAvatarView: NSView {
                 self.imageView.image = image
                 self.imageView.isHidden = false
             } catch {
-                Self.log.debug("avatar load failed: \(error.localizedDescription, privacy: .public)")
+                Self.logger.debug("avatar load failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }
+}
+
+extension AccountAvatarView: Loggable {
+    static nonisolated let logger = makeLogger()
 }

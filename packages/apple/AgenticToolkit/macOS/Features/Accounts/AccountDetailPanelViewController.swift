@@ -8,7 +8,6 @@ import os
 @MainActor
 final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelViewController {
     static let restoringText = "Checking sign-in…"
-    private static let log = Logger(subsystem: "com.agentic-cookbook.toolkit", category: "accounts")
 
     private static let wrapWidth: CGFloat = 360
 
@@ -155,11 +154,11 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
 
     func signup() {
         guard let url = account.signupURL else {
-            Self.log.error("signup pressed with no signup URL for \(self.account.id, privacy: .public)")
+            logger.error("signup pressed with no signup URL for \(self.account.id, privacy: .public)")
             return
         }
         if !openURL(url) {
-            Self.log.error("signup URL failed to open: \(url.absoluteString, privacy: .public)")
+            logger.error("signup URL failed to open: \(url.absoluteString, privacy: .public)")
         }
     }
 
@@ -170,4 +169,8 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
     @objc private func loginPressed() { login() }
     @objc private func signupPressed() { signup() }
     @objc private func logoutPressed() { Task { await logout() } }
+}
+
+extension AccountDetailPanelViewController: Loggable {
+    static nonisolated let logger = makeLogger()
 }
