@@ -20,7 +20,18 @@ import Foundation
 /// browser closes wins, and a browser that closes before any delivery becomes
 /// a cancellation.
 public struct WebAuthSocialSignIn: SocialSignInProvider {
-    public init() {}
+    /// `true` runs every sign-in in a private browser session: it starts
+    /// with no cookies and forgets them when the sheet closes. The hub's own
+    /// web login (its `adh_sso` cookie) then never outlives the round-trip,
+    /// so signing out of the app really signs out — with a shared jar the
+    /// next sign-in finds that cookie and lands the same user straight back.
+    /// `false` shares the user's browser cookies, so a login already made in
+    /// the browser carries over.
+    public let ephemeral: Bool
+
+    public init(ephemeral: Bool = false) {
+        self.ephemeral = ephemeral
+    }
 
     public func authenticate(_ request: SocialSignInRequest) async throws -> SocialSignInResult {
         let server = try await LoopbackAuthServer.bind(dismissURL: request.dismissURL)
@@ -33,7 +44,7 @@ public struct WebAuthSocialSignIn: SocialSignInProvider {
         // last hop to the callback scheme.
         let browser = Task {
             do {
-                try await runner.run(startURL: startURL, callbackScheme: request.callbackScheme)
+                try await runner.run(startURL: startURL, callbackScheme: request.callbackScheme, ephemeral: ephemeral)
                 // The callback scheme fired. Either a delivery already landed
                 // (this is then a no-op) or the user got out some other way.
                 server.abort()
@@ -69,7 +80,7 @@ final class WebAuthRunner: NSObject, ASWebAuthenticationPresentationContextProvi
     /// page navigated to the callback scheme. The URL it ends on is
     /// deliberately discarded: it carries no code (see
     /// ``LoopbackAuthServer``), only the fact that the flow finished.
-    func run(startURL: URL, callbackScheme: String) async throws {
+    func run(startURL: URL, callbackScheme: String, ephemeral: Bool) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, any Error>) in
             // What binds this callback to the attempt that started it is the
             // per-attempt nonce in the loopback `return` URL, not an OAuth
@@ -82,13 +93,12 @@ final class WebAuthRunner: NSObject, ASWebAuthenticationPresentationContextProvi
             // The app still registers no URL-open handler for the callback
             // scheme, so the only way this session can end is the system
             // handing the URL back to the session that started it.
-            let session = ASWebAuthenticationSession(
-                url: startURL,
-                callbackURLScheme: callbackScheme,
+            let session = makeSession(
+                startURL: startURL,
+                callbackScheme: callbackScheme,
+                ephemeral: ephemeral,
                 completionHandler: completionHandler(resuming: continuation)
             )
-            session.presentationContextProvider = self
-            session.prefersEphemeralWebBrowserSession = false
             self.session = session
             self.retained = self
             // `ASWebAuthenticationSession.start()` returns `false` when the
@@ -109,6 +119,23 @@ final class WebAuthRunner: NSObject, ASWebAuthenticationPresentationContextProvi
                 return
             }
         }
+    }
+
+    /// The browser session, unstarted, so a test can read how it is set up.
+    func makeSession(
+        startURL: URL,
+        callbackScheme: String,
+        ephemeral: Bool,
+        completionHandler: @escaping @Sendable (URL?, (any Error)?) -> Void
+    ) -> ASWebAuthenticationSession {
+        let session = ASWebAuthenticationSession(
+            url: startURL,
+            callbackURLScheme: callbackScheme,
+            completionHandler: completionHandler
+        )
+        session.presentationContextProvider = self
+        session.prefersEphemeralWebBrowserSession = ephemeral
+        return session
     }
 
     /// The session's completion handler, built here rather than inline so a

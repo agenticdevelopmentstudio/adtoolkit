@@ -268,4 +268,11 @@ struct HubAccountTests {
         #expect(session.webCalls == 1)
         #expect(account.state == .signedIn(AccountUser(ada)))
     }
+
+    @Test("the default browser is private, so Sign Out leaves no web login behind")
+    func defaultBrowserIsEphemeral() {
+        let account = HubAccount(session: FakeSession())
+        let browser = account.browser as? WebAuthSocialSignIn
+        #expect(browser?.ephemeral == true)
+    }
 }

@@ -32,12 +32,13 @@ public final class HubAccount: Account {
     public var onChange: @MainActor () -> Void = {}
 
     private let session: any SignInSession
-    private let browser: any SocialSignInProvider
+    let browser: any SocialSignInProvider
     private var signingIn: Task<Void, Never>?
 
     /// `browser` runs the hosted page's round-trip; the default opens it in
-    /// an `ASWebAuthenticationSession` sheet on the key window.
-    public init(session: any SignInSession, browser: any SocialSignInProvider = WebAuthSocialSignIn()) {
+    /// a private `ASWebAuthenticationSession` sheet on the key window, so the
+    /// hub's web login never outlives it and Sign Out leaves no way back in.
+    public init(session: any SignInSession, browser: any SocialSignInProvider = WebAuthSocialSignIn(ephemeral: true)) {
         self.session = session
         self.browser = browser
         // Chain, never replace: the live controller's onChange already has an

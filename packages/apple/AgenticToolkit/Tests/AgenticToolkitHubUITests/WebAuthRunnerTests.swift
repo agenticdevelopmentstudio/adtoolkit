@@ -69,4 +69,16 @@ final class WebAuthRunnerTests: XCTestCase {
             "the real error is what the sign-in screen has to show"
         )
     }
+
+    @MainActor
+    func testSessionHonoursEphemeral() {
+        let runner = WebAuthRunner()
+        let url = URL(string: "https://example.com/start")!
+        let handler: @Sendable (URL?, (any Error)?) -> Void = { _, _ in }
+        func session(ephemeral: Bool) -> ASWebAuthenticationSession {
+            runner.makeSession(startURL: url, callbackScheme: "adh", ephemeral: ephemeral, completionHandler: handler)
+        }
+        XCTAssertTrue(session(ephemeral: true).prefersEphemeralWebBrowserSession)
+        XCTAssertFalse(session(ephemeral: false).prefersEphemeralWebBrowserSession)
+    }
 }
