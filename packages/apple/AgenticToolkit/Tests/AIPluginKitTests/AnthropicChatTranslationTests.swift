@@ -82,6 +82,27 @@ final class AnthropicChatTranslationTests: XCTestCase {
         XCTAssertEqual((calls[1]["function"] as? NSDictionary)?["arguments"] as? String, "{}")
     }
 
+    func testEmptyAssistantMessageHasEmptyContent() throws {
+        let result = try single(["role": "assistant", "content": [["type": "thinking", "thinking": "x"]]])
+        XCTAssertEqual(messages(result)[0], ["role": "assistant", "content": ""] as NSDictionary)
+        let none = try single(["role": "assistant", "content": [Any]()])
+        XCTAssertEqual(messages(none)[0]["content"] as? String, "")
+    }
+
+    func testToolResultWithBlockArrayAndImage() throws {
+        let result = try single([
+            "role": "user",
+            "content": [["type": "tool_result", "tool_use_id": "t1", "content": [
+                ["type": "text", "text": "one"],
+                ["type": "image", "source": ["type": "base64", "media_type": "image/png", "data": "AA"]],
+                ["type": "text", "text": "two"]
+            ]]]
+        ])
+        XCTAssertEqual(messages(result), [
+            ["role": "tool", "tool_call_id": "t1", "content": "one\n\n[image omitted]\n\ntwo"]
+        ] as [NSDictionary])
+    }
+
     func testAssistantWithoutTextHasNullContent() throws {
         let result = try single([
             "role": "assistant",
@@ -264,14 +285,42 @@ final class AnthropicChatTranslationTests: XCTestCase {
         XCTAssertEqual(parseEvents(run(crlf, byteAtATime: false)).count, 7)
     }
 
+    private func toolChunk(_ index: Int?, id: String? = nil, name: String? = nil, args: String? = nil)
+        -> [String: Any] {
+        var function: [String: Any] = [:]
+        if let name { function["name"] = name }
+        if let args { function["arguments"] = args }
+        var entry: [String: Any] = ["function": function]
+        if let index { entry["index"] = index }
+        if let id { entry["id"] = id }
+        return ["choices": [["index": 0, "delta": ["tool_calls": [entry]]]]]
+    }
+
+    /// Asserts at most one block is open at any time and every start follows
+    /// the previous block's stop.
+    private func assertSequential(_ events: [(name: String, payload: NSDictionary)],
+                                  file: StaticString = #filePath, line: UInt = #line) {
+        var open: Int?
+        for event in events {
+            let index = event.payload["index"] as? Int
+            switch event.name {
+            case "content_block_start":
+                XCTAssertNil(open, "start while a block is open", file: file, line: line)
+                open = index
+            case "content_block_delta":
+                XCTAssertEqual(open, index, "delta for a block that is not open", file: file, line: line)
+            case "content_block_stop":
+                XCTAssertEqual(open, index, file: file, line: line)
+                open = nil
+            default: break
+            }
+        }
+        XCTAssertNil(open, file: file, line: line)
+    }
+
     func testTextThenTwoToolCalls() {
         func call(_ index: Int, id: String? = nil, name: String? = nil, args: String? = nil) -> [String: Any] {
-            var function: [String: Any] = [:]
-            if let name { function["name"] = name }
-            if let args { function["arguments"] = args }
-            var entry: [String: Any] = ["index": index, "function": function]
-            if let id { entry["id"] = id }
-            return ["choices": [["index": 0, "delta": ["tool_calls": [entry]]]]]
+            toolChunk(index, id: id, name: name, args: args)
         }
         let stream = sse([
             ["choices": [["index": 0, "delta": ["content": "ok"]]]],
@@ -296,9 +345,113 @@ final class AnthropicChatTranslationTests: XCTestCase {
         XCTAssertEqual(fragments(1), "{\"a\":1}")
         XCTAssertEqual(fragments(2), "{\"b\":2}")
         XCTAssertEqual(events.filter { $0.name == "content_block_stop" }.count, 3)
+        assertSequential(events)
         let delta = events.first { $0.name == "message_delta" }
         XCTAssertEqual((delta?.payload["delta"] as? NSDictionary)?["stop_reason"] as? String, "tool_use")
         XCTAssertEqual(events.last?.name, "message_stop")
+    }
+
+    func testInterleavedToolFragmentsNeverOpenTwoBlocks() {
+        let stream = sse([
+            toolChunk(0, id: "c0", name: "alpha", args: "{\"a\":"),
+            toolChunk(1, id: "c1", name: "beta", args: "{\"b\":2}"),
+            toolChunk(0, args: "1}"),
+            ["choices": [["index": 0, "delta": ["content": "late"], "finish_reason": "tool_calls"]]]
+        ])
+        let events = parseEvents(run(stream, byteAtATime: false))
+        assertSequential(events)
+        let joined = events.compactMap { ($0.payload["delta"] as? NSDictionary)?["partial_json"] as? String }
+        XCTAssertEqual(joined, ["{\"a\":", "{\"b\":2}"])   // the late "1}" was dropped
+        let names = events.map(\.name)
+        XCTAssertEqual(names.filter { $0 == "content_block_start" }.count, 3)
+    }
+
+    func testKeylessToolCallsSplitOnNewIDAndDelayStartUntilNamed() {
+        let stream = sse([
+            toolChunk(nil, args: "{\"a\""),                       // no id, no name yet: buffered
+            toolChunk(nil, id: "k0", name: "alpha", args: ":1}"),
+            toolChunk(nil, args: ""),
+            toolChunk(nil, id: "k1", name: "beta", args: "{}")
+        ])
+        let events = parseEvents(run(stream, byteAtATime: true))
+        assertSequential(events)
+        let starts = events.filter { $0.name == "content_block_start" }
+        XCTAssertEqual(starts.compactMap { ($0.payload["content_block"] as? NSDictionary)?["name"] as? String },
+                       ["alpha", "beta"])
+        let first = events.filter { $0.name == "content_block_delta" && $0.payload["index"] as? Int == 0 }
+            .compactMap { ($0.payload["delta"] as? NSDictionary)?["partial_json"] as? String }.joined()
+        XCTAssertEqual(first, "{\"a\":1}")
+    }
+
+    func testNameArrivingAfterIDIsNotLostWhenStartWaitsForIt() {
+        let stream = sse([toolChunk(0, name: "late", args: "{}")])
+        let events = parseEvents(run(stream, byteAtATime: false))
+        let start = events.first { $0.name == "content_block_start" }
+        XCTAssertEqual((start?.payload["content_block"] as? NSDictionary)?["name"] as? String, "late")
+    }
+
+    func testGeneratedToolUseID() {
+        let events = parseEvents(run(sse([toolChunk(0, name: "n", args: "{}")]), byteAtATime: false))
+        let start = events.first { $0.name == "content_block_start" }
+        let id = (start?.payload["content_block"] as? NSDictionary)?["id"] as? String
+        XCTAssertEqual(id?.hasPrefix("toolu_"), true)
+        XCTAssertGreaterThan(id?.count ?? 0, 6)
+    }
+
+    func testNonASCIITextFedOneByteAtATime() {
+        let text = "caf\u{E9} \u{1F600} na\u{EF}ve \u{65E5}\u{672C}"
+        let stream = sse([["choices": [["index": 0, "delta": ["content": text], "finish_reason": "stop"]]]])
+        let events = parseEvents(run(stream, byteAtATime: true))
+        let got = events.compactMap { ($0.payload["delta"] as? NSDictionary)?["text"] as? String }.joined()
+        XCTAssertEqual(got, text)
+    }
+
+    func testCRLFSplitAcrossChunks() {
+        let translator = ChatCompletionsStreamTranslator(model: "m", messageID: "msg_1")
+        let line = "data: " + (String(data: json(["choices": [["delta": ["content": "x"]]]]), encoding: .utf8) ?? "")
+        var out = translator.consume(Data(line.utf8))
+        out.append(translator.consume(Data("\r".utf8)))
+        XCTAssertTrue(out.isEmpty || !(String(data: out, encoding: .utf8) ?? "").contains("content_block_delta"))
+        out.append(translator.consume(Data("\n\r\n".utf8)))
+        out.append(translator.finish())
+        let events = parseEvents(out)
+        let texts = events.compactMap { ($0.payload["delta"] as? NSDictionary)?["text"] as? String }
+        XCTAssertEqual(texts, ["x"])
+    }
+
+    func testDataAfterDoneIsIgnored() {
+        var input = textStream
+        input.append(sse([["choices": [["index": 0, "delta": ["content": "ghost"]]]]], done: false))
+        let translator = ChatCompletionsStreamTranslator(model: "m", messageID: "msg_1")
+        var out = translator.consume(input)
+        out.append(translator.consume(sse([["choices": [["index": 0, "delta": ["content": "more"]]]]])))
+        out.append(translator.finish())
+        let events = parseEvents(out)
+        XCTAssertEqual(events.last?.name, "message_stop")
+        XCTAssertEqual(events.filter { $0.name == "message_stop" }.count, 1)
+        XCTAssertFalse((String(data: out, encoding: .utf8) ?? "").contains("ghost"))
+        XCTAssertFalse((String(data: out, encoding: .utf8) ?? "").contains("more"))
+    }
+
+    func testMidStreamErrorClosesBlockAndEmitsErrorOnly() {
+        let stream = sse([
+            ["choices": [["index": 0, "delta": ["content": "partial"]]]],
+            ["error": ["message": "upstream died", "type": "server_error"]],
+            ["choices": [["index": 0, "delta": ["content": "after"]]]]
+        ])
+        let translator = ChatCompletionsStreamTranslator(model: "m", messageID: "msg_1")
+        var out = translator.consume(stream)
+        out.append(translator.finish())
+        let events = parseEvents(out)
+        XCTAssertEqual(events.map(\.name), [
+            "message_start", "content_block_start", "content_block_delta", "content_block_stop", "error"
+        ])
+        XCTAssertEqual(events.last?.payload, [
+            "type": "error", "error": ["type": "api_error", "message": "upstream died"]
+        ] as NSDictionary)
+        let bare = parseEvents(run(sse([["error": ["code": 1]]]), byteAtATime: false))
+        XCTAssertEqual(bare.map(\.name), ["error"])
+        XCTAssertEqual((bare[0].payload["error"] as? NSDictionary)?["message"] as? String, "provider stream error")
     }
 
     func testFinishTwiceEmitsClosingEventsOnce() {

@@ -74,11 +74,15 @@ public enum AnthropicChatTranslation {
     }
 
     /// Text of a string, or the "\n\n"-joined text blocks of an array.
-    private static func joinedText(_ content: Any?) -> String? {
+    private static func joinedText(_ content: Any?, inToolResult: Bool = false) -> String? {
         if let string = content as? String { return string }
         guard let blocks = content as? [[String: Any]] else { return nil }
         return blocks.compactMap { block -> String? in
-            (block["type"] as? String) == "text" ? block["text"] as? String : nil
+            switch block["type"] as? String {
+            case "text": return block["text"] as? String
+            case "image": return inToolResult ? "[image omitted]" : nil
+            default: return nil
+            }
         }.joined(separator: "\n\n")
     }
 
@@ -106,7 +110,7 @@ public enum AnthropicChatTranslation {
                     parts.append(["type": "image_url", "image_url": ["url": url]])
                 }
             case "tool_result":
-                var text = joinedText(block["content"]) ?? ""
+                var text = joinedText(block["content"], inToolResult: true) ?? ""
                 if (block["is_error"] as? Bool) == true { text = "Error: " + text }
                 toolMessages.append([
                     "role": "tool",
@@ -157,7 +161,8 @@ public enum AnthropicChatTranslation {
             default: break
             }
         }
-        message["content"] = texts.isEmpty ? NSNull() : texts.joined(separator: "\n\n")
+        message["content"] = texts.joined(separator: "\n\n")
+        if texts.isEmpty && !calls.isEmpty { message["content"] = NSNull() }
         if !calls.isEmpty { message["tool_calls"] = calls }
         return message
     }
@@ -249,16 +254,29 @@ public enum AnthropicChatTranslation {
 
 /// Stateful: Chat Completions SSE bytes in, Anthropic SSE bytes out.
 /// Not thread-safe; one per response; never crosses an isolation boundary.
+/// At most one content block is open at a time, as Anthropic's streaming
+/// format requires; a fragment for a tool call whose block already closed
+/// is dropped.
 public final class ChatCompletionsStreamTranslator {
+    private struct ToolCall {
+        var id: String?
+        var name = ""
+        var blockIndex: Int?
+        var closed = false
+        var pendingArguments = ""
+    }
+
     private let model: String
     private let messageID: String
     private var buffer = Data()
     private var started = false
     private var finished = false
     private var nextIndex = 0
-    private var textIndex: Int?
-    private var toolIndexes: [Int: Int] = [:]
-    private var openBlocks: [Int] = []
+    private var openIndex: Int?
+    private var openTool: Int?
+    private var calls: [Int: ToolCall] = [:]
+    private var lastKeylessKey: Int?
+    private var nextKeylessKey = -1
     private var stopReason: String?
     private var inputTokens = 0
     private var outputTokens = 0
@@ -272,20 +290,21 @@ public final class ChatCompletionsStreamTranslator {
     }
 
     public func consume(_ chunk: Data) -> Data {
-        guard !finished else { return Data() }
+        guard !finished else { buffer = Data(); return Data() }
         buffer.append(chunk)
         var out = Data()
-        while let newline = buffer.firstIndex(of: 0x0A) {
+        while !finished, let newline = buffer.firstIndex(of: 0x0A) {
             var line = buffer[buffer.startIndex..<newline]
             buffer.removeSubrange(buffer.startIndex...newline)
             if line.last == 0x0D { line = line.dropLast() }
             out.append(handle(line: Data(line)))
         }
+        if finished { buffer = Data() }
         return out
     }
 
     public func finish() -> Data {
-        guard !finished else { return Data() }
+        guard !finished else { buffer = Data(); return Data() }
         var out = Data()
         // A final line with no trailing newline still counts.
         if !buffer.isEmpty {
@@ -297,10 +316,7 @@ public final class ChatCompletionsStreamTranslator {
         }
         finished = true
         out.append(startIfNeeded())
-        for index in openBlocks {
-            out.append(event("content_block_stop", ["type": "content_block_stop", "index": index]))
-        }
-        openBlocks = []
+        out.append(closeOpenBlock())
         out.append(event("message_delta", [
             "type": "message_delta",
             "delta": ["stop_reason": stopReason ?? "end_turn", "stop_sequence": NSNull()],
@@ -317,6 +333,9 @@ public final class ChatCompletionsStreamTranslator {
         if payload == "[DONE]" { return finish() }
         guard let root = (try? JSONSerialization.jsonObject(with: Data(payload.utf8))) as? [String: Any] else {
             return Data()
+        }
+        if let error = root["error"] as? [String: Any] {
+            return fail(message: error["message"] as? String)
         }
         var out = startIfNeeded()
         if let usage = root["usage"] as? [String: Any] {
@@ -338,6 +357,19 @@ public final class ChatCompletionsStreamTranslator {
         return out
     }
 
+    /// A provider error mid-stream: close the open block, emit one Anthropic
+    /// error event, and stop. No message_delta or message_stop follows.
+    private func fail(message: String?) -> Data {
+        finished = true
+        buffer = Data()
+        var out = closeOpenBlock()
+        out.append(event("error", [
+            "type": "error",
+            "error": ["type": "api_error", "message": message ?? "provider stream error"]
+        ]))
+        return out
+    }
+
     private func startIfNeeded() -> Data {
         guard !started else { return Data() }
         started = true
@@ -351,59 +383,95 @@ public final class ChatCompletionsStreamTranslator {
         ])
     }
 
-    private func closeText() -> Data {
-        guard let index = textIndex else { return Data() }
-        textIndex = nil
-        openBlocks.removeAll { $0 == index }
+    private func closeOpenBlock() -> Data {
+        guard let index = openIndex else { return Data() }
+        if let key = openTool { calls[key]?.closed = true }
+        openIndex = nil
+        openTool = nil
         return event("content_block_stop", ["type": "content_block_stop", "index": index])
     }
 
     private func textDelta(_ text: String) -> Data {
         var out = Data()
-        if textIndex == nil {
+        if openIndex == nil || openTool != nil {
+            out.append(closeOpenBlock())
             let index = nextIndex
             nextIndex += 1
-            textIndex = index
-            openBlocks.append(index)
+            openIndex = index
             out.append(event("content_block_start", [
                 "type": "content_block_start", "index": index,
                 "content_block": ["type": "text", "text": ""]
             ]))
         }
         out.append(event("content_block_delta", [
-            "type": "content_block_delta", "index": textIndex ?? 0,
+            "type": "content_block_delta", "index": openIndex ?? 0,
             "delta": ["type": "text_delta", "text": text]
         ]))
         return out
     }
 
+    /// Which tool call a fragment belongs to. With an `index` that is the key;
+    /// without one, a fragment carrying a new `id` starts a new call.
+    private func key(for call: [String: Any]) -> Int {
+        if let index = call["index"] as? Int { return index }
+        let id = call["id"] as? String
+        if let last = lastKeylessKey, id == nil || id == "" || calls[last]?.id == id || calls[last]?.id == nil {
+            return last
+        }
+        let key = nextKeylessKey
+        nextKeylessKey -= 1
+        lastKeylessKey = key
+        return key
+    }
+
     private func toolDelta(_ call: [String: Any]) -> Data {
         var out = Data()
-        let sourceIndex = call["index"] as? Int ?? 0
+        let key = key(for: call)
         let function = call["function"] as? [String: Any] ?? [:]
-        if toolIndexes[sourceIndex] == nil {
-            out.append(closeText())
+        var state = calls[key] ?? ToolCall()
+        if state.id == nil, let id = call["id"] as? String, !id.isEmpty { state.id = id }
+        if state.blockIndex == nil, state.name.isEmpty, let name = function["name"] as? String { state.name = name }
+        let arguments = function["arguments"] as? String ?? ""
+        calls[key] = state
+
+        if state.closed {
+            return out   // its block is closed; Anthropic cannot reopen it
+        }
+        if state.blockIndex == nil {
+            guard state.id != nil || !state.name.isEmpty else {
+                calls[key]?.pendingArguments += arguments
+                return out
+            }
+            out.append(closeOpenBlock())
             let index = nextIndex
             nextIndex += 1
-            toolIndexes[sourceIndex] = index
-            openBlocks.append(index)
+            calls[key]?.blockIndex = index
+            openIndex = index
+            openTool = key
             out.append(event("content_block_start", [
                 "type": "content_block_start", "index": index,
                 "content_block": [
                     "type": "tool_use",
-                    "id": call["id"] as? String ?? "toolu_" + UUID().uuidString.replacingOccurrences(of: "-", with: ""),
-                    "name": function["name"] as? String ?? "",
+                    "id": state.id ?? "toolu_" + UUID().uuidString.replacingOccurrences(of: "-", with: ""),
+                    "name": state.name,
                     "input": [String: Any]()
                 ]
             ]))
-        }
-        if let args = function["arguments"] as? String, !args.isEmpty, let index = toolIndexes[sourceIndex] {
-            out.append(event("content_block_delta", [
-                "type": "content_block_delta", "index": index,
-                "delta": ["type": "input_json_delta", "partial_json": args]
-            ]))
+            let pending = state.pendingArguments + arguments
+            calls[key]?.pendingArguments = ""
+            out.append(argumentsDelta(pending, index: index))
+        } else if let index = state.blockIndex {
+            out.append(argumentsDelta(arguments, index: index))
         }
         return out
+    }
+
+    private func argumentsDelta(_ arguments: String, index: Int) -> Data {
+        guard !arguments.isEmpty else { return Data() }
+        return event("content_block_delta", [
+            "type": "content_block_delta", "index": index,
+            "delta": ["type": "input_json_delta", "partial_json": arguments]
+        ])
     }
 
     private func event(_ name: String, _ object: [String: Any]) -> Data {
