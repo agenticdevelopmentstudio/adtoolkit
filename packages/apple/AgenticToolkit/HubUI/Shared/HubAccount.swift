@@ -53,11 +53,22 @@ public final class HubAccount: Account {
     /// Busy while the browser sheet is up. Closing the sheet is a cancel and
     /// says nothing; any other failure lands signed out with its message. The
     /// browser sheet finds its own window, so `anchor` is unused.
+    ///
+    /// A session left in `.error` still has its stored login — the hub just
+    /// couldn't confirm it — so Login re-checks that first, and only opens
+    /// the browser if the hub turned the login down.
     public func presentSignIn(from anchor: AccountPresentationAnchor) {
         guard signingIn == nil else { return }
         set(state: .busy, message: nil)
         signingIn = Task { [weak self] in
             guard let self else { return }
+            if case .error = session.state {
+                await session.restore()
+                guard session.state == .signedOut else {
+                    finishSigningIn(failure: nil)
+                    return
+                }
+            }
             do {
                 _ = try await session.signInWithWeb(using: browser)
                 finishSigningIn(failure: nil)

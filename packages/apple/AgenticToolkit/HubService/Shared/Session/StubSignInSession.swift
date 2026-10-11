@@ -72,6 +72,13 @@ public final class StubSignInSession: SignInSession {
         try await signInSample()
     }
 
+    /// The stub keeps no stored session: anything but signed in restores to
+    /// signed out.
+    public func restore() async {
+        if case .signedIn = state { return }
+        state = .signedOut
+    }
+
     public func signOut() async {
         state = .signedOut
     }

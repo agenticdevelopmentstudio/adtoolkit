@@ -19,6 +19,9 @@ public protocol SignInSession: AnyObject {
     func signInWithSocial(_ provider: SocialProvider, using session: any SocialSignInProvider) async throws -> HubUser
     /// Signs in on the hub's hosted login page in a browser sheet.
     func signInWithWeb(using session: any SocialSignInProvider) async throws -> HubUser
+    /// Re-checks the stored session: lands signed in, signed out, or
+    /// `.error` again when the hub still can't confirm it.
+    func restore() async
     func signOut() async
 }
 

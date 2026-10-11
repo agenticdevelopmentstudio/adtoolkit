@@ -55,6 +55,15 @@ private final class FakeSession: SignInSession {
         }
     }
 
+    /// What the next restore lands on.
+    var restoreOutcome: SessionState = .signedOut
+    var restoreCalls = 0
+
+    func restore() async {
+        restoreCalls += 1
+        state = restoreOutcome
+    }
+
     func signOut() async {
         signOutCount += 1
         stateDuringSignOut = account?.state
@@ -218,5 +227,45 @@ struct HubAccountTests {
         account.presentSignIn(from: anchor)
         await settle(account)
         #expect(session.webCalls == 2)
+    }
+
+    @Test("Login after a failed restore re-checks the stored login, no browser")
+    func loginRetriesRestore() async {
+        let session = FakeSession()
+        session.state = .error("The hub is unreachable.")
+        session.restoreOutcome = .signedIn(ada)
+        let account = make(session)
+        #expect(account.message == "The hub is unreachable.")
+        account.presentSignIn(from: AccountPresentationAnchor(NSObject()))
+        await settle(account)
+        #expect(session.restoreCalls == 1)
+        #expect(session.webCalls == 0)
+        if case .signedIn = account.state {} else { Issue.record("expected signedIn, got \(account.state)") }
+    }
+
+    @Test("a restore that still fails keeps its message and opens no browser")
+    func loginRestoreStillFails() async {
+        let session = FakeSession()
+        session.state = .error("The hub is unreachable.")
+        session.restoreOutcome = .error("Still unreachable.")
+        let account = make(session)
+        account.presentSignIn(from: AccountPresentationAnchor(NSObject()))
+        await settle(account)
+        #expect(session.webCalls == 0)
+        #expect(account.state == .signedOut)
+        #expect(account.message == "Still unreachable.")
+    }
+
+    @Test("a restore the hub turns down goes on to the web sign-in")
+    func loginRestoreRejected() async {
+        let session = FakeSession()
+        session.state = .error("The hub is unreachable.")
+        session.restoreOutcome = .signedOut
+        let account = make(session)
+        account.presentSignIn(from: AccountPresentationAnchor(NSObject()))
+        await settle(account)
+        #expect(session.restoreCalls == 1)
+        #expect(session.webCalls == 1)
+        #expect(account.state == .signedIn(AccountUser(ada)))
     }
 }
