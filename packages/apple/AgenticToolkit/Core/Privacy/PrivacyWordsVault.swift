@@ -18,6 +18,10 @@ public final class PrivacyWordsVault: ObservableObject {
 
     public var isLoaded: Bool { filter != nil }
 
+    /// The upgrade in progress, so private terminals starting together share
+    /// one prompt rather than stacking one each.
+    private var pendingUpgrade: Task<Void, Error>?
+
     public init(store: PrivacyWordStore) {
         self.store = store
     }
@@ -47,6 +51,22 @@ public final class PrivacyWordsVault: ObservableObject {
         let pairs = try store.load(context: context)
         try store.save(pairs)
         filter = TextSubstitutionFilter(pairs: pairs)
+    }
+
+    /// Makes sure the words are in memory, for running a terminal. Silent,
+    /// except for words still under the old guard: those ask once — saying
+    /// so, since the user is not opening anything — and are saved again
+    /// without it, so no later start asks.
+    public func loadUpgradingIfNeeded() async throws {
+        if try load() { return }
+        if let pendingUpgrade { return try await pendingUpgrade.value }
+        let task = Task {
+            try await self.authenticate(
+                reason: "upgrade how the privacy words are stored. This is asked once")
+        }
+        pendingUpgrade = task
+        defer { pendingUpgrade = nil }
+        try await task.value
     }
 
     /// Authenticates the user, then stores `pairs` in the keychain and applies

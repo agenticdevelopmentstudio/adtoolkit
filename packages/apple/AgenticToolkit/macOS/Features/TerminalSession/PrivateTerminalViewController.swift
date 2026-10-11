@@ -339,9 +339,7 @@ extension PrivateTerminalViewController: TerminalPaneConnectable {
     public func startConnectableTerminal() async throws -> TerminalSession? {
         if session.isStarted { return session }
         hasAskedToStart = true
-        if try !vault.load() {
-            try await vault.authenticate(reason: "start the private terminal")
-        }
+        try await vault.loadUpgradingIfNeeded()
         if let filter = vault.filter { startOrUpdate(filter: filter) }
         return connectableTerminal
     }
