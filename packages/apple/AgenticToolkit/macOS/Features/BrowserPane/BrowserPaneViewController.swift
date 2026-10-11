@@ -4,7 +4,9 @@
 //
 
 import AppKit
+import Combine
 import os
+import UniformTypeIdentifiers
 import WebKit
 import AgenticDeveloperToolkitUI
 import AgenticToolkitCore
@@ -22,9 +24,10 @@ import AgenticToolkitCoreMacOS
 /// quiet-presentation helper, and nothing else, so neither has to carry the
 /// other's rules (`separation-of-concerns`).
 ///
-/// What it remembers is one key, `url`, in the pane's state store. History
-/// stays WebKit's own and dies with the pane: persisting a back stack is a
-/// serialization format to maintain for a feature nobody asked for (`yagni`).
+/// What it remembers in its own state store is one key, `url`. Everything
+/// else it honours comes from the Browser settings (`BrowserSettings.swift`):
+/// read once where WebKit fixes a value at construction, and followed live
+/// everywhere WebKit lets a value change under a page.
 @MainActor
 public final class BrowserPaneViewController: NSViewController {
 
@@ -58,7 +61,10 @@ public final class BrowserPaneViewController: NSViewController {
     public static let blankPage = URL(string: "about:blank")!
 
     private let store: PaneStateStore
-    private let homeURL: URL
+    private let settings: SettingsStore
+    private let history: BrowserHistoryStore?
+    private let siteData: BrowserSiteData
+    private let fallbackHomeURL: URL
     private let logger = Logger(subsystem: "AgenticToolkit", category: "BrowserPane")
 
     public let webView: WKWebView
@@ -68,23 +74,39 @@ public final class BrowserPaneViewController: NSViewController {
     let reloadButton = NSButton()
 
     private var observations: [NSKeyValueObservation] = []
+    private var cancellables: Set<AnyCancellable> = []
+    private var downloads: [WKDownload] = []
+    /// The history row for the page on screen, so a title that arrives after
+    /// the load is filed against it rather than lost.
+    private var currentVisitID: Int64?
 
     /// - Parameters:
     ///   - store: Where the pane remembers its address between launches.
-    ///   - homeURL: What a pane with nothing remembered opens on.
-    public init(store: PaneStateStore, homeURL: URL = BrowserPaneViewController.blankPage) {
+    ///   - settings: The browser settings the pane honours. The app's shared
+    ///     store by default; a test hands in an in-memory one.
+    ///   - history: Where visits are recorded; `nil` records nothing.
+    ///   - homeURL: What a pane opens on when nothing is remembered *and* the
+    ///     Home Page setting is blank.
+    public init(
+        store: PaneStateStore,
+        settings: SettingsStore = UserSettings.shared,
+        history: BrowserHistoryStore? = nil,
+        homeURL: URL = BrowserPaneViewController.blankPage
+    ) {
         self.store = store
-        self.homeURL = homeURL
-        let configuration = WKWebViewConfiguration()
-        // The default data store, shared with every other browser pane: a login
-        // in one pane is a login in the next, which is what a browser does.
-        configuration.websiteDataStore = .default()
+        self.settings = settings
+        self.history = history
+        self.fallbackHomeURL = homeURL
+        let configuration = Self.makeConfiguration(settings: settings)
+        self.siteData = BrowserSiteData(dataStore: configuration.websiteDataStore)
         webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 640, height: 480), configuration: configuration)
         super.init(nibName: nil, bundle: nil)
         webView.navigationDelegate = self
         webView.uiDelegate = self
         webView.allowsBackForwardNavigationGestures = true
         webView.keepPaintingUnderQuietPresentation()
+        applyLiveSettings()
+        observeSettings()
     }
 
     @available(*, unavailable)
@@ -93,13 +115,75 @@ public final class BrowserPaneViewController: NSViewController {
     public var onPaneTitleChange: (() -> Void)?
 
     /// The address the pane will restore to: what the store remembers, else
-    /// the home page.
+    /// the Home Page setting, else the registration's home.
     var restorationURL: URL {
         if let remembered = store.paneStateValue(forKey: Self.addressKey),
            let url = URL(string: remembered) {
             return url
         }
-        return homeURL
+        return BrowserSettings.homePage(in: settings) ?? fallbackHomeURL
+    }
+
+    // MARK: - Settings
+
+    /// The configuration WebKit fixes when the web view is made. The settings
+    /// read here take effect for the *next* browser pane, and the panel says
+    /// so beside each of them.
+    static func makeConfiguration(settings: SettingsStore) -> WKWebViewConfiguration {
+        let configuration = WKWebViewConfiguration()
+        // Private browsing is a data store that lives only as long as the
+        // pane; otherwise the default store, shared with every other browser
+        // pane, so a login in one pane is a login in the next.
+        configuration.websiteDataStore = settings.get(UserSettings.browserPrivateBrowsing)
+            ? .nonPersistent()
+            : .default()
+        configuration.upgradeKnownHostsToHTTPS = settings.get(UserSettings.browserUpgradesToHTTPS)
+        configuration.allowsAirPlayForMediaPlayback = settings.get(UserSettings.browserAllowsAirPlay)
+        configuration.mediaTypesRequiringUserActionForPlayback = switch settings.get(UserSettings.browserAutoplay) {
+        case .allowed: []
+        case .mutedOnly: .audio
+        case .never: .all
+        }
+        return configuration
+    }
+
+    /// Every setting WebKit lets change under a page, applied from the store.
+    /// Called once at construction and again whenever a browser key changes.
+    private func applyLiveSettings() {
+        let zoom = settings.get(UserSettings.browserPageZoom)
+        let zoomRange = BrowserSettings.pageZoomRange
+        webView.pageZoom = min(max(zoom, zoomRange.lowerBound), zoomRange.upperBound)
+        let agent = settings.get(UserSettings.browserCustomUserAgent)
+        webView.customUserAgent = agent.isEmpty ? nil : agent
+        webView.isInspectable = settings.get(UserSettings.browserWebInspectorEnabled)
+
+        let preferences = webView.configuration.preferences
+        preferences.minimumFontSize = CGFloat(settings.get(UserSettings.browserMinimumFontSize))
+        preferences.javaScriptCanOpenWindowsAutomatically = !settings.get(UserSettings.browserBlocksPopups)
+        preferences.isFraudulentWebsiteWarningEnabled = settings.get(UserSettings.browserFraudWarning)
+
+        let acceptsCookies = settings.get(UserSettings.browserAcceptsCookies)
+        Task { await siteData.setAcceptsCookies(acceptsCookies) }
+    }
+
+    private func observeSettings() {
+        settings.changes
+            .filter { $0.hasPrefix("browser.") }
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.applyLiveSettings() }
+            .store(in: &cancellables)
+    }
+
+    /// Forgets visits older than the retention setting allows. Run as the
+    /// pane comes up, so an old history shrinks without anyone opening the
+    /// panel to ask it to.
+    private func pruneHistory() {
+        guard let history, let cutoff = settings.get(UserSettings.browserHistoryRetention).cutoff() else { return }
+        do {
+            try history.removeVisits(before: cutoff)
+        } catch {
+            logger.error("browser history prune failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     // MARK: - View
@@ -148,6 +232,7 @@ public final class BrowserPaneViewController: NSViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         observeWebView()
+        pruneHistory()
         webView.load(URLRequest(url: restorationURL))
     }
 
@@ -169,7 +254,7 @@ public final class BrowserPaneViewController: NSViewController {
     private func observeWebView() {
         observations = [
             webView.observe(\.title, options: [.initial, .new]) { [weak self] _, _ in
-                MainActor.assumeIsolated { self?.onPaneTitleChange?() }
+                MainActor.assumeIsolated { self?.titleDidChange() }
             },
             webView.observe(\.url, options: [.initial, .new]) { [weak self] _, _ in
                 MainActor.assumeIsolated { self?.addressDidChange() }
@@ -181,6 +266,16 @@ public final class BrowserPaneViewController: NSViewController {
                 MainActor.assumeIsolated { self?.forwardButton.isEnabled = self?.webView.canGoForward ?? false }
             }
         ]
+    }
+
+    private func titleDidChange() {
+        onPaneTitleChange?()
+        guard let history, let visitID = currentVisitID, let title = webView.title, !title.isEmpty else { return }
+        do {
+            try history.updateTitle(ofVisit: visitID, to: title)
+        } catch {
+            logger.error("browser history title update failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     private func addressDidChange() {
@@ -196,6 +291,19 @@ public final class BrowserPaneViewController: NSViewController {
         }
         store.setPaneStateValue(url == Self.blankPage ? nil : url.absoluteString, forKey: Self.addressKey)
         onPaneTitleChange?()
+    }
+
+    /// Files the page that just finished loading. Only pages, only when the
+    /// setting says so, and never the blank page.
+    private func recordVisit() {
+        currentVisitID = nil
+        guard let history, settings.get(UserSettings.browserRecordsHistory),
+              let url = webView.url, url != Self.blankPage else { return }
+        do {
+            currentVisitID = try history.record(url, title: webView.title ?? "")
+        } catch {
+            logger.error("browser history record failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     // MARK: - Actions
@@ -244,15 +352,53 @@ extension BrowserPaneViewController: PaneContentTeardown {
     /// into a discarded pane would otherwise call back into it.
     public func paneContentWillBeDiscarded() {
         observations.removeAll()
+        cancellables.removeAll()
         webView.stopLoading()
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
     }
 }
 
-// MARK: - WebKit delegates
+// MARK: - Navigation
 
 extension BrowserPaneViewController: WKNavigationDelegate {
+
+    /// Per navigation, and read off the settings each time, so switching
+    /// JavaScript or Lockdown Mode takes effect on the next page rather than
+    /// the next pane. WebKit picks **one** `decidePolicyFor` overload, so the
+    /// download decision lives here too.
+    public func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        preferences: WKWebpagePreferences
+    ) async -> (WKNavigationActionPolicy, WKWebpagePreferences) {
+        preferences.allowsContentJavaScript = settings.get(UserSettings.browserJavaScriptEnabled)
+        preferences.isLockdownModeEnabled = settings.get(UserSettings.browserLockdownMode)
+        return (navigationAction.shouldPerformDownload ? .download : .allow, preferences)
+    }
+
+    /// A response the web view cannot show — a zip, a disk image — is a
+    /// download, which is what every browser does with one.
+    public func webView(
+        _ webView: WKWebView,
+        decidePolicyFor navigationResponse: WKNavigationResponse
+    ) async -> WKNavigationResponsePolicy {
+        navigationResponse.canShowMIMEType ? .allow : .download
+    }
+
+    public func webView(_ webView: WKWebView, navigationAction: WKNavigationAction, didBecome download: WKDownload) {
+        adopt(download)
+    }
+
+    public func webView(
+        _ webView: WKWebView, navigationResponse: WKNavigationResponse, didBecome download: WKDownload
+    ) {
+        adopt(download)
+    }
+
+    public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+        recordVisit()
+    }
 
     public func webView(
         _ webView: WKWebView,
@@ -264,6 +410,69 @@ extension BrowserPaneViewController: WKNavigationDelegate {
         logger.error("browser pane failed to load: \(error.localizedDescription, privacy: .public)")
     }
 }
+
+// MARK: - Downloads
+
+extension BrowserPaneViewController: WKDownloadDelegate {
+
+    private func adopt(_ download: WKDownload) {
+        download.delegate = self
+        downloads.append(download)
+    }
+
+    /// A file name that does not collide with one already in `directory`:
+    /// `name.ext`, then `name-2.ext`, `name-3.ext`, the way Finder counts.
+    static func uniqueDestination(for suggestedName: String, in directory: URL) -> URL {
+        let name = suggestedName.isEmpty ? "download" : suggestedName
+        let base = (name as NSString).deletingPathExtension
+        let ext = (name as NSString).pathExtension
+        var candidate = directory.appendingPathComponent(name)
+        var attempt = 2
+        while FileManager.default.fileExists(atPath: candidate.path) {
+            let next = ext.isEmpty ? "\(base)-\(attempt)" : "\(base)-\(attempt).\(ext)"
+            candidate = directory.appendingPathComponent(next)
+            attempt += 1
+        }
+        return candidate
+    }
+
+    public func download(
+        _ download: WKDownload,
+        decideDestinationUsing response: URLResponse,
+        suggestedFilename: String
+    ) async -> URL? {
+        if settings.get(UserSettings.browserAsksDownloadLocation), let window = view.window {
+            let panel = NSSavePanel()
+            panel.nameFieldStringValue = suggestedFilename
+            panel.directoryURL = BrowserSettings.downloadDirectory(in: settings)
+            panel.canCreateDirectories = true
+            let response = await panel.beginSheetModal(for: window)
+            return response == .OK ? panel.url : nil
+        }
+        let directory = BrowserSettings.downloadDirectory(in: settings)
+        do {
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        } catch {
+            logger.error("browser download folder unavailable: \(error.localizedDescription, privacy: .public)")
+            return nil
+        }
+        return Self.uniqueDestination(for: suggestedFilename, in: directory)
+    }
+
+    public func downloadDidFinish(_ download: WKDownload) {
+        downloads.removeAll { $0 === download }
+        let address = download.originalRequest?.url?.absoluteString ?? ""
+        logger.info("browser download finished: \(address, privacy: .public)")
+    }
+
+    public func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {
+        downloads.removeAll { $0 === download }
+        guard (error as NSError).code != NSURLErrorCancelled else { return }
+        logger.error("browser download failed: \(error.localizedDescription, privacy: .public)")
+    }
+}
+
+// MARK: - UI delegate
 
 extension BrowserPaneViewController: WKUIDelegate {
 
@@ -280,5 +489,35 @@ extension BrowserPaneViewController: WKUIDelegate {
             webView.load(navigationAction.request)
         }
         return nil
+    }
+
+    /// Camera and microphone, decided by the Media setting: granted or refused
+    /// outright, or asked about — on the pane's window, naming the site, so
+    /// the answer is given to the page that asked and nothing else.
+    public func webView(
+        _ webView: WKWebView,
+        decideMediaCapturePermissionsFor origin: WKSecurityOrigin,
+        initiatedBy frame: WKFrameInfo,
+        type: WKMediaCaptureType
+    ) async -> WKPermissionDecision {
+        switch settings.get(UserSettings.browserMediaCapture) {
+        case .allow: return .grant
+        case .deny: return .deny
+        case .ask: break
+        }
+        guard let window = view.window else { return .prompt }
+        let device = switch type {
+        case .camera: "camera"
+        case .microphone: "microphone"
+        case .cameraAndMicrophone: "camera and microphone"
+        @unknown default: "camera or microphone"
+        }
+        let alert = NSAlert()
+        alert.messageText = "\(origin.host) wants to use your \(device)."
+        alert.informativeText = "Browser settings decide whether sites ask, are always allowed, or never are."
+        alert.addButton(withTitle: "Allow")
+        alert.addButton(withTitle: "Don’t Allow")
+        let response = await alert.beginSheetModal(for: window)
+        return response == .alertFirstButtonReturn ? .grant : .deny
     }
 }

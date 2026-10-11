@@ -24,12 +24,20 @@ extension ComposableTabsViewRegistry {
     /// - Parameters:
     ///   - preferredAxis: Which way the Split menu proposes adding another
     ///     browser. Side by side suits a pane that wants width.
-    ///   - homeURL: What a fresh pane opens on. Blank by default: the address
-    ///     field is right there, and a start page is a choice the host makes.
+    ///   - homeURL: What a fresh pane opens on when the Home Page setting is
+    ///     blank. Blank by default: the address field is right there, and a
+    ///     start page is a choice the host or the user makes.
+    ///   - settings: The browser settings every pane honours. The app's
+    ///     shared store by default — the same one the settings panel edits.
+    ///   - history: Where panes record visits; `nil` records nothing. The
+    ///     host hands the same store to `BrowserSettingsPanelViewController`,
+    ///     so the panel lists what the panes wrote.
     @MainActor
     public func registerBrowser(
         preferredAxis: ComposableTabsAxis,
-        homeURL: URL = BrowserPaneViewController.blankPage
+        homeURL: URL = BrowserPaneViewController.blankPage,
+        settings: SettingsStore = UserSettings.shared,
+        history: BrowserHistoryStore? = nil
     ) {
         register(
             .browser,
@@ -44,6 +52,8 @@ extension ComposableTabsViewRegistry {
         ) { context in
             BrowserPaneViewController(
                 store: context.makeStateStore(prefix: "browser."),
+                settings: settings,
+                history: history,
                 homeURL: homeURL
             )
         }
