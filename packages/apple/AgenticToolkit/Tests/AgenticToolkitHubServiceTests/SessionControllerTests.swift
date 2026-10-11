@@ -104,6 +104,36 @@ final class SessionControllerTests: XCTestCase {
 
     // MARK: restore
 
+    /// Records the thread each read runs on: a Keychain read can block on an
+    /// access prompt, so restore must never make it on the main thread.
+    private final class ThreadRecordingStore: SessionStore, @unchecked Sendable {
+        private let lock = NSLock()
+        private var mainThreadReads = 0
+        var readsOnMain: Int { lock.withLock { mainThreadReads } }
+
+        func currentSession() -> Session? {
+            if Thread.isMainThread { lock.withLock { mainThreadReads += 1 } }
+            return nil
+        }
+        func save(_ session: Session) {}
+        func clear() {}
+    }
+
+    func testRestoreReadsTheStoreOffTheMainThread() async {
+        let store = ThreadRecordingStore()
+        let controller = SessionController(
+            environment: .direct(sessionStore: store),
+            configuration: SignInConfiguration(
+                clientID: "adh-cli",
+                backendURL: URL(string: "https://api.example.com")!
+            ),
+            defaults: isolated.defaults
+        )
+        await controller.restore()
+        XCTAssertEqual(controller.state, .signedOut)
+        XCTAssertEqual(store.readsOnMain, 0)
+    }
+
     func testRestoreWithoutASessionIsSignedOutAndMakesNoRequest() async {
         let harness = makeHarness()
         CachedUserStore(defaults: isolated.defaults).save(Self.ada)

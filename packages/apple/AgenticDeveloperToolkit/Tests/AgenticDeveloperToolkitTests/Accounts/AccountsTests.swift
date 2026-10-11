@@ -12,6 +12,7 @@ private final class StubAccount: Account {
     var signupURL: URL?
     var onChange: @MainActor () -> Void = {}
     init(id: String) { self.id = id }
+    func restore() {}
     func presentSignIn(from anchor: AccountPresentationAnchor) {}
     func signOut() async {}
 }

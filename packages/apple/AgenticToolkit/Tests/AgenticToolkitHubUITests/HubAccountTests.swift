@@ -135,6 +135,33 @@ struct HubAccountTests {
         if case .signedIn = account.state {} else { Issue.record("expected signedIn, got \(account.state)") }
     }
 
+    @Test("nothing is restored until restore() is called, and then only once")
+    func restoreIsLazyAndOnce() async {
+        let session = FakeSession()
+        session.state = .restoring
+        session.restoreOutcome = .signedIn(ada)
+        let account = make(session)
+        await Task.yield()
+        #expect(session.restoreCalls == 0)
+
+        account.restore()
+        account.restore()
+        for _ in 0..<50 where account.state == .restoring { await Task.yield() }
+
+        #expect(session.restoreCalls == 1)
+        if case .signedIn = account.state {} else { Issue.record("expected signedIn, got \(account.state)") }
+    }
+
+    @Test("restore() leaves a settled session alone")
+    func restoreSkipsASettledSession() async {
+        let session = FakeSession()
+        session.state = .signedOut
+        let account = make(session)
+        account.restore()
+        await Task.yield()
+        #expect(session.restoreCalls == 0)
+    }
+
     @Test("a blank name falls back to slug, then email local-part")
     func nameFallback() {
         let slugOnly = HubUser(id: "1", email: "z@x.y", name: " ", slug: "zed", avatarURL: nil)

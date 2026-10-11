@@ -16,11 +16,14 @@ final class FakeAccount: Account {
     var presentCount = 0
     var lastAnchor: AnyObject?
     var signOutCount = 0
+    var restoreCount = 0
 
     init(id: String, displayName: String) {
         self.id = id
         self.displayName = displayName
     }
+
+    func restore() { restoreCount += 1 }
 
     func presentSignIn(from anchor: AccountPresentationAnchor) {
         presentCount += 1
@@ -100,6 +103,15 @@ struct AccountDetailPanelTests {
         let detail = AccountDetailPanelViewController(account: account, openURL: { opened?($0); return opens })
         _ = detail.view
         return detail
+    }
+
+    @Test("showing the detail asks the account to restore, and building it does not")
+    func showingRestores() {
+        let account = FakeAccount(id: "a", displayName: "Alpha")
+        let detail = AccountDetailPanelViewController(account: account, openURL: { _ in true })
+        #expect(account.restoreCount == 0)
+        _ = detail.view
+        #expect(account.restoreCount == 1)
     }
 
     @Test("restoring shows the spinner and status, no buttons")

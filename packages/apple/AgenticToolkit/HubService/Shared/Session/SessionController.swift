@@ -97,7 +97,11 @@ public final class SessionController {
     /// a rejected refresh → sign-in; unreachable backend → the cached user
     /// (offline launch) or an error when there is none.
     public func restore() async {
-        guard environment.sessionStore.currentSession() != nil else {
+        // A Keychain read can put up an access prompt and block until it is
+        // answered, so it never runs on the main actor.
+        let store = environment.sessionStore
+        let hasSession = await Task.detached { store.currentSession() != nil }.value
+        guard hasSession else {
             cache.clear()
             state = .signedOut
             return

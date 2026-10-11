@@ -108,6 +108,7 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
         // This panel is the account's one observer; assigning replaces any earlier one.
         account.onChange = { [weak self] in self?.render() }
         render()
+        account.restore()
     }
 
     // MARK: Rendering

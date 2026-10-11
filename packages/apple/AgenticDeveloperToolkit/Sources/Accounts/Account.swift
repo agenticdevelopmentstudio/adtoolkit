@@ -65,6 +65,11 @@ public protocol Account: AnyObject {
     /// so assigning it again replaces the earlier observer.
     var onChange: @MainActor () -> Void { get set }
 
+    /// Starts finding out whether a stored login is still good, leaving
+    /// `.restoring` when done. The accounts UI calls it when it first shows
+    /// the account, so an app pays for the check (a Keychain read, a network
+    /// call) only when someone looks. Calling it again does nothing.
+    func restore()
     func presentSignIn(from anchor: AccountPresentationAnchor)
     func signOut() async
 }

@@ -34,6 +34,7 @@ public final class HubAccount: Account {
     private let session: any SignInSession
     let browser: any SocialSignInProvider
     private var signingIn: Task<Void, Never>?
+    private var restoring: Task<Void, Never>?
 
     /// `browser` runs the hosted page's round-trip; the default opens it in
     /// a private `ASWebAuthenticationSession` sheet on the key window, so the
@@ -49,6 +50,13 @@ public final class HubAccount: Account {
             self?.apply(newState)
         }
         apply(session.state)
+    }
+
+    /// Checks the stored login once, and only while the session has not
+    /// settled on its own.
+    public func restore() {
+        guard restoring == nil, session.state == .restoring else { return }
+        restoring = Task { [session] in await session.restore() }
     }
 
     /// Busy while the browser sheet is up. Closing the sheet is a cancel and
@@ -118,16 +126,14 @@ public final class HubAccount: Account {
 extension HubAccount {
     /// The hub account for an app that is not the hub app: a live
     /// `SessionController` over direct HTTPS (no adh-daemon), its session kept
-    /// in the Keychain, restored straight away so the account leaves
-    /// `.restoring` on its own.
+    /// in the Keychain. Nothing is read until the accounts UI calls
+    /// `restore()`, so building Settings never touches the Keychain.
     public static func live(
         sessionStore: any SessionStore = KeychainSessionStore(keyPrefix: "adh.api"),
         configuration: SignInConfiguration = .fromBundle()
     ) -> HubAccount {
         let environment = HubEnvironment.direct(sessionStore: sessionStore)
         let session = SessionController(environment: environment, configuration: configuration)
-        let account = HubAccount(session: session)
-        Task { await session.restore() }
-        return account
+        return HubAccount(session: session)
     }
 }
