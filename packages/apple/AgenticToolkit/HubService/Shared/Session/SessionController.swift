@@ -265,6 +265,8 @@ public final class SessionController {
                     dismissURL: configuration.callbackURL
                 )
             )
+            // A code that lands after the caller gave up must not sign in.
+            try Task.checkCancellation()
             let generated: Components.Schemas.User
             do {
                 generated = try await environment.client.exchangeOAuthCode(

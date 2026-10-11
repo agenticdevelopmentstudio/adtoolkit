@@ -125,17 +125,22 @@ public final class LoopbackAuthServer: @unchecked Sendable {
     /// if ``abort()`` ran first (the user closed the browser),
     /// ``SessionControllerError/missingOAuthCode`` if the provider came back
     /// with an error instead of a code, or
-    /// ``LoopbackAuthServerError/timedOut(_:)``.
+    /// ``LoopbackAuthServerError/timedOut(_:)``. Cancelling the waiting task
+    /// is an ``abort()``, so a cancelled sign-in stops waiting at once.
     public func waitForDelivery() async throws -> SocialSignInResult {
-        try await withCheckedThrowingContinuation { continuation in
-            lock.lock()
-            if let outcome {
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { continuation in
+                lock.lock()
+                if let outcome {
+                    lock.unlock()
+                    continuation.resume(with: outcome)
+                    return
+                }
+                waiter = continuation
                 lock.unlock()
-                continuation.resume(with: outcome)
-                return
             }
-            waiter = continuation
-            lock.unlock()
+        } onCancel: {
+            abort()
         }
     }
 

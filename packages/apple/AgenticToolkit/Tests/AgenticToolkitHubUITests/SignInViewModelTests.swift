@@ -62,12 +62,17 @@ final class SignInViewModelTests: XCTestCase {
     }
 
     private struct FakeSocial: SocialSignInProvider {
-        enum Outcome { case code(String), noCode, cancel }
+        /// `failsWhenCancelled` waits for a cancel and then fails the way a
+        /// cancelled request does: with an error that is not a `CancellationError`.
+        enum Outcome { case code(String), noCode, cancel, failsWhenCancelled }
         let outcome: Outcome
         func authenticate(_ request: SocialSignInRequest) async throws -> SocialSignInResult {
             switch outcome {
             case .cancel: throw CancellationError()
             case .noCode: throw SessionControllerError.missingOAuthCode
+            case .failsWhenCancelled:
+                while !Task.isCancelled { await Task.yield() }
+                throw URLError(.cancelled)
             case .code(let code): return SocialSignInResult(code: code, userAgent: "TestBrowser/1.0")
             }
         }
@@ -479,6 +484,17 @@ final class SignInViewModelTests: XCTestCase {
         XCTAssertNil(harness.viewModel.state.errorMessage)
         XCTAssertFalse(harness.viewModel.state.isBusy)
         XCTAssertEqual(harness.stub.requestCount(.post, "/oauth/signin/exchange"), 0)
+    }
+
+    func testACancelThatFailsWithAnotherErrorIsStillSilent() async throws {
+        let harness = makeHarness(social: .failsWhenCancelled)
+        let viewModel = harness.viewModel
+        let signIn = Task { await viewModel.signInWithSocial(.google) }
+        try await Task.sleep(for: .milliseconds(30))
+        viewModel.cancel()
+        await signIn.value
+        XCTAssertNil(viewModel.state.errorMessage)
+        XCTAssertFalse(viewModel.state.isBusy)
     }
 
     func testSocialCallbackWithoutCodeShowsTheMessage() async {

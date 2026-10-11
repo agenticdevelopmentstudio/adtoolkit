@@ -123,6 +123,21 @@ final class LoopbackAuthServerTests: XCTestCase {
         }
     }
 
+    func testCancellingTheWaitingTaskEndsTheWait() async throws {
+        let server = try await makeServer(ports: [38_822], nonce: "n-cancel", timeout: 30)
+        defer { server.shutdown() }
+
+        let wait = Task { try await server.waitForDelivery() }
+        try await Task.sleep(for: .milliseconds(50))
+        wait.cancel()
+        do {
+            _ = try await wait.value
+            XCTFail("expected a cancellation")
+        } catch {
+            XCTAssertTrue(error is CancellationError, "\(error)")
+        }
+    }
+
     /// The browser session always ends *after* the code has been handed over,
     /// so a late abort must not turn a success into a cancellation.
     func testALateAbortCannotUndoADeliveredCode() async throws {

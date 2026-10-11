@@ -382,6 +382,30 @@ final class SessionControllerTests: XCTestCase {
         XCTAssertEqual(harness.stub.requestCount(.post, "/oauth/signin/exchange"), 0)
     }
 
+    /// A browser that hands over a code only after the caller gave up.
+    private struct LateCode: SocialSignInProvider {
+        func authenticate(_ request: SocialSignInRequest) async throws -> SocialSignInResult {
+            while !Task.isCancelled { await Task.yield() }
+            return SocialSignInResult(code: "code-late", userAgent: "TestBrowser/1.0")
+        }
+    }
+
+    func testACodeArrivingAfterACancelNeverSignsIn() async {
+        let harness = makeHarness()
+        harness.stub.on(.post, "/oauth/signin/exchange", status: 200, json: Self.authJSON)
+        let controller = harness.controller
+        let signIn = Task { try await controller.signInWithWeb(using: LateCode()) }
+        signIn.cancel()
+        do {
+            _ = try await signIn.value
+            XCTFail("expected CancellationError")
+        } catch {
+            XCTAssertTrue(error is CancellationError, "\(error)")
+        }
+        XCTAssertEqual(harness.controller.state, .signedOut)
+        XCTAssertEqual(harness.stub.requestCount(.post, "/oauth/signin/exchange"), 0)
+    }
+
     func testSocialSignInWithoutACodeFails() async {
         let harness = makeHarness()
         let social = CannedSocial(failure: SessionControllerError.missingOAuthCode)

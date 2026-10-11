@@ -203,8 +203,10 @@ public final class SignInViewModel {
     // MARK: Private
 
     /// Wraps one async intent: busy flag on, messages cleared, errors mapped.
-    /// A `CancellationError` (the user dismissed a passkey or web sheet) is
-    /// silent by design — nothing went wrong that the user does not know about.
+    /// A cancel is silent by design — nothing went wrong that the user does
+    /// not know about. That is a `CancellationError` (the user dismissed a
+    /// passkey or web sheet) or any error from an intent that was cancelled,
+    /// which may arrive wrapped (a `ClientError` around a cancelled request).
     /// `describe` words the failure; a browser sign-in passes its own.
     private func run(
         describe: @MainActor (any Error) -> String = SessionController.userMessage,
@@ -221,7 +223,7 @@ public final class SignInViewModel {
         defer { if inFlight == task { inFlight = nil } }
         do {
             try await task.value
-        } catch is CancellationError {
+        } catch where error is CancellationError || task.isCancelled {
             return
         } catch {
             state.errorMessage = describe(error)
