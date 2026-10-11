@@ -42,6 +42,18 @@ struct SessionWrappersTests {
         #expect(store.currentSession() == Session(credentials: Credentials(token: "jwt-1", kind: .jwt), refreshToken: "r-1"))
     }
 
+    @Test("signIn sends what the user typed as `identifier`, never `email`")
+    func signInSendsIdentifier() async throws {
+        let (adh, mock) = makeClient { _ in (.ok, Self.authJSON) }
+
+        _ = try await adh.signIn(email: "mike", password: "pw")
+
+        let body = try #require(mock.lastBody)
+        let json = try #require(try JSONSerialization.jsonObject(with: body) as? [String: String])
+        #expect(json["identifier"] == "mike")
+        #expect(json["email"] == nil)
+    }
+
     @Test("signIn surfaces an MFA challenge without storing anything")
     func signInMfaChallenge() async throws {
         let store = InMemorySessionStore()

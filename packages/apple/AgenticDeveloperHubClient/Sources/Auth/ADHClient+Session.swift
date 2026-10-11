@@ -75,9 +75,12 @@ extension ADHClient {
         error.error?.message ?? error.error?.code ?? "unknown error"
     }
 
+    /// `email` is whatever the user typed — an email, user id or phone — and
+    /// goes out as `identifier`, which the backend classifies. The legacy
+    /// `email` key would pin the lookup to email only.
     public func signIn(email: String, password: String) async throws -> SignInOutcome {
         let store = try sessionStore()
-        let output = try await api.postAuthLogin(body: .json(.init(email: email, password: password)))
+        let output = try await api.postAuthLogin(body: .json(.init(identifier: email, password: password)))
         switch output {
         case .ok(let ok):
             return .signedIn(adopt(try ok.body.json, into: store))
