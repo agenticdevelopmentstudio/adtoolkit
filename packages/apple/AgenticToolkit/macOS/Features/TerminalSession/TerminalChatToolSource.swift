@@ -2,8 +2,8 @@ import Foundation
 import AgenticToolkitCore
 
 /// The tools a persona uses to work a terminal — through a Terminal Chat
-/// rather than the terminal itself, so everything it sends and reads passes
-/// through that chat's substitutions. The persona only ever sees the aliases.
+/// rather than the terminal itself. Connected to a private terminal, the
+/// persona only ever sees that terminal's privacy words, never the real ones.
 ///
 /// The Terminal Chat is looked up on every call, not held, so connecting one
 /// after the persona chat opened — or closing it — takes effect on the next

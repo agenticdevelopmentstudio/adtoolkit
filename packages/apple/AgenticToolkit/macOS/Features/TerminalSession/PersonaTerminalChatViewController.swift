@@ -4,9 +4,9 @@ import AgenticToolkitCore
 import AgenticToolkitCoreMacOS
 
 /// A chat with an AI persona that can work the user's terminal — by way of
-/// the Terminal Chat in the same tab, never the terminal directly, so what the
-/// persona sends and reads goes through that chat's substitutions and it only
-/// ever sees the aliases.
+/// the Terminal Chat in the same tab, never the terminal directly. When that
+/// chat is connected to a private terminal, the persona only ever sees the
+/// terminal's privacy words, never the real ones.
 ///
 /// The persona runs on one of the LLM providers configured in Settings, chosen
 /// per pane along with a model and the persona's instructions.

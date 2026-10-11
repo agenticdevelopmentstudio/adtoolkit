@@ -74,10 +74,23 @@ public final class ScriptAccessibilityIDsCommand: ScriptWindowCommand, @unchecke
         ])
     }
 
+    /// AgenticToolkitCoreUI's `ConcealsContents`, by the Objective-C name it
+    /// fixes for exactly this: this framework is AppKit-only and cannot import
+    /// it. Nil when CoreUI is not loaded — and then nothing is concealed.
+    @MainActor
+    private static let concealsContents = NSProtocolFromString("ATKConcealsContents")
+
+    @MainActor
+    private static func conceals(_ view: NSView) -> Bool {
+        concealsContents.map { view.conforms(to: $0) } ?? false
+    }
+
     /// Depth-first, so the order a reader sees matches the order the controls
-    /// are laid out in.
+    /// are laid out in. A concealed container — a private terminal — ends the
+    /// walk down that branch: a script is told nothing about what is in it.
     @MainActor
     private static func collect(_ view: NSView, into views: inout [[String: Any]]) {
+        guard !conceals(view) else { return }
         let identifier = view.accessibilityIdentifier()
         if !identifier.isEmpty {
             var entry: [String: Any] = [

@@ -252,6 +252,16 @@ extension ComposableSettings {
 
         private let columns: [EditableTableColumn]
         private let footer: AddRemoveFooterView
+        private var tableHeightConstraint: NSLayoutConstraint?
+
+        /// The table's height in points — set from `visibleRows` at first. An
+        /// owner whose card fills a resizable window sets it as the window
+        /// changes size; the card itself never grows with its rows, for the
+        /// reason `visibleRows` gives. Never less than one row.
+        public var tableHeight: CGFloat {
+            get { tableHeightConstraint?.constant ?? 0 }
+            set { tableHeightConstraint?.constant = max(newValue, tableView.rowHeight + 2 + 24) }
+        }
         private let scrollView = ThemedScrollView()
         private var heldRows = EditDeferredValue<[EditableTableRow]>()
         private var lastReportedSelection: String??
@@ -599,14 +609,16 @@ extension ComposableSettings {
             let container = NSView()
             container.translatesAutoresizingMaskIntoConstraints = false
             container.addSubview(stack)
+            let tableHeight = scrollView.heightAnchor.constraint(
+                equalToConstant: CGFloat(visibleRows) * (tableView.rowHeight + 2) + 24)
+            tableHeightConstraint = tableHeight
             NSLayoutConstraint.activate([
                 stack.topAnchor.constraint(equalTo: container.topAnchor),
                 stack.leadingAnchor.constraint(equalTo: container.leadingAnchor),
                 stack.trailingAnchor.constraint(equalTo: container.trailingAnchor),
                 stack.bottomAnchor.constraint(equalTo: container.bottomAnchor),
                 scrollView.widthAnchor.constraint(equalTo: stack.widthAnchor),
-                scrollView.heightAnchor.constraint(
-                    equalToConstant: CGFloat(visibleRows) * (tableView.rowHeight + 2) + 24)
+                tableHeight
             ])
             addSettingSubview(container)
             updateButtons()

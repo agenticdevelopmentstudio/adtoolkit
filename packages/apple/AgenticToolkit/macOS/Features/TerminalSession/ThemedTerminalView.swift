@@ -15,7 +15,7 @@ import SwiftTerm
 /// `LocalProcessTerminalView` in the framework's generated Objective-C header,
 /// which then cannot find the Swift-only `SwiftTerm` module.
 @MainActor
-final class ThemedTerminalView: LocalProcessTerminalView {
+class ThemedTerminalView: LocalProcessTerminalView {
 
     /// Everything the caret needs from the theme, in one value, because the
     /// colour and the shape are two halves of one decision: set the colour

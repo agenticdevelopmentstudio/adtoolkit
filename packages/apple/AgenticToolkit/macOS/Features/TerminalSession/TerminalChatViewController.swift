@@ -2,13 +2,14 @@ import AppKit
 import AgenticToolkitCore
 import AgenticToolkitCoreMacOS
 
-/// A chat pane that talks to the terminal beside it: what is typed here is
-/// typed there, and what the terminal prints comes back as replies, each way
-/// through the pane's substitutions.
+/// A chat pane that talks to a terminal pane: what is typed here is typed
+/// there, and what the terminal prints comes back as replies.
 ///
-/// **Experimental, and deliberately narrow.** "The terminal beside it" means the
-/// first terminal pane in the same tab — the pane assumes there is exactly one.
-/// Choosing which terminal to talk to is for when the experiment has earned it.
+/// Which terminal is the user's choice: Connect to Terminal… in the pane's
+/// Settings puts up a ``TerminalPanePicker`` and they click the one they mean.
+/// Any pane offering ``TerminalPaneConnectable`` will do — the chat knows
+/// nothing about what kind of terminal it is. The choice is remembered by
+/// pane and re-made when the chat next appears.
 @MainActor
 public final class TerminalChatViewController: NSViewController {
 
@@ -20,6 +21,7 @@ public final class TerminalChatViewController: NSViewController {
     private var chatView: ChatView?
     private let directory: TerminalChatDirectory?
     private let listing: TerminalChatDirectory.Listing?
+    private var picker: TerminalPanePicker?
 
     /// - Parameters:
     ///   - directory: Where this chat lists itself, under `listing`, for
@@ -32,11 +34,14 @@ public final class TerminalChatViewController: NSViewController {
         self.stateStore = stateStore
         self.directory = directory
         self.listing = listing
-        let filter = TextSubstitutionFilter(
-            parsing: stateStore.paneStateValue(forKey: Keys.substitutions) ?? "")
-        session = TerminalChatSession(filter: filter)
+        session = TerminalChatSession()
         viewModel = AIChatViewModel(session: session)
         super.init(nibName: nil, bundle: nil)
+        // Earlier versions kept a connect flag and substitution words here;
+        // the words now belong to the private terminal alone, so none are
+        // left lying in pane state.
+        stateStore.setPaneStateValue(nil, forKey: Keys.legacyConnected)
+        stateStore.setPaneStateValue(nil, forKey: Keys.legacySubstitutions)
         if let directory, let listing { directory.add(session, as: listing) }
     }
 
@@ -65,20 +70,24 @@ public final class TerminalChatViewController: NSViewController {
 
     public override func viewDidAppear() {
         super.viewDidAppear()
-        // The sibling terminal can only be found once this pane is in the tree,
-        // and a remembered connection is re-made rather than stored.
-        if isConnectEnabled { connect() }
+        // The remembered pane can only be found once this one is in the tree.
+        if session.terminal == nil { reconnect() }
     }
 
     // MARK: - Connection
 
-    private var isConnectEnabled: Bool {
-        get { stateStore.paneStateValue(forKey: Keys.connected) == "1" }
-        set { stateStore.setPaneStateValue(newValue ? "1" : nil, forKey: Keys.connected) }
+    /// The pane last connected to, by node.
+    private var connectedPaneID: UUID? {
+        get { stateStore.paneStateValue(forKey: Keys.connectedPane).flatMap(UUID.init(uuidString:)) }
+        set { stateStore.setPaneStateValue(newValue?.uuidString, forKey: Keys.connectedPane) }
     }
 
-    private func connect() {
-        session.connect(to: isConnectEnabled ? siblingTerminal() : nil)
+    private func reconnect() {
+        guard let connectedPaneID else { return applyConnectionState() }
+        let terminal = tabPanes()
+            .first { $0.nodeID == connectedPaneID }
+            .flatMap { ($0.contentViewController as? TerminalPaneConnectable)?.connectableTerminal }
+        session.connect(to: terminal)
         applyConnectionState()
     }
 
@@ -89,73 +98,54 @@ public final class TerminalChatViewController: NSViewController {
         chatView.composerPrompt = connected ? "$" : nil
         if connected {
             chatView.setStatus(nil, icon: nil)
-        } else if isConnectEnabled {
-            chatView.setStatus("No terminal in this tab to connect to", icon: nil)
+        } else if connectedPaneID != nil {
+            chatView.setStatus(
+                "Its terminal isn't available — use Connect to Terminal… in this pane's Settings", icon: nil)
         } else {
-            chatView.setStatus("Not connected — turn on Connect to Terminal in this pane's Settings", icon: nil)
+            chatView.setStatus("Not connected — use Connect to Terminal… in this pane's Settings", icon: nil)
         }
     }
 
-    /// The first terminal pane in this tab.
-    private func siblingTerminal() -> TerminalSession? {
-        tabPaneContents().lazy.compactMap {
-            ($0 as? TerminalSessionContentViewController)?.sessionManager.selectedSession
-        }.first
-    }
-
-    // MARK: - Substitutions
-
-    private func setSubstitutions(_ text: String) {
-        let filter = TextSubstitutionFilter(parsing: text)
-        session.filter = filter
-        stateStore.setPaneStateValue(filter.pairs.isEmpty ? nil : filter.serialized,
-                                     forKey: Keys.substitutions)
-    }
-
-    @objc private func substitutionsEdited(_ sender: NSTextField) {
-        setSubstitutions(sender.stringValue)
+    /// Closes the Settings sheet and lets the user click the terminal to
+    /// connect to.
+    @objc private func connectPressed(_ sender: Any?) {
+        (parent as? PaneViewController)?.dismissOptionsDialog()
+        guard picker == nil, let window = view.window else { return }
+        let picker = TerminalPanePicker(window: window) { [weak self] in
+            self?.tabPanes() ?? []
+        }
+        picker.onPick = { [weak self] pane, terminal in
+            guard let self else { return }
+            self.connectedPaneID = pane.nodeID
+            self.session.connect(to: terminal)
+            self.applyConnectionState()
+        }
+        picker.onFinish = { [weak self] in self?.picker = nil }
+        self.picker = picker
+        // After the sheet has gone, so the panel is not put up behind it.
+        DispatchQueue.main.async { picker.begin() }
     }
 
     private enum Keys {
-        static let connected = "connected"
-        static let substitutions = "substitutions"
+        static let connectedPane = "connectedPane"
+        static let legacyConnected = "connected"
+        static let legacySubstitutions = "substitutions"
     }
 }
 
 extension TerminalChatViewController: PaneOptionsProviding {
 
     public func makePaneOptionRows() -> [NSView] {
-        let connect = WindowOptionsToggle(
-            title: "Connect to terminal",
-            isOn: isConnectEnabled,
-            onChange: { [weak self] value in
-                self?.isConnectEnabled = value
-                self?.connect()
-            }
-        ).checkboxAccessibilityID("terminalChat.options.connect")
-
-        let label = NSTextField(labelWithString: "Substitutions (alias = real; …)")
-        let field = NSTextField(string: session.filter.serialized)
-        field.placeholderString = "bobby mcfarin = mike fullerton"
-        field.target = self
-        field.action = #selector(substitutionsEdited(_:))
-        // Committed when the field loses focus too, so closing the sheet
-        // without pressing Return does not throw the edit away.
-        field.cell?.sendsActionOnEndEditing = true
-        field.setAccessibilityIdentifier("terminalChat.options.substitutions")
-        field.widthAnchor.constraint(greaterThanOrEqualToConstant: 280).isActive = true
-
-        let substitutions = NSStackView(views: [label, field])
-        substitutions.orientation = .vertical
-        substitutions.alignment = .leading
-        substitutions.spacing = 4
-
-        return [connect, substitutions]
+        let connect = NSButton(title: "Connect to Terminal…", target: self, action: #selector(connectPressed(_:)))
+        connect.bezelStyle = .rounded
+        connect.setAccessibilityIdentifier("terminalChat.options.connect")
+        return [connect]
     }
 }
 
 extension TerminalChatViewController: PaneContentTeardown {
     public func paneContentWillBeDiscarded() {
+        picker?.cancel()
         if let directory, let listing { directory.remove(id: listing.id) }
         session.close()
     }

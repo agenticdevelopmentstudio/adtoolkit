@@ -12,6 +12,9 @@ extension ComposableTabsViewID {
     /// A chat with an AI persona that works the terminal through the tab's
     /// Terminal Chat — see `PersonaTerminalChatViewController`.
     public static let personaTerminalChat = ComposableTabsViewID("persona-terminal-chat")
+    /// A terminal behind privacy words and a privacy screen — see
+    /// `PrivateTerminalViewController`.
+    public static let privateTerminal = ComposableTabsViewID("private-terminal")
 }
 
 extension ComposableTabsViewRegistry {
@@ -44,9 +47,26 @@ extension ComposableTabsViewRegistry {
         }
     }
 
+    /// Registers the private terminal pane: one shell behind `vault`'s privacy
+    /// words, under a privacy screen until the user authenticates.
+    @MainActor
+    public func registerPrivateTerminal(vault: PrivacyWordsVault, preferredAxis: ComposableTabsAxis) {
+        register(
+            .privateTerminal,
+            descriptor: .init(
+                displayName: "Private Terminal",
+                symbolName: "eye.slash",
+                preferredAxis: preferredAxis,
+                minimumThickness: 300
+            )
+        ) { context in
+            PrivateTerminalViewController(vault: vault, workingDirectory: context.workingDirectory.path)
+        }
+    }
+
     /// Registers the terminal chat pane: a chat whose messages are typed into
-    /// the tab's terminal and whose replies are what that terminal prints,
-    /// passed through the pane's substitutions each way.
+    /// the terminal pane it is connected to and whose replies are what that
+    /// terminal prints.
     ///
     /// - Parameter directory: Where each chat lists itself for processes
     ///   outside the app to drive (`TerminalChatControlServer`); nil keeps
@@ -104,10 +124,13 @@ extension ComposableTabsLayout {
     ///     one, the persona terminal chat pane is not offered.
     ///   - chatDirectory: Where Terminal Chats list themselves for outside
     ///     processes to drive; nil keeps them private to the window.
+    ///   - privacyVault: The privacy words private terminals run behind;
+    ///     without one, the private terminal pane is not offered.
     @MainActor
     public static func terminalOnly(
         pluginManager: AIPluginManager? = nil,
-        chatDirectory: TerminalChatDirectory? = nil
+        chatDirectory: TerminalChatDirectory? = nil,
+        privacyVault: PrivacyWordsVault? = nil
     ) throws -> ComposableTabsLayout {
         let registry = ComposableTabsViewRegistry()
         registry.registerTerminal(preferredAxis: .horizontal)
@@ -117,9 +140,13 @@ extension ComposableTabsLayout {
             .unbounded(.terminalChat),
             .unbounded(.placeholder)
         ]
+        if let privacyVault {
+            registry.registerPrivateTerminal(vault: privacyVault, preferredAxis: .horizontal)
+            allows.insert(.unbounded(.privateTerminal, preferredAxis: .horizontal), at: 1)
+        }
         if let pluginManager {
             registry.registerPersonaTerminalChat(pluginManager: pluginManager)
-            allows.insert(.unbounded(.personaTerminalChat), at: 2)
+            allows.insert(.unbounded(.personaTerminalChat), at: allows.count - 1)
         }
         return try ComposableTabsLayout(
             registry: registry,

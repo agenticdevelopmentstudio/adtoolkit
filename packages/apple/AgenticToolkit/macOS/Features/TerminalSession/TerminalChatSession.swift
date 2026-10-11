@@ -5,22 +5,16 @@ import AgenticToolkitCore
 /// A `ChatSession` whose other side is a shell: a line sent here is typed into
 /// a `TerminalSession`, and what the terminal prints back arrives as a reply.
 ///
-/// Both directions pass through a `TextSubstitutionFilter`, and only whole
-/// pieces of text ever do — the line the user finished, the output that has
-/// stopped arriving. That is the point of putting a chat in front of the
-/// terminal instead of filtering keystrokes: a substitution can't match half a
-/// name that hasn't been typed yet, or half a name the shell is partway through
-/// printing.
+/// The chat changes nothing on the way in or out: it types what was written
+/// and reports what the screen shows. A terminal that keeps its contents
+/// private does so itself, so its screen — and so every reply read off it —
+/// is already what the user is meant to see.
 ///
-/// What is lost in exchange is everything interactive. Tab completion, a line
+/// What is lost against typing into the terminal is everything interactive. Tab completion, a line
 /// editor, a full-screen program: none of it goes through here, and output
 /// drawn on the alternate screen is not reported at all.
 @MainActor
 public final class TerminalChatSession {
-
-    /// Applied to each line on its way to the terminal (revealing) and to each
-    /// reply on its way back (concealing). Takes effect from the next line.
-    public var filter: TextSubstitutionFilter
 
     /// The terminal lines are typed into, or nil when there is none.
     public private(set) weak var terminal: TerminalSession?
@@ -40,11 +34,7 @@ public final class TerminalChatSession {
     /// slow command prints after its wait gave up is not lost to the next.
     private var unclaimedOutput: [String] = []
 
-    public init(
-        filter: TextSubstitutionFilter = .identity,
-        quietPeriod: RunLoop.SchedulerTimeType.Stride = .milliseconds(300)
-    ) {
-        self.filter = filter
+    public init(quietPeriod: RunLoop.SchedulerTimeType.Stride = .milliseconds(300)) {
         self.quietPeriod = quietPeriod
     }
 
@@ -65,22 +55,21 @@ public final class TerminalChatSession {
 
     private func reportNewOutput() {
         guard let terminal, let output = tracker.newOutput(in: terminal.screenSnapshot()) else { return }
-        let concealed = filter.concealing(output)
         let id = UUID().uuidString
         continuation?.yield(.responseStarted(messageID: id))
-        continuation?.yield(.responseDelta(messageID: id, text: concealed))
+        continuation?.yield(.responseDelta(messageID: id, text: output))
         continuation?.yield(.responseFinished(messageID: id, stopReason: nil))
         if let currentWait {
-            currentWait.received(concealed)
+            currentWait.received(output)
         } else {
-            unclaimedOutput.append(concealed)
+            unclaimedOutput.append(output)
         }
     }
 
     // MARK: - Driven by another agent
 
     /// Sends `text` exactly as ``send(_:)`` does — it shows in the transcript
-    /// as typed — and returns what the terminal printed in reply, concealed.
+    /// as typed — and returns what the terminal printed in reply.
     ///
     /// For a caller that is not a person reading the transcript: a persona
     /// chat whose tool types into this one. The reply is everything reported
@@ -117,14 +106,14 @@ public final class TerminalChatSession {
         return await wait.result()
     }
 
-    /// The last `lines` lines on the terminal's screen, concealed — what is
-    /// there now, prompt included, rather than a reply to anything. Nil when
+    /// The last `lines` lines on the terminal's screen — what is there now,
+    /// prompt included, rather than a reply to anything. Nil when
     /// there is no terminal.
     public func screen(lines: Int = 40) -> String? {
         guard let terminal else { return nil }
         var rows = terminal.screenSnapshot().lines
         while rows.last?.trimmingCharacters(in: .whitespaces).isEmpty == true { rows.removeLast() }
-        return filter.concealing(rows.suffix(max(lines, 1)).joined(separator: "\n"))
+        return rows.suffix(max(lines, 1)).joined(separator: "\n")
     }
 
     private static let notConnected = "The Terminal Chat is not connected to a terminal."
@@ -208,8 +197,8 @@ extension TerminalChatSession: @preconcurrency ChatSession {
         }
     }
 
-    /// Shows `text` as the user wrote it and types its revealed form into the
-    /// terminal, followed by Return. A multi-line message goes in as several
+    /// Shows `text` as the user wrote it and types it into the terminal,
+    /// followed by Return. A multi-line message goes in as several
     /// lines, the way a paste would.
     public func send(_ text: String) {
         continuation?.yield(.userMessage(ChatMessage(role: .user, text: text)))
@@ -218,11 +207,12 @@ extension TerminalChatSession: @preconcurrency ChatSession {
                 message: "Not connected to a terminal.", isRetryable: false)))
             return
         }
-        let revealed = filter.revealing(text)
         // The last line is what the shell echoes back onto the prompt row, so
-        // it is what the tracker has to recognise and leave out.
-        tracker.noteSent(revealed.components(separatedBy: "\n").last ?? revealed)
-        terminal.sendInput(revealed.replacingOccurrences(of: "\n", with: "\r") + "\r")
+        // it is what the tracker has to recognise and leave out — as the
+        // terminal shows it, which a private terminal may have changed.
+        let echoed = terminal.presentable(text)
+        tracker.noteSent(echoed.components(separatedBy: "\n").last ?? echoed)
+        terminal.sendInput(text.replacingOccurrences(of: "\n", with: "\r") + "\r")
     }
 
     /// Control-C, which is what interrupting a terminal means.

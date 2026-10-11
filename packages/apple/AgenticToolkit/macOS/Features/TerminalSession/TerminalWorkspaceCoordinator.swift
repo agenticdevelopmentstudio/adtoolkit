@@ -40,6 +40,8 @@ public final class TerminalWorkspaceCoordinator: AppFeature {
     ///     leaves that pane type out.
     ///   - chatDirectory: Where Terminal Chat panes list themselves for
     ///     processes outside the app to drive; nil keeps them private.
+    ///   - privacyVault: The privacy words private terminal panes run behind;
+    ///     nil leaves that pane type out.
     public init(
         database: ProjectDatabase,
         directory: URL = FileManager.default.homeDirectoryForCurrentUser,
@@ -47,13 +49,15 @@ public final class TerminalWorkspaceCoordinator: AppFeature {
         commandRegistry registry: CommandRegistry,
         pluginManager: AIPluginManager? = nil,
         chatDirectory: TerminalChatDirectory? = nil,
+        privacyVault: PrivacyWordsVault? = nil,
         windowManager: ProjectWindowManager = .shared
     ) throws {
         self.database = database
         self.windowManager = windowManager
         self.directory = directory
         self.name = name
-        try ComposableTabsLayout.install(.terminalOnly(pluginManager: pluginManager, chatDirectory: chatDirectory))
+        try ComposableTabsLayout.install(.terminalOnly(
+            pluginManager: pluginManager, chatDirectory: chatDirectory, privacyVault: privacyVault))
         super.init()
 
         windowManager.attach(database: database)

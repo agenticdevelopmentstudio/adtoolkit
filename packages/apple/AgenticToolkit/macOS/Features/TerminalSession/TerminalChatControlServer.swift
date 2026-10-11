@@ -46,12 +46,15 @@ public final class TerminalChatDirectory {
         return entries.values.compactMap { entry in
             guard let session = entry.session else { return nil }
             let listing = entry.listing
-            // Concealed like everything else the chat reports: a home
-            // directory or a project named after the user gives them away.
+            // As the connected terminal would show them: a private terminal's
+            // home directory or project can name the user, and it conceals
+            // them on its screen — so here too. Nothing is listed for one
+            // that has not been unlocked yet.
+            let presentable = { (text: String) in session.terminal?.presentable(text) ?? text }
             let chat = TerminalChatControl.Chat(
                 id: listing.id,
-                project: session.filter.concealing(listing.project),
-                directory: session.filter.concealing(listing.directory.path),
+                project: presentable(listing.project),
+                directory: presentable(listing.directory.path),
                 paneNumber: listing.paneNumber, connected: session.terminal != nil)
             return (chat, session)
         }.sorted { ($0.0.project, $0.0.paneNumber) < ($1.0.project, $1.0.paneNumber) }
@@ -60,11 +63,12 @@ public final class TerminalChatDirectory {
 
 /// Lets a process outside the app drive its Terminal Chats, over the protocol
 /// ``TerminalChatControl`` defines: `adterm`, run by Claude Code in another
-/// terminal, types into a chat here and reads the concealed reply.
+/// terminal, types into a chat here and reads the reply.
 ///
-/// Everything goes through the chat, never the terminal, so what the caller
-/// sends is revealed by the chat's substitutions and what it reads back is
-/// concealed by them — and it shows in the chat's transcript as it happens.
+/// Everything goes through the chat, never the terminal, so it shows in the
+/// chat's transcript as it happens — and a chat connected to a private
+/// terminal reads back only what that terminal shows, its privacy words in
+/// place of the real ones.
 @MainActor
 public final class TerminalChatControlServer {
 
@@ -114,8 +118,8 @@ public final class TerminalChatControlServer {
         case .failure(let error): return .failure(error.message)
         }
         guard let session = chats.first(where: { $0.0.id == chat.id })?.1, session.terminal != nil else {
-            return .failure("Terminal Chat \(chat.id) is not connected to a terminal — turn on "
-                            + "Connect to terminal in its pane's Settings.")
+            return .failure("Terminal Chat \(chat.id) is not connected to a terminal — use "
+                            + "Connect to Terminal in its pane's Settings.")
         }
         let settle = Self.duration(request.settle, default: 1.5, limit: 60)
         let timeout = Self.duration(request.timeout, default: 60, limit: 600)

@@ -77,9 +77,52 @@ public final class TerminalSession: ObservableObject, Identifiable {
     /// escape sequences and cursor moves have already been applied.
     public let outputActivity = PassthroughSubject<Void, Never>()
 
-    /// Sends `text` to the shell exactly as if it had been typed.
+    /// Sends `text` to the shell exactly as if it had been typed — through
+    /// the privacy words, for a private session. Dropped while the shell has
+    /// not started.
     public func sendInput(_ text: String) {
+        guard isStarted else { return }
         terminalView.send(txt: text)
+    }
+
+    // MARK: - Privacy
+
+    /// Whether this session runs behind privacy words: what is typed is
+    /// revealed on its way to the shell, and what the shell prints is concealed
+    /// before it reaches the screen — and so before anything that reads the
+    /// screen, the scrollback, the title or the directory.
+    public let isPrivate: Bool
+
+    /// Whether the shell has been started. A private session's shell waits for
+    /// its first ``privacyFilter``: until the words are known, nothing it
+    /// printed could be concealed.
+    public private(set) var isStarted = false
+
+    /// The words a private session's streams pass through. Setting it the
+    /// first time starts the shell; later settings apply from the next byte.
+    /// Ignored by a session that is not private.
+    public var privacyFilter: TextSubstitutionFilter? {
+        didSet {
+            guard isPrivate, let privacyFilter else { return }
+            (terminalView as? PrivateTerminalView)?.substitutions = privacyFilter
+            if !isStarted { startShellProcess(in: terminalView) }
+        }
+    }
+
+    /// `text` as this terminal would show it — concealed, for a private
+    /// session. For anything that reports on the terminal from outside it, so
+    /// a name or a directory reads the same there as on its screen.
+    public func presentable(_ text: String) -> String {
+        guard isPrivate else { return text }
+        return privacyFilter?.concealing(text) ?? ""
+    }
+
+    /// `text` as the shell knows it — revealed, for a private session. For
+    /// what the app itself does with something the screen shows concealed,
+    /// such as finding the branch of the current directory.
+    func programForm(_ text: String) -> String {
+        guard isPrivate else { return text }
+        return privacyFilter?.revealing(text) ?? text
     }
 
     /// The terminal's rendered lines and cursor, rows numbered so the same
@@ -103,10 +146,11 @@ public final class TerminalSession: ObservableObject, Identifiable {
     }
 
     public private(set) lazy var terminalView: LocalProcessTerminalView = {
-        let view = ThemedTerminalView(frame: CGRect(x: 0, y: 0, width: 800, height: 600))
+        let frame = CGRect(x: 0, y: 0, width: 800, height: 600)
+        let view = isPrivate ? PrivateTerminalView(frame: frame) : ThemedTerminalView(frame: frame)
         view.processDelegate = processHandler
         view.onDataReceived = { [weak self] in self?.outputActivity.send() }
-        startShellProcess(in: view)
+        if !isPrivate { startShellProcess(in: view) }
         return view
     }()
 
@@ -116,8 +160,13 @@ public final class TerminalSession: ObservableObject, Identifiable {
     private let workingDirectory: String?
     private let gitClient: GitClient
 
-    public init(name: String, workingDirectory: String? = nil, gitClient: GitClient = .shared) {
+    /// - Parameter isPrivate: Runs the session behind privacy words; its shell
+    ///   starts when ``privacyFilter`` is first set.
+    public init(
+        name: String, workingDirectory: String? = nil, gitClient: GitClient = .shared, isPrivate: Bool = false
+    ) {
         self.name = name
+        self.isPrivate = isPrivate
         self.workingDirectory = workingDirectory
         self.gitClient = gitClient
         self.processHandler = TerminalSessionProcessHandler()
@@ -125,6 +174,8 @@ public final class TerminalSession: ObservableObject, Identifiable {
     }
 
     private func startShellProcess(in view: LocalProcessTerminalView) {
+        guard !isStarted else { return }
+        isStarted = true
         let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
         let startDir = workingDirectory ?? FileManager.default.homeDirectoryForCurrentUser.path
         // swiftlint:disable:next line_length
@@ -261,7 +312,7 @@ public final class TerminalSession: ObservableObject, Identifiable {
 
     public func terminateProcess() {
         stopProcessPolling()
-        if state == .running {
+        if state == .running, isStarted {
             logger.info("Terminating shell process for session '\(self.name)'")
             terminalView.terminate()
         }
@@ -309,8 +360,11 @@ private final class TerminalSessionProcessHandler: NSObject, LocalProcessTermina
         }
         DispatchQueue.main.async {
             MainActor.assumeIsolated {
-                self.session?.currentDirectory = path
-                self.session?.detectGitBranch(for: path)
+                guard let session = self.session else { return }
+                // A private session's directory arrives concealed, like
+                // everything else it printed; the branch lookup needs the real one.
+                session.currentDirectory = path
+                session.detectGitBranch(for: session.programForm(path))
             }
         }
     }

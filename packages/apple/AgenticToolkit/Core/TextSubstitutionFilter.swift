@@ -15,7 +15,7 @@ import Foundation
 /// before a shorter "mike" pair can split it.
 public struct TextSubstitutionFilter: Sendable, Equatable {
 
-    public struct Pair: Sendable, Equatable {
+    public struct Pair: Sendable, Equatable, Hashable, Codable {
         /// What the user writes and reads.
         public let alias: String
         /// What the program is given and prints.

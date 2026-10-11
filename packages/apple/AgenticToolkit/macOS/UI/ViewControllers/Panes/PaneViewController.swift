@@ -338,6 +338,14 @@ open class PaneViewController: NSViewController {
         presentAsSheet(sheet)
     }
 
+    /// Closes the options dialog, when it is up — for a row whose action
+    /// carries on somewhere the sheet would be in the way of, such as picking
+    /// another pane in the window.
+    public func dismissOptionsDialog() {
+        guard let optionsSheet else { return }
+        dismiss(optionsSheet)
+    }
+
     /// The spacing steppers coalesce their writes, so the last tick of a
     /// gesture is still waiting when the dialog goes away. The dialog closing
     /// *is* the end of the gesture — and closing the window closes it too — so
