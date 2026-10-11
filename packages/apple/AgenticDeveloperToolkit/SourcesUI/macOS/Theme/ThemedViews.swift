@@ -307,6 +307,26 @@ public extension NSButton {
     }
 }
 
+/// A push button that fades when it is disabled: the one home of the themed
+/// disabled look.
+///
+/// A stock button greys its own bezel and title when it is off; a button that
+/// paints its own fill and carries an explicit `.foregroundColor` on its
+/// attributed title does not — a disabled Save looked exactly like an enabled
+/// one. Fading the whole control keeps fill, outline and title in step
+/// whatever the paint. `ThemedActionButton` is one; a stock button painted
+/// with an `apply…ActionTheme(_:)` extension, kept stock for its Return key
+/// equivalent, is built as one too.
+@MainActor
+open class FadingPushButton: NSButton {
+    /// The alpha a disabled button fades to.
+    public static let disabledAlpha: CGFloat = 0.45
+
+    open override var isEnabled: Bool {
+        didSet { alphaValue = isEnabled ? 1 : Self.disabledAlpha }
+    }
+}
+
 /// A themed action button as a *control* rather than a paint job: it sizes
 /// itself from the palette's own button font, and it reacts to being pressed.
 ///
@@ -327,7 +347,7 @@ public extension NSButton {
 /// so the painted version gave no feedback at all when clicked. The fill answers
 /// instead.
 @MainActor
-public final class ThemedActionButton: NSButton, Themeable {
+public final class ThemedActionButton: FadingPushButton, Themeable {
 
     /// What the button *means*, which is what decides how it is painted. The
     /// three are the three the palette actually distinguishes: the accent for
@@ -373,19 +393,6 @@ public final class ThemedActionButton: NSButton, Themeable {
     public override var isHighlighted: Bool {
         didSet { paintFill(resolvedThemeScope.palette) }
     }
-
-    /// Disabled has to be drawn here too. A stock button greys its own bezel
-    /// and title when it is off; a button that paints its own fill and carries
-    /// an explicit `.foregroundColor` on its attributed title does not — a
-    /// disabled Save looked exactly like an enabled one. Fading the whole
-    /// control keeps fill, outline and title in step whatever the style.
-    public override var isEnabled: Bool {
-        didSet { alphaValue = isEnabled ? 1 : Self.disabledAlpha }
-    }
-
-    /// The alpha a disabled themed button fades to; the one source for every
-    /// control that must fade in step with it.
-    public static let disabledAlpha: CGFloat = 0.45
 
     public override var intrinsicContentSize: NSSize {
         let title = attributedTitle.size()

@@ -33,7 +33,9 @@ open class FirstRunDialog: NSWindowController, NSWindowDelegate {
     open func makeContentView() -> NSView { NSView() }
     open func jobsForConfirm() -> [any StartupJob] { [] }
 
-    public let confirmButton = NSButton(title: "", target: nil, action: nil)
+    /// Fades when disabled, like every themed button; stays a stock push
+    /// button for its Return key equivalent.
+    public let confirmButton: NSButton = FadingPushButton(title: "", target: nil, action: nil)
     public let cancelButton = NSButton(title: "", target: nil, action: nil)
     /// The headline above the content; nil when the dialog was given no message.
     public private(set) var messageLabel: NSTextField?
@@ -136,7 +138,6 @@ open class FirstRunDialog: NSWindowController, NSWindowDelegate {
 
     public func updateConfirmEnabled() {
         confirmButton.isEnabled = isConfirmEnabled
-        confirmButton.alphaValue = confirmButton.isEnabled ? 1 : ThemedActionButton.disabledAlpha
     }
 
     public func runModal() async -> Result {

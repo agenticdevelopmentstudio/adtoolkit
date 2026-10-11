@@ -83,6 +83,20 @@ struct ThemedActionButtonTests {
         #expect(button.alphaValue == 1)
     }
 
+    @Test("a stock push button painted by hand fades to the same alpha as a themed one")
+    func stockButtonFadesInStep() {
+        let stock = FadingPushButton(title: "Sign In", target: nil, action: nil)
+        stock.keyEquivalent = "\r"
+        stock.applyPrimaryActionTheme(palette)
+        let themed = ThemedActionButton(title: "Save", style: .primary)
+        stock.isEnabled = false
+        themed.isEnabled = false
+        #expect(stock.alphaValue == FadingPushButton.disabledAlpha)
+        #expect(themed.alphaValue == stock.alphaValue)
+        stock.isEnabled = true
+        #expect(stock.alphaValue == 1)
+    }
+
     @Test("re-titling repaints, so the new word is on screen in the theme's font")
     func retitlingRepaints() {
         let button = ThemedActionButton(title: "Save", style: .primary)
