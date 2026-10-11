@@ -113,17 +113,8 @@ public struct SignInConfiguration: Sendable, Equatable {
     /// code can only reach this app through the attempt that asked for it,
     /// even though another local process may bind the port on the next run.
     public func socialStartURL(provider: SocialProvider, returnURL: URL) -> URL {
-        var components = URLComponents(url: backendURL, resolvingAgainstBaseURL: false)
-        components?.path = "/oauth/signin/start"
-        components?.queryItems = [
-            URLQueryItem(name: "clientId", value: clientID),
-            URLQueryItem(name: "providerId", value: provider.rawValue),
-            URLQueryItem(name: "return", value: returnURL.absoluteString)
-        ]
-        guard let url = components?.url else {
-            preconditionFailure("could not build social start URL from \(backendURL)")
-        }
-        return url
+        signInURL(path: "/oauth/signin/start", returnURL: returnURL,
+                  extra: [URLQueryItem(name: "providerId", value: provider.rawValue)])
     }
 
     /// `{backend}/oauth/signin/authorize?clientId=…&return={returnURL}` — the
@@ -134,14 +125,20 @@ public struct SignInConfiguration: Sendable, Equatable {
     /// same way. The return contract is the social one, so the same loopback
     /// listener and nonce receive it (see ``socialStartURL(provider:returnURL:)``).
     public func webSignInStartURL(returnURL: URL) -> URL {
+        signInURL(path: "/oauth/signin/authorize", returnURL: returnURL)
+    }
+
+    /// The one return contract both browser sign-ins share:
+    /// `{backend}{path}?clientId=…[&extra…]&return={returnURL}`. Change it
+    /// here and social and hosted sign-in change together.
+    private func signInURL(path: String, returnURL: URL, extra: [URLQueryItem] = []) -> URL {
         var components = URLComponents(url: backendURL, resolvingAgainstBaseURL: false)
-        components?.path = "/oauth/signin/authorize"
-        components?.queryItems = [
-            URLQueryItem(name: "clientId", value: clientID),
+        components?.path = path
+        components?.queryItems = [URLQueryItem(name: "clientId", value: clientID)] + extra + [
             URLQueryItem(name: "return", value: returnURL.absoluteString)
         ]
         guard let url = components?.url else {
-            preconditionFailure("could not build web sign-in URL from \(backendURL)")
+            preconditionFailure("could not build \(path) URL from \(backendURL)")
         }
         return url
     }
