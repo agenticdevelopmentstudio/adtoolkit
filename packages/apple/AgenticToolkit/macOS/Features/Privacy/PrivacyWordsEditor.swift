@@ -6,9 +6,10 @@ import AgenticToolkitCoreUI
 /// each word edited in place, with add and remove beneath it and Save and
 /// Cancel under that.
 ///
-/// Edits are a draft until Save, which writes them to the keychain through the
-/// vault — Cancel leaves the words as they were. The vault must already be
-/// unlocked: whoever opens this has just made the user authenticate.
+/// Edits are a draft until Save, which asks the user to authenticate and then
+/// writes them to the keychain through the vault — Cancel leaves the words as
+/// they were. The vault must already hold the words: whoever opens this has
+/// just made the user authenticate.
 ///
 /// Everything in it sits inside a ``ConcealedContainerView``, revealed for as
 /// long as the sheet is up, so neither the accessibility API nor a screen
@@ -36,6 +37,8 @@ public final class PrivacyWordsEditor: NSObject {
     private weak var parentWindow: NSWindow?
     /// Keeps the editor alive while its sheet is up: nothing else holds it.
     private var retainedSelf: PrivacyWordsEditor?
+    /// Save's authentication is on screen, so a second press does not stack another.
+    private var isSaving = false
 
     /// Opens the editor as a sheet on `parentWindow`.
     public static func present(vault: PrivacyWordsVault, on parentWindow: NSWindow) {
@@ -46,7 +49,7 @@ public final class PrivacyWordsEditor: NSObject {
     }
 
     private init(vault: PrivacyWordsVault, parentWindow: NSWindow) {
-        precondition(vault.isUnlocked, "The privacy words editor opened without the words unlocked.")
+        precondition(vault.isLoaded, "The privacy words editor opened without the words loaded.")
         self.vault = vault
         self.parentWindow = parentWindow
         rows = (vault.filter?.pairs ?? []).map { DraftRow(alias: $0.alias, real: $0.real) }
@@ -167,14 +170,20 @@ public final class PrivacyWordsEditor: NSObject {
         // A cell still being typed in commits by losing focus.
         window.makeFirstResponder(nil)
         let pairs = rows.map { TextSubstitutionFilter.Pair(alias: $0.alias, real: $0.real) }
-        do {
-            try vault.save(pairs)
-            close()
-        } catch {
-            let alert = NSAlert()
-            alert.messageText = "The privacy words could not be saved."
-            alert.informativeText = error.localizedDescription
-            alert.beginSheetModal(for: window)
+        guard !isSaving else { return }
+        isSaving = true
+        Task { [weak self] in
+            guard let self else { return }
+            defer { self.isSaving = false }
+            do {
+                try await self.vault.save(pairs, reason: "save the privacy words")
+                self.close()
+            } catch {
+                let alert = NSAlert()
+                alert.messageText = "The privacy words could not be saved."
+                alert.informativeText = error.localizedDescription
+                alert.beginSheetModal(for: self.window, completionHandler: nil)
+            }
         }
     }
 

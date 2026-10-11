@@ -12,12 +12,11 @@ import AgenticToolkitCoreUI
 /// - **The privacy screen** is up by default and goes back up whenever the
 ///   user asks. Lifting it takes the eye on the screen, or the eye in the
 ///   title bar, and the Mac owner's authentication every time.
-/// - **The privacy words** are the vault's, read from the keychain only after
-///   authentication. The shell starts when the pane first appears, as any
-///   terminal does — but only once the words are in memory, because with none
-///   known nothing it printed could be concealed. So appearing unlocks the
-///   vault (one prompt, and none if another pane already unlocked it), and the
-///   privacy screen stays up: starting is not showing.
+/// - **The privacy words** are the vault's. The shell starts when the pane
+///   first appears, as any terminal does, with the words read from the
+///   keychain without a prompt — they are what conceals its output, so it
+///   cannot start without them, and starting shows nothing. Only words still
+///   saved under the old `userPresence` guard make it wait for the eye.
 /// - **Nothing outside the app can read it.** The terminal sits inside a
 ///   ``ConcealedContainerView``, so accessibility clients and screen readers
 ///   find no element there, a scripted view dump stops at it, and while it is
@@ -45,8 +44,8 @@ public final class PrivateTerminalViewController: NSViewController {
     private var cancellables = Set<AnyCancellable>()
     /// An authentication is on screen, so a second click does not stack another.
     private var isAuthenticating = false
-    /// The pane has appeared and asked to start, so reappearing after a
-    /// cancelled prompt does not ask again — the eye is there for that.
+    /// The pane has appeared and tried to start, so the words arriving later —
+    /// from another pane's eye, say — start it too.
     private var hasAskedToStart = false
 
     /// Whether the contents are on screen.
@@ -128,9 +127,9 @@ public final class PrivateTerminalViewController: NSViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Another private terminal can unlock the words, and the editor can
+        // Another private terminal can load the words, and the editor can
         // change them: a shell already running takes the new words from the
-        // next byte. One that has not started waits for its own unlock.
+        // next byte. One that has not appeared yet waits until it does.
         vault.$filter
             .receive(on: RunLoop.main)
             .sink { [weak self] filter in
@@ -157,20 +156,16 @@ public final class PrivateTerminalViewController: NSViewController {
 
     // MARK: - Starting
 
-    /// Starts the shell the first time the pane is on screen, unlocking the
-    /// words to do it. A cancelled prompt leaves the pane waiting for its eye.
+    /// Starts the shell the first time the pane is on screen, with the words
+    /// read without a prompt. Words the keychain will not hand over silently
+    /// leave the pane waiting for its eye.
     private func startWhenVisible() {
         guard !session.isStarted, !hasAskedToStart else { return }
         hasAskedToStart = true
-        if let filter = vault.filter { return startOrUpdate(filter: filter) }
-        Task { [weak self] in
-            guard let self else { return }
-            do {
-                try await self.vault.unlock(reason: "start the private terminal")
-                if let filter = self.vault.filter { self.startOrUpdate(filter: filter) }
-            } catch {
-                self.screenMessage.stringValue = error.localizedDescription
-            }
+        do {
+            if try vault.load(), let filter = vault.filter { startOrUpdate(filter: filter) }
+        } catch {
+            screenMessage.stringValue = error.localizedDescription
         }
     }
 
@@ -333,8 +328,8 @@ extension PrivateTerminalViewController: PaneOptionsProviding {
 }
 
 extension PrivateTerminalViewController: TerminalPaneConnectable {
-    /// Offered once the shell is running; until the words are unlocked there
-    /// is nothing to type into.
+    /// Offered once the shell is running; until the words are read there is
+    /// nothing to type into.
     public var connectableTerminal: TerminalSession? { session.isStarted ? session : nil }
 }
 

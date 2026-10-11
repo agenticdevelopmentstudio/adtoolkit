@@ -5,11 +5,17 @@ import Security
 /// The privacy words — alias and real pairs — kept in the keychain and nowhere
 /// else: no defaults, no database, no file.
 ///
-/// One item, its value the pairs as JSON. The item is guarded by
-/// `userPresence`, so the keychain itself refuses to hand it over until the
-/// user has authenticated — Touch ID or the account password — rather than this
-/// code promising to ask first. Reads take the `LAContext` the user already
-/// authenticated with, so revealing costs one prompt, not two.
+/// One item, its value the pairs as JSON, readable by the apps in its access
+/// group without a prompt while the Mac is unlocked. That is deliberate: a
+/// private terminal needs the words from its first byte — they are what
+/// conceals its output — so starting one must not ask. What asks is the app:
+/// showing a private terminal, opening the words and saving them each take
+/// ``authenticate(reason:)`` first.
+///
+/// Items saved before that were guarded by `userPresence`, which the keychain
+/// will not hand over silently. ``load(context:)`` without a context reports
+/// one as ``StoreError/needsAuthentication``; read with an authenticated
+/// context and saved again, it is rewritten without the guard.
 ///
 /// `ThisDeviceOnly` and never synchronizable: the words name the user, and
 /// they stay on the Mac they were typed on.
@@ -23,12 +29,16 @@ public struct PrivacyWordStore: Sendable {
 
     public enum StoreError: Error, LocalizedError, Equatable {
         case authenticationFailed(String)
+        /// The item is still guarded by `userPresence` and cannot be read
+        /// without authenticating.
+        case needsAuthentication
         case keychain(OSStatus)
         case unreadable
 
         public var errorDescription: String? {
             switch self {
             case .authenticationFailed(let reason): reason
+            case .needsAuthentication: "The privacy words need you to authenticate once before they can be read."
             case .keychain(let status):
                 (SecCopyErrorMessageString(status, nil) as String?) ?? "Keychain error \(status)."
             case .unreadable: "The privacy words in the keychain could not be read."
@@ -73,16 +83,22 @@ public struct PrivacyWordStore: Sendable {
         return context
     }
 
-    /// The stored pairs, read with an authenticated `context`. Empty when
-    /// nothing has been saved yet.
-    public func load(context: LAContext) throws -> [TextSubstitutionFilter.Pair] {
+    /// The stored pairs. Empty when nothing has been saved yet.
+    ///
+    /// - Parameter context: An authenticated context, for reading an item
+    ///   saved under the old `userPresence` guard. Without one the read never
+    ///   prompts, and such an item throws ``StoreError/needsAuthentication``.
+    public func load(context: LAContext? = nil) throws -> [TextSubstitutionFilter.Pair] {
         var query = baseQuery
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
-        query[kSecUseAuthenticationContext as String] = context
+        let silent = LAContext()
+        silent.interactionNotAllowed = true
+        query[kSecUseAuthenticationContext as String] = context ?? silent
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         if status == errSecItemNotFound { return [] }
+        if status == errSecInteractionNotAllowed || status == errSecAuthFailed { throw StoreError.needsAuthentication }
         guard status == errSecSuccess else { throw StoreError.keychain(status) }
         guard let data = result as? Data,
               let pairs = try? JSONDecoder().decode([TextSubstitutionFilter.Pair].self, from: data) else {
@@ -99,15 +115,9 @@ public struct PrivacyWordStore: Sendable {
         }
         guard !pairs.isEmpty else { return }
 
-        var accessError: Unmanaged<CFError>?
-        guard let access = SecAccessControlCreateWithFlags(
-            nil, kSecAttrAccessibleWhenUnlockedThisDeviceOnly, .userPresence, &accessError
-        ) else {
-            throw StoreError.keychain(errSecParam)
-        }
         var query = baseQuery
         query[kSecValueData as String] = try JSONEncoder().encode(pairs)
-        query[kSecAttrAccessControl as String] = access
+        query[kSecAttrAccessible as String] = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         query[kSecAttrLabel as String] = "Privacy words"
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess else { throw StoreError.keychain(status) }
