@@ -396,6 +396,14 @@ extension BrowserPaneViewController: WKNavigationDelegate {
         adopt(download)
     }
 
+    /// The visit on record is the page being left. WebKit publishes the
+    /// new page's title before `didFinish` files its visit, so a title that
+    /// lands while a load is in flight would otherwise be written onto the
+    /// previous page's row.
+    public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+        currentVisitID = nil
+    }
+
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         recordVisit()
     }
