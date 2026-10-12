@@ -72,7 +72,8 @@ public enum TerminalSessionSummarizer {
         }
 
         let (directory, branch, process, currentSummary) = await MainActor.run {
-            (session.currentDirectory, session.gitBranch, session.foregroundProcess, session.summary)
+            (session.currentDirectory.map(session.presentable), session.gitBranch.map(session.presentable),
+             session.foregroundProcess, session.summary)
         }
 
         let userMessage = buildPrompt(

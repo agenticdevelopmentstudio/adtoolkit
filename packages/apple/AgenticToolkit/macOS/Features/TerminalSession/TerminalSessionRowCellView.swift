@@ -73,7 +73,7 @@ public final class TerminalSessionRowCellView: NSTableCellView {
         )
         .combineLatest(session.$summary)
         .receive(on: RunLoop.main)
-        .sink { [weak self] combined, summary in
+        .sink { [weak self, weak session] combined, summary in
             let (stateAndColors, branch, process, subtitles) = combined
             let (state, dotColor, titlePair, directory) = stateAndColors
             let (oscTitle, name) = titlePair
@@ -87,9 +87,12 @@ public final class TerminalSessionRowCellView: NSTableCellView {
                 self?.dotView.layer?.backgroundColor = (state == .terminated ? terminatedColor : dotColor).cgColor
                 self?.titleLabel.stringValue = oscTitle ?? name
 
+                // The directory and branch are real; a private session shows
+                // them concealed, the way its screen does.
+                let present = { (text: String) in session?.presentable(text) ?? text }
                 self?.rebuildSubtitles(
-                    directory: directory,
-                    gitBranch: branch,
+                    directory: TerminalSession.tildeAbbreviated(directory).map(present),
+                    gitBranch: branch.map(present),
                     foregroundProcess: process,
                     customSubtitles: subtitles,
                     summary: summary
@@ -114,7 +117,7 @@ public final class TerminalSessionRowCellView: NSTableCellView {
     ) {
         subtitleStack.arrangedSubviews.forEach { $0.removeFromSuperview() }
 
-        if let dir = tildeAbbreviate(directory) {
+        if let dir = directory {
             subtitleStack.addArrangedSubview(
                 makeSubtitleLine(icon: "folder", text: dir, truncation: .byTruncatingMiddle)
             )
@@ -160,13 +163,5 @@ public final class TerminalSessionRowCellView: NSTableCellView {
         line.spacing = 4
         line.alignment = .centerY
         return line
-    }
-
-    private func tildeAbbreviate(_ path: String?) -> String? {
-        guard let dir = path else { return nil }
-        let home = FileManager.default.homeDirectoryForCurrentUser.path
-        if dir == home { return "~" }
-        if dir.hasPrefix(home + "/") { return "~" + dir.dropFirst(home.count) }
-        return dir
     }
 }

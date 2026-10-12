@@ -18,8 +18,8 @@ public class ScriptableTerminalSession: NSObject {
     @objc var uniqueID: String { terminalSession.id.uuidString }
     @objc var name: String { terminalSession.name }
     @objc var title: String { terminalSession.title ?? "" }
-    @objc var workingDirectory: String { terminalSession.currentDirectory ?? "" }
-    @objc var termGitBranch: String { terminalSession.gitBranch ?? "" }
+    @objc var workingDirectory: String { terminalSession.presentable(terminalSession.currentDirectory ?? "") }
+    @objc var termGitBranch: String { terminalSession.presentable(terminalSession.gitBranch ?? "") }
     @objc var foregroundProcess: String { terminalSession.foregroundProcess ?? "" }
     @objc var termSummary: String { terminalSession.summary ?? "" }
 

@@ -19,6 +19,9 @@ public final class TerminalSession: ObservableObject, Identifiable {
 
     @Published public var name: String
     @Published public var title: String?
+    /// The shell's directory as the shell knows it — real, for a private
+    /// session too. Show it through ``tildeAbbreviatedDirectory`` or
+    /// ``presentable(_:)``, never as it is.
     @Published public var currentDirectory: String?
     @Published public var gitBranch: String?
     @Published public var foregroundProcess: String?
@@ -34,15 +37,23 @@ public final class TerminalSession: ObservableObject, Identifiable {
             let home = FileManager.default.homeDirectoryForCurrentUser.path
             let folder = dir == home ? "~" : (dir as NSString).lastPathComponent
             if let branch = gitBranch {
-                return "\(folder): \(branch)"
+                return presentable("\(folder): \(branch)")
             }
-            return folder
+            return presentable(folder)
         }
         return name
     }
 
+    /// The directory for display: `~` for home, and concealed for a private
+    /// session.
     public var tildeAbbreviatedDirectory: String? {
-        guard let dir = currentDirectory else { return nil }
+        Self.tildeAbbreviated(currentDirectory).map(presentable)
+    }
+
+    /// `path` with the home directory written `~`. Abbreviate the real path,
+    /// then conceal it — a concealed path no longer starts with the real home.
+    public static func tildeAbbreviated(_ path: String?) -> String? {
+        guard let dir = path else { return nil }
         let home = FileManager.default.homeDirectoryForCurrentUser.path
         if dir == home { return "~" }
         if dir.hasPrefix(home + "/") { return "~" + dir.dropFirst(home.count) }
@@ -367,9 +378,11 @@ private final class TerminalSessionProcessHandler: NSObject, LocalProcessTermina
             MainActor.assumeIsolated {
                 guard let session = self.session else { return }
                 // A private session's directory arrives concealed, like
-                // everything else it printed; the branch lookup needs the real one.
-                session.currentDirectory = path
-                session.detectGitBranch(for: session.programForm(path))
+                // everything else it printed. It is kept real, so `~` and the
+                // branch lookup work on it, and concealed again for display.
+                let directory = session.programForm(path)
+                session.currentDirectory = directory
+                session.detectGitBranch(for: directory)
             }
         }
     }
