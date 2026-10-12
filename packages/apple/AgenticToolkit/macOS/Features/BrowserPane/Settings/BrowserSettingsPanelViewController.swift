@@ -15,11 +15,14 @@ import AgenticToolkitCore
 /// Permissions, Downloads, Developer, Reset — and the chosen topic's controls
 /// on the right, the shape the Language Servers panel has.
 ///
-/// Every row here binds to the app's shared settings (`UserSettings.shared`),
-/// which is what the rows' view models read, and what `BrowserPaneViewController`
-/// follows. The two things that are not settings — the visit history and
-/// WebKit's site data — are handed in, because they are stores with files
-/// behind them and a test must be able to point them elsewhere
+/// Every row here binds to the app's shared settings (`UserSettings.shared`):
+/// a row's view model reads through `UserSetting`, which mirrors the shared
+/// store and no other, and that is the store `BrowserPaneViewController`
+/// follows. The panel's own writes — choosing a download folder, putting it
+/// back, Reset — go through `settings`, the shared store by default, so a
+/// test can hand in an in-memory one and watch them land. The two things
+/// that are not settings, the visit history and WebKit's site data, are
+/// handed in for the same reason: they are stores with files behind them
 /// (`dependency-injection`).
 ///
 /// **Every setting shown is one the pane honours.** The ones WebKit fixes when
@@ -31,15 +34,23 @@ public final class BrowserSettingsPanelViewController: ComposableSettings.Settin
 
     private let history: BrowserHistoryStore?
     private let siteData: BrowserSiteData
+    private let settings: SettingsStore
 
     /// - Parameters:
     ///   - history: where the pane records visits; `nil` means the host records
     ///     none, and the History topic says so.
     ///   - siteData: WebKit's persistent store, which every non-private pane
     ///     shares. A test hands in a non-persistent one.
-    public init(history: BrowserHistoryStore?, siteData: BrowserSiteData = BrowserSiteData()) {
+    ///   - settings: where the panel's own buttons write. The app's shared
+    ///     store by default, which is the one the rows bind to either way.
+    public init(
+        history: BrowserHistoryStore?,
+        siteData: BrowserSiteData = BrowserSiteData(),
+        settings: SettingsStore = UserSettings.shared
+    ) {
         self.history = history
         self.siteData = siteData
+        self.settings = settings
         super.init(with: ComposableSettings.SettingsPanelDescriptor(
             title: "Browser",
             icon: NSImage(systemSymbolName: "globe", accessibilityDescription: nil)
@@ -90,9 +101,9 @@ public final class BrowserSettingsPanelViewController: ComposableSettings.Settin
         addPanel(BrowserSiteDataPanel(siteData: siteData))
         addPanel(BrowserPrivacyPanel())
         addPanel(BrowserMediaPanel())
-        addPanel(BrowserDownloadsPanel())
+        addPanel(BrowserDownloadsPanel(settings: settings))
         addPanel(BrowserDeveloperPanel())
-        addPanel(BrowserResetPanel())
+        addPanel(BrowserResetPanel(settings: settings))
     }
 }
 
@@ -759,9 +770,11 @@ private final class BrowserMediaPanel: ComposableSettings.SettingsPanelViewContr
 private final class BrowserDownloadsPanel: ComposableSettings.SettingsPanelViewController {
 
     private let folderRow = ComposableSettings.ValueRowView(title: "Folder")
+    private let settings: SettingsStore
     private var cancellables: Set<AnyCancellable> = []
 
-    init() {
+    init(settings: SettingsStore) {
+        self.settings = settings
         super.init(with: ComposableSettings.SettingsPanelDescriptor(
             title: "Downloads",
             icon: NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: nil)
@@ -802,8 +815,8 @@ private final class BrowserDownloadsPanel: ComposableSettings.SettingsPanelViewC
         _ = chooseView.button.accessibilityID("settings.browser.downloads.choose")
         group.addSettingSubview(chooseView)
 
-        let useDefault = ComposableSettings.ButtonViewModel(title: "Use Downloads Folder") {
-            UserSettings.browserDownloadDirectory.remove()
+        let useDefault = ComposableSettings.ButtonViewModel(title: "Use Downloads Folder") { [weak self] in
+            self?.settings.remove(UserSettings.browserDownloadDirectory)
         }
         let useDefaultView = ComposableSettings.ButtonView(viewModel: useDefault, placement: .leading)
         _ = useDefaultView.button.accessibilityID("settings.browser.downloads.use-default")
@@ -819,7 +832,8 @@ private final class BrowserDownloadsPanel: ComposableSettings.SettingsPanelViewC
 
         settingsView.addGroup(group)
 
-        UserSettings.browserDownloadDirectory.$currentValue
+        settings.changes
+            .filter { $0 == UserSettings.browserDownloadDirectory.name }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in self?.showFolder() }
             .store(in: &cancellables)
@@ -827,7 +841,7 @@ private final class BrowserDownloadsPanel: ComposableSettings.SettingsPanelViewC
     }
 
     private func showFolder() {
-        folderRow.value = (BrowserSettings.downloadDirectory(in: UserSettings.shared).path as NSString)
+        folderRow.value = (BrowserSettings.downloadDirectory(in: settings).path as NSString)
             .abbreviatingWithTildeInPath
     }
 
@@ -836,9 +850,9 @@ private final class BrowserDownloadsPanel: ComposableSettings.SettingsPanelViewC
             on: view.window,
             prompt: "Choose",
             message: "Downloads from browser panes are saved here."
-        ) { url in
+        ) { [weak self] url in
             guard let url else { return }
-            UserSettings.browserDownloadDirectory.value = url.path
+            self?.settings.set(url.path, for: UserSettings.browserDownloadDirectory)
         }
     }
 }
@@ -894,7 +908,10 @@ private final class BrowserDeveloperPanel: ComposableSettings.SettingsPanelViewC
 @MainActor
 private final class BrowserResetPanel: ComposableSettings.SettingsPanelViewController {
 
-    init() {
+    private let settings: SettingsStore
+
+    init(settings: SettingsStore) {
+        self.settings = settings
         super.init(with: ComposableSettings.SettingsPanelDescriptor(
             title: "Reset",
             icon: NSImage(systemSymbolName: "arrow.counterclockwise", accessibilityDescription: nil)
@@ -941,9 +958,9 @@ private final class BrowserResetPanel: ComposableSettings.SettingsPanelViewContr
             detail: "Every Browser setting returns to its default. History and site data are not affected.",
             actionTitle: "Reset",
             on: view.window
-        ) { confirmed in
-            guard confirmed else { return }
-            BrowserSettings.reset(in: UserSettings.shared)
+        ) { [weak self] confirmed in
+            guard let self, confirmed else { return }
+            BrowserSettings.reset(in: self.settings)
         }
     }
 }
