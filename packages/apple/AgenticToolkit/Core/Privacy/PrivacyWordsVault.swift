@@ -8,6 +8,12 @@ import Foundation
 /// of them at once. Reading the words to run a terminal never prompts;
 /// *seeing* them does. Showing a terminal, opening the editor and saving each
 /// go through ``authenticate(reason:)``.
+///
+/// Every app that shares the keychain item keeps its own vault, so a save
+/// announces itself with a distributed notification and every other vault
+/// that holds the words reads them again — an edit in one app conceals in all
+/// of them, and an editor opened in another starts from it rather than
+/// writing back a list from before it. The notification names no words.
 @MainActor
 public final class PrivacyWordsVault: ObservableObject {
 
@@ -22,9 +28,29 @@ public final class PrivacyWordsVault: ObservableObject {
     /// one prompt rather than stacking one each.
     private var pendingUpgrade: Task<Void, Error>?
 
+    nonisolated(unsafe) private var changeObserver: NSObjectProtocol?
+
     public init(store: PrivacyWordStore) {
         self.store = store
+        let ownProcess = Self.processTag
+        changeObserver = DistributedNotificationCenter.default().addObserver(
+            forName: Self.changedNotification(for: store), object: nil, queue: .main
+        ) { [weak self] note in
+            guard note.object as? String != ownProcess else { return }
+            MainActor.assumeIsolated { self?.reloadIfLoaded() }
+        }
     }
+
+    deinit {
+        if let changeObserver { DistributedNotificationCenter.default().removeObserver(changeObserver) }
+    }
+
+    /// Posted, across processes, when `store`'s words are saved.
+    public static func changedNotification(for store: PrivacyWordStore) -> Notification.Name {
+        Notification.Name("\(store.service).\(store.account).changed")
+    }
+
+    private static let processTag = String(ProcessInfo.processInfo.processIdentifier)
 
     /// Reads the words without prompting, if they are not in memory yet.
     /// Returns whether they are now — false only for words still saved under
@@ -47,10 +73,16 @@ public final class PrivacyWordsVault: ObservableObject {
     /// without it, so they never need it to be read again.
     public func authenticate(reason: String) async throws {
         let context = try await PrivacyWordStore.authenticate(reason: reason)
-        guard !(try load()) else { return }
-        let pairs = try store.load(context: context)
-        try store.save(pairs)
-        filter = TextSubstitutionFilter(pairs: pairs)
+        do {
+            // Read again even when already in memory: whoever authenticates
+            // is about to see or replace the words, and another app may have
+            // saved since.
+            filter = TextSubstitutionFilter(pairs: try store.load())
+        } catch PrivacyWordStore.StoreError.needsAuthentication {
+            let pairs = try store.load(context: context)
+            try persist(pairs)
+            filter = TextSubstitutionFilter(pairs: pairs)
+        }
     }
 
     /// Makes sure the words are in memory, for running a terminal. Silent,
@@ -74,7 +106,20 @@ public final class PrivacyWordsVault: ObservableObject {
     public func save(_ pairs: [TextSubstitutionFilter.Pair], reason: String) async throws {
         try await authenticate(reason: reason)
         let filter = TextSubstitutionFilter(pairs: pairs)
-        try store.save(filter.pairs)
+        try persist(filter.pairs)
         self.filter = filter
+    }
+
+    private func persist(_ pairs: [TextSubstitutionFilter.Pair]) throws {
+        try store.save(pairs)
+        DistributedNotificationCenter.default().postNotificationName(
+            Self.changedNotification(for: store), object: Self.processTag, userInfo: nil, deliverImmediately: true)
+    }
+
+    /// Another app saved the words. Only words already in memory are read
+    /// again — a vault that never needed them has nothing to bring up to date.
+    private func reloadIfLoaded() {
+        guard isLoaded, let pairs = try? store.load() else { return }
+        filter = TextSubstitutionFilter(pairs: pairs)
     }
 }
