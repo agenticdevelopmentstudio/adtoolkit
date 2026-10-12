@@ -107,19 +107,33 @@ public final class BrowserSettingsPanelViewController: ComposableSettings.Settin
     }
 }
 
-// MARK: - General
+// MARK: - Topic
 
+/// One topic of the Browser panel. Every topic is listed by a title and a
+/// symbol and is never made from a coder, so that is said once here rather
+/// than eight times over (`dry`).
 @MainActor
-private final class BrowserGeneralPanel: ComposableSettings.SettingsPanelViewController {
+private class BrowserTopicPanel: ComposableSettings.SettingsPanelViewController {
 
-    init() {
+    init(title: String, symbol: String) {
         super.init(with: ComposableSettings.SettingsPanelDescriptor(
-            title: "General",
-            icon: NSImage(systemSymbolName: "gearshape", accessibilityDescription: nil)
+            title: title,
+            icon: NSImage(systemSymbolName: symbol, accessibilityDescription: nil)
         ))
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
+}
+
+// MARK: - General
+
+@MainActor
+private final class BrowserGeneralPanel: BrowserTopicPanel {
+
+    init() {
+        super.init(title: "General", symbol: "gearshape")
+    }
 
     override var helpContent: ComposableSettings.PanelHelp? {
         ComposableSettings.PanelHelp(topics: [
@@ -239,7 +253,7 @@ private final class BrowserGeneralPanel: ComposableSettings.SettingsPanelViewCon
 // MARK: - History
 
 @MainActor
-private final class BrowserHistoryPanel: ComposableSettings.SettingsPanelViewController {
+private final class BrowserHistoryPanel: BrowserTopicPanel {
 
     private let history: BrowserHistoryStore?
     private let searchField = NSSearchField()
@@ -250,22 +264,10 @@ private final class BrowserHistoryPanel: ComposableSettings.SettingsPanelViewCon
     /// have an older answer land after a newer one.
     private var reloadTask: Task<Void, Never>?
 
-    private static let whenFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .short
-        formatter.timeStyle = .short
-        return formatter
-    }()
-
     init(history: BrowserHistoryStore?) {
         self.history = history
-        super.init(with: ComposableSettings.SettingsPanelDescriptor(
-            title: "History",
-            icon: NSImage(systemSymbolName: "clock.arrow.circlepath", accessibilityDescription: nil)
-        ))
+        super.init(title: "History", symbol: "clock.arrow.circlepath")
     }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override var helpContent: ComposableSettings.PanelHelp? {
         ComposableSettings.PanelHelp(topics: [
@@ -444,7 +446,7 @@ private final class BrowserHistoryPanel: ComposableSettings.SettingsPanelViewCon
         if let count { countRow.value = String(count) }
         table?.setRows(visits.map { visit in
             ComposableSettings.EditableTableRow(id: String(visit.id), cells: [
-                "when": .text(Self.whenFormatter.string(from: visit.visitedAt)),
+                "when": .text(LocalTimeText.dayAndClock(visit.visitedAt, timeZone: .current, locale: .current)),
                 "title": visit.title.isEmpty ? .placeholder("Untitled") : .text(visit.title),
                 "url": .text(visit.url.absoluteString)
             ])
@@ -455,7 +457,7 @@ private final class BrowserHistoryPanel: ComposableSettings.SettingsPanelViewCon
 // MARK: - Cookies and site data
 
 @MainActor
-private final class BrowserSiteDataPanel: ComposableSettings.SettingsPanelViewController {
+private final class BrowserSiteDataPanel: BrowserTopicPanel {
 
     private let siteData: BrowserSiteData
     private var table: ComposableSettings.EditableTableCard?
@@ -467,13 +469,8 @@ private final class BrowserSiteDataPanel: ComposableSettings.SettingsPanelViewCo
 
     init(siteData: BrowserSiteData) {
         self.siteData = siteData
-        super.init(with: ComposableSettings.SettingsPanelDescriptor(
-            title: "Cookies and Site Data",
-            icon: NSImage(systemSymbolName: "tray.full", accessibilityDescription: nil)
-        ))
+        super.init(title: "Cookies and Site Data", symbol: "tray.full")
     }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override var helpContent: ComposableSettings.PanelHelp? {
         ComposableSettings.PanelHelp(topics: [
@@ -606,16 +603,11 @@ private final class BrowserSiteDataPanel: ComposableSettings.SettingsPanelViewCo
 // MARK: - Privacy and security
 
 @MainActor
-private final class BrowserPrivacyPanel: ComposableSettings.SettingsPanelViewController {
+private final class BrowserPrivacyPanel: BrowserTopicPanel {
 
     init() {
-        super.init(with: ComposableSettings.SettingsPanelDescriptor(
-            title: "Privacy and Security",
-            icon: NSImage(systemSymbolName: "lock.shield", accessibilityDescription: nil)
-        ))
+        super.init(title: "Privacy and Security", symbol: "lock.shield")
     }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override var helpContent: ComposableSettings.PanelHelp? {
         ComposableSettings.PanelHelp(topics: [
@@ -683,16 +675,11 @@ private final class BrowserPrivacyPanel: ComposableSettings.SettingsPanelViewCon
 // MARK: - Media and permissions
 
 @MainActor
-private final class BrowserMediaPanel: ComposableSettings.SettingsPanelViewController {
+private final class BrowserMediaPanel: BrowserTopicPanel {
 
     init() {
-        super.init(with: ComposableSettings.SettingsPanelDescriptor(
-            title: "Media and Permissions",
-            icon: NSImage(systemSymbolName: "play.rectangle", accessibilityDescription: nil)
-        ))
+        super.init(title: "Media and Permissions", symbol: "play.rectangle")
     }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override var helpContent: ComposableSettings.PanelHelp? {
         ComposableSettings.PanelHelp(topics: [
@@ -767,7 +754,7 @@ private final class BrowserMediaPanel: ComposableSettings.SettingsPanelViewContr
 // MARK: - Downloads
 
 @MainActor
-private final class BrowserDownloadsPanel: ComposableSettings.SettingsPanelViewController {
+private final class BrowserDownloadsPanel: BrowserTopicPanel {
 
     private let folderRow = ComposableSettings.ValueRowView(title: "Folder")
     private let settings: SettingsStore
@@ -775,13 +762,8 @@ private final class BrowserDownloadsPanel: ComposableSettings.SettingsPanelViewC
 
     init(settings: SettingsStore) {
         self.settings = settings
-        super.init(with: ComposableSettings.SettingsPanelDescriptor(
-            title: "Downloads",
-            icon: NSImage(systemSymbolName: "arrow.down.circle", accessibilityDescription: nil)
-        ))
+        super.init(title: "Downloads", symbol: "arrow.down.circle")
     }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override var helpContent: ComposableSettings.PanelHelp? {
         ComposableSettings.PanelHelp(topics: [
@@ -790,8 +772,8 @@ private final class BrowserDownloadsPanel: ComposableSettings.SettingsPanelViewC
                 body: "Where a file a page offers — a zip, a disk image, anything the "
                     + "browser cannot show — is saved. Your Downloads folder unless you "
                     + "choose another; Use Downloads Folder puts it back. A file whose "
-                    + "name is already taken is saved as name-2, name-3 and so on, the "
-                    + "way Finder counts. Ask where to save each file shows a save sheet "
+                    + "name is already taken is saved as name 2, name 3 and so on, the "
+                    + "way the app names every duplicate. Ask where to save each file shows a save sheet "
                     + "on the pane's window instead, starting in this folder."
             )
         ])
@@ -860,16 +842,11 @@ private final class BrowserDownloadsPanel: ComposableSettings.SettingsPanelViewC
 // MARK: - Developer
 
 @MainActor
-private final class BrowserDeveloperPanel: ComposableSettings.SettingsPanelViewController {
+private final class BrowserDeveloperPanel: BrowserTopicPanel {
 
     init() {
-        super.init(with: ComposableSettings.SettingsPanelDescriptor(
-            title: "Developer",
-            icon: NSImage(systemSymbolName: "hammer", accessibilityDescription: nil)
-        ))
+        super.init(title: "Developer", symbol: "hammer")
     }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override var helpContent: ComposableSettings.PanelHelp? {
         ComposableSettings.PanelHelp(topics: [
@@ -906,19 +883,14 @@ private final class BrowserDeveloperPanel: ComposableSettings.SettingsPanelViewC
 // MARK: - Reset
 
 @MainActor
-private final class BrowserResetPanel: ComposableSettings.SettingsPanelViewController {
+private final class BrowserResetPanel: BrowserTopicPanel {
 
     private let settings: SettingsStore
 
     init(settings: SettingsStore) {
         self.settings = settings
-        super.init(with: ComposableSettings.SettingsPanelDescriptor(
-            title: "Reset",
-            icon: NSImage(systemSymbolName: "arrow.counterclockwise", accessibilityDescription: nil)
-        ))
+        super.init(title: "Reset", symbol: "arrow.counterclockwise")
     }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
 
     override var helpContent: ComposableSettings.PanelHelp? {
         ComposableSettings.PanelHelp(topics: [

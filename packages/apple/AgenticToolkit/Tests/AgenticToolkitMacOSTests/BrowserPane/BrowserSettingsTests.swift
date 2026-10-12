@@ -119,7 +119,7 @@ final class BrowserSettingsTests: XCTestCase {
         )
     }
 
-    func testUniqueDownloadDestinationsCountLikeFinder() throws {
+    func testUniqueDownloadDestinationsCountLikeEveryOtherName() throws {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("BrowserSettingsTests-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -130,11 +130,11 @@ final class BrowserSettingsTests: XCTestCase {
         FileManager.default.createFile(atPath: first.path, contents: Data())
 
         let second = BrowserPaneViewController.uniqueDestination(for: "file.zip", in: directory)
-        XCTAssertEqual(second.lastPathComponent, "file-2.zip")
+        XCTAssertEqual(second.lastPathComponent, "file 2.zip")
         FileManager.default.createFile(atPath: second.path, contents: Data())
 
         XCTAssertEqual(
-            BrowserPaneViewController.uniqueDestination(for: "file.zip", in: directory).lastPathComponent, "file-3.zip"
+            BrowserPaneViewController.uniqueDestination(for: "file.zip", in: directory).lastPathComponent, "file 3.zip"
         )
         XCTAssertEqual(
             BrowserPaneViewController.uniqueDestination(for: "", in: directory).lastPathComponent, "download",

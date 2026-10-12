@@ -485,19 +485,17 @@ extension BrowserPaneViewController: WKDownloadDelegate {
     }
 
     /// A file name that does not collide with one already in `directory`:
-    /// `name.ext`, then `name-2.ext`, `name-3.ext`, the way Finder counts.
+    /// `name.ext`, then `name 2.ext`, `name 3.ext` — `UniqueName`'s count,
+    /// the one every "New Project" and renamed record uses (`dry`).
     static func uniqueDestination(for suggestedName: String, in directory: URL) -> URL {
         let name = suggestedName.isEmpty ? "download" : suggestedName
         let base = (name as NSString).deletingPathExtension
         let ext = (name as NSString).pathExtension
-        var candidate = directory.appendingPathComponent(name)
-        var attempt = 2
-        while FileManager.default.fileExists(atPath: candidate.path) {
-            let next = ext.isEmpty ? "\(base)-\(attempt)" : "\(base)-\(attempt).\(ext)"
-            candidate = directory.appendingPathComponent(next)
-            attempt += 1
-        }
-        return candidate
+        let taken = ((try? FileManager.default.contentsOfDirectory(atPath: directory.path)) ?? [])
+            .filter { ($0 as NSString).pathExtension == ext }
+            .map { ($0 as NSString).deletingPathExtension }
+        let stem = UniqueName.next(base: base, taken: taken)
+        return directory.appendingPathComponent(ext.isEmpty ? stem : "\(stem).\(ext)")
     }
 
     public func download(
