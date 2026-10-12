@@ -221,6 +221,9 @@ targets:
       - target: AgenticDeveloperToolkit/AgenticDeveloperToolkitUI-macOS
       - target: AgenticToolkitMarkdown-macOS
       - target: AgenticToolkitDatabase
+      # `BrowserHistoryStore` sits on `BoundedDatabase` and reads GRDB rows.
+      - package: GRDB
+        product: GRDB
       - package: SwiftTerm
       - package: CodeEditSourceEditor
       - package: CodeEditLanguages
