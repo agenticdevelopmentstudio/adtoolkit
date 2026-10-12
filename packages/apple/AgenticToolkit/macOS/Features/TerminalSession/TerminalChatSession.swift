@@ -39,9 +39,14 @@ public final class TerminalChatSession {
 
     /// The caller waiting on output — see ``run(_:settle:timeout:)``.
     private var currentWait: OutputWait?
-    /// Replies no caller was waiting for, kept until one asks — so output a
-    /// slow command prints after its wait gave up is not lost to the next.
+    /// Replies no caller was waiting for, kept until a ``waitForOutput(settle:timeout:)``
+    /// asks — so output a slow command prints after its wait gave up is not
+    /// lost. Only the latest ``unclaimedLimit`` characters are kept: a chat
+    /// left connected to a busy log would otherwise hold all of it.
     private var unclaimedOutput: [String] = []
+    private var unclaimedCount = 0
+    private var droppedUnclaimedOutput = false
+    private static let unclaimedLimit = 64 * 1024
 
     public init(quietPeriod: Duration = .milliseconds(300), maximumLatency: Duration = .seconds(1)) {
         self.quietPeriod = quietPeriod
@@ -107,7 +112,16 @@ public final class TerminalChatSession {
         if let currentWait {
             currentWait.received(output)
         } else {
-            unclaimedOutput.append(output)
+            keepUnclaimed(output)
+        }
+    }
+
+    private func keepUnclaimed(_ output: String) {
+        unclaimedOutput.append(output)
+        unclaimedCount += output.count
+        while unclaimedCount > Self.unclaimedLimit, unclaimedOutput.count > 1 {
+            unclaimedCount -= unclaimedOutput.removeFirst().count
+            droppedUnclaimedOutput = true
         }
     }
 
@@ -127,7 +141,7 @@ public final class TerminalChatSession {
         timeout: Duration = .seconds(60)
     ) async -> String {
         guard terminal != nil else { return Self.notConnected }
-        let wait = beginWait(settle: settle, timeout: timeout)
+        let wait = beginWait(settle: settle, timeout: timeout, replayingUnclaimed: false)
         send(text)
         return await wait.result()
     }
@@ -140,7 +154,7 @@ public final class TerminalChatSession {
         timeout: Duration = .seconds(30)
     ) async -> String {
         guard terminal != nil else { return Self.notConnected }
-        return await beginWait(settle: settle, timeout: timeout).result()
+        return await beginWait(settle: settle, timeout: timeout, replayingUnclaimed: true).result()
     }
 
     /// Control-C, then whatever the terminal printed in response.
@@ -149,7 +163,7 @@ public final class TerminalChatSession {
         timeout: Duration = .seconds(10)
     ) async -> String {
         guard terminal != nil else { return Self.notConnected }
-        let wait = beginWait(settle: settle, timeout: timeout)
+        let wait = beginWait(settle: settle, timeout: timeout, replayingUnclaimed: false)
         interrupt()
         return await wait.result()
     }
@@ -171,14 +185,21 @@ public final class TerminalChatSession {
     }
 
     /// One caller at a time: a new wait ends the previous one with what it
-    /// had, and starts from the output nobody claimed.
-    private func beginWait(settle: Duration, timeout: Duration) -> OutputWait {
+    /// had. A wait for more output starts from the output nobody claimed; a
+    /// new command or an interrupt starts fresh, since what came before it
+    /// answers something else and is in the transcript already.
+    private func beginWait(settle: Duration, timeout: Duration, replayingUnclaimed: Bool) -> OutputWait {
         currentWait?.finish()
         let wait = OutputWait(settle: settle, timeout: timeout) { [weak self] finished in
             if self?.currentWait === finished { self?.currentWait = nil }
         }
-        for text in unclaimedOutput { wait.received(text) }
+        if replayingUnclaimed, !unclaimedOutput.isEmpty {
+            let earlier = droppedUnclaimedOutput ? ["[… earlier output dropped]"] : []
+            wait.received((earlier + unclaimedOutput).joined(separator: "\n"))
+        }
         unclaimedOutput.removeAll()
+        unclaimedCount = 0
+        droppedUnclaimedOutput = false
         currentWait = wait
         return wait
     }

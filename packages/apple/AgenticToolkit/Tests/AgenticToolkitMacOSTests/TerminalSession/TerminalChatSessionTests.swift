@@ -45,6 +45,21 @@ final class TerminalChatSessionTests: XCTestCase {
         XCTAssertLessThan(waited, .seconds(5), "the wait must end at the timeout given, not a fixed 10 s")
     }
 
+    func testOutputAfterARunGaveUpGoesToWaitNotToTheNextRun() async throws {
+        let (chat, terminal) = try await connectedShell()
+        defer { withExtendedLifetime(terminal) {} }
+        _ = await chat.run("sleep 1; echo late-one", settle: .milliseconds(300), timeout: .milliseconds(600))
+        try await Task.sleep(for: .seconds(2))
+        let waited = await chat.waitForOutput(settle: .milliseconds(300), timeout: .seconds(2))
+        XCTAssertTrue(waited.contains("late-one"), waited)
+
+        _ = await chat.run("sleep 1; echo late-two", settle: .milliseconds(300), timeout: .milliseconds(600))
+        try await Task.sleep(for: .seconds(2))
+        let next = await chat.run("echo next", settle: .milliseconds(300), timeout: .seconds(3))
+        XCTAssertTrue(next.contains("next"), next)
+        XCTAssertFalse(next.contains("late-two"), "a new command's reply is its own output only: \(next)")
+    }
+
     // MARK: - Helpers
 
     /// A chat connected to a freshly started shell, once its first prompt is up.
