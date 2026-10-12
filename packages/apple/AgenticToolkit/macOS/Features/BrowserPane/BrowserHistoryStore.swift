@@ -60,8 +60,8 @@ public final class BrowserHistoryStore: @unchecked Sendable {
             try FileManager.default.createDirectory(atPath: directory, withIntermediateDirectories: true)
         }
         database = try BoundedDatabase(path: path)
-        try database.write { db in
-            try db.execute(sql: """
+        try database.write { connection in
+            try connection.execute(sql: """
                 CREATE TABLE IF NOT EXISTS visit (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     url TEXT NOT NULL,
@@ -69,7 +69,7 @@ public final class BrowserHistoryStore: @unchecked Sendable {
                     visited_at REAL NOT NULL
                 )
             """)
-            try db.execute(sql: "CREATE INDEX IF NOT EXISTS visit_visited_at ON visit (visited_at DESC)")
+            try connection.execute(sql: "CREATE INDEX IF NOT EXISTS visit_visited_at ON visit (visited_at DESC)")
         }
     }
 
@@ -88,37 +88,38 @@ public final class BrowserHistoryStore: @unchecked Sendable {
     /// load can be filed against the right row.
     @discardableResult
     public func record(_ url: URL, title: String, at date: Date = Date()) throws -> Int64 {
-        try database.write { db in
-            try db.execute(
+        try database.write { connection in
+            try connection.execute(
                 sql: "INSERT INTO visit (url, title, visited_at) VALUES (?, ?, ?)",
                 arguments: [url.absoluteString, title, date.timeIntervalSince1970]
             )
-            return db.lastInsertedRowID
+            return connection.lastInsertedRowID
         }
     }
 
     public func updateTitle(ofVisit id: Int64, to title: String) throws {
-        try database.write { db in
-            try db.execute(sql: "UPDATE visit SET title = ? WHERE id = ?", arguments: [title, id])
+        try database.write { connection in
+            try connection.execute(sql: "UPDATE visit SET title = ? WHERE id = ?", arguments: [title, id])
         }
     }
 
     public func remove(visit id: Int64) throws {
-        try database.write { db in
-            try db.execute(sql: "DELETE FROM visit WHERE id = ?", arguments: [id])
+        try database.write { connection in
+            try connection.execute(sql: "DELETE FROM visit WHERE id = ?", arguments: [id])
         }
     }
 
     /// Forgets every visit before `cutoff`.
     public func removeVisits(before cutoff: Date) throws {
-        try database.write { db in
-            try db.execute(sql: "DELETE FROM visit WHERE visited_at < ?", arguments: [cutoff.timeIntervalSince1970])
+        try database.write { connection in
+            try connection.execute(
+                sql: "DELETE FROM visit WHERE visited_at < ?", arguments: [cutoff.timeIntervalSince1970])
         }
     }
 
     public func removeAll() throws {
-        try database.write { db in
-            try db.execute(sql: "DELETE FROM visit")
+        try database.write { connection in
+            try connection.execute(sql: "DELETE FROM visit")
         }
     }
 
@@ -126,8 +127,8 @@ public final class BrowserHistoryStore: @unchecked Sendable {
 
     /// The latest visits, newest first.
     public func recent(limit: Int = 200) throws -> [BrowserVisit] {
-        try database.read { db in
-            try Row.fetchAll(db, sql: """
+        try database.read { connection in
+            try Row.fetchAll(connection, sql: """
                 SELECT id, url, title, visited_at FROM visit
                 ORDER BY visited_at DESC, id DESC LIMIT ?
             """, arguments: [limit]).compactMap(Self.visit(from:))
@@ -137,8 +138,8 @@ public final class BrowserHistoryStore: @unchecked Sendable {
     /// Visits whose address or title contains `text`, newest first.
     public func search(_ text: String, limit: Int = 200) throws -> [BrowserVisit] {
         let pattern = "%" + Self.escapedForLike(text) + "%"
-        return try database.read { db in
-            try Row.fetchAll(db, sql: """
+        return try database.read { connection in
+            try Row.fetchAll(connection, sql: """
                 SELECT id, url, title, visited_at FROM visit
                 WHERE url LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\'
                 ORDER BY visited_at DESC, id DESC LIMIT ?
@@ -147,8 +148,8 @@ public final class BrowserHistoryStore: @unchecked Sendable {
     }
 
     public func count() throws -> Int {
-        try database.read { db in
-            try Int.fetchOne(db, sql: "SELECT COUNT(*) FROM visit") ?? 0
+        try database.read { connection in
+            try Int.fetchOne(connection, sql: "SELECT COUNT(*) FROM visit") ?? 0
         }
     }
 

@@ -524,7 +524,8 @@ extension BrowserPaneViewController: WKDownloadDelegate {
                 do {
                     try FileManager.default.removeItem(at: chosen)
                 } catch {
-                    logger.error("browser download could not replace the file: \(error.localizedDescription, privacy: .public)")
+                    logger.error(
+                        "browser download could not replace the file: \(error.localizedDescription, privacy: .public)")
                     return nil
                 }
             }

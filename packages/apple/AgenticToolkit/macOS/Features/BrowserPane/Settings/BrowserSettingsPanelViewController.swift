@@ -166,7 +166,9 @@ private final class BrowserGeneralPanel: BrowserTopicPanel {
         ])
     }
 
-    static let keywords: [String] = ["home page", "start page", "zoom", "font size", "javascript", "pop-up", "popup", "user agent"]
+    static let keywords: [String] = [
+        "home page", "start page", "zoom", "font size", "javascript", "pop-up", "popup", "user agent"
+    ]
 
     override var searchKeywords: [String] { Self.keywords }
 
@@ -433,7 +435,8 @@ private final class BrowserHistoryPanel: BrowserTopicPanel {
                 self.show(visits, count: count)
             } catch {
                 guard let self, !Task.isCancelled else { return }
-                ComposableSettings.Alerts.report("Could not read history: \(error.localizedDescription)", on: self.view.window)
+                ComposableSettings.Alerts.report(
+                    "Could not read history: \(error.localizedDescription)", on: self.view.window)
                 self.show([], count: nil)
             }
         }
@@ -497,7 +500,9 @@ private final class BrowserSiteDataPanel: BrowserTopicPanel {
         ])
     }
 
-    static let keywords: [String] = ["cookies", "site data", "local storage", "cache", "private browsing", "incognito", "sign out"]
+    static let keywords: [String] = [
+        "cookies", "site data", "local storage", "cache", "private browsing", "incognito", "sign out"
+    ]
 
     override var searchKeywords: [String] { Self.keywords }
 
@@ -702,7 +707,9 @@ private final class BrowserMediaPanel: BrowserTopicPanel {
         ])
     }
 
-    static let keywords: [String] = ["autoplay", "video", "audio", "airplay", "camera", "microphone", "permissions", "webcam"]
+    static let keywords: [String] = [
+        "autoplay", "video", "audio", "airplay", "camera", "microphone", "permissions", "webcam"
+    ]
 
     override var searchKeywords: [String] { Self.keywords }
 
