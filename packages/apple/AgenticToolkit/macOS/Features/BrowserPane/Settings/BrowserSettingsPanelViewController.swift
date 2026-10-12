@@ -431,6 +431,10 @@ private final class BrowserSiteDataPanel: ComposableSettings.SettingsPanelViewCo
     private let siteData: BrowserSiteData
     private var table: ComposableSettings.EditableTableCard?
     private var records: [WKWebsiteDataRecord] = []
+    /// The read in flight. One at a time: a Refresh pressed twice, or a
+    /// removal landing while a read is out, must not let the older answer
+    /// arrive last and show rows that are already gone.
+    private var reloadTask: Task<Void, Never>?
 
     init(siteData: BrowserSiteData) {
         self.siteData = siteData
@@ -555,8 +559,10 @@ private final class BrowserSiteDataPanel: ComposableSettings.SettingsPanelViewCo
     }
 
     private func reload() {
-        Task {
+        reloadTask?.cancel()
+        reloadTask = Task {
             let records = await siteData.records()
+            guard !Task.isCancelled else { return }
             self.records = records
             table?.setRows(records.map { record in
                 ComposableSettings.EditableTableRow(id: record.displayName, cells: [
