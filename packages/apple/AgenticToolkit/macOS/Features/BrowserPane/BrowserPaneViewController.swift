@@ -462,7 +462,19 @@ extension BrowserPaneViewController: WKDownloadDelegate {
             panel.directoryURL = BrowserSettings.downloadDirectory(in: settings)
             panel.canCreateDirectories = true
             let response = await panel.beginSheetModal(for: window)
-            return response == .OK ? panel.url : nil
+            guard response == .OK, let chosen = panel.url else { return nil }
+            // Replace was answered on the sheet. `WKDownload` refuses to write
+            // over an existing file, so the file goes first, and if it will
+            // not go the download fails here rather than after the transfer.
+            if FileManager.default.fileExists(atPath: chosen.path) {
+                do {
+                    try FileManager.default.removeItem(at: chosen)
+                } catch {
+                    logger.error("browser download could not replace the file: \(error.localizedDescription, privacy: .public)")
+                    return nil
+                }
+            }
+            return chosen
         }
         let directory = BrowserSettings.downloadDirectory(in: settings)
         do {
