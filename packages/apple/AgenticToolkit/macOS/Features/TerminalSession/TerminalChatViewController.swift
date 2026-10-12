@@ -40,11 +40,6 @@ public final class TerminalChatViewController: NSViewController {
         session = TerminalChatSession()
         viewModel = AIChatViewModel(session: session)
         super.init(nibName: nil, bundle: nil)
-        // Earlier versions kept a connect flag and substitution words here;
-        // the words now belong to the private terminal alone, so none are
-        // left lying in pane state.
-        stateStore.setPaneStateValue(nil, forKey: Keys.legacyConnected)
-        stateStore.setPaneStateValue(nil, forKey: Keys.legacySubstitutions)
         if let directory, let listing { directory.add(session, as: listing) }
         session.terminalDidExit = { [weak self] in self?.applyConnectionState() }
         // A terminal that starts after this chat appeared — a private one
@@ -215,8 +210,6 @@ public final class TerminalChatViewController: NSViewController {
 
     private enum Keys {
         static let connectedPane = "connectedPane"
-        static let legacyConnected = "connected"
-        static let legacySubstitutions = "substitutions"
     }
 }
 
