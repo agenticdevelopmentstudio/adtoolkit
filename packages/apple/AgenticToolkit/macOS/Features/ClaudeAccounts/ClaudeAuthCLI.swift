@@ -78,63 +78,63 @@ public enum ClaudeAuthCLI {
 
     // MARK: - Process plumbing
 
-    /// Runs `executable` and returns everything it said.
+    /// Runs `executable` and returns everything it said — and always returns.
     ///
-    /// The shape is `ClaudeCLI.run`'s, for the same reasons: stdout and stderr
-    /// are drained CONCURRENTLY with the child (one that outran the ~64KB pipe
-    /// buffer would otherwise deadlock against the wait), and the wait happens
-    /// off the cooperative pool.
+    /// The run is `CommandRunner.runToCompletion` on a `BlockingWork` thread:
+    /// stdout and stderr are drained concurrently with the child (one that
+    /// outran the ~64KB pipe buffer would otherwise deadlock against the
+    /// wait), the exit is learnt from a `terminationHandler` installed before
+    /// launch, and the wait is bounded by `timeout` whatever the child does.
     ///
-    /// `input` is written to the child's stdin before it is closed — how a
-    /// secret reaches `security -i` without ever appearing in an argv that `ps`
-    /// can show.
+    /// **Never `Process.waitUntilExit()` here.** On macOS 26.6 it can miss the
+    /// wake-up for a child that exits within a few milliseconds and park its
+    /// thread forever — about one call in five against `/usr/bin/true`, about
+    /// one credential round in a thousand against `security`. The child is
+    /// gone and reaped by then, so a timeout that watches `isRunning` never
+    /// fires either. One such run held a credential round open for good and
+    /// froze every later "Switching to …" behind it.
+    ///
+    /// `input` is written to the child's stdin, and stdin closed, **before**
+    /// launch — how a secret reaches `security -i` without ever appearing in
+    /// an argv that `ps` can show, and how a `claude` that decides to prompt
+    /// sees EOF and gives up rather than block on a terminal that isn't
+    /// there. A pipe is a kernel buffer, so the input must fit one unread:
+    /// 64 KB on macOS, and `security -i` reads at most
+    /// `ClaudeCodeKeychainItem.interactiveLineLimit` of it anyway.
     public static func run(
         executable: String,
         arguments: [String],
         input: Data? = nil,
         timeout: TimeInterval = 180
     ) async throws -> Output {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: executable)
-        process.arguments = arguments
-        process.environment = childEnvironment(executable: executable)
-
-        let stdinPipe = Pipe(), stdoutPipe = Pipe(), stderrPipe = Pipe()
-        process.standardInput = stdinPipe
-        process.standardOutput = stdoutPipe
-        process.standardError = stderrPipe
-
+        let environment = childEnvironment(executable: executable)
+        let outcome: CommandRunner.Outcome
         do {
-            try process.run()
+            // `Process` is not Sendable, so it is built on the thread that runs it.
+            outcome = try await BlockingWork.run(qos: .default, enforcedQoS: .default) {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: executable)
+                process.arguments = arguments
+                process.environment = environment
+
+                let stdinPipe = Pipe()
+                process.standardInput = stdinPipe
+                if let input { try stdinPipe.fileHandleForWriting.write(contentsOf: input) }
+                try stdinPipe.fileHandleForWriting.close()
+
+                return try CommandRunner.runToCompletion(process, timeout: timeout)
+            }
         } catch {
             throw CLIError.launchFailed(error.localizedDescription)
         }
 
-        // Closed immediately after any input: a `claude` that decides to prompt
-        // must see EOF and give up, rather than block forever on a terminal that
-        // isn't there.
-        if let input { try? stdinPipe.fileHandleForWriting.write(contentsOf: input) }
-        try? stdinPipe.fileHandleForWriting.close()
-
-        let timedOut = FlagBox()
-        let timeoutTask = Task {
-            try? await Task.sleep(for: .seconds(timeout))
-            if process.isRunning {
-                timedOut.raise()
-                process.terminate()
-            }
-        }
-        async let stdoutData = readToEnd(stdoutPipe.fileHandleForReading)
-        async let stderrData = readToEnd(stderrPipe.fileHandleForReading)
-        await waitForExit(process)
-        timeoutTask.cancel()
-
-        let out = String(data: await stdoutData, encoding: .utf8) ?? ""
-        let err = String(data: await stderrData, encoding: .utf8) ?? ""
-        if timedOut.isRaised {
+        if outcome.timedOut {
             throw CLIError.timedOut(([executable] + arguments).joined(separator: " "))
         }
-        return Output(stdout: out, stderr: err, status: process.terminationStatus)
+        return Output(
+            stdout: String(data: outcome.standardOutput, encoding: .utf8) ?? "",
+            stderr: String(data: outcome.standardError, encoding: .utf8) ?? "",
+            status: outcome.status)
     }
 
     /// The environment a child of *this app* should run in.
@@ -159,32 +159,5 @@ public enum ClaudeAuthCLI {
         env["CLAUDE_ACCT_TOKENS"] = nil
         env["CLAUDE_ACCT_NAME"] = nil
         return env
-    }
-
-    private static func readToEnd(_ handle: FileHandle) async -> Data {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Data, Never>) in
-            DispatchQueue.global(qos: .utility).async {
-                continuation.resume(returning: (try? handle.readToEnd()) ?? Data())
-            }
-        }
-    }
-
-    private static func waitForExit(_ process: Process) async {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            DispatchQueue.global(qos: .utility).async {
-                process.waitUntilExit()
-                continuation.resume()
-            }
-        }
-    }
-
-    /// A one-way flag two tasks share — the timeout task raises it, the caller
-    /// reads it after the wait, so a terminated child is reported as a timeout
-    /// rather than as an ordinary non-zero exit.
-    private final class FlagBox: @unchecked Sendable {
-        private let lock = NSLock()
-        private var raised = false
-        func raise() { lock.lock(); raised = true; lock.unlock() }
-        var isRaised: Bool { lock.lock(); defer { lock.unlock() }; return raised }
     }
 }
