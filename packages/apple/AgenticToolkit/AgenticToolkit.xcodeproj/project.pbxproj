@@ -395,6 +395,7 @@
 		1FDE279A0B62B7EA688A0480 /* SessionControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CEC6D96BE48D7839126D8E0B /* SessionControllerTests.swift */; };
 		2029997B36A09715A2E121CB /* JITAvailability.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33619129A89D9B7E57F49FDB /* JITAvailability.swift */; };
 		205BD734E6C71259396F2BF1 /* MessagingTopic.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6B528FFEF943F3EC4358C98 /* MessagingTopic.swift */; };
+		20A5DC568B873AECB625F4D9 /* TerminalChatSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFCD8CC5AE593549713B77F0 /* TerminalChatSessionTests.swift */; };
 		20B18A7E439966B0B8F8527E /* HTDVStatusViews+UIKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2769A6482884F2716D3ED921 /* HTDVStatusViews+UIKit.swift */; };
 		20B8C510FDAEC77F58663E25 /* ProjectWorkspaceTabsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07BDE2E23C219E9E12E3C6C7 /* ProjectWorkspaceTabsTests.swift */; };
 		20C624664E1AF6F4FF87A344 /* HTDVRailViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8E7C7BF6F326B24BCDDDB75 /* HTDVRailViewController.swift */; };
@@ -5811,6 +5812,7 @@
 		CF360D598CCA38046B23D3EE /* EditorSettingsPanelViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorSettingsPanelViewController.swift; sourceTree = "<group>"; };
 		CF68F1ED9C55006410E976B6 /* ComposableTabsMoveMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposableTabsMoveMenu.swift; sourceTree = "<group>"; };
 		CF79C0E78583A9A3A7A27053 /* MessagingTopicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessagingTopicTests.swift; sourceTree = "<group>"; };
+		CFCD8CC5AE593549713B77F0 /* TerminalChatSessionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalChatSessionTests.swift; sourceTree = "<group>"; };
 		CFDA74414E7A1ACA14DDFC1C /* ReconcileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReconcileView.swift; sourceTree = "<group>"; };
 		CFE75D40889E80E42212DF7C /* AccessListsTopic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessListsTopic.swift; sourceTree = "<group>"; };
 		CFFB20ADD87C2F07DB4BE563 /* BusyOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BusyOverlayView.swift; sourceTree = "<group>"; };
@@ -7285,6 +7287,14 @@
 				3068F74F58A984D50E1BC993 /* ClaudeLiveLoginRecordTests.swift */,
 			);
 			path = ClaudeAccounts;
+			sourceTree = "<group>";
+		};
+		23BEFB082F4D89A8C000678D /* TerminalSession */ = {
+			isa = PBXGroup;
+			children = (
+				CFCD8CC5AE593549713B77F0 /* TerminalChatSessionTests.swift */,
+			);
+			path = TerminalSession;
 			sourceTree = "<group>";
 		};
 		24BEB1277F5CC08D207908B7 /* Persistence */ = {
@@ -8821,6 +8831,7 @@
 				C56A24054E3CA526924EE765 /* Scripting */,
 				F605B14439735F2BD0831A37 /* SessionWatcher */,
 				DA813A8FFBCDB6253AE5387E /* SystemWindows */,
+				23BEFB082F4D89A8C000678D /* TerminalSession */,
 				DE243850ABB4FE09B75D4B7C /* TerminalWindow */,
 				AA36F186ADD8645242D0487E /* Theme */,
 				2CB2A8087467B698A91E85F9 /* UI */,
@@ -14907,6 +14918,7 @@
 				4E535AB7A7F5E3AD74367036 /* TabBarStartInsetTests.swift in Sources */,
 				F7B88FFA10A2AA015336A050 /* TabCardStackTests.swift in Sources */,
 				89BD930B805681630C39038F /* TabPaneViewControllerTests.swift in Sources */,
+				20A5DC568B873AECB625F4D9 /* TerminalChatSessionTests.swift in Sources */,
 				E78B0E62A73A6142EE421553 /* TerminalSessionGitBranchTests.swift in Sources */,
 				444EFB4D09F8D7A761C43743 /* TerminalTextInjectorTests.swift in Sources */,
 				D82800D87E946AB4B95D830C /* TextDocumentStorageTests.swift in Sources */,

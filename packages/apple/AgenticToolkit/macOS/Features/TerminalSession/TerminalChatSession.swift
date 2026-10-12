@@ -22,7 +22,13 @@ public final class TerminalChatSession {
     /// How long output has to stop before what arrived counts as one reply.
     /// A shell prints in bursts; without the pause one command's output would
     /// arrive as a dozen fragments.
-    private let quietPeriod: RunLoop.SchedulerTimeType.Stride
+    private let quietPeriod: Duration
+    /// The longest output waits to be reported while it keeps coming, so a
+    /// stream that never pauses — `yes`, `tail -f`, a chatty build — still
+    /// reaches the transcript and whoever is waiting on it.
+    private let maximumLatency: Duration
+    private var quietTask: Task<Void, Never>?
+    private var latencyTask: Task<Void, Never>?
 
     private var tracker = TerminalOutputTracker()
     private var outputSubscription: AnyCancellable?
@@ -37,8 +43,9 @@ public final class TerminalChatSession {
     /// slow command prints after its wait gave up is not lost to the next.
     private var unclaimedOutput: [String] = []
 
-    public init(quietPeriod: RunLoop.SchedulerTimeType.Stride = .milliseconds(300)) {
+    public init(quietPeriod: Duration = .milliseconds(300), maximumLatency: Duration = .seconds(1)) {
         self.quietPeriod = quietPeriod
+        self.maximumLatency = maximumLatency
     }
 
     /// Connects to `terminal`, or disconnects when it is nil. What the
@@ -48,14 +55,43 @@ public final class TerminalChatSession {
     public func connect(to terminal: TerminalSession?) {
         guard terminal !== self.terminal || terminal == nil else { return }
         outputSubscription = nil
+        cancelReportTimers()
         self.terminal = terminal
         guard let terminal else { return }
 
         tracker = TerminalOutputTracker(fromTopOf: terminal.screenSnapshot())
         outputSubscription = terminal.outputActivity
-            .debounce(for: quietPeriod, scheduler: RunLoop.main)
-            .sink { [weak self] in self?.reportNewOutput() }
+            .sink { [weak self] in self?.outputArrived() }
         reportNewOutput(claimable: false)
+    }
+
+    /// Reports once output has been quiet for ``quietPeriod``, or once it has
+    /// waited ``maximumLatency``, whichever comes first.
+    private func outputArrived() {
+        quietTask?.cancel()
+        quietTask = Task { [weak self, quietPeriod] in
+            try? await Task.sleep(for: quietPeriod)
+            guard !Task.isCancelled else { return }
+            self?.flushOutput()
+        }
+        guard latencyTask == nil else { return }
+        latencyTask = Task { [weak self, maximumLatency] in
+            try? await Task.sleep(for: maximumLatency)
+            guard !Task.isCancelled else { return }
+            self?.flushOutput()
+        }
+    }
+
+    private func flushOutput() {
+        cancelReportTimers()
+        reportNewOutput()
+    }
+
+    private func cancelReportTimers() {
+        quietTask?.cancel()
+        quietTask = nil
+        latencyTask?.cancel()
+        latencyTask = nil
     }
 
     /// - Parameter claimable: Whether the output can be a reply a caller of

@@ -158,16 +158,21 @@ public final class TerminalSession: ObservableObject, Identifiable {
     private var gitBranchRequestID: UUID?
     private var processPollingTimer: Timer?
     private let workingDirectory: String?
+    private let shell: String?
     private let gitClient: GitClient
 
-    /// - Parameter isPrivate: Runs the session behind privacy words; its shell
-    ///   starts when ``privacyFilter`` is first set.
+    /// - Parameters:
+    ///   - isPrivate: Runs the session behind privacy words; its shell
+    ///     starts when ``privacyFilter`` is first set.
+    ///   - shell: The shell to run; the user's `$SHELL` when nil.
     public init(
-        name: String, workingDirectory: String? = nil, gitClient: GitClient = .shared, isPrivate: Bool = false
+        name: String, workingDirectory: String? = nil, gitClient: GitClient = .shared, isPrivate: Bool = false,
+        shell: String? = nil
     ) {
         self.name = name
         self.isPrivate = isPrivate
         self.workingDirectory = workingDirectory
+        self.shell = shell
         self.gitClient = gitClient
         self.processHandler = TerminalSessionProcessHandler()
         self.processHandler.session = self
@@ -176,7 +181,7 @@ public final class TerminalSession: ObservableObject, Identifiable {
     private func startShellProcess(in view: LocalProcessTerminalView) {
         guard !isStarted else { return }
         isStarted = true
-        let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
+        let shell = self.shell ?? ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
         let startDir = workingDirectory ?? FileManager.default.homeDirectoryForCurrentUser.path
         // swiftlint:disable:next line_length
         logger.info("Starting shell '\(shell, privacy: .public)' for session '\(self.name)' in \(startDir, privacy: .public)")
