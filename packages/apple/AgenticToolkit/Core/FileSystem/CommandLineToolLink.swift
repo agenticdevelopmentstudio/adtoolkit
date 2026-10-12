@@ -55,11 +55,14 @@ public struct CommandLineToolLink: Sendable, Equatable {
 
     public var linkURL: URL { directory.appendingPathComponent(name) }
 
+    /// Both sides are compared with every symbolic link resolved, so a link
+    /// written through one path to the app and checked through another — a
+    /// symlinked `~/Applications`, say — still reads as this tool.
     public var state: State {
         let path = linkURL.path
         if let destination = try? FileManager.default.destinationOfSymbolicLink(atPath: path) {
-            let resolved = URL(fileURLWithPath: destination, relativeTo: directory).standardizedFileURL
-            return resolved.path == tool.standardizedFileURL.path ? .installed : .linkedElsewhere(destination)
+            let resolved = URL(fileURLWithPath: destination, relativeTo: directory).resolvingSymlinksInPath()
+            return resolved.path == tool.resolvingSymlinksInPath().path ? .installed : .linkedElsewhere(destination)
         }
         return FileManager.default.fileExists(atPath: path) ? .occupied : .notInstalled
     }
