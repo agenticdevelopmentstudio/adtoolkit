@@ -321,7 +321,9 @@ public final class BrowserPaneViewController: NSViewController {
 
     @objc private func navigateToTypedAddress() {
         guard let url = Self.resolveAddress(addressField.stringValue) else {
-            logger.info("browser pane refused address: \(self.addressField.stringValue, privacy: .public)")
+            // What was typed is the user's, and may be anything; it stays out
+            // of the public log.
+            logger.info("browser pane refused address: \(self.addressField.stringValue, privacy: .private)")
             return
         }
         load(url)
@@ -506,8 +508,10 @@ extension BrowserPaneViewController: WKDownloadDelegate {
 
     public func downloadDidFinish(_ download: WKDownload) {
         downloads.removeAll { $0 === download }
-        let address = download.originalRequest?.url?.absoluteString ?? ""
-        logger.info("browser download finished: \(address, privacy: .public)")
+        // The host says which site it came from; the path and query can carry
+        // a token or a name, and stay out of the public log.
+        let host = download.originalRequest?.url?.host ?? ""
+        logger.info("browser download finished from \(host, privacy: .public)")
     }
 
     public func download(_ download: WKDownload, didFailWithError error: Error, resumeData: Data?) {
