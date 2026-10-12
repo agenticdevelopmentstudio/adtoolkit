@@ -72,6 +72,17 @@ public final class BrowserSettingsPanelViewController: ComposableSettings.Settin
         ])
     }
 
+    /// The topics are built when this view loads, and settings search reads
+    /// a split's panels only once it has — so until the user has opened
+    /// Browser, "cookies" or "downloads" would find nothing. Every topic's
+    /// terms are listed here as well, from the same declarations the topics
+    /// use (`dry`).
+    public override var searchKeywords: [String] {
+        BrowserGeneralPanel.keywords + BrowserHistoryPanel.keywords + BrowserSiteDataPanel.keywords
+            + BrowserPrivacyPanel.keywords + BrowserMediaPanel.keywords + BrowserDownloadsPanel.keywords
+            + BrowserDeveloperPanel.keywords + BrowserResetPanel.keywords
+    }
+
     public override func viewDidLoad() {
         super.viewDidLoad()
         addPanel(BrowserGeneralPanel())
@@ -130,9 +141,9 @@ private final class BrowserGeneralPanel: ComposableSettings.SettingsPanelViewCon
         ])
     }
 
-    override var searchKeywords: [String] {
-        ["home page", "start page", "zoom", "font size", "javascript", "pop-up", "popup", "user agent"]
-    }
+    static let keywords: [String] = ["home page", "start page", "zoom", "font size", "javascript", "pop-up", "popup", "user agent"]
+
+    override var searchKeywords: [String] { Self.keywords }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -269,9 +280,9 @@ private final class BrowserHistoryPanel: ComposableSettings.SettingsPanelViewCon
         ])
     }
 
-    override var searchKeywords: [String] {
-        ["history", "visits", "recent", "clear history", "forget"]
-    }
+    static let keywords: [String] = ["history", "visits", "recent", "clear history", "forget"]
+
+    override var searchKeywords: [String] { Self.keywords }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -456,9 +467,9 @@ private final class BrowserSiteDataPanel: ComposableSettings.SettingsPanelViewCo
         ])
     }
 
-    override var searchKeywords: [String] {
-        ["cookies", "site data", "local storage", "cache", "private browsing", "incognito", "sign out"]
-    }
+    static let keywords: [String] = ["cookies", "site data", "local storage", "cache", "private browsing", "incognito", "sign out"]
+
+    override var searchKeywords: [String] { Self.keywords }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -595,9 +606,9 @@ private final class BrowserPrivacyPanel: ComposableSettings.SettingsPanelViewCon
         ])
     }
 
-    override var searchKeywords: [String] {
-        ["privacy", "security", "fraud", "phishing", "https", "lockdown mode", "tracking"]
-    }
+    static let keywords: [String] = ["privacy", "security", "fraud", "phishing", "https", "lockdown mode", "tracking"]
+
+    override var searchKeywords: [String] { Self.keywords }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -669,9 +680,9 @@ private final class BrowserMediaPanel: ComposableSettings.SettingsPanelViewContr
         ])
     }
 
-    override var searchKeywords: [String] {
-        ["autoplay", "video", "audio", "airplay", "camera", "microphone", "permissions", "webcam"]
-    }
+    static let keywords: [String] = ["autoplay", "video", "audio", "airplay", "camera", "microphone", "permissions", "webcam"]
+
+    override var searchKeywords: [String] { Self.keywords }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -749,9 +760,9 @@ private final class BrowserDownloadsPanel: ComposableSettings.SettingsPanelViewC
         ])
     }
 
-    override var searchKeywords: [String] {
-        ["downloads", "download folder", "save", "where to save"]
-    }
+    static let keywords: [String] = ["downloads", "download folder", "save", "where to save"]
+
+    override var searchKeywords: [String] { Self.keywords }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -835,9 +846,9 @@ private final class BrowserDeveloperPanel: ComposableSettings.SettingsPanelViewC
         ])
     }
 
-    override var searchKeywords: [String] {
-        ["developer", "web inspector", "inspect element", "devtools", "debug"]
-    }
+    static let keywords: [String] = ["developer", "web inspector", "inspect element", "devtools", "debug"]
+
+    override var searchKeywords: [String] { Self.keywords }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -881,9 +892,9 @@ private final class BrowserResetPanel: ComposableSettings.SettingsPanelViewContr
         ])
     }
 
-    override var searchKeywords: [String] {
-        ["reset", "defaults", "restore"]
-    }
+    static let keywords: [String] = ["reset", "defaults", "restore"]
+
+    override var searchKeywords: [String] { Self.keywords }
 
     override func viewDidLoad() {
         super.viewDidLoad()
