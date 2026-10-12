@@ -32,5 +32,7 @@ extension Notification.Name {
 }
 
 extension TerminalSessionContentViewController: TerminalPaneConnectable {
-    public var connectableTerminal: TerminalSession? { sessionManager.selectedSession }
+    public var connectableTerminal: TerminalSession? {
+        sessionManager.selectedSession.flatMap { $0.isRunning ? $0 : nil }
+    }
 }

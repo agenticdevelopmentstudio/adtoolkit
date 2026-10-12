@@ -90,9 +90,9 @@ public final class TerminalSession: ObservableObject, Identifiable {
 
     /// Sends `text` to the shell exactly as if it had been typed — through
     /// the privacy words, for a private session. Dropped while the shell has
-    /// not started.
+    /// not started, and once it has exited.
     public func sendInput(_ text: String) {
-        guard isStarted else { return }
+        guard isRunning else { return }
         terminalView.send(txt: text)
     }
 
@@ -108,6 +108,9 @@ public final class TerminalSession: ObservableObject, Identifiable {
     /// its first ``privacyFilter``: until the words are known, nothing it
     /// printed could be concealed.
     public private(set) var isStarted = false
+
+    /// Whether there is a shell to type into: started, and not yet exited.
+    public var isRunning: Bool { isStarted && state == .running }
 
     /// The words a private session's streams pass through. Setting it the
     /// first time starts the shell; later settings apply from the next byte.

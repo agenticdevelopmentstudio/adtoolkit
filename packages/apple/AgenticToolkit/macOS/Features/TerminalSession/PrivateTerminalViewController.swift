@@ -328,16 +328,16 @@ extension PrivateTerminalViewController: PaneOptionsProviding {
 }
 
 extension PrivateTerminalViewController: TerminalPaneConnectable {
-    /// Offered once the shell is running; until the words are read there is
-    /// nothing to type into.
-    public var connectableTerminal: TerminalSession? { session.isStarted ? session : nil }
+    /// Offered while the shell is running; until the words are read, and
+    /// once it has exited, there is nothing to type into.
+    public var connectableTerminal: TerminalSession? { session.isRunning ? session : nil }
 
     /// Starts the shell for a chat connecting to it, appeared or not, with the
     /// words read without a prompt. Only words still under the old
     /// `userPresence` guard ask — once, since authenticating rewrites them
     /// without it.
     public func startConnectableTerminal() async throws -> TerminalSession? {
-        if session.isStarted { return session }
+        if session.isStarted { return connectableTerminal }
         hasAskedToStart = true
         try await vault.loadUpgradingIfNeeded()
         if let filter = vault.filter { startOrUpdate(filter: filter) }

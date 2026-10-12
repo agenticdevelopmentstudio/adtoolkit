@@ -60,6 +60,17 @@ final class TerminalChatSessionTests: XCTestCase {
         XCTAssertFalse(next.contains("late-two"), "a new command's reply is its own output only: \(next)")
     }
 
+    func testAShellThatExitsLetsGoAtOnce() async throws {
+        let (chat, terminal) = try await connectedShell()
+        defer { withExtendedLifetime(terminal) {} }
+        let start = ContinuousClock.now
+        let reply = await chat.run("exit", settle: .seconds(2), timeout: .seconds(30))
+        XCTAssertLessThan(ContinuousClock.now - start, .seconds(10), "an exited shell must not wait out the timeout")
+        XCTAssertTrue(reply.hasSuffix(TerminalChatSession.exited), reply)
+        XCTAssertNil(chat.terminal)
+        XCTAssertFalse(terminal.isRunning)
+    }
+
     // MARK: - Helpers
 
     /// A chat connected to a freshly started shell, once its first prompt is up.

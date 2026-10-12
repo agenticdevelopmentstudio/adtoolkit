@@ -32,6 +32,11 @@ public final class TerminalChatSession {
 
     private var tracker = TerminalOutputTracker()
     private var outputSubscription: AnyCancellable?
+    private var exitSubscription: AnyCancellable?
+
+    /// Called after the connected terminal's shell exits and the chat has let
+    /// go of it, so whoever shows the connection can say so.
+    public var terminalDidExit: (() -> Void)?
     private var continuation: AsyncStream<ChatEvent>.Continuation?
     /// Events from before anything listened — a connection made before the
     /// transcript subscribed — handed over when it does.
@@ -60,6 +65,7 @@ public final class TerminalChatSession {
     public func connect(to terminal: TerminalSession?) {
         guard terminal !== self.terminal || terminal == nil else { return }
         outputSubscription = nil
+        exitSubscription = nil
         cancelReportTimers()
         self.terminal = terminal
         guard let terminal else { return }
@@ -67,7 +73,25 @@ public final class TerminalChatSession {
         tracker = TerminalOutputTracker(fromTopOf: terminal.screenSnapshot())
         outputSubscription = terminal.outputActivity
             .sink { [weak self] in self?.outputArrived() }
+        exitSubscription = terminal.$state
+            .filter { $0 == .terminated }
+            .sink { [weak self] _ in self?.terminalExited() }
         reportNewOutput(claimable: false)
+    }
+
+    /// The shell is gone, so nothing typed would reach anything: report what
+    /// it printed last, end any wait with that and the reason, and let go —
+    /// a caller is told at once rather than waiting out its timeout.
+    private func terminalExited() {
+        flushOutput()
+        let id = UUID().uuidString
+        yield(.responseStarted(messageID: id))
+        yield(.responseDelta(messageID: id, text: Self.exited))
+        yield(.responseFinished(messageID: id, stopReason: nil))
+        currentWait?.received(Self.exited)
+        currentWait?.finish()
+        connect(to: nil)
+        terminalDidExit?()
     }
 
     /// Reports once output has been quiet for ``quietPeriod``, or once it has
@@ -179,6 +203,7 @@ public final class TerminalChatSession {
     }
 
     private static let notConnected = "The Terminal Chat is not connected to a terminal."
+    static let exited = "[the terminal's shell has exited]"
 
     private func yield(_ event: ChatEvent) {
         if let continuation { continuation.yield(event) } else { unsentEvents.append(event) }

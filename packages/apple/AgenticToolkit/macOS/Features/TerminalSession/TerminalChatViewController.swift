@@ -46,6 +46,7 @@ public final class TerminalChatViewController: NSViewController {
         stateStore.setPaneStateValue(nil, forKey: Keys.legacyConnected)
         stateStore.setPaneStateValue(nil, forKey: Keys.legacySubstitutions)
         if let directory, let listing { directory.add(session, as: listing) }
+        session.terminalDidExit = { [weak self] in self?.applyConnectionState() }
         // A terminal that starts after this chat appeared — a private one
         // waiting on its words — is connected to the moment it is there.
         connectableObserver = NotificationCenter.default.addObserver(
