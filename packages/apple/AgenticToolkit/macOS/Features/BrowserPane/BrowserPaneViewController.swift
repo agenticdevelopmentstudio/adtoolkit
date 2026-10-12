@@ -524,15 +524,20 @@ extension BrowserPaneViewController: WKUIDelegate {
     /// A `target="_blank"` link asks for a new window. A pane has no windows to
     /// give it, so the link opens here instead — in the pane the user is
     /// looking at, which is where a click goes everywhere else.
+    ///
+    /// A script's `window.open()` with no address asks for a blank window to
+    /// write into later. There is nothing to open for that, and loading the
+    /// blank page here would throw away the page on screen and the address
+    /// the pane remembers, so it is refused.
     public func webView(
         _ webView: WKWebView,
         createWebViewWith configuration: WKWebViewConfiguration,
         for navigationAction: WKNavigationAction,
         windowFeatures: WKWindowFeatures
     ) -> WKWebView? {
-        if navigationAction.targetFrame == nil {
-            webView.load(navigationAction.request)
-        }
+        guard navigationAction.targetFrame == nil,
+              let url = navigationAction.request.url, url != Self.blankPage else { return nil }
+        webView.load(navigationAction.request)
         return nil
     }
 
