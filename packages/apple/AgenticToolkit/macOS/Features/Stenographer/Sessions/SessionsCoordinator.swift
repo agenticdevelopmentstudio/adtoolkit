@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 import OSLog
 import AgenticToolkitCore
 
@@ -9,6 +10,19 @@ public final class SessionsCoordinator: AppFeature {
 
     public enum CommandID {
         public static let showWindow = "stenographer.sessions.showWindow"
+    }
+
+    /// The window's stable id — what Stenographer's scripting called it — and
+    /// the key its key command's binding is stored under (`window.sessions`).
+    public static let windowID = "sessions"
+
+    /// The system-wide key command that opens this window. The host installs
+    /// it through `StenographerWindowKeyCommands.install(commands:)`.
+    public func keyCommand() -> KeyCommandDescriptor {
+        StenographerWindowKeyCommands.descriptor(
+            windowID: Self.windowID, title: "Sessions",
+            defaultShortcut: .init(.s, modifiers: [.command, .control, .option]),
+            present: { [weak self] in self?.showWindow() })
     }
 
     private let service: any StenographerDaemonService

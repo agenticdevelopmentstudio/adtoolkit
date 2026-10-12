@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 import OSLog
 import AgenticToolkitCore
 
@@ -9,6 +10,19 @@ public final class AILogCoordinator: AppFeature {
 
     public enum CommandID {
         public static let showWindow = "stenographer.ailog.showWindow"
+    }
+
+    /// The window's stable id — what Stenographer's scripting called it — and
+    /// the key its key command's binding is stored under (`window.ai-log`).
+    public static let windowID = "ai-log"
+
+    /// The system-wide key command that opens this window. The host installs
+    /// it through `StenographerWindowKeyCommands.install(commands:)`.
+    public func keyCommand() -> KeyCommandDescriptor {
+        StenographerWindowKeyCommands.descriptor(
+            windowID: Self.windowID, title: "AI Log",
+            defaultShortcut: nil,
+            present: { [weak self] in self?.showWindow() })
     }
 
     private let service: any StenographerDaemonService

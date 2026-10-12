@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 import OSLog
 import AgenticToolkitCore
 
@@ -9,6 +10,19 @@ public final class ConversationsCoordinator: AppFeature {
 
     public enum CommandID {
         public static let showWindow = "stenographer.conversations.showWindow"
+    }
+
+    /// The window's stable id — what Stenographer's scripting called it — and
+    /// the key its key command's binding is stored under (`window.conversations`).
+    public static let windowID = "conversations"
+
+    /// The system-wide key command that opens this window. The host installs
+    /// it through `StenographerWindowKeyCommands.install(commands:)`.
+    public func keyCommand() -> KeyCommandDescriptor {
+        StenographerWindowKeyCommands.descriptor(
+            windowID: Self.windowID, title: "Conversations",
+            defaultShortcut: .init(.c, modifiers: [.command, .control, .option]),
+            present: { [weak self] in self?.showWindow() })
     }
 
     private let service: any StenographerDaemonService
@@ -31,6 +45,13 @@ public final class ConversationsCoordinator: AppFeature {
     public override func start() throws {
         // Registered unopened so the toolkit's restore-on-launch can reopen it.
         ConversationsWindowController.ensureCurrent(service: service)
+        // The window's own (app-scoped) commands — list/single mode, previous
+        // and next conversation — resolved at fire time so a window reopened
+        // later is the one they reach. The shared registry is the one the Key
+        // Commands panel reads.
+        KeyCommandRegistry.shared.install(ConversationsKeyCommands.section(resolve: {
+            ConversationsWindowController.current?.splitViewController
+        }))
     }
 
     public func showWindow() {

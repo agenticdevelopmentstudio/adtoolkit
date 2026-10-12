@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 import OSLog
 import AgenticToolkitCore
 
@@ -10,6 +11,19 @@ public final class OversightCoordinator: AppFeature {
 
     public enum CommandID {
         public static let showWindow = "stenographer.oversight.showWindow"
+    }
+
+    /// The window's stable id — what Stenographer's scripting called it — and
+    /// the key its key command's binding is stored under (`window.ai-oversight`).
+    public static let windowID = "ai-oversight"
+
+    /// The system-wide key command that opens this window. The host installs
+    /// it through `StenographerWindowKeyCommands.install(commands:)`.
+    public func keyCommand() -> KeyCommandDescriptor {
+        StenographerWindowKeyCommands.descriptor(
+            windowID: Self.windowID, title: "AI Oversight",
+            defaultShortcut: nil,
+            present: { [weak self] in self?.showWindow() })
     }
 
     private let service: any StenographerDaemonService

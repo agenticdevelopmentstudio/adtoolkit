@@ -1717,6 +1717,7 @@
 		B013742EE7D4C53DA83108DF /* ExtensionStatusBarPresenting.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6158481EA0FDB6CCE26EFEC /* ExtensionStatusBarPresenting.swift */; };
 		B02BA2C7FEE9987D9D937790 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = C44178A173495CCDBE1371AC /* libsqlite3.tbd */; };
 		B0D7F0678901AE08C79809CF /* AccountAvatarViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3CF13214F4C3B6A6042A1D04 /* AccountAvatarViewTests.swift */; };
+		B0DCC7C25F296A59DB1AF0E5 /* StenographerWindowKeyCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = B82AFFD6F7D84E224E80CD05 /* StenographerWindowKeyCommands.swift */; };
 		B0EEDAC60B94E690A6CBC37D /* TextGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D18A3B90DF3697B6B4E277A4 /* TextGeometryTests.swift */; };
 		B0F51BF2E4C2A4B962CE35FF /* BillingPrefs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D99552584F2A7A2847B9ED21 /* BillingPrefs.swift */; };
 		B1009468460B12563AAD925F /* GitRepo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1865EEFDAFBFCF557DCDCDC2 /* GitRepo.swift */; };
@@ -2086,6 +2087,7 @@
 		DCC59B340916DB06C420D3CD /* TerminalCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C833E2859602634DC99C02C /* TerminalCoordinator.swift */; };
 		DCE5DDE85A4BBCEC7FCD1FC7 /* ProjectCheckoutTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73F0119CDB478A40922A5E3A /* ProjectCheckoutTests.swift */; };
 		DD05AB0CD86F3794E0D04D18 /* SummarizeReplyDTO.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AC7A01F5277BCCC27EF0A7 /* SummarizeReplyDTO.swift */; };
+		DD6E3B29724AECCEB7E717E8 /* StenographerWindowKeyCommandsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39E19AC4057852FBBC12A06D /* StenographerWindowKeyCommandsTests.swift */; };
 		DD71B32807207B773B058D1B /* KeyCommandRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A7B89C20298AC0D702A281C /* KeyCommandRegistry.swift */; };
 		DDA338BC278608DBF11A0319 /* JSONValue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62E72B1651E46E46D8D73340 /* JSONValue.swift */; };
 		DDCBFA695CB19E02136820C0 /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 607DCB9764497B1F6BDCA779 /* AppCoordinator.swift */; };
@@ -4968,6 +4970,7 @@
 		398FCDDBD556655D5F2C53D0 /* AgenticToolkitHubService-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "AgenticToolkitHubService-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		39A019F12D97C834D68D9A28 /* ComposableTabLayoutSpec.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposableTabLayoutSpec.swift; sourceTree = "<group>"; };
 		39D2904B79D1C3A8B833FA72 /* AIProviderConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderConfigStore.swift; sourceTree = "<group>"; };
+		39E19AC4057852FBBC12A06D /* StenographerWindowKeyCommandsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerWindowKeyCommandsTests.swift; sourceTree = "<group>"; };
 		39E42B65AECE7EFEA631F88B /* FileEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileEditorView.swift; sourceTree = "<group>"; };
 		3A4063CDE9758F2EA9EB7811 /* PromptedToolCallingPluginTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptedToolCallingPluginTests.swift; sourceTree = "<group>"; };
 		3A4FEBCABBDC39A364BDD1E4 /* SessionController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionController.swift; sourceTree = "<group>"; };
@@ -5825,6 +5828,7 @@
 		B80E4CA204954CD2D5B64C67 /* CheckboxView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CheckboxView.swift; sourceTree = "<group>"; };
 		B822FFB8DE74977C683E4EC4 /* HubSceneController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubSceneController.swift; sourceTree = "<group>"; };
 		B8271004133BEF8589B85B66 /* BrowserConsoleLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserConsoleLog.swift; sourceTree = "<group>"; };
+		B82AFFD6F7D84E224E80CD05 /* StenographerWindowKeyCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerWindowKeyCommands.swift; sourceTree = "<group>"; };
 		B83776DCA648EA0D07B84C48 /* HTDVViewController+UIKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HTDVViewController+UIKit.swift"; sourceTree = "<group>"; };
 		B8748B4F811CCE16DBD2435B /* VSCodeThemeImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeThemeImporter.swift; sourceTree = "<group>"; };
 		B89939C84939B1E30B0D26A4 /* StenographerPreferenceDTOsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerPreferenceDTOsTests.swift; sourceTree = "<group>"; };
@@ -7599,6 +7603,7 @@
 				FBD05AB01B49AF54B4D6481C /* Summaries */,
 				DE3311B04E140BFF57052A10 /* DaemonProviderPickerView.swift */,
 				5A09AF27BA079BF196E8AB34 /* StenographerUserSettings.swift */,
+				B82AFFD6F7D84E224E80CD05 /* StenographerWindowKeyCommands.swift */,
 			);
 			path = Stenographer;
 			sourceTree = "<group>";
@@ -10743,6 +10748,7 @@
 				6FC15F90F5493381967A676C /* SessionListSourceFilterTests.swift */,
 				2C9948FD6AE34F3345130E4B /* SessionsWindowAccessibilityTests.swift */,
 				76E295616FF8455E57BBAF1A /* StenographerPrefsPushTests.swift */,
+				39E19AC4057852FBBC12A06D /* StenographerWindowKeyCommandsTests.swift */,
 				EFF9AAFB59FD1F206C2BB3A3 /* SummarizeReplyMappingTests.swift */,
 			);
 			path = Stenographer;
@@ -14280,6 +14286,7 @@
 				E81949502E45FF5A6B31C0FF /* StenographerSummarizing.swift in Sources */,
 				A45F881C81C22E483B000268 /* StenographerSummaryPrefsPush.swift in Sources */,
 				C546F3892B367F83CE1BCE26 /* StenographerUserSettings.swift in Sources */,
+				B0DCC7C25F296A59DB1AF0E5 /* StenographerWindowKeyCommands.swift in Sources */,
 				38995CAB02C10C1B10AD206F /* StepperView.swift in Sources */,
 				1A4B3132C9EA6955BA9D75D2 /* StringRenderedWidth.swift in Sources */,
 				0140756863045D57212786E6 /* SwatchGridView.swift in Sources */,
@@ -15484,6 +15491,7 @@
 				90A6D74C03D2CD5EF5CE9B26 /* SingletonWindowControllerTests.swift in Sources */,
 				BE23794732928232D0D54DD7 /* SpacingTests.swift in Sources */,
 				323456CBFB62BDB737B32570 /* StenographerPrefsPushTests.swift in Sources */,
+				DD6E3B29724AECCEB7E717E8 /* StenographerWindowKeyCommandsTests.swift in Sources */,
 				B8A25819DEA512A4343C30D3 /* SummarizeReplyMappingTests.swift in Sources */,
 				14BC4E01EF0E54BD7BC654B0 /* SystemWindowContextManagerTests.swift in Sources */,
 				F0619763C8A2EC2168010B87 /* SystemWindowMatcherTests.swift in Sources */,
