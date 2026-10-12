@@ -31,6 +31,12 @@ public final class SessionsCoordinator: AppFeature {
     public override func start() throws {
         // Registered unopened so the toolkit's restore-on-launch can reopen it.
         SessionsWindowController.ensureCurrent(service: service)
+        StenographerSummaryPrefsPush.startObserving(service: service)
+    }
+
+    /// The AI Summaries settings pane, for the host's settings window.
+    public func settingsPanel() -> AISummariesSettingsPanel {
+        AISummariesSettingsPanel(service: service)
     }
 
     public func showWindow() {

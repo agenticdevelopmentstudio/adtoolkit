@@ -7,6 +7,10 @@ final class StenographerPrefsPushTests: XCTestCase {
 
     override func tearDown() async throws {
         StenographerOversightPrefsPush.stopObserving()
+        StenographerSummaryPrefsPush.stopObserving()
+        UserSettings.stenographerAISummariesEnabled.remove()
+        UserSettings.stenographerAISummariesProviderConfigId.remove()
+        UserSettings.resetAISummaryTuning()
         UserSettings.stenographerAIOversightEnabled.remove()
         UserSettings.stenographerAIOversightProviderConfigId.remove()
     }
@@ -36,6 +40,35 @@ final class StenographerPrefsPushTests: XCTestCase {
         UserSettings.stenographerAIOversightEnabled.value = true
         await settle()
         XCTAssertEqual(daemon.oversightRequests.last?.enabled, true)
+    }
+
+    func testSummaryUnmodifiedPromptTravelsBlank() async {
+        let daemon = StubDaemonService()
+        StenographerSummaryPrefsPush.startObserving(service: daemon)
+        await StenographerSummaryPrefsPush.awaitPendingPush()
+        XCTAssertEqual(daemon.summaryRequests.count, 1)
+        XCTAssertEqual(daemon.summaryRequests.first?.prompt, "")
+        XCTAssertEqual(daemon.summaryRequests.first?.maxWords, SummaryDefaults.maxWords)
+    }
+
+    func testSummaryChangeAndReconnectPush() async {
+        let daemon = StubDaemonService()
+        StenographerSummaryPrefsPush.startObserving(service: daemon)
+        await StenographerSummaryPrefsPush.awaitPendingPush()
+        UserSettings.stenographerAISummariesEnabled.value = true
+        UserSettings.stenographerAISummariesProviderConfigId.value = "claude-cli"
+        await settleSummary()
+        XCTAssertEqual(daemon.summaryRequests.last?.enabled, true)
+        XCTAssertEqual(daemon.summaryRequests.last?.selectedConfigId, "claude-cli")
+        let before = daemon.summaryRequests.count
+        daemon.fireReconnect()
+        await settleSummary()
+        XCTAssertEqual(daemon.summaryRequests.count, before + 1)
+    }
+
+    private func settleSummary() async {
+        try? await Task.sleep(for: .milliseconds(50))
+        await StenographerSummaryPrefsPush.awaitPendingPush()
     }
 
     /// Lets a setting change (delivered on the next main-queue turn) or a

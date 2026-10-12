@@ -1600,6 +1600,7 @@
 		A426AA7E9DC2E917ABD2225C /* PersonasModuleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A454828BA52FA18E10100DFB /* PersonasModuleTests.swift */; };
 		A435C569825AD5B1DE4B1E40 /* HTDVRailCellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D202C31D01778D355A3E021F /* HTDVRailCellView.swift */; };
 		A45DA85AFB35BAC1E1B72BE4 /* PermissionsSettingsPanelViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 068A462BB3B6D36768A88DE2 /* PermissionsSettingsPanelViewController.swift */; };
+		A45F881C81C22E483B000268 /* StenographerSummaryPrefsPush.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7234EE00B143D6C6988E5CFE /* StenographerSummaryPrefsPush.swift */; };
 		A4615DB470BB4650A1631599 /* CGFloatClampedTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 996BC129EFE3C2D78BE1C0D2 /* CGFloatClampedTests.swift */; };
 		A47C173DF8606ABD7FA47BCD /* BillingModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 817621AAD3A5DDB7468190B7 /* BillingModelTests.swift */; };
 		A4A0AD5206257B2370572E00 /* LRUCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = B375D89FA186FB0D6E5DC88D /* LRUCache.swift */; };
@@ -1765,6 +1766,7 @@
 		B70FE46576954E9123BABC12 /* AlertDetails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 885F56114F988F525C95377E /* AlertDetails.swift */; };
 		B73787CB076FB50ADBF81F9F /* BillingActivityViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F853E0CE36BC9A04139B3B4 /* BillingActivityViewController.swift */; };
 		B7BCE17617DABDBE84098073 /* ExtensionEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86530A7DCF73CB6006D908BB /* ExtensionEvent.swift */; };
+		B7D61585E79E59F2AACCEC17 /* AISummariesSettingsPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58284553F55716CA48B1614 /* AISummariesSettingsPanel.swift */; };
 		B7D8CCB89905B91B0E323DD5 /* PasskeyAssertionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 064172AD29BB6BE81A2F7F9A /* PasskeyAssertionProvider.swift */; };
 		B7E99202CED0C8EA303849B0 /* KeyCommandsSettingsPanelViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B76EEC3B69698FE22FCEC662 /* KeyCommandsSettingsPanelViewController.swift */; };
 		B7EC35F417FA81E6A7197F70 /* StenographerPreferenceDTOsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B89939C84939B1E30B0D26A4 /* StenographerPreferenceDTOsTests.swift */; };
@@ -5377,6 +5379,7 @@
 		71FC0CFF8A190FE13E818A71 /* ThemeContributionPointTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeContributionPointTests.swift; sourceTree = "<group>"; };
 		7226398D6A1644CFE7D83966 /* AppUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdater.swift; sourceTree = "<group>"; };
 		72337013C6184C5FFEF921CE /* ScriptablePane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptablePane.swift; sourceTree = "<group>"; };
+		7234EE00B143D6C6988E5CFE /* StenographerSummaryPrefsPush.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerSummaryPrefsPush.swift; sourceTree = "<group>"; };
 		72395568A17CD97EBCF65F2D /* ExtensionIdentityComponentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionIdentityComponentTests.swift; sourceTree = "<group>"; };
 		725F4B47141C0C0EB5A8B6EA /* AgenticToolkitDisplaysTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = AgenticToolkitDisplaysTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		726A9B75F2C4F7E304086340 /* MacPermissionGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacPermissionGate.swift; sourceTree = "<group>"; };
@@ -6052,6 +6055,7 @@
 		D518FF3A6999E5EEA383DAA8 /* AccountDetailPanelViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountDetailPanelViewController.swift; sourceTree = "<group>"; };
 		D562274C3DFB0E67240B87C0 /* StenographerPreferenceDTOs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerPreferenceDTOs.swift; sourceTree = "<group>"; };
 		D566499EB2CFCAF2E14B55B8 /* LanguageServerStatusModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageServerStatusModelTests.swift; sourceTree = "<group>"; };
+		D58284553F55716CA48B1614 /* AISummariesSettingsPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISummariesSettingsPanel.swift; sourceTree = "<group>"; };
 		D58EB30775CD325FD1525437 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		D5B0001BBF3E59C64E36B8F2 /* ProjectControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectControllerTests.swift; sourceTree = "<group>"; };
 		D5B79A54727436AAA06C533D /* ISO8601Timestamp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ISO8601Timestamp.swift; sourceTree = "<group>"; };
@@ -11176,6 +11180,8 @@
 			isa = PBXGroup;
 			children = (
 				23E07D436FAB76EDAC7636CD /* AISummariesPluginControls.swift */,
+				D58284553F55716CA48B1614 /* AISummariesSettingsPanel.swift */,
+				7234EE00B143D6C6988E5CFE /* StenographerSummaryPrefsPush.swift */,
 			);
 			path = Summaries;
 			sourceTree = "<group>";
@@ -13863,6 +13869,7 @@
 				B28CBB07C3454B26A3E5DF03 /* AIProviderResolver.swift in Sources */,
 				55780F80FFD5A4BB11707330 /* AISettingsViewPanelController.swift in Sources */,
 				3DF280D6F9BE4EA35D3EFCEE /* AISummariesPluginControls.swift in Sources */,
+				B7D61585E79E59F2AACCEC17 /* AISummariesSettingsPanel.swift in Sources */,
 				C4F7D2D7C4B5E95B3E8B3A1C /* AbstractViewModel.swift in Sources */,
 				B5A148A29FA0883E9B7C5E2E /* AccountAvatarView.swift in Sources */,
 				2B8AE426852F7D4201FF86B1 /* AccountDetailPanelViewController.swift in Sources */,
@@ -14271,6 +14278,7 @@
 				390840BE574C74613CC334D6 /* StenographerOversightPrefsPush.swift in Sources */,
 				ED000709BB2A2C236E8A6256 /* StenographerSessionListSource.swift in Sources */,
 				E81949502E45FF5A6B31C0FF /* StenographerSummarizing.swift in Sources */,
+				A45F881C81C22E483B000268 /* StenographerSummaryPrefsPush.swift in Sources */,
 				C546F3892B367F83CE1BCE26 /* StenographerUserSettings.swift in Sources */,
 				38995CAB02C10C1B10AD206F /* StepperView.swift in Sources */,
 				1A4B3132C9EA6955BA9D75D2 /* StringRenderedWidth.swift in Sources */,
