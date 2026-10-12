@@ -449,7 +449,14 @@ extension BrowserPaneViewController: WKDownloadDelegate {
         decideDestinationUsing response: URLResponse,
         suggestedFilename: String
     ) async -> URL? {
-        if settings.get(UserSettings.browserAsksDownloadLocation), let window = view.window {
+        if settings.get(UserSettings.browserAsksDownloadLocation) {
+            // Asking needs a window to ask on. A pane with none is not a
+            // reason to save somewhere the user was never shown
+            // (`explicit-over-implicit`): refuse the download instead.
+            guard let window = view.window else {
+                logger.error("browser download refused: asked to choose a location with no window to ask on")
+                return nil
+            }
             let panel = NSSavePanel()
             panel.nameFieldStringValue = suggestedFilename
             panel.directoryURL = BrowserSettings.downloadDirectory(in: settings)
