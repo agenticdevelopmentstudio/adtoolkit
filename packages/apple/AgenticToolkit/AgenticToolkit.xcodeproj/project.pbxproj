@@ -1106,6 +1106,7 @@
 		725E739076F8F09CCA1286A1 /* BillingRate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94DB4D30BB2E20AB8699BAF0 /* BillingRate.swift */; };
 		726BFCCE27CBB127A47FF7F0 /* AgenticToolkitPermissionsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB251437E922B5A8689625BF /* AgenticToolkitPermissionsUI.framework */; };
 		7285E6F06AFDD2885258B86D /* LocalChatSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EA6FFFEFD6FE486B378C /* LocalChatSession.swift */; };
+		72931C2417926B12880A0352 /* StenographerHTTPClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614B29FF3E49ED1A4EDC3F6A /* StenographerHTTPClientTests.swift */; };
 		729C57CDDF4DA5513587E83C /* HubLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0826680E945DB6D6A99C5F7 /* HubLinks.swift */; };
 		73B198E7CBB7ED52F6983CFC /* StenographerPreferenceDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = D562274C3DFB0E67240B87C0 /* StenographerPreferenceDTOs.swift */; };
 		73B805B494A6A78EED5A9223 /* AgenticToolkitPermissions.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF04ADB42980B9D5DE44BF46 /* AgenticToolkitPermissions.framework */; };
@@ -1160,6 +1161,7 @@
 		787776EA5937518ADC5F11DA /* FontChooserButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9585893552485B2CC98ABCE4 /* FontChooserButton.swift */; };
 		78D7013A919D83E2D2041555 /* ScreenSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F3E98FAC4584B9490DD7714 /* ScreenSnapshot.swift */; };
 		78D8608D81465F4805F87BAB /* BoundedAX.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4EC222384A1D04209BA19B6 /* BoundedAX.swift */; };
+		78F1B66AD8B3D734682FF3CD /* StenographerDaemonService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BBFDCC0E1AD1D282FAB80EA /* StenographerDaemonService.swift */; };
 		790EAECAFE39541DF84E4FA8 /* AccountMenuModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 079244E60613CB85A6B0883D /* AccountMenuModelTests.swift */; };
 		7927D9315B859E3F4B699F1D /* SessionController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A4FEBCABBDC39A364BDD1E4 /* SessionController.swift */; };
 		79404B1DD6D0948D5A72F69E /* FirstRunDialog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05A2976006910F93336AEF5D /* FirstRunDialog.swift */; };
@@ -1414,6 +1416,7 @@
 		9150CF460034A9D99782816D /* ExtensionRegistryRescanTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC96283E781E0F64ECBD7631 /* ExtensionRegistryRescanTests.swift */; };
 		915CFDCD8D42E99B1C6733E3 /* ApplicationsAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B24717874E4BF8FB7865CE1 /* ApplicationsAdapter.swift */; };
 		917169E897A3FAD6DA99028A /* MCPChipsBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74925FD9DA16DA1C1650F4CE /* MCPChipsBarView.swift */; };
+		917D8FF9F479BBE5ABBFCC1E /* StenographerHTTPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DEB99C473EEB4D6582BA5FD /* StenographerHTTPClient.swift */; };
 		917ED099271216F4F28E38F7 /* GitStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 59AA2DB0B9F43DA04BD8316B /* GitStatus.swift */; };
 		91910DAD180C2CA4394D497F /* AgenticToolkitCoreUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A6A6F1AF7704D404EE128D5 /* AgenticToolkitCoreUI.framework */; };
 		919729FEBDC2A83173C1EE7F /* StubSignInSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F77C25E5EB7A3DB5C0581B6 /* StubSignInSession.swift */; };
@@ -4717,6 +4720,7 @@
 		1B81AAB880046E3AC142CD75 /* BundleOwnershipTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundleOwnershipTests.swift; sourceTree = "<group>"; };
 		1B9AD92831D3EB96B47CCB8E /* ConversationFocusOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversationFocusOverlay.swift; sourceTree = "<group>"; };
 		1BA5D9118A1080C5EE9E8FD9 /* ScriptingHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptingHost.swift; sourceTree = "<group>"; };
+		1BBFDCC0E1AD1D282FAB80EA /* StenographerDaemonService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerDaemonService.swift; sourceTree = "<group>"; };
 		1BC949F427908282E5CC5944 /* ThemeTopicPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeTopicPanel.swift; sourceTree = "<group>"; };
 		1C0F3C02C6C6FCFDF019FB03 /* HubText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubText.swift; sourceTree = "<group>"; };
 		1C2FA00807E94CCBE7D4B545 /* PersonasModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonasModule.swift; sourceTree = "<group>"; };
@@ -5047,6 +5051,7 @@
 		4D406955FF116011F2F41462 /* AIPluginsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPluginsCoordinator.swift; sourceTree = "<group>"; };
 		4DB9173A4B3F08A11D30052B /* AccountsSettingsPanelViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountsSettingsPanelViewController.swift; sourceTree = "<group>"; };
 		4DD892CBDC86EFD7DEA0B361 /* PendingUsersTopic.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PendingUsersTopic.swift; sourceTree = "<group>"; };
+		4DEB99C473EEB4D6582BA5FD /* StenographerHTTPClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerHTTPClient.swift; sourceTree = "<group>"; };
 		4EB5C5B45ADAC89E9F562FBF /* EditableTableCardTypedEditTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditableTableCardTypedEditTests.swift; sourceTree = "<group>"; };
 		4EE08F5008E7986F28B19B53 /* OnceOnlyContinuationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnceOnlyContinuationTests.swift; sourceTree = "<group>"; };
 		4EF995FC0CC791F38212BEE6 /* AIPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPlugin.swift; sourceTree = "<group>"; };
@@ -5179,6 +5184,7 @@
 		610164CB36F3E8282E21EF4C /* GitClientConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitClientConfiguration.swift; sourceTree = "<group>"; };
 		61310A916E242BA60A9FE8C1 /* AgenticToolkitCoreMacOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AgenticToolkitCoreMacOS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		61392DCE00B5FC56BFAF80AC /* BrowserSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserSettings.swift; sourceTree = "<group>"; };
+		614B29FF3E49ED1A4EDC3F6A /* StenographerHTTPClientTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerHTTPClientTests.swift; sourceTree = "<group>"; };
 		615584B743170D28F30D5235 /* BucketAccessAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BucketAccessAdapter.swift; sourceTree = "<group>"; };
 		6160743BD46ABDAC795CD533 /* ExtensionPickerWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionPickerWindowController.swift; sourceTree = "<group>"; };
 		6170A42638BD6625DAC97BF1 /* GitGlobalConfigTableViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitGlobalConfigTableViewTests.swift; sourceTree = "<group>"; };
@@ -7306,6 +7312,8 @@
 				C2F170AF3EC281555A7CE9CC /* OversightScriptDTO.swift */,
 				F226B8A3516E1E2AA19D0557 /* SessionDTOs.swift */,
 				83915F6253521A2D7A80C781 /* SessionMetricsDTO.swift */,
+				1BBFDCC0E1AD1D282FAB80EA /* StenographerDaemonService.swift */,
+				4DEB99C473EEB4D6582BA5FD /* StenographerHTTPClient.swift */,
 				BBE539C216B001170F681243 /* StenographerIdentifiers.swift */,
 				D562274C3DFB0E67240B87C0 /* StenographerPreferenceDTOs.swift */,
 				B6C739860B639553B9531860 /* StenographerWire.swift */,
@@ -10039,6 +10047,7 @@
 		B67CC52ED7514DFFA34BA8A6 /* Stenographer */ = {
 			isa = PBXGroup;
 			children = (
+				614B29FF3E49ED1A4EDC3F6A /* StenographerHTTPClientTests.swift */,
 				B89939C84939B1E30B0D26A4 /* StenographerPreferenceDTOsTests.swift */,
 			);
 			path = Stenographer;
@@ -13495,6 +13504,7 @@
 				D35788BA91E0E2FF4BA260E6 /* SettingsKeyTests.swift in Sources */,
 				E1A795AD9884C0D68635B18A /* SetupStampTests.swift in Sources */,
 				FA6C8E856602A0B23C805403 /* SqliteStorageProviderTests.swift in Sources */,
+				72931C2417926B12880A0352 /* StenographerHTTPClientTests.swift in Sources */,
 				B7EC35F417FA81E6A7197F70 /* StenographerPreferenceDTOsTests.swift in Sources */,
 				6D1196350DCDDEE8619B4E31 /* StubbedRegistrySession.swift in Sources */,
 				5589D9698D9879A781C600E1 /* SubprocessChannelRunTests.swift in Sources */,
@@ -14433,6 +14443,8 @@
 				E8A491DB14685E4DCB28C9C9 /* SetupStamp.swift in Sources */,
 				EAC3EC93D4436A5A2D3F77FB /* ShellQuoting.swift in Sources */,
 				3E4FBCAC30712619E45DA1FC /* SqliteStorageProvider.swift in Sources */,
+				78F1B66AD8B3D734682FF3CD /* StenographerDaemonService.swift in Sources */,
+				917D8FF9F479BBE5ABBFCC1E /* StenographerHTTPClient.swift in Sources */,
 				0AB970D1EC72459DB5D7B63F /* StenographerIdentifiers.swift in Sources */,
 				73B198E7CBB7ED52F6983CFC /* StenographerPreferenceDTOs.swift in Sources */,
 				C314481BBCB3ECA16E787FCE /* StenographerWire.swift in Sources */,
