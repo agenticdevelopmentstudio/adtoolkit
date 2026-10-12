@@ -289,8 +289,17 @@ public final class BrowserPaneViewController: NSViewController {
         if addressField.currentEditor() == nil {
             addressField.stringValue = url == Self.blankPage ? "" : url.absoluteString
         }
-        store.setPaneStateValue(url == Self.blankPage ? nil : url.absoluteString, forKey: Self.addressKey)
         onPaneTitleChange?()
+    }
+
+    /// Writes the address the pane will reopen on. Once per committed
+    /// navigation rather than on every change of `webView.url` — a redirect
+    /// chain or a fragment change reports several — and only when it differs
+    /// from what is remembered, since the store is a database write.
+    private func rememberAddress() {
+        let address = webView.url.flatMap { $0 == Self.blankPage ? nil : $0.absoluteString }
+        guard address != store.paneStateValue(forKey: Self.addressKey) else { return }
+        store.setPaneStateValue(address, forKey: Self.addressKey)
     }
 
     /// Files the page that just finished loading. Only pages, only when the
@@ -405,6 +414,10 @@ extension BrowserPaneViewController: WKNavigationDelegate {
     /// previous page's row.
     public func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
         currentVisitID = nil
+    }
+
+    public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        rememberAddress()
     }
 
     public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
