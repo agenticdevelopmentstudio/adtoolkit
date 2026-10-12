@@ -1242,6 +1242,7 @@
 		7D88FB7466F53FB71DE6AE5D /* OpenDocumentReloaderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D75E1076D057287593E5668 /* OpenDocumentReloaderTests.swift */; };
 		7DAEA5AB2FA48ABD09ADB23B /* HubWorkspaceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86397BF91BE25B91BE94C360 /* HubWorkspaceTests.swift */; };
 		7DEBE8278E4AB8F38CE6D343 /* EcosystemTopic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A1902EDFDE70A886116262E /* EcosystemTopic.swift */; };
+		7E041FC58325D9FBF35DBF64 /* StenographerFeaturePermissions.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37A4F66A25A715F038DA2D1 /* StenographerFeaturePermissions.swift */; };
 		7E06A61532A711063DA6EC4D /* SessionListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D32DB64D049628A66B23446A /* SessionListViewController.swift */; };
 		7E171786A9DCC866DAA32F54 /* SessionBreadcrumbView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 075F7B05F5991A77DC055B40 /* SessionBreadcrumbView.swift */; };
 		7E192BF6B4D003D99C6E968E /* MessageFramingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2F76D78C482EE5E8A3A35B9 /* MessageFramingTests.swift */; };
@@ -2001,6 +2002,7 @@
 		D2998A708F3D6875A8EC95FA /* AgenticToolkitCoreMacOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 61310A916E242BA60A9FE8C1 /* AgenticToolkitCoreMacOS.framework */; };
 		D2A4AB298C91A4ADC2B9B264 /* OversightScriptsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5FE364C69F268E5144D04643 /* OversightScriptsViewController.swift */; };
 		D2A727CD3AAD1D539F79B5D3 /* HubFeature.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5789D3F4AD20237585F561D /* HubFeature.swift */; };
+		D2B025B879E58FC5BAC364DD /* StenographerFeaturePermissionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E700645C1D8E4098F2DEB0 /* StenographerFeaturePermissionsTests.swift */; };
 		D2C2365847FFC644964896CD /* ProjectLanguageServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B774952393631C1EBDB56CD /* ProjectLanguageServices.swift */; };
 		D2CB7787E1F19851157E6364 /* HTDVRailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62C92E5C220DD7C3D20E1498 /* HTDVRailView.swift */; };
 		D2D88301C7C912CD735CF566 /* ChatEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DA56E0ADF90FCB532FEE763 /* ChatEvent.swift */; };
@@ -5696,6 +5698,7 @@
 		A2925891EDC330DE6D5D2FA1 /* DurationFormatterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DurationFormatterTests.swift; sourceTree = "<group>"; };
 		A2D8D854516A1CD50DB7DC62 /* FeatureCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureCatalogTests.swift; sourceTree = "<group>"; };
 		A2F76D78C482EE5E8A3A35B9 /* MessageFramingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageFramingTests.swift; sourceTree = "<group>"; };
+		A37A4F66A25A715F038DA2D1 /* StenographerFeaturePermissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerFeaturePermissions.swift; sourceTree = "<group>"; };
 		A3909CE4FC6CB7A86865DFF0 /* PaneArranger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneArranger.swift; sourceTree = "<group>"; };
 		A43A1D8E1D74B97E62F9A786 /* DisplayMatcher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayMatcher.swift; sourceTree = "<group>"; };
 		A447FFBF16260DA6B05B3CB0 /* LSPCompletionEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LSPCompletionEntry.swift; sourceTree = "<group>"; };
@@ -5961,6 +5964,7 @@
 		C8BA2CBE167459CA857BB43B /* RunAlertFromRunLoop.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunAlertFromRunLoop.swift; sourceTree = "<group>"; };
 		C8C09F3437F343B088CA54E1 /* AgenticToolkitMarkdown-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "AgenticToolkitMarkdown-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C8CE9CC3B7493BF16445C111 /* SplitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplitViewController.swift; sourceTree = "<group>"; };
+		C8E700645C1D8E4098F2DEB0 /* StenographerFeaturePermissionsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerFeaturePermissionsTests.swift; sourceTree = "<group>"; };
 		C904D1A85CC134C6520DE6D8 /* DisplayThumbnailer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayThumbnailer.swift; sourceTree = "<group>"; };
 		C910FF79AB86DF4FAD0E623A /* CustomHeuristicStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomHeuristicStore.swift; sourceTree = "<group>"; };
 		C9255436546CDE72B4A61603 /* NotesStorageFailureTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesStorageFailureTests.swift; sourceTree = "<group>"; };
@@ -7602,6 +7606,7 @@
 				9850AFC1FEAD7A5A441478CC /* Sessions */,
 				FBD05AB01B49AF54B4D6481C /* Summaries */,
 				DE3311B04E140BFF57052A10 /* DaemonProviderPickerView.swift */,
+				A37A4F66A25A715F038DA2D1 /* StenographerFeaturePermissions.swift */,
 				5A09AF27BA079BF196E8AB34 /* StenographerUserSettings.swift */,
 				B82AFFD6F7D84E224E80CD05 /* StenographerWindowKeyCommands.swift */,
 			);
@@ -10747,6 +10752,7 @@
 				5CF862E3A9C63F5D4B55FF15 /* OversightScriptsSummaryTests.swift */,
 				6FC15F90F5493381967A676C /* SessionListSourceFilterTests.swift */,
 				2C9948FD6AE34F3345130E4B /* SessionsWindowAccessibilityTests.swift */,
+				C8E700645C1D8E4098F2DEB0 /* StenographerFeaturePermissionsTests.swift */,
 				76E295616FF8455E57BBAF1A /* StenographerPrefsPushTests.swift */,
 				39E19AC4057852FBBC12A06D /* StenographerWindowKeyCommandsTests.swift */,
 				EFF9AAFB59FD1F206C2BB3A3 /* SummarizeReplyMappingTests.swift */,
@@ -14281,6 +14287,7 @@
 				FFBD1E7BC9197BD32B4E3127 /* SpacingControlLayout.swift in Sources */,
 				ED88EBD89EEE72B6D56CFD30 /* SpacingSettingsBinding.swift in Sources */,
 				C408F9A22A6D80AB6C05EDFF /* SplitViewController.swift in Sources */,
+				7E041FC58325D9FBF35DBF64 /* StenographerFeaturePermissions.swift in Sources */,
 				390840BE574C74613CC334D6 /* StenographerOversightPrefsPush.swift in Sources */,
 				ED000709BB2A2C236E8A6256 /* StenographerSessionListSource.swift in Sources */,
 				E81949502E45FF5A6B31C0FF /* StenographerSummarizing.swift in Sources */,
@@ -15490,6 +15497,7 @@
 				697B4C220C6BF3D7B33BB1F7 /* SingleWindowControllerTests.swift in Sources */,
 				90A6D74C03D2CD5EF5CE9B26 /* SingletonWindowControllerTests.swift in Sources */,
 				BE23794732928232D0D54DD7 /* SpacingTests.swift in Sources */,
+				D2B025B879E58FC5BAC364DD /* StenographerFeaturePermissionsTests.swift in Sources */,
 				323456CBFB62BDB737B32570 /* StenographerPrefsPushTests.swift in Sources */,
 				DD6E3B29724AECCEB7E717E8 /* StenographerWindowKeyCommandsTests.swift in Sources */,
 				B8A25819DEA512A4343C30D3 /* SummarizeReplyMappingTests.swift in Sources */,
