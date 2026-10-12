@@ -97,6 +97,7 @@ public final class TerminalChatSession {
     /// Reports once output has been quiet for ``quietPeriod``, or once it has
     /// waited ``maximumLatency``, whichever comes first.
     private func outputArrived() {
+        currentWait?.activity()
         quietTask?.cancel()
         quietTask = Task { [weak self, quietPeriod] in
             try? await Task.sleep(for: quietPeriod)
@@ -215,7 +216,9 @@ public final class TerminalChatSession {
     /// answers something else and is in the transcript already.
     private func beginWait(settle: Duration, timeout: Duration, replayingUnclaimed: Bool) -> OutputWait {
         currentWait?.finish()
-        let wait = OutputWait(settle: settle, timeout: timeout) { [weak self] finished in
+        let wait = OutputWait(settle: settle, timeout: timeout) { [weak self] in
+            self?.flushOutput()
+        } onFinish: { [weak self] finished in
             if self?.currentWait === finished { self?.currentWait = nil }
         }
         if replayingUnclaimed, !unclaimedOutput.isEmpty {
@@ -230,8 +233,12 @@ public final class TerminalChatSession {
     }
 }
 
-/// Collects replies until they stop coming, then hands them to whoever is
-/// awaiting ``result()``.
+/// Collects replies until the terminal stops printing, then hands them to
+/// whoever is awaiting ``result()``.
+///
+/// Quiet is measured from the terminal's own output, not from the replies: a
+/// stream that never pauses is reported only once per `maximumLatency`, and a
+/// settle shorter than that would judge it finished between two reports.
 @MainActor
 private final class OutputWait {
     private var output: [String] = []
@@ -240,30 +247,49 @@ private final class OutputWait {
     private var settleTask: Task<Void, Never>?
     private var deadlineTask: Task<Void, Never>?
     private let settle: Duration
+    private let flushPending: () -> Void
     private let onFinish: (OutputWait) -> Void
 
-    /// - Parameter settle: Held to half of `timeout`, so output that stops
-    ///   early is always judged finished before the deadline judges it still
-    ///   running — a settle as long as the timeout would lose every race.
-    init(settle: Duration, timeout: Duration, onFinish: @escaping (OutputWait) -> Void) {
+    /// - Parameters:
+    ///   - settle: Held to half of `timeout`, so output that stops early is
+    ///     always judged finished before the deadline judges it still running —
+    ///     a settle as long as the timeout would lose every race.
+    ///   - flushPending: Reports output the terminal printed but the chat has
+    ///     not reported yet, so a wait that ends inside the chat's own quiet
+    ///     period still gets all of it.
+    init(settle: Duration, timeout: Duration, flushPending: @escaping () -> Void,
+         onFinish: @escaping (OutputWait) -> Void) {
         self.settle = min(settle, timeout / 2)
+        self.flushPending = flushPending
         self.onFinish = onFinish
         deadlineTask = Task { [weak self] in
             try? await Task.sleep(for: timeout)
             guard !Task.isCancelled else { return }
-            self?.finish(stillRunning: true)
+            self?.end(stillRunning: true)
+        }
+    }
+
+    /// The terminal printed something, so the wait is not settled yet.
+    func activity() {
+        guard finished == nil else { return }
+        settleTask?.cancel()
+        settleTask = Task { [weak self, settle] in
+            try? await Task.sleep(for: settle)
+            guard !Task.isCancelled else { return }
+            self?.end(stillRunning: false)
         }
     }
 
     func received(_ text: String) {
         guard finished == nil else { return }
         output.append(text)
-        settleTask?.cancel()
-        settleTask = Task { [weak self, settle] in
-            try? await Task.sleep(for: settle)
-            guard !Task.isCancelled else { return }
-            self?.finish()
-        }
+        activity()
+    }
+
+    private func end(stillRunning: Bool) {
+        guard finished == nil else { return }
+        flushPending()
+        finish(stillRunning: stillRunning)
     }
 
     func finish(stillRunning: Bool = false) {
