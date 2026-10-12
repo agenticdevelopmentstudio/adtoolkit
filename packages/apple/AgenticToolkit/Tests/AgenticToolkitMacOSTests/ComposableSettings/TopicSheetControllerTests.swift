@@ -110,4 +110,34 @@ final class TopicSheetControllerTests: XCTestCase {
         sheet.ok()
         XCTAssertNil(sheet.problem)
     }
+
+    func testTheFirstPanelIsSelectedOnceTheViewLoads() {
+        let sheet = make()
+        _ = sheet.view
+        XCTAssertEqual(sheet.split.selectedPanel?.descriptor.title, "One")
+    }
+
+    func testOnOKDisablesOKSoASecondPressCannotRun() {
+        var okCalls = 0
+        let sheet = make()
+        _ = sheet.view
+        sheet.onOK = { okCalls += 1 }
+        sheet.ok()
+        XCTAssertFalse(sheet.okEnabled)
+        sheet.okEnabled = true
+        sheet.showProblem("Save failed.")
+        XCTAssertEqual(okCalls, 1)
+    }
+
+    func testFinishEndsThePresentedSheet() {
+        let window = NSWindow(contentRect: NSRect(x: -3000, y: -3000, width: 400, height: 300),
+                              styleMask: [.titled], backing: .buffered, defer: false)
+        var finishes: [Bool] = []
+        let sheet = make(finished: { finishes.append($0) })
+        sheet.present(on: window)
+        XCTAssertNotNil(window.attachedSheet)
+        sheet.finish(true)
+        XCTAssertNil(window.attachedSheet)
+        XCTAssertEqual(finishes, [true])
+    }
 }

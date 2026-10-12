@@ -33,7 +33,6 @@ extension ComposableSettings {
             didSet { okButton.isEnabled = okEnabled }
         }
 
-        private let okTitle: String
         private let problemLabel = ThemedLabel(role: .secondaryText, textRole: .caption)
         private let cancelButton = NSButton(title: "Cancel", target: nil, action: nil)
         private let okButton: NSButton
@@ -45,7 +44,6 @@ extension ComposableSettings {
             self.split = SplitViewController()
             self.validate = validate
             self.onFinish = onFinish
-            self.okTitle = okTitle
             self.okButton = NSButton(title: okTitle, target: nil, action: nil)
             super.init(nibName: nil, bundle: nil)
             self.title = title
@@ -117,6 +115,15 @@ extension ComposableSettings {
             view = root
         }
 
+        public override func viewDidLoad() {
+            super.viewDidLoad()
+            // The split selects its first panel only when it is about to appear;
+            // the sheet's detail pane should never be blank once loaded.
+            if split.selectedPanel == nil, let first = split.panels.first {
+                split.selectPanel(first)
+            }
+        }
+
         /// Shows `sentence` under the panels; nil clears the line.
         public func showProblem(_ sentence: String?) {
             problem = sentence
@@ -134,6 +141,8 @@ extension ComposableSettings {
                 return
             }
             if let onOK {
+                // One save in flight: the owner re-enables OK when it shows a problem.
+                okEnabled = false
                 onOK()
             } else {
                 finish(true)
@@ -153,7 +162,12 @@ extension ComposableSettings {
                 window.endSheet(sheet)
             }
             presentingWindow = nil
-            onFinish(accepted)
+            let finished = onFinish
+            // Release what the owner captured; the sheet is done with it.
+            onFinish = { _ in }
+            onOK = nil
+            validate = { nil }
+            finished(accepted)
         }
 
         /// Presents the sheet on `window`, with the panels' first topic selected.
