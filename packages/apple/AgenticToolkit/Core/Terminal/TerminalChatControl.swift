@@ -161,10 +161,12 @@ public enum TerminalChatControl {
     /// Sends `request` to the app at `host` and decodes its answer.
     ///
     /// The wait is the request's own timeout plus a margin, so a long `run`
-    /// is not cut off by the transport before the app reports it.
-    public static func send(_ request: Request, to host: Host) throws -> Response {
+    /// is not cut off by the transport before the app reports it. A request
+    /// that runs nothing, such as a `list` asked of every host, passes a
+    /// short `wait` instead, so one stalled app cannot hold up the rest.
+    public static func send(_ request: Request, to host: Host, wait: TimeInterval? = nil) throws -> Response {
         let payload = try JSONEncoder().encode(request)
-        let waitSeconds = (request.timeout ?? 60) + 15
+        let waitSeconds = wait ?? (request.timeout ?? 60) + 15
         let reply = try UnixSocketLineClient.request(payload, path: host.socket.path, timeout: waitSeconds)
         return try JSONDecoder().decode(Response.self, from: reply)
     }
