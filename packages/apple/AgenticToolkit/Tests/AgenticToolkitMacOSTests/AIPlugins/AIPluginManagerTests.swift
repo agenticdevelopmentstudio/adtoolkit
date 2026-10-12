@@ -78,6 +78,26 @@ struct AIPluginManagerTests {
         #expect(manager.descriptors.first?.displayName == "Test Plugin")
     }
 
+    @Test("scanDescriptors reads descriptors off the main actor, first identifier wins")
+    func scanDescriptorsOffMainActor() async throws {
+        let first = try makeTempDir()
+        let second = try makeTempDir()
+        defer {
+            try? FileManager.default.removeItem(at: first)
+            try? FileManager.default.removeItem(at: second)
+        }
+        try writeDescriptorBundle(in: first, id: "com.test.a", name: "A")
+        try writeDescriptorBundle(in: second, id: "com.test.a", name: "A Again")
+        try writeDescriptorBundle(in: second, id: "com.test.b", name: "B")
+        try writeDescriptorBundle(in: second, id: "com.test.old", name: "Old", schemaVersion: 999)
+
+        let found = await Task.detached { AIPluginManager.scanDescriptors(in: [first, second]) }.value
+
+        #expect(found.map(\.descriptor.identifier).sorted() == ["com.test.a", "com.test.b"])
+        #expect(found.first { $0.descriptor.identifier == "com.test.a" }?.descriptor.displayName == "A")
+        #expect(found.allSatisfy { $0.bundleURL.pathExtension == "aiplugin" })
+    }
+
     @Test("skips a bundle with an incompatible schema version")
     func skipIncompatibleSchema() throws {
         let tmpDir = try makeTempDir()

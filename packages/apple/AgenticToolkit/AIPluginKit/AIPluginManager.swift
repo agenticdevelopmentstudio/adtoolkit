@@ -132,8 +132,29 @@ public final class AIPluginManager {
     /// descriptor, or whose `schemaVersion` the host does not understand, are
     /// skipped (this is how old v1 plugins are ignored).
     public func discoverPlugins() {
-        let fileManager = FileManager.default
+        for found in Self.scanDescriptors(in: searchPaths)
+        where !records.contains(where: { $0.descriptor.identifier == found.descriptor.identifier }) {
+            records.append(Record(descriptor: found.descriptor, bundleURL: found.bundleURL))
+            let descriptor = found.descriptor
+            // swiftlint:disable:next line_length
+            logger.info("Discovered plugin: \(descriptor.displayName, privacy: .public) (\(descriptor.identifier, privacy: .public))")
+        }
+    }
 
+    /// A `.aiplugin` bundle on disk and its decoded descriptor.
+    public struct DiscoveredPlugin: Sendable, Equatable {
+        public let descriptor: AIPluginDescriptor
+        public let bundleURL: URL
+    }
+
+    /// Every `.aiplugin` bundle under `searchPaths` with a readable descriptor
+    /// whose schema the host understands, in search-path order; a later bundle
+    /// with an identifier already found is skipped. Reads `descriptor.json`
+    /// only, never loads a binary, and touches no manager state, so a daemon or
+    /// any other non-main-actor caller can use it.
+    public nonisolated static func scanDescriptors(in searchPaths: [URL]) -> [DiscoveredPlugin] {
+        let fileManager = FileManager.default
+        var found: [DiscoveredPlugin] = []
         for searchPath in searchPaths {
             guard fileManager.fileExists(atPath: searchPath.path) else { continue }
 
@@ -145,7 +166,7 @@ public final class AIPluginManager {
 
             for url in contents where url.pathExtension == "aiplugin" {
                 guard let bundle = Bundle(url: url),
-                      let descriptor = Self.readDescriptor(from: bundle) else {
+                      let descriptor = readDescriptor(from: bundle) else {
                     // swiftlint:disable:next line_length
                     logger.warning("Skipping plugin without a readable descriptor: \(url.lastPathComponent, privacy: .public)")
                     continue
@@ -157,17 +178,15 @@ public final class AIPluginManager {
                     continue
                 }
 
-                guard !records.contains(where: { $0.descriptor.identifier == descriptor.identifier }) else { continue }
-
-                records.append(Record(descriptor: descriptor, bundleURL: url))
-                // swiftlint:disable:next line_length
-                logger.info("Discovered plugin: \(descriptor.displayName, privacy: .public) (\(descriptor.identifier, privacy: .public))")
+                guard !found.contains(where: { $0.descriptor.identifier == descriptor.identifier }) else { continue }
+                found.append(DiscoveredPlugin(descriptor: descriptor, bundleURL: url))
             }
         }
+        return found
     }
 
     /// Reads and decodes `descriptor.json` from a bundle's resources.
-    private static func readDescriptor(from bundle: Bundle) -> AIPluginDescriptor? {
+    private nonisolated static func readDescriptor(from bundle: Bundle) -> AIPluginDescriptor? {
         guard let url = bundle.url(forResource: "descriptor", withExtension: "json"),
               let data = try? Data(contentsOf: url) else {
             return nil
