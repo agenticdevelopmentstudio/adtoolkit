@@ -30,6 +30,23 @@ public enum KeychainHelper {
     /// old copy and bring the cleared secret back.
     nonisolated(unsafe) public static var legacyServices: [String] = []
 
+    /// The entry of this process's `keychain-access-groups` entitlement whose
+    /// group is `group` — `"<team>.com.example.shared"` for
+    /// `"com.example.shared"` — or nil when the binary carries none.
+    ///
+    /// The team prefix is the signer's (`$(AppIdentifierPrefix)` in the
+    /// entitlements file), so it is read off the running code rather than
+    /// spelled in source, where it goes stale the moment the build is signed by
+    /// another team. Read through `SecTaskCreateFromSelf`, which reports what
+    /// the kernel granted, not what a file on disk says.
+    public static func entitledAccessGroup(_ group: String) -> String? {
+        guard let task = SecTaskCreateFromSelf(nil),
+              let groups = SecTaskCopyValueForEntitlement(task, "keychain-access-groups" as CFString, nil)
+                as? [String]
+        else { return nil }
+        return groups.first { $0 == group || $0.hasSuffix("." + group) }
+    }
+
     /// Builds the base generic-password query for an account key. When an access
     /// group is in play, scopes the item to it and forces the macOS data-protection
     /// keychain (required for access groups on macOS).
