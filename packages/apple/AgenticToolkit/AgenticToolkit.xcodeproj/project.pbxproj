@@ -2105,6 +2105,7 @@
 		EA7FB6C3355B06B56E0E7C10 /* UserSetting.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3D112853E30CE786A73B192 /* UserSetting.swift */; };
 		EA91C1205D9F3BB61BEE999E /* FormDetails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3908B299DFC11D5CFFD3688C /* FormDetails.swift */; };
 		EA95597BAA2E246EBAB3D5C8 /* AgenticToolkitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FF857DF2BB3D2BE006BBA101 /* AgenticToolkitCore.framework */; };
+		EAC3EC93D4436A5A2D3F77FB /* ShellQuoting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54753050DFB0B337DF792D5B /* ShellQuoting.swift */; };
 		EAF90C9B6B0322555869BC8B /* ModelPickerItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F3F290E11EDE126F6A99DD9 /* ModelPickerItem.swift */; };
 		EB001795D2CDC1DD2E28B44F /* BlockingWorkTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEF85732E3B51B68AB067181 /* BlockingWorkTests.swift */; };
 		EB2357A5EA740457D3173555 /* TerminalSessionSplitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4EC9B640A2A45B605AE64DC /* TerminalSessionSplitViewController.swift */; };
@@ -4999,6 +5000,7 @@
 		545C2B0A038B25DF01D0046A /* NSStackView+FullWidth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSStackView+FullWidth.swift"; sourceTree = "<group>"; };
 		546447A5E3CFAF9218D61C4B /* PopupMenuChoiceViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupMenuChoiceViewTests.swift; sourceTree = "<group>"; };
 		546A0D47818D28AD7F0AEF4D /* CommandLineToolFeature.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandLineToolFeature.swift; sourceTree = "<group>"; };
+		54753050DFB0B337DF792D5B /* ShellQuoting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShellQuoting.swift; sourceTree = "<group>"; };
 		54A05DE6DDD1636E85E81884 /* AgenticToolkitLaunchUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AgenticToolkitLaunchUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		553B286FB8AF6CC860C1CE5F /* MarkdownSchema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownSchema.swift; sourceTree = "<group>"; };
 		556D79C6C5A57C39A74C9390 /* RemoteScreenPlacement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemoteScreenPlacement.swift; sourceTree = "<group>"; };
@@ -8516,6 +8518,7 @@
 				5F8EC2FA532939EB051D79A9 /* CommandRunner.swift */,
 				E0C354AFAF25264CB1045812 /* CommandRunning.swift */,
 				DCB1708D091BFA3D8DADFD10 /* ProcessExitWatch.swift */,
+				54753050DFB0B337DF792D5B /* ShellQuoting.swift */,
 			);
 			path = Process;
 			sourceTree = "<group>";
@@ -14080,6 +14083,7 @@
 				A6C33026C2885BCC4E7F5999 /* SettingsSnapshotPush.swift in Sources */,
 				0AA7EC3695C61BB3449125B4 /* SettingsStore.swift in Sources */,
 				E8A491DB14685E4DCB28C9C9 /* SetupStamp.swift in Sources */,
+				EAC3EC93D4436A5A2D3F77FB /* ShellQuoting.swift in Sources */,
 				3E4FBCAC30712619E45DA1FC /* SqliteStorageProvider.swift in Sources */,
 				5A423EDBDBC36FFC6215E4DD /* StorableSetting.swift in Sources */,
 				2379C7574D0AAF1D97F00B48 /* StoredSettingPropertyWrapper.swift in Sources */,

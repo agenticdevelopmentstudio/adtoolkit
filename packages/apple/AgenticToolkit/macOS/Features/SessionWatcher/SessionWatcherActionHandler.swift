@@ -808,14 +808,10 @@ extension SessionWatcher {
 
         public func substituteVariables(in template: String, session: SessionWatcherSession) -> String {
             var result = template
-            result = result.replacingOccurrences(of: "$SESSION_ID", with: posixShellEscape(session.sessionId))
-            result = result.replacingOccurrences(of: "$CWD", with: posixShellEscape(session.cwd))
-            result = result.replacingOccurrences(of: "$MODEL", with: posixShellEscape(session.model))
+            result = result.replacingOccurrences(of: "$SESSION_ID", with: ShellQuoting.quote(session.sessionId))
+            result = result.replacingOccurrences(of: "$CWD", with: ShellQuoting.quote(session.cwd))
+            result = result.replacingOccurrences(of: "$MODEL", with: ShellQuoting.quote(session.model))
             return result
-        }
-
-        private func posixShellEscape(_ string: String) -> String {
-            return "'" + string.replacingOccurrences(of: "'", with: "'\\''") + "'"
         }
 
         /// Checks an AppleScript error dictionary for authorization/permission failures.
