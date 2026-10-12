@@ -106,6 +106,7 @@ public final class BrowserPaneViewController: NSViewController {
         webView.allowsBackForwardNavigationGestures = true
         webView.keepPaintingUnderQuietPresentation()
         applyLiveSettings()
+        applyCookiePolicy()
         observeSettings()
     }
 
@@ -163,7 +164,15 @@ public final class BrowserPaneViewController: NSViewController {
         preferences.minimumFontSize = CGFloat(min(max(fontSize, fontRange.lowerBound), fontRange.upperBound))
         preferences.javaScriptCanOpenWindowsAutomatically = !settings.get(UserSettings.browserBlocksPopups)
         preferences.isFraudulentWebsiteWarningEnabled = settings.get(UserSettings.browserFraudWarning)
+    }
 
+    /// The cookie policy belongs to the data store, not the web view, and the
+    /// persistent store is shared by every non-private pane. The pane still
+    /// applies it, because a private pane's store has no other owner — but
+    /// only when the cookie setting itself changes, not on every browser
+    /// change: a zoom slider drag is not a reason for every open pane to
+    /// rewrite the shared store's policy once per tick.
+    private func applyCookiePolicy() {
         let acceptsCookies = settings.get(UserSettings.browserAcceptsCookies)
         Task { await siteData.setAcceptsCookies(acceptsCookies) }
     }
@@ -172,7 +181,10 @@ public final class BrowserPaneViewController: NSViewController {
         settings.changes
             .filter { $0.hasPrefix("browser.") }
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.applyLiveSettings() }
+            .sink { [weak self] key in
+                self?.applyLiveSettings()
+                if key == UserSettings.browserAcceptsCookies.name { self?.applyCookiePolicy() }
+            }
             .store(in: &cancellables)
     }
 
