@@ -56,6 +56,19 @@ final class BrowserHistoryStoreTests: XCTestCase {
         XCTAssertEqual(try store.search("nowhere").count, 0)
     }
 
+    /// `%` and `_` are LIKE's wildcards; typed into the search they mean
+    /// themselves.
+    func testSearchTakesWildcardsLiterally() throws {
+        let store = try makeStore()
+        try store.record(URL(string: "https://example.com/100%25")!, title: "100% done")
+        try store.record(URL(string: "https://example.com/snake_case")!, title: "snake_case")
+        try store.record(URL(string: "https://example.com/plain")!, title: "plain")
+
+        XCTAssertEqual(try store.search("%").map(\.title), ["100% done"])
+        XCTAssertEqual(try store.search("e_c").map(\.title), ["snake_case"], "`_` is not a one-character wildcard")
+        XCTAssertEqual(try store.search("\\").count, 0)
+    }
+
     func testRemovingOneVisitLeavesTheRest() throws {
         let store = try makeStore()
         let first = try store.record(URL(string: "https://example.com/1")!, title: "1")

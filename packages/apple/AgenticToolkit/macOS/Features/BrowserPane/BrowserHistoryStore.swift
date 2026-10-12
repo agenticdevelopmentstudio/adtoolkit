@@ -144,10 +144,10 @@ public final class BrowserHistoryStore: @unchecked Sendable {
         try queue.sync {
             try query("""
                 SELECT id, url, title, visited_at FROM visit
-                WHERE url LIKE ? OR title LIKE ?
+                WHERE url LIKE ? ESCAPE '\\' OR title LIKE ? ESCAPE '\\'
                 ORDER BY visited_at DESC, id DESC LIMIT ?
             """) { stmt in
-                let pattern = "%" + text + "%"
+                let pattern = "%" + Self.escapedForLike(text) + "%"
                 bindText(stmt, 1, pattern)
                 bindText(stmt, 2, pattern)
                 sqlite3_bind_int(stmt, 3, Int32(limit))
@@ -167,6 +167,14 @@ public final class BrowserHistoryStore: @unchecked Sendable {
             }
             return Int(sqlite3_column_int64(stmt, 0))
         }
+    }
+
+    /// `%` and `_` are LIKE's wildcards, so a search for either must escape
+    /// it or match everything; `\` is the escape the query names.
+    static func escapedForLike(_ text: String) -> String {
+        text.replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "%", with: "\\%")
+            .replacingOccurrences(of: "_", with: "\\_")
     }
 
     // MARK: - SQLite
