@@ -79,6 +79,9 @@ public final class BrowserPaneViewController: NSViewController {
     /// The history row for the page on screen, so a title that arrives after
     /// the load is filed against it rather than lost.
     private var currentVisitID: Int64?
+    /// Counts page loads, so a visit row that comes back from the file after
+    /// the pane has moved on to the next page is not filed as the current one.
+    private var visitGeneration = 0
 
     /// - Parameters:
     ///   - store: Where the pane remembers its address between launches.
@@ -193,10 +196,12 @@ public final class BrowserPaneViewController: NSViewController {
     /// panel to ask it to.
     private func pruneHistory() {
         guard let history, let cutoff = settings.get(UserSettings.browserHistoryRetention).cutoff() else { return }
-        do {
-            try history.removeVisits(before: cutoff)
-        } catch {
-            logger.error("browser history prune failed: \(error.localizedDescription, privacy: .public)")
+        Task { [logger] in
+            do {
+                try await history.perform { try $0.removeVisits(before: cutoff) }
+            } catch {
+                logger.error("browser history prune failed: \(error.localizedDescription, privacy: .public)")
+            }
         }
     }
 
@@ -284,11 +289,18 @@ public final class BrowserPaneViewController: NSViewController {
 
     private func titleDidChange() {
         onPaneTitleChange?()
-        guard let history, let visitID = currentVisitID, let title = webView.title, !title.isEmpty else { return }
-        do {
-            try history.updateTitle(ofVisit: visitID, to: title)
-        } catch {
-            logger.error("browser history title update failed: \(error.localizedDescription, privacy: .public)")
+        guard let visitID = currentVisitID, let title = webView.title, !title.isEmpty else { return }
+        file(title, againstVisit: visitID)
+    }
+
+    private func file(_ title: String, againstVisit visitID: Int64) {
+        guard let history else { return }
+        Task { [logger] in
+            do {
+                try await history.perform { try $0.updateTitle(ofVisit: visitID, to: title) }
+            } catch {
+                logger.error("browser history title update failed: \(error.localizedDescription, privacy: .public)")
+            }
         }
     }
 
@@ -320,12 +332,24 @@ public final class BrowserPaneViewController: NSViewController {
     /// setting says so, and never the blank page.
     private func recordVisit() {
         currentVisitID = nil
+        visitGeneration += 1
         guard let history, settings.get(UserSettings.browserRecordsHistory),
               let url = webView.url, url != Self.blankPage else { return }
-        do {
-            currentVisitID = try history.record(url, title: webView.title ?? "")
-        } catch {
-            logger.error("browser history record failed: \(error.localizedDescription, privacy: .public)")
+        let generation = visitGeneration
+        let title = webView.title ?? ""
+        Task { [weak self, logger] in
+            do {
+                let visitID = try await history.perform { try $0.record(url, title: title) }
+                guard let self, self.visitGeneration == generation else { return }
+                self.currentVisitID = visitID
+                // A title that arrived while the row was being written found
+                // no row to be filed against; file it now.
+                if let later = self.webView.title, !later.isEmpty, later != title {
+                    self.file(later, againstVisit: visitID)
+                }
+            } catch {
+                logger.error("browser history record failed: \(error.localizedDescription, privacy: .public)")
+            }
         }
     }
 

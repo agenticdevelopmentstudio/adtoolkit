@@ -235,6 +235,9 @@ private final class BrowserHistoryPanel: ComposableSettings.SettingsPanelViewCon
     private let countRow = ComposableSettings.ValueRowView(title: "Visits recorded", value: "0")
     private var table: ComposableSettings.EditableTableCard?
     private var visits: [BrowserVisit] = []
+    /// The read in flight. One at a time, so a search typed quickly cannot
+    /// have an older answer land after a newer one.
+    private var reloadTask: Task<Void, Never>?
 
     private static let whenFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -355,15 +358,8 @@ private final class BrowserHistoryPanel: ComposableSettings.SettingsPanelViewCon
         // A history is removed from, never added to by hand.
         table.addButton.isHidden = true
         table.onRemove = { [weak self] rowID in
-            guard let self, let history = self.history, let id = Int64(rowID) else { return }
-            do {
-                try history.remove(visit: id)
-            } catch {
-                ComposableSettings.Alerts.report(
-                    "Could not forget that visit: \(error.localizedDescription)", on: self.view.window
-                )
-            }
-            self.reload()
+            guard let self, let id = Int64(rowID) else { return }
+            self.change("Could not forget that visit") { try $0.remove(visit: id) }
         }
         let clear = table.addFooterButton(
             title: "Clear History…", identifier: "settings.browser.history.clear"
@@ -379,7 +375,7 @@ private final class BrowserHistoryPanel: ComposableSettings.SettingsPanelViewCon
     }
 
     private func clearHistory() {
-        guard let history else { return }
+        guard history != nil else { return }
         ComposableSettings.Alerts.confirmDestructive(
             "Clear all browsing history?",
             detail: "Every recorded visit is forgotten. Cookies and site data are not affected.",
@@ -387,32 +383,54 @@ private final class BrowserHistoryPanel: ComposableSettings.SettingsPanelViewCon
             on: view.window
         ) { [weak self] confirmed in
             guard let self, confirmed else { return }
+            self.change("Could not clear history") { try $0.removeAll() }
+        }
+    }
+
+    /// A write to the history, off the main thread, then the table reread.
+    /// An error is reported on the window and the reread still runs: what
+    /// the file holds is the truth to show.
+    private func change(_ failure: String, _ work: @escaping @Sendable (BrowserHistoryStore) throws -> Void) {
+        guard let history else { return }
+        Task { [weak self] in
             do {
-                try history.removeAll()
+                try await history.perform(work)
             } catch {
-                ComposableSettings.Alerts.report(
-                    "Could not clear history: \(error.localizedDescription)", on: self.view.window
-                )
+                guard let self else { return }
+                ComposableSettings.Alerts.report("\(failure): \(error.localizedDescription)", on: self.view.window)
             }
-            self.reload()
+            self?.reload()
         }
     }
 
     private func reload() {
+        reloadTask?.cancel()
         guard let history else {
-            visits = []
-            table?.setRows([])
-            countRow.value = "0"
+            show([], count: 0)
             return
         }
-        do {
-            let text = searchField.stringValue.trimmingCharacters(in: .whitespaces)
-            visits = text.isEmpty ? try history.recent() : try history.search(text)
-            countRow.value = String(try history.count())
-        } catch {
-            ComposableSettings.Alerts.report("Could not read history: \(error.localizedDescription)", on: view.window)
-            visits = []
+        let text = searchField.stringValue.trimmingCharacters(in: .whitespaces)
+        reloadTask = Task { [weak self] in
+            do {
+                let (visits, count) = try await history.perform { store in
+                    let visits = try text.isEmpty ? store.recent() : store.search(text)
+                    return (visits, try store.count())
+                }
+                guard let self, !Task.isCancelled else { return }
+                self.show(visits, count: count)
+            } catch {
+                guard let self, !Task.isCancelled else { return }
+                ComposableSettings.Alerts.report("Could not read history: \(error.localizedDescription)", on: self.view.window)
+                self.show([], count: nil)
+            }
         }
+    }
+
+    /// Puts `visits` in the table; the count row keeps its number when the
+    /// read that would have refreshed it failed.
+    private func show(_ visits: [BrowserVisit], count: Int?) {
+        self.visits = visits
+        if let count { countRow.value = String(count) }
         table?.setRows(visits.map { visit in
             ComposableSettings.EditableTableRow(id: String(visit.id), cells: [
                 "when": .text(Self.whenFormatter.string(from: visit.visitedAt)),

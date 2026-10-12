@@ -33,6 +33,10 @@ public struct BrowserVisit: Equatable, Sendable, Identifiable {
 /// and pooled readers, a deadline on every statement so a wedged file cannot
 /// hang the pane, and GRDB's binding and row reading in place of hand-rolled
 /// `sqlite3_*` calls (`open-source-preference`, `dry`).
+///
+/// Every method here runs on the caller's thread and returns when the file
+/// has answered. The pane and the panel are on the main actor, and a WAL
+/// commit waits on the disk, so they go through ``perform(_:)``.
 public final class BrowserHistoryStore: @unchecked Sendable {
 
     public static let fileName = "BrowserHistory.db"
@@ -67,6 +71,15 @@ public final class BrowserHistoryStore: @unchecked Sendable {
             """)
             try db.execute(sql: "CREATE INDEX IF NOT EXISTS visit_visited_at ON visit (visited_at DESC)")
         }
+    }
+
+    /// Runs `work` against the store off the caller's thread, for a caller
+    /// on the main actor. Every method here reads or writes the file, and a
+    /// write's commit waits on the disk; neither belongs on the thread that
+    /// draws the pane.
+    public func perform<T: Sendable>(_ work: @escaping @Sendable (BrowserHistoryStore) throws -> T) async throws -> T {
+        let store = self
+        return try await Task.detached(priority: .utility) { try work(store) }.value
     }
 
     // MARK: - Writing
