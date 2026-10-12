@@ -1850,6 +1850,7 @@
 		CAC99FDFADD265984765C3EC /* GRDBSyncStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 916EE798B464361B030150D4 /* GRDBSyncStoreTests.swift */; };
 		CB031BB6EF756E178D4E37CF /* AppearanceControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A638B4DE3126BD8570A36E18 /* AppearanceControllerTests.swift */; };
 		CB0E48C192312502639E0B49 /* HubPermissionsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48C3FF7696680A70DABED34D /* HubPermissionsTests.swift */; };
+		CB10348373AA02A68C372AA8 /* TerminalPaneFamilyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7ECF9BB1AAE4DD4B32F440B /* TerminalPaneFamilyTests.swift */; };
 		CB3A1A87C58D4D8EA1BB2A7A /* NSFont+TabularFigures.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEC1699BDA1A015CB677274D /* NSFont+TabularFigures.swift */; };
 		CB3CCEEED6E5CD08CCA14572 /* ApiTokensAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0777E11ECD5C558EE45D8C3 /* ApiTokensAdapter.swift */; };
 		CB53A899C846C84BC57368A2 /* Loggable.swift in Sources */ = {isa = PBXBuildFile; fileRef = E44C16FF5550600D6EF44C65 /* Loggable.swift */; };
@@ -5547,6 +5548,7 @@
 		A6F9550B0951931BB29B711C /* PreparationJob.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreparationJob.swift; sourceTree = "<group>"; };
 		A75C952C90851DA4D7EE1D78 /* LiveTimerRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveTimerRowView.swift; sourceTree = "<group>"; };
 		A768A392F2E2D29B4CFA5761 /* RunningAppsProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningAppsProvider.swift; sourceTree = "<group>"; };
+		A7ECF9BB1AAE4DD4B32F440B /* TerminalPaneFamilyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalPaneFamilyTests.swift; sourceTree = "<group>"; };
 		A7F621171FF33797EEBC5DCA /* WindowLifecycleContextTrigger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowLifecycleContextTrigger.swift; sourceTree = "<group>"; };
 		A7FB6082368D23714EF4DFFA /* ProviderTypeFacet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderTypeFacet.swift; sourceTree = "<group>"; };
 		A7FE2943EBBE0420C26B603C /* PaneSpacingOverrideTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaneSpacingOverrideTests.swift; sourceTree = "<group>"; };
@@ -7295,6 +7297,7 @@
 			isa = PBXGroup;
 			children = (
 				CFCD8CC5AE593549713B77F0 /* TerminalChatSessionTests.swift */,
+				A7ECF9BB1AAE4DD4B32F440B /* TerminalPaneFamilyTests.swift */,
 			);
 			path = TerminalSession;
 			sourceTree = "<group>";
@@ -14923,6 +14926,7 @@
 				F7B88FFA10A2AA015336A050 /* TabCardStackTests.swift in Sources */,
 				89BD930B805681630C39038F /* TabPaneViewControllerTests.swift in Sources */,
 				20A5DC568B873AECB625F4D9 /* TerminalChatSessionTests.swift in Sources */,
+				CB10348373AA02A68C372AA8 /* TerminalPaneFamilyTests.swift in Sources */,
 				E78B0E62A73A6142EE421553 /* TerminalSessionGitBranchTests.swift in Sources */,
 				444EFB4D09F8D7A761C43743 /* TerminalTextInjectorTests.swift in Sources */,
 				D82800D87E946AB4B95D830C /* TextDocumentStorageTests.swift in Sources */,

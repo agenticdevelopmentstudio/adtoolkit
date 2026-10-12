@@ -114,6 +114,56 @@ extension ComposableTabsViewRegistry {
     }
 }
 
+/// The terminal panes a host offers — terminals, private terminals, Terminal
+/// Chats and persona terminal chats — registered and allowed together, so a
+/// pane added to the family reaches every host that offers it with no edit
+/// there, and no host can register one without allowing it.
+@MainActor
+public struct TerminalPaneFamily {
+
+    /// Which way the Split menu proposes adding another of these panes.
+    public let preferredAxis: ComposableTabsAxis
+    /// The LLM providers a persona chat runs on; without them, the persona
+    /// terminal chat pane is not offered.
+    public let pluginManager: AIPluginManager?
+    /// Where Terminal Chats list themselves for outside processes to drive;
+    /// nil keeps them private to the window.
+    public let chatDirectory: TerminalChatDirectory?
+    /// The privacy words private terminals run behind; without them, the
+    /// private terminal pane is not offered.
+    public let privacyVault: PrivacyWordsVault?
+
+    public init(
+        preferredAxis: ComposableTabsAxis,
+        pluginManager: AIPluginManager? = nil,
+        chatDirectory: TerminalChatDirectory? = nil,
+        privacyVault: PrivacyWordsVault? = nil
+    ) {
+        self.preferredAxis = preferredAxis
+        self.pluginManager = pluginManager
+        self.chatDirectory = chatDirectory
+        self.privacyVault = privacyVault
+    }
+
+    /// Registers every pane in the family this host can offer.
+    public func register(in registry: ComposableTabsViewRegistry) {
+        registry.registerTerminal(preferredAxis: preferredAxis)
+        if let privacyVault { registry.registerPrivateTerminal(vault: privacyVault, preferredAxis: preferredAxis) }
+        registry.registerTerminalChat(directory: chatDirectory)
+        if let pluginManager { registry.registerPersonaTerminalChat(pluginManager: pluginManager) }
+    }
+
+    /// An unbounded allowance for each pane ``register(in:)`` registers, in
+    /// the order the arrange menu offers them.
+    public var allowances: [ComposableTabsViewAllowance] {
+        var viewIDs: [ComposableTabsViewID] = [.terminal]
+        if privacyVault != nil { viewIDs.append(.privateTerminal) }
+        viewIDs.append(.terminalChat)
+        if pluginManager != nil { viewIDs.append(.personaTerminalChat) }
+        return viewIDs.map { .unbounded($0, preferredAxis: preferredAxis) }
+    }
+}
+
 extension ComposableTabsLayout {
 
     /// A layout of terminals: one to start, as many more as the user splits
@@ -132,28 +182,19 @@ extension ComposableTabsLayout {
         chatDirectory: TerminalChatDirectory? = nil,
         privacyVault: PrivacyWordsVault? = nil
     ) throws -> ComposableTabsLayout {
+        let family = TerminalPaneFamily(
+            preferredAxis: .horizontal,
+            pluginManager: pluginManager,
+            chatDirectory: chatDirectory,
+            privacyVault: privacyVault)
         let registry = ComposableTabsViewRegistry()
-        registry.registerTerminal(preferredAxis: .horizontal)
-        registry.registerTerminalChat(directory: chatDirectory)
-        var allows: [ComposableTabsViewAllowance] = [
-            .unbounded(.terminal, preferredAxis: .horizontal),
-            .unbounded(.terminalChat),
-            .unbounded(.placeholder)
-        ]
-        if let privacyVault {
-            registry.registerPrivateTerminal(vault: privacyVault, preferredAxis: .horizontal)
-            allows.insert(.unbounded(.privateTerminal, preferredAxis: .horizontal), at: 1)
-        }
-        if let pluginManager {
-            registry.registerPersonaTerminalChat(pluginManager: pluginManager)
-            allows.insert(.unbounded(.personaTerminalChat), at: allows.count - 1)
-        }
+        family.register(in: registry)
         return try ComposableTabsLayout(
             registry: registry,
             spec: .split(
                 axis: .horizontal,
                 children: [.pane(.terminal)],
-                allows: allows
+                allows: family.allowances + [.unbounded(.placeholder)]
             )
         )
     }
