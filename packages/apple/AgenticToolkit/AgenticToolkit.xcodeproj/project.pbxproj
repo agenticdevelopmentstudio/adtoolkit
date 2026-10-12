@@ -1082,11 +1082,13 @@
 		726BFCCE27CBB127A47FF7F0 /* AgenticToolkitPermissionsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB251437E922B5A8689625BF /* AgenticToolkitPermissionsUI.framework */; };
 		7285E6F06AFDD2885258B86D /* LocalChatSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83D3EA6FFFEFD6FE486B378C /* LocalChatSession.swift */; };
 		729C57CDDF4DA5513587E83C /* HubLinks.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0826680E945DB6D6A99C5F7 /* HubLinks.swift */; };
+		735FC2DF95C6A79869450B93 /* TopicSheetController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB37F040EB87D6741291681C /* TopicSheetController.swift */; };
 		73B805B494A6A78EED5A9223 /* AgenticToolkitPermissions.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF04ADB42980B9D5DE44BF46 /* AgenticToolkitPermissions.framework */; };
 		73C3779D42C9A242159BB7B1 /* ModalProgressPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BAB324CB0445A189BC46959 /* ModalProgressPanel.swift */; };
 		73F97262C72EB7D251D1D91F /* AgenticToolkitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FF857DF2BB3D2BE006BBA101 /* AgenticToolkitCore.framework */; };
 		73FCC775C3A5BFDA330DC49D /* GRDB in Frameworks */ = {isa = PBXBuildFile; productRef = 77B3FF72F2C2ABA1BEDBF240 /* GRDB */; };
 		7410CBE813C2315405A8B24C /* MoneyTotalsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07A604BBF9C85916541D9C1A /* MoneyTotalsTests.swift */; };
+		742E6EC3A60DA1A58552BD61 /* TopicSheetControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E904B29B69E75EECBE33E779 /* TopicSheetControllerTests.swift */; };
 		7447E333BF884B0A86BDD60F /* ThemePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9D78EBD9C75F8215D809DC3 /* ThemePickerView.swift */; };
 		7456BFDF3C14401B42800F6A /* EcosystemsModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D889B0CC6F47C39934E3401 /* EcosystemsModule.swift */; };
 		74A3FF2B4E0FB0AC265DB6BA /* WebviewPanelState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 225E1D82840A50CAA129BE7A /* WebviewPanelState.swift */; };
@@ -6005,6 +6007,7 @@
 		E89CD8180E33BD650996EA2E /* WindowAddress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowAddress.swift; sourceTree = "<group>"; };
 		E8CF09ACFE3457C5A6D4EF81 /* ProjectBillablesSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectBillablesSection.swift; sourceTree = "<group>"; };
 		E8E7C7BF6F326B24BCDDDB75 /* HTDVRailViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTDVRailViewController.swift; sourceTree = "<group>"; };
+		E904B29B69E75EECBE33E779 /* TopicSheetControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopicSheetControllerTests.swift; sourceTree = "<group>"; };
 		E90F59F2C0C58348C6AEE149 /* LanguageServerSessionRaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageServerSessionRaceTests.swift; sourceTree = "<group>"; };
 		E91AC0BD64023575F1ACB323 /* UserSettings+Editor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UserSettings+Editor.swift"; sourceTree = "<group>"; };
 		E94E4226C9F21C5C1E6E0DE3 /* ContextsSettingsTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContextsSettingsTab.swift; sourceTree = "<group>"; };
@@ -6149,6 +6152,7 @@
 		FAEA589426DA19C4D308193A /* TabItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabItem.swift; sourceTree = "<group>"; };
 		FAF4D27DB51B0A90DB9AEB2A /* FieldSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FieldSync.swift; sourceTree = "<group>"; };
 		FB251437E922B5A8689625BF /* AgenticToolkitPermissionsUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = AgenticToolkitPermissionsUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB37F040EB87D6741291681C /* TopicSheetController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopicSheetController.swift; sourceTree = "<group>"; };
 		FB4472AB4265BF6DAA7843F7 /* ExtensionsSettingsPanelViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionsSettingsPanelViewController.swift; sourceTree = "<group>"; };
 		FBA357B9B5CC2D304EBB343D /* LanguageServersPanelViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageServersPanelViewController.swift; sourceTree = "<group>"; };
 		FBBA2D1453F0F3497FCB8DE7 /* PermissionsPanelView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsPanelView.swift; sourceTree = "<group>"; };
@@ -7013,6 +7017,7 @@
 				2BA3AE72DD1F62D18FC9CD01 /* SettingsAlerts.swift */,
 				2EEBEDAB495EA3A0C6AA40A6 /* SettingsCoordinator.swift */,
 				7874C8ED2FF45D39236DB0CA /* SettingsWindow.swift */,
+				FB37F040EB87D6741291681C /* TopicSheetController.swift */,
 				F8DF73562F63FB72F77D4CD9 /* UserSettings+ComposableSettings.swift */,
 				9319B761DD5270D28B8481E2 /* ViewLayout.swift */,
 			);
@@ -10221,6 +10226,7 @@
 				AB1A0FFC5577C5D0B4163F80 /* SettingsCardViewsTests.swift */,
 				51F4EEE8D48555EEB4F9F935 /* SettingsNavigationHistoryTests.swift */,
 				5AAEE0ADB8A5C6F599688D42 /* SettingsSearchIndexTests.swift */,
+				E904B29B69E75EECBE33E779 /* TopicSheetControllerTests.swift */,
 				DAF2279D297E55353AB438F2 /* ValueRowViewTests.swift */,
 			);
 			path = ComposableSettings;
@@ -13897,6 +13903,7 @@
 				29C133383CFFE385008F91A0 /* ThemeUIReExports.swift in Sources */,
 				8E97F6967524F3C811A5BF2A /* ThemedTerminalView.swift in Sources */,
 				B6B2D8F61C25776A5B6B23EA /* TopicListViewController.swift in Sources */,
+				735FC2DF95C6A79869450B93 /* TopicSheetController.swift in Sources */,
 				79B346551118AB7E8D46C8A6 /* TrackedAppsSettingsPanel.swift in Sources */,
 				1D2114724A90DE6BE9935894 /* TypingIndicatorView.swift in Sources */,
 				0344C60D9C7EBB60BAEADBE1 /* UnassignedPanel.swift in Sources */,
@@ -15011,6 +15018,7 @@
 				3026B15B7983DC1A60A293F0 /* ThemeUITests.swift in Sources */,
 				4635DCB7F3A90EBADC0E8A8C /* ThemedSplitViewOrientationTests.swift in Sources */,
 				0AFF0852BB6191797F3F6795 /* TopicListViewControllerTests.swift in Sources */,
+				742E6EC3A60DA1A58552BD61 /* TopicSheetControllerTests.swift in Sources */,
 				1ED213E273C42F45F7F842DB /* TrackedAppsSettingsPanelTests.swift in Sources */,
 				1508BAA6C880D83608E3E1BB /* TranscriptDateTests.swift in Sources */,
 				665984835E1CCED0DC75B919 /* TranscriptWidthTests.swift in Sources */,
