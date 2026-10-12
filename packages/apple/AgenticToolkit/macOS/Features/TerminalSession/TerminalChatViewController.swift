@@ -119,14 +119,19 @@ public final class TerminalChatViewController: NSViewController {
         applyConnectionState()
         Task { [weak self] in
             guard let self else { return }
+            var choseAnother = false
             do {
                 let terminal = try await connectable.startConnectableTerminal()
-                // The user may have chosen another pane while this one started.
-                if self.connectedPaneID == pane.nodeID { self.session.connect(to: terminal) }
+                choseAnother = self.connectedPaneID != pane.nodeID
+                if !choseAnother { self.session.connect(to: terminal) }
             } catch {
-                self.startError = error.localizedDescription
+                choseAnother = self.connectedPaneID != pane.nodeID
+                if !choseAnother { self.startError = error.localizedDescription }
             }
             self.isStarting = false
+            // The user chose another pane while this one started; that choice
+            // was put off only because a start was in flight, so act on it now.
+            if choseAnother { return self.reconnect() }
             self.applyConnectionState()
         }
     }
