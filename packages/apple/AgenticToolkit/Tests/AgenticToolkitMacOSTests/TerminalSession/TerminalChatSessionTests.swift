@@ -22,6 +22,29 @@ final class TerminalChatSessionTests: XCTestCase {
         XCTAssertTrue(reply.hasSuffix(Self.stillRunning), reply)
     }
 
+    func testASettleLongerThanTheTimeoutStillReportsAFinishedCommand() async throws {
+        let (chat, terminal) = try await connectedShell()
+        defer { withExtendedLifetime(terminal) {} }
+        let reply = await chat.run("echo done", settle: .seconds(30), timeout: .seconds(4))
+        XCTAssertTrue(reply.contains("done"), reply)
+        XCTAssertFalse(reply.contains(Self.stillRunning),
+                       "a command that finished at once is not still running: \(reply)")
+    }
+
+    func testInterruptWaitsAsLongAsItIsTold() async throws {
+        let (chat, terminal) = try await connectedShell()
+        defer { withExtendedLifetime(terminal) {} }
+        // Ignores Control-C and keeps printing, so only the timeout ends the wait.
+        _ = await chat.run(#"sh -c 'trap "" INT; while :; do echo tick; sleep 0.1; done'"#,
+                           settle: .milliseconds(300), timeout: .seconds(1))
+        let start = ContinuousClock.now
+        let reply = await chat.interruptAndWait(settle: .milliseconds(500), timeout: .seconds(2))
+        let waited = ContinuousClock.now - start
+        terminal.sendInput("\u{1C}")  // Control-backslash: SIGQUIT, which it does not ignore
+        XCTAssertTrue(reply.hasSuffix(Self.stillRunning), reply)
+        XCTAssertLessThan(waited, .seconds(5), "the wait must end at the timeout given, not a fixed 10 s")
+    }
+
     // MARK: - Helpers
 
     /// A chat connected to a freshly started shell, once its first prompt is up.

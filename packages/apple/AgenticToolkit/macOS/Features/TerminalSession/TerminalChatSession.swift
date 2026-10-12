@@ -144,9 +144,12 @@ public final class TerminalChatSession {
     }
 
     /// Control-C, then whatever the terminal printed in response.
-    public func interruptAndWait(settle: Duration = .milliseconds(1000)) async -> String {
+    public func interruptAndWait(
+        settle: Duration = .milliseconds(1000),
+        timeout: Duration = .seconds(10)
+    ) async -> String {
         guard terminal != nil else { return Self.notConnected }
-        let wait = beginWait(settle: settle, timeout: .seconds(10))
+        let wait = beginWait(settle: settle, timeout: timeout)
         interrupt()
         return await wait.result()
     }
@@ -193,8 +196,11 @@ private final class OutputWait {
     private let settle: Duration
     private let onFinish: (OutputWait) -> Void
 
+    /// - Parameter settle: Held to half of `timeout`, so output that stops
+    ///   early is always judged finished before the deadline judges it still
+    ///   running — a settle as long as the timeout would lose every race.
     init(settle: Duration, timeout: Duration, onFinish: @escaping (OutputWait) -> Void) {
-        self.settle = settle
+        self.settle = min(settle, timeout / 2)
         self.onFinish = onFinish
         deadlineTask = Task { [weak self] in
             try? await Task.sleep(for: timeout)

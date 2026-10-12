@@ -122,7 +122,7 @@ public final class TerminalChatControlServer {
                             + "Connect to Terminal in its pane's Settings.")
         }
         let settle = Self.duration(request.settle, default: 1.5, limit: 60)
-        let timeout = Self.duration(request.timeout, default: 60, limit: 600)
+        let timeout = Self.duration(request.timeout, default: request.action == .interrupt ? 10 : 60, limit: 600)
 
         switch request.action {
         case .run:
@@ -133,7 +133,7 @@ public final class TerminalChatControlServer {
         case .wait:
             return .init(chat: chat.id, output: await session.waitForOutput(settle: settle, timeout: timeout))
         case .interrupt:
-            return .init(chat: chat.id, output: await session.interruptAndWait(settle: settle))
+            return .init(chat: chat.id, output: await session.interruptAndWait(settle: settle, timeout: timeout))
         case .screen:
             return .init(chat: chat.id, output: session.screen(lines: request.lines ?? 40) ?? "")
         case .list:
