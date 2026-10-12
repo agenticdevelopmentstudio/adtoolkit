@@ -158,7 +158,9 @@ public final class BrowserPaneViewController: NSViewController {
         webView.isInspectable = settings.get(UserSettings.browserWebInspectorEnabled)
 
         let preferences = webView.configuration.preferences
-        preferences.minimumFontSize = CGFloat(settings.get(UserSettings.browserMinimumFontSize))
+        let fontSize = settings.get(UserSettings.browserMinimumFontSize)
+        let fontRange = BrowserSettings.minimumFontSizeRange
+        preferences.minimumFontSize = CGFloat(min(max(fontSize, fontRange.lowerBound), fontRange.upperBound))
         preferences.javaScriptCanOpenWindowsAutomatically = !settings.get(UserSettings.browserBlocksPopups)
         preferences.isFraudulentWebsiteWarningEnabled = settings.get(UserSettings.browserFraudWarning)
 
