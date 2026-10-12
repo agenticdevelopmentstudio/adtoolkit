@@ -348,11 +348,14 @@ extension BrowserPaneViewController: PaneMinimizedRepresenting {
 
 extension BrowserPaneViewController: PaneContentTeardown {
 
-    /// Stops the page and drops the delegates: a navigation that completes
-    /// into a discarded pane would otherwise call back into it.
+    /// Stops the page, cancels its downloads and drops the delegates: a
+    /// navigation or a transfer that completes into a discarded pane would
+    /// otherwise call back into it.
     public func paneContentWillBeDiscarded() {
         observations.removeAll()
         cancellables.removeAll()
+        downloads.forEach { $0.cancel() }
+        downloads.removeAll()
         webView.stopLoading()
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
