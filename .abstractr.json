@@ -275,7 +275,8 @@
         "apple-hub",
         "apple-htdv",
         "apple-permissions",
-        "apple-hubclient"
+        "apple-hubclient",
+        "apple-adt"
       ],
       "shared": true,
       "holds": "AgenticToolkitHubService. The hub's session, workspaces, API adapters and transport — no UI. Sees an embedded daemon only as AgenticDeveloperHubClient's EmbeddedDaemon."

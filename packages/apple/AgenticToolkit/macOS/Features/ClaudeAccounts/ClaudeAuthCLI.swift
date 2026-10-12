@@ -94,13 +94,12 @@ public enum ClaudeAuthCLI {
     /// fires either. One such run held a credential round open for good and
     /// froze every later "Switching to …" behind it.
     ///
-    /// `input` is written to the child's stdin, and stdin closed, **before**
-    /// launch — how a secret reaches `security -i` without ever appearing in
-    /// an argv that `ps` can show, and how a `claude` that decides to prompt
+    /// `input` is the whole of the child's stdin, and stdin is closed behind
+    /// it — how a secret reaches `security -i` without ever appearing in an
+    /// argv that `ps` can show, and how a `claude` that decides to prompt
     /// sees EOF and gives up rather than block on a terminal that isn't
-    /// there. A pipe is a kernel buffer, so the input must fit one unread:
-    /// 64 KB on macOS, and `security -i` reads at most
-    /// `ClaudeCodeKeychainItem.interactiveLineLimit` of it anyway.
+    /// there. `nil` is the same EOF with nothing before it: no child of the
+    /// app ever inherits the app's stdin.
     public static func run(
         executable: String,
         arguments: [String],
@@ -116,13 +115,7 @@ public enum ClaudeAuthCLI {
                 process.executableURL = URL(fileURLWithPath: executable)
                 process.arguments = arguments
                 process.environment = environment
-
-                let stdinPipe = Pipe()
-                process.standardInput = stdinPipe
-                if let input { try stdinPipe.fileHandleForWriting.write(contentsOf: input) }
-                try stdinPipe.fileHandleForWriting.close()
-
-                return try CommandRunner.runToCompletion(process, timeout: timeout)
+                return try CommandRunner.runToCompletion(process, input: input ?? Data(), timeout: timeout)
             }
         } catch {
             throw CLIError.launchFailed(error.localizedDescription)

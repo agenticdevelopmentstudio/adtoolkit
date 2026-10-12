@@ -29,6 +29,23 @@ public enum ClaudeSetupTokenMinter {
         guard let claude = ClaudeAuthCLI.claudeBinary() else {
             throw ClaudeAuthCLI.CLIError.binaryNotFound("claude")
         }
+        // `Process` is not Sendable, so it is built on the thread that runs it.
+        return try await BlockingWork.run(qos: .default, enforcedQoS: .default) {
+            try mint(claude: claude)
+        }
+    }
+
+    /// How often the transcript is looked at for the token while the child
+    /// runs: the resolution of "stopped the moment the token appears".
+    private static let pollInterval: TimeInterval = 0.25
+
+    /// The run itself, on a thread it may block: `script` is launched with an
+    /// exit watch installed first, the transcript is scanned between short
+    /// bounded waits on that exit — the one way to learn it that always
+    /// arrives; `waitUntilExit()` can miss a fast exit and park its thread for
+    /// good — and the child is stopped the moment the token appears or the
+    /// deadline passes.
+    private static func mint(claude: String) throws -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/script")
         // `-q` suppresses script's own start/stop banner; /dev/null is the
@@ -47,34 +64,40 @@ public enum ClaudeSetupTokenMinter {
         process.standardError = outputPipe
 
         let transcript = TranscriptBox()
+        let drained = DispatchSemaphore(value: 0)
         outputPipe.fileHandleForReading.readabilityHandler = { handle in
             let chunk = handle.availableData
-            if !chunk.isEmpty { transcript.append(chunk) }
+            guard !chunk.isEmpty else {
+                handle.readabilityHandler = nil
+                drained.signal()
+                return
+            }
+            transcript.append(chunk)
         }
 
+        let watch = ProcessExitWatch(process)
         do {
             try process.run()
         } catch {
+            outputPipe.fileHandleForReading.readabilityHandler = nil
             throw ClaudeAuthCLI.CLIError.launchFailed(error.localizedDescription)
         }
 
         let deadline = Date().addingTimeInterval(timeout)
         var found: String?
-        while found == nil {
+        var exited = false
+        while found == nil, !exited, Date() < deadline {
             if let token = token(in: transcript.text) {
                 found = token
                 break
             }
-            if !process.isRunning { break }
-            if Date() >= deadline {
-                process.terminate()
-                break
-            }
-            try? await Task.sleep(for: .milliseconds(250))
+            exited = watch.waitForExit(timeout: pollInterval)
         }
+        if !exited { _ = watch.stop(process) }
 
-        if process.isRunning { process.terminate() }
-        await waitForExit(process)
+        // The pty's write end closes with the child, so this is a wait on an
+        // EOF already posted — bounded anyway, in case a grandchild kept it.
+        _ = drained.wait(timeout: .now() + ProcessExitWatch.terminationGrace)
         outputPipe.fileHandleForReading.readabilityHandler = nil
         // One last look: the child may have printed the token in the same
         // breath as it exited, after the final poll.
@@ -128,15 +151,6 @@ public enum ClaudeSetupTokenMinter {
             }
         }
         return out
-    }
-
-    private static func waitForExit(_ process: Process) async {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            DispatchQueue.global(qos: .utility).async {
-                process.waitUntilExit()
-                continuation.resume()
-            }
-        }
     }
 
     /// The child writes from a background queue while the poll loop reads; one

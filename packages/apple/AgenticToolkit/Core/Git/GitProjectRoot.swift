@@ -133,29 +133,22 @@ public enum GitProjectRoot {
         let proc = Process()
         proc.executableURL = URL(fileURLWithPath: "/usr/bin/git")
         proc.arguments = ["-C", cwd] + args
-        let out = Pipe()
-        proc.standardOutput = out
-        // Discard stderr to /dev/null — we don't use it, and leaving it an
-        // undrained Pipe risks deadlock if git writes more than the pipe buffer.
-        proc.standardError = FileHandle.nullDevice
 
-        do {
-            try proc.run()
-            // Drain stdout to EOF *before* waiting: reading blocks until git closes
-            // the pipe (i.e. exits), so a large output can't fill the buffer and
-            // wedge a git that's blocked on write while we block in waitUntilExit().
-            let data = out.fileHandleForReading.readDataToEndOfFile()
-            proc.waitUntilExit()
-            guard proc.terminationStatus == 0 else {
-                return .failed(status: proc.terminationStatus)
-            }
-            let str = String(data: data, encoding: .utf8)?
-                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            return str.isEmpty ? .empty : .output(str)
-        } catch {
-            return .failed(status: -1)
-        }
+        // Drained while git writes and bounded by the clock: a git parked on a
+        // lock or a hung mount is reported as a failure, not waited on.
+        guard let outcome = try? CommandRunner.runToCompletion(proc, timeout: timeout),
+              !outcome.timedOut
+        else { return .failed(status: -1) }
+        guard outcome.status == 0 else { return .failed(status: outcome.status) }
+        let str = String(data: outcome.standardOutput, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return str.isEmpty ? .empty : .output(str)
     }
+
+    /// Every query here is a `rev-parse` or a `worktree list`: milliseconds
+    /// on a healthy repository. A git still running at this point is waiting
+    /// on something — an index lock, a network mount — not working.
+    private static let timeout: TimeInterval = 30
 
     /// The first `worktree <path>` entry of `git worktree list --porcelain`, which
     /// git lists main-working-tree-first.

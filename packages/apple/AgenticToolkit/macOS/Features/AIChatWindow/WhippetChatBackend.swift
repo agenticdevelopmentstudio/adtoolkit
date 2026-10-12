@@ -111,78 +111,27 @@ public class WhippetChatBackend: ChatBackend {
 
     // MARK: - Claude CLI
 
+    /// How long a chat reply from `claude -p` may take before it is given up on.
+    private static let cliTimeout: TimeInterval = 30
+
+    /// `ClaudeCLI.run`, which owns finding the binary, the child's PATH and a
+    /// run that always comes back, with its errors read into this backend's.
     private static func runClaudeCLI(prompt: String, model: String) async throws -> String {
-        guard let claudePath = findClaudeBinary() else {
-            throw WhippetChatBackendError.cliNotFound
+        do {
+            return try await ClaudeCLI.run(prompt: prompt, systemPrompt: "", model: model, timeout: cliTimeout)
+        } catch let error as ClaudeCLI.CLIError {
+            switch error {
+            case .binaryNotFound:
+                throw WhippetChatBackendError.cliNotFound
+            case .emptyReply:
+                throw WhippetChatBackendError.emptyReply
+            case .nonZeroExit(let code, let stderr):
+                let message = stderr.isEmpty ? "Exit code \(code)" : stderr
+                throw WhippetChatBackendError.cliFailed(String(message.prefix(200)))
+            case .launchFailed, .timedOut:
+                throw WhippetChatBackendError.cliFailed(String(error.localizedDescription.prefix(200)))
+            }
         }
-
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: claudePath)
-        var args = ["-p"]
-        if !model.isEmpty {
-            args += ["--model", model]
-        }
-        process.arguments = args
-
-        let stdinPipe = Pipe()
-        let stdoutPipe = Pipe()
-        let stderrPipe = Pipe()
-        process.standardInput = stdinPipe
-        process.standardOutput = stdoutPipe
-        process.standardError = stderrPipe
-
-        var env = ProcessInfo.processInfo.environment
-        let homeDir = FileManager.default.homeDirectoryForCurrentUser.path
-        let extraPaths = [
-            "\(homeDir)/.local/bin",
-            "/usr/local/bin",
-            "/opt/homebrew/bin"
-        ]
-        let existingPath = env["PATH"] ?? "/usr/bin:/bin"
-        env["PATH"] = (extraPaths + [existingPath]).joined(separator: ":")
-        process.environment = env
-
-        try process.run()
-
-        stdinPipe.fileHandleForWriting.write(Data(prompt.utf8))
-        stdinPipe.fileHandleForWriting.closeFile()
-
-        let timeoutTask = Task {
-            try await Task.sleep(for: .seconds(30))
-            if process.isRunning { process.terminate() }
-        }
-
-        process.waitUntilExit()
-        timeoutTask.cancel()
-
-        let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-        let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
-        let reply = String(data: stdoutData, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        let errorOutput = String(data: stderrData, encoding: .utf8)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-
-        guard process.terminationStatus == 0 else {
-            let msg = errorOutput.isEmpty ? "Exit code \(process.terminationStatus)" : errorOutput
-            throw WhippetChatBackendError.cliFailed(String(msg.prefix(200)))
-        }
-
-        guard !reply.isEmpty else {
-            throw WhippetChatBackendError.emptyReply
-        }
-
-        return reply
-    }
-
-    private static func findClaudeBinary() -> String? {
-        let candidates = [
-            FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".local/bin/claude").path,
-            "/usr/local/bin/claude",
-            "/opt/homebrew/bin/claude"
-        ]
-        for path in candidates where FileManager.default.isExecutableFile(atPath: path) {
-            return path
-        }
-        return nil
     }
 }
 

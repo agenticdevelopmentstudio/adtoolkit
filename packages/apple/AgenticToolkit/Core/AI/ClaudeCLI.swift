@@ -11,6 +11,8 @@ public enum ClaudeCLI {
         case launchFailed(String)
         case nonZeroExit(code: Int32, stderr: String)
         case emptyReply
+        /// `claude -p` ran past the caller's timeout and was stopped.
+        case timedOut(TimeInterval)
 
         public var errorDescription: String? {
             switch self {
@@ -22,6 +24,8 @@ public enum ClaudeCLI {
                 return "claude -p failed: \(stderr.isEmpty ? "exit \(code)" : String(stderr.prefix(200)))"
             case .emptyReply:
                 return "Empty reply from claude -p"
+            case .timedOut(let seconds):
+                return "claude -p did not finish within \(Int(seconds))s"
             }
         }
     }
@@ -97,11 +101,14 @@ public enum ClaudeCLI {
 
     /// Runs `claude -p` with `prompt` on stdin and returns trimmed stdout.
     ///
-    /// Robustness: stdout/stderr are drained CONCURRENTLY with the run (a child writing
-    /// more than the ~64KB pipe buffer would otherwise deadlock against the wait), the wait
-    /// happens off the cooperative pool (so a slow reply doesn't pin a concurrency thread),
-    /// and stdin is written with the throwing API so a broken pipe can't raise an
-    /// uncatchable Obj-C exception. An empty `model` omits `--model` (claude's default).
+    /// The run is `CommandRunner.runToCompletion` on a `BlockingWork` thread:
+    /// the prompt is fed and both streams drained concurrently with the child
+    /// (a reply past the 64 KB pipe buffer would otherwise deadlock against
+    /// the wait), the exit is learnt from a handler installed before launch —
+    /// never `waitUntilExit()`, which can miss a fast exit and park its thread
+    /// for good — and the wait ends at `timeout` whatever `claude` does, as
+    /// `CLIError.timedOut`. An empty `systemPrompt` omits `--system-prompt`;
+    /// an empty `model` omits `--model` (claude's default).
     public static func run(
         prompt: String,
         systemPrompt: String,
@@ -110,16 +117,10 @@ public enum ClaudeCLI {
     ) async throws -> String {
         guard let claudePath = findBinary() else { throw CLIError.binaryNotFound }
 
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: claudePath)
-        var args = ["-p", "--system-prompt", systemPrompt]
+        var args = ["-p"]
+        if !systemPrompt.isEmpty { args += ["--system-prompt", systemPrompt] }
         if !model.isEmpty { args += ["--model", model] }
-        process.arguments = args
-
-        let stdinPipe = Pipe(), stdoutPipe = Pipe(), stderrPipe = Pipe()
-        process.standardInput = stdinPipe
-        process.standardOutput = stdoutPipe
-        process.standardError = stderrPipe
+        let arguments = args
 
         var env = ProcessInfo.processInfo.environment
         env["PATH"] = searchPath(claudeDirectory: directory(ofBinary: claudePath))
@@ -128,61 +129,30 @@ public enum ClaudeCLI {
         // from a real interactive user session and not record it — e.g.
         // stenographer's EnvelopeBuilder drops events carrying this marker.
         env["AGENTIC_TOOLKIT_HEADLESS"] = "1"
-        process.environment = env
+        let environment = env
+        let input = Data(prompt.utf8)
 
+        let outcome: CommandRunner.Outcome
         do {
-            try process.run()
+            // `Process` is not Sendable, so it is built on the thread that runs it.
+            outcome = try await BlockingWork.run(qos: .default, enforcedQoS: .default) {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: claudePath)
+                process.arguments = arguments
+                process.environment = environment
+                return try CommandRunner.runToCompletion(process, input: input, timeout: timeout)
+            }
         } catch {
             throw CLIError.launchFailed(error.localizedDescription)
         }
+        if outcome.timedOut { throw CLIError.timedOut(timeout) }
 
-        // A dead child closes the pipe; the legacy non-throwing write(_:) would raise an
-        // uncatchable Obj-C exception on the broken pipe. A closed pipe here is benign.
-        do {
-            try stdinPipe.fileHandleForWriting.write(contentsOf: Data(prompt.utf8))
-            try stdinPipe.fileHandleForWriting.close()
-        } catch {
-            // Child exited before reading stdin — read whatever it emitted.
-        }
-
-        let timeoutTask = Task {
-            try? await Task.sleep(for: .seconds(timeout))
-            if process.isRunning { process.terminate() }
-        }
-        async let stdoutData = readToEnd(stdoutPipe.fileHandleForReading)
-        async let stderrData = readToEnd(stderrPipe.fileHandleForReading)
-        await waitForExit(process)
-        timeoutTask.cancel()
-
-        let reply = (String(data: await stdoutData, encoding: .utf8) ?? "")
+        let reply = (String(data: outcome.standardOutput, encoding: .utf8) ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        let stderr = (String(data: await stderrData, encoding: .utf8) ?? "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-
-        guard process.terminationStatus == 0 else {
-            throw CLIError.nonZeroExit(code: process.terminationStatus, stderr: stderr)
+        guard outcome.status == 0 else {
+            throw CLIError.nonZeroExit(code: outcome.status, stderr: outcome.diagnostics)
         }
         guard !reply.isEmpty else { throw CLIError.emptyReply }
         return reply
-    }
-
-    /// Reads a file handle to EOF on a background queue — concurrent with the child, never
-    /// blocking a Swift concurrency thread.
-    private static func readToEnd(_ handle: FileHandle) async -> Data {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Data, Never>) in
-            DispatchQueue.global(qos: .utility).async {
-                continuation.resume(returning: (try? handle.readToEnd()) ?? Data())
-            }
-        }
-    }
-
-    /// Awaits process exit off the cooperative pool (`waitUntilExit()` blocks its thread).
-    private static func waitForExit(_ process: Process) async {
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            DispatchQueue.global(qos: .utility).async {
-                process.waitUntilExit()
-                continuation.resume()
-            }
-        }
     }
 }

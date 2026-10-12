@@ -700,38 +700,46 @@ extension SessionWatcher {
 
         // MARK: - Custom Command
 
+        /// How long a custom command may run before it is stopped. Nobody is
+        /// waiting at the menu for it, but a shell script that never exits
+        /// would otherwise hold a thread for the rest of the app's life.
+        private static let customCommandTimeout: TimeInterval = 600
+
+        /// Hands the user's command to a background thread and reports the
+        /// click a success at once — the click is the hand-off, not the run.
+        /// Everything the command then does is logged: a launch that fails,
+        /// a non-zero exit with what it wrote, a run stopped at the timeout.
         private func runCustomCommand(for session: SessionWatcherSession) -> SessionWatcherActionResult {
             let template = customCommandTemplate
             let command = substituteVariables(in: template, session: session)
             // swiftlint:disable:next line_length
             logger.info("runCustomCommand: template='\(template, privacy: .public)' expanded='\(command, privacy: .public)'")
 
-            let process = Process()
-            process.executableURL = URL(fileURLWithPath: "/bin/sh")
-            process.arguments = ["-c", command]
+            // `Process` is not Sendable, so it is built on the thread that runs it.
+            DispatchQueue.global(qos: .userInitiated).async {
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/bin/sh")
+                process.arguments = ["-c", command]
 
-            let pipe = Pipe()
-            process.standardOutput = pipe
-            process.standardError = pipe
-
-            do {
-                try process.run()
-                DispatchQueue.global(qos: .userInitiated).async {
-                    process.waitUntilExit()
-                    if process.terminationStatus != 0 {
-                        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-                        let output = String(data: data, encoding: .utf8) ?? "Unknown error"
-                        // swiftlint:disable:next line_length
-                        Self.logger.error("Custom command failed (exit \(process.terminationStatus)): \(output, privacy: .public)")
-                    } else {
-                        Self.logger.debug("Custom command completed successfully")
-                    }
+                let outcome: CommandRunner.Outcome
+                do {
+                    outcome = try CommandRunner.runToCompletion(process, timeout: Self.customCommandTimeout)
+                } catch {
+                    Self.logger.error("Custom command launch failed: \(error.localizedDescription, privacy: .public)")
+                    return
                 }
-                return .success
-            } catch {
-                logger.error("Custom command launch failed: \(error.localizedDescription, privacy: .public)")
-                return .failure(.commandFailed(error.localizedDescription))
+                if outcome.timedOut {
+                    // swiftlint:disable:next line_length
+                    Self.logger.error("Custom command ran past \(Int(Self.customCommandTimeout))s and was stopped: \(command, privacy: .public)")
+                } else if outcome.status != 0 {
+                    let output = String(data: outcome.standardOutput + outcome.standardError, encoding: .utf8)
+                        ?? "Unknown error"
+                    Self.logger.error("Custom command failed (exit \(outcome.status)): \(output, privacy: .public)")
+                } else {
+                    Self.logger.debug("Custom command completed successfully")
+                }
             }
+            return .success
         }
 
         // MARK: - Send Notification

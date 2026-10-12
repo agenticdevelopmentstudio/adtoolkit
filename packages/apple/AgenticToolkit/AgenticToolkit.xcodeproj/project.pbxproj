@@ -797,7 +797,6 @@
 		533AEB3D0652FA90160D2719 /* SettingsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EEBEDAB495EA3A0C6AA40A6 /* SettingsCoordinator.swift */; };
 		533B6A5CAA3E1D05495FAD9D /* ApplicationsTopicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABD9C53982B57BB7A91BC63A /* ApplicationsTopicTests.swift */; };
 		53498C48394A9F9ABF2DE39B /* WindowDiscoveryWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB98434EF421DF7AD41BB449 /* WindowDiscoveryWindowController.swift */; };
-		53699FDE7294B3F1B592CC21 /* Deadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0CC9D5671DA1AC1CA636C0C /* Deadline.swift */; };
 		536F989303ECE79C9CCF9502 /* LiveTimerRowViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 155F63F8DD201589BA250664 /* LiveTimerRowViewTests.swift */; };
 		538A7C8D63D1C8F207826BEA /* InputActivityTriggerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3CF5F3A02940005D0EBB393 /* InputActivityTriggerTests.swift */; };
 		539D6AA99B2163FCE9C2F054 /* HTDVStatusViews+UIKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2769A6482884F2716D3ED921 /* HTDVStatusViews+UIKit.swift */; };
@@ -1197,6 +1196,7 @@
 		810B186CBAACF5E9F4646F7C /* ConversationsShelfViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D681CB8BA0F05E706BEC8D5 /* ConversationsShelfViewController.swift */; };
 		814006E50BE711DBF130C996 /* FileTreeContextMenuTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7FDBB01FF756D721706972A4 /* FileTreeContextMenuTests.swift */; };
 		81740DCB17701025319F8F8F /* AgenticToolkitLaunch.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F261AED7A63558444FAD8DBD /* AgenticToolkitLaunch.framework */; };
+		817890711B243647CAD22EF5 /* AgenticDeveloperToolkit-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AA33F0AF418F0DDFE05C6BF /* AgenticDeveloperToolkit-macOS.framework */; };
 		819205B285AE90E41D527C3E /* HorizontalStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC220478903118D361CF5A97 /* HorizontalStackView.swift */; };
 		819DF37D82F837428A6108A4 /* ADHSyncCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7557A62B9C5215425A6F65AC /* ADHSyncCatalog.swift */; };
 		81AD040588FC40085F65585C /* AgenticDeveloperToolkitUI-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 12692636CB83EBEA82DE2F7C /* AgenticDeveloperToolkitUI-macOS.framework */; };
@@ -1401,7 +1401,6 @@
 		97369AE07858C9D1A5BAEB8A /* MarkdownNoteStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA8EBD7DE07EAE6D4F575B42 /* MarkdownNoteStorage.swift */; };
 		973D9CFA8F58623BFC31F63F /* StubSignInSessionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98BF28E11A14A1E3A031FA36 /* StubSignInSessionTests.swift */; };
 		97573BE4BA06E0BA559482F0 /* SettingsWindowCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7384AD8B1E1C9D20C362EFAA /* SettingsWindowCommands.swift */; };
-		97B09C37617DACB8A2545422 /* Deadline.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0CC9D5671DA1AC1CA636C0C /* Deadline.swift */; };
 		97B47A508D465C03F31D271D /* AgenticToolkitPermissions.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BF04ADB42980B9D5DE44BF46 /* AgenticToolkitPermissions.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		97C7805BE64002967734D6C5 /* BreadcrumbPopoverViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9D5CB382AB255DD44FDD086 /* BreadcrumbPopoverViewController.swift */; };
 		97E00B469C14A9A669516605 /* TriggerRowPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF868123851314DE127D42DE /* TriggerRowPresenter.swift */; };
@@ -1869,6 +1868,7 @@
 		D0616ACF77AD251E4A8288AE /* AgenticToolkitHub-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29F78337D841C951F8CE9EAB /* AgenticToolkitHub-macOS.framework */; };
 		D08511CB731E9902C684B846 /* HTTPTypes in Frameworks */ = {isa = PBXBuildFile; productRef = 5C4F29C769271BCA75C90CD3 /* HTTPTypes */; };
 		D0C88E4F364A8A33DA17CFC2 /* ActivationEventMatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCB96E5EAB3C71D53C7FABE /* ActivationEventMatcher.swift */; };
+		D0E7DD1C5B999355722C9C73 /* ProcessExitWatch.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB1708D091BFA3D8DADFD10 /* ProcessExitWatch.swift */; };
 		D0FA87A8D9A08A28556C2183 /* ProjectPaneStateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1781DB434DFFBAFB6B49B5E3 /* ProjectPaneStateStore.swift */; };
 		D0FD192976206F1AB11F0E1E /* HubAppComposition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C87B5897762E942CC632555 /* HubAppComposition.swift */; };
 		D1156BBB87A5C105381470BE /* AgenticToolkitMarkdown-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9BE5AA37E98B6801FE1D1948 /* AgenticToolkitMarkdown-macOS.framework */; };
@@ -2060,6 +2060,7 @@
 		E7C96D97325D74CF57DD7806 /* FileSystemServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE5CE1385F51628013682355 /* FileSystemServiceTests.swift */; };
 		E7D188A19B9CB56B50B3647F /* TerminalSessionWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64A98A60FFB1917014F3BD5A /* TerminalSessionWindowController.swift */; };
 		E7E388320870DF2F9875017B /* AccessListsTopicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 088692B0AFDA23205E680105 /* AccessListsTopicTests.swift */; };
+		E80896A5D5854426C3EB3B0D /* AgenticDeveloperToolkit-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 275FFEBE0698BE7A32B95A5E /* AgenticDeveloperToolkit-iOS.framework */; };
 		E818131B59B972C835C6402F /* AgenticToolkitSync.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 085D01FE73EBFAD731A18864 /* AgenticToolkitSync.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E8214376DEFF51DB34CE6AC0 /* SyncID.swift in Sources */ = {isa = PBXBuildFile; fileRef = CED6D92BE5D6C405930E5386 /* SyncID.swift */; };
 		E83AD2A7DA8D7435D157602A /* PermissionPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09C1D47037BB4EDCAD1B5026 /* PermissionPresenter.swift */; };
@@ -2781,6 +2782,13 @@
 			proxyType = 2;
 			remoteGlobalIDString = E7A1A8E873030EA0447E2DCC;
 			remoteInfo = "AgenticDeveloperToolkitUI-iOS";
+		};
+		4B9D0575566F0B7BF3E7DF29 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 25DF1BCBF8C9EECC86E6FDE3 /* AgenticDeveloperToolkit */;
+			proxyType = 1;
+			remoteGlobalIDString = DC37B1DAB160C9E325562F97;
+			remoteInfo = "AgenticDeveloperToolkit-macOS";
 		};
 		4BFEC13BC33D2D425A39DDFE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -3943,6 +3951,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 2EFC363C175DD44B5CD8E0E4;
 			remoteInfo = AgenticToolkitPermissions;
+		};
+		F046893F27B0460A28841E80 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 25DF1BCBF8C9EECC86E6FDE3 /* AgenticDeveloperToolkit */;
+			proxyType = 1;
+			remoteGlobalIDString = 82D4BACE3EF682E47C71C0EE;
+			remoteInfo = "AgenticDeveloperToolkit-iOS";
 		};
 		F09AB83A85F03330ABDF4920 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -5540,7 +5555,6 @@
 		AF868123851314DE127D42DE /* TriggerRowPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerRowPresenter.swift; sourceTree = "<group>"; };
 		B0429F15C60F4A7618407E53 /* WorkspacesProviding.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkspacesProviding.swift; sourceTree = "<group>"; };
 		B0826680E945DB6D6A99C5F7 /* HubLinks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubLinks.swift; sourceTree = "<group>"; };
-		B0CC9D5671DA1AC1CA636C0C /* Deadline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Deadline.swift; sourceTree = "<group>"; };
 		B0CEA61B4F75C3A8F70A9459 /* PickerKeyboardController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PickerKeyboardController.swift; sourceTree = "<group>"; };
 		B17BD3CEDFCAFAADD4C7D711 /* LoopbackAuthServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoopbackAuthServer.swift; sourceTree = "<group>"; };
 		B1B799587637B5B9D60F9F14 /* SystemWindowMatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemWindowMatcherTests.swift; sourceTree = "<group>"; };
@@ -5844,6 +5858,7 @@
 		DC8E88AB5F3DFF5971679946 /* MainThreadDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainThreadDiagnosticsTests.swift; sourceTree = "<group>"; };
 		DC96283E781E0F64ECBD7631 /* ExtensionRegistryRescanTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionRegistryRescanTests.swift; sourceTree = "<group>"; };
 		DCA7037E8B1F1B555E281A65 /* CommandPaletteViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandPaletteViewController.swift; sourceTree = "<group>"; };
+		DCB1708D091BFA3D8DADFD10 /* ProcessExitWatch.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessExitWatch.swift; sourceTree = "<group>"; };
 		DD38319435C8DABF89E03FB1 /* ClientsWindowControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClientsWindowControllerTests.swift; sourceTree = "<group>"; };
 		DD4B549A3AB52465823FB3DE /* TabPaneView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabPaneView.swift; sourceTree = "<group>"; };
 		DD4ED71A3B2B4EAEBE0483F9 /* NotesSplitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotesSplitViewController.swift; sourceTree = "<group>"; };
@@ -6227,6 +6242,7 @@
 			files = (
 				E33ADA0863873F1378DAC80A /* AgenticToolkitHub-iOS.framework in Frameworks */,
 				BFCE1779F896A64539AEDFBA /* AgenticDeveloperHubClient.framework in Frameworks */,
+				E80896A5D5854426C3EB3B0D /* AgenticDeveloperToolkit-iOS.framework in Frameworks */,
 				A3930229C05E00C101D2E80F /* OpenAPIRuntime in Frameworks */,
 				0057C6820680122A5B1C5C69 /* HTTPTypes in Frameworks */,
 				BA04F5C14436BCF747C7C236 /* OpenAPIURLSession in Frameworks */,
@@ -6606,6 +6622,7 @@
 				B9198ECD3DE49E793C0727F8 /* AgenticToolkitHub-macOS.framework in Frameworks */,
 				A00E7D2BA09B653803927B9C /* AgenticToolkitPermissions.framework in Frameworks */,
 				8ABB575367418F30D36D02EA /* AgenticDeveloperHubClient.framework in Frameworks */,
+				817890711B243647CAD22EF5 /* AgenticDeveloperToolkit-macOS.framework in Frameworks */,
 				1B91DE8EDFF427EFEBEDECB5 /* OpenAPIRuntime in Frameworks */,
 				D08511CB731E9902C684B846 /* HTTPTypes in Frameworks */,
 				A0E6A3FE77EF885A2AFCF3FD /* OpenAPIURLSession in Frameworks */,
@@ -8396,6 +8413,7 @@
 			children = (
 				5F8EC2FA532939EB051D79A9 /* CommandRunner.swift */,
 				E0C354AFAF25264CB1045812 /* CommandRunning.swift */,
+				DCB1708D091BFA3D8DADFD10 /* ProcessExitWatch.swift */,
 			);
 			path = Process;
 			sourceTree = "<group>";
@@ -8818,14 +8836,6 @@
 			path = Tests/AgenticToolkitDatabaseTests;
 			sourceTree = "<group>";
 		};
-		842199BD0AB402F6F7CD4DF8 /* Support */ = {
-			isa = PBXGroup;
-			children = (
-				B0CC9D5671DA1AC1CA636C0C /* Deadline.swift */,
-			);
-			path = Support;
-			sourceTree = "<group>";
-		};
 		88E0E07BDD6FE9890EA9D1D2 /* KeyCommands */ = {
 			isa = PBXGroup;
 			children = (
@@ -9229,7 +9239,6 @@
 			children = (
 				A866386523169E962A6A72EE /* Adapters */,
 				5739F7014496F71DB0F3A1BE /* Session */,
-				842199BD0AB402F6F7CD4DF8 /* Support */,
 				EE7F42C2A2B001FE2D3C96E1 /* Transport */,
 				9A1FADFD1F817D7F835BB5E5 /* Workspace */,
 			);
@@ -11184,6 +11193,7 @@
 				A400E05AE2B49BBF5642FCFB /* PBXTargetDependency */,
 				14B15E65E017A90968F7AD33 /* PBXTargetDependency */,
 				1BFA497230D4CD04CD592728 /* PBXTargetDependency */,
+				819F3957F289F6EF26FFC46E /* PBXTargetDependency */,
 			);
 			name = "AgenticToolkitHubService-macOS";
 			packageProductDependencies = (
@@ -11498,6 +11508,7 @@
 			dependencies = (
 				CBA296E311CA271C21681303 /* PBXTargetDependency */,
 				F285C07BF20AE98CF0B0C460 /* PBXTargetDependency */,
+				F3C26AC875AFB0F725AF4C6D /* PBXTargetDependency */,
 			);
 			name = "AgenticToolkitHubService-iOS";
 			packageProductDependencies = (
@@ -13937,6 +13948,7 @@
 				07547148B38A51CF4B9EDB92 /* OwnCodeSignature.swift in Sources */,
 				C00A5236F047A81A0F0166B0 /* PendingTeardowns.swift in Sources */,
 				79B85D29D231E764971F8D40 /* PeriodicRefresher.swift in Sources */,
+				D0E7DD1C5B999355722C9C73 /* ProcessExitWatch.swift in Sources */,
 				6A09192ADFE913E5088DEB34 /* RawSetting.swift in Sources */,
 				0835008AB689912EB0E6E1E8 /* ReconcileModels.swift in Sources */,
 				E5E64A21285D19829D23FD95 /* SecureStoredSettingsStorageProvider.swift in Sources */,
@@ -14254,7 +14266,6 @@
 				3C98EF5882B624A7D3DB4DB7 /* BucketsAdapter.swift in Sources */,
 				35A9CC1021232BEDC99A6B39 /* CachedUserStore.swift in Sources */,
 				ACEC1A41B133FF005C7E73F4 /* CustomersAdapter.swift in Sources */,
-				53699FDE7294B3F1B592CC21 /* Deadline.swift in Sources */,
 				1FA6A830626185614CB3A880 /* EcosystemsAdapter.swift in Sources */,
 				13EFC5C99A1E5E2C0295F7E6 /* EmbeddedDaemonTransportSource.swift in Sources */,
 				75F8C6F71566C91B8AF975D1 /* FeatureFlagsAdapter.swift in Sources */,
@@ -14961,7 +14972,6 @@
 				D3ED0C133EFDBE894D5354AC /* BucketsAdapter.swift in Sources */,
 				0C44FFF7181C70990FBECC3B /* CachedUserStore.swift in Sources */,
 				D957E20EE2C526A66232FC29 /* CustomersAdapter.swift in Sources */,
-				97B09C37617DACB8A2545422 /* Deadline.swift in Sources */,
 				EEE6AB7227F76203EBF2D69E /* EcosystemsAdapter.swift in Sources */,
 				E048A338B5F2507057677547 /* EmbeddedDaemonTransportSource.swift in Sources */,
 				5B85EE1C5547D4595948D139 /* FeatureFlagsAdapter.swift in Sources */,
@@ -15793,6 +15803,11 @@
 			target = FB6FD55DBA606361A9BEEB56 /* AgenticToolkitMacOSTests */;
 			targetProxy = 9AACE798ED5F289101BFB900 /* PBXContainerItemProxy */;
 		};
+		819F3957F289F6EF26FFC46E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "AgenticDeveloperToolkit-macOS";
+			targetProxy = 4B9D0575566F0B7BF3E7DF29 /* PBXContainerItemProxy */;
+		};
 		81AAA9BDDC1887635A780641 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 96727E11D2DD7F46C91C37AB /* AgenticToolkitHTDV-macOS */;
@@ -16347,6 +16362,11 @@
 			isa = PBXTargetDependency;
 			name = AgenticDeveloperHubClient;
 			targetProxy = 9C6608B8A206DE0B6960CA03 /* PBXContainerItemProxy */;
+		};
+		F3C26AC875AFB0F725AF4C6D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "AgenticDeveloperToolkit-iOS";
+			targetProxy = F046893F27B0460A28841E80 /* PBXContainerItemProxy */;
 		};
 		F7610993B7AC5515EA405964 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

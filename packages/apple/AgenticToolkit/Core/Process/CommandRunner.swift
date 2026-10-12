@@ -22,8 +22,24 @@ import Foundation
 /// one-shot shape; a tool to hold a conversation with is `SubprocessChannel`.
 ///
 /// `standardOutput` and `standardError` are installed here, so anything a
-/// caller set on them is replaced.
+/// caller set on them is replaced. The exit is learnt from a
+/// `ProcessExitWatch`, never from `Process.waitUntilExit()` — see that type
+/// for the wake-up it misses.
 public enum CommandRunner {
+
+    /// Why a run could not even start, beyond what `Process.run()` throws.
+    public enum LaunchError: Error, LocalizedError, Sendable {
+
+        /// `fcntl(F_SETNOSIGPIPE)` on the stdin pipe failed, with `errno`.
+        case cannotGuardStandardInput(errno: Int32)
+
+        public var errorDescription: String? {
+            switch self {
+            case .cannotGuardStandardInput(let code):
+                return "Couldn't guard the child's stdin against SIGPIPE: \(String(cString: strerror(code)))"
+            }
+        }
+    }
 
     /// What one run amounted to.
     public struct Outcome: Sendable, Equatable {
@@ -102,12 +118,10 @@ public enum CommandRunner {
         }
     }
 
-    /// How long a terminated process is given to die before it is killed.
-    ///
-    /// A tool that ignores `SIGTERM` is exactly the tool this timeout exists
-    /// for, so there has to be a second step; two seconds is long enough for
-    /// an honest cleanup handler and short enough that nobody notices.
-    private static let terminationGrace: TimeInterval = 2
+    /// How long the drains and the stdin writer are given to finish once the
+    /// process is gone — waits on an EOF or an EPIPE that has already been
+    /// posted, bounded anyway in case a grandchild inherited a descriptor.
+    private static let settleGrace: TimeInterval = ProcessExitWatch.terminationGrace
 
     /// `Outcome.status` for a process that never exited at all.
     ///
@@ -119,11 +133,23 @@ public enum CommandRunner {
     /// Runs `process`, returning once it has exited or `timeout` has passed.
     ///
     /// Throws only what `Process.run()` throws — a tool that is not there, or
-    /// one this process is not allowed to execute. A tool that ran and failed
-    /// is not an error here; it is an `Outcome` with a non-zero `status`,
-    /// because what a failing helper wrote is usually the whole answer.
+    /// one this process is not allowed to execute — or a `LaunchError`. A
+    /// tool that ran and failed is not an error here; it is an `Outcome` with
+    /// a non-zero `status`, because what a failing helper wrote is usually
+    /// the whole answer.
+    ///
+    /// `input`, when given, is the whole of the child's stdin: it is written
+    /// after launch, concurrently with the drains, and stdin is closed behind
+    /// it — so it may be any size, and a child that decides to prompt sees
+    /// EOF and gives up rather than block on a terminal that isn't there. It
+    /// is how a secret reaches `security -i` without ever appearing in an
+    /// argv that `ps` can show. `Data()` is just that EOF. `nil` leaves stdin
+    /// inherited, as `Process` does. A child that exits without reading its
+    /// input is fine: the writer gets `EPIPE`, not `SIGPIPE`, and the run
+    /// reports the exit as usual.
     public static func runToCompletion(
         _ process: Process,
+        input: Data? = nil,
         timeout: TimeInterval,
         watchdog: Watchdog? = nil
     ) throws -> Outcome {
@@ -131,13 +157,13 @@ public enum CommandRunner {
         let errors = Pipe()
         process.standardOutput = output
         process.standardError = errors
+        let stdin = try input.map { _ in try guardedStandardInput(for: process) }
 
         let collected = Collector()
         let outputDrained = drain(output, into: collected, as: .standardOutput)
         let errorsDrained = drain(errors, into: collected, as: .standardError)
 
-        let exited = DispatchSemaphore(value: 0)
-        process.terminationHandler = { _ in exited.signal() }
+        let watch = ProcessExitWatch(process)
         do {
             try process.run()
         } catch {
@@ -146,6 +172,7 @@ public enum CommandRunner {
             process.terminationHandler = nil
             throw error
         }
+        let inputWritten = stdin.map { feed($0, with: input ?? Data()) }
 
         var timedOut = false
         var aborted = false
@@ -160,7 +187,7 @@ public enum CommandRunner {
                 }
                 // The shorter of the two, so neither the poll interval
                 // overshoots the deadline nor the deadline delays a poll.
-                if exited.wait(timeout: .now() + min(watchdog.interval, remaining)) == .success {
+                if watch.waitForExit(timeout: min(watchdog.interval, remaining)) {
                     break
                 }
                 if watchdog.shouldAbort() {
@@ -168,22 +195,19 @@ public enum CommandRunner {
                     break
                 }
             }
-        } else if exited.wait(timeout: .now() + timeout) == .timedOut {
+        } else if !watch.waitForExit(timeout: timeout) {
             timedOut = true
         }
 
         if timedOut || aborted {
-            process.terminate()
-            if exited.wait(timeout: .now() + terminationGrace) == .timedOut {
-                kill(process.processIdentifier, SIGKILL)
-                didExit = exited.wait(timeout: .now() + terminationGrace) == .success
-            }
+            didExit = watch.stop(process)
         }
         // Both write ends are closed once the process is gone, so these are
-        // waits on an EOF that has already been posted — bounded anyway, in
-        // case a grandchild inherited one of them.
-        _ = outputDrained.wait(timeout: .now() + terminationGrace)
-        _ = errorsDrained.wait(timeout: .now() + terminationGrace)
+        // waits on an EOF that has already been posted; the writer, likewise,
+        // has either finished or been handed EPIPE by the dead read end.
+        _ = outputDrained.wait(timeout: .now() + settleGrace)
+        _ = errorsDrained.wait(timeout: .now() + settleGrace)
+        _ = inputWritten?.wait(timeout: .now() + settleGrace)
         output.fileHandleForReading.readabilityHandler = nil
         errors.fileHandleForReading.readabilityHandler = nil
 
@@ -209,6 +233,44 @@ public enum CommandRunner {
     private enum Stream {
         case standardOutput
         case standardError
+    }
+
+    /// A stdin pipe for `process` whose write end cannot raise `SIGPIPE`.
+    ///
+    /// Per-descriptor (`F_SETNOSIGPIPE`), as `SubprocessChannel` does it,
+    /// rather than a process-wide `signal()` that would change every other
+    /// write in the host. With the flag set, writing to a pipe whose reader
+    /// has exited is an `EPIPE` error from `FileHandle`, which `feed` swallows
+    /// — a child that quit before reading its input is a child that quit, and
+    /// the run reports that exit.
+    private static func guardedStandardInput(for process: Process) throws -> Pipe {
+        let pipe = Pipe()
+        if fcntl(pipe.fileHandleForWriting.fileDescriptor, F_SETNOSIGPIPE, 1) == -1 {
+            throw LaunchError.cannotGuardStandardInput(errno: errno)
+        }
+        process.standardInput = pipe
+        return pipe
+    }
+
+    /// Writes `input` to the child through `pipe` and closes stdin behind it,
+    /// off the waiting thread; signals the returned semaphore when done.
+    ///
+    /// Concurrent with the drains for the same reason they are concurrent
+    /// with the child: a pipe is a 64 KB kernel buffer, and a child that
+    /// answers as it reads would fill stdout while this thread was still
+    /// blocked filling stdin. The parent's copy of the read end is closed
+    /// first so the pipe dies with the child, which is what turns a write to
+    /// a departed reader into `EPIPE` instead of a wait that never ends.
+    private static func feed(_ pipe: Pipe, with input: Data) -> DispatchSemaphore {
+        let written = DispatchSemaphore(value: 0)
+        try? pipe.fileHandleForReading.close()
+        DispatchQueue.global(qos: .default).async {
+            let writer = pipe.fileHandleForWriting
+            if !input.isEmpty { try? writer.write(contentsOf: input) }
+            try? writer.close()
+            written.signal()
+        }
+        return written
     }
 
     /// Reads `pipe` on Foundation's reader queue until EOF, appending into

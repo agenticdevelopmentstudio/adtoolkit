@@ -183,6 +183,8 @@ public enum DaemonAIChat {
             case .nonZeroExit(let code, let stderr):
                 let detail = stderr.isEmpty ? "exit \(code)" : stderr
                 throw ChatError.providerError("claude -p failed: \(String(detail.prefix(200)))")
+            case .timedOut(let seconds):
+                throw ChatError.providerError("claude -p did not finish within \(Int(seconds))s")
             }
         }
     }

@@ -229,4 +229,45 @@ struct CommandRunnerTests {
         #expect(outcome.status == 3)
         #expect(outcome.status != CommandRunner.neverExited)
     }
+
+    // MARK: - Feeding stdin
+
+    /// 200 KB is past what a pipe holds, so an input written before launch,
+    /// or on the waiting thread, would block the writer before the child read
+    /// a byte — and the child's echo of it is past the buffer too, so the
+    /// write and the drain have to run at once.
+    @Test("input larger than a pipe holds reaches the child and comes back")
+    func aLargeInputRoundTrips() throws {
+        let input = Data(repeating: UInt8(ascii: "y"), count: 200_000)
+
+        let outcome = try CommandRunner.runToCompletion(shell("cat"), input: input, timeout: 30)
+
+        #expect(!outcome.timedOut)
+        #expect(outcome.status == 0)
+        #expect(outcome.standardOutput == input)
+    }
+
+    /// A `cat` left with an inherited stdin would wait on this process's for
+    /// ever; `Data()` is an EOF, so it exits at once with nothing to say.
+    @Test("empty input closes the child's stdin")
+    func emptyInputIsEOF() throws {
+        let outcome = try CommandRunner.runToCompletion(shell("cat"), input: Data(), timeout: 10)
+
+        #expect(!outcome.timedOut)
+        #expect(outcome.status == 0)
+        #expect(outcome.standardOutput.isEmpty)
+    }
+
+    /// A child that exits without reading leaves the writer with a pipe nobody
+    /// reads: `EPIPE` on the write, never `SIGPIPE` for the host, and the exit
+    /// is reported like any other.
+    @Test("a child that exits before reading its input is still reported")
+    func aChildThatIgnoresItsInputStillComesBack() throws {
+        let input = Data(repeating: UInt8(ascii: "y"), count: 200_000)
+
+        let outcome = try CommandRunner.runToCompletion(shell("exit 7"), input: input, timeout: 10)
+
+        #expect(!outcome.timedOut)
+        #expect(outcome.status == 7)
+    }
 }

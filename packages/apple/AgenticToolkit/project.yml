@@ -1055,6 +1055,9 @@ targets:
       - target: AgenticToolkitHub-macOS
       - target: AgenticToolkitPermissions
       - target: AgenticDeveloperHubClient/AgenticDeveloperHubClient
+      # withDeadline: the bounded wait HubEnvironment resolves its transport
+      # under lives in the bottom framework so every tier can share it.
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
       - package: swift-openapi-runtime
         product: OpenAPIRuntime
       - package: swift-http-types
@@ -1087,6 +1090,8 @@ targets:
     dependencies:
       - target: AgenticToolkitHub-iOS
       - target: AgenticDeveloperHubClient/AgenticDeveloperHubClient
+      # See AgenticToolkitHubService-macOS: withDeadline.
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-iOS
       - package: swift-openapi-runtime
         product: OpenAPIRuntime
       - package: swift-http-types

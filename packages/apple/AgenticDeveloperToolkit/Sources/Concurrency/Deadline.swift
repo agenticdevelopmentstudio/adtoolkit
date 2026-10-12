@@ -5,15 +5,16 @@ import Foundation
 /// Unlike a task group, this never waits for the loser. A task group's
 /// implicit `await` on its remaining children means a child that ignores
 /// cancellation — a URL load with no timeout of its own, an actor call parked
-/// behind one — still holds the caller past the deadline, which is exactly the
-/// failure this guards. Here the losing task is cancelled and then *abandoned*:
-/// the caller resumes on the deadline whatever the operation does next, and a
-/// late result is discarded.
+/// behind one, a thread parked in a kernel wait — still holds the caller past
+/// the deadline, which is exactly the failure this guards. Here the losing
+/// task is cancelled and then *abandoned*: the caller resumes on the deadline
+/// whatever the operation does next, and a late result is discarded.
 ///
 /// The cost of that guarantee is that an uncooperative operation keeps running
 /// in the background. Use it where the caller must make progress — launch
-/// bootstrap — not as a general-purpose timeout.
-func withDeadline<T: Sendable>(
+/// bootstrap, a gate that serializes work behind the job in front — not as a
+/// general-purpose timeout.
+public func withDeadline<T: Sendable>(
     _ duration: Duration,
     fallback: @escaping @Sendable () -> T,
     operation: @escaping @Sendable () async -> T
@@ -32,6 +33,27 @@ func withDeadline<T: Sendable>(
     work.cancel()
     timer.cancel()
     return winner
+}
+
+extension Task {
+
+    /// Whether this task finished within `duration`.
+    ///
+    /// `await task.value` has no bound: a task whose work never comes back
+    /// holds every awaiter with it, so anything that serializes work behind a
+    /// task needs the wait to end on its own or the first stuck job stops
+    /// everything queued after it, for good. A task that did not finish in
+    /// time is **cancelled** and left to notice — this answers `false` at
+    /// once rather than waiting for the cancellation to be honoured, because
+    /// a task that ignores cancellation is exactly the one a deadline is for.
+    public func finished(within duration: Duration) async -> Bool {
+        let inTime = await withDeadline(duration, fallback: { false }) {
+            _ = await self.result
+            return true
+        }
+        if !inTime { cancel() }
+        return inTime
+    }
 }
 
 /// One-shot rendezvous between the operation and the timer: the first `settle`
