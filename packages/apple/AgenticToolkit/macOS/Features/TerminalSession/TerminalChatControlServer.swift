@@ -121,8 +121,10 @@ public final class TerminalChatControlServer {
             return .failure("Terminal Chat \(chat.id) is not connected to a terminal — use "
                             + "Connect to Terminal in its pane's Settings.")
         }
-        let settle = Self.duration(request.settle, default: 1.5, limit: 60)
-        let timeout = Self.duration(request.timeout, default: request.action == .interrupt ? 10 : 60, limit: 600)
+        typealias Defaults = TerminalChatControl.Defaults
+        let settle = Self.duration(request.settle, default: Defaults.settle, limit: Defaults.maximumSettle)
+        let timeout = Self.duration(request.timeout, default: Defaults.timeout(for: request.action),
+                                    limit: Defaults.maximumTimeout)
 
         switch request.action {
         case .run:
@@ -135,7 +137,7 @@ public final class TerminalChatControlServer {
         case .interrupt:
             return .init(chat: chat.id, output: await session.interruptAndWait(settle: settle, timeout: timeout))
         case .screen:
-            return .init(chat: chat.id, output: session.screen(lines: request.lines ?? 40) ?? "")
+            return .init(chat: chat.id, output: session.screen(lines: request.lines ?? Defaults.lines) ?? "")
         case .list:
             return .init(chats: chats.map(\.0))
         }

@@ -24,6 +24,28 @@ public enum TerminalChatControl {
         case screen
     }
 
+    /// What a request that leaves a field out gets, and the most it may ask
+    /// for — the one statement of them, read by the session's own defaults,
+    /// the app's server, the transport's wait and `adterm`'s usage text.
+    public enum Defaults {
+        /// Seconds output has to stop for before a reply is complete.
+        public static let settle: Double = 1.5
+        /// Seconds a `run` or `wait` waits at most.
+        public static let timeout: Double = 60
+        /// Seconds an `interrupt` waits at most: Control-C either works
+        /// quickly or not at all.
+        public static let interruptTimeout: Double = 10
+        /// Lines `screen` returns.
+        public static let lines = 40
+        public static let maximumSettle: Double = 60
+        public static let maximumTimeout: Double = 600
+
+        /// The timeout `action` gets when the request names none.
+        public static func timeout(for action: Action) -> Double {
+            action == .interrupt ? interruptTimeout : timeout
+        }
+    }
+
     public struct Request: Codable, Sendable, Equatable {
         public var action: Action
         /// A chat's id, or a prefix of one. Optional when the app hosts
@@ -166,7 +188,7 @@ public enum TerminalChatControl {
     /// short `wait` instead, so one stalled app cannot hold up the rest.
     public static func send(_ request: Request, to host: Host, wait: TimeInterval? = nil) throws -> Response {
         let payload = try JSONEncoder().encode(request)
-        let waitSeconds = wait ?? (request.timeout ?? 60) + 15
+        let waitSeconds = wait ?? (request.timeout ?? Defaults.timeout(for: request.action)) + 15
         let reply = try UnixSocketLineClient.request(payload, path: host.socket.path, timeout: waitSeconds)
         return try JSONDecoder().decode(Response.self, from: reply)
     }

@@ -137,8 +137,8 @@ public final class TerminalChatSession {
     /// kept for ``waitForOutput(settle:timeout:)``.
     public func run(
         _ text: String,
-        settle: Duration = .milliseconds(1500),
-        timeout: Duration = .seconds(60)
+        settle: Duration = .seconds(TerminalChatControl.Defaults.settle),
+        timeout: Duration = .seconds(TerminalChatControl.Defaults.timeout)
     ) async -> String {
         guard terminal != nil else { return Self.notConnected }
         let wait = beginWait(settle: settle, timeout: timeout, replayingUnclaimed: false)
@@ -150,8 +150,8 @@ public final class TerminalChatSession {
     /// arrives until it has been quiet for `settle` — for a command that
     /// outlasted ``run(_:settle:timeout:)``.
     public func waitForOutput(
-        settle: Duration = .milliseconds(1500),
-        timeout: Duration = .seconds(30)
+        settle: Duration = .seconds(TerminalChatControl.Defaults.settle),
+        timeout: Duration = .seconds(TerminalChatControl.Defaults.timeout)
     ) async -> String {
         guard terminal != nil else { return Self.notConnected }
         return await beginWait(settle: settle, timeout: timeout, replayingUnclaimed: true).result()
@@ -159,8 +159,8 @@ public final class TerminalChatSession {
 
     /// Control-C, then whatever the terminal printed in response.
     public func interruptAndWait(
-        settle: Duration = .milliseconds(1000),
-        timeout: Duration = .seconds(10)
+        settle: Duration = .seconds(TerminalChatControl.Defaults.settle),
+        timeout: Duration = .seconds(TerminalChatControl.Defaults.interruptTimeout)
     ) async -> String {
         guard terminal != nil else { return Self.notConnected }
         let wait = beginWait(settle: settle, timeout: timeout, replayingUnclaimed: false)
@@ -171,7 +171,7 @@ public final class TerminalChatSession {
     /// The last `lines` lines on the terminal's screen — what is there now,
     /// prompt included, rather than a reply to anything. Nil when
     /// there is no terminal.
-    public func screen(lines: Int = 40) -> String? {
+    public func screen(lines: Int = TerminalChatControl.Defaults.lines) -> String? {
         guard let terminal else { return nil }
         var rows = terminal.screenSnapshot().lines
         while rows.last?.trimmingCharacters(in: .whitespaces).isEmpty == true { rows.removeLast() }
