@@ -230,6 +230,16 @@ final class BrowserAutomationTests: XCTestCase {
         XCTAssertEqual(nothing, "undefined")
     }
 
+    func testEvaluateAcceptsOneTrailingSemicolon() async throws {
+        let (_, a) = await make(html: "<p>x</p>")
+        let sum = try await a.evaluate("1 + 1;")
+        XCTAssertEqual(sum, "2")
+        let count = try await a.evaluate("  document.body.children.length ; \n")
+        XCTAssertEqual(count, "1")
+        XCTAssertEqual(BrowserAutomation.expressionBody("a;;"), "a;")
+        XCTAssertEqual(BrowserAutomation.expressionBody("b // c;"), "b // c")
+    }
+
     func testContentSecurityPolicyRefusalIsRecognised() {
         XCTAssertTrue(BrowserAutomation.isContentSecurityPolicyRefusal(
             "EvalError: Refused to evaluate a string as JavaScript because 'unsafe-eval' is not an allowed source"))
@@ -245,24 +255,56 @@ final class BrowserAutomationTests: XCTestCase {
         let (_, a) = await make(html: "<p>x</p>")
         let order = DriveOrder()
         let first = Task { @MainActor in
-            await a.drive {
+            try await a.drive {
                 order.events.append("enter 1")
-                try? await Task.sleep(nanoseconds: 200_000_000)
-                await a.drive { order.events.append("nested 1") }
+                try await Task.sleep(nanoseconds: 200_000_000)
+                try await a.drive { order.events.append("nested 1") }
                 order.events.append("exit 1")
             }
         }
         try await Task.sleep(nanoseconds: 30_000_000)
         let second = Task { @MainActor in
-            await a.drive {
+            try await a.drive {
                 order.events.append("enter 2")
                 order.events.append("exit 2")
             }
         }
-        await first.value
-        await second.value
+        try await first.value
+        try await second.value
         XCTAssertEqual(order.events, ["enter 1", "nested 1", "exit 1", "enter 2", "exit 2"])
         XCTAssertFalse(a.isActionInFlight)
+    }
+
+    func testAWaiterCancelledInTheQueueDoesNotAct() async throws {
+        let (_, a) = await make(html: "<p>x</p>")
+        let order = DriveOrder()
+        let first = Task { @MainActor in
+            try await a.drive {
+                order.events.append("enter 1")
+                try await Task.sleep(nanoseconds: 200_000_000)
+                order.events.append("exit 1")
+            }
+        }
+        try await Task.sleep(nanoseconds: 30_000_000)
+        let second = Task { @MainActor () -> Bool in
+            do {
+                try await a.drive { order.events.append("enter 2") }
+                return false
+            } catch is CancellationError {
+                return true
+            } catch {
+                return false
+            }
+        }
+        try await Task.sleep(nanoseconds: 30_000_000)
+        second.cancel()
+        try await first.value
+        let cancelled = await second.value
+        XCTAssertTrue(cancelled, "the cancelled waiter must throw CancellationError")
+        XCTAssertEqual(order.events, ["enter 1", "exit 1"], "the cancelled waiter must not run its body")
+        XCTAssertFalse(a.isActionInFlight)
+        try await a.drive { order.events.append("enter 3") }
+        XCTAssertEqual(order.events.last, "enter 3", "the gate must be free again after the cancelled waiter")
     }
 
     func testStaleRefFromPreviousDocumentIsRefused() async throws {

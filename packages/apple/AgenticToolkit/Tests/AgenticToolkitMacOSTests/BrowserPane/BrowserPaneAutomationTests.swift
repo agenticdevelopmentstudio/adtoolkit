@@ -75,7 +75,7 @@ final class BrowserPaneAutomationTests: XCTestCase {
         let pane = makePane()
         await load("<button id='b'>Go</button>", into: pane)
         XCTAssertFalse(pane.drivenBadge.isShowing)
-        await pane.automation.drive { }
+        try await pane.automation.drive { }
         XCTAssertTrue(pane.drivenBadge.isShowing, "the badge stays up through the hold")
         let deadline = Date().addingTimeInterval(6)
         while pane.drivenBadge.isShowing && Date() < deadline {

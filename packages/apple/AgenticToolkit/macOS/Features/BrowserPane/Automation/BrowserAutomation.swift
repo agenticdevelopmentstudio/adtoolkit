@@ -133,12 +133,16 @@ public final class BrowserAutomation: NSObject {
     /// local records which automations the current chain already holds, and a
     /// nested `drive` from that chain passes straight through. The depth count
     /// alone cannot tell the two apart, because a second caller also sees a
-    /// non-zero depth while the first is inside.
-    public func drive<T>(_ body: () async throws -> T) async rethrows -> T {
+    /// non-zero depth while the first is inside. A caller cancelled while it
+    /// waits still takes its turn, so the queue stays in order, but then
+    /// throws `CancellationError` without running its body: a cancelled tool
+    /// call must not act on the page after its caller has gone.
+    public func drive<T>(_ body: () async throws -> T) async throws -> T {
         let key = ObjectIdentifier(self)
         if BrowserDriveChain.held.contains(key) { return try await counted(body) }
         await acquireGate()
         defer { releaseGate() }
+        try Task.checkCancellation()
         return try await BrowserDriveChain.$held.withValue(BrowserDriveChain.held.union([key])) {
             try await counted(body)
         }
@@ -300,18 +304,30 @@ public final class BrowserAutomation: NSObject {
     /// and renders the value as JSON (`undefined` when there is none).
     ///
     /// The newlines around the expression keep a trailing `//` comment from
-    /// swallowing the closing parenthesis.
+    /// swallowing the closing parenthesis, and one trailing semicolon is
+    /// dropped first, since `return (x;)` is a syntax error and a model
+    /// writing `document.title;` means the expression, not a statement.
     public func evaluate(_ expression: String) async throws -> String {
         let value: Any?
         do {
             value = try await webView.callAsyncJavaScript(
-                "return (\n\(expression)\n);", arguments: [:], in: nil, contentWorld: .page)
+                "return (\n\(Self.expressionBody(expression))\n);", arguments: [:], in: nil, contentWorld: .page)
         } catch {
             let message = Self.javaScriptMessage(of: error)
             if Self.isContentSecurityPolicyRefusal(message) { throw BrowserAutomationError.cspRefusesEvaluation }
             throw BrowserAutomationError.script(message)
         }
         return Self.renderJSON(value)
+    }
+
+    /// The expression with surrounding whitespace and one trailing `;` removed.
+    static func expressionBody(_ expression: String) -> String {
+        var body = expression.trimmingCharacters(in: .whitespacesAndNewlines)
+        if body.hasSuffix(";") {
+            body.removeLast()
+            body = body.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        return body
     }
 
     /// What WebKit says went wrong: the page's exception message when there
