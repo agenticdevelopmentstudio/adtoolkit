@@ -66,9 +66,22 @@ final class BrowserPaneAutomationTests: XCTestCase {
         await load("<button id='b' onclick=\"alert('careful')\">Go</button>", into: pane)
         let snapshot = try await pane.automation.snapshot(BrowserSnapshotOptions())
         let button = try XCTUnwrap(ref(ofRole: "button", in: snapshot))
-        let delta = try await pane.automation.click(ref: button, generation: snapshot.generation, native: false)
+        let automation = pane.automation
+        let delta = try await automation.drive {
+            try await automation.click(ref: button, generation: snapshot.generation, native: false)
+        }
         XCTAssertEqual(delta.dialog?.kind, .alert)
         XCTAssertEqual(delta.dialog?.message, "careful")
+    }
+
+    /// WebKit raises on a second handler under a name still registered, so
+    /// adding the name again without a crash proves teardown removed it.
+    func testTeardownRemovesTheConsoleMessageHandler() {
+        let pane = makePane()
+        pane.paneContentWillBeDiscarded()
+        let controller = pane.webView.configuration.userContentController
+        controller.add(pane.consoleLog, name: BrowserConsoleLog.handlerName)
+        controller.removeScriptMessageHandler(forName: BrowserConsoleLog.handlerName)
     }
 
     func testConfirmOutsideAnActionIsDismissedWithFalse() async {

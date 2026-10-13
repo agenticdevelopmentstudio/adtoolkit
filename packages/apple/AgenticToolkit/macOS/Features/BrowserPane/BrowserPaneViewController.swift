@@ -578,10 +578,6 @@ extension BrowserPaneViewController: WKDownloadDelegate {
 
 extension BrowserPaneViewController: WKUIDelegate {
 
-    /// A dialog raised while a model acts is the model's to hear about, and it
-    /// is always dismissed: a panel would block the pane under a hand that is
-    /// not the user's. Outside an action the same dismissal applies, since the
-    /// pane shows no dialogs of its own; the answer is just not reported.
     public func webView(
         _ webView: WKWebView,
         runJavaScriptAlertPanelWithMessage message: String,
@@ -609,6 +605,10 @@ extension BrowserPaneViewController: WKUIDelegate {
         return nil
     }
 
+    /// A dialog raised while a model acts is the model's to hear about, and it
+    /// is always dismissed: a panel would block the pane under a hand that is
+    /// not the user's. Outside an action the same dismissal applies, since the
+    /// pane shows no dialogs of its own; the answer is just not reported.
     private func reportDialog(_ kind: BrowserDialog.Kind, _ message: String) {
         guard automation.isActionInFlight else { return }
         automation.dialogRaised(kind: kind, message: message)
