@@ -20,6 +20,7 @@ public actor HostMCPServer {
 
     private let server: Server
     private var registrations: [Registration] = []
+    private var isServing = false
     private let log = Logger(subsystem: "AgenticToolkit", category: "automation")
 
     public init(appName: String, appVersion: String) {
@@ -36,13 +37,21 @@ public actor HostMCPServer {
         registrations.append(Registration(source: source, prefix: prefix ?? ""))
     }
 
+    /// Starts serving over `transport`. If the server is already serving, it
+    /// is stopped first: the SDK's `Server.start` would otherwise overwrite
+    /// its connection and receive task without cancelling the old ones.
     public func serve(over transport: any Transport) async throws {
+        if isServing { await stop() }
         await installHandlers()
         try await server.start(transport: transport)
+        isServing = true
     }
 
+    /// Stops serving. Registrations and handlers survive a stop, so a later
+    /// `serve(over:)` serves the same tools; callers must not re-register.
     public func stop() async {
         await server.stop()
+        isServing = false
     }
 
     // MARK: - Handlers
@@ -54,9 +63,14 @@ public actor HostMCPServer {
         }
         await server.withMethodHandler(CallTool.self) { [weak self] params in
             guard let self else { return Self.errorResult("server is gone") }
-            let caller = Server.currentHandlerContext?.httpContext?.header(Self.callerHeader)
+            let caller = Self.caller(from: Server.currentHandlerContext?.httpContext)
             return await self.call(name: params.name, arguments: params.arguments ?? [:], caller: caller)
         }
+    }
+
+    /// The pane id the HTTP request names in `callerHeader`, if any.
+    static func caller(from request: HTTPRequest?) -> String? {
+        request?.header(callerHeader)
     }
 
     private func listTools() async -> [MCP.Tool] {
@@ -73,7 +87,7 @@ public actor HostMCPServer {
         return tools
     }
 
-    private func call(name: String, arguments: [String: Value], caller: String?) async -> CallTool.Result {
+    func call(name: String, arguments: [String: Value], caller: String?) async -> CallTool.Result {
         for registration in registrations {
             guard name.hasPrefix(registration.prefix) else { continue }
             let bare = String(name.dropFirst(registration.prefix.count))

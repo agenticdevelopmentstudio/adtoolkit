@@ -37,6 +37,10 @@ final class HostMCPServerTests: XCTestCase {
         try await server.serve(over: serverTransport)
         let client = Client(name: "test-client", version: "1")
         _ = try await client.connect(transport: clientTransport)
+        addTeardownBlock {
+            await client.disconnect()
+            await server.stop()
+        }
         return (server, client)
     }
 
@@ -120,5 +124,43 @@ final class HostMCPServerTests: XCTestCase {
         let open = await host.callTool(name: "host_open_chat_window", argumentsJSON: Data("{}".utf8), caller: nil)
         XCTAssertEqual(open.content, "Opened a new chat window.")
         XCTAssertEqual(opened.count, 1)
+    }
+
+    func testSecondServeStopsTheFirst() async throws {
+        let server = HostMCPServer(appName: "Test", appVersion: "1")
+        await server.register(EchoSource(names: ["a"]))
+        addTeardownBlock { await server.stop() }
+
+        let first = await InMemoryTransport.createConnectedPair()
+        try await server.serve(over: first.server)
+        let firstClient = Client(name: "first", version: "1")
+        _ = try await firstClient.connect(transport: first.client)
+        addTeardownBlock { await firstClient.disconnect() }
+
+        let second = await InMemoryTransport.createConnectedPair()
+        try await server.serve(over: second.server)
+        let secondClient = Client(name: "second", version: "1")
+        _ = try await secondClient.connect(transport: second.client)
+        addTeardownBlock { await secondClient.disconnect() }
+
+        let tools = try await secondClient.listTools().tools
+        XCTAssertEqual(tools.map(\.name), ["a"])
+        await server.stop()
+    }
+
+    func testCallerHeaderReachesTheSource() async throws {
+        // `Server.HandlerContext` cannot be built outside the SDK, so the
+        // header read (`caller(from:)`) and the call path are tested in turn.
+        let request = HTTPRequest(method: "POST", headers: ["x-adkitchen-pane": "pane-7"])
+        let caller = HostMCPServer.caller(from: request)
+        XCTAssertEqual(caller, "pane-7")
+        XCTAssertNil(HostMCPServer.caller(from: nil))
+        XCTAssertNil(HostMCPServer.caller(from: HTTPRequest(method: "POST")))
+
+        let source = EchoSource(names: ["a"])
+        let server = HostMCPServer(appName: "Test", appVersion: "1")
+        await server.register(source)
+        _ = await server.call(name: "a", arguments: [:], caller: caller)
+        XCTAssertEqual(source.calls.first?.caller, "pane-7")
     }
 }

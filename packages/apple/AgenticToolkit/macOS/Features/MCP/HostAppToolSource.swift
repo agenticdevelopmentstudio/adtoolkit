@@ -4,7 +4,7 @@ import AgenticToolkitCore
 
 /// The two tools every host app offers: what it is, and "open a chat window".
 /// What `HostMCPServer` used to hard-code, now one source among several.
-public final class HostAppToolSource: ChatToolSource, @unchecked Sendable {
+public final class HostAppToolSource: ChatToolSource, Sendable {
     private let appName: String
     private let appVersion: String
     private let pluginNames: [String]
