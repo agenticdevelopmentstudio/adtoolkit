@@ -91,6 +91,13 @@ final class BrowserSnapshotTests: XCTestCase {
         XCTAssertTrue(snap.text.contains("\"" + String(repeating: "x", count: 100) + "…\""))
     }
 
+    func testEmptyDocumentRendersRootWithColon() async throws {
+        let page = OffscreenWebView()
+        await page.load(html: "", baseURL: URL(string: "about:blank"))
+        let snap = try await snapshot(page)
+        XCTAssertEqual(snap.text, "- document:\n")
+    }
+
     func testFindReturnsMatchingRefs() async throws {
         let page = OffscreenWebView()
         try await page.load(fixture: "form")

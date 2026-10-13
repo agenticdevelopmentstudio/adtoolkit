@@ -8,8 +8,11 @@
   let generation = 0;
   let nextRef = 1;
   let mutationCount = 0;
-  new MutationObserver(() => { mutationCount += 1; })
-    .observe(document.documentElement, { childList: true, subtree: true, attributes: true, characterData: true });
+  try {
+    new MutationObserver(() => { mutationCount += 1; })
+      .observe(document.documentElement || document,
+        { childList: true, subtree: true, attributes: true, characterData: true });
+  } catch (e) { /* leave the counter at 0 rather than fail the install */ }
 
   const NAME_LIMIT = 100, VALUE_LIMIT = 50;
   const LANDMARKS = { header: 'banner', nav: 'navigation', main: 'main', footer: 'contentinfo',
@@ -53,7 +56,7 @@
     return null;
   }
 
-  function isHidden(el) {
+  function isHiddenUncached(el) {
     const tag = el.tagName.toLowerCase();
     if (tag === 'script' || tag === 'style' || tag === 'noscript' || tag === 'template' || tag === 'head') { return true; }
     if (el.hidden || el.getAttribute('aria-hidden') === 'true') { return true; }
@@ -147,21 +150,38 @@
     return ref;
   }
 
+  // Per-snapshot memos: each element's hidden state, role and "has a non-generic
+  // descendant" answer are computed once, so deep div soup stays linear.
+  const hiddenMemo = new Map(), roleMemo = new Map(), descendantMemo = new Map();
+
+  function isHidden(el) {
+    if (!hiddenMemo.has(el)) { hiddenMemo.set(el, isHiddenUncached(el)); }
+    return hiddenMemo.get(el);
+  }
+
+  function roleMemoized(el) {
+    if (!roleMemo.has(el)) { roleMemo.set(el, roleOf(el)); }
+    return roleMemo.get(el);
+  }
+
   function hasNonGenericDescendant(el) {
+    if (descendantMemo.has(el)) { return descendantMemo.get(el); }
+    let found = false;
     for (const child of el.children) {
       if (isHidden(child)) { continue; }
-      if (roleOf(child) !== null && roleOf(child) !== 'presentation') { return true; }
-      if (isInteractive(child, null)) { return true; }
-      if (hasNonGenericDescendant(child)) { return true; }
+      const childRole = roleMemoized(child);
+      if ((childRole !== null && childRole !== 'presentation') || isInteractive(child, null)
+          || hasNonGenericDescendant(child)) { found = true; break; }
     }
-    return false;
+    descendantMemo.set(el, found);
+    return found;
   }
 
   // Returns an array of nodes (an element may collapse into its children).
   function build(el, depthLeft, opts) {
     if (isHidden(el)) { return []; }
     const tag = el.tagName.toLowerCase();
-    let role = roleOf(el);
+    let role = roleMemoized(el);
     if (role === 'presentation') { role = null; }
     const interactive = isInteractive(el, role);
     const generic = role === null && !interactive;
@@ -224,6 +244,7 @@
     const scopeEl = resolveScope(opts.scope);   // resolved before refs reset
     generation += 1;
     refs.clear();
+    hiddenMemo.clear(); roleMemo.clear(); descendantMemo.clear();
     nextRef = 1;
     const depth = (typeof opts.depth === 'number' && opts.depth > 0) ? opts.depth : null;
     const options = { interactiveOnly: !!opts.interactiveOnly };
@@ -248,7 +269,11 @@
       if (!el || !el.isConnected) { continue; }
       const role = roleOf(el) || 'generic';
       const { name } = nameOf(el, role);
-      const hay = (name + ' ' + collapse(el.textContent)).toLowerCase();
+      // Own accessible name plus own direct text nodes only: containers must not
+      // match on their descendants' text.
+      const own = Array.from(el.childNodes).filter((n) => n.nodeType === Node.TEXT_NODE)
+        .map((n) => n.textContent).join(' ');
+      const hay = (name + ' ' + collapse(own)).toLowerCase();
       if (needle && hay.includes(needle)) { out.push({ ref: ref, role: role, name: name }); }
     }
     return out;

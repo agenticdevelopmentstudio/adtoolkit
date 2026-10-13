@@ -91,7 +91,7 @@ public enum BrowserSnapshotRenderer {
         for state in node.states { line += " [\(state)]" }
         if let value = node.value { line += " [value=\"\(value)\"]" }
         if includeURLs, let url = node.url { line += " [url=\(url)]" }
-        if !node.children.isEmpty { line += ":" }
+        if !node.children.isEmpty || (depth == 0 && node.role == "document") { line += ":" }
         lines.append(line)
         for child in node.children { append(child, depth: depth + 1, includeURLs: includeURLs, into: &lines) }
     }
