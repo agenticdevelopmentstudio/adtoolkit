@@ -1,11 +1,13 @@
 import AppKit
 import WebKit
 import XCTest
+@testable import AgenticToolkitMacOS
 
 /// A web view in a window that is never ordered front, so layout and
 /// `getBoundingClientRect` work without taking the screen.
 @MainActor
-final class OffscreenWebView: NSObject, WKNavigationDelegate {
+final class OffscreenWebView: NSObject, WKNavigationDelegate, WKUIDelegate {
+    weak var automation: BrowserAutomation?
     let window: NSWindow
     let webView: WKWebView
     private var continuation: CheckedContinuation<Void, Never>?
@@ -18,6 +20,7 @@ final class OffscreenWebView: NSObject, WKNavigationDelegate {
         super.init()
         self.window.contentView = self.webView
         self.webView.navigationDelegate = self
+        self.webView.uiDelegate = self
     }
 
     func load(html: String, baseURL: URL? = URL(string: "http://fixture.test/")) async {
@@ -45,5 +48,11 @@ final class OffscreenWebView: NSObject, WKNavigationDelegate {
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
         self.continuation?.resume()
         self.continuation = nil
+    }
+
+    func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
+                 initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping @MainActor @Sendable () -> Void) {
+        self.automation?.dialogRaised(kind: .alert, message: message)
+        completionHandler()
     }
 }

@@ -305,6 +305,176 @@
     return null;
   }
 
+  function withElement(ref, gen, fn) {
+    const r = resolve(ref, gen);
+    if (r.error) { return { error: r.error }; }
+    try { return { ok: fn(r.el) }; } catch (e) { return { error: 'script: ' + (e && e.message ? e.message : String(e)) }; }
+  }
+
+  function centre(el) {
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+
+  function mouse(el, type, extra) {
+    const c = centre(el);
+    const init = Object.assign({ bubbles: true, cancelable: true, composed: true, clientX: c.x, clientY: c.y, view: window }, extra || {});
+    el.dispatchEvent(new MouseEvent(type, init));
+  }
+
+  function click(ref, gen) {
+    return withElement(ref, gen, (el) => {
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+      if (el.tagName.toLowerCase() === 'option') {
+        const select = el.closest('select');
+        if (select) { select.value = el.value; select.dispatchEvent(new Event('input', { bubbles: true })); select.dispatchEvent(new Event('change', { bubbles: true })); }
+        return true;
+      }
+      if (el.tagName.toLowerCase() === 'a' && el.getAttribute('target') === '_blank') { el.removeAttribute('target'); }
+      mouse(el, 'pointerdown'); mouse(el, 'mousedown');
+      if (typeof el.focus === 'function') { el.focus(); }
+      mouse(el, 'pointerup'); mouse(el, 'mouseup');
+      el.click();
+      return true;
+    });
+  }
+
+  const KEY_CODES = { Enter: 13, Escape: 27, Tab: 9, Backspace: 8, Delete: 46, ArrowUp: 38, ArrowDown: 40, ArrowLeft: 37, ArrowRight: 39, Home: 36, End: 35, PageUp: 33, PageDown: 34, ' ': 32 };
+
+  function keyInit(key, mods) {
+    const code = key.length === 1 ? ('Key' + key.toUpperCase()) : key;
+    return { key: key, code: code, keyCode: KEY_CODES[key] || (key.length === 1 ? key.toUpperCase().charCodeAt(0) : 0),
+      bubbles: true, cancelable: true, composed: true,
+      metaKey: !!mods.meta, shiftKey: !!mods.shift, altKey: !!mods.alt, ctrlKey: !!mods.control };
+  }
+
+  function sendKey(target, key, mods) {
+    const down = new KeyboardEvent('keydown', keyInit(key, mods));
+    const prevented = !target.dispatchEvent(down);
+    if (!prevented && key.length === 1 && !mods.meta && !mods.control) {
+      target.dispatchEvent(new KeyboardEvent('keypress', keyInit(key, mods)));
+      if ('value' in target && !target.readOnly) {
+        target.value = target.value + key;
+        target.dispatchEvent(new InputEvent('input', { bubbles: true, data: key, inputType: 'insertText' }));
+      } else if (target.isContentEditable) {
+        document.execCommand('insertText', false, key);
+      }
+    }
+    target.dispatchEvent(new KeyboardEvent('keyup', keyInit(key, mods)));
+    return !prevented;
+  }
+
+  function type(ref, gen, text, submit) {
+    return withElement(ref, gen, (el) => {
+      el.focus();
+      for (const ch of String(text)) { sendKey(el, ch, {}); }
+      if (submit) {
+        if (sendKey(el, 'Enter', {}) && el.form && typeof el.form.requestSubmit === 'function') { el.form.requestSubmit(); }
+      }
+      return true;
+    });
+  }
+
+  function setNativeValue(el, value) {
+    const proto = el.tagName.toLowerCase() === 'textarea' ? HTMLTextAreaElement.prototype
+      : el.tagName.toLowerCase() === 'select' ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
+    const setter = Object.getOwnPropertyDescriptor(proto, 'value');
+    if (setter && setter.set) { setter.set.call(el, value); } else { el.value = value; }
+  }
+
+  function fill(ref, gen, value) {
+    return withElement(ref, gen, (el) => {
+      el.focus();
+      if (el.isContentEditable && !('value' in el)) {
+        document.execCommand('selectAll', false, null);
+        document.execCommand('insertText', false, String(value));
+        return true;
+      }
+      if (typeof el.select === 'function') { el.select(); }
+      setNativeValue(el, String(value));
+      el.dispatchEvent(new InputEvent('input', { bubbles: true, data: String(value), inputType: 'insertReplacementText' }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    });
+  }
+
+  function select(ref, gen, value) {
+    return withElement(ref, gen, (el) => {
+      const wanted = String(value);
+      const options = Array.from(el.options || []);
+      const match = options.find((o) => o.value === wanted) || options.find((o) => collapse(o.textContent) === wanted);
+      if (!match) { throw new Error('no option "' + wanted + '"'); }
+      setNativeValue(el, match.value);
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
+      return true;
+    });
+  }
+
+  function hover(ref, gen) {
+    return withElement(ref, gen, (el) => {
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+      for (const t of ['pointerover', 'mouseover', 'mouseenter', 'pointermove', 'mousemove']) {
+        mouse(el, t, t.endsWith('enter') ? { bubbles: false } : {});
+      }
+      return true;
+    });
+  }
+
+  // "Meta+Shift+ArrowDown", "Enter", "a"
+  function pressKey(spec) {
+    const parts = String(spec).split('+');
+    const key = parts.pop();
+    const mods = {};
+    for (const p of parts) { mods[p.toLowerCase()] = true; }
+    const target = document.activeElement || document.body;
+    try { return { ok: sendKey(target, key === 'Space' ? ' ' : key, mods) }; }
+    catch (e) { return { error: 'script: ' + e.message }; }
+  }
+
+  function scroll(ref, gen, direction, amount) {
+    if (ref) { return withElement(ref, gen, (el) => { el.scrollIntoView({ block: 'center', inline: 'center' }); return true; }); }
+    const px = typeof amount === 'number' ? amount : window.innerHeight * 0.8;
+    const dx = direction === 'left' ? -px : direction === 'right' ? px : 0;
+    const dy = direction === 'up' ? -px : direction === 'left' || direction === 'right' ? 0 : px;
+    window.scrollBy(dx, dy);
+    return { ok: true };
+  }
+
+  function rect(ref, gen) {
+    return withElement(ref, gen, (el) => {
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+      const r = el.getBoundingClientRect();
+      return { x: r.left, y: r.top, width: r.width, height: r.height };
+    });
+  }
+
+  function isVisible(ref, gen) {
+    const r = resolve(ref, gen);
+    if (r.error) { return false; }
+    return !isHidden(r.el);
+  }
+
+  function hasText(needle) {
+    return (document.body ? document.body.innerText : '').includes(needle);
+  }
+
+  function landmarkSnapshot(ref, depth) {
+    const held = refs.get(ref);
+    const el = held ? held.deref() : null;
+    if (!el || !el.isConnected) { return null; }
+    hiddenMemo.clear(); roleMemo.clear(); descendantMemo.clear();
+    const built = build(el, depth, { interactiveOnly: false });
+    return built.length ? built[0] : null;
+  }
+
+  function evaluate(expression) {
+    try {
+      const value = (0, eval)(String(expression));
+      return { ok: value === undefined ? 'undefined' : JSON.stringify(value) };
+    } catch (e) { return { error: 'script: ' + (e && e.message ? e.message : String(e)) }; }
+  }
+
   window.__adkitchen = {
     version: 1,
     snapshot: snapshot,
@@ -314,5 +484,8 @@
     focusedLandmark: focusedLandmark,
     resolve: resolve,
     generation: () => generation,
+    click: click, type: type, fill: fill, select: select, hover: hover, pressKey: pressKey,
+    scroll: scroll, rect: rect, isVisible: isVisible, hasText: hasText,
+    landmarkSnapshot: landmarkSnapshot, evaluate: evaluate,
   };
 })();
