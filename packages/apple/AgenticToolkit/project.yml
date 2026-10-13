@@ -84,6 +84,9 @@ packages:
     url: https://github.com/modelcontextprotocol/swift-sdk
     minVersion: "0.11.0"
     maxVersion: "1.0.0"
+  FlyingFox:
+    url: https://github.com/swhitty/FlyingFox
+    from: "0.20.0"
   KeyboardShortcuts:
     url: https://github.com/sindresorhus/KeyboardShortcuts
     from: "2.0.0"
@@ -232,6 +235,8 @@ targets:
       - package: CodeEditLanguages
       - package: KeyboardShortcuts
       - package: Sparkle
+      # `MCPHTTPEndpoint` owns the loopback socket through FlyingFox.
+      - package: FlyingFox
 
   AgenticToolkitPermissions:
     type: framework
@@ -868,6 +873,10 @@ targets:
       # be there too — same "closure completion" reason as GRDB above.
       - package: Sparkle
         product: Sparkle
+      # AgenticToolkitMacOS links FlyingFox (MCPHTTPEndpoint); same closure
+      # completion as Sparkle above.
+      - package: FlyingFox
+        product: FlyingFox
 
   AgenticToolkitMacOSTests:
     type: bundle.unit-test
@@ -956,6 +965,10 @@ targets:
       # be there too — same "closure completion" reason as GRDB above.
       - package: Sparkle
         product: Sparkle
+      # AgenticToolkitMacOS links FlyingFox (MCPHTTPEndpoint); same closure
+      # completion as Sparkle above.
+      - package: FlyingFox
+        product: FlyingFox
 
   # A per-platform pair rather than one `supportedDestinations: [macOS, iOS]`
   # target, for the reason spelled out above AgenticToolkitMarkdown: this
