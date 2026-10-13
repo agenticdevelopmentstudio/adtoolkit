@@ -208,6 +208,9 @@ targets:
           # TEMP_ UUID churn in project.pbxproj on every regeneration.
           - "UI/Settings"
           - "Scripting"
+          - "Features/BrowserPane/Automation/BrowserSnapshot.js"
+      - path: macOS/Features/BrowserPane/Automation/BrowserSnapshot.js
+        buildPhase: resources
     dependencies:
       - target: AgenticToolkitCore
       - target: AgenticToolkitCoreUI
@@ -872,7 +875,10 @@ targets:
     templates:
       - SwiftLint
     sources:
-      - Tests/AgenticToolkitMacOSTests
+      - path: Tests/AgenticToolkitMacOSTests
+        excludes: ["BrowserAutomation/Fixtures/**"]
+      - path: Tests/AgenticToolkitMacOSTests/BrowserAutomation/Fixtures
+        buildPhase: resources
       # The in-memory billing service, shared with the Core billing tests.
       - path: Tests/AgenticToolkitCoreTests/Billing/FakeBillingClient.swift
     dependencies:

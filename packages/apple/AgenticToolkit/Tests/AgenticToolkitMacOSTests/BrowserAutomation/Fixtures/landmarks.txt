@@ -1,0 +1,20 @@
+- document "Home":
+  - banner [ref=e1]:
+    - link "Acme" [ref=e2]
+    - navigation [ref=e3]:
+      - list [ref=e4]:
+        - listitem [ref=e5]:
+          - link "Docs" [ref=e6]
+        - listitem [ref=e7]:
+          - link "Weblog" [ref=e8]
+  - text: Welcome to Acme.
+  - img "Logo" [ref=e9]
+  - table [ref=e10]:
+    - rowgroup [ref=e11]:
+      - row [ref=e12]:
+        - columnheader "Name" [ref=e13]
+        - cell "Ada" [ref=e14]
+  - button "Menu" [ref=e15]
+  - text: bad role
+  - contentinfo [ref=e16]:
+    - text: © Acme

@@ -1,0 +1,15 @@
+- document "Sign in":
+  - main [ref=e1]:
+    - heading "Sign in" [ref=e2] [level=1]
+    - form [ref=e3]:
+      - text: Email
+      - textbox "Email" [ref=e4] [value="a@b.c"]
+      - text: Password
+      - textbox "Password" [ref=e5]
+      - checkbox "Remember me" [ref=e6] [checked]
+      - text: Remember me
+      - combobox [ref=e7] [value="pro"]:
+        - option "Free" [ref=e8]
+        - option "Pro" [ref=e9] [selected]
+      - button "Continue" [ref=e10] [disabled]
+      - link "Forgot password?" [ref=e11]
