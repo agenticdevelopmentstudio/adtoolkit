@@ -18,6 +18,7 @@ public final class LocalChatSession: ChatSession, @unchecked Sendable {
     private let makeContext: @Sendable ([AIChatMessage]) async -> AIChatContext
     private let eventStreamFactory: EventStreamFactory
     private let toolSource: (any ChatToolSource)?
+    private let toolCaller: String?
 
     private let lock = NSLock()
     private var continuation: AsyncStream<ChatEvent>.Continuation?
@@ -33,12 +34,14 @@ public final class LocalChatSession: ChatSession, @unchecked Sendable {
         resolvePlugin: @escaping @Sendable () async -> (any AIPlugin)?,
         makeContext: @escaping @Sendable ([AIChatMessage]) async -> AIChatContext,
         eventStreamFactory: @escaping EventStreamFactory = { PluginTransport.run(spec: $0, plugin: $1) },
-        toolSource: (any ChatToolSource)? = nil
+        toolSource: (any ChatToolSource)? = nil,
+        toolCaller: String? = nil
     ) {
         self.resolvePlugin = resolvePlugin
         self.makeContext = makeContext
         self.eventStreamFactory = eventStreamFactory
         self.toolSource = toolSource
+        self.toolCaller = toolCaller
     }
 
     public func events() -> AsyncStream<ChatEvent> {
@@ -134,7 +137,7 @@ public final class LocalChatSession: ChatSession, @unchecked Sendable {
                         toolName: use.name,
                         toolArgumentsJSON: use.args
                     ))
-                    let result = await toolSource!.callTool(name: use.name, argumentsJSON: use.args)
+                    let result = await toolSource!.callTool(name: use.name, argumentsJSON: use.args, caller: toolCaller)
                     appendHistory(AIChatMessage(
                         role: .toolResult,
                         content: result.content,

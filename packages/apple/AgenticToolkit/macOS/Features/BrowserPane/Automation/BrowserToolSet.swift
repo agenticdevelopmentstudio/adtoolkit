@@ -25,10 +25,6 @@ public final class BrowserToolSet: ChatToolSource, @unchecked Sendable {
 
     public func toolDefinitions() async -> [ToolDefinition] { Self.definitions }
 
-    public func callTool(name: String, argumentsJSON: Data) async -> (content: String, isError: Bool) {
-        await callTool(name: name, argumentsJSON: argumentsJSON, caller: nil)
-    }
-
     public func callTool(name: String, argumentsJSON: Data, caller: String?) async -> (content: String, isError: Bool) {
         guard Self.toolNames.contains(name) else { return ("unknown tool \(name)", true) }
         let arguments: [String: Any]
