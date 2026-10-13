@@ -23,13 +23,14 @@ public actor MCPHTTPEndpoint {
     static let requestTimeout: TimeInterval = 120
 
     public enum StartError: Error {
-        /// `start()` was called while another `start()` was still binding.
+        /// `start()` was called while another `start()` was still binding, or
+        /// while a `stop()` was still tearing down.
         case alreadyStarting
         /// `stop()` arrived while `start()` was binding; everything was torn down.
         case stoppedWhileStarting
     }
 
-    private enum Phase { case idle, starting, running }
+    private enum Phase { case idle, starting, running, stopping }
 
     private struct ClosedEarly: Error {}
 
@@ -60,7 +61,7 @@ public actor MCPHTTPEndpoint {
         switch phase {
         case .running:
             if let port { return port }
-        case .starting:
+        case .starting, .stopping:
             throw StartError.alreadyStarting
         case .idle:
             break
@@ -95,10 +96,19 @@ public actor MCPHTTPEndpoint {
     /// Stops listening. Called while `start()` is binding, it records the
     /// request and `start()` tears down what it built and throws.
     public func stop() async {
-        if phase == .starting {
+        switch phase {
+        case .starting:
             stopRequested = true
             return
+        case .stopping:
+            return
+        case .idle, .running:
+            break
         }
+        // The phase flips and tearDown() moves everything out before its first
+        // await, so a `start()` arriving meanwhile can neither see the closing
+        // port nor bind a second server.
+        phase = .stopping
         await tearDown()
         phase = .idle
     }
@@ -108,13 +118,15 @@ public actor MCPHTTPEndpoint {
     }
 
     private func tearDown() async {
-        await http?.stop(timeout: 1)
-        runTask?.cancel()
-        runTask = nil
+        let closingHTTP = http
+        let closingTask = runTask
         http = nil
+        runTask = nil
         transport = nil
-        await server.stop()
         port = nil
+        await closingHTTP?.stop(timeout: 1)
+        closingTask?.cancel()
+        await server.stop()
     }
 
     // MARK: - Listening
@@ -222,7 +234,7 @@ public actor MCPHTTPEndpoint {
     /// other body (array, no id, unparseable) passes through unchanged.
     static func rewriteID(in body: Data) -> IDRewrite {
         guard var object = (try? JSONSerialization.jsonObject(with: body)) as? [String: Any],
-              let original = object["id"],
+              let original = object["id"], isRewritable(original),
               let originalJSON = try? JSONSerialization.data(withJSONObject: [original]) else {
             return IDRewrite(body: body, uniqueID: nil, originalIDJSON: nil)
         }
@@ -232,6 +244,15 @@ public actor MCPHTTPEndpoint {
             return IDRewrite(body: body, uniqueID: nil, originalIDJSON: nil)
         }
         return IDRewrite(body: rewritten, uniqueID: unique, originalIDJSON: originalJSON)
+    }
+
+    /// Only a string or an integer is a JSON-RPC id the SDK tracks; null (which
+    /// the SDK reads as "no id", a notification), booleans and fractions pass
+    /// through untouched.
+    private static func isRewritable(_ id: Any) -> Bool {
+        if id is String { return true }
+        guard let number = id as? NSNumber, CFGetTypeID(number) == CFNumberGetTypeID() else { return false }
+        return !CFNumberIsFloatType(number)
     }
 
     /// Puts the caller's id back into a response body that carries ours.

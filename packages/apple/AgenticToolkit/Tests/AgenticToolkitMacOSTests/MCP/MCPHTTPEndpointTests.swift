@@ -131,6 +131,15 @@ final class MCPHTTPEndpointTests: XCTestCase {
         XCTAssertEqual(json?["id"] as? String, "abc")
     }
 
+    /// `"id": null` is no id to the SDK: a notification, answered 202 with no
+    /// body. The endpoint must not turn it into a request.
+    func testNullIdIsStillANotification() async throws {
+        let body = #"{"jsonrpc":"2.0","id":null,"method":"tools/list","params":{}}"#
+        let (status, json) = try await send(body: body)
+        XCTAssertEqual(status, 202)
+        XCTAssertNil(json)
+    }
+
     func testStartWhileRunningReturnsTheSamePort() async throws {
         let again = try await endpoint.start()
         XCTAssertEqual(again, port)
