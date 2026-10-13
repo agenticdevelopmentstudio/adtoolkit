@@ -112,7 +112,9 @@ extension ComposableTabsViewRegistry {
     /// LLM providers configured in Settings, that runs commands through the
     /// tab's Terminal Chat.
     @MainActor
-    public func registerPersonaTerminalChat(pluginManager: AIPluginManager) {
+    public func registerPersonaTerminalChat(
+        pluginManager: AIPluginManager, browserTools: (any ChatToolSource)? = nil
+    ) {
         register(
             .personaTerminalChat,
             descriptor: .init(
@@ -124,7 +126,9 @@ extension ComposableTabsViewRegistry {
         ) { context in
             PersonaTerminalChatViewController(
                 stateStore: context.makeStateStore(prefix: "personaTerminalChat"),
-                pluginManager: pluginManager)
+                pluginManager: pluginManager,
+                browserTools: browserTools,
+                paneID: context.nodeID)
         }
     }
 }
@@ -150,19 +154,24 @@ public struct TerminalPaneFamily {
     /// Extra shell variables every terminal pane's shell gets, under the
     /// pane's own identity variables.
     public let environment: [String: String]
+    /// Tools for driving the Browser pane, offered to persona chats beside the
+    /// terminal tools; nil offers none.
+    public let browserTools: (any ChatToolSource)?
 
     public init(
         preferredAxis: ComposableTabsAxis,
         pluginManager: AIPluginManager? = nil,
         chatDirectory: TerminalChatDirectory? = nil,
         privacyVault: PrivacyWordsVault? = nil,
-        environment: [String: String] = [:]
+        environment: [String: String] = [:],
+        browserTools: (any ChatToolSource)? = nil
     ) {
         self.preferredAxis = preferredAxis
         self.pluginManager = pluginManager
         self.chatDirectory = chatDirectory
         self.privacyVault = privacyVault
         self.environment = environment
+        self.browserTools = browserTools
     }
 
     /// Registers every pane in the family this host can offer.
@@ -173,7 +182,9 @@ public struct TerminalPaneFamily {
                 vault: privacyVault, preferredAxis: preferredAxis, environment: environment)
         }
         registry.registerTerminalChat(directory: chatDirectory)
-        if let pluginManager { registry.registerPersonaTerminalChat(pluginManager: pluginManager) }
+        if let pluginManager {
+            registry.registerPersonaTerminalChat(pluginManager: pluginManager, browserTools: browserTools)
+        }
     }
 
     /// An unbounded allowance for each pane ``register(in:)`` registers, in

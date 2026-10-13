@@ -1382,6 +1382,7 @@
 		8E88CF8788DDBC7CEA1CAF20 /* ExtensionsBrowsePanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EE8B49BDB77A27EA20270BE /* ExtensionsBrowsePanel.swift */; };
 		8E97F6967524F3C811A5BF2A /* ThemedTerminalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36891551371F0B380FD52A1D /* ThemedTerminalView.swift */; };
 		8EB3B9DBD495B64B42A5CD97 /* ExpiringMemoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F6D7DD97EFDFD8C7049B1AE /* ExpiringMemoTests.swift */; };
+		8F0CA7BFA37C7B9724D5EBFB /* PersonaTerminalChatToolsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 051950C53D26DBD621257576 /* PersonaTerminalChatToolsTests.swift */; };
 		8F411DCA533FDCFB8B6D0AB7 /* PluginLoadFailuresPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F2D8CD502813330AE5AEC77 /* PluginLoadFailuresPanel.swift */; };
 		8F653A68F5D987BD5923072A /* BucketAccessAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 615584B743170D28F30D5235 /* BucketAccessAdapter.swift */; };
 		8F6836DC7D80A7B50BFCD91C /* AgenticDeveloperHubClient.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1135775DADF0951E93877DC0 /* AgenticDeveloperHubClient.framework */; };
@@ -4523,6 +4524,7 @@
 		043577290886D5F1D593BF3E /* MainWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowController.swift; sourceTree = "<group>"; };
 		04C8EA09F59EA16290707027 /* HTDVController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTDVController.swift; sourceTree = "<group>"; };
 		04E28B0B7B9559B9AC1C1EE2 /* ClaudeAuthStoreDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeAuthStoreDelegate.swift; sourceTree = "<group>"; };
+		051950C53D26DBD621257576 /* PersonaTerminalChatToolsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaTerminalChatToolsTests.swift; sourceTree = "<group>"; };
 		0533C9C921428FE64F72581E /* WebAuthRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAuthRunnerTests.swift; sourceTree = "<group>"; };
 		054EE267FE62903BB10C2434 /* ExtensionsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionsCoordinator.swift; sourceTree = "<group>"; };
 		058A27D7B07D396EBF7A45E1 /* WindowDiscoveryMatchingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowDiscoveryMatchingTests.swift; sourceTree = "<group>"; };
@@ -9029,6 +9031,7 @@
 				0E15B873D127EF564CA6C6EE /* WorkTracking */,
 				BB4368290C759EB450171D51 /* MarkdownNoteStorageTests.swift */,
 				891D2F21BE29CCE600FB6473 /* NoteEditorViewControllerTests.swift */,
+				051950C53D26DBD621257576 /* PersonaTerminalChatToolsTests.swift */,
 				DB78EA6E1D01F6B14B041951 /* RefusalRecorder.swift */,
 				F6EAAB5CEBC2B48955B96B84 /* SettingObservingTests.swift */,
 			);
@@ -15111,6 +15114,7 @@
 				6912383011452E4437CEB535 /* PaneWebviewPresenterTests.swift in Sources */,
 				4B9C5A9FA7D1C62A309D234E /* PathViewTests.swift in Sources */,
 				0C9DB16E6B2C8C9A7A64E984 /* PerIDWindowControllerTests.swift in Sources */,
+				8F0CA7BFA37C7B9724D5EBFB /* PersonaTerminalChatToolsTests.swift in Sources */,
 				145D9A43D78CF7CF3A0A6E59 /* PlaceholderTests.swift in Sources */,
 				0C094A9A567FD8F7696CF4F2 /* PluginLoadFailuresPanelTests.swift in Sources */,
 				D21E64220F721413CA25BA5D /* PopupMenuChoiceViewTests.swift in Sources */,

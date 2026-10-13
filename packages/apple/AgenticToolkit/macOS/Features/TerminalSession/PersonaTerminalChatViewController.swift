@@ -18,7 +18,7 @@ public final class PersonaTerminalChatViewController: NSViewController {
 
     private let stateStore: PaneStateStore
     private let pluginManager: AIPluginManager
-    private var session: LocalChatSession!
+    public private(set) var session: LocalChatSession!
     private var viewModel: AIChatViewModel!
     private var chatView: ChatView?
 
@@ -28,7 +28,13 @@ public final class PersonaTerminalChatViewController: NSViewController {
     private weak var modelPopup: NSPopUpButton?
     private var modelFetch: Task<Void, Never>?
 
-    public init(stateStore: PaneStateStore, pluginManager: AIPluginManager) {
+    /// - Parameters:
+    ///   - browserTools: Tools for driving the Browser pane, offered beside the
+    ///     terminal tools; nil offers none.
+    ///   - paneID: This pane's id, named as the caller of every tool call so
+    ///     "the active pane" resolves to the pane this chat sits in.
+    public init(stateStore: PaneStateStore, pluginManager: AIPluginManager,
+                browserTools: (any ChatToolSource)? = nil, paneID: UUID? = nil) {
         self.stateStore = stateStore
         self.pluginManager = pluginManager
         super.init(nibName: nil, bundle: nil)
@@ -43,9 +49,10 @@ public final class PersonaTerminalChatViewController: NSViewController {
                 await MainActor.run { self?.makeContext(history: history) }
                     ?? AIChatContext(messages: history, model: "", config: AIPluginConfig([:]))
             },
-            toolSource: TerminalChatToolSource { [weak self] in
-                self?.connectedTerminalChat()
-            }
+            toolSource: CompositeChatToolSource(
+                [TerminalChatToolSource { [weak self] in self?.connectedTerminalChat() }]
+                    + (browserTools.map { [$0] } ?? [])),
+            toolCaller: paneID?.uuidString
         )
         viewModel = AIChatViewModel(session: session)
     }

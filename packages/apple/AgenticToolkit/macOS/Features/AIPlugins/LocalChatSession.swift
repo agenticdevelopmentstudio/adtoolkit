@@ -17,8 +17,9 @@ public final class LocalChatSession: ChatSession, @unchecked Sendable {
     private let resolvePlugin: @Sendable () async -> (any AIPlugin)?
     private let makeContext: @Sendable ([AIChatMessage]) async -> AIChatContext
     private let eventStreamFactory: EventStreamFactory
-    private let toolSource: (any ChatToolSource)?
-    private let toolCaller: String?
+    /// The tools this session offers, and who it names as the caller of each.
+    public let toolSource: (any ChatToolSource)?
+    public let toolCaller: String?
 
     private let lock = NSLock()
     private var continuation: AsyncStream<ChatEvent>.Continuation?
