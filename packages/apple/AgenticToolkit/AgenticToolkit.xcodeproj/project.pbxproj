@@ -2218,6 +2218,7 @@
 		F1AEE06B649A186274B686A0 /* OnceOnlyContinuation.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2DE205A32728F397BFB2830 /* OnceOnlyContinuation.swift */; };
 		F1B92445CED75A6B710687D9 /* LayoutService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96B9E430694E03B3881F855D /* LayoutService.swift */; };
 		F1D80BC5CEDE70AE7E367172 /* AgenticDeveloperHubClient.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1135775DADF0951E93877DC0 /* AgenticDeveloperHubClient.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		F2050B634A7EA4158BF8A769 /* BrowserPaneFocus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00682C501E3E8A58D49B47A3 /* BrowserPaneFocus.swift */; };
 		F205135A7374C12AB343E232 /* PendingUsersTopic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DD892CBDC86EFD7DEA0B361 /* PendingUsersTopic.swift */; };
 		F20C940E39ABBC3325D258D4 /* AgenticToolkitPermissions.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF04ADB42980B9D5DE44BF46 /* AgenticToolkitPermissions.framework */; };
 		F20E1B325DFEA95421FFF491 /* ContextEventRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC8E316C5D2E9742F02BF1D6 /* ContextEventRecord.swift */; };
@@ -4502,6 +4503,7 @@
 		0038EE81ABBA88095B85AC6C /* ApplicationsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ApplicationsModels.swift; sourceTree = "<group>"; };
 		003E282AAC0D27ACE18306C7 /* NSWindow+Center.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSWindow+Center.swift"; sourceTree = "<group>"; };
 		00603C44F2F7D2F1D5B05F39 /* KeyCommandCaptureField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyCommandCaptureField.swift; sourceTree = "<group>"; };
+		00682C501E3E8A58D49B47A3 /* BrowserPaneFocus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserPaneFocus.swift; sourceTree = "<group>"; };
 		006EA62FE184CE60EACE5E7B /* ContributionPoint.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContributionPoint.swift; sourceTree = "<group>"; };
 		00B9D963DAE74394A2EFB02D /* ThemeEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeEnvironment.swift; sourceTree = "<group>"; };
 		00CBFC2812F35918356FB22D /* InvitationsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvitationsModels.swift; sourceTree = "<group>"; };
@@ -7157,6 +7159,7 @@
 				B8271004133BEF8589B85B66 /* BrowserConsoleLog.swift */,
 				653EA04B82D80EE6FE87667E /* BrowserDrivenBadge.swift */,
 				C18880CF4309CFED3C3C14B2 /* BrowserPaneDirectory.swift */,
+				00682C501E3E8A58D49B47A3 /* BrowserPaneFocus.swift */,
 				4ADC1613FB30916BB42548AB /* BrowserSnapshot.js */,
 				1E1D2AA6BA3880F010BEF8A2 /* BrowserSnapshot.swift */,
 				3A5EA37A794D1ADA3FF17850 /* BrowserToolSet.swift */,
@@ -13643,6 +13646,7 @@
 				DA62192181BCE82ECF7DF4C5 /* BrowserHistoryStore.swift in Sources */,
 				60209B2008DD1BA2E9569AD7 /* BrowserPane.swift in Sources */,
 				BBA2483DEA13781F0A108770 /* BrowserPaneDirectory.swift in Sources */,
+				F2050B634A7EA4158BF8A769 /* BrowserPaneFocus.swift in Sources */,
 				2F402216E9726B900D14DB51 /* BrowserPaneViewController.swift in Sources */,
 				E3B0D97A1EC5AE0A919E5C2B /* BrowserSettings.swift in Sources */,
 				F21C31D5B666228991FDCB53 /* BrowserSettingsPanelViewController.swift in Sources */,

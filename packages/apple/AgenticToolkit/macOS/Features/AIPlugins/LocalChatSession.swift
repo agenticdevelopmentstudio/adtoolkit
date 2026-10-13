@@ -141,7 +141,7 @@ public final class LocalChatSession: ChatSession, @unchecked Sendable {
                     let result = await toolSource!.callTool(name: use.name, argumentsJSON: use.args, caller: toolCaller)
                     appendHistory(AIChatMessage(
                         role: .toolResult,
-                        content: result.content,
+                        content: Self.historyContent(ofToolResult: result.content),
                         toolUseId: use.id,
                         toolIsError: result.isError
                     ))
@@ -157,6 +157,15 @@ public final class LocalChatSession: ChatSession, @unchecked Sendable {
     }
 
     // MARK: - Helpers
+
+    /// What an image tool result reads as in history. The plugins carry text
+    /// only, so a `data:image/...` URL would reach the model as a megabyte of
+    /// base64 it cannot see; it is recorded as this sentence instead.
+    static let imageToolResultPlaceholder = "screenshot taken (image not shown to text-only models)"
+
+    static func historyContent(ofToolResult content: String) -> String {
+        content.hasPrefix("data:image/") ? imageToolResultPlaceholder : content
+    }
 
     private func emit(_ event: ChatEvent) { withLock { continuation }?.yield(event) }
     private func appendHistory(_ msg: AIChatMessage) { lock.lock(); history.append(msg); lock.unlock() }

@@ -23,6 +23,13 @@ final class OffscreenWebView: NSObject, WKNavigationDelegate, WKUIDelegate {
         self.webView.uiDelegate = self
     }
 
+    /// Orders the window in behind everything, still far off every display,
+    /// so `isVisible` is true: a screenshot refuses a window that is not.
+    /// Never ordered front and never key, so it takes nothing from the screen.
+    func orderInOffscreen() {
+        window.orderBack(nil)
+    }
+
     func load(html: String, baseURL: URL? = URL(string: "http://fixture.test/")) async {
         await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
             self.continuation = cont

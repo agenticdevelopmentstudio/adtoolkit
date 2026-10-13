@@ -129,6 +129,10 @@ public enum BrowserAutomationError: Error, CustomStringConvertible, Equatable, S
     case timeout(String)
     case runtimeMissing
     case noWindow
+    case notOnScreen
+    case screenshotTimedOut
+    case cspRefusesEvaluation
+    case openRefused
 
     public var description: String {
         switch self {
@@ -138,6 +142,10 @@ public enum BrowserAutomationError: Error, CustomStringConvertible, Equatable, S
         case .timeout(let what): return "timed out waiting for \(what)"
         case .runtimeMissing: return "the browser automation runtime is missing from the bundle"
         case .noWindow: return "the pane is not in a window"
+        case .notOnScreen: return "the pane is not on screen"
+        case .screenshotTimedOut: return "the screenshot timed out"
+        case .cspRefusesEvaluation: return "the page's Content Security Policy refuses evaluation"
+        case .openRefused: return "could not open a Browser pane beside that pane"
         }
     }
 }

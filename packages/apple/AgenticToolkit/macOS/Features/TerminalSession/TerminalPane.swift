@@ -28,6 +28,17 @@ extension ComposableTabsViewRegistry {
     ///   `.vertical`; a terminal-only window wants them side by side.
     @MainActor
     public func registerTerminal(preferredAxis: ComposableTabsAxis, environment: [String: String] = [:]) {
+        registerTerminal(preferredAxis: preferredAxis, environment: { environment })
+    }
+
+    /// Registers the terminal pane with an environment read when each shell
+    /// is spawned rather than when the pane is registered, so a value the host
+    /// learns later (the port a server has actually bound) reaches every shell
+    /// opened after it is known.
+    @MainActor
+    public func registerTerminal(
+        preferredAxis: ComposableTabsAxis, environment: @escaping @MainActor () -> [String: String]
+    ) {
         register(
             .terminal,
             descriptor: .init(
@@ -41,7 +52,7 @@ extension ComposableTabsViewRegistry {
         ) { context in
             let manager = TerminalSessionManager(
                 workingDirectory: context.workingDirectory.path,
-                environment: environment.merging(Self.paneEnvironment(for: context)) { _, pane in pane })
+                environment: environment().merging(Self.paneEnvironment(for: context)) { _, pane in pane })
             // The pane opens on a live shell; an empty pane is a dead end the
             // user would have to click out of every time.
             manager.addSession()
@@ -55,6 +66,16 @@ extension ComposableTabsViewRegistry {
     public func registerPrivateTerminal(
         vault: PrivacyWordsVault, preferredAxis: ComposableTabsAxis, environment: [String: String] = [:]
     ) {
+        registerPrivateTerminal(vault: vault, preferredAxis: preferredAxis, environment: { environment })
+    }
+
+    /// Registers the private terminal pane with an environment read when each
+    /// shell is spawned; see the closure form of ``registerTerminal(preferredAxis:environment:)``.
+    @MainActor
+    public func registerPrivateTerminal(
+        vault: PrivacyWordsVault, preferredAxis: ComposableTabsAxis,
+        environment: @escaping @MainActor () -> [String: String]
+    ) {
         register(
             .privateTerminal,
             descriptor: .init(
@@ -66,7 +87,7 @@ extension ComposableTabsViewRegistry {
         ) { context in
             PrivateTerminalViewController(
                 vault: vault, workingDirectory: context.workingDirectory.path,
-                environment: environment.merging(Self.paneEnvironment(for: context)) { _, pane in pane })
+                environment: environment().merging(Self.paneEnvironment(for: context)) { _, pane in pane })
         }
     }
 
@@ -152,8 +173,10 @@ public struct TerminalPaneFamily {
     /// private terminal pane is not offered.
     public let privacyVault: PrivacyWordsVault?
     /// Extra shell variables every terminal pane's shell gets, under the
-    /// pane's own identity variables.
-    public let environment: [String: String]
+    /// pane's own identity variables, read when each shell is spawned.
+    public let environmentProvider: @MainActor () -> [String: String]
+    /// The extra shell variables a shell spawned now would get.
+    public var environment: [String: String] { environmentProvider() }
     /// Tools for driving the Browser pane, offered to persona chats beside the
     /// terminal tools; nil offers none.
     public let browserTools: (any ChatToolSource)?
@@ -166,20 +189,36 @@ public struct TerminalPaneFamily {
         environment: [String: String] = [:],
         browserTools: (any ChatToolSource)? = nil
     ) {
+        self.init(
+            preferredAxis: preferredAxis, pluginManager: pluginManager, chatDirectory: chatDirectory,
+            privacyVault: privacyVault, environment: { environment }, browserTools: browserTools)
+    }
+
+    /// A family whose shells read `environment` when each is spawned, so a
+    /// value the host learns after registering (a bound port) still reaches
+    /// every shell opened once it is known.
+    public init(
+        preferredAxis: ComposableTabsAxis,
+        pluginManager: AIPluginManager? = nil,
+        chatDirectory: TerminalChatDirectory? = nil,
+        privacyVault: PrivacyWordsVault? = nil,
+        environment: @escaping @MainActor () -> [String: String],
+        browserTools: (any ChatToolSource)? = nil
+    ) {
         self.preferredAxis = preferredAxis
         self.pluginManager = pluginManager
         self.chatDirectory = chatDirectory
         self.privacyVault = privacyVault
-        self.environment = environment
+        self.environmentProvider = environment
         self.browserTools = browserTools
     }
 
     /// Registers every pane in the family this host can offer.
     public func register(in registry: ComposableTabsViewRegistry) {
-        registry.registerTerminal(preferredAxis: preferredAxis, environment: environment)
+        registry.registerTerminal(preferredAxis: preferredAxis, environment: environmentProvider)
         if let privacyVault {
             registry.registerPrivateTerminal(
-                vault: privacyVault, preferredAxis: preferredAxis, environment: environment)
+                vault: privacyVault, preferredAxis: preferredAxis, environment: environmentProvider)
         }
         registry.registerTerminalChat(directory: chatDirectory)
         if let pluginManager {

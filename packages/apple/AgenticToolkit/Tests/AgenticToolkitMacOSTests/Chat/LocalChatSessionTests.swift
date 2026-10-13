@@ -110,6 +110,71 @@ struct LocalChatSessionTests {
 
         #expect(await calls.callers == ["pane-42"])
     }
+
+    @Test("an image tool result is recorded in history as a sentence, not the data URL")
+    func imageToolResultIsASentenceInHistory() async {
+        let seen = HistoryRecorder()
+        let requests = RequestCounter()
+        let factory: LocalChatSession.EventStreamFactory = { _, _ in
+            let first = requests.next() == 0
+            return AsyncThrowingStream { continuation in
+                if first {
+                    continuation.yield(.toolUse(id: "t1", name: "probe", argumentsJSON: Data("{}".utf8)))
+                }
+                continuation.yield(.end(stopReason: "end_turn"))
+                continuation.finish()
+            }
+        }
+        let session = LocalChatSession(
+            resolvePlugin: { StubPlugin() },
+            makeContext: { history in
+                seen.record(history)
+                return AIChatContext(
+                    messages: [], model: "m", systemPrompt: nil, tools: [], config: AIPluginConfig([:]))
+            },
+            eventStreamFactory: factory,
+            toolSource: FixedResultSource("data:image/png;base64,iVBORw0KGgo=")
+        )
+        let finished = FinishFlag()
+        let collectorTask = Task {
+            for await event in session.events() {
+                if case .stateChanged(.ready) = event, seen.toolResults.count > 0 { await finished.set(); break }
+            }
+        }
+        try? await Task.sleep(for: .milliseconds(20))
+        session.send("look")
+        for _ in 0..<200 {
+            if await finished.value { break }
+            try? await Task.sleep(for: .milliseconds(10))
+        }
+        collectorTask.cancel()
+        session.close()
+
+        #expect(seen.toolResults == ["screenshot taken (image not shown to text-only models)"])
+    }
+}
+
+/// The tool results in the most recent history handed to `makeContext`.
+private final class HistoryRecorder: @unchecked Sendable {
+    private let lock = NSLock()
+    private var latest: [AIChatMessage] = []
+    func record(_ history: [AIChatMessage]) { lock.lock(); latest = history; lock.unlock() }
+    var toolResults: [String] {
+        lock.lock(); defer { lock.unlock() }
+        return latest.filter { $0.role == .toolResult }.map(\.content)
+    }
+}
+
+private final class FixedResultSource: ChatToolSource, @unchecked Sendable {
+    private let content: String
+    init(_ content: String) { self.content = content }
+    func toolDefinitions() async -> [ToolDefinition] {
+        let schema = ToolJSONSchema.object(properties: [:])
+        return [ToolDefinition(name: "probe", description: "probe", parametersJSONSchema: schema)]
+    }
+    func callTool(name: String, argumentsJSON: Data, caller: String?) async -> (content: String, isError: Bool) {
+        (content, false)
+    }
 }
 
 private actor CallRecorder {

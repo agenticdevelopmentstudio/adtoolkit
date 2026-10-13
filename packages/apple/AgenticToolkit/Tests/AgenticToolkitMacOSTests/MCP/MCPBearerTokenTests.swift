@@ -49,4 +49,24 @@ final class MCPBearerTokenTests: XCTestCase {
         let file = URL(fileURLWithPath: "/dev/null/cannot/mcp-token")
         XCTAssertThrowsError(try MCPBearerToken.load(from: file))
     }
+
+    /// A symlink at the token path is refused, not followed: neither the file
+    /// it points to is read as the token, nor is a fresh token written
+    /// through it, and its target is left untouched.
+    func testASymlinkAtTheTokenPathIsRefused() throws {
+        let dir = tempDir()
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let target = dir.appendingPathComponent("elsewhere")
+        try "not-a-token".write(to: target, atomically: true, encoding: .utf8)
+        let file = dir.appendingPathComponent("mcp-token")
+        try FileManager.default.createSymbolicLink(at: file, withDestinationURL: target)
+        XCTAssertThrowsError(try MCPBearerToken.load(from: file))
+        XCTAssertEqual(try String(contentsOf: target, encoding: .utf8), "not-a-token")
+
+        let dangling = dir.appendingPathComponent("dangling-token")
+        let missing = dir.appendingPathComponent("missing")
+        try FileManager.default.createSymbolicLink(at: dangling, withDestinationURL: missing)
+        XCTAssertThrowsError(try MCPBearerToken.load(from: dangling))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: missing.path), "nothing is written through the link")
+    }
 }

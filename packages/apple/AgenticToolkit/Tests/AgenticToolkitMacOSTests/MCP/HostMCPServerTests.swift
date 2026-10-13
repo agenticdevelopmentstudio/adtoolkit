@@ -126,6 +126,12 @@ final class HostMCPServerTests: XCTestCase {
         XCTAssertEqual(opened.count, 1)
     }
 
+    func testHostAppInfoSaysNoneWhenThereAreNoPlugins() async {
+        let host = HostAppToolSource(appName: "Kitchen", appVersion: "2.0")
+        let info = await host.callTool(name: "host_app_info", argumentsJSON: Data("{}".utf8), caller: nil)
+        XCTAssertEqual(info.content, "Host: Kitchen\nVersion: 2.0\nPlugins: (none)")
+    }
+
     func testSecondServeStopsTheFirst() async throws {
         let server = HostMCPServer(appName: "Test", appVersion: "1")
         await server.register(EchoSource(names: ["a"]))

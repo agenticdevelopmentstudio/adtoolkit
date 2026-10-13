@@ -74,7 +74,13 @@ public final class BrowserPaneViewController: NSViewController {
     /// use so a pane nobody drives pays nothing for it.
     public private(set) lazy var automation: BrowserAutomation = {
         let automation = BrowserAutomation(webView: webView, console: consoleLog)
-        automation.onDriveStateChange = { [weak self] driving in self?.drivenBadge.setDriven(driving) }
+        automation.onDriveStateChange = { [weak self] driving in
+            guard let self else { return }
+            // The start of every drive is a use of this pane, so it becomes
+            // the default for the next caller that names none.
+            if driving { BrowserPaneFocus.shared.note(self) }
+            self.drivenBadge.setDriven(driving)
+        }
         return automation
     }()
     let drivenBadge = BrowserDrivenBadge()
@@ -84,6 +90,8 @@ public final class BrowserPaneViewController: NSViewController {
     let reloadButton = NSButton()
 
     private var observations: [NSKeyValueObservation] = []
+    /// The window's first responder, followed while the pane is on screen.
+    private var firstResponderObservation: NSKeyValueObservation?
     private var cancellables: Set<AnyCancellable> = []
     private var downloads: [WKDownload] = []
     /// The history row for the page on screen, so a title that arrives after
@@ -267,6 +275,27 @@ public final class BrowserPaneViewController: NSViewController {
         webView.load(URLRequest(url: restorationURL))
     }
 
+    /// A pane that appears — opened, or its tab brought forward — is the one
+    /// the user is now looking at, and the window's first responder is
+    /// followed from here on, so clicking into the page or tabbing into it
+    /// makes this the most recently focused Browser pane too.
+    public override func viewDidAppear() {
+        super.viewDidAppear()
+        BrowserPaneFocus.shared.note(self)
+        firstResponderObservation = view.window?.observe(\.firstResponder, options: [.new]) { [weak self] window, _ in
+            MainActor.assumeIsolated {
+                guard let self, let responder = window.firstResponder as? NSView,
+                      responder === self.webView || responder.isDescendant(of: self.webView) else { return }
+                BrowserPaneFocus.shared.note(self)
+            }
+        }
+    }
+
+    public override func viewDidDisappear() {
+        super.viewDidDisappear()
+        firstResponderObservation = nil
+    }
+
     private func configureButton(_ button: NSButton, symbol: String, label: String, action: Selector) {
         button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: label)
         button.imagePosition = .imageOnly
@@ -414,6 +443,7 @@ extension BrowserPaneViewController: PaneContentTeardown {
     /// otherwise call back into it.
     public func paneContentWillBeDiscarded() {
         observations.removeAll()
+        firstResponderObservation = nil
         cancellables.removeAll()
         downloads.forEach { $0.cancel() }
         downloads.removeAll()

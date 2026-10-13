@@ -64,6 +64,27 @@ public struct BrowserFindMatch: Sendable, Equatable {
     public var name: String
 }
 
+/// The automations the current call chain is already driving, so a nested
+/// `drive` from inside one can tell itself apart from a second caller.
+enum BrowserDriveChain {
+    @TaskLocal static var held: Set<ObjectIdentifier> = []
+}
+
+/// Resumes a screenshot's continuation exactly once: with WebKit's image, or
+/// with the timeout, whichever comes first.
+@MainActor
+private final class SnapshotResumer {
+    var continuation: CheckedContinuation<NSImage, Error>?
+    var timer: Task<Void, Never>?
+
+    func finish(_ result: Result<NSImage, Error>) {
+        guard let continuation else { return }
+        self.continuation = nil
+        timer?.cancel()
+        continuation.resume(with: result)
+    }
+}
+
 /// Drives one `WKWebView` on behalf of a model.
 @MainActor
 public final class BrowserAutomation: NSObject {
@@ -102,8 +123,50 @@ public final class BrowserAutomation: NSObject {
     // MARK: Driving
 
     /// Every tool call runs inside this so the pane can show its badge and
-    /// route dialogs here. Re-entrant.
+    /// route dialogs here.
+    ///
+    /// One caller at a time: the outermost `drive` takes a FIFO gate and holds
+    /// it until its body finishes, so a second caller — another Claude Code
+    /// process, a persona chat — waits its turn instead of interleaving with
+    /// the first at every `await`. An action's dialog and delta then belong to
+    /// the caller that caused them. Re-entrant within one call chain: a task
+    /// local records which automations the current chain already holds, and a
+    /// nested `drive` from that chain passes straight through. The depth count
+    /// alone cannot tell the two apart, because a second caller also sees a
+    /// non-zero depth while the first is inside.
     public func drive<T>(_ body: () async throws -> T) async rethrows -> T {
+        let key = ObjectIdentifier(self)
+        if BrowserDriveChain.held.contains(key) { return try await counted(body) }
+        await acquireGate()
+        defer { releaseGate() }
+        return try await BrowserDriveChain.$held.withValue(BrowserDriveChain.held.union([key])) {
+            try await counted(body)
+        }
+    }
+
+    private var gateHeld = false
+    private var gateWaiters: [CheckedContinuation<Void, Never>] = []
+
+    private func acquireGate() async {
+        guard gateHeld else {
+            gateHeld = true
+            return
+        }
+        await withCheckedContinuation { gateWaiters.append($0) }
+    }
+
+    /// Hands the gate straight to the first waiter, which then holds it, so a
+    /// caller arriving between the release and the waiter's resumption cannot
+    /// jump the queue.
+    private func releaseGate() {
+        if gateWaiters.isEmpty {
+            gateHeld = false
+        } else {
+            gateWaiters.removeFirst().resume()
+        }
+    }
+
+    private func counted<T>(_ body: () async throws -> T) async rethrows -> T {
         driveDepth += 1
         if driveDepth == 1 { isActionInFlight = true; onDriveStateChange?(true) }
         defer {
@@ -232,8 +295,48 @@ public final class BrowserAutomation: NSObject {
         try await act { try self.nativeClick(atPageX: x, pageY: y) }
     }
 
+    /// Runs `expression` as the body `return (<expression>);` of an async
+    /// function, so a returned Promise is awaited before the value comes back,
+    /// and renders the value as JSON (`undefined` when there is none).
+    ///
+    /// The newlines around the expression keep a trailing `//` comment from
+    /// swallowing the closing parenthesis.
     public func evaluate(_ expression: String) async throws -> String {
-        try await call("evaluate", ["expression": expression]) as? String ?? "undefined"
+        let value: Any?
+        do {
+            value = try await webView.callAsyncJavaScript(
+                "return (\n\(expression)\n);", arguments: [:], in: nil, contentWorld: .page)
+        } catch {
+            let message = Self.javaScriptMessage(of: error)
+            if Self.isContentSecurityPolicyRefusal(message) { throw BrowserAutomationError.cspRefusesEvaluation }
+            throw BrowserAutomationError.script(message)
+        }
+        return Self.renderJSON(value)
+    }
+
+    /// What WebKit says went wrong: the page's exception message when there
+    /// is one, else the error's own description.
+    static func javaScriptMessage(of error: Error) -> String {
+        let info = (error as NSError).userInfo
+        if let message = info["WKJavaScriptExceptionMessage"] as? String, !message.isEmpty { return message }
+        return error.localizedDescription
+    }
+
+    /// An `EvalError`, or a refusal that names the policy.
+    static func isContentSecurityPolicyRefusal(_ message: String) -> Bool {
+        let lowered = message.lowercased()
+        return lowered.contains("evalerror") || lowered.contains("content security policy")
+            || lowered.contains("unsafe-eval")
+    }
+
+    /// JSON for a value WebKit handed back. `nil` is JavaScript's `undefined`;
+    /// a bare string or number is rendered as a JSON fragment.
+    static func renderJSON(_ value: Any?) -> String {
+        guard let value else { return "undefined" }
+        if value is NSNull { return "null" }
+        guard let data = try? JSONSerialization.data(withJSONObject: value, options: [.fragmentsAllowed, .sortedKeys]),
+              let text = String(data: data, encoding: .utf8) else { return String(describing: value) }
+        return text
     }
 
     public func navigate(to url: URL) async throws -> BrowserActionDelta {
@@ -328,16 +431,39 @@ public final class BrowserAutomation: NSObject {
         return context.makeImage()
     }
 
+    /// How long `takeSnapshot` may take before the screenshot is given up.
+    public static let screenshotTimeout: TimeInterval = 10
+
+    /// Refuses a pane whose view is in no window or in one that is not
+    /// visible, and gives up after `screenshotTimeout`: a pane WebKit has
+    /// stopped painting can otherwise leave `takeSnapshot` without an answer.
+    /// Occlusion is deliberately not checked — a quiet-presentation window is
+    /// occluded by design and still screenshots.
     public func screenshot(ref: String?, generation: Int?) async throws -> Data {
+        guard let window = webView.window, window.isVisible else { throw BrowserAutomationError.notOnScreen }
         let configuration = WKSnapshotConfiguration()
         if let ref, let generation {
             let r = try await rect(ref: ref, generation: generation)
             let zoom = webView.pageZoom
             configuration.rect = CGRect(x: r.minX * zoom, y: r.minY * zoom, width: r.width * zoom, height: r.height * zoom)
         }
+        let once = SnapshotResumer()
+        let timeout = Self.screenshotTimeout
         let image: NSImage = try await withCheckedThrowingContinuation { c in
+            once.continuation = c
+            once.timer = Task { @MainActor in
+                try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+                guard !Task.isCancelled else { return }
+                once.finish(.failure(BrowserAutomationError.screenshotTimedOut))
+            }
             webView.takeSnapshot(with: configuration) { image, error in
-                if let image { c.resume(returning: image) } else { c.resume(throwing: BrowserAutomationError.script(error?.localizedDescription ?? "snapshot failed")) }
+                MainActor.assumeIsolated {
+                    if let image {
+                        once.finish(.success(image))
+                    } else {
+                        once.finish(.failure(BrowserAutomationError.script(error?.localizedDescription ?? "snapshot failed")))
+                    }
+                }
             }
         }
         guard let full = image.cgImage(forProposedRect: nil, context: nil, hints: nil),

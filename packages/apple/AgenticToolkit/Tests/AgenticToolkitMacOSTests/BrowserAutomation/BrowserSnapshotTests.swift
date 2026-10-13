@@ -23,7 +23,7 @@ final class BrowserSnapshotTests: XCTestCase {
         let snap = try await snapshot(page)
         XCTAssertEqual(snap.text, try OffscreenWebView.expected("form"))
         XCTAssertEqual(snap.title, "Sign in")
-        XCTAssertEqual(snap.generation, 1)
+        XCTAssertGreaterThan(snap.generation, 0)
     }
 
     func testLandmarksFixtureSkipsHiddenAndCollapsesGenerics() async throws {

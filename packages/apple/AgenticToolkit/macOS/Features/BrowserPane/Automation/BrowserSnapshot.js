@@ -5,8 +5,10 @@
 
   const refs = new Map();            // ref -> WeakRef<Element>
   window.__adkitchenRefs = refs;
-  // Seeded from the clock so no document reuses another's (ref, generation) numbers.
-  let generation = Date.now() * 1000;
+  // A random six-digit base chosen once per document, advanced by one per
+  // snapshot: short enough for a model to copy back without a slip, and
+  // unlikely to repeat another document's (ref, generation) numbers.
+  let generation = 100000 + Math.floor(Math.random() * 900000);
   let nextRef = 1;
   let mutationCount = 0;
   try {
@@ -357,7 +359,10 @@
     if (!prevented && key.length === 1 && !mods.meta && !mods.control) {
       target.dispatchEvent(new KeyboardEvent('keypress', keyInit(key, mods)));
       if ('value' in target && !target.readOnly) {
-        target.value = target.value + key;
+        // The prototype setter, not the instance one: React's value tracker
+        // overrides the instance setter and drops the following input event
+        // when the value it tracked already matches.
+        setNativeValue(target, target.value + key);
         target.dispatchEvent(new InputEvent('input', { bubbles: true, data: key, inputType: 'insertText' }));
       } else if (target.isContentEditable) {
         document.execCommand('insertText', false, key);
@@ -378,11 +383,16 @@
     });
   }
 
+  // Writes `value` through the element's prototype setter, past any setter a
+  // framework installed on the instance itself. Walks the prototype chain
+  // rather than naming HTMLInputElement, so an element with a `value` of
+  // another kind (output, li, a custom element) gets its own setter.
   function setNativeValue(el, value) {
-    const proto = el.tagName.toLowerCase() === 'textarea' ? HTMLTextAreaElement.prototype
-      : el.tagName.toLowerCase() === 'select' ? HTMLSelectElement.prototype : HTMLInputElement.prototype;
-    const setter = Object.getOwnPropertyDescriptor(proto, 'value');
-    if (setter && setter.set) { setter.set.call(el, value); } else { el.value = value; }
+    for (let proto = Object.getPrototypeOf(el); proto; proto = Object.getPrototypeOf(proto)) {
+      const descriptor = Object.getOwnPropertyDescriptor(proto, 'value');
+      if (descriptor && descriptor.set) { descriptor.set.call(el, value); return; }
+    }
+    el.value = value;
   }
 
   function fill(ref, gen, value) {
@@ -471,13 +481,6 @@
     return built.length ? built[0] : null;
   }
 
-  function evaluate(expression) {
-    try {
-      const value = (0, eval)(String(expression));
-      return { ok: value === undefined ? 'undefined' : JSON.stringify(value) };
-    } catch (e) { return { error: 'script: ' + (e && e.message ? e.message : String(e)) }; }
-  }
-
   window.__adkitchen = {
     version: 1,
     snapshot: snapshot,
@@ -489,6 +492,6 @@
     generation: () => generation,
     click: click, type: type, fill: fill, select: select, hover: hover, pressKey: pressKey,
     scroll: scroll, rect: rect, isVisible: isVisible, hasText: hasText,
-    landmarkSnapshot: landmarkSnapshot, evaluate: evaluate,
+    landmarkSnapshot: landmarkSnapshot,
   };
 })();

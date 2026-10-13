@@ -21,7 +21,7 @@ final class FakeBrowserDirectory: BrowserPaneDirectory {
     func lastUsedBrowserPane() -> BrowserPaneHandle? { lastUsed.flatMap(browserPane(id:)) }
     func openBrowserPane(besidePane paneID: String?) throws -> BrowserPaneHandle {
         opened.append(paneID)
-        if openFails { throw BrowserAutomationError.noWindow }
+        if openFails { throw BrowserAutomationError.openRefused }
         let page = OffscreenWebView()
         let handle = BrowserPaneHandle(id: "new-\(panes.count)", project: "proj", tab: "Tab", automation: BrowserAutomation(webView: page.webView, console: BrowserConsoleLog()))
         panes.append(handle)
@@ -107,10 +107,29 @@ final class BrowserToolSetTests: XCTestCase {
     }
 
     func testOpenAsksTheDirectoryBesideTheCaller() async {
-        let reply = await call("browser_open", ["url": "http://fixture.test/"], caller: "term-1")
+        let reply = await call("browser_open", ["url": "about:blank"], caller: "term-1")
         XCTAssertFalse(reply.isError, reply.content)
         XCTAssertEqual(directory.opened, ["term-1"])
         XCTAssertTrue(reply.content.contains("new-2"))
+    }
+
+    /// The URL is optional: with none given the pane opens on the Home Page
+    /// setting, and with that blank (as it is here) on a blank page.
+    func testOpenWithoutAURLOpensABlankPage() async throws {
+        let reply = await call("browser_open", caller: "term-1")
+        XCTAssertFalse(reply.isError, reply.content)
+        XCTAssertTrue(reply.content.hasPrefix("opened pane new-2"), reply.content)
+        XCTAssertEqual(directory.panes.last?.automation.currentURL, "about:blank")
+        let open = try XCTUnwrap(BrowserToolSet.definitions.first { $0.name == "browser_open" })
+        let schema = try XCTUnwrap(try JSONSerialization.jsonObject(with: open.parametersJSONSchema) as? [String: Any])
+        XCTAssertFalse((schema["required"] as? [String] ?? []).contains("url"))
+    }
+
+    func testAFailedOpenIsTheSentence() async {
+        directory.openFails = true
+        let reply = await call("browser_open", ["url": "about:blank"], caller: "term-1")
+        XCTAssertTrue(reply.isError)
+        XCTAssertEqual(reply.content, "could not open a Browser pane beside that pane")
     }
 
     func testOpenRefusesNonHTTP() async {
@@ -218,6 +237,7 @@ final class BrowserToolSetTests: XCTestCase {
     }
 
     func testScreenshotReturnsAnImageDataURL() async {
+        pages["A"]!.orderInOffscreen()
         let reply = await call("browser_screenshot", ["pane_id": "A"])
         XCTAssertFalse(reply.isError, reply.content)
         XCTAssertTrue(reply.content.hasPrefix("data:image/png;base64,"))

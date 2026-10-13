@@ -37,7 +37,16 @@ public final class BrowserToolSet: ChatToolSource, @unchecked Sendable {
         }
         let parsed = Arguments(tool: name, values: arguments)
         do {
-            return (try await Task { @MainActor in try await self.dispatch(name, parsed, caller: caller) }.value, false)
+            // The hop to the main actor is an unstructured task, so a cancelled
+            // request (a timed-out HTTP call, a stopped chat) is forwarded to
+            // it by hand; otherwise a 60 s wait_for runs on to its end.
+            let work = Task { @MainActor in try await self.dispatch(name, parsed, caller: caller) }
+            let reply = try await withTaskCancellationHandler {
+                try await work.value
+            } onCancel: {
+                work.cancel()
+            }
+            return (reply, false)
         } catch let error as BrowserAutomationError {
             return (error.description, true)
         } catch let error as ToolError {
@@ -150,7 +159,7 @@ public final class BrowserToolSet: ChatToolSource, @unchecked Sendable {
         try requireEnabled()
         if name == "browser_evaluate" { try requireEvaluateEnabled() }
         if name == "browser_open" {
-            let url = try args.url("url")
+            let url = args.optionalString("url") == nil ? openWithoutURLPage() : try args.url("url")
             let pane = try directory.openBrowserPane(besidePane: caller)
             return try await pane.automation.drive {
                 let delta = try await pane.automation.navigate(to: url)
@@ -164,6 +173,19 @@ public final class BrowserToolSet: ChatToolSource, @unchecked Sendable {
             if let reply = try await self.dispatchActions(name, args, automation) { return reply }
             throw ToolError(sentence: "unknown tool \(name)")
         }
+    }
+
+    /// What `browser_open` loads when no URL is given: the Home Page setting
+    /// when it names an http or https page, else a blank page. A home page of
+    /// any other scheme is not one a model may be handed (`file:` panes are
+    /// refused everywhere else), so it falls to blank too.
+    @MainActor
+    private func openWithoutURLPage() -> URL {
+        if let home = BrowserSettings.homePage(in: settings),
+           let scheme = home.scheme?.lowercased(), scheme == "http" || scheme == "https" {
+            return home
+        }
+        return BrowserPaneViewController.blankPage
     }
 
     @MainActor
@@ -303,7 +325,7 @@ public final class BrowserToolSet: ChatToolSource, @unchecked Sendable {
 
     static let definitions: [ToolDefinition] = [
         tool("browser_list", "List the open Browser panes: id, title, url, project, tab, and which one is the default for this caller.", [:]),
-        tool("browser_open", "Open a new Browser pane beside the caller and load a URL (http or https).", ["url": ToolJSONSchema.string("The page to load")], required: ["url"]),
+        tool("browser_open", "Open a new Browser pane beside the caller and load a URL (http or https), or the home page (else a blank page) when no URL is given.", ["url": ToolJSONSchema.string("The page to load; optional")]),
         tool("browser_navigate", "Load a URL in a Browser pane.", ["url": ToolJSONSchema.string("The page to load"), "pane_id": paneID], required: ["url"]),
         tool("browser_back", "Go back one page.", ["pane_id": paneID]),
         tool("browser_forward", "Go forward one page.", ["pane_id": paneID]),

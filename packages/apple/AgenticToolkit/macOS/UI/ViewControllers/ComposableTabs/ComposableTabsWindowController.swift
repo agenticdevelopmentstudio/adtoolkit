@@ -737,19 +737,34 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
     /// Splits `pane`, adding a pane that shows `viewID`, and returns the new
     /// pane. `nil` when `pane` is not in this window or the spec refuses.
     ///
-    /// `ComposableTabsViewController.split` returns nothing; the new leaf is
-    /// the one that was not there before, so this snapshots the leaves first.
+    /// The split asked is the pane's own enclosing one, exactly as
+    /// `addPaneBesideActivePane` asks it: `ComposableTabsViewController.split`
+    /// acts only on a direct child, and after the first split no pane is a
+    /// direct child of the tab's root. The spec's allowances are honoured the
+    /// same way, so a bounded view cannot be added past its `max`.
+    ///
+    /// `split` returns nothing; the new leaf is the one that was not there
+    /// before, so this snapshots the root's leaves first. Its view is loaded
+    /// before it is returned, because a pane builds its content in `loadView`
+    /// and a caller reaching for `contentViewController` would otherwise find
+    /// `nil` in a tab whose views have not loaded.
     public func splitPane(
         _ pane: ComposableTabsPaneViewController,
         adding viewID: ComposableTabsViewID,
         direction: ComposableTabsViewController.Direction
     ) -> ComposableTabsPaneViewController? {
-        guard let split = splitControllersByTabID.values.first(where: { controller in
+        guard let root = splitControllersByTabID.values.first(where: { controller in
             controller.allLeaves().contains { $0 === pane }
-        }) else { return nil }
-        let before = Set(split.allLeaves().map(\.nodeID))
+        }),
+            let split = (pane.parent as? ComposableTabsViewController)
+                ?? (pane.host as? ComposableTabsViewController),
+            split.allowedInsertions(beside: pane).contains(where: { $0.viewID == viewID })
+        else { return nil }
+        let before = Set(root.allLeaves().map(\.nodeID))
         split.split(pane, adding: viewID, direction: direction)
-        return split.allLeaves().first { !before.contains($0.nodeID) }
+        guard let added = root.allLeaves().first(where: { !before.contains($0.nodeID) }) else { return nil }
+        _ = added.view
+        return added
     }
 
     private func leaves(of group: ScriptingTab) -> [ComposableTabsPaneViewController] {

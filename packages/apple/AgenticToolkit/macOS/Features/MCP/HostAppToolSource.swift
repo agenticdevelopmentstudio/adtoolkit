@@ -31,7 +31,8 @@ public final class HostAppToolSource: ChatToolSource, Sendable {
     public func callTool(name: String, argumentsJSON: Data, caller: String?) async -> (content: String, isError: Bool) {
         switch name {
         case "host_app_info":
-            return ("Host: \(appName)\nVersion: \(appVersion)\nPlugins: \(pluginNames.joined(separator: ", "))", false)
+            let plugins = pluginNames.isEmpty ? "(none)" : pluginNames.joined(separator: ", ")
+            return ("Host: \(appName)\nVersion: \(appVersion)\nPlugins: \(plugins)", false)
         case "host_open_chat_window":
             await openChatWindow()
             return ("Opened a new chat window.", false)

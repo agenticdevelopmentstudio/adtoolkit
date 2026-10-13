@@ -204,6 +204,35 @@ final class ComposableTabsArrangementTests: XCTestCase {
         XCTAssertEqual(Set(stored.map { shape(of: $0.root) }).count, 1, "the reshape must have been saved")
     }
 
+    // MARK: - Splitting a pane that is already nested
+
+    /// `splitPane` asks the pane's own split, not the tab's root: every split
+    /// wraps the pane it splits in a new inner split, so after the first one no
+    /// pane is a direct child of the root, and a root that was asked did
+    /// nothing at all. The added pane comes back with its content built.
+    func testSplittingANestedPaneAddsALeafWithItsContent() throws {
+        let project = try makeProject()
+        let records = try seedTwoTabs(in: project)
+        let window = ComposableTabsWindowController(project: project)
+        defer { window.close() }
+        window.showWindow(nil)
+
+        let root = try XCTUnwrap(splitTree(for: records[0], in: window))
+        let nested = try XCTUnwrap(root.firstLeaf())
+        root.split(nested, adding: .placeholder, direction: .right)
+        XCTAssertFalse(
+            (nested.parent as? ComposableTabsViewController) === root,
+            "the first split must have moved the pane into an inner split"
+        )
+        let before = root.allLeaves().count
+
+        let added = try XCTUnwrap(window.splitPane(nested, adding: .placeholder, direction: .below))
+
+        XCTAssertEqual(root.allLeaves().count, before + 1)
+        XCTAssertTrue(root.allLeaves().contains { $0 === added })
+        XCTAssertNotNil(added.contentViewController)
+    }
+
     // MARK: - Helpers
 
     private func makeProject() throws -> ProjectWorkspace {

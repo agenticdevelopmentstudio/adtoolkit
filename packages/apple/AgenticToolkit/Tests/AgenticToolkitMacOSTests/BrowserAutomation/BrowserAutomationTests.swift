@@ -45,6 +45,36 @@ final class BrowserAutomationTests: XCTestCase {
         XCTAssertEqual(shown, "enter:abcd")
     }
 
+    /// A React-style value tracker: the instance `value` setter records what it
+    /// was given, and the page's handler only runs when the input event brings
+    /// a value the tracker does not already hold. A `type` that wrote through
+    /// the instance setter would leave the tracker equal to the new value, and
+    /// the handler would never see the keystrokes.
+    func testTypeReachesAnInputWithAValueTracker() async throws {
+        let (_, a) = await make(html: """
+            <input id="q" value="ab"><span id="out"></span>
+            <script>
+            const native = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+            let tracked = q.value;
+            Object.defineProperty(q, 'value', {
+              configurable: true,
+              get() { return native.get.call(this); },
+              set(v) { tracked = String(v); native.set.call(this, v); }
+            });
+            q.addEventListener('input', () => {
+              const current = native.get.call(q);
+              if (current === tracked) { return; }
+              tracked = current;
+              out.textContent = 'seen:' + current;
+            });
+            </script>
+            """)
+        let snap = try await a.snapshot(.init())
+        _ = try await a.type(ref: "e1", generation: snap.generation, text: "cd", submit: false)
+        let shown = try await a.text(scope: nil)
+        XCTAssertEqual(shown, "seen:abcd")
+    }
+
     func testClickLinkNavigatesAndDeltaReportsIt() async throws {
         let (_, a) = await make(html: "<a href=\"#second\" onclick=\"document.title='Second'\">Go</a>")
         let snap = try await a.snapshot(.init())
@@ -163,7 +193,8 @@ final class BrowserAutomationTests: XCTestCase {
     }
 
     func testScreenshotIsPNGAndCapped() async throws {
-        let (_, a) = await make(html: "<div style=\"width:3000px;height:10px;background:red\"></div>")
+        let (page, a) = await make(html: "<div style=\"width:3000px;height:10px;background:red\"></div>")
+        page.orderInOffscreen()
         let png = try await a.screenshot(ref: nil, generation: nil)
         XCTAssertEqual(Array(png.prefix(4)), [0x89, 0x50, 0x4E, 0x47])
         let image = try XCTUnwrap(NSBitmapImageRep(data: png))
@@ -174,9 +205,64 @@ final class BrowserAutomationTests: XCTestCase {
         let (page, a) = await make(html: "<div style=\"width:100px;height:100px;background:red\"></div>")
         page.window.setContentSize(NSSize(width: 2400, height: 1000))
         page.webView.frame = NSRect(x: 0, y: 0, width: 2400, height: 1000)
+        page.orderInOffscreen()
         let png = try await a.screenshot(ref: nil, generation: nil)
         let image = try XCTUnwrap(NSBitmapImageRep(data: png))
         XCTAssertEqual(max(image.pixelsWide, image.pixelsHigh), 1568)
+    }
+
+    func testScreenshotOfAPaneNotOnScreenIsTheSentence() async throws {
+        let (_, a) = await make(html: "<p>x</p>")
+        do {
+            _ = try await a.screenshot(ref: nil, generation: nil)
+            XCTFail("expected the pane to be refused")
+        } catch let error as BrowserAutomationError {
+            XCTAssertEqual(error, .notOnScreen)
+            XCTAssertEqual(error.description, "the pane is not on screen")
+        }
+    }
+
+    func testEvaluateAwaitsAReturnedPromise() async throws {
+        let (_, a) = await make(html: "<p>x</p>")
+        let value = try await a.evaluate("new Promise(resolve => setTimeout(() => resolve({b: [1, 'two']}), 10))")
+        XCTAssertEqual(value, "{\"b\":[1,\"two\"]}")
+        let nothing = try await a.evaluate("undefined")
+        XCTAssertEqual(nothing, "undefined")
+    }
+
+    func testContentSecurityPolicyRefusalIsRecognised() {
+        XCTAssertTrue(BrowserAutomation.isContentSecurityPolicyRefusal(
+            "EvalError: Refused to evaluate a string as JavaScript because 'unsafe-eval' is not an allowed source"))
+        XCTAssertFalse(BrowserAutomation.isContentSecurityPolicyRefusal("ReferenceError: Can't find variable: nope"))
+        XCTAssertEqual(BrowserAutomationError.cspRefusesEvaluation.description,
+                       "the page's Content Security Policy refuses evaluation")
+    }
+
+    /// Two callers on one pane: the second `drive` waits for the first body to
+    /// finish, and a `drive` nested inside a body passes straight through
+    /// rather than waiting on the gate its own chain holds.
+    func testConcurrentDrivesOnOnePaneRunOneAfterTheOther() async throws {
+        let (_, a) = await make(html: "<p>x</p>")
+        let order = DriveOrder()
+        let first = Task { @MainActor in
+            await a.drive {
+                order.events.append("enter 1")
+                try? await Task.sleep(nanoseconds: 200_000_000)
+                await a.drive { order.events.append("nested 1") }
+                order.events.append("exit 1")
+            }
+        }
+        try await Task.sleep(nanoseconds: 30_000_000)
+        let second = Task { @MainActor in
+            await a.drive {
+                order.events.append("enter 2")
+                order.events.append("exit 2")
+            }
+        }
+        await first.value
+        await second.value
+        XCTAssertEqual(order.events, ["enter 1", "nested 1", "exit 1", "enter 2", "exit 2"])
+        XCTAssertFalse(a.isActionInFlight)
     }
 
     func testStaleRefFromPreviousDocumentIsRefused() async throws {
@@ -225,5 +311,10 @@ final class BrowserAutomationTests: XCTestCase {
         _ = try await a.click(ref: "e1", generation: snap.generation, native: true)
         _ = try await a.wait(for: .text("clicked"), timeout: 3)
     }
+}
+
+@MainActor
+private final class DriveOrder {
+    var events: [String] = []
 }
 // swiftlint:enable line_length identifier_name
