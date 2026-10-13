@@ -68,6 +68,16 @@ public final class BrowserPaneViewController: NSViewController {
     private let logger = Logger(subsystem: "AgenticToolkit", category: "BrowserPane")
 
     public let webView: WKWebView
+    /// What the page wrote to `console.*` since the last navigation.
+    public let consoleLog = BrowserConsoleLog()
+    /// The driving seam a model reaches the pane through. Built on first
+    /// use so a pane nobody drives pays nothing for it.
+    public private(set) lazy var automation: BrowserAutomation = {
+        let automation = BrowserAutomation(webView: webView, console: consoleLog)
+        automation.onDriveStateChange = { [weak self] driving in self?.drivenBadge.setDriven(driving) }
+        return automation
+    }()
+    let drivenBadge = BrowserDrivenBadge()
     let addressField = NSTextField()
     let backButton = NSButton()
     let forwardButton = NSButton()
@@ -100,7 +110,7 @@ public final class BrowserPaneViewController: NSViewController {
         self.settings = settings
         self.history = history
         self.fallbackHomeURL = homeURL
-        let configuration = Self.makeConfiguration(settings: settings)
+        let configuration = Self.makeConfiguration(settings: settings, consoleLog: consoleLog)
         self.siteData = BrowserSiteData(dataStore: configuration.websiteDataStore)
         webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 640, height: 480), configuration: configuration)
         super.init(nibName: nil, bundle: nil)
@@ -133,8 +143,10 @@ public final class BrowserPaneViewController: NSViewController {
     /// The configuration WebKit fixes when the web view is made. The settings
     /// read here take effect for the *next* browser pane, and the panel says
     /// so beside each of them.
-    static func makeConfiguration(settings: SettingsStore) -> WKWebViewConfiguration {
+    static func makeConfiguration(settings: SettingsStore, consoleLog: BrowserConsoleLog) -> WKWebViewConfiguration {
         let configuration = WKWebViewConfiguration()
+        configuration.userContentController.addUserScript(consoleLog.userScript)
+        configuration.userContentController.add(consoleLog, name: BrowserConsoleLog.handlerName)
         // Private browsing is a data store that lives only as long as the
         // pane; otherwise the default store, shared with every other browser
         // pane, so a login in one pane is a login in the next.
@@ -227,7 +239,7 @@ public final class BrowserPaneViewController: NSViewController {
         addressField.setContentHuggingPriority(.defaultLow, for: .horizontal)
         addressField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
-        let bar = NSStackView(views: [backButton, forwardButton, reloadButton, addressField])
+        let bar = NSStackView(views: [backButton, forwardButton, reloadButton, addressField, drivenBadge])
         bar.orientation = .horizontal
         bar.alignment = .centerY
         bar.spacing = 4
@@ -408,6 +420,11 @@ extension BrowserPaneViewController: PaneContentTeardown {
         webView.stopLoading()
         webView.navigationDelegate = nil
         webView.uiDelegate = nil
+        // The handler holds the log strongly and the pane holds the log, so
+        // without this the two outlive the pane together.
+        webView.configuration.userContentController.removeScriptMessageHandler(
+            forName: BrowserConsoleLog.handlerName
+        )
     }
 }
 
@@ -457,6 +474,7 @@ extension BrowserPaneViewController: WKNavigationDelegate {
     }
 
     public func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+        consoleLog.clear()
         rememberAddress()
     }
 
@@ -559,6 +577,42 @@ extension BrowserPaneViewController: WKDownloadDelegate {
 // MARK: - UI delegate
 
 extension BrowserPaneViewController: WKUIDelegate {
+
+    /// A dialog raised while a model acts is the model's to hear about, and it
+    /// is always dismissed: a panel would block the pane under a hand that is
+    /// not the user's. Outside an action the same dismissal applies, since the
+    /// pane shows no dialogs of its own; the answer is just not reported.
+    public func webView(
+        _ webView: WKWebView,
+        runJavaScriptAlertPanelWithMessage message: String,
+        initiatedByFrame frame: WKFrameInfo
+    ) async {
+        reportDialog(.alert, message)
+    }
+
+    public func webView(
+        _ webView: WKWebView,
+        runJavaScriptConfirmPanelWithMessage message: String,
+        initiatedByFrame frame: WKFrameInfo
+    ) async -> Bool {
+        reportDialog(.confirm, message)
+        return false
+    }
+
+    public func webView(
+        _ webView: WKWebView,
+        runJavaScriptTextInputPanelWithPrompt prompt: String,
+        defaultText: String?,
+        initiatedByFrame frame: WKFrameInfo
+    ) async -> String? {
+        reportDialog(.prompt, prompt)
+        return nil
+    }
+
+    private func reportDialog(_ kind: BrowserDialog.Kind, _ message: String) {
+        guard automation.isActionInFlight else { return }
+        automation.dialogRaised(kind: kind, message: message)
+    }
 
     /// A `target="_blank"` link asks for a new window. A pane has no windows to
     /// give it, so the link opens here instead — in the pane the user is

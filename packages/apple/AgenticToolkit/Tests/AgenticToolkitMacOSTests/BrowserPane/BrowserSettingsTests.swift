@@ -1,9 +1,14 @@
 import XCTest
+import WebKit
 import AgenticToolkitCore
 @testable import AgenticToolkitMacOS
 
 @MainActor
 final class BrowserSettingsTests: XCTestCase {
+
+    private func configuration(_ store: SettingsStore) -> WKWebViewConfiguration {
+        BrowserPaneViewController.makeConfiguration(settings: store, consoleLog: BrowserConsoleLog())
+    }
 
     private func makeStore() -> SettingsStore {
         UserSettings(
@@ -98,24 +103,24 @@ final class BrowserSettingsTests: XCTestCase {
 
     func testPrivateBrowsingGivesTheConfigurationAThrowawayStore() {
         let store = makeStore()
-        XCTAssertTrue(BrowserPaneViewController.makeConfiguration(settings: store).websiteDataStore.isPersistent)
+        XCTAssertTrue(configuration(store).websiteDataStore.isPersistent)
         store.set(true, for: UserSettings.browserPrivateBrowsing)
-        XCTAssertFalse(BrowserPaneViewController.makeConfiguration(settings: store).websiteDataStore.isPersistent)
+        XCTAssertFalse(configuration(store).websiteDataStore.isPersistent)
     }
 
     func testAutoplayPolicyBecomesWebKitsPlaybackGate() {
         let store = makeStore()
         XCTAssertEqual(
-            BrowserPaneViewController.makeConfiguration(settings: store).mediaTypesRequiringUserActionForPlayback,
+            configuration(store).mediaTypesRequiringUserActionForPlayback,
             .audio, "the default lets muted video play"
         )
         store.set(BrowserAutoplayPolicy.never, for: UserSettings.browserAutoplay)
         XCTAssertEqual(
-            BrowserPaneViewController.makeConfiguration(settings: store).mediaTypesRequiringUserActionForPlayback, .all
+            configuration(store).mediaTypesRequiringUserActionForPlayback, .all
         )
         store.set(BrowserAutoplayPolicy.allowed, for: UserSettings.browserAutoplay)
         XCTAssertEqual(
-            BrowserPaneViewController.makeConfiguration(settings: store).mediaTypesRequiringUserActionForPlayback, []
+            configuration(store).mediaTypesRequiringUserActionForPlayback, []
         )
     }
 
