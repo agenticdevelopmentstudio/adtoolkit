@@ -1,4 +1,5 @@
 import XCTest
+import OSLog
 import AgenticToolkitCore
 @testable import AgenticToolkitMacOS
 
@@ -197,5 +198,82 @@ final class StenographerPrefsPushTests: XCTestCase {
     private func settle() async {
         try? await Task.sleep(for: .milliseconds(50))
         await StenographerOversightPrefsPush.awaitPendingPush()
+    }
+}
+
+/// The seeding engine in `SettingsSnapshotPush` itself, with a short retry delay.
+@MainActor
+final class SettingsSnapshotPushSeedTests: XCTestCase {
+
+    private final class Counter: @unchecked Sendable {
+        private let lock = NSLock()
+        private var value = 0
+        var count: Int { lock.withLock { value } }
+        func bump() { lock.withLock { value += 1 } }
+    }
+
+    private let setting = UserSetting<Int>("settings_snapshot_push_seed_tests", default: 0)
+
+    override func tearDown() async throws {
+        setting.remove()
+    }
+
+    /// A push whose seed succeeds once `reachable` says so; the reconnect handler is never fired.
+    private func makePush(
+        gets: Counter, posts: Counter, reachable: @escaping @Sendable () -> Bool
+    ) -> SettingsSnapshotPush {
+        SettingsSnapshotPush(
+            label: "Seed test",
+            logger: Logger(subsystem: "tests", category: "SettingsSnapshotPushSeedTests"),
+            backoffs: [0],
+            reconnectDelay: { _ in 100_000_000 },
+            snapshot: { Data("{}".utf8) },
+            send: { _ in
+                posts.bump()
+                return true
+            },
+            registerReconnect: { _ in },
+            seed: {
+                gets.bump()
+                return reachable()
+            }
+        )
+    }
+
+    func testFailedSeedRetriesOnItsOwnWithoutAReconnect() async {
+        let (gets, posts, comeUp) = (Counter(), Counter(), Counter())
+        let push = makePush(gets: gets, posts: posts) { comeUp.count > 0 }
+        push.start(observing: [setting])
+        await push.awaitPendingPush()
+        XCTAssertEqual(posts.count, 0)
+        comeUp.bump()  // the receiver comes up
+        await push.awaitPendingPush()
+        await push.awaitPendingPush()
+        XCTAssertGreaterThanOrEqual(gets.count, 2)
+        XCTAssertEqual(posts.count, 1)
+        push.stop()
+    }
+
+    func testPushWhileSeedPendingSendsNothing() async {
+        let (gets, posts) = (Counter(), Counter())
+        let push = makePush(gets: gets, posts: posts) { false }
+        push.start(observing: [setting])
+        push.push()
+        push.push()
+        await push.awaitPendingPush()
+        XCTAssertEqual(posts.count, 0)
+        push.stop()
+    }
+
+    func testStopCancelsThePendingReseed() async {
+        let (gets, posts) = (Counter(), Counter())
+        let push = makePush(gets: gets, posts: posts) { false }
+        push.start(observing: [setting])
+        await push.awaitPendingPush()
+        push.stop()
+        let before = gets.count
+        try? await Task.sleep(for: .milliseconds(400))
+        XCTAssertEqual(gets.count, before)
+        XCTAssertEqual(posts.count, 0)
     }
 }

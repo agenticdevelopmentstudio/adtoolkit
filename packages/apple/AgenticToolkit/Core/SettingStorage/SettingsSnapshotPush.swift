@@ -36,6 +36,16 @@ import OSLog
 /// reconnect retries the seed and then completes the start. Observers are
 /// installed only after seeding, so writing the seeded values pushes nothing.
 ///
+/// **A failed seed retries itself.** A receiver that is down at launch never
+/// reports a "reconnect" (its connection was never up), so waiting for one would
+/// leave the start incomplete indefinitely. A failed seed therefore schedules its
+/// own retry after ``reconnectDelay``, which grows with each consecutive failure
+/// up to its cap; ``stop()`` cancels it. A reconnect while a seed is waiting to
+/// retry retries it at once; a reconnect while a seed is in flight is dropped,
+/// because that seed's own failure branch schedules the retry. ``push()`` does
+/// nothing until the seed completes (completing it always pushes the then-current
+/// snapshot), so no caller can send local values ahead of the receiver's.
+///
 /// What the snapshot holds, how it is encoded and how it travels are the
 /// caller's; the engine — observe, snapshot, supersede, bounded retry,
 /// re-push on reconnect — is this one copy.
@@ -46,11 +56,11 @@ public final class SettingsSnapshotPush {
     public typealias Snapshot = @MainActor () -> Data?
     /// Sends one body; true when the receiver took it.
     public typealias Send = @Sendable (Data) async -> Bool
-    /// Registers a handler to run on every reconnect.
     /// Brings the local store up to the receiver's current values before the
     /// first push; true when done (or not needed), false when the receiver
     /// could not be reached.
     public typealias Seed = @MainActor () async -> Bool
+    /// Registers a handler to run on every reconnect.
     public typealias RegisterReconnect = (@escaping @Sendable () -> Void) -> Void
     /// Nanoseconds a reconnect waits before pushing, given how many pushes in a
     /// row have failed (always at least 1 when asked).
@@ -79,6 +89,10 @@ public final class SettingsSnapshotPush {
     private var seedTask: Task<Void, Never>?
     /// Bumped by every seed attempt and by ``stop()``, so a stale seed's ending is ignored.
     private var seedGeneration = 0
+    /// Consecutive failed seeds, which sets how long the next retry waits.
+    private var seedFailures = 0
+    /// The wait before a failed seed's own retry.
+    private var seedRetry: Task<Void, Never>?
 
     /// - Parameters:
     ///   - label: names the channel in log lines ("Billing prefs").
@@ -172,6 +186,8 @@ public final class SettingsSnapshotPush {
     /// Runs the seed unless one is already in flight; on success completes the start.
     private func attemptSeed() {
         guard let seed, seedTask == nil else { return }
+        seedRetry?.cancel()
+        seedRetry = nil
         seedGeneration += 1
         let mine = seedGeneration
         seedTask = Task { @MainActor [weak self] in
@@ -180,10 +196,29 @@ public final class SettingsSnapshotPush {
             self.seedTask = nil
             guard self.observing, let build = self.pendingObservers else { return }
             if seeded {
+                self.seedFailures = 0
                 self.activate(build())
             } else {
-                self.logger.warning("\(self.label, privacy: .public) seed failed; retrying on reconnect")
+                self.seedFailures += 1
+                self.scheduleSeedRetry()
             }
+        }
+    }
+
+    /// Retries a failed seed after ``reconnectDelay`` for the seed failure count,
+    /// unless ``stop()`` or a reconnect (which retries at once) gets there first.
+    private func scheduleSeedRetry() {
+        let delay = reconnectDelay(seedFailures)
+        let (name, failed, waitMs) = (label, seedFailures, delay / 1_000_000)
+        logger.warning(
+            "\(name, privacy: .public) seed failed \(failed) time(s); retrying in \(waitMs) ms or on reconnect"
+        )
+        seedRetry = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: delay)
+            guard !Task.isCancelled, let self else { return }
+            self.seedRetry = nil
+            self.attemptSeed()
+            await self.seedTask?.value
         }
     }
 
@@ -195,12 +230,18 @@ public final class SettingsSnapshotPush {
         pendingObservers = nil
         seedTask?.cancel()
         seedTask = nil
+        seedRetry?.cancel()
+        seedRetry = nil
+        seedFailures = 0
         seedGeneration += 1
         cancelPending()
     }
 
     /// Sends the current snapshot, superseding any push still retrying.
     public func push() {
+        // Until the seed completes the local values are not the receiver's;
+        // completing the seed pushes the then-current snapshot itself.
+        guard pendingObservers == nil else { return }
         guard let body = snapshot() else {
             logger.error("Failed to build the \(self.label, privacy: .public) snapshot")
             return
@@ -222,6 +263,7 @@ public final class SettingsSnapshotPush {
     /// make — for tests.
     public func awaitPendingPush() async {
         await seedTask?.value
+        await seedRetry?.value
         await delayedReconnect?.value
         await pushTask?.value
     }
