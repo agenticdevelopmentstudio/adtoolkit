@@ -69,9 +69,10 @@ final class BrowserToolSetTests: XCTestCase {
         directory.lastUsed = "B"
         let reply = await call("browser_list")
         XCTAssertFalse(reply.isError)
-        XCTAssertTrue(reply.content.contains("A"), reply.content)
-        XCTAssertTrue(reply.content.contains("Alpha"))
-        XCTAssertTrue(reply.content.contains("\"is_default\":true") || reply.content.contains("is_default: true"), reply.content)
+        let rows = try! JSONSerialization.jsonObject(with: Data(reply.content.utf8)) as! [[String: Any]]
+        XCTAssertEqual(rows.map { $0["id"] as? String }, ["A", "B"])
+        XCTAssertEqual(rows.map { $0["title"] as? String }, ["Alpha", "Beta"])
+        XCTAssertEqual(rows.map { $0["is_default"] as? Bool }, [false, true])
     }
 
     func testDefaultPaneIsBesideCallerThenLastUsedThenFirst() async {
@@ -189,6 +190,31 @@ final class BrowserToolSetTests: XCTestCase {
         let reply = await call("browser_click", ["pane_id": "A", "ref": "e1", "generation": 0])
         XCTAssertTrue(reply.isError)
         XCTAssertEqual(reply.content, "stale ref; take a new snapshot")
+    }
+
+    func testNonIntegerGenerationIsASentence() async {
+        let reply = await tools.callTool(name: "browser_click", argumentsJSON: Data("{\"ref\":\"e1\",\"generation\":1e30}".utf8), caller: nil)
+        XCTAssertTrue(reply.isError)
+        XCTAssertEqual(reply.content, "browser_click needs generation")
+    }
+
+    func testScreenshotRefWithoutGenerationIsASentence() async {
+        let reply = await call("browser_screenshot", ["pane_id": "A", "ref": "e1"])
+        XCTAssertTrue(reply.isError)
+        XCTAssertEqual(reply.content, "browser_screenshot needs generation")
+    }
+
+    func testEmptyPaneIDMeansTheDefaultPane() async {
+        directory.lastUsed = "B"
+        let reply = await call("browser_snapshot", ["pane_id": ""])
+        XCTAssertTrue(reply.content.contains("Two"), reply.content)
+    }
+
+    func testEvaluateOffSaysSoEvenWithNoPane() async {
+        directory.panes.removeAll()
+        let reply = await call("browser_evaluate", ["expression": "1+1"])
+        XCTAssertTrue(reply.isError)
+        XCTAssertEqual(reply.content, "browser_evaluate is turned off in Settings")
     }
 
     func testScreenshotReturnsAnImageDataURL() async {
