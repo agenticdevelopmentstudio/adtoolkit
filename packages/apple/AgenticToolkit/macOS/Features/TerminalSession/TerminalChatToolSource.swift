@@ -76,7 +76,6 @@ public final class TerminalChatToolSource: ChatToolSource, @unchecked Sendable {
     }
 
     private static func schema(properties: [String: [String: String]], required: [String]) -> Data {
-        let object: [String: Any] = ["type": "object", "properties": properties, "required": required]
-        return (try? JSONSerialization.data(withJSONObject: object)) ?? Data("{}".utf8)
+        ToolJSONSchema.object(properties: properties, required: required)
     }
 }

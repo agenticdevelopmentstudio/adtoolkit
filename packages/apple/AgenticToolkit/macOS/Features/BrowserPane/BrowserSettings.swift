@@ -112,6 +112,10 @@ extension UserSettings {
 
     // Developer
     public static let browserWebInspectorEnabled = UserSetting<Bool>("browser.web_inspector_enabled", default: false)
+
+    // Automation
+    public static let browserAutomationEnabled = UserSetting<Bool>("browser.automation.enabled", default: true)
+    public static let browserAutomationEvaluate = UserSetting<Bool>("browser.automation.evaluate", default: false)
 }
 
 // MARK: - Derived values and reset
@@ -133,7 +137,8 @@ public enum BrowserSettings {
         UserSettings.browserUpgradesToHTTPS, UserSettings.browserLockdownMode,
         UserSettings.browserAutoplay, UserSettings.browserAllowsAirPlay, UserSettings.browserMediaCapture,
         UserSettings.browserDownloadDirectory, UserSettings.browserAsksDownloadLocation,
-        UserSettings.browserWebInspectorEnabled
+        UserSettings.browserWebInspectorEnabled,
+        UserSettings.browserAutomationEnabled, UserSettings.browserAutomationEvaluate
     ]
 
     /// The names of every browser key, for a test to hold the list to.
