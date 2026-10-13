@@ -1122,6 +1122,7 @@
 		75F8C6F71566C91B8AF975D1 /* FeatureFlagsAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 503F40D6991D4F1C4A8A6153 /* FeatureFlagsAdapter.swift */; };
 		760A0C73CF4F847471C1002B /* OpenAPIRuntime in Frameworks */ = {isa = PBXBuildFile; productRef = 8D9E9E85B457923CE892CEC2 /* OpenAPIRuntime */; };
 		7615FF8024E558C25212CCEF /* HTDVController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04C8EA09F59EA16290707027 /* HTDVController.swift */; };
+		76290F1A117791347E29648D /* TerminalShellEnvironmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F4BAC1DD20C1FD1B8965E2A /* TerminalShellEnvironmentTests.swift */; };
 		762E9DF12BA480FB3B8F3E8A /* UriTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB3E22C2C70AC80B898A263 /* UriTests.swift */; };
 		76496513F3C41ADC8EC8E2D5 /* AgenticDeveloperToolkitUI-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 12692636CB83EBEA82DE2F7C /* AgenticDeveloperToolkitUI-macOS.framework */; };
 		76549DAAE47F4CDF9500755F /* AgenticToolkitSystemMonitorUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F60A6F2D66990C28F2B3818 /* AgenticToolkitSystemMonitorUI.framework */; };
@@ -4809,6 +4810,7 @@
 		2EEBEDAB495EA3A0C6AA40A6 /* SettingsCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsCoordinator.swift; sourceTree = "<group>"; };
 		2F0843F78AB5133AF35A89D1 /* DialogFirstRunExperience.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DialogFirstRunExperience.swift; sourceTree = "<group>"; };
 		2F4B099BD52998E1AADC274C /* GitRepoScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitRepoScanner.swift; sourceTree = "<group>"; };
+		2F4BAC1DD20C1FD1B8965E2A /* TerminalShellEnvironmentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalShellEnvironmentTests.swift; sourceTree = "<group>"; };
 		2F64371F51BFB8E0D1FBC46B /* HubDates.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubDates.swift; sourceTree = "<group>"; };
 		2F651772C41BC713C88F3DEA /* HubScriptCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubScriptCommand.swift; sourceTree = "<group>"; };
 		2FCEFB5144AC969192DD72F4 /* MCPServerRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPServerRegistryTests.swift; sourceTree = "<group>"; };
@@ -7410,6 +7412,7 @@
 			children = (
 				CFCD8CC5AE593549713B77F0 /* TerminalChatSessionTests.swift */,
 				A7ECF9BB1AAE4DD4B32F440B /* TerminalPaneFamilyTests.swift */,
+				2F4BAC1DD20C1FD1B8965E2A /* TerminalShellEnvironmentTests.swift */,
 			);
 			path = TerminalSession;
 			sourceTree = "<group>";
@@ -15153,6 +15156,7 @@
 				20A5DC568B873AECB625F4D9 /* TerminalChatSessionTests.swift in Sources */,
 				CB10348373AA02A68C372AA8 /* TerminalPaneFamilyTests.swift in Sources */,
 				E78B0E62A73A6142EE421553 /* TerminalSessionGitBranchTests.swift in Sources */,
+				76290F1A117791347E29648D /* TerminalShellEnvironmentTests.swift in Sources */,
 				444EFB4D09F8D7A761C43743 /* TerminalTextInjectorTests.swift in Sources */,
 				D82800D87E946AB4B95D830C /* TextDocumentStorageTests.swift in Sources */,
 				B0EEDAC60B94E690A6CBC37D /* TextGeometryTests.swift in Sources */,

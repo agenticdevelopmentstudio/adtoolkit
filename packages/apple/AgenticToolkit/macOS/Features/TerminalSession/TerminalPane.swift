@@ -27,7 +27,7 @@ extension ComposableTabsViewRegistry {
     ///   another terminal. A host stacking terminals beside other panes wants
     ///   `.vertical`; a terminal-only window wants them side by side.
     @MainActor
-    public func registerTerminal(preferredAxis: ComposableTabsAxis) {
+    public func registerTerminal(preferredAxis: ComposableTabsAxis, environment: [String: String] = [:]) {
         register(
             .terminal,
             descriptor: .init(
@@ -39,7 +39,9 @@ extension ComposableTabsViewRegistry {
                 minimumThickness: 300
             )
         ) { context in
-            let manager = TerminalSessionManager(workingDirectory: context.workingDirectory.path)
+            let manager = TerminalSessionManager(
+                workingDirectory: context.workingDirectory.path,
+                environment: environment.merging(Self.paneEnvironment(for: context)) { _, pane in pane })
             // The pane opens on a live shell; an empty pane is a dead end the
             // user would have to click out of every time.
             manager.addSession()
@@ -50,7 +52,9 @@ extension ComposableTabsViewRegistry {
     /// Registers the private terminal pane: one shell behind `vault`'s privacy
     /// words, under a privacy screen until the user authenticates.
     @MainActor
-    public func registerPrivateTerminal(vault: PrivacyWordsVault, preferredAxis: ComposableTabsAxis) {
+    public func registerPrivateTerminal(
+        vault: PrivacyWordsVault, preferredAxis: ComposableTabsAxis, environment: [String: String] = [:]
+    ) {
         register(
             .privateTerminal,
             descriptor: .init(
@@ -60,8 +64,19 @@ extension ComposableTabsViewRegistry {
                 minimumThickness: 300
             )
         ) { context in
-            PrivateTerminalViewController(vault: vault, workingDirectory: context.workingDirectory.path)
+            PrivateTerminalViewController(
+                vault: vault, workingDirectory: context.workingDirectory.path,
+                environment: environment.merging(Self.paneEnvironment(for: context)) { _, pane in pane })
         }
+    }
+
+    /// The two variables that say which pane a shell runs in. A process in
+    /// the shell sends `ADKITCHEN_PANE_ID` as the MCP caller header, which is
+    /// how "this pane" resolves to the Browser pane beside it.
+    @MainActor
+    static func paneEnvironment(for context: ComposableTabsViewContext) -> [String: String] {
+        ["ADKITCHEN_PANE_ID": context.nodeID.uuidString,
+         "ADKITCHEN_PROJECT": context.project.displayName]
     }
 
     /// Registers the terminal chat pane: a chat whose messages are typed into
@@ -132,23 +147,31 @@ public struct TerminalPaneFamily {
     /// The privacy words private terminals run behind; without them, the
     /// private terminal pane is not offered.
     public let privacyVault: PrivacyWordsVault?
+    /// Extra shell variables every terminal pane's shell gets, under the
+    /// pane's own identity variables.
+    public let environment: [String: String]
 
     public init(
         preferredAxis: ComposableTabsAxis,
         pluginManager: AIPluginManager? = nil,
         chatDirectory: TerminalChatDirectory? = nil,
-        privacyVault: PrivacyWordsVault? = nil
+        privacyVault: PrivacyWordsVault? = nil,
+        environment: [String: String] = [:]
     ) {
         self.preferredAxis = preferredAxis
         self.pluginManager = pluginManager
         self.chatDirectory = chatDirectory
         self.privacyVault = privacyVault
+        self.environment = environment
     }
 
     /// Registers every pane in the family this host can offer.
     public func register(in registry: ComposableTabsViewRegistry) {
-        registry.registerTerminal(preferredAxis: preferredAxis)
-        if let privacyVault { registry.registerPrivateTerminal(vault: privacyVault, preferredAxis: preferredAxis) }
+        registry.registerTerminal(preferredAxis: preferredAxis, environment: environment)
+        if let privacyVault {
+            registry.registerPrivateTerminal(
+                vault: privacyVault, preferredAxis: preferredAxis, environment: environment)
+        }
         registry.registerTerminalChat(directory: chatDirectory)
         if let pluginManager { registry.registerPersonaTerminalChat(pluginManager: pluginManager) }
     }

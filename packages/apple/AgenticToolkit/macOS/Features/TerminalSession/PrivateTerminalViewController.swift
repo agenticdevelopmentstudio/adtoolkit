@@ -53,9 +53,10 @@ public final class PrivateTerminalViewController: NSViewController {
         didSet { applyRevealState() }
     }
 
-    public init(vault: PrivacyWordsVault, workingDirectory: String?) {
+    public init(vault: PrivacyWordsVault, workingDirectory: String?, environment: [String: String] = [:]) {
         self.vault = vault
-        session = TerminalSession(name: "Private Terminal", workingDirectory: workingDirectory, isPrivate: true)
+        session = TerminalSession(
+            name: "Private Terminal", workingDirectory: workingDirectory, isPrivate: true, environment: environment)
         super.init(nibName: nil, bundle: nil)
     }
 

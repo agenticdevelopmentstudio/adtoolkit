@@ -173,23 +173,44 @@ public final class TerminalSession: ObservableObject, Identifiable {
     private var processPollingTimer: Timer?
     private let workingDirectory: String?
     private let shell: String?
+    /// Extra variables for the shell, on top of the terminal's and the
+    /// process's. What a pane uses to tell the shell which pane it is.
+    public let environment: [String: String]
     private let gitClient: GitClient
 
     /// - Parameters:
     ///   - isPrivate: Runs the session behind privacy words; its shell
     ///     starts when ``privacyFilter`` is first set.
     ///   - shell: The shell to run; the user's `$SHELL` when nil.
+    ///   - environment: Extra shell variables; they win over the inherited ones.
     public init(
         name: String, workingDirectory: String? = nil, gitClient: GitClient = .shared, isPrivate: Bool = false,
-        shell: String? = nil
+        shell: String? = nil, environment: [String: String] = [:]
     ) {
         self.name = name
         self.isPrivate = isPrivate
         self.workingDirectory = workingDirectory
         self.shell = shell
+        self.environment = environment
         self.gitClient = gitClient
         self.processHandler = TerminalSessionProcessHandler()
         self.processHandler.session = self
+    }
+
+    /// `base` with every pair in `extra` applied: a key already present is
+    /// replaced where it stands, a new one is appended, in key order so the
+    /// result is the same from one launch to the next.
+    public nonisolated static func shellEnvironment(base: [String], extra: [String: String]) -> [String] {
+        var env = base
+        for key in extra.keys.sorted() {
+            let pair = "\(key)=\(extra[key]!)"
+            if let index = env.firstIndex(where: { $0.hasPrefix("\(key)=") }) {
+                env[index] = pair
+            } else {
+                env.append(pair)
+            }
+        }
+        return env
     }
 
     private func startShellProcess(in view: LocalProcessTerminalView) {
@@ -200,18 +221,12 @@ public final class TerminalSession: ObservableObject, Identifiable {
         // swiftlint:disable:next line_length
         logger.info("Starting shell '\(shell, privacy: .public)' for session '\(self.name)' in \(startDir, privacy: .public)")
 
-        var env = Terminal.getEnvironmentVariables(termName: "xterm-256color")
         let processEnv = ProcessInfo.processInfo.environment
-        let keysToInclude = ["HOME", "USER", "LOGNAME", "PATH", "LANG", "LC_ALL", "LC_CTYPE"]
-        for key in keysToInclude {
-            if let value = processEnv[key] {
-                if let index = env.firstIndex(where: { $0.hasPrefix("\(key)=") }) {
-                    env[index] = "\(key)=\(value)"
-                } else {
-                    env.append("\(key)=\(value)")
-                }
-            }
-        }
+        let inherited = ["HOME", "USER", "LOGNAME", "PATH", "LANG", "LC_ALL", "LC_CTYPE"]
+            .reduce(into: [String: String]()) { acc, key in if let value = processEnv[key] { acc[key] = value } }
+        var env = Terminal.getEnvironmentVariables(termName: "xterm-256color")
+        env = Self.shellEnvironment(base: env, extra: inherited)
+        env = Self.shellEnvironment(base: env, extra: environment)
 
         let shellName = (shell as NSString).lastPathComponent
         view.startProcess(
