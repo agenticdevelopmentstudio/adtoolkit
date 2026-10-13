@@ -5,7 +5,8 @@
 
   const refs = new Map();            // ref -> WeakRef<Element>
   window.__adkitchenRefs = refs;
-  let generation = 0;
+  // Seeded from the clock so no document reuses another's (ref, generation) numbers.
+  let generation = Date.now() * 1000;
   let nextRef = 1;
   let mutationCount = 0;
   try {
@@ -298,7 +299,9 @@
     while (el && el !== document.body) {
       const role = roleOf(el);
       if (role === 'form' || (role && Object.values(LANDMARKS).includes(role)) || el.tagName.toLowerCase() === 'dialog') {
-        return el.__adkitchenRef || null;
+        const ref = el.__adkitchenRef;
+        const held = ref ? refs.get(ref) : null;
+        return (held && held.deref() === el) ? ref : null;
       }
       el = el.parentElement;
     }
@@ -452,7 +455,7 @@
   function isVisible(ref, gen) {
     const r = resolve(ref, gen);
     if (r.error) { return false; }
-    return !isHidden(r.el);
+    return !isHiddenUncached(r.el);   // never the snapshot memo: the page may have changed since
   }
 
   function hasText(needle) {

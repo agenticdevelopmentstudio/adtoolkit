@@ -92,10 +92,10 @@ final class BrowserAutomationTests: XCTestCase {
             """)
         let snap = try await a.snapshot(.init())
         _ = try await a.select(ref: "e1", generation: snap.generation, value: "Beta")
-        let shown = try await a.text(scope: nil)
+        let shown = try await a.text(scope: "#out")
         XCTAssertEqual(shown, "b")
         _ = try await a.select(ref: "e1", generation: snap.generation, value: "a")
-        let shownAgain = try await a.text(scope: nil)
+        let shownAgain = try await a.text(scope: "#out")
         XCTAssertEqual(shownAgain, "a")
     }
 
@@ -106,7 +106,7 @@ final class BrowserAutomationTests: XCTestCase {
             """)
         let snap = try await a.snapshot(.init())
         _ = try await a.hover(ref: "e1", generation: snap.generation)
-        let shown = try await a.text(scope: nil)
+        let shown = try await a.text(scope: "#out")
         XCTAssertEqual(shown, "over")
     }
 
@@ -168,6 +168,28 @@ final class BrowserAutomationTests: XCTestCase {
         XCTAssertEqual(Array(png.prefix(4)), [0x89, 0x50, 0x4E, 0x47])
         let image = try XCTUnwrap(NSBitmapImageRep(data: png))
         XCTAssertLessThanOrEqual(max(image.pixelsWide, image.pixelsHigh), 1568)
+    }
+
+    func testCapExceedingSnapshotIsResampledToPixelCap() async throws {
+        let (page, a) = await make(html: "<div style=\"width:100px;height:100px;background:red\"></div>")
+        page.window.setContentSize(NSSize(width: 2400, height: 1000))
+        page.webView.frame = NSRect(x: 0, y: 0, width: 2400, height: 1000)
+        let png = try await a.screenshot(ref: nil, generation: nil)
+        let image = try XCTUnwrap(NSBitmapImageRep(data: png))
+        XCTAssertEqual(max(image.pixelsWide, image.pixelsHigh), 1568)
+    }
+
+    func testStaleRefFromPreviousDocumentIsRefused() async throws {
+        let (page, a) = await make(html: "<button>One</button>")
+        let first = try await a.snapshot(.init())
+        await page.load(html: "<button>Two</button>")
+        _ = try await a.snapshot(.init())
+        do {
+            _ = try await a.click(ref: "e1", generation: first.generation, native: false)
+            XCTFail("expected stale")
+        } catch let error as BrowserAutomationError {
+            XCTAssertEqual(error, .staleRef)
+        }
     }
 
     func testConsoleLogCapturesLevelsAndErrors() async throws {

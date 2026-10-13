@@ -88,9 +88,10 @@ public final class BrowserAutomation: NSObject {
         self.console = console
         super.init()
         self.loadObservation = webView.observe(\.isLoading, options: [.new]) { [weak self] _, change in
+            let started = change.newValue == true
             Task { @MainActor in
                 guard let self else { return }
-                if change.newValue == true { self.navigationsStarted += 1 } else { self.navigationsFinished += 1 }
+                if started { self.navigationsStarted += 1 } else { self.navigationsFinished += 1 }
             }
         }
     }
@@ -260,6 +261,7 @@ public final class BrowserAutomation: NSObject {
             if webView.isLoading { delta.pending = true } else { delta.navigated = navigationsFinished > finishedBefore }
             lastSnapshotLines = nil
         }
+        // A #fragment navigation leaves `navigated` false; this URL diff still reports it.
         if currentURL != urlBefore { delta.url = currentURL }
         if currentTitle != titleBefore { delta.title = currentTitle }
         if delta.navigated { delta.url = currentURL; delta.title = currentTitle }
@@ -268,6 +270,7 @@ public final class BrowserAutomation: NSObject {
         if delta.changed && !delta.navigated && !delta.pending,
            let ref = try? await call("focusedLandmark") as? String,
            let raw = try? await call("landmarkSnapshot", ["ref": ref, "depth": 4]),
+           JSONSerialization.isValidJSONObject(raw as Any),
            let data = try? JSONSerialization.data(withJSONObject: raw as Any),
            let node = try? JSONDecoder().decode(BrowserSnapshotNode.self, from: data) {
             delta.focused = BrowserSnapshotRenderer.render(node, includeURLs: false)
@@ -309,6 +312,22 @@ public final class BrowserAutomation: NSObject {
         return CGRect(x: r["x"] ?? 0, y: r["y"] ?? 0, width: r["width"] ?? 0, height: r["height"] ?? 0)
     }
 
+    /// Resamples so the longer side is at most `side` PIXELS (not points: a Retina
+    /// snapshot of an 800 pt view is 1600 px).
+    static func capped(_ image: CGImage, side: CGFloat) -> CGImage? {
+        let longest = CGFloat(max(image.width, image.height))
+        guard longest > side else { return image }
+        let scale = side / longest
+        let width = max(1, Int((CGFloat(image.width) * scale).rounded()))
+        let height = max(1, Int((CGFloat(image.height) * scale).rounded()))
+        guard let context = CGContext(data: nil, width: width, height: height, bitsPerComponent: 8, bytesPerRow: 0,
+                                      space: CGColorSpaceCreateDeviceRGB(),
+                                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
+        context.interpolationQuality = .high
+        context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
+        return context.makeImage()
+    }
+
     public func screenshot(ref: String?, generation: Int?) async throws -> Data {
         let configuration = WKSnapshotConfiguration()
         if let ref, let generation {
@@ -316,17 +335,13 @@ public final class BrowserAutomation: NSObject {
             let zoom = webView.pageZoom
             configuration.rect = CGRect(x: r.minX * zoom, y: r.minY * zoom, width: r.width * zoom, height: r.height * zoom)
         }
-        let source = configuration.rect.isNull ? webView.bounds : configuration.rect
-        let longest = max(source.width, source.height)
-        if longest > Self.maximumScreenshotSide {
-            configuration.snapshotWidth = NSNumber(value: Double(source.width * Self.maximumScreenshotSide / longest))
-        }
         let image: NSImage = try await withCheckedThrowingContinuation { c in
             webView.takeSnapshot(with: configuration) { image, error in
                 if let image { c.resume(returning: image) } else { c.resume(throwing: BrowserAutomationError.script(error?.localizedDescription ?? "snapshot failed")) }
             }
         }
-        guard let cg = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+        guard let full = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
+              let cg = Self.capped(full, side: Self.maximumScreenshotSide),
               let png = NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:]) else {
             throw BrowserAutomationError.script("could not encode the screenshot")
         }
