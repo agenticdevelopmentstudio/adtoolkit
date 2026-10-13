@@ -734,6 +734,24 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         }
     }
 
+    /// Splits `pane`, adding a pane that shows `viewID`, and returns the new
+    /// pane. `nil` when `pane` is not in this window or the spec refuses.
+    ///
+    /// `ComposableTabsViewController.split` returns nothing; the new leaf is
+    /// the one that was not there before, so this snapshots the leaves first.
+    public func splitPane(
+        _ pane: ComposableTabsPaneViewController,
+        adding viewID: ComposableTabsViewID,
+        direction: ComposableTabsViewController.Direction
+    ) -> ComposableTabsPaneViewController? {
+        guard let split = splitControllersByTabID.values.first(where: { controller in
+            controller.allLeaves().contains { $0 === pane }
+        }) else { return nil }
+        let before = Set(split.allLeaves().map(\.nodeID))
+        split.split(pane, adding: viewID, direction: direction)
+        return split.allLeaves().first { !before.contains($0.nodeID) }
+    }
+
     private func leaves(of group: ScriptingTab) -> [ComposableTabsPaneViewController] {
         group.members.compactMap { splitControllersByTabID[$0.tabID] }.flatMap { $0.allLeaves() }
     }
