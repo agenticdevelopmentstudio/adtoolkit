@@ -6,22 +6,40 @@ final class MCPHTTPEndpointTests: XCTestCase {
 
     /// A source whose one tool reports the caller it was given.
     final class CallerSource: ChatToolSource, @unchecked Sendable {
+        private let lock = NSLock()
+        private var recorded: [String] = []
+        var callers: [String] {
+            lock.lock()
+            defer { lock.unlock() }
+            return recorded
+        }
+
+        private func record(_ caller: String) {
+            lock.lock()
+            recorded.append(caller)
+            lock.unlock()
+        }
+
         func toolDefinitions() async -> [ToolDefinition] {
             [ToolDefinition(name: "whoami", description: "names the caller",
                             parametersJSONSchema: ToolJSONSchema.object(properties: [:]))]
         }
         func callTool(name: String, argumentsJSON: Data, caller: String?) async -> (content: String, isError: Bool) {
-            ("caller:\(caller ?? "none")", false)
+            record(caller ?? "none")
+            // Long enough that two concurrent calls overlap.
+            try? await Task.sleep(nanoseconds: 300_000_000)
+            return ("caller:\(caller ?? "none")", false)
         }
     }
 
+    private let source = CallerSource()
     private var endpoint: MCPHTTPEndpoint!
     private var port: UInt16 = 0
     private let token = "test-token"
 
     override func setUp() async throws {
         let server = HostMCPServer(appName: "Test", appVersion: "1")
-        await server.register(CallerSource())
+        await server.register(source)
         // An ephemeral preferred port so the suite never collides with a
         // running app on 51477.
         endpoint = MCPHTTPEndpoint(server: server, token: token, preferredPort: 0)
@@ -34,6 +52,14 @@ final class MCPHTTPEndpointTests: XCTestCase {
 
     private func send(
         method: String = "POST", path: String = "/mcp", body: String,
+        bearer: String? = "test-token", extraHeaders: [String: String] = [:]
+    ) async throws -> (Int, [String: Any]?) {
+        try await Self.post(port: port, method: method, path: path, body: body,
+                            bearer: bearer, extraHeaders: extraHeaders)
+    }
+
+    private static func post(
+        port: UInt16, method: String = "POST", path: String = "/mcp", body: String,
         bearer: String? = "test-token", extraHeaders: [String: String] = [:]
     ) async throws -> (Int, [String: Any]?) {
         var request = URLRequest(url: URL(string: "http://127.0.0.1:\(port)\(path)")!)
@@ -71,6 +97,43 @@ final class MCPHTTPEndpointTests: XCTestCase {
         let (_, json) = try await send(body: rpc("tools/call", params: #"{"name":"whoami","arguments":{}}"#))
         let content = ((json?["result"] as? [String: Any])?["content"] as? [[String: Any]])?.first
         XCTAssertEqual(content?["text"] as? String, "caller:none")
+    }
+
+    typealias Outcome = (pane: String, id: Int?, text: String?, elapsed: TimeInterval)
+
+    /// The SDK keys its per-request bookkeeping by JSON-RPC id alone; the
+    /// endpoint gives each request a unique id and restores the caller's.
+    private static func timedWhoAmI(port: UInt16, pane: String) async throws -> Outcome {
+        let body = #"{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"whoami","arguments":{}}}"#
+        let begin = Date()
+        let (_, json) = try await post(port: port, body: body, extraHeaders: [HostMCPServer.callerHeader: pane])
+        let content = ((json?["result"] as? [String: Any])?["content"] as? [[String: Any]])?.first
+        return (pane, json?["id"] as? Int, content?["text"] as? String, Date().timeIntervalSince(begin))
+    }
+
+    func testConcurrentCallsWithTheSameIdKeepTheirOwnCaller() async throws {
+        let port = self.port
+        async let first = Self.timedWhoAmI(port: port, pane: "pane-A")
+        async let second = Self.timedWhoAmI(port: port, pane: "pane-B")
+        let results = try await [first, second]
+        for result in results {
+            XCTAssertEqual(result.id, 1, "\(result.pane) must get its own id back")
+            XCTAssertEqual(result.text, "caller:\(result.pane)")
+            XCTAssertLessThan(result.elapsed, 5)
+        }
+        XCTAssertEqual(source.callers.sorted(), ["pane-A", "pane-B"])
+    }
+
+    func testStringIdsRoundTripToo() async throws {
+        let body = #"{"jsonrpc":"2.0","id":"abc","method":"tools/list","params":{}}"#
+        let (status, json) = try await send(body: body)
+        XCTAssertEqual(status, 200)
+        XCTAssertEqual(json?["id"] as? String, "abc")
+    }
+
+    func testStartWhileRunningReturnsTheSamePort() async throws {
+        let again = try await endpoint.start()
+        XCTAssertEqual(again, port)
     }
 
     func testWrongBearerIs401() async throws {

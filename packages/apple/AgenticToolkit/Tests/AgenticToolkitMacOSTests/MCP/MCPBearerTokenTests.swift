@@ -24,6 +24,17 @@ final class MCPBearerTokenTests: XCTestCase {
         XCTAssertEqual((attributes[.posixPermissions] as? Int), 0o600)
     }
 
+    func testLoadTightensAWiderExistingFileAndKeepsItsToken() throws {
+        let dir = tempDir()
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let file = dir.appendingPathComponent("mcp-token")
+        try "keepme".write(to: file, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: file.path)
+        XCTAssertEqual(try MCPBearerToken.load(from: file), "keepme")
+        let attributes = try FileManager.default.attributesOfItem(atPath: file.path)
+        XCTAssertEqual((attributes[.posixPermissions] as? Int), 0o600)
+    }
+
     func testLoadReadsAnExistingTokenTrimmed() throws {
         let dir = tempDir()
         try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
