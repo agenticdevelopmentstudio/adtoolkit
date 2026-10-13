@@ -1,81 +1,44 @@
-//
-//  HostMCPServer.swift
-//  AgenticToolkit
-//
-//  Created by Mike Fullerton on 4/30/26.
-//
-
+// macOS/Features/MCP/HostMCPServer.swift
 import Foundation
 import MCP
-
+import OSLog
 import AgenticToolkitCore
-import AgenticToolkitCoreUI
-import AgenticToolkitCoreMacOS
 
-/// In-process MCP server that exposes a small toolset describing the host
-/// application. Demonstrates the host-as-MCP-server pattern: tools defined
-/// here can be consumed by the host's own chat window via an in-memory
-/// transport, no subprocess required.
-///
-/// ### Usage
-///
-/// ```swift
-/// let host = HostMCPServer(
-///     appName: "AgenticToolkitApp",
-///     appVersion: "1.0.0",
-///     pluginNames: ["Claude (Local)", "OpenAI"],
-///     openChatWindow: { coordinator.openNewWindow() }
-/// )
-/// try await host.start()
-///
-/// // Build an MCP.Client wired to host.clientTransport and pass that
-/// // through whatever surface routes tool calls (registry adapter,
-/// // direct chat-view-model wiring, etc.).
-/// ```
-///
-/// The class is intentionally self-contained — registry integration is left
-/// to the host application so the sample does not have to expand the
-/// `MCPServerConfiguration.Transport` enum with an in-process variant.
-@MainActor
-public final class HostMCPServer {
+/// One MCP server for the host app: every registered `ChatToolSource` is
+/// advertised under `tools/list`, and `tools/call` is routed to the source
+/// that advertises the name. Transport-agnostic — the in-app chat and the
+/// HTTP endpoint hand it different transports.
+public actor HostMCPServer {
 
-    private let appName: String
-    private let appVersion: String
-    private let pluginNames: [String]
-    private let openChatWindow: @Sendable () -> Void
+    /// The request header a caller sets to say which pane it speaks from.
+    public static let callerHeader = "X-ADKitchen-Pane"
 
-    private let server: MCP.Server
-    private let serverTransport: InMemoryTransport
-
-    /// Client side of the in-memory transport pair. Hand this to an
-    /// `MCP.Client.connect(transport:)` to talk to the host server.
-    public let clientTransport: InMemoryTransport
-
-    public init(
-        appName: String,
-        appVersion: String,
-        pluginNames: [String] = [],
-        openChatWindow: @Sendable @escaping () -> Void = {}
-    ) async {
-        self.appName = appName
-        self.appVersion = appVersion
-        self.pluginNames = pluginNames
-        self.openChatWindow = openChatWindow
-
-        let pair = await InMemoryTransport.createConnectedPair()
-        self.clientTransport = pair.client
-        self.serverTransport = pair.server
-
-        self.server = MCP.Server(
-            name: "host-app",
-            version: appVersion,
-            capabilities: MCP.Server.Capabilities(tools: .init(listChanged: false))
-        )
+    private struct Registration {
+        let source: any ChatToolSource
+        let prefix: String
     }
 
-    public func start() async throws {
-        await registerHandlers()
-        try await server.start(transport: serverTransport)
+    private let server: Server
+    private var registrations: [Registration] = []
+    private let log = Logger(subsystem: "AgenticToolkit", category: "automation")
+
+    public init(appName: String, appVersion: String) {
+        // Not `.strict`: a stateless HTTP caller sends `tools/call` with no
+        // `initialize` first, and strict mode would refuse it.
+        server = Server(name: appName, version: appVersion,
+                        capabilities: .init(tools: .init(listChanged: false)),
+                        configuration: .default)
+    }
+
+    /// Adds a source. `prefix` is put before every tool name it advertises
+    /// and stripped again before the call reaches it.
+    public func register(_ source: any ChatToolSource, prefix: String? = nil) {
+        registrations.append(Registration(source: source, prefix: prefix ?? ""))
+    }
+
+    public func serve(over transport: any Transport) async throws {
+        await installHandlers()
+        try await server.start(transport: transport)
     }
 
     public func stop() async {
@@ -84,62 +47,64 @@ public final class HostMCPServer {
 
     // MARK: - Handlers
 
-    private func registerHandlers() async {
-        let appName = self.appName
-        let appVersion = self.appVersion
-        let pluginNames = self.pluginNames
-        let openChatWindow = self.openChatWindow
-
-        await server.withMethodHandler(ListTools.self) { _ in
-            ListTools.Result(tools: HostMCPServer.staticToolDefinitions())
+    private func installHandlers() async {
+        await server.withMethodHandler(ListTools.self) { [weak self] _ in
+            guard let self else { return .init(tools: []) }
+            return .init(tools: await self.listTools())
         }
-
-        await server.withMethodHandler(CallTool.self) { params in
-            switch params.name {
-            case "host_app_info":
-                let pluginList = pluginNames.isEmpty ? "(none)" : pluginNames.joined(separator: ", ")
-                let body = """
-                Host: \(appName)
-                Version: \(appVersion)
-                Plugins: \(pluginList)
-                """
-                return CallTool.Result(
-                    content: [.text(text: body, annotations: nil, _meta: nil)],
-                    isError: false
-                )
-            case "host_open_chat_window":
-                openChatWindow()
-                return CallTool.Result(
-                    content: [.text(text: "Opened a new chat window.", annotations: nil, _meta: nil)],
-                    isError: false
-                )
-            default:
-                return CallTool.Result(
-                    content: [.text(text: "Unknown tool: \(params.name)", annotations: nil, _meta: nil)],
-                    isError: true
-                )
-            }
+        await server.withMethodHandler(CallTool.self) { [weak self] params in
+            guard let self else { return Self.errorResult("server is gone") }
+            let caller = Server.currentHandlerContext?.httpContext?.header(Self.callerHeader)
+            return await self.call(name: params.name, arguments: params.arguments ?? [:], caller: caller)
         }
     }
 
-    private nonisolated static func staticToolDefinitions() -> [MCP.Tool] {
-        [
-            MCP.Tool(
-                name: "host_app_info",
-                description: "Return the host application's name, version, and configured AI plugins.",
-                inputSchema: .object([
-                    "type": .string("object"),
-                    "properties": .object([:])
-                ])
-            ),
-            MCP.Tool(
-                name: "host_open_chat_window",
-                description: "Open a new AI chat window in the host application.",
-                inputSchema: .object([
-                    "type": .string("object"),
-                    "properties": .object([:])
-                ])
-            )
-        ]
+    private func listTools() async -> [MCP.Tool] {
+        var tools: [MCP.Tool] = []
+        for registration in registrations {
+            for definition in await registration.source.toolDefinitions() {
+                let schema = (try? JSONDecoder().decode(Value.self, from: definition.parametersJSONSchema))
+                    ?? .object(["type": .string("object"), "properties": .object([:])])
+                tools.append(MCP.Tool(name: registration.prefix + definition.name,
+                                  description: definition.description,
+                                  inputSchema: schema))
+            }
+        }
+        return tools
+    }
+
+    private func call(name: String, arguments: [String: Value], caller: String?) async -> CallTool.Result {
+        for registration in registrations {
+            guard name.hasPrefix(registration.prefix) else { continue }
+            let bare = String(name.dropFirst(registration.prefix.count))
+            let names = await registration.source.toolDefinitions().map(\.name)
+            guard names.contains(bare) else { continue }
+            let json = (try? JSONEncoder().encode(Value.object(arguments))) ?? Data("{}".utf8)
+            let result = await registration.source.callTool(name: bare, argumentsJSON: json, caller: caller)
+            log.info("tools/call \(name, privacy: .public) \(result.isError ? "error" : "ok", privacy: .public)")
+            return Self.result(result.content, isError: result.isError)
+        }
+        log.info("tools/call \(name, privacy: .public) unknown")
+        return Self.errorResult("unknown tool \(name)")
+    }
+
+    // MARK: - Results
+
+    /// A `data:image/png;base64,` answer becomes image content; everything
+    /// else is text. The tool set renders screenshots as a data URL so a
+    /// text-only chat still gets *something*, and this is where MCP gets the
+    /// real thing.
+    private static func result(_ content: String, isError: Bool) -> CallTool.Result {
+        let pngPrefix = "data:image/png;base64,"
+        if content.hasPrefix(pngPrefix) {
+            let base64 = String(content.dropFirst(pngPrefix.count))
+            let image = MCP.Tool.Content.image(data: base64, mimeType: "image/png", annotations: nil, _meta: nil)
+            return .init(content: [image], isError: isError)
+        }
+        return .init(content: [.text(text: content, annotations: nil, _meta: nil)], isError: isError)
+    }
+
+    private static func errorResult(_ sentence: String) -> CallTool.Result {
+        result(sentence, isError: true)
     }
 }
