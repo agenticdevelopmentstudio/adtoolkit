@@ -18,15 +18,15 @@ final class AutomationSettingsPanelTests: XCTestCase {
         return nil
     }
 
-    /// Only the selected topic is in the view tree, and a split selects its
-    /// first topic when it appears in a window, which these tests have none
-    /// of — so the topic is chosen here: 0 is Browser, 1 is Endpoint.
     private func control(_ id: String, in view: NSView) -> NSControl? {
         if let control = view as? NSControl, control.accessibilityIdentifier() == id { return control }
         for sub in view.subviews { if let found = control(id, in: sub) { return found } }
         return nil
     }
 
+    /// Only the selected topic is in the view tree, and a split selects its
+    /// first topic when it appears in a window, which these tests have none
+    /// of — so the topic is chosen here: 0 is Browser, 1 is Endpoint.
     private func makePanel(status: AutomationServerStatus,
                            topic: Int,
                            pasteboard: NSPasteboard = .general) -> AutomationSettingsPanelViewController {
