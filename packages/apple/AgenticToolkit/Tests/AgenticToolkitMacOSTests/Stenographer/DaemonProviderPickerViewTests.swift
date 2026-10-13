@@ -49,6 +49,17 @@ class StubDaemonService: StenographerDaemonService, @unchecked Sendable {
     var scriptsReply: [OversightScript]? = []
     var interactionsReply: [AIInteractionDTO]? = []
     var conversationsReply: [ConversationEntryDTO]? = []
+    /// What the daemon's GET /preferences/* answers; nil = daemon unreachable.
+    /// Defaults to the values a freshly installed daemon holds.
+    var summaryReply: SummaryPreferenceResponse? = SummaryPreferenceResponse(
+        enabled: true, selectedConfigId: "", prompt: "", maxWords: SummaryDefaults.maxWords,
+        activityLines: SummaryDefaults.activityLines, detailChars: SummaryDefaults.detailChars,
+        intervalMinutes: SummaryDefaults.intervalMinutes, maxPerRun: SummaryDefaults.maxPerRun,
+        timeoutSeconds: SummaryDefaults.timeoutSeconds)
+    var oversightReply: OversightPreferenceResponse? = OversightPreferenceResponse(
+        enabled: false, contextThresholdPct: 80, llmEnabled: false, selectedConfigId: "", model: "")
+    private(set) var summaryGets = 0
+    private(set) var oversightGets = 0
     private(set) var summaryRequests: [SummaryPreferenceRequest] = []
     private(set) var oversightRequests: [OversightPreferenceRequest] = []
     private var reconnectHandlers: [@Sendable () -> Void] = []
@@ -76,8 +87,14 @@ class StubDaemonService: StenographerDaemonService, @unchecked Sendable {
     func aiInteractions(limit: Int) async -> [AIInteractionDTO]? { interactionsReply }
     func aiInteraction(id: Int) async -> AIInteractionDTO? { interactionsReply?.first { $0.id == id } }
     func aiProviderConfigs() async -> [DaemonProviderConfig]? { configs }
-    func summaryPreferences() async -> SummaryPreferenceResponse? { nil }
-    func oversightPreferences() async -> OversightPreferenceResponse? { nil }
+    func summaryPreferences() async -> SummaryPreferenceResponse? {
+        summaryGets += 1
+        return summaryReply
+    }
+    func oversightPreferences() async -> OversightPreferenceResponse? {
+        oversightGets += 1
+        return oversightReply
+    }
     func setSummaryPreferences(_ request: SummaryPreferenceRequest) async -> Bool {
         summaryRequests.append(request)
         return true

@@ -9,6 +9,13 @@ import AgenticToolkitCore
 /// of observers lives here; on any change, at startup and on every daemon
 /// reconnect the full idempotent snapshot is pushed, so a daemon restart cannot
 /// strand a stale value. The engine is Core's `SettingsSnapshotPush`.
+///
+/// **The first push is preceded by a one-time seed.** The daemon holds the only
+/// copy of what the user chose before these panes moved to a new app, so a store
+/// that has not yet been seeded reads `GET /preferences/oversight` and writes
+/// the fields into its settings before the observers are installed and the
+/// first snapshot goes out. If the daemon is down, nothing is pushed until a
+/// reconnect lets the seed run.
 @MainActor
 public enum StenographerOversightPrefsPush {
 
@@ -32,7 +39,8 @@ public enum StenographerOversightPrefsPush {
                 ) else { return false }
                 return await service.setOversightPreferences(request)
             },
-            registerReconnect: { service.onReconnect($0) }
+            registerReconnect: { service.onReconnect($0) },
+            seed: { await seedFromDaemon(service: service) }
         )
         push = engine
         resubscribeModelObserver()
@@ -46,6 +54,25 @@ public enum StenographerOversightPrefsPush {
                 }
             ]
         }
+    }
+
+    /// Takes the daemon's stored values into the local settings once (marker
+    /// `stenographerAIOversightSeededFromDaemon`). True when the store is now
+    /// current or needs no seeding; false when the daemon could not be reached.
+    /// The response's `contextThresholdPct` has no local setting and is ignored.
+    static func seedFromDaemon(service: any StenographerDaemonService) async -> Bool {
+        if UserSettings.stenographerAIOversightSeededFromDaemon.value { return true }
+        guard let stored = await service.oversightPreferences() else { return false }
+        UserSettings.stenographerAIOversightEnabled.value = stored.enabled
+        UserSettings.stenographerAIOversightLLMEnabled.value = stored.llmEnabled
+        UserSettings.stenographerAIOversightProviderConfigId.value = stored.selectedConfigId
+        if let id = UUID(uuidString: stored.selectedConfigId) {
+            UserSettings.oversightModelSetting(config: id).value = stored.model
+        }
+        UserSettings.stenographerAIOversightSeededFromDaemon.value = true
+        // The selection may have changed, so the model observer follows it.
+        resubscribeModelObserver()
+        return true
     }
 
     /// Tears the observers down (test isolation; production installs once).

@@ -1,5 +1,6 @@
 import AppKit
 import AgenticToolkitCore
+import AgenticToolkitCoreUI
 import AgenticToolkitCoreMacOS
 
 /// One theme's detail pane in the Theme settings split: two tabs, **Preview**
@@ -126,7 +127,7 @@ final class ThemeDetailPanelViewController: ComposableSettings.SettingsPanelView
         preview.layer?.masksToBounds = true
         preview.translatesAutoresizingMaskIntoConstraints = false
 
-        let doc = ThemeFlippedView()
+        let doc = TopAnchoredFlippedView()
         doc.translatesAutoresizingMaskIntoConstraints = false
         doc.addSubview(preview)
 

@@ -26,6 +26,16 @@ import OSLog
 /// while the receiver was down unapplied. A newer push or ``stop()`` cancels
 /// it; a reconnect while it waits is ignored, since it is already coming.
 ///
+/// **Seeding before the first push.** A push whose local store is new to the
+/// receiver (a fresh app taking over settings the receiver already holds) would
+/// overwrite the receiver's values with compile-time defaults. A caller may
+/// therefore pass a `seed` step: it runs before the observers are installed and
+/// before the first push, and returns true once the local store holds the
+/// receiver's current values (or needs no seeding), false when the receiver
+/// could not be reached. On false nothing is observed or pushed; the next
+/// reconnect retries the seed and then completes the start. Observers are
+/// installed only after seeding, so writing the seeded values pushes nothing.
+///
 /// What the snapshot holds, how it is encoded and how it travels are the
 /// caller's; the engine — observe, snapshot, supersede, bounded retry,
 /// re-push on reconnect — is this one copy.
@@ -37,6 +47,10 @@ public final class SettingsSnapshotPush {
     /// Sends one body; true when the receiver took it.
     public typealias Send = @Sendable (Data) async -> Bool
     /// Registers a handler to run on every reconnect.
+    /// Brings the local store up to the receiver's current values before the
+    /// first push; true when done (or not needed), false when the receiver
+    /// could not be reached.
+    public typealias Seed = @MainActor () async -> Bool
     public typealias RegisterReconnect = (@escaping @Sendable () -> Void) -> Void
     /// Nanoseconds a reconnect waits before pushing, given how many pushes in a
     /// row have failed (always at least 1 when asked).
@@ -49,6 +63,7 @@ public final class SettingsSnapshotPush {
     private let registerReconnect: RegisterReconnect
     private let backoffs: [UInt64]
     private let reconnectDelay: ReconnectDelay
+    private let seed: Seed?
 
     private var observers: [AnyObject] = []
     private var observing = false
@@ -59,6 +74,11 @@ public final class SettingsSnapshotPush {
     private var inFlight = false
     private var failures = 0
     private var delayedReconnect: Task<Void, Never>?
+    /// Builds the observers; held back, unbuilt, until the seed succeeds.
+    private var pendingObservers: (@MainActor () -> [AnyObject])?
+    private var seedTask: Task<Void, Never>?
+    /// Bumped by every seed attempt and by ``stop()``, so a stale seed's ending is ignored.
+    private var seedGeneration = 0
 
     /// - Parameters:
     ///   - label: names the channel in log lines ("Billing prefs").
@@ -66,6 +86,8 @@ public final class SettingsSnapshotPush {
     ///     tries at once, then after 0.5 s and 1.5 s.
     ///   - reconnectDelay: how long a reconnect after failed pushes waits; the
     ///     default doubles from 1 s to a 30 s cap.
+    ///   - seed: optional step run before the first push (see the type's
+    ///     "Seeding" note); nil starts pushing at once.
     public init(
         label: String,
         logger: Logger,
@@ -73,7 +95,8 @@ public final class SettingsSnapshotPush {
         reconnectDelay: @escaping ReconnectDelay = SettingsSnapshotPush.defaultReconnectDelay,
         snapshot: @escaping Snapshot,
         send: @escaping Send,
-        registerReconnect: @escaping RegisterReconnect
+        registerReconnect: @escaping RegisterReconnect,
+        seed: Seed? = nil
     ) {
         self.label = label
         self.logger = logger
@@ -82,6 +105,7 @@ public final class SettingsSnapshotPush {
         self.snapshot = snapshot
         self.sendBody = send
         self.registerReconnect = registerReconnect
+        self.seed = seed
     }
 
     /// 1 s after one failed push, doubling per further failure, capped at 30 s.
@@ -99,31 +123,67 @@ public final class SettingsSnapshotPush {
     /// Observes `settings`, pushes the snapshot now, and re-pushes it on every
     /// reconnect. A repeat call while observing is ignored.
     public func start<Value: Codable & Sendable>(observing settings: [UserSetting<Value>]) {
-        start(observers: settings.map { setting in
-            UserSettingObserver(setting) { [weak self] _ in self?.push() }
+        start(observers: { [weak self] in
+            settings.map { setting in
+                UserSettingObserver(setting) { _ in self?.push() }
+            }
         })
     }
 
     /// ``start(observing:)`` for settings of mixed types: `makeObservers` is
     /// handed the change handler and returns whatever observers it built,
     /// which this push keeps alive until ``stop()``.
-    public func start(makeObservers: (_ onChange: @escaping @MainActor () -> Void) -> [AnyObject]) {
-        start(observers: makeObservers { [weak self] in self?.push() })
+    public func start(makeObservers: @escaping (_ onChange: @escaping @MainActor () -> Void) -> [AnyObject]) {
+        start(observers: { [weak self] in makeObservers { self?.push() } })
     }
 
-    private func start(observers built: [AnyObject]) {
+    private func start(observers build: @escaping @MainActor () -> [AnyObject]) {
         guard !observing else {
             logger.warning("\(self.label, privacy: .public) push started more than once; ignoring the repeat")
             return
         }
         observing = true
+        guard seed != nil else {
+            activate(build())
+            return
+        }
+        // Observers wait for the seed, so writing the seeded values pushes nothing.
+        pendingObservers = build
+        installReconnect()
+        attemptSeed()
+    }
+
+    private func activate(_ built: [AnyObject]) {
+        pendingObservers = nil
         observers = built
         // Observers fire only on change, and the receiver may have restarted.
         push()
+        installReconnect()
+    }
+
+    private func installReconnect() {
         guard !reconnectInstalled else { return }
         reconnectInstalled = true
         registerReconnect { [weak self] in
             Task { @MainActor in self?.reconnected() }
+        }
+    }
+
+    /// Runs the seed unless one is already in flight; on success completes the start.
+    private func attemptSeed() {
+        guard let seed, seedTask == nil else { return }
+        seedGeneration += 1
+        let mine = seedGeneration
+        seedTask = Task { @MainActor [weak self] in
+            let seeded = await seed()
+            guard let self, self.seedGeneration == mine else { return }
+            self.seedTask = nil
+            guard self.observing, let build = self.pendingObservers else { return }
+            if seeded {
+                self.activate(build())
+            } else {
+                self.logger.warning("\(self.label, privacy: .public) seed failed; retrying on reconnect")
+            }
         }
     }
 
@@ -132,6 +192,10 @@ public final class SettingsSnapshotPush {
     public func stop() {
         observing = false
         observers = []
+        pendingObservers = nil
+        seedTask?.cancel()
+        seedTask = nil
+        seedGeneration += 1
         cancelPending()
     }
 
@@ -157,6 +221,7 @@ public final class SettingsSnapshotPush {
     /// Awaits the most recent push, including one a reconnect is waiting to
     /// make — for tests.
     public func awaitPendingPush() async {
+        await seedTask?.value
         await delayedReconnect?.value
         await pushTask?.value
     }
@@ -165,6 +230,11 @@ public final class SettingsSnapshotPush {
 
     private func reconnected() {
         guard observing else { return }
+        // Not started yet: the seed failed, so the reconnect retries it.
+        if pendingObservers != nil {
+            attemptSeed()
+            return
+        }
         // The running push carries the current snapshot; restarting it would
         // cancel its bounded retry before it can give up (review F11).
         guard !inFlight, delayedReconnect == nil else { return }

@@ -10,7 +10,7 @@ import AIPluginKit
 extension UserSettings {
 
     /// Whether the always-on daemon generates AI summaries for sessions. Toggling
-    /// this POSTs `/preferences/ai` so the daemon's summarizer + SummarizeTask pick
+    /// this POSTs `/preferences/summaries` so the daemon's summarizer + SummarizeTask pick
     /// it up. "claude_cli" needs no API key (it uses the local Claude Code login).
     public static let stenographerAISummariesEnabled = UserSetting<Bool>(
         "stenographer_ai_summaries_enabled",
@@ -121,6 +121,23 @@ extension UserSettings {
     public static let stenographerAIOversightProviderConfigId = UserSetting<String>(
         "stenographer_ai_oversight_provider_config_id",
         default: ""
+    )
+
+    /// Whether this store has taken the AI summaries values from the daemon once.
+    /// The daemon holds the only copy of what the user chose before these panes
+    /// moved to a new app, so the first push reads them instead of overwriting
+    /// them with this build's defaults. Set by `StenographerSummaryPrefsPush`.
+    public static let stenographerAISummariesSeededFromDaemon = UserSetting<Bool>(
+        "stenographer_ai_summaries_seeded_from_daemon",
+        default: false
+    )
+
+    /// Whether this store has taken the AI oversight values from the daemon once;
+    /// the oversight counterpart of ``stenographerAISummariesSeededFromDaemon``.
+    /// Set by `StenographerOversightPrefsPush`.
+    public static let stenographerAIOversightSeededFromDaemon = UserSetting<Bool>(
+        "stenographer_ai_oversight_seeded_from_daemon",
+        default: false
     )
 
     /// The oversight model override for one daemon provider configuration; ""

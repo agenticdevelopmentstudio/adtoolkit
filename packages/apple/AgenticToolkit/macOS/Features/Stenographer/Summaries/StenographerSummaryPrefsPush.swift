@@ -9,6 +9,13 @@ import AgenticToolkitCore
 /// here; on any change, at startup and on every daemon reconnect the full
 /// idempotent snapshot is pushed through `POST /preferences/summaries`. The
 /// engine is Core's `SettingsSnapshotPush`.
+///
+/// **The first push is preceded by a one-time seed.** The daemon holds the only
+/// copy of what the user chose before these panes moved to a new app, so a store
+/// that has not yet been seeded reads `GET /preferences/summaries` and writes
+/// every field into its settings before the observers are installed and the
+/// first snapshot goes out. If the daemon is down, nothing is pushed until a
+/// reconnect lets the seed run.
 @MainActor
 public enum StenographerSummaryPrefsPush {
 
@@ -31,7 +38,8 @@ public enum StenographerSummaryPrefsPush {
                 ) else { return false }
                 return await service.setSummaryPreferences(request)
             },
-            registerReconnect: { service.onReconnect($0) }
+            registerReconnect: { service.onReconnect($0) },
+            seed: { await seedFromDaemon(service: service) }
         )
         push = engine
         engine.start { onChange -> [AnyObject] in
@@ -52,6 +60,31 @@ public enum StenographerSummaryPrefsPush {
             ].map { setting in UserSettingObserver(setting) { _ in onChange() } }
             return strings + bools + ints
         }
+    }
+
+    /// Takes the daemon's stored values into the local settings once (marker
+    /// `stenographerAISummariesSeededFromDaemon`). True when the store is now
+    /// current or needs no seeding; false when the daemon could not be reached.
+    static func seedFromDaemon(service: any StenographerDaemonService) async -> Bool {
+        if UserSettings.stenographerAISummariesSeededFromDaemon.value { return true }
+        guard let stored = await service.summaryPreferences() else { return false }
+        UserSettings.stenographerAISummariesEnabled.value = stored.enabled
+        UserSettings.stenographerAISummariesProviderConfigId.value = stored.selectedConfigId
+        // An unmodified (or never configured) prompt stays at the default, which
+        // is not stored, so a later release's wording still applies.
+        if stored.prompt.isEmpty || stored.prompt == SummaryDefaults.prompt {
+            UserSettings.stenographerAISummaryPrompt.remove()
+        } else {
+            UserSettings.stenographerAISummaryPrompt.value = stored.prompt
+        }
+        UserSettings.stenographerAISummaryMaxWords.value = stored.maxWords
+        UserSettings.stenographerAISummaryActivityLines.value = stored.activityLines
+        UserSettings.stenographerAISummaryDetailChars.value = stored.detailChars
+        UserSettings.stenographerAISummaryIntervalMinutes.value = stored.intervalMinutes
+        UserSettings.stenographerAISummaryMaxPerRun.value = stored.maxPerRun
+        UserSettings.stenographerAISummaryTimeoutSeconds.value = stored.timeoutSeconds
+        UserSettings.stenographerAISummariesSeededFromDaemon.value = true
+        return true
     }
 
     /// Tears the observers down (test isolation; production installs once).

@@ -1,12 +1,6 @@
 import AppKit
 import AgenticToolkitCore
 
-/// A document view that pins its content to the top (AppKit's default flips the
-/// origin to the bottom-left). Used as the scroll document for the theme gallery.
-final class ThemeFlippedView: NSView {
-    override var isFlipped: Bool { true }
-}
-
 /// A titled "card": a header label above a rounded, outlined surface (`ThemedBox`)
 /// holding the section's content. Each part of a theme (Preview, Details, Colors,
 /// Typography, Terminal palette) is shown as its own card, so the editor reads as

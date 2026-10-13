@@ -1,4 +1,5 @@
 import AppKit
+import AgenticToolkitCoreUI
 
 extension ComposableSettings {
 
@@ -12,7 +13,7 @@ extension ComposableSettings {
     @MainActor
     public final class PanelScrollView: NSScrollView {
 
-        private let document = FlippedDocumentView()
+        private let document = TopAnchoredFlippedView()
 
         public init() {
             super.init(frame: .zero)
@@ -48,10 +49,4 @@ extension ComposableSettings {
             ])
         }
     }
-}
-
-/// Flipped so a scroll view's document top-aligns its content (settings read
-/// top-to-bottom) instead of AppKit's default bottom-up origin.
-private final class FlippedDocumentView: NSView {
-    override var isFlipped: Bool { true }
 }

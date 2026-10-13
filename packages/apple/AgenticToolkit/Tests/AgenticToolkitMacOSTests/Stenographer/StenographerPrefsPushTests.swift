@@ -13,6 +13,127 @@ final class StenographerPrefsPushTests: XCTestCase {
         UserSettings.resetAISummaryTuning()
         UserSettings.stenographerAIOversightEnabled.remove()
         UserSettings.stenographerAIOversightProviderConfigId.remove()
+        UserSettings.stenographerAIOversightLLMEnabled.remove()
+        UserSettings.stenographerAISummariesSeededFromDaemon.remove()
+        UserSettings.stenographerAIOversightSeededFromDaemon.remove()
+        UserSettings.oversightModelSetting(config: Self.configId).remove()
+    }
+
+    private static let configId = UUID(uuidString: "0A1B2C3D-0000-4000-8000-000000000001")!
+
+    private func nonDefaultSummaries() -> SummaryPreferenceResponse {
+        SummaryPreferenceResponse(
+            enabled: false, selectedConfigId: "claude-cli", prompt: "Custom prompt", maxWords: 7,
+            activityLines: 11, detailChars: 222, intervalMinutes: 9, maxPerRun: 3, timeoutSeconds: 44)
+    }
+
+    // MARK: - Seeding from the daemon
+
+    func testSummaryFreshStoreSeedsFromDaemonBeforeFirstPush() async {
+        let daemon = StubDaemonService()
+        daemon.summaryReply = nonDefaultSummaries()
+        StenographerSummaryPrefsPush.startObserving(service: daemon)
+        await StenographerSummaryPrefsPush.awaitPendingPush()
+        XCTAssertEqual(UserSettings.stenographerAISummariesEnabled.value, false)
+        XCTAssertEqual(UserSettings.stenographerAISummariesProviderConfigId.value, "claude-cli")
+        XCTAssertEqual(UserSettings.stenographerAISummaryPrompt.value, "Custom prompt")
+        XCTAssertEqual(UserSettings.stenographerAISummaryMaxWords.value, 7)
+        XCTAssertEqual(UserSettings.stenographerAISummaryActivityLines.value, 11)
+        XCTAssertEqual(UserSettings.stenographerAISummaryDetailChars.value, 222)
+        XCTAssertEqual(UserSettings.stenographerAISummaryIntervalMinutes.value, 9)
+        XCTAssertEqual(UserSettings.stenographerAISummaryMaxPerRun.value, 3)
+        XCTAssertEqual(UserSettings.stenographerAISummaryTimeoutSeconds.value, 44)
+        XCTAssertTrue(UserSettings.stenographerAISummariesSeededFromDaemon.value)
+        await settleSummary()
+        XCTAssertEqual(daemon.summaryRequests.count, 1, "seeding must not itself trigger a push")
+        let body = daemon.summaryRequests.first
+        XCTAssertEqual(body?.enabled, false)
+        XCTAssertEqual(body?.selectedConfigId, "claude-cli")
+        XCTAssertEqual(body?.prompt, "Custom prompt")
+        XCTAssertEqual(body?.maxWords, 7)
+        XCTAssertEqual(body?.timeoutSeconds, 44)
+    }
+
+    func testSummaryDefaultPromptFromDaemonStaysUnstored() async {
+        let daemon = StubDaemonService()
+        daemon.summaryReply = SummaryPreferenceResponse(
+            enabled: true, selectedConfigId: "", prompt: SummaryDefaults.prompt, maxWords: 5,
+            activityLines: 11, detailChars: 222, intervalMinutes: 9, maxPerRun: 3, timeoutSeconds: 44)
+        StenographerSummaryPrefsPush.startObserving(service: daemon)
+        await StenographerSummaryPrefsPush.awaitPendingPush()
+        XCTAssertEqual(UserSettings.stenographerAISummaryPrompt.value, SummaryDefaults.prompt)
+        XCTAssertEqual(daemon.summaryRequests.first?.prompt, "")
+        XCTAssertEqual(daemon.summaryRequests.first?.maxWords, 5)
+    }
+
+    func testOversightFreshStoreSeedsFromDaemonBeforeFirstPush() async {
+        let daemon = StubDaemonService()
+        daemon.oversightReply = OversightPreferenceResponse(
+            enabled: true, contextThresholdPct: 70, llmEnabled: true,
+            selectedConfigId: Self.configId.uuidString, model: "big-model")
+        StenographerOversightPrefsPush.startObserving(service: daemon)
+        await StenographerOversightPrefsPush.awaitPendingPush()
+        XCTAssertEqual(UserSettings.stenographerAIOversightEnabled.value, true)
+        XCTAssertEqual(UserSettings.stenographerAIOversightLLMEnabled.value, true)
+        XCTAssertEqual(UserSettings.stenographerAIOversightProviderConfigId.value, Self.configId.uuidString)
+        XCTAssertEqual(UserSettings.oversightModelSetting(config: Self.configId).value, "big-model")
+        XCTAssertTrue(UserSettings.stenographerAIOversightSeededFromDaemon.value)
+        await settle()
+        XCTAssertEqual(daemon.oversightRequests.count, 1, "seeding must not itself trigger a push")
+        let body = daemon.oversightRequests.first
+        XCTAssertEqual(body?.enabled, true)
+        XCTAssertEqual(body?.llmEnabled, true)
+        XCTAssertEqual(body?.selectedConfigId, Self.configId.uuidString)
+        XCTAssertEqual(body?.model, "big-model")
+    }
+
+    func testSeededMarkerSkipsTheDaemonRead() async {
+        UserSettings.stenographerAISummariesSeededFromDaemon.value = true
+        UserSettings.stenographerAIOversightSeededFromDaemon.value = true
+        let daemon = StubDaemonService()
+        daemon.summaryReply = nonDefaultSummaries()
+        StenographerSummaryPrefsPush.startObserving(service: daemon)
+        StenographerOversightPrefsPush.startObserving(service: daemon)
+        await StenographerSummaryPrefsPush.awaitPendingPush()
+        await StenographerOversightPrefsPush.awaitPendingPush()
+        XCTAssertEqual(daemon.summaryGets, 0)
+        XCTAssertEqual(daemon.oversightGets, 0)
+        XCTAssertEqual(daemon.summaryRequests.count, 1)
+        XCTAssertEqual(daemon.summaryRequests.first?.maxWords, SummaryDefaults.maxWords)
+        XCTAssertEqual(daemon.oversightRequests.count, 1)
+    }
+
+    func testDaemonDownPushesNothingUntilReconnectSeeds() async {
+        let daemon = StubDaemonService()
+        daemon.summaryReply = nil
+        daemon.oversightReply = nil
+        StenographerSummaryPrefsPush.startObserving(service: daemon)
+        StenographerOversightPrefsPush.startObserving(service: daemon)
+        await StenographerSummaryPrefsPush.awaitPendingPush()
+        await StenographerOversightPrefsPush.awaitPendingPush()
+        XCTAssertTrue(daemon.summaryRequests.isEmpty)
+        XCTAssertTrue(daemon.oversightRequests.isEmpty)
+        XCTAssertFalse(UserSettings.stenographerAISummariesSeededFromDaemon.value)
+        // Observers are not installed: a change pushes nothing.
+        UserSettings.stenographerAISummariesEnabled.value = false
+        UserSettings.stenographerAIOversightEnabled.value = true
+        await settleSummary()
+        await settle()
+        XCTAssertTrue(daemon.summaryRequests.isEmpty)
+        XCTAssertTrue(daemon.oversightRequests.isEmpty)
+
+        daemon.summaryReply = nonDefaultSummaries()
+        daemon.oversightReply = OversightPreferenceResponse(
+            enabled: true, contextThresholdPct: 80, llmEnabled: true, selectedConfigId: "claude-cli", model: "")
+        daemon.fireReconnect()
+        await settleSummary()
+        await settle()
+        XCTAssertEqual(daemon.summaryRequests.count, 1)
+        XCTAssertEqual(daemon.summaryRequests.first?.maxWords, 7)
+        XCTAssertEqual(daemon.oversightRequests.count, 1)
+        XCTAssertEqual(daemon.oversightRequests.first?.selectedConfigId, "claude-cli")
+        XCTAssertTrue(UserSettings.stenographerAISummariesSeededFromDaemon.value)
+        XCTAssertTrue(UserSettings.stenographerAIOversightSeededFromDaemon.value)
     }
 
     func testOversightSnapshotCarriesSentinelWithEmptyModel() {
