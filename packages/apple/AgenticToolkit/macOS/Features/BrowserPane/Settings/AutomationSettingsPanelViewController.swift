@@ -11,9 +11,18 @@ public final class AutomationSettingsPanelViewController: ComposableSettings.Set
 
     private let status: AutomationServerStatus
     private let settings: SettingsStore
+    private let pasteboard: NSPasteboard
 
-    public init(status: AutomationServerStatus, settings: SettingsStore = UserSettings.shared) {
+    /// - Parameters:
+    ///   - settings: where the two switches read and write.
+    ///   - pasteboard: where Copy puts the registration command.
+    public init(
+        status: AutomationServerStatus,
+        settings: SettingsStore = UserSettings.shared,
+        pasteboard: NSPasteboard = .general
+    ) {
         self.status = status
+        self.pasteboard = pasteboard
         self.settings = settings
         super.init(with: ComposableSettings.SettingsPanelDescriptor(
             title: "Automation",
@@ -36,8 +45,8 @@ public final class AutomationSettingsPanelViewController: ComposableSettings.Set
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        addPanel(AutomationBrowserPanel())
-        addPanel(AutomationEndpointPanel(status: status))
+        addPanel(AutomationBrowserPanel(settings: settings))
+        addPanel(AutomationEndpointPanel(status: status, pasteboard: pasteboard))
     }
 }
 
@@ -58,7 +67,12 @@ private final class AutomationBrowserPanel: AutomationTopicPanel {
     static let keywords = ["automation", "model", "drive", "browser", "evaluate", "javascript", "mcp"]
     override var searchKeywords: [String] { Self.keywords }
 
-    init() { super.init(title: "Browser", symbol: "globe") }
+    private let settings: SettingsStore
+
+    init(settings: SettingsStore) {
+        self.settings = settings
+        super.init(title: "Browser", symbol: "globe")
+    }
 
     override var helpContent: ComposableSettings.PanelHelp? {
         ComposableSettings.PanelHelp(topics: [
@@ -76,7 +90,8 @@ private final class AutomationBrowserPanel: AutomationTopicPanel {
 
         let enabled = ComposableSettings.ViewModel<Bool>(
             title: "Let models drive browser panes",
-            setting: UserSettings.browserAutomationEnabled,
+            get: { [settings] in settings.get(UserSettings.browserAutomationEnabled) },
+            set: { [settings] in settings.set($0, for: UserSettings.browserAutomationEnabled) },
             explanation: "Off, a model can list browser panes but not read or act on them.")
         let enabledView = ComposableSettings.CheckboxView(with: enabled)
         _ = enabledView.toggle.accessibilityID("settings.automation.enabled")
@@ -84,7 +99,8 @@ private final class AutomationBrowserPanel: AutomationTopicPanel {
 
         let evaluate = ComposableSettings.ViewModel<Bool>(
             title: "Allow browser_evaluate",
-            setting: UserSettings.browserAutomationEvaluate,
+            get: { [settings] in settings.get(UserSettings.browserAutomationEvaluate) },
+            set: { [settings] in settings.set($0, for: UserSettings.browserAutomationEvaluate) },
             explanation: "Lets a model run its own JavaScript in a page.")
         let evaluateView = ComposableSettings.CheckboxView(with: evaluate)
         _ = evaluateView.toggle.accessibilityID("settings.automation.evaluate")
@@ -106,8 +122,11 @@ private final class AutomationEndpointPanel: AutomationTopicPanel {
     private let copyButton = NSButton(title: "Copy Claude Code Command", target: nil, action: nil)
     private var cancellables: Set<AnyCancellable> = []
 
-    init(status: AutomationServerStatus) {
+    private let pasteboard: NSPasteboard
+
+    init(status: AutomationServerStatus, pasteboard: NSPasteboard) {
         self.status = status
+        self.pasteboard = pasteboard
         super.init(title: "Endpoint", symbol: "network")
     }
 
@@ -154,7 +173,6 @@ private final class AutomationEndpointPanel: AutomationTopicPanel {
 
     @objc private func copyCommand() {
         guard let port = status.port, let token = status.token else { return }
-        let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(MCPRegistration.claudeCommand(port: port, token: token), forType: .string)
     }
