@@ -92,6 +92,12 @@ extension ComposableSettings {
             bottom.edgeInsets = NSEdgeInsets(top: 12, left: 20, bottom: 16, right: 20)
             bottom.translatesAutoresizingMaskIntoConstraints = false
             buttons.translatesAutoresizingMaskIntoConstraints = false
+            // The topics take the sheet's height; the button bar keeps only what it needs.
+            // A stack's hugging priority makes no constraint against its own height, so
+            // without this the bar out-grew a glass sidebar that hugs a 10 pt height and
+            // the topics were squeezed to a sliver. Its content still sets its least height.
+            let barAsShortAsItCanBe = bottom.heightAnchor.constraint(equalToConstant: 0)
+            barAsShortAsItCanBe.priority = .defaultHigh
 
             root.addSubview(split.view)
             root.addSubview(bottom)
@@ -104,6 +110,7 @@ extension ComposableSettings {
                 bottom.trailingAnchor.constraint(equalTo: root.trailingAnchor),
                 bottom.bottomAnchor.constraint(equalTo: root.bottomAnchor),
                 buttons.widthAnchor.constraint(equalTo: bottom.widthAnchor, constant: -40),
+                barAsShortAsItCanBe,
                 root.widthAnchor.constraint(greaterThanOrEqualToConstant: 620),
                 root.heightAnchor.constraint(greaterThanOrEqualToConstant: 420)
             ])
