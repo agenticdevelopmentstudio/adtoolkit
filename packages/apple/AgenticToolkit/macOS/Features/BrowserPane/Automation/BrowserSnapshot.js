@@ -203,7 +203,10 @@
     node.ref = assignRef(el);
     if (role === 'heading') {
       const m = /^h([1-6])$/.exec(tag);
-      node.level = m ? Number(m[1]) : Number(el.getAttribute('aria-level') || 2);
+      // aria-level is only a level when it is a whole number from 1 up; "1.5",
+      // "x" and "" would otherwise reach the Swift decoder as NaN or a fraction.
+      const aria = Number(el.getAttribute('aria-level'));
+      node.level = m ? Number(m[1]) : (Number.isInteger(aria) && aria >= 1 ? aria : 2);
     }
     if (role === 'link' && el.href) { node.url = el.href; }
     const value = valueOf(el, role);

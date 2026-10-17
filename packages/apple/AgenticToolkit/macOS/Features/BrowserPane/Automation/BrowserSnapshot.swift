@@ -39,7 +39,9 @@ public struct BrowserSnapshotNode: Decodable, Sendable {
         name = try container.decodeIfPresent(String.self, forKey: .name)
         ref = try container.decodeIfPresent(String.self, forKey: .ref)
         states = try container.decodeIfPresent([String].self, forKey: .states) ?? []
-        level = try container.decodeIfPresent(Int.self, forKey: .level)
+        // A level the page misreports (a fraction, a word) is dropped, not fatal:
+        // one bad heading must not cost the whole snapshot.
+        if let raw = try? container.decodeIfPresent(Double.self, forKey: .level) { level = Int(exactly: raw) }
         url = try container.decodeIfPresent(String.self, forKey: .url)
         value = try container.decodeIfPresent(String.self, forKey: .value)
         text = try container.decodeIfPresent(String.self, forKey: .text)

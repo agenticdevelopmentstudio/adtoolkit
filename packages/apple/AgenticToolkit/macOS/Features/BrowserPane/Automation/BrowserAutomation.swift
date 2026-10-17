@@ -215,6 +215,11 @@ public final class BrowserAutomation: NSObject {
 
     public func snapshot(_ options: BrowserSnapshotOptions) async throws -> BrowserSnapshot {
         let raw = try await call("snapshot", ["opts": options.jsArguments])
+        // `JSONSerialization.data` raises an Objective-C exception, not a Swift
+        // error, on anything that is not JSON (a NaN, a Date), so check first.
+        guard JSONSerialization.isValidJSONObject(raw as Any) else {
+            throw BrowserAutomationError.script("the snapshot is not JSON")
+        }
         let data = try JSONSerialization.data(withJSONObject: raw as Any)
         let payload = try JSONDecoder().decode(BrowserSnapshotPayload.self, from: data)
         var snapshot = BrowserSnapshot(payload: payload, includeURLs: options.includeURLs)
