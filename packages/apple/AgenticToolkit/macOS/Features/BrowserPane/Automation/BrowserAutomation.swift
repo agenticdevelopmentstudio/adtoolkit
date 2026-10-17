@@ -351,11 +351,16 @@ public final class BrowserAutomation: NSObject {
     }
 
     /// JSON for a value WebKit handed back. `nil` is JavaScript's `undefined`;
-    /// a bare string or number is rendered as a JSON fragment.
+    /// a bare string or number is rendered as a JSON fragment. A value that is
+    /// not JSON at all — NaN, Infinity, a Date — is described instead:
+    /// `JSONSerialization.data` raises an Objective-C exception on it, which
+    /// `try?` cannot catch, so the check comes first. Wrapping the value in an
+    /// array lets `isValidJSONObject` answer for a fragment too.
     static func renderJSON(_ value: Any?) -> String {
         guard let value else { return "undefined" }
         if value is NSNull { return "null" }
-        guard let data = try? JSONSerialization.data(withJSONObject: value, options: [.fragmentsAllowed, .sortedKeys]),
+        guard JSONSerialization.isValidJSONObject([value]),
+              let data = try? JSONSerialization.data(withJSONObject: value, options: [.fragmentsAllowed, .sortedKeys]),
               let text = String(data: data, encoding: .utf8) else { return String(describing: value) }
         return text
     }
