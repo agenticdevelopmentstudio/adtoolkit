@@ -158,6 +158,44 @@ extension ComposableSettings {
 
         public var isHelpVisible: Bool { panelHost.isHelpVisible }
 
+        /// A view pinned under the detail pane, below the panels and beside the
+        /// sidebar, the width of the detail pane: a dialog's buttons. The panels
+        /// take the rest of the height. Nil (the default) gives them all of it.
+        public var detailFooterView: NSView? {
+            didSet {
+                guard detailFooterView !== oldValue else { return }
+                oldValue?.removeFromSuperview()
+                if isViewLoaded { installDetailFooter() }
+            }
+        }
+
+        /// The panels' bottom edge: the footer's top, or the pane's bottom.
+        private var panelHostBottom: NSLayoutConstraint?
+
+        private func installDetailFooter() {
+            guard detailContainer.isViewLoaded else { return }
+            let detailView = detailContainer.view
+            panelHostBottom?.isActive = false
+            guard let footer = detailFooterView else {
+                let bottom = panelHost.bottomAnchor.constraint(equalTo: detailView.bottomAnchor)
+                bottom.isActive = true
+                panelHostBottom = bottom
+                return
+            }
+            footer.translatesAutoresizingMaskIntoConstraints = false
+            detailView.addSubview(footer)
+            // The footer keeps the height it needs; the panels get the rest.
+            footer.setContentHuggingPriority(.required, for: .vertical)
+            let bottom = panelHost.bottomAnchor.constraint(equalTo: footer.topAnchor)
+            panelHostBottom = bottom
+            NSLayoutConstraint.activate([
+                bottom,
+                footer.leadingAnchor.constraint(equalTo: detailView.leadingAnchor),
+                footer.trailingAnchor.constraint(equalTo: detailView.trailingAnchor),
+                footer.bottomAnchor.constraint(equalTo: detailView.bottomAnchor)
+            ])
+        }
+
         // Repaints the window chrome and detail pane on every theme change.
         private var themeObserver: ThemePaletteObserver?
 
@@ -244,9 +282,9 @@ extension ComposableSettings {
             NSLayoutConstraint.activate([
                 panelHost.topAnchor.constraint(equalTo: detailView.safeAreaLayoutGuide.topAnchor),
                 panelHost.leadingAnchor.constraint(equalTo: detailView.leadingAnchor),
-                panelHost.trailingAnchor.constraint(equalTo: detailView.trailingAnchor),
-                panelHost.bottomAnchor.constraint(equalTo: detailView.bottomAnchor)
+                panelHost.trailingAnchor.constraint(equalTo: detailView.trailingAnchor)
             ])
+            installDetailFooter()
 
             let sidebarItem = NSSplitViewItem(sidebarWithViewController: listViewController)
             // The topic list must never auto-hide — it's the only way to switch

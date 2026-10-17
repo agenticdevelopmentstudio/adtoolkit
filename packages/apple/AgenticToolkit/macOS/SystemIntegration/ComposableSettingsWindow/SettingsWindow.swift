@@ -176,8 +176,15 @@ extension ComposableSettings {
             // the arrows are enabled here, from the same trail that answers them.
             navigationControl.setEnabled(split.canGoBack, forSegment: 0)
             navigationControl.setEnabled(split.canGoForward, forSegment: 1)
-            panelTitleLabel.stringValue = split.currentPanelTitle ?? ""
+            panelTitleLabel.stringValue = toolbarTitle(forPanel: split.currentPanelTitle)
             updateHelpButton()
+        }
+
+        /// What the toolbar says over the detail pane: the panel's name. A
+        /// window that is about one thing (a dialog editing one record) says
+        /// that thing as well.
+        open func toolbarTitle(forPanel panelTitle: String?) -> String {
+            panelTitle ?? ""
         }
 
         /// Makes the `?` report the drawer as well as toggle it — filled while
