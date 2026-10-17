@@ -18,17 +18,19 @@ public actor HostMCPServer {
         let prefix: String
     }
 
-    private let server: Server
+    private let appName: String
+    private let appVersion: String
+    /// The SDK server for the current connection. One per `serve(over:)`: the
+    /// SDK marks a `Server` initialized on its first `initialize` and never
+    /// clears that, not even in `stop()`, so a reused one would answer the
+    /// next client's `initialize` with "Server is already initialized".
+    private var server: Server?
     private var registrations: [Registration] = []
-    private var isServing = false
     private let log = Logger(subsystem: "AgenticToolkit", category: "automation")
 
     public init(appName: String, appVersion: String) {
-        // Not `.strict`: a stateless HTTP caller sends `tools/call` with no
-        // `initialize` first, and strict mode would refuse it.
-        server = Server(name: appName, version: appVersion,
-                        capabilities: .init(tools: .init(listChanged: false)),
-                        configuration: .default)
+        self.appName = appName
+        self.appVersion = appVersion
     }
 
     /// Adds a source. `prefix` is put before every tool name it advertises
@@ -37,26 +39,32 @@ public actor HostMCPServer {
         registrations.append(Registration(source: source, prefix: prefix ?? ""))
     }
 
-    /// Starts serving over `transport`. If the server is already serving, it
-    /// is stopped first: the SDK's `Server.start` would otherwise overwrite
-    /// its connection and receive task without cancelling the old ones.
+    /// Starts serving over `transport` on a fresh SDK server. If one is
+    /// already serving, it is stopped first: the SDK's `Server.start` would
+    /// otherwise overwrite its connection and receive task without
+    /// cancelling the old ones.
     public func serve(over transport: any Transport) async throws {
-        if isServing { await stop() }
-        await installHandlers()
-        try await server.start(transport: transport)
-        isServing = true
+        if server != nil { await stop() }
+        // Not `.strict`: a stateless HTTP caller sends `tools/call` with no
+        // `initialize` first, and strict mode would refuse it.
+        let fresh = Server(name: appName, version: appVersion,
+                           capabilities: .init(tools: .init(listChanged: false)),
+                           configuration: .default)
+        await installHandlers(on: fresh)
+        try await fresh.start(transport: transport)
+        server = fresh
     }
 
-    /// Stops serving. Registrations and handlers survive a stop, so a later
-    /// `serve(over:)` serves the same tools; callers must not re-register.
+    /// Stops serving. Registrations survive a stop, so a later `serve(over:)`
+    /// serves the same tools; callers must not re-register.
     public func stop() async {
-        await server.stop()
-        isServing = false
+        await server?.stop()
+        server = nil
     }
 
     // MARK: - Handlers
 
-    private func installHandlers() async {
+    private func installHandlers(on server: Server) async {
         await server.withMethodHandler(ListTools.self) { [weak self] _ in
             guard let self else { return .init(tools: []) }
             return .init(tools: await self.listTools())
