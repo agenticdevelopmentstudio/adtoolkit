@@ -62,6 +62,9 @@ class StubDaemonService: StenographerDaemonService, @unchecked Sendable {
     private(set) var oversightGets = 0
     private(set) var summaryRequests: [SummaryPreferenceRequest] = []
     private(set) var oversightRequests: [OversightPreferenceRequest] = []
+    /// Every registry the AI config push sent, and whether the daemon takes it.
+    private(set) var aiSyncs: [AIProviderConfigSync] = []
+    var aiPushResult = true
     private var reconnectHandlers: [@Sendable () -> Void] = []
 
     init(configs: [DaemonProviderConfig] = []) { self.configs = configs }
@@ -102,6 +105,10 @@ class StubDaemonService: StenographerDaemonService, @unchecked Sendable {
     func setOversightPreferences(_ request: OversightPreferenceRequest) async -> Bool {
         oversightRequests.append(request)
         return true
+    }
+    func setAIPreferences(_ sync: AIProviderConfigSync) async -> Bool {
+        aiSyncs.append(sync)
+        return aiPushResult
     }
     func onReconnect(_ handler: @escaping @Sendable () -> Void) { reconnectHandlers.append(handler) }
     func fireReconnect() { reconnectHandlers.forEach { $0() } }

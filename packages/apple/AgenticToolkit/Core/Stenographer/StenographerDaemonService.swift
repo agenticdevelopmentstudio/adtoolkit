@@ -37,6 +37,9 @@ public protocol StenographerDaemonService: Sendable {
     func oversightPreferences() async -> OversightPreferenceResponse?
     func setSummaryPreferences(_ request: SummaryPreferenceRequest) async -> Bool
     func setOversightPreferences(_ request: OversightPreferenceRequest) async -> Bool
+    /// Replaces the daemon's LLM provider registry with `sync` (the whole set
+    /// plus the active selection). True when the daemon took it.
+    func setAIPreferences(_ sync: AIProviderConfigSync) async -> Bool
 
     /// Registers a handler that fires when the daemon is seen to have restarted,
     /// so a preference push can re-send its snapshot.

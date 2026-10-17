@@ -131,6 +131,36 @@ final class StenographerHTTPClientTests: XCTestCase {
         XCTAssertEqual(object["selected_config_id"] as? String, "c")
     }
 
+    func testSetAIPreferencesPostsTheRegistryAsCamelCase() async throws {
+        let captured = Captured()
+        StubDaemonProtocol.handler = { request in
+            captured.set(request.url!, body: request.httpBody ?? request.httpBodyStream.map(Self.readAll) ?? Data())
+            return (200, Data("{}".utf8))
+        }
+        let id = UUID()
+        let sync = AIProviderConfigSync(
+            enabled: true, selectedConfigId: id,
+            configs: [ResolvedProviderConfig(
+                id: id, name: "A", pluginIdentifier: "p", templateId: "t", model: "m",
+                values: ["baseURL": "h"], secrets: ["apiKey": "k"])])
+        let succeeded = await makeClient().setAIPreferences(sync)
+        XCTAssertTrue(succeeded)
+        XCTAssertEqual(captured.url?.path, "/preferences/ai")
+        let object = try XCTUnwrap(JSONSerialization.jsonObject(with: captured.body) as? [String: Any])
+        XCTAssertEqual(object["selectedConfigId"] as? String, id.uuidString)
+        XCTAssertEqual(try JSONDecoder().decode(AIProviderConfigSync.self, from: captured.body), sync)
+    }
+
+    func testSetAIPreferencesIsFalseOnAnErrorStatusOrNoDaemon() async {
+        let sync = AIProviderConfigSync(enabled: true, selectedConfigId: nil, configs: [])
+        StubDaemonProtocol.handler = { _ in (400, Data("{}".utf8)) }
+        let rejected = await makeClient().setAIPreferences(sync)
+        XCTAssertFalse(rejected)
+        StubDaemonProtocol.handler = nil
+        let unreachable = await makeClient().setAIPreferences(sync)
+        XCTAssertFalse(unreachable)
+    }
+
     func testReconnectFiresWhenUptimeDrops() async {
         let uptimes = Uptimes([500, 600, 3, 10])
         StubDaemonProtocol.handler = { _ in

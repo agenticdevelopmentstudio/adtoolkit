@@ -152,6 +152,17 @@ public final class StenographerHTTPClient: StenographerDaemonService, @unchecked
         return reply != nil
     }
 
+    /// Sent with a plain encoder: `POST /preferences/ai` decodes the registry
+    /// with a default `JSONDecoder`, so its keys stay camelCase (not the wire
+    /// encoder's snake_case).
+    public func setAIPreferences(_ sync: AIProviderConfigSync) async -> Bool {
+        guard let body = try? JSONEncoder().encode(sync) else { return false }
+        guard let reply = await request(method: "POST", path: "/preferences/ai", query: [], body: body) else {
+            return false
+        }
+        return (200..<300).contains(reply.status)
+    }
+
     // MARK: - Reconnect
 
     public func onReconnect(_ handler: @escaping @Sendable () -> Void) {
