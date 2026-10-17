@@ -23,8 +23,20 @@ from macos_app_release.verify import Fetched
 from macos_app_release_fixtures import (BUILD, VERSION, FakeRunner, deep_merge, FLAVORS,
                                         write_config)
 
-SKILL = Path("/Users/mfullerton/Development/mydevsetup/.claude/worktrees/release-skill/"
-             "source/agents/skills/release-macos-app/SKILL.md")
+def _skill() -> Path:
+    """The release-macos-app skill that drives this CLI: $RELEASE_MACOS_APP_SKILL when set
+    (point it at mydevsetup's source copy while changing both), else an installed copy."""
+    import os
+    if os.environ.get("RELEASE_MACOS_APP_SKILL"):
+        return Path(os.environ["RELEASE_MACOS_APP_SKILL"])
+    for host in (".claude", ".codex"):
+        installed = Path.home() / host / "skills/release-macos-app/SKILL.md"
+        if installed.exists():
+            return installed
+    return Path("/nonexistent/release-macos-app/SKILL.md")
+
+
+SKILL = _skill()
 
 
 @pytest.fixture(autouse=True)
@@ -79,8 +91,12 @@ def test_status_json_adkitchen(tmp_path, capsys):
     assert w.run("status", "--json") == 0
     s = out_json(capsys)
     assert set(s) == {"app", "version", "build", "notes", "notes_exists", "source_tag",
-                      "releases_checkout", "latest_published", "hooks", "artifacts_default",
+                      "source_branch", "releases_checkout", "latest_published",
+                      "latest_published_error", "hooks", "regenerate", "artifacts_default",
                       "toolkit"}
+    assert s["source_branch"] == "main"
+    assert s["latest_published_error"] is None
+    assert s["regenerate"] is False
     assert (s["app"], s["version"], s["build"]) == ("AgenticDeveloperKitchen", VERSION, BUILD)
     assert s["notes"] == str(w.repo / f"docs/release-notes/{VERSION}.md")
     assert s["notes_exists"] is True
@@ -101,14 +117,24 @@ def test_status_json_stenographer_flavor(tmp_path, capsys):
     assert s["hooks"] == {"tests": True, "warnings_build": True, "health": True}
     assert s["notes_exists"] is False
     assert s["latest_published"] is None
+    assert s["latest_published_error"] is None       # a first release, not a failure
+    assert s["regenerate"] is True
     assert s["releases_checkout"] == str(Path.home() / "stenographer-releases")
+
+
+def test_status_reports_a_configured_source_branch(tmp_path, capsys):
+    w = World(tmp_path, {"source": {"branch": "trunk"}}, gh=LATEST)
+    assert w.run("status", "--json") == 0
+    assert out_json(capsys)["source_branch"] == "trunk"
 
 
 def test_status_warns_but_succeeds_when_gh_cannot_say(tmp_path, capsys):
     w = World(tmp_path, gh=(1, "", "gh: not logged in"))
     assert w.run("status", "--json") == 0
     captured = capsys.readouterr()
-    assert json.loads(captured.out)["latest_published"] is None
+    s = json.loads(captured.out)
+    assert s["latest_published"] is None
+    assert "not logged in" in s["latest_published_error"]
     assert "not logged in" in captured.err
 
 
@@ -225,6 +251,28 @@ def test_bump_failure_exits_1(tmp_path, capsys):
     w.runner.responses.append((lambda a: a[0] == "xcodegen", 1, "", "boom"))
     assert w.run("bump", "patch") == 1
     assert "version.regenerate" in capsys.readouterr().err
+
+
+# regenerate -----------------------------------------------------------------------------
+
+
+def test_regenerate_runs_the_configured_command(tmp_path):
+    w = World(tmp_path, flavor="stenographer")
+    assert w.run("regenerate") == 0
+    assert w.runner.find("xcodegen", "generate")
+
+
+def test_regenerate_unset_is_a_no_op(tmp_path, capsys):
+    w = World(tmp_path)
+    assert w.run("regenerate") == 0
+    assert "nothing to regenerate" in capsys.readouterr().out
+
+
+def test_regenerate_failure_exits_1(tmp_path, capsys):
+    w = World(tmp_path, flavor="stenographer")
+    w.runner.responses.insert(0, (lambda a: a[0] == "xcodegen", 1, "", "boom"))
+    assert w.run("regenerate") == 1
+    assert "boom" in capsys.readouterr().err
 
 
 # hook -----------------------------------------------------------------------------------
@@ -483,8 +531,10 @@ def test_verify_defaults(tmp_path, monkeypatch):
 
 # the skill's contract -----------------------------------------------------------------
 
-COMMAND_RE = re.compile(r"CLI(?: <\w+>)? (status|bump|hook|warnings|build|installed|install|"
-                        r"prepared|publish|verify)\b([^`\n]*)")
+# Longest first, so `installed` is not read as `install`.
+COMMAND_RE = re.compile(r"CLI(?: <\w+>)? ("
+                        + "|".join(sorted(cli.COMMANDS, key=len, reverse=True))
+                        + r")\b([^`\n]*)")
 
 
 def skill_invocations(text: str) -> list[tuple[str, list[str]]]:
@@ -506,12 +556,13 @@ def test_skill_invocation_extraction():
     assert got == [("bump", ["patch"]), ("publish", ["--site", "placeholder"])]
 
 
-@pytest.mark.skipif(not SKILL.exists(), reason="the mydevsetup skill is not checked out here")
+@pytest.mark.skipif(not SKILL.exists(), reason="the release-macos-app skill is not installed "
+                    "(set RELEASE_MACOS_APP_SKILL to its SKILL.md)")
 def test_every_cli_usage_in_the_skill_is_accepted_by_argparse():
     uses = skill_invocations(SKILL.read_text())
     assert len(uses) >= 15, "the extraction should find the skill's CLI calls"
-    assert {"status", "bump", "hook", "warnings", "build", "install", "installed",
-            "prepared", "publish", "verify"} <= {cmd for cmd, _ in uses}
+    assert set(cli.COMMANDS) <= {cmd for cmd, _ in uses}, \
+        "a CLI command the skill never calls is dead, or the skill forgot a step"
     parser = cli.build_parser()
     for cmd, tail in uses:
         argv = ["--repo", "/some/repo", cmd, *tail]
@@ -522,7 +573,6 @@ def test_every_cli_usage_in_the_skill_is_accepted_by_argparse():
         assert args.command == cmd
 
 
-@pytest.mark.skipif(not SKILL.exists(), reason="the mydevsetup skill is not checked out here")
 def test_skill_flags_have_the_documented_values():
     parser = cli.build_parser()
     a = parser.parse_args(["build", "--branch", "release-preparation",

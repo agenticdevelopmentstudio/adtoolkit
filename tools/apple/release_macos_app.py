@@ -71,6 +71,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("kind", choices=("patch", "minor"))
     p.add_argument("--json", action="store_true")
 
+    p = command("regenerate", "Run version.regenerate (e.g. xcodegen) in a fresh checkout.")
+
     p = command("hook", "Run one configured hook, passing its exit code through.")
     p.add_argument("name", choices=HOOK_NAMES)
 
@@ -158,36 +160,40 @@ def _release(args: argparse.Namespace, cfg: ReleaseConfig, factory: RunnerFactor
 # Commands ----------------------------------------------------------------------
 
 
-def latest_published(cfg: ReleaseConfig, run: Runner) -> dict | None:
-    """The newest release on the releases repo as {"version", "publishedAt"}, or None
-    when there is none (or gh cannot say). Asks GitHub through the injected runner."""
+def latest_published(cfg: ReleaseConfig, run: Runner) -> tuple[dict | None, str | None]:
+    """(latest, error): the newest release on the releases repo as {"version",
+    "publishedAt"}, and why it could not be asked. (None, None) is a first release --
+    nothing published yet -- which a caller must not confuse with (None, <why>), gh
+    failing to say. Asks GitHub through the injected runner."""
     argv = ["gh", "release", "view", "--repo", cfg.github_repo, "--json",
             "tagName,publishedAt"]
     try:
         proc = run(argv)
     except OSError as exc:
-        print(f"warning: latest_published unavailable ({exc})", file=sys.stderr)
-        return None
+        return _unavailable(str(exc))
     if proc.returncode != 0:
         why = ((proc.stderr or "") + (proc.stdout or "")).strip()
-        if "not found" not in why.lower():
-            print(f"warning: latest_published unavailable ({why or 'gh failed'})",
-                  file=sys.stderr)
-        return None
+        if "not found" in why.lower():
+            return None, None
+        return _unavailable(why or "gh failed")
     try:
         data = json.loads(proc.stdout)
-        return {"version": str(data["tagName"]).removeprefix("v"),
-                "publishedAt": data["publishedAt"]}
+        return ({"version": str(data["tagName"]).removeprefix("v"),
+                 "publishedAt": data["publishedAt"]}, None)
     except (json.JSONDecodeError, KeyError, TypeError):
-        print("warning: latest_published unavailable (gh returned unreadable JSON)",
-              file=sys.stderr)
-        return None
+        return _unavailable("gh returned unreadable JSON")
+
+
+def _unavailable(why: str) -> tuple[None, str]:
+    print(f"warning: latest_published unavailable ({why})", file=sys.stderr)
+    return None, why
 
 
 def cmd_status(args: argparse.Namespace, cfg: ReleaseConfig, factory: RunnerFactory,
                **_: object) -> int:
     version, build = _versions(cfg)
     notes = cfg.notes_path(version)
+    latest, latest_error = latest_published(cfg, factory(False, cwd=cfg.repo))
     status = {
         "app": cfg.app_name,
         "version": version,
@@ -195,11 +201,14 @@ def cmd_status(args: argparse.Namespace, cfg: ReleaseConfig, factory: RunnerFact
         "notes": str(notes),
         "notes_exists": notes.exists(),
         "source_tag": cfg.source_tag(version),
+        "source_branch": cfg.source_branch,
         "releases_checkout": str(cfg.releases_checkout),
-        "latest_published": latest_published(cfg, factory(False, cwd=cfg.repo)),
+        "latest_published": latest,
+        "latest_published_error": latest_error,
         "hooks": {"tests": bool(cfg.hook_tests),
                   "warnings_build": bool(cfg.hook_warnings_build),
                   "health": bool(cfg.hook_health)},
+        "regenerate": bool(cfg.regenerate),
         "artifacts_default": str(cfg.repo / "build/release"),
         "toolkit": str(cfg.toolkit),
     }
@@ -210,9 +219,11 @@ def cmd_status(args: argparse.Namespace, cfg: ReleaseConfig, factory: RunnerFact
     print(f"{cfg.app_name} {version} (build {build})")
     print(f"  notes:             {notes}{'' if status['notes_exists'] else '  (missing)'}")
     print(f"  source tag:        {status['source_tag']}")
+    print(f"  source branch:     {cfg.source_branch}")
     print(f"  releases checkout: {cfg.releases_checkout}")
     print("  latest published:  " + (f"{latest['version']} ({latest['publishedAt']})"
-                                     if latest else "none"))
+                                     if latest else
+                                     f"unknown ({latest_error})" if latest_error else "none"))
     print("  hooks:             " + ", ".join(
         f"{name}={'set' if on else 'unset'}" for name, on in status["hooks"].items()))
     print(f"  artifacts:         {status['artifacts_default']}")
@@ -231,6 +242,23 @@ def cmd_bump(args: argparse.Namespace, cfg: ReleaseConfig, factory: RunnerFactor
         print(json.dumps({"version": version, "build": build}))
     else:
         print(f"{version} (build {build})")
+    return 0
+
+
+def cmd_regenerate(args: argparse.Namespace, cfg: ReleaseConfig, factory: RunnerFactory,
+                   **_: object) -> int:
+    if not cfg.regenerate:
+        print("nothing to regenerate (version.regenerate is not configured)")
+        return 0
+    try:
+        proc = factory(False, cwd=cfg.repo)(list(cfg.regenerate))
+    except OSError as exc:
+        print(f"error: version.regenerate could not run: {exc}", file=sys.stderr)
+        return 1
+    if proc.returncode != 0:
+        print(f"error: version.regenerate failed (exit {proc.returncode}):\n"
+              f"{(proc.stderr or proc.stdout or '').strip()}", file=sys.stderr)
+        return 1
     return 0
 
 
@@ -324,7 +352,8 @@ def cmd_verify(args: argparse.Namespace, cfg: ReleaseConfig, factory: RunnerFact
         artifacts_root=Path(os.path.abspath(os.path.expanduser(root))) if root else None)
 
 
-COMMANDS = {"status": cmd_status, "bump": cmd_bump, "hook": cmd_hook,
+COMMANDS = {"status": cmd_status, "bump": cmd_bump, "regenerate": cmd_regenerate,
+            "hook": cmd_hook,
             "warnings": cmd_warnings, "build": cmd_build, "install": cmd_install,
             "installed": cmd_installed, "prepared": cmd_prepared, "publish": cmd_publish,
             "verify": cmd_verify}
