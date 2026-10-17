@@ -70,14 +70,15 @@ enum BrowserDriveChain {
     @TaskLocal static var held: Set<ObjectIdentifier> = []
 }
 
-/// Resumes a screenshot's continuation exactly once: with WebKit's image, or
-/// with the timeout, whichever comes first.
+/// Resumes a continuation exactly once: with WebKit's answer, or with the
+/// timeout, whichever comes first. WebKit's callbacks cannot be cancelled, so
+/// whichever arrives second finds the continuation gone and is dropped.
 @MainActor
-private final class SnapshotResumer {
-    var continuation: CheckedContinuation<NSImage, Error>?
+private final class Resumer<Value> {
+    var continuation: CheckedContinuation<Value, Error>?
     var timer: Task<Void, Never>?
 
-    func finish(_ result: Result<NSImage, Error>) {
+    func finish(_ result: sending Result<Value, Error>) {
         guard let continuation else { return }
         self.continuation = nil
         timer?.cancel()
@@ -312,17 +313,40 @@ public final class BrowserAutomation: NSObject {
     /// swallowing the closing parenthesis, and one trailing semicolon is
     /// dropped first, since `return (x;)` is a syntax error and a model
     /// writing `document.title;` means the expression, not a statement.
+    ///
+    /// Gives up after `maximumTimeout`: the caller holds the pane's drive
+    /// gate throughout, and a promise that never settles would otherwise hold
+    /// it for good, queueing every later tool call on the pane behind it.
+    /// WebKit cannot be told to stop, so its answer, if it ever comes, is
+    /// dropped.
     public func evaluate(_ expression: String) async throws -> String {
-        let value: Any?
+        let body = "return (\n\(Self.expressionBody(expression))\n);"
+        let once = Resumer<String>()
+        let timeout = Self.maximumTimeout
         do {
-            value = try await webView.callAsyncJavaScript(
-                "return (\n\(Self.expressionBody(expression))\n);", arguments: [:], in: nil, contentWorld: .page)
+            return try await withCheckedThrowingContinuation { c in
+                once.continuation = c
+                once.timer = Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
+                    guard !Task.isCancelled else { return }
+                    once.finish(.failure(BrowserAutomationError.timeout("the expression (\(Int(timeout)) s)")))
+                }
+                Task { @MainActor in
+                    do {
+                        let value = try await self.webView.callAsyncJavaScript(body, arguments: [:], in: nil, contentWorld: .page)
+                        once.finish(.success(Self.renderJSON(value)))
+                    } catch {
+                        once.finish(.failure(error))
+                    }
+                }
+            }
+        } catch let error as BrowserAutomationError {
+            throw error
         } catch {
             let message = Self.javaScriptMessage(of: error)
             if Self.isContentSecurityPolicyRefusal(message) { throw BrowserAutomationError.cspRefusesEvaluation }
             throw BrowserAutomationError.script(message)
         }
-        return Self.renderJSON(value)
     }
 
     /// The expression with surrounding whitespace and one trailing `;` removed.
@@ -473,7 +497,7 @@ public final class BrowserAutomation: NSObject {
             let zoom = webView.pageZoom
             configuration.rect = CGRect(x: r.minX * zoom, y: r.minY * zoom, width: r.width * zoom, height: r.height * zoom)
         }
-        let once = SnapshotResumer()
+        let once = Resumer<NSImage>()
         let timeout = Self.screenshotTimeout
         let image: NSImage = try await withCheckedThrowingContinuation { c in
             once.continuation = c
