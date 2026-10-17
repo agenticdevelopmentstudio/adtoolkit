@@ -228,6 +228,19 @@ final class BrowserToolSetTests: XCTestCase {
         XCTAssertEqual(reply.content, "browser_click needs ref")
     }
 
+    /// `value` is required; a number must not fill in "" and report success.
+    func testFillWithANumericValueIsASentence() async {
+        let reply = await call("browser_fill", ["pane_id": "A", "ref": "e1", "generation": 1, "value": 42])
+        XCTAssertTrue(reply.isError)
+        XCTAssertEqual(reply.content, "browser_fill needs value as a string")
+    }
+
+    func testFillWithoutAValueIsASentence() async {
+        let reply = await call("browser_fill", ["pane_id": "A", "ref": "e1", "generation": 1])
+        XCTAssertTrue(reply.isError)
+        XCTAssertEqual(reply.content, "browser_fill needs value as a string")
+    }
+
     func testUnknownToolIsASentence() async {
         let reply = await call("browser_fly")
         XCTAssertTrue(reply.isError)

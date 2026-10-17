@@ -74,6 +74,16 @@ public final class BrowserToolSet: ChatToolSource, @unchecked Sendable {
             return text
         }
 
+        /// A required string that may be empty: `browser_fill` with "" clears
+        /// the field. A missing, null, numeric or boolean value is still an
+        /// error, never a silent "".
+        func text(_ key: String) throws -> String {
+            guard let text = values[key] as? String else {
+                throw ToolError(sentence: "\(tool) needs \(key) as a string")
+            }
+            return text
+        }
+
         /// An absent key and an empty string both read as "not given".
         func optionalString(_ key: String) -> String? {
             guard let text = values[key] as? String, !text.isEmpty else { return nil }
@@ -273,7 +283,7 @@ public final class BrowserToolSet: ChatToolSource, @unchecked Sendable {
         case "browser_fill":
             return try await automation.fill(
                 ref: try args.string("ref"), generation: try args.int("generation"),
-                value: args.optionalString("value") ?? ""
+                value: try args.text("value")
             ).rendered()
         case "browser_select":
             return try await automation.select(
