@@ -9,14 +9,17 @@ enum TestDaemonDatabase {
 
     /// Opens a fresh `SessionSchema` database at a unique temp path.
     static func makeSessionDatabase(
+        path explicitPath: String? = nil,
+        accountResolver: AccountResolver = AccountResolver(),
         statusLineIngest: DaemonDatabase.StatusLineIngest? = nil,
         sessionUpsertHook: DaemonDatabase.SessionUpsertHook? = nil,
         file: StaticString = #filePath, line: UInt = #line
     ) throws -> (db: DaemonDatabase, path: String) {
-        let path = NSTemporaryDirectory() + "daemontest-\(UUID().uuidString).db"
+        let path = explicitPath ?? NSTemporaryDirectory() + "daemontest-\(UUID().uuidString).db"
         do {
             let db = try DaemonDatabase(
                 path: path,
+                accountResolver: accountResolver,
                 migrations: SessionSchema.migrations,
                 postMigration: SessionSchema.postMigration,
                 statusLineIngest: statusLineIngest,

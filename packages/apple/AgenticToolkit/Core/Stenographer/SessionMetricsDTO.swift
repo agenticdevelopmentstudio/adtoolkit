@@ -60,6 +60,36 @@ public struct ImportRequestDTO: Codable, Sendable {
     }
 }
 
+/// How much of the transcripts on disk the JSONL byte cursors already cover.
+public struct TranscriptCursorStatsDTO: Codable, Sendable {
+    /// Files with a stored cursor.
+    public let files: Int
+    /// Bytes already ingested across those files — what the next pass will skip.
+    public let bytesCovered: Int64
+    /// Size of those same files as recorded at the START of their last scan, which
+    /// is why it can read slightly BELOW `bytesCovered`: Claude appends to live
+    /// transcripts, so a file that grew while being read ends up with more bytes
+    /// consumed than the size stat taken moments earlier. Treat the gap as a rough
+    /// "still to read", not an exact remainder.
+    public let bytesOnDisk: Int64
+    public let oldestUpdatedAt: String?
+    public let newestUpdatedAt: String?
+
+    public init(
+        files: Int,
+        bytesCovered: Int64,
+        bytesOnDisk: Int64,
+        oldestUpdatedAt: String?,
+        newestUpdatedAt: String?
+    ) {
+        self.files = files
+        self.bytesCovered = bytesCovered
+        self.bytesOnDisk = bytesOnDisk
+        self.oldestUpdatedAt = oldestUpdatedAt
+        self.newestUpdatedAt = newestUpdatedAt
+    }
+}
+
 /// Summary of a completed `steno import` run.
 public struct ImportSummary: Codable, Sendable {
     public let filesScanned: Int
