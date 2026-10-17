@@ -30,6 +30,13 @@ final class TopicDialogWindowTests: XCTestCase {
         return dialog
     }
 
+    func testTheSidebarWidthIsKeptApartFromTheSettingsWindows() {
+        let dialog = make()
+        let root = ComposableSettings.SplitViewController()
+        XCTAssertNotNil(dialog.split.sidebarAutosaveName)
+        XCTAssertNotEqual(dialog.split.sidebarAutosaveName, root.sidebarAutosaveName)
+    }
+
     func testTheTopicsKeepTheOrderGiven() {
         let dialog = make()
         XCTAssertEqual(dialog.split.panels.map(\.descriptor.title), ["Zebra", "Apple"])
@@ -176,5 +183,51 @@ final class TopicDialogWindowTests: XCTestCase {
         XCTAssertNotNil(footer.superview)
         split.detailFooterView = nil
         XCTAssertNil(footer.superview)
+    }
+
+    private func makeParent() -> NSWindow {
+        let parent = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 900, height: 700),
+                              styleMask: [.titled, .closable], backing: .buffered, defer: false)
+        parent.isReleasedWhenClosed = false
+        parent.orderFront(nil)
+        addTeardownBlock { @MainActor in parent.orderOut(nil) }
+        return parent
+    }
+
+    func testASheetBeginsOnTheParentWithoutAToolbarAndShowsTheHelpButton() {
+        let dialog = make()
+        let parent = makeParent()
+        XCTAssertTrue(dialog.helpButton.isHidden, "an app-modal dialog keeps its help in the toolbar")
+        dialog.beginSheet(on: parent)
+        XCTAssertIdentical(dialog.sheetParent, parent)
+        XCTAssertIdentical(parent.attachedSheet, dialog.window)
+        XCTAssertNil(dialog.window?.toolbar)
+        XCTAssertFalse(dialog.helpButton.isHidden)
+        XCTAssertEqual(dialog.helpButton.bezelStyle, .helpButton)
+    }
+
+    func testOKEndsTheSheetThenCallsOnFinishOnce() {
+        var finishes: [Bool] = []
+        var attachedWhenFinished: NSWindow?
+        let parent = makeParent()
+        let dialog = make(finished: { finishes.append($0); attachedWhenFinished = parent.attachedSheet })
+        dialog.beginSheet(on: parent)
+        dialog.ok()
+        XCTAssertEqual(finishes, [true])
+        XCTAssertNil(attachedWhenFinished, "the sheet has ended before onFinish, so the next one can begin")
+        XCTAssertNil(parent.attachedSheet)
+        XCTAssertNil(dialog.sheetParent)
+        dialog.cancel()
+        XCTAssertEqual(finishes, [true])
+    }
+
+    func testCancelEndsTheSheetAndFinishesFalse() {
+        var finishes: [Bool] = []
+        let parent = makeParent()
+        let dialog = make(finished: { finishes.append($0) })
+        dialog.beginSheet(on: parent)
+        dialog.cancel()
+        XCTAssertEqual(finishes, [false])
+        XCTAssertNil(parent.attachedSheet)
     }
 }

@@ -28,8 +28,9 @@ extension ComposableSettings {
     open class SettingsWindow: WindowController<SplitViewController>, NSToolbarDelegate {
 
         /// A settings window identified by `windowID` — the key its saved window state and its registry lookup use.
-        public init(windowID: String = "settings") {
-            super.init(windowID: windowID, contentViewController: SplitViewController())
+        /// `split` is the topic split it shows; a subclass passes its own to change how the sidebar is kept.
+        public init(windowID: String = "settings", split: SplitViewController = SplitViewController()) {
+            super.init(windowID: windowID, contentViewController: split)
             self.windowTitle = "Settings"
             // `.fullSizeContentView` is what lets the sidebar run the *whole*
             // height of the window, with the close/minimise/zoom buttons sitting

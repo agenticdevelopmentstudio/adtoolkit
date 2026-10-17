@@ -7,6 +7,10 @@ extension ComposableSettings {
     /// under the detail pane. The close button is Cancel, Escape is Cancel and
     /// Return is OK.
     ///
+    /// `present()` shows it app-modally; `beginSheet(on:)` shows it as a sheet
+    /// on one window, which holds up only that window. A sheet has no toolbar:
+    /// its help is behind a standard round ? button at the bottom left.
+    ///
     /// OK asks `validate`; a sentence stays in the dialog as the problem line and
     /// the dialog stays open. With no problem, OK either finishes (`onOK` unset)
     /// or hands over to `onOK` (an owner that saves asynchronously, which then
@@ -42,6 +46,12 @@ extension ComposableSettings {
         let problemLabel = NSTextField(wrappingLabelWithString: "")
         let cancelButton = NSButton(title: "Cancel", target: nil, action: nil)
         let okButton: NSButton
+        /// The round ? at the bottom left; shown only on a sheet, which has no toolbar.
+        let helpButton = NSButton(title: "", target: nil, action: nil)
+        /// The window this dialog is a sheet on, from `beginSheet` until `finish`.
+        public private(set) weak var sheetParent: NSWindow?
+        private var problemLeadingToFooter: NSLayoutConstraint?
+        private var problemLeadingToHelp: NSLayoutConstraint?
         private let dialogTitle: String
         /// Set while `NSApp.runModal(for:)` is running this dialog.
         private var isRunningModal = false
@@ -59,7 +69,7 @@ extension ComposableSettings {
             self.onFinish = onFinish
             self.okButton = NSButton(title: okTitle, target: nil, action: nil)
             self.dialogTitle = title
-            super.init(windowID: windowID)
+            super.init(windowID: windowID, split: DialogSplitViewController())
             windowTitle = title
             // A dialog is not minimised: it holds up the app until it is answered.
             windowStyleMask = [.titled, .closable, .resizable, .fullSizeContentView]
@@ -74,6 +84,14 @@ extension ComposableSettings {
             split.showsSidebarSearch = false
             split.setPanels(panels)
             split.detailFooterView = makeFooter()
+        }
+
+        /// A dialog's topic split. Its sidebar width is kept apart from the
+        /// settings window's: a dialog is smaller, and the settings window's
+        /// remembered width would take most of it.
+        final class DialogSplitViewController: SplitViewController {
+            static let sidebarAutosave = "ComposableSettings.TopicDialogSidebar"
+            override var sidebarAutosaveName: String? { Self.sidebarAutosave }
         }
 
         /// "Title — Panel": which record the dialog is about, and which topic is on screen.
@@ -113,6 +131,23 @@ extension ComposableSettings {
                 }
             }
             CFRunLoopWakeUp(CFRunLoopGetMain())
+        }
+
+        /// Shows the dialog as a sheet on `parent`, holding up only that window.
+        /// Returns at once; `onFinish` reports the answer once the sheet has ended,
+        /// so it can begin the next sheet on the same window.
+        public func beginSheet(on parent: NSWindow) {
+            guard !isFinished, sheetParent == nil, let window = prepare() else { return }
+            // A toolbar does not belong in a sheet: the topics stay in the
+            // sidebar and help moves to the round ? beside the buttons.
+            window.toolbar = nil
+            window.titleVisibility = .hidden
+            helpButton.isHidden = false
+            problemLeadingToFooter?.isActive = false
+            problemLeadingToHelp?.isActive = true
+            presentedSelf = self
+            sheetParent = parent
+            parent.beginSheet(window) { _ in }
         }
 
         /// Shows `sentence` beside the buttons; nil clears it.
@@ -160,6 +195,10 @@ extension ComposableSettings {
                     NSApp.postEvent(wake, atStart: true)
                 }
             }
+            if let parent = sheetParent, let window {
+                parent.endSheet(window)
+                sheetParent = nil
+            }
             window?.orderOut(nil)
             let finished = onFinish
             // Release what the owner captured; the dialog is done with it.
@@ -198,7 +237,15 @@ extension ComposableSettings {
             okButton.keyEquivalent = "\r"
             okButton.isEnabled = okEnabled
 
-            for view in [problemLabel, cancelButton, okButton] {
+            helpButton.bezelStyle = .helpButton
+            helpButton.title = ""
+            helpButton.target = self
+            helpButton.action = #selector(helpClicked)
+            helpButton.toolTip = "Help"
+            helpButton.setAccessibilityLabel("Help")
+            helpButton.isHidden = true
+
+            for view in [helpButton, problemLabel, cancelButton, okButton] {
                 view.translatesAutoresizingMaskIntoConstraints = false
                 footer.addSubview(view)
             }
@@ -210,14 +257,20 @@ extension ComposableSettings {
                 okButton.topAnchor.constraint(equalTo: footer.topAnchor, constant: 12),
                 cancelButton.trailingAnchor.constraint(equalTo: okButton.leadingAnchor, constant: -12),
                 cancelButton.firstBaselineAnchor.constraint(equalTo: okButton.firstBaselineAnchor),
-                problemLabel.leadingAnchor.constraint(equalTo: footer.leadingAnchor, constant: 20),
+                helpButton.leadingAnchor.constraint(equalTo: footer.leadingAnchor, constant: 20),
+                helpButton.centerYAnchor.constraint(equalTo: okButton.centerYAnchor),
                 problemLabel.trailingAnchor.constraint(lessThanOrEqualTo: cancelButton.leadingAnchor, constant: -20),
                 problemLabel.centerYAnchor.constraint(equalTo: okButton.centerYAnchor),
                 problemLabel.topAnchor.constraint(greaterThanOrEqualTo: footer.topAnchor, constant: 8)
             ])
+            problemLeadingToFooter = problemLabel.leadingAnchor.constraint(equalTo: footer.leadingAnchor, constant: 20)
+            problemLeadingToHelp = problemLabel.leadingAnchor.constraint(
+                equalTo: helpButton.trailingAnchor, constant: 12)
+            problemLeadingToFooter?.isActive = true
             return footer
         }
 
+        @objc private func helpClicked() { split.toggleHelp() }
         @objc private func okClicked() { ok() }
         @objc private func cancelClicked() { cancel() }
     }
