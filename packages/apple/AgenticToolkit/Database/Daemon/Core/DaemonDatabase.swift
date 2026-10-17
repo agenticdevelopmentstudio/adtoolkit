@@ -57,6 +57,33 @@ public final class DaemonDatabase: @unchecked Sendable {
     public let path: String
     let migrations: [DaemonMigration]
     let postMigration: [@Sendable (DaemonDatabase) throws -> Void]
+
+    /// A consumer's extra handling of a `StatusLine` event, run by `ingestEvent`
+    /// inside the same write transaction as the rest of that event. It receives
+    /// the database, the session id, the hook payload, the event timestamp and
+    /// the account the event was attributed to. Because it runs inside the
+    /// transaction, it may call the reentrant `execute` / `query` directly.
+    public typealias StatusLineIngest = @Sendable (
+        DaemonDatabase, _ sessionId: String, _ hookData: [String: Any],
+        _ timestamp: String, _ accountEmail: String
+    ) throws -> Void
+
+    /// The consumer's `StatusLine` handler, or nil when it has none (the event is
+    /// still recorded; only the extra routing is skipped).
+    public let statusLineIngest: StatusLineIngest?
+
+    /// A consumer's follow-up to the `sessions` upsert, run by `ingestEvent`
+    /// inside the same write transaction, immediately after the upsert. It lets a
+    /// consumer maintain its own per-session derived state. It receives the
+    /// database, the session id, the event's timestamp as received, and whether
+    /// the event counts as session activity. A throw rolls the whole ingest back.
+    public typealias SessionUpsertHook = @Sendable (
+        DaemonDatabase, _ sessionId: String, _ eventTimestamp: String,
+        _ countsAsActivity: Bool
+    ) throws -> Void
+
+    /// The consumer's post-upsert hook, or nil when it has none.
+    public let sessionUpsertHook: SessionUpsertHook?
     public let dynamicSchema = DynamicSchema()
     public let accountResolver: AccountResolver
 
@@ -107,12 +134,18 @@ public final class DaemonDatabase: @unchecked Sendable {
     ///   A broken chain throws `openFailed` rather than skipping or double-applying a step.
     /// - Parameter postMigration: ensure steps run after every migration pass, outside
     ///   the version gate (each must be idempotent).
+    /// - Parameter statusLineIngest: optional extra handling of a `StatusLine`
+    ///   event, run inside that event's write transaction (see ``StatusLineIngest``).
+    /// - Parameter sessionUpsertHook: optional follow-up to each `sessions` upsert,
+    ///   run inside the same write transaction (see ``SessionUpsertHook``).
     public init(
         path: String,
         accountResolver: AccountResolver = AccountResolver(),
         deferMigrations: Bool = false,
         migrations: [DaemonMigration],
-        postMigration: [@Sendable (DaemonDatabase) throws -> Void] = []
+        postMigration: [@Sendable (DaemonDatabase) throws -> Void] = [],
+        statusLineIngest: StatusLineIngest? = nil,
+        sessionUpsertHook: SessionUpsertHook? = nil
     ) throws {
         let versions = migrations.map(\.version)
         guard versions == (0..<versions.count).map({ $0 + 1 }) else {
@@ -124,6 +157,8 @@ public final class DaemonDatabase: @unchecked Sendable {
         self.accountResolver = accountResolver
         self.migrations = migrations
         self.postMigration = postMigration
+        self.statusLineIngest = statusLineIngest
+        self.sessionUpsertHook = sessionUpsertHook
         // GRDB owns the reader/writer WAL pool + FK enforcement + statement
         // plumbing; BoundedDatabase layers deadline-ejection + per-lane metrics on
         // top, and transparently uses a serial DatabaseQueue for an in-memory path.
