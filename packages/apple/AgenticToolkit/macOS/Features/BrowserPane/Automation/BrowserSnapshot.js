@@ -365,19 +365,38 @@
 
   const KEY_CODES = { Enter: 13, Escape: 27, Tab: 9, Backspace: 8, Delete: 46, ArrowUp: 38, ArrowDown: 40, ArrowLeft: 37, ArrowRight: 39, Home: 36, End: 35, PageUp: 33, PageDown: 34, ' ': 32 };
 
+  // Input types whose value the browser sanitizes on every write: "19." is
+  // not a number and "2026-10" is not a date, so a value typed key by key
+  // collapses to "" part-way through. These get the whole text in one write.
+  const SANITIZED_INPUTS = new Set(['number', 'date', 'time', 'datetime-local', 'month', 'week']);
+
+  function inputType(el) {
+    return el.tagName.toLowerCase() === 'input' ? (el.getAttribute('type') || 'text').toLowerCase() : null;
+  }
+
   function keyInit(key, mods) {
-    const code = key.length === 1 ? ('Key' + key.toUpperCase()) : key;
-    return { key: key, code: code, keyCode: KEY_CODES[key] || (key.length === 1 ? key.toUpperCase().charCodeAt(0) : 0),
+    const letter = key.length === 1 && /[a-z]/i.test(key);
+    const digit = key.length === 1 && /[0-9]/.test(key);
+    // keyCode is the key's own code for letters, digits and the named keys;
+    // punctuation has none. Its character code would name another key: '&'
+    // is 38, ArrowUp, which an autocomplete widget swallows.
+    const code = letter ? 'Key' + key.toUpperCase() : digit ? 'Digit' + key : key.length === 1 ? '' : key;
+    const keyCode = KEY_CODES[key] || ((letter || digit) ? key.toUpperCase().charCodeAt(0) : 0);
+    return { key: key, code: code, keyCode: keyCode,
       bubbles: true, cancelable: true, composed: true,
       metaKey: !!mods.meta, shiftKey: !!mods.shift, altKey: !!mods.alt, ctrlKey: !!mods.control };
   }
 
-  function sendKey(target, key, mods) {
+  // `insert` false sends the key events but leaves the value alone, for a
+  // caller that writes the value itself.
+  function sendKey(target, key, mods, insert) {
     const down = new KeyboardEvent('keydown', keyInit(key, mods));
     const prevented = !target.dispatchEvent(down);
     if (!prevented && key.length === 1 && !mods.meta && !mods.control) {
       target.dispatchEvent(new KeyboardEvent('keypress', keyInit(key, mods)));
-      if ('value' in target && !target.readOnly) {
+      if (insert === false) {
+        // The caller writes the value.
+      } else if ('value' in target && !target.readOnly) {
         // The prototype setter, not the instance one: React's value tracker
         // overrides the instance setter and drops the following input event
         // when the value it tracked already matches.
@@ -394,7 +413,19 @@
   function type(ref, gen, text, submit) {
     return withElement(ref, gen, (el) => {
       el.focus();
-      for (const ch of String(text)) { sendKey(el, ch, {}); }
+      const wanted = String(text);
+      const kind = inputType(el);
+      if (SANITIZED_INPUTS.has(kind)) {
+        for (const ch of wanted) { sendKey(el, ch, {}, false); }
+        const expected = el.value + wanted;
+        setNativeValue(el, expected);
+        el.dispatchEvent(new InputEvent('input', { bubbles: true, data: wanted, inputType: 'insertText' }));
+        if (el.value !== expected) {
+          throw new Error('"' + expected + '" is not a valid ' + kind + ' value; the field holds "' + el.value + '"');
+        }
+      } else {
+        for (const ch of wanted) { sendKey(el, ch, {}); }
+      }
       if (submit) {
         if (sendKey(el, 'Enter', {}) && el.form && typeof el.form.requestSubmit === 'function') { el.form.requestSubmit(); }
       }

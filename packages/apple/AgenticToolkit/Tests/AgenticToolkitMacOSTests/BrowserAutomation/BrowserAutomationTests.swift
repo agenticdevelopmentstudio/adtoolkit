@@ -45,6 +45,46 @@ final class BrowserAutomationTests: XCTestCase {
         XCTAssertEqual(shown, "enter:abcd")
     }
 
+    /// A number input sanitizes "19." to "", so typing key by key would leave
+    /// "99". The whole value is written once, and the page sees one input.
+    func testTypeIntoANumberInputKeepsTheWholeValue() async throws {
+        let (_, a) = await make(html: """
+            <input id="q" type="number"><span id="out"></span>
+            <script>q.addEventListener('input', () => out.textContent = 'input:' + q.value)</script>
+            """)
+        let snap = try await a.snapshot(.init())
+        _ = try await a.type(ref: "e1", generation: snap.generation, text: "19.99", submit: false)
+        let shown = try await a.text(scope: nil)
+        XCTAssertEqual(shown, "input:19.99")
+    }
+
+    func testTypeAnInvalidDateIsASentence() async throws {
+        let (_, a) = await make(html: "<input id=\"q\" type=\"date\">")
+        let snap = try await a.snapshot(.init())
+        do {
+            _ = try await a.type(ref: "e1", generation: snap.generation, text: "soon", submit: false)
+            XCTFail("expected a refusal")
+        } catch let error as BrowserAutomationError {
+            XCTAssertEqual(error.description, "the page refused: \"soon\" is not a valid date value; the field holds \"\"")
+        }
+    }
+
+    /// '&' has no keyCode of its own; its character code is ArrowUp's, which
+    /// a widget that prevents arrow keys would swallow along with the character.
+    func testTypedPunctuationIsNotAnArrowKey() async throws {
+        let (_, a) = await make(html: """
+            <input id="q"><span id="out"></span>
+            <script>
+            q.addEventListener('keydown', e => { if (e.keyCode === 38 || e.keyCode === 40) e.preventDefault(); });
+            q.addEventListener('input', () => out.textContent = q.value);
+            </script>
+            """)
+        let snap = try await a.snapshot(.init())
+        _ = try await a.type(ref: "e1", generation: snap.generation, text: "R&D(1)", submit: false)
+        let shown = try await a.text(scope: nil)
+        XCTAssertEqual(shown, "R&D(1)")
+    }
+
     /// A React-style value tracker: the instance `value` setter records what it
     /// was given, and the page's handler only runs when the input event brings
     /// a value the tracker does not already hold. A `type` that wrote through
