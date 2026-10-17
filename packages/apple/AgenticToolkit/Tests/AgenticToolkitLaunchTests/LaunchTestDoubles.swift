@@ -12,12 +12,25 @@ final class RecordingCommands: CommandRunning, @unchecked Sendable {
         get { lock.withLock { _responses } }
         set { lock.withLock { _responses = newValue } }
     }
+    private var _sequences: [String: [(Int32, String)]] = [:]
     var calls: [[String]] { lock.withLock { _calls } }
+
+    /// Answers the next calls of `argv` in order, one entry per call, before
+    /// falling back to `responses` (for a command whose answer changes).
+    func respond(to argv: [String], inOrder answers: [(Int32, String)]) {
+        lock.withLock { _sequences[argv.joined(separator: " ")] = answers }
+    }
 
     func run(_ argv: [String]) async -> (status: Int32, output: String) {
         let key = argv.joined(separator: " ")
-        lock.withLock { _calls.append(argv) }
-        return responses[key] ?? (0, "")
+        let queued: (Int32, String)? = lock.withLock {
+            _calls.append(argv)
+            guard var pending = _sequences[key], !pending.isEmpty else { return nil }
+            let next = pending.removeFirst()
+            _sequences[key] = pending
+            return next
+        }
+        return queued ?? responses[key] ?? (0, "")
     }
 }
 
