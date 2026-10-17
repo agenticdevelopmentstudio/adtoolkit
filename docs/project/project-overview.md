@@ -51,7 +51,14 @@ agenticdevelopertoolkit/
 
 `docs/planning/planning.md` (milestones), `docs/planning/merge-agentictoolkit.md` (the merge), `docs/planning/ports/`, and point-in-time records under `docs/archive/`.
 
-Also: [`docs/architecture/session-daemon-core.md`](../architecture/session-daemon-core.md) (the planned `Database/Daemon/` tier shared by Stenographer's and the Kitchen's daemons).
+Also: [`docs/architecture/session-daemon-core.md`](../architecture/session-daemon-core.md) (the `Database/Daemon/` tier shared by Stenographer's and the Kitchen's daemons; written and committed, not yet built or tested).
+
+New directories from that move, all inside `packages/apple/AgenticToolkit`:
+
+- `Database/Daemon/` in `AgenticToolkitDatabase`: `Core/`, `Ingestion/`, `Sessions/`, `Transcripts/`, `Oversight/`, `AILog/`, `Preferences/`, `Routes/`, `Settings/`. macOS only (a `destinationFilters: [macOS]` source path, and every file wrapped in `#if canImport(AgenticToolkitCore)`).
+- `AgenticToolkitDatabase` now depends on `AgenticToolkitCore` and `AIPluginKit`, on macOS only. **Invariant: `AIPluginKit` (and `AgenticToolkitCore`) never import `AgenticToolkitDatabase`.**
+- `Core/Sessions/`, `Core/Routing/`, `Core/ClaudeHooks/`, `Core/Process/ReadOnlyGit.swift` and `Core/Stenographer/ADKDIdentifiers.swift` in `AgenticToolkitCore`; the launchd pieces in `AgenticToolkitLaunch`.
+- The toolkit and DaemonKit stay independent of each other; each daemon bridges the two.
 
 ## Build & Test Commands
 

@@ -10,8 +10,8 @@ import Darwin
 /// Recovers `CLAUDE_CODE_OAUTH_TOKEN` from a parent `claude` process. Claude
 /// Code scrubs the token from the env it gives hook/status-line commands, but
 /// the token lives in the `claude` process, whose pid the hook forwards
-/// ($PPID). Same-user KERN_PROCARGS2 is readable (as `ps eww` proves). Shared
-/// by the daemon and the CLI target (file-listed in both, like DigestHex).
+/// ($PPID). Same-user KERN_PROCARGS2 is readable (as `ps eww` proves). Lives in
+/// `AgenticToolkitCore`, so the daemons and the CLIs all link the one copy.
 public enum ProcessEnv {
     /// How long a resolved token stays usable. Checked on read; also the
     /// staleness predicate the over-cap eviction in `oauthTokenWalkingUp` uses.
