@@ -346,14 +346,22 @@ targets:
       - SwiftLint
     sources:
       - Database
+      - path: Database/Daemon
+        destinationFilters: [macOS]
     dependencies:
       - package: GRDB
         product: GRDB
       - sdk: libsqlite3.tbd
+      # Daemon stores (Database/Daemon) are macOS-only: they sit on Core and
+      # AIPluginKit, neither of which builds for iOS.
+      - target: AgenticToolkitCore
+        destinationFilters: [macOS]
+      - target: AIPluginKit
+        destinationFilters: [macOS]
     settings:
       base:
         SDKROOT: auto
-        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        MACOSX_DEPLOYMENT_TARGET: "26.0"
         IPHONEOS_DEPLOYMENT_TARGET: "26.0"
     # Daemon-safe: a GRDB DatabasePool with deadline-ejection (progress_handler),
     # read/write reentrancy (read-your-writes), and per-lane stats. Foundation +
@@ -368,6 +376,16 @@ targets:
       - Tests/AgenticToolkitDatabaseTests
     dependencies:
       - target: AgenticToolkitDatabase
+        embed: true
+        codeSign: true
+      - target: AgenticToolkitCore
+        embed: true
+        codeSign: true
+      - target: AIPluginKit
+        embed: true
+        codeSign: true
+      # Closure completion -- see the note in AgenticToolkitLanguageTests.
+      - target: AgenticDeveloperToolkit/AgenticDeveloperToolkit-macOS
         embed: true
         codeSign: true
       - package: GRDB
@@ -448,7 +466,7 @@ targets:
     settings:
       base:
         SDKROOT: auto
-        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        MACOSX_DEPLOYMENT_TARGET: "26.0"
         IPHONEOS_DEPLOYMENT_TARGET: "26.0"
     # Daemon-safe: SyncStore implementation on BoundedDatabase (WAL pool).
 
@@ -495,7 +513,7 @@ targets:
     settings:
       base:
         PRODUCT_NAME: AgenticToolkitMarkdown
-        MACOSX_DEPLOYMENT_TARGET: "14.0"
+        MACOSX_DEPLOYMENT_TARGET: "26.0"
 
   AgenticToolkitMarkdown-iOS:
     type: framework

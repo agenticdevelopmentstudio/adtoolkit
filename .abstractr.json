@@ -169,7 +169,10 @@
       "paths": [
         "packages/apple/AgenticToolkit/Database/"
       ],
-      "depends_on": [],
+      "depends_on": [
+        "apple-core",
+        "apple-pluginkit"
+      ],
       "shared": true,
       "holds": "AgenticToolkitDatabase. Storage primitives."
     },

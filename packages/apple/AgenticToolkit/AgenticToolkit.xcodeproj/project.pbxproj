@@ -427,6 +427,7 @@
 		2264E445C9A1259625CD7185 /* NotesCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86FEFB54F5560AB6533F4379 /* NotesCommands.swift */; };
 		22835B5AF4E849500C96D85D /* LayoutServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E33CFABA2C80F10988961B85 /* LayoutServiceTests.swift */; };
 		22CAE970BEB7AC16D40E333A /* AgenticToolkitPermissionsUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FB251437E922B5A8689625BF /* AgenticToolkitPermissionsUI.framework */; };
+		231E996DEEA3402E95B3D4BA /* AgenticToolkitCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FF857DF2BB3D2BE006BBA101 /* AgenticToolkitCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		234CEE167B9D43140A2EC2A6 /* SystemWindowContextsSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71138CCA6F7155839D93DE12 /* SystemWindowContextsSettings.swift */; };
 		23577AF38B113F79EBAF46E5 /* ContextEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 493B8042367C550B2CAE23A7 /* ContextEvent.swift */; };
 		237804904D4F7A58F500FF25 /* DaemonAIChatTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BD8F8CA7B88AC3A53AB9785 /* DaemonAIChatTests.swift */; };
@@ -899,6 +900,7 @@
 		58D57CCE96B8B3352E7DE491 /* LiveTimerListViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FD1DB119902B94484FCE892 /* LiveTimerListViewTests.swift */; };
 		58DE534BA56300F760157AB7 /* WorkGroupsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14D79B17B7A4A814634CF92D /* WorkGroupsView.swift */; };
 		58EFA7EA66263265E0EA338A /* ProviderTypeFacet.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7FB6082368D23714EF4DFFA /* ProviderTypeFacet.swift */; };
+		58F99C03802FC8E2A0894A51 /* DaemonDatabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7420C6A5E4845859D5F50963 /* DaemonDatabase.swift */; };
 		590106531F868A7760EECD64 /* EcosystemConfigTopicsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 494106605469CA8AC9F2B1D4 /* EcosystemConfigTopicsTests.swift */; };
 		5905F8557471AACF26D7001D /* AILogListSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 47184F877ACCB5ABA28BF1CF /* AILogListSourceTests.swift */; };
 		595A0FC0191A1334137FEF60 /* SignInSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 375AFDA20995CB05210954C1 /* SignInSession.swift */; };
@@ -1054,6 +1056,7 @@
 		689272A7EB42A5A74778472A /* TriggerRowPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF868123851314DE127D42DE /* TriggerRowPresenter.swift */; };
 		6896BC5559FFE5093EE00AA6 /* FileTreeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 91A9343C36100629E2F39BDF /* FileTreeManager.swift */; };
 		68BBF6474EA1AAC19A090CFD /* AgenticDeveloperToolkit-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0AA33F0AF418F0DDFE05C6BF /* AgenticDeveloperToolkit-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		68BE6DA6C363B73250E996FD /* AgenticToolkitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FF857DF2BB3D2BE006BBA101 /* AgenticToolkitCore.framework */; };
 		68E5AABD3AE353705371E2A0 /* PickerKeyboardController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0CEA61B4F75C3A8F70A9459 /* PickerKeyboardController.swift */; };
 		68E829230932A1D2D2E1F77B /* AgenticToolkitSync.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 085D01FE73EBFAD731A18864 /* AgenticToolkitSync.framework */; };
 		6904CECE8E186808E8B0253A /* DisplayError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1FC28D2E9027451CBB7A8BF5 /* DisplayError.swift */; };
@@ -1412,6 +1415,7 @@
 		8CEDF2EED81DBB13E20232A2 /* AppStorageLocationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 35F6E8E07AAF01ED95F11BDC /* AppStorageLocationTests.swift */; };
 		8CF4403C75B748B2071E3122 /* AgenticToolkitActivity-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F98644B345154B92B5CCA83D /* AgenticToolkitActivity-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		8D1413879FA1E0BBA108DAC1 /* AgenticToolkitLaunch.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F261AED7A63558444FAD8DBD /* AgenticToolkitLaunch.framework */; };
+		8D14BF7E37F94CC68D35790C /* AIPluginKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FD467D736FA5B431DD30B091 /* AIPluginKit.framework */; };
 		8D396628FE6093C2CB0C08C2 /* ContactFieldsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EC3F9239300B86AB4739006 /* ContactFieldsView.swift */; };
 		8D89446D7431D02FDB715A59 /* VSIXArchiveTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3737B4624425CEFF209B1D7D /* VSIXArchiveTests.swift */; };
 		8D9902ECA4D797D074097046 /* EditableTableCardTypedEditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EB5C5B45ADAC89E9F562FBF /* EditableTableCardTypedEditTests.swift */; };
@@ -1868,6 +1872,7 @@
 		C1258494C632DA29257AACE1 /* ExtensionWebviewPresenting.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDBEDB82948D445356E61D93 /* ExtensionWebviewPresenting.swift */; };
 		C1501D2650525E0A8F90D70F /* ComposableTabsFocusable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8C41450A42A2BA27B4432260 /* ComposableTabsFocusable.swift */; };
 		C1757D9116F4CCC1D2CF1986 /* UniversalControlMonitorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 467EDE72AC63A6C98AE4964C /* UniversalControlMonitorTests.swift */; };
+		C1C41B833B5C8584CD0893AF /* AIPluginKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FD467D736FA5B431DD30B091 /* AIPluginKit.framework */; platformFilters = (macos, ); };
 		C1CF8C47B6F113AE8AE4D2E0 /* MarkdownSchema.swift in Sources */ = {isa = PBXBuildFile; fileRef = 553B286FB8AF6CC860C1CE5F /* MarkdownSchema.swift */; };
 		C1D2CB4E9259BD1C02B2A879 /* LLMProvidersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2783245881A0C4CACD86139E /* LLMProvidersView.swift */; };
 		C1ECF7A37DC16737298A6F70 /* HubAccountTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2645EE719C9E0F9E9EC18CF /* HubAccountTests.swift */; };
@@ -2034,6 +2039,7 @@
 		D3F07EFD977A8FE2449096BB /* AgenticToolkitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FF857DF2BB3D2BE006BBA101 /* AgenticToolkitCore.framework */; };
 		D411D7719098EA518850AA29 /* MockStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9DD9139A93E469F94DF53EB2 /* MockStorage.swift */; };
 		D419462EE7FEBCFCCEFBA626 /* BillingDTOs.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B22C727AFCC2845E624E710 /* BillingDTOs.swift */; };
+		D463E2EF7EC27F45FB69EE27 /* AgenticDeveloperToolkit-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AA33F0AF418F0DDFE05C6BF /* AgenticDeveloperToolkit-macOS.framework */; };
 		D47979001F7A4B5C0D8ED51E /* GitBranch.swift in Sources */ = {isa = PBXBuildFile; fileRef = B797E0571100237B97EB19EC /* GitBranch.swift */; };
 		D4A185F53AE147779E74F4F9 /* ClaudeLiveLoginRecordTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3068F74F58A984D50E1BC993 /* ClaudeLiveLoginRecordTests.swift */; };
 		D4B134F4318F31AB42F75D1D /* BillingActivityViewControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7D3018C220EA95F1AB708432 /* BillingActivityViewControllerTests.swift */; };
@@ -2120,6 +2126,7 @@
 		DE8B73CE949C6C4CA9F99D0F /* ThemeContributionPointTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71FC0CFF8A190FE13E818A71 /* ThemeContributionPointTests.swift */; };
 		DE9993E78CADE6902D248A11 /* HubModules.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E9F5B7C2EE1D677B72592A3 /* HubModules.swift */; };
 		DEAB51E75FC6F0EC5A04333A /* WKWebView+QuietPresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9922EAD1757334923B5A796E /* WKWebView+QuietPresentation.swift */; };
+		DED04AC321F6F77DD464352C /* AgenticToolkitCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FF857DF2BB3D2BE006BBA101 /* AgenticToolkitCore.framework */; platformFilters = (macos, ); };
 		DED7BD3A250E2E92584A8F78 /* LLMProvidersListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A848D138A330A2134BADBE42 /* LLMProvidersListViewModel.swift */; };
 		DF1D112A2F3E2F6D3561D7B8 /* AgenticDeveloperToolkit-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0AA33F0AF418F0DDFE05C6BF /* AgenticDeveloperToolkit-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		DF1E5B21456E18FD7EBEC2CA /* AgenticDeveloperToolkit-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0AA33F0AF418F0DDFE05C6BF /* AgenticDeveloperToolkit-macOS.framework */; };
@@ -2215,6 +2222,7 @@
 		E8635919F9DA6D002BF4EB80 /* NSWindow+FitWidth.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6F1577CDCB5AAF25B24F230 /* NSWindow+FitWidth.swift */; };
 		E8A491DB14685E4DCB28C9C9 /* SetupStamp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82F1AAA0CCD47BFD24A2C13C /* SetupStamp.swift */; };
 		E8CE9A80050725613F7B6D7E /* InMemoryActivityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB54DE4FB59E292E4459D8A1 /* InMemoryActivityStore.swift */; };
+		E902AE7D40216246D78BE60B /* AIPluginKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FD467D736FA5B431DD30B091 /* AIPluginKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E917C415CCDAF5F4CEA9E32B /* LaunchAtLoginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 956F50EE328345009C16B24F /* LaunchAtLoginManager.swift */; };
 		E91D8F1917D077F9E3057CF0 /* ComposableTabsClosePersistTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D39641986D609698360C2E4A /* ComposableTabsClosePersistTests.swift */; };
 		E91DCE68BD43E5E956B68A1F /* AgenticToolkitDisplays.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C4549C0F49FF13D5D7E441FE /* AgenticToolkitDisplays.framework */; };
@@ -2368,6 +2376,7 @@
 		F9D8F92D9AA0F61AFF270E42 /* NotesCoordinatorMenuTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CE8F713165AC8E94FACD702 /* NotesCoordinatorMenuTests.swift */; };
 		F9D944EAF651AD4D73D8D1C5 /* ConversationsSwitchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D2E269DCD4EAADC18CF8EDB /* ConversationsSwitchTests.swift */; };
 		F9DA532AB46B8C411B5E25BE /* LogLine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9880737F7060E9B047C7A98 /* LogLine.swift */; };
+		F9DBF1D2900C279ABE8BE79C /* AgenticDeveloperToolkit-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0AA33F0AF418F0DDFE05C6BF /* AgenticDeveloperToolkit-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F9FF9725CB25E03265D5B960 /* ContextFakes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E50FB28E54375FAAB9C113 /* ContextFakes.swift */; };
 		FA19D8A2A6075D8C9A8E5CCE /* model-catalog.json in Resources */ = {isa = PBXBuildFile; fileRef = 141BE154E49D6B8722E54512 /* model-catalog.json */; };
 		FA24E0A5E65ACC1ED7D6FE21 /* LaunchManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 283FA108F215280A1C5E7D0A /* LaunchManager.swift */; };
@@ -3021,6 +3030,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = 2EFC363C175DD44B5CD8E0E4;
 			remoteInfo = AgenticToolkitPermissions;
+		};
+		541330ED127B00BB7C746D0C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7964E913AD06611688C0B3A6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 003F8A478BDB5243DE76FA9E;
+			remoteInfo = AgenticToolkitCore;
+		};
+		5595000AA2C7F63BF28FFE14 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7964E913AD06611688C0B3A6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 75B33B7BC0E7B443EFB94243;
+			remoteInfo = AIPluginKit;
 		};
 		561486CAF2984B6C6BF7ED72 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -3722,6 +3745,13 @@
 			remoteGlobalIDString = 3AF101D2659DA8D809B2E4C4;
 			remoteInfo = AgenticToolkitSystemMonitor;
 		};
+		B52FA04B3646DF140662A4A2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7964E913AD06611688C0B3A6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 003F8A478BDB5243DE76FA9E;
+			remoteInfo = AgenticToolkitCore;
+		};
 		B587CD024D7166C08EA7055E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7964E913AD06611688C0B3A6 /* Project object */;
@@ -4156,6 +4186,20 @@
 			remoteGlobalIDString = D4EE08663F8C55B3A706061D;
 			remoteInfo = AgenticToolkitDisplays;
 		};
+		F4E05C3098F35EF65DB19648 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 25DF1BCBF8C9EECC86E6FDE3 /* AgenticDeveloperToolkit */;
+			proxyType = 1;
+			remoteGlobalIDString = DC37B1DAB160C9E325562F97;
+			remoteInfo = "AgenticDeveloperToolkit-macOS";
+		};
+		F610DA3B9931552D101BA9F6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7964E913AD06611688C0B3A6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 75B33B7BC0E7B443EFB94243;
+			remoteInfo = AIPluginKit;
+		};
 		F68496B74A67B7FD0C3F3FBF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 7964E913AD06611688C0B3A6 /* Project object */;
@@ -4576,6 +4620,9 @@
 			dstSubfolderSpec = 10;
 			files = (
 				D71BC73ACA6F3FC83C200665 /* AgenticToolkitDatabase.framework in Embed Frameworks */,
+				231E996DEEA3402E95B3D4BA /* AgenticToolkitCore.framework in Embed Frameworks */,
+				E902AE7D40216246D78BE60B /* AIPluginKit.framework in Embed Frameworks */,
+				F9DBF1D2900C279ABE8BE79C /* AgenticDeveloperToolkit-macOS.framework in Embed Frameworks */,
 			);
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -5426,6 +5473,7 @@
 		73AABFF9469CDC91BFC0AB25 /* LSPJumpToDefinitionDelegateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LSPJumpToDefinitionDelegateTests.swift; sourceTree = "<group>"; };
 		73F0119CDB478A40922A5E3A /* ProjectCheckoutTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectCheckoutTests.swift; sourceTree = "<group>"; };
 		74058B27121A2773814462AA /* HeaderView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HeaderView.swift; sourceTree = "<group>"; };
+		7420C6A5E4845859D5F50963 /* DaemonDatabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DaemonDatabase.swift; sourceTree = "<group>"; };
 		744440285E8490608CB81FFC /* HubWorkspace.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubWorkspace.swift; sourceTree = "<group>"; };
 		74478068B66DC72DF466A367 /* WindowRegistryVisibilityTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowRegistryVisibilityTests.swift; sourceTree = "<group>"; };
 		74925FD9DA16DA1C1650F4CE /* MCPChipsBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCPChipsBarView.swift; sourceTree = "<group>"; };
@@ -6846,6 +6894,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				7BD4A4B433DBC67EA2012DE8 /* AgenticToolkitDatabase.framework in Frameworks */,
+				68BE6DA6C363B73250E996FD /* AgenticToolkitCore.framework in Frameworks */,
+				8D14BF7E37F94CC68D35790C /* AIPluginKit.framework in Frameworks */,
+				D463E2EF7EC27F45FB69EE27 /* AgenticDeveloperToolkit-macOS.framework in Frameworks */,
 				0E9E4ACEAEAA115476141B3C /* GRDB in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -6885,6 +6936,8 @@
 			files = (
 				47F25205E7B64A45EC24FA8C /* GRDB in Frameworks */,
 				B02BA2C7FEE9987D9D937790 /* libsqlite3.tbd in Frameworks */,
+				DED04AC321F6F77DD464352C /* AgenticToolkitCore.framework in Frameworks */,
+				C1C41B833B5C8584CD0893AF /* AIPluginKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -7292,6 +7345,14 @@
 				68FBBAE65B74F2D17FD794E5 /* StartupQueue.swift */,
 			);
 			path = Launch;
+			sourceTree = "<group>";
+		};
+		11F153797E10E660E272E821 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				7420C6A5E4845859D5F50963 /* DaemonDatabase.swift */,
+			);
+			path = Core;
 			sourceTree = "<group>";
 		};
 		12115893376325B514D75766 /* BrowserPane */ = {
@@ -9547,6 +9608,14 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		8E9E000B6C73E24C7E3FA43D /* Daemon */ = {
+			isa = PBXGroup;
+			children = (
+				11F153797E10E660E272E821 /* Core */,
+			);
+			path = Daemon;
+			sourceTree = "<group>";
+		};
 		8EF4B39335E2FAB10F56FB93 /* Timeline */ = {
 			isa = PBXGroup;
 			children = (
@@ -10521,6 +10590,7 @@
 		C94733FEC784E2C80D1A1275 /* Database */ = {
 			isa = PBXGroup;
 			children = (
+				8E9E000B6C73E24C7E3FA43D /* Daemon */,
 				377F378363D7C5429B3F0656 /* AppStorageLocation.swift */,
 				5134B714779C3FC29D9DD4AA /* BoundedDatabase.swift */,
 			);
@@ -11752,6 +11822,8 @@
 			buildRules = (
 			);
 			dependencies = (
+				A32F6EBBEC6EC2ECA3CB8D65 /* PBXTargetDependency */,
+				BD9E8005C5FD63653C7A2918 /* PBXTargetDependency */,
 			);
 			name = AgenticToolkitDatabase;
 			packageProductDependencies = (
@@ -12343,6 +12415,9 @@
 			);
 			dependencies = (
 				4EA473A95A70DAD2013716B6 /* PBXTargetDependency */,
+				30B8D4788C5F80EF7E90BFF7 /* PBXTargetDependency */,
+				F1EA44E009D78E754E409753 /* PBXTargetDependency */,
+				4370C2F66E05E35F15C80BF5 /* PBXTargetDependency */,
 			);
 			name = AgenticToolkitDatabaseTests;
 			packageProductDependencies = (
@@ -15954,6 +16029,7 @@
 			files = (
 				6652E253C85FA7BC081976A7 /* AppStorageLocation.swift in Sources */,
 				06564B2D54BEEDD12124BE8D /* BoundedDatabase.swift in Sources */,
+				58F99C03802FC8E2A0894A51 /* DaemonDatabase.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -16285,6 +16361,11 @@
 			name = "AgenticDeveloperToolkit-macOS";
 			targetProxy = 90D3146B70FA3CA2DC4777D4 /* PBXContainerItemProxy */;
 		};
+		30B8D4788C5F80EF7E90BFF7 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 003F8A478BDB5243DE76FA9E /* AgenticToolkitCore */;
+			targetProxy = B52FA04B3646DF140662A4A2 /* PBXContainerItemProxy */;
+		};
 		31B6CD55DD526576A7E6B9D3 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF1B6D156999EBA1E66D7B49 /* AgenticToolkitPermissionsTests */;
@@ -16369,6 +16450,11 @@
 			isa = PBXTargetDependency;
 			target = 66E5188115D61C6D363D4DBF /* AgenticToolkitLanguage */;
 			targetProxy = 7CB2CEF39A5BA779185D2604 /* PBXContainerItemProxy */;
+		};
+		4370C2F66E05E35F15C80BF5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = "AgenticDeveloperToolkit-macOS";
+			targetProxy = F4E05C3098F35EF65DB19648 /* PBXContainerItemProxy */;
 		};
 		440165D5CA94B900DA88BEF9 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -16825,6 +16911,14 @@
 			target = BE1545B532AE0D9C7323F3C1 /* AgenticToolkitSyncGRDB */;
 			targetProxy = 7DF8ED377F40877F8493C435 /* PBXContainerItemProxy */;
 		};
+		A32F6EBBEC6EC2ECA3CB8D65 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilters = (
+				macos,
+			);
+			target = 003F8A478BDB5243DE76FA9E /* AgenticToolkitCore */;
+			targetProxy = 541330ED127B00BB7C746D0C /* PBXContainerItemProxy */;
+		};
 		A3E366F69097B111F3DDDEE2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = F146B004BC017497E4FE0BC0 /* AgenticToolkitHubUI-macOS */;
@@ -16914,6 +17008,14 @@
 			isa = PBXTargetDependency;
 			target = 42D67FCDDBE968127EEFFF39 /* AgenticToolkitPermissionsUI */;
 			targetProxy = F8295C50AF738D27D67B032C /* PBXContainerItemProxy */;
+		};
+		BD9E8005C5FD63653C7A2918 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			platformFilters = (
+				macos,
+			);
+			target = 75B33B7BC0E7B443EFB94243 /* AIPluginKit */;
+			targetProxy = 5595000AA2C7F63BF28FFE14 /* PBXContainerItemProxy */;
 		};
 		BDB57B7E20F36E442A0FE50A /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -17215,6 +17317,11 @@
 			target = AC88CFADE46A8B4C98268076 /* AgenticToolkitCoreUI */;
 			targetProxy = 84E2EE43F6C46EA7C3C3C0A4 /* PBXContainerItemProxy */;
 		};
+		F1EA44E009D78E754E409753 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 75B33B7BC0E7B443EFB94243 /* AIPluginKit */;
+			targetProxy = F610DA3B9931552D101BA9F6 /* PBXContainerItemProxy */;
+		};
 		F20E78FA0B1158EBD5257E58 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 5BFCF4EF9B6A3F62F3599C61 /* AgenticToolkitDatabase */;
@@ -17408,7 +17515,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mikefullerton.agentictoolkit.AgenticToolkitSyncGRDB;
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
@@ -17451,7 +17558,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mikefullerton.agentictoolkit.AgenticToolkitMarkdown-macOS";
 				PRODUCT_NAME = AgenticToolkitMarkdown;
 				SDKROOT = macosx;
@@ -17846,7 +17953,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mikefullerton.agentictoolkit.AgenticToolkitDatabase;
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
@@ -18318,7 +18425,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mikefullerton.agentictoolkit.AgenticToolkitSyncGRDB;
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
@@ -18459,7 +18566,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mikefullerton.agentictoolkit.AgenticToolkitDatabase;
 				SDKROOT = auto;
 				SKIP_INSTALL = YES;
@@ -18925,7 +19032,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.mikefullerton.agentictoolkit.AgenticToolkitMarkdown-macOS";
 				PRODUCT_NAME = AgenticToolkitMarkdown;
 				SDKROOT = macosx;
