@@ -10,6 +10,11 @@ extension DaemonDatabase {
         { [self] key in ((try? setting(for: key)) ?? nil) }
     }
 
+    /// The reader a feature's completions resolve providers through.
+    public func aiProviderSettings(for feature: AIFeature) -> ProviderSettingsReader {
+        feature == .oversight ? oversightAIProviderSettings : aiProviderSettings
+    }
+
     /// The provider-registry reader for **oversight** completions: identical to
     /// `aiProviderSettings` except that the summaries selection and its model can be
     /// overridden by the oversight keys — so the toolkit's resolution path needs no
