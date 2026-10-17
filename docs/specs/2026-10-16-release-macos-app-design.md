@@ -139,7 +139,7 @@ Defaults, so a key may be left out:
 | `layout.*`, `checks` | empty |
 | `signing.app_identity` / `installer_identity` | `Developer ID Application` / `Developer ID Installer` |
 | `signing.profiles` | `[]` |
-| `releases.checkout` | the sibling directory `<app repo's main checkout>/../<repo name>` |
+| `releases.checkout` | `$RELEASE_RELEASES_CHECKOUT` if set, else the sibling directory `<app repo's main checkout>/../<repo name>` |
 | `releases.branch` | `main` |
 | `source.branch` / `source.tag_prefix` | `main` / `release/` |
 | `site.routes` | `{"downloads": "/downloads", "latest": "/downloads/latest", "appcast": "/appcast.xml"}` |
