@@ -6,10 +6,6 @@ import Foundation
 /// the one session write (`POST /sessions/:id/summarize`).
 enum SessionRoutes {
 
-    /// Most sessions `GET /sessions` will ever return in one response. See
-    /// `listSessions` for why this is a ceiling and not a page size.
-    static let sessionListCeiling = 10_000
-
     static func table(_ services: SessionFeatureServices) -> RouteTable {
         let database = services.database
         return RouteTable([
@@ -109,7 +105,8 @@ enum SessionRoutes {
         // it would truncate existing callers with no signal. `?limit=` asks for
         // less, `?since_hours=` asks for a window (the XPC list path, which the
         // Sessions window uses, always passes one).
-        let limit = request.boundedLimit(default: sessionListCeiling, max: sessionListCeiling)
+        let ceiling = SessionFeatureRoutes.sessionListCeiling
+        let limit = request.boundedLimit(default: ceiling, max: ceiling)
         let sinceHours = request.queryInt("since_hours", default: 0)
 
         do {

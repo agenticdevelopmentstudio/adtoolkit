@@ -10,6 +10,11 @@ import Foundation
 /// concern and stays outside this table.
 public enum SessionFeatureRoutes {
 
+    /// Most sessions `GET /sessions` will ever return in one response. A ceiling
+    /// and not a page size: that endpoint has always returned every session, so
+    /// quietly paging it would truncate existing callers with no signal.
+    public static let sessionListCeiling = 10_000
+
     /// Every route the session-daemon core serves, built from `services`.
     public static func table(_ services: SessionFeatureServices) -> RouteTable {
         SessionRoutes.table(services)
