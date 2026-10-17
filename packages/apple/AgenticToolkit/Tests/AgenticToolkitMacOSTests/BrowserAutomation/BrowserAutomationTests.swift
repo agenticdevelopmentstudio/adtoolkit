@@ -259,6 +259,48 @@ final class BrowserAutomationTests: XCTestCase {
         XCTAssertEqual(delta.dialog?.message, "hi")
     }
 
+    // MARK: Snapshot delta
+
+    func testDeltaOfIdenticalSnapshotsIsNoChange() {
+        let lines = ["- button \"One\" [ref=e1]", "- button \"Two\" [ref=e2]"]
+        XCTAssertEqual(BrowserAutomation.delta(from: lines, to: lines.joined(separator: "\n")),
+                       "no change since the last snapshot\n")
+    }
+
+    /// A second copy of a line the page already had is an addition; a set
+    /// comparison said nothing had changed.
+    func testDeltaReportsADuplicateLineAsAdded() {
+        let before = ["- listitem \"a\" [ref=e1]", "- listitem \"b\" [ref=e2]"]
+        let after = "- listitem \"a\" [ref=e1]\n- listitem \"b\" [ref=e2]\n- listitem \"a\" [ref=e3]"
+        XCTAssertEqual(BrowserAutomation.delta(from: before, to: after), "Added:\n- listitem \"a\" [ref=e3]\n")
+    }
+
+    func testDeltaReportsAReorder() {
+        let before = ["- listitem \"a\" [ref=e1]", "- listitem \"b\" [ref=e2]"]
+        let after = "- listitem \"b\" [ref=e1]\n- listitem \"a\" [ref=e2]"
+        let delta = BrowserAutomation.delta(from: before, to: after)
+        XCTAssertNotEqual(delta, "no change since the last snapshot\n")
+        XCTAssertTrue(delta.contains("Added:\n"), delta)
+        XCTAssertTrue(delta.contains("Removed:\n"), delta)
+    }
+
+    /// The same lines with new refs: every ref the model holds is stale, and
+    /// "no change" would have it act on them. The new refs are listed.
+    func testDeltaReportsRenumberedRefs() {
+        let before = ["- button \"One\" [ref=e1]", "- button \"Two\" [ref=e2]"]
+        let after = "- button \"One\" [ref=e2]\n- button \"Two\" [ref=e3]"
+        XCTAssertEqual(BrowserAutomation.delta(from: before, to: after),
+                       "Renumbered:\n- button \"One\" [ref=e2]\n- button \"Two\" [ref=e3]\n")
+    }
+
+    func testDeltaKeepsPageOrderAndStripsRemovedRefs() {
+        let before = ["- heading \"A\" [ref=e1]", "- button \"B\" [ref=e2]", "- link \"C\" [ref=e3]"]
+        let after = "- heading \"A\" [ref=e1]\n- button \"X\" [ref=e2]\n- button \"Y\" [ref=e3]\n- link \"C\" [ref=e4]"
+        XCTAssertEqual(BrowserAutomation.delta(from: before, to: after),
+                       "Added:\n- button \"X\" [ref=e2]\n- button \"Y\" [ref=e3]\nRemoved:\n- button \"B\"\n"
+                       + "Renumbered:\n- link \"C\" [ref=e4]\n")
+    }
+
     func testDeltaIsFocusedLandmarkAfterDomChange() async throws {
         let (_, a) = await make(html: """
             <form id="f"><input id="q"><span id="out"></span></form>

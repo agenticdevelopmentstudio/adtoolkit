@@ -362,7 +362,7 @@ public final class BrowserToolSet: ChatToolSource, @unchecked Sendable {
             "depth": ToolJSONSchema.integer("Maximum tree depth"),
             "scope": ToolJSONSchema.string("A ref or CSS selector to snapshot under"),
             "include_urls": ToolJSONSchema.boolean("Add [url=…] to links"),
-            "delta": ToolJSONSchema.boolean("Only lines added or removed since the last snapshot")
+            "delta": ToolJSONSchema.boolean("Only what changed since the last snapshot, in page order: lines added (with refs), lines removed, and lines renumbered (same line, new ref)")
         ]),
         tool("browser_text", "The visible text of the page (its main region, else the whole body).", ["pane_id": paneID, "scope": ToolJSONSchema.string("A ref or CSS selector")]),
         tool("browser_find", "Find elements from the last snapshot whose name or text contains the given text.", ["pane_id": paneID, "text": ToolJSONSchema.string("Text to look for, case-insensitive")], required: ["text"]),

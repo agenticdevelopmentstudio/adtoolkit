@@ -250,17 +250,87 @@ public final class BrowserAutomation: NSObject {
 
     private var lastSnapshotLines: [String]?
 
+    /// What changed between two snapshots, in page order. Lines are matched on
+    /// their text with the ref stripped, through a longest-common-subsequence
+    /// alignment, so a second copy of a line is an addition, a reorder is a
+    /// removal and an addition, and a line whose only change is its ref is
+    /// reported under "Renumbered:" with the ref to use now. A set comparison
+    /// saw none of those and called them all "no change".
     static func delta(from previous: [String], to current: String) -> String {
         let now = current.split(separator: "\n").map(String.init)
-        let strip: (String) -> String = { $0.replacingOccurrences(of: #" \[ref=e\d+\]"#, with: "", options: .regularExpression) }
-        let before = Set(previous.map(strip))
-        let after = Set(now.map(strip))
-        let added = now.filter { !before.contains(strip($0)) }
-        let removed = previous.filter { !after.contains(strip($0)) }
-        if added.isEmpty && removed.isEmpty { return "no change since the last snapshot\n" }
+        let strip: (String) -> String = {
+            $0.replacingOccurrences(of: #" \[ref=e\d+\]"#, with: "", options: .regularExpression)
+        }
+        let before = previous.map(strip), after = now.map(strip)
+        var added: [String] = [], removed: [String] = [], renumbered: [String] = []
+        for step in Self.align(before, after) {
+            switch step {
+            case .matched(let i, let j): if previous[i] != now[j] { renumbered.append(now[j]) }
+            case .removed(let i): removed.append(before[i])
+            case .added(let j): added.append(now[j])
+            }
+        }
+        if added.isEmpty && removed.isEmpty && renumbered.isEmpty { return "no change since the last snapshot\n" }
         var out = ""
         if !added.isEmpty { out += "Added:\n" + added.joined(separator: "\n") + "\n" }
-        if !removed.isEmpty { out += "Removed:\n" + removed.map(strip).joined(separator: "\n") + "\n" }
+        if !removed.isEmpty { out += "Removed:\n" + removed.joined(separator: "\n") + "\n" }
+        if !renumbered.isEmpty { out += "Renumbered:\n" + renumbered.joined(separator: "\n") + "\n" }
+        return out
+    }
+
+    enum AlignmentStep: Equatable {
+        case matched(Int, Int)
+        case removed(Int)
+        case added(Int)
+    }
+
+    /// An ordered longest-common-subsequence alignment of two line lists. The
+    /// common prefix and suffix are matched first, since a page change is
+    /// almost always local, and the middle is aligned by dynamic programming.
+    /// A middle too large for the table is reported as a wholesale
+    /// replacement: verbose, never wrong.
+    static func align(_ a: [String], _ b: [String]) -> [AlignmentStep] {
+        var out: [AlignmentStep] = []
+        var start = 0
+        while start < a.count, start < b.count, a[start] == b[start] {
+            out.append(.matched(start, start))
+            start += 1
+        }
+        var endA = a.count, endB = b.count
+        while endA > start, endB > start, a[endA - 1] == b[endB - 1] {
+            endA -= 1
+            endB -= 1
+        }
+        let n = endA - start, m = endB - start, width = m + 1
+        if n * m > 4_000_000 {
+            for i in start..<endA { out.append(.removed(i)) }
+            for j in start..<endB { out.append(.added(j)) }
+        } else if n > 0 || m > 0 {
+            // table[i * width + j]: the LCS length of a[start + i...] and b[start + j...].
+            var table = [Int](repeating: 0, count: (n + 1) * width)
+            for i in stride(from: n - 1, through: 0, by: -1) {
+                for j in stride(from: m - 1, through: 0, by: -1) {
+                    table[i * width + j] = a[start + i] == b[start + j]
+                        ? table[(i + 1) * width + j + 1] + 1
+                        : max(table[(i + 1) * width + j], table[i * width + j + 1])
+                }
+            }
+            var i = 0, j = 0
+            while i < n || j < m {
+                if i < n, j < m, a[start + i] == b[start + j] {
+                    out.append(.matched(start + i, start + j))
+                    i += 1
+                    j += 1
+                } else if j < m, i == n || table[i * width + j + 1] >= table[(i + 1) * width + j] {
+                    out.append(.added(start + j))
+                    j += 1
+                } else {
+                    out.append(.removed(start + i))
+                    i += 1
+                }
+            }
+        }
+        for k in 0..<(a.count - endA) { out.append(.matched(endA + k, endB + k)) }
         return out
     }
 
