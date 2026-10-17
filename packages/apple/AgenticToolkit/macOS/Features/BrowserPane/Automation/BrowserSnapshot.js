@@ -410,8 +410,33 @@
     return !prevented;
   }
 
+  // What type and fill may write into: a textbox, a textarea or a
+  // contenteditable. A select, checkbox, radio, slider, color input or button
+  // has a `value` too, and writing it wrecks the control without a word: a
+  // label written into a select deselects every option, "75" typed after a
+  // range's 50 is 507. Those have tools of their own, which the sentence names.
+  function refuseUnlessEditable(el, verb) {
+    const tag = el.tagName.toLowerCase();
+    const refuse = (what, hint) => { throw new Error(what + ' cannot be ' + verb + (hint ? '; use ' + hint : '')); };
+    if (tag === 'select') { refuse('a select', 'browser_select'); }
+    if (tag === 'input') {
+      const kind = inputType(el);
+      if (kind === 'checkbox' || kind === 'radio') { refuse('a ' + kind, 'browser_click'); }
+      if (kind === 'button' || kind === 'submit' || kind === 'reset' || kind === 'image') { refuse('a button', 'browser_click'); }
+      if (kind === 'range' || kind === 'color' || kind === 'file' || kind === 'hidden') { refuse('a ' + kind + ' input', null); }
+    }
+    if (tag === 'input' || tag === 'textarea') {
+      if (el.disabled) { refuse('a disabled field', null); }
+      if (el.readOnly) { refuse('a read-only field', null); }
+      return;
+    }
+    if (el.isContentEditable) { return; }
+    refuse('an element that is not a textbox, textarea or contenteditable', null);
+  }
+
   function type(ref, gen, text, submit) {
     return withElement(ref, gen, (el) => {
+      refuseUnlessEditable(el, 'typed into');
       el.focus();
       const wanted = String(text);
       const kind = inputType(el);
@@ -447,6 +472,7 @@
 
   function fill(ref, gen, value) {
     return withElement(ref, gen, (el) => {
+      refuseUnlessEditable(el, 'filled');
       el.focus();
       if (el.isContentEditable && !('value' in el)) {
         document.execCommand('selectAll', false, null);

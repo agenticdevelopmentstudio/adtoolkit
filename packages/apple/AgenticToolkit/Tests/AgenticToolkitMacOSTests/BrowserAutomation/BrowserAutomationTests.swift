@@ -169,6 +169,45 @@ final class BrowserAutomationTests: XCTestCase {
         XCTAssertEqual(shownAgain, "a")
     }
 
+    /// The snapshot shows option labels, so a model will try to fill a select
+    /// with one; writing it would deselect everything. The refusal names the tool.
+    func testFillOnASelectIsRefusedTowardBrowserSelect() async throws {
+        let (_, a) = await make(html: """
+            <select id="s"><option value="free">Free</option><option value="pro" selected>Pro</option></select>
+            """)
+        let snap = try await a.snapshot(.init())
+        do {
+            _ = try await a.fill(ref: "e1", generation: snap.generation, value: "Free")
+            XCTFail("expected a refusal")
+        } catch let error as BrowserAutomationError {
+            XCTAssertEqual(error.description, "the page refused: a select cannot be filled; use browser_select")
+        }
+        let after = try await a.snapshot(.init())
+        XCTAssertTrue(after.text.contains("[value=\"pro\"]"), after.text)
+    }
+
+    func testTypeIntoACheckboxIsRefusedTowardBrowserClick() async throws {
+        let (_, a) = await make(html: "<input type=\"checkbox\" checked>")
+        let snap = try await a.snapshot(.init())
+        do {
+            _ = try await a.type(ref: "e1", generation: snap.generation, text: "false", submit: false)
+            XCTFail("expected a refusal")
+        } catch let error as BrowserAutomationError {
+            XCTAssertEqual(error.description, "the page refused: a checkbox cannot be typed into; use browser_click")
+        }
+    }
+
+    func testTypeIntoARangeIsRefused() async throws {
+        let (_, a) = await make(html: "<input id=\"r\" type=\"range\" value=\"50\">")
+        let snap = try await a.snapshot(.init())
+        do {
+            _ = try await a.type(ref: "e1", generation: snap.generation, text: "75", submit: false)
+            XCTFail("expected a refusal")
+        } catch let error as BrowserAutomationError {
+            XCTAssertEqual(error.description, "the page refused: a range input cannot be typed into")
+        }
+    }
+
     func testHoverFiresMouseEvents() async throws {
         let (_, a) = await make(html: """
             <button id="b">Hi</button><span id="out"></span>
