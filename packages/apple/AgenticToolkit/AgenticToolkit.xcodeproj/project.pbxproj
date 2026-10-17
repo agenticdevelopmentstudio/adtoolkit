@@ -1523,6 +1523,7 @@
 		989F33F7B5E467B8CF32CC2C /* SessionsWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21B9884F8AE328AFE6202DD8 /* SessionsWindowController.swift */; };
 		989F73C1617628AD616AF482 /* ChatTranscriptRowView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0D848A785BBA01C9E89A7DCD /* ChatTranscriptRowView.swift */; };
 		98B259C75E3DC744B50AE79A /* UsageSyncService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA84DFDB1124A874F8DF1861 /* UsageSyncService.swift */; };
+		98DA15721212F5AE6C9F7E56 /* SessionSchemaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9639F25C901B43BDC3FE90F4 /* SessionSchemaTests.swift */; };
 		98F531C43B96E17646DBC319 /* AIPluginKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = FD467D736FA5B431DD30B091 /* AIPluginKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		9927C09790691C2374DB2BE1 /* ArtificialAnalysisStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E704045A9988FA8B0269C338 /* ArtificialAnalysisStoreTests.swift */; };
 		993E5CD0F018FD75512DD970 /* URL+DocumentUri.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F2D731ECDAEF5E3BDF82F7D /* URL+DocumentUri.swift */; };
@@ -1794,6 +1795,7 @@
 		B6DD01A409C6D8DEF9125041 /* ButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBFE6A254091C292617E372F /* ButtonView.swift */; };
 		B70FE46576954E9123BABC12 /* AlertDetails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 885F56114F988F525C95377E /* AlertDetails.swift */; };
 		B73787CB076FB50ADBF81F9F /* BillingActivityViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F853E0CE36BC9A04139B3B4 /* BillingActivityViewController.swift */; };
+		B744AF6DB9BCF90F5173029E /* SessionSchema.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62827F4DE7ED52B32BD18FA0 /* SessionSchema.swift */; };
 		B7BCE17617DABDBE84098073 /* ExtensionEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86530A7DCF73CB6006D908BB /* ExtensionEvent.swift */; };
 		B7D61585E79E59F2AACCEC17 /* AISummariesSettingsPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D58284553F55716CA48B1614 /* AISummariesSettingsPanel.swift */; };
 		B7D8CCB89905B91B0E323DD5 /* PasskeyAssertionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 064172AD29BB6BE81A2F7F9A /* PasskeyAssertionProvider.swift */; };
@@ -5349,6 +5351,7 @@
 		6261C316355B80C45CDB6191 /* AutomationSettingsPanelViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutomationSettingsPanelViewController.swift; sourceTree = "<group>"; };
 		626FECFD2A90654F819760B3 /* WindowManagerTerminationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowManagerTerminationTests.swift; sourceTree = "<group>"; };
 		627F3E78E15AE28E147DA0E2 /* AppAllowlistTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppAllowlistTests.swift; sourceTree = "<group>"; };
+		62827F4DE7ED52B32BD18FA0 /* SessionSchema.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSchema.swift; sourceTree = "<group>"; };
 		62899E2D8A1715C1FCECE465 /* ProjectBrowserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectBrowserViewController.swift; sourceTree = "<group>"; };
 		62A84A9D45DD39103BEF8DFE /* ScreenManagerObservationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenManagerObservationTests.swift; sourceTree = "<group>"; };
 		62C92E5C220DD7C3D20E1498 /* HTDVRailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTDVRailView.swift; sourceTree = "<group>"; };
@@ -5728,6 +5731,7 @@
 		960CB1D0B8395783C6C4FF2F /* HubEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubEnvironment.swift; sourceTree = "<group>"; };
 		96102571DB127C5B589E4E8A /* UniqueName.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UniqueName.swift; sourceTree = "<group>"; };
 		962244B2D3951AB26A2E95E4 /* ModelChooserViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelChooserViewController.swift; sourceTree = "<group>"; };
+		9639F25C901B43BDC3FE90F4 /* SessionSchemaTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SessionSchemaTests.swift; sourceTree = "<group>"; };
 		9640D313E020C0A0C615326E /* KeychainHelperTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelperTests.swift; sourceTree = "<group>"; };
 		967F2EB0F2F15D98699CB9FA /* UsageTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UsageTypes.swift; sourceTree = "<group>"; };
 		96859DED17C794CEEB669996 /* ToolResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolResult.swift; sourceTree = "<group>"; };
@@ -7373,6 +7377,7 @@
 				187CDDD0E532594F6D39A9E4 /* DaemonDatabaseError.swift */,
 				24D157F7A2AA7E6181D6AE9D /* DynamicSchema.swift */,
 				DAE81B30F63657B1066251FE /* Migrator.swift */,
+				62827F4DE7ED52B32BD18FA0 /* SessionSchema.swift */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -10597,6 +10602,7 @@
 				34307F2DC47F2BE4985A859A /* AccountResolverTests.swift */,
 				080EA43EC893860B88B621E3 /* DaemonDatabaseTests.swift */,
 				9DC6CEB3B4C2372990E65579 /* DynamicSchemaTests.swift */,
+				9639F25C901B43BDC3FE90F4 /* SessionSchemaTests.swift */,
 			);
 			path = Daemon;
 			sourceTree = "<group>";
@@ -15397,6 +15403,7 @@
 				C41438174EC879D1D8400DC3 /* BoundedDatabaseTests.swift in Sources */,
 				714F75B1B36211F30CBC0FAB /* DaemonDatabaseTests.swift in Sources */,
 				504D7B31BDDFBBCAB3A84A0D /* DynamicSchemaTests.swift in Sources */,
+				98DA15721212F5AE6C9F7E56 /* SessionSchemaTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -16082,6 +16089,7 @@
 				5A36626D02471C1729A25E8C /* DaemonDatabaseError.swift in Sources */,
 				A856B2E2687499998D4061E0 /* DynamicSchema.swift in Sources */,
 				D1C5FA6C5F715F28DF27845B /* Migrator.swift in Sources */,
+				B744AF6DB9BCF90F5173029E /* SessionSchema.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
