@@ -61,7 +61,8 @@ public final class MenuContributionCommands {
     }
 
     private func command(_ contribution: MenuContribution) -> MainMenuCommand {
-        let target = ClosureMenuItemTarget(action: contribution.action, isEnabled: contribution.isEnabled)
+        let target = ClosureMenuItemTarget(
+            action: contribution.action, isEnabled: contribution.isEnabled, isChecked: contribution.isChecked)
         targets.append(target)
         if let isHidden = contribution.isHidden {
             hiddenRules[ObjectIdentifier(target)] = isHidden

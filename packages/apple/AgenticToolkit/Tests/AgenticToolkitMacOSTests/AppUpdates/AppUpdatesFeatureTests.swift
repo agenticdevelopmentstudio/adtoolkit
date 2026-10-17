@@ -42,7 +42,7 @@ final class AppUpdatesFeatureTests: XCTestCase {
 
         let app = contributions.filter { $0.slot == .app }
         XCTAssertEqual(app.map(\.title), ["Check for Updates…"])
-        let status = contributions.filter { $0.slot == .statusItem(section: 1) }
+        let status = contributions.filter { $0.slot == .statusItem(section: 2) }
         XCTAssertEqual(status.map(\.title), ["Check for Updates…", "Install Updates Automatically"])
         XCTAssertEqual(status.map(\.identifier), [nil, "install-automatically"])
 
@@ -79,5 +79,27 @@ final class AppUpdatesFeatureTests: XCTestCase {
             "SUPublicEDKey": "abc123="
         ]
         XCTAssertEqual(AppUpdaterConfiguration(infoDictionary: info)?.checksInBackground, false)
+    }
+}
+
+@MainActor
+final class ClosureMenuItemTargetCheckStateTests: XCTestCase {
+    func testValidateSetsStateFromIsChecked() {
+        var checked = true
+        let target = ClosureMenuItemTarget(action: {}, isChecked: { checked })
+        let item = NSMenuItem()
+        XCTAssertTrue(target.validateMenuItem(item))
+        XCTAssertEqual(item.state, .on)
+        checked = false
+        _ = target.validateMenuItem(item)
+        XCTAssertEqual(item.state, .off)
+    }
+
+    func testValidateLeavesStateAloneWithoutIsChecked() {
+        let target = ClosureMenuItemTarget(action: {})
+        let item = NSMenuItem()
+        item.state = .mixed
+        _ = target.validateMenuItem(item)
+        XCTAssertEqual(item.state, .mixed)
     }
 }

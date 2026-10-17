@@ -39,6 +39,8 @@ public final class AppUpdatesFeature: AppFeature {
         self.setInstallsUpdatesAutomatically = setInstallsUpdatesAutomatically
         super.init()
 
+        // Section 2: after the sections other features fill (Notes 0, AI Chat and
+        // Terminal 1), so these two form their own group above Quit.
         let checkTitle = "Check for Updates…"
         // The app menu's contributions follow About directly, so order 0 puts
         // this item right under it.
@@ -48,11 +50,11 @@ public final class AppUpdatesFeature: AppFeature {
                 isEnabled: { canCheckForUpdates() },
                 action: { checkForUpdates() }),
             MenuContribution(
-                slot: .statusItem(section: 1), title: checkTitle, order: 0,
+                slot: .statusItem(section: 2), title: checkTitle, order: 0,
                 isEnabled: { canCheckForUpdates() },
                 action: { checkForUpdates() }),
             MenuContribution(
-                slot: .statusItem(section: 1), title: "Install Updates Automatically", order: 10,
+                slot: .statusItem(section: 2), title: "Install Updates Automatically", order: 10,
                 isChecked: { installsUpdatesAutomatically() },
                 identifier: "install-automatically",
                 action: { setInstallsUpdatesAutomatically(!installsUpdatesAutomatically()) })

@@ -140,7 +140,8 @@ final class MenuManager {
 
     private func appendContributions(_ contributions: [MenuContribution], to menu: NSMenu) {
         for contribution in contributions.sorted(by: { $0.order < $1.order }) {
-            let target = ClosureMenuItemTarget(action: contribution.action, isEnabled: contribution.isEnabled)
+            let target = ClosureMenuItemTarget(
+                action: contribution.action, isEnabled: contribution.isEnabled, isChecked: contribution.isChecked)
             menuItemTargets.append(target)
             let item = NSMenuItem(
                 title: contribution.title,
