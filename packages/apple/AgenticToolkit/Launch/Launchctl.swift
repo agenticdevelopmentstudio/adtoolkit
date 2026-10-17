@@ -42,4 +42,20 @@ public enum BundleLocation {
     public static func isTranslocated(_ bundleURL: URL) -> Bool {
         bundleURL.path.contains("/AppTranslocation/")
     }
+
+    /// True only for a bundle inside `/Applications` or `~/Applications`
+    /// (subfolders count) and never for a translocated copy. Symlinks are
+    /// resolved and the path standardized first, so neither `..` nor a link
+    /// can make another location look installed.
+    ///
+    /// Only the installed copy may set up the user's machine: a Debug build or a
+    /// Downloads copy would point that setup at a bundle that may vanish.
+    public static func isInstalledCopy(bundleURL: URL, homeDirectory: URL) -> Bool {
+        guard !isTranslocated(bundleURL) else { return false }
+        let path = bundleURL.standardizedFileURL.resolvingSymlinksInPath().path
+        let roots = [URL(fileURLWithPath: "/Applications"),
+                     homeDirectory.appendingPathComponent("Applications")]
+            .map { $0.standardizedFileURL.resolvingSymlinksInPath().path }
+        return roots.contains { path.hasPrefix($0 + "/") }
+    }
 }
