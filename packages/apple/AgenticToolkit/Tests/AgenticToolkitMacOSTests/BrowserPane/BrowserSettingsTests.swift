@@ -21,7 +21,7 @@ final class BrowserSettingsTests: XCTestCase {
 
     func testEveryBrowserKeyIsNamedUnderTheBrowserPrefix() {
         let names = BrowserSettings.allKeyNames
-        XCTAssertEqual(names.count, 21)
+        XCTAssertEqual(names.count, 19)
         XCTAssertEqual(Set(names).count, names.count, "no two settings share a key")
         for name in names {
             XCTAssertTrue(name.hasPrefix("browser."), "\(name) is not a browser key")
@@ -29,6 +29,19 @@ final class BrowserSettingsTests: XCTestCase {
     }
 
     // MARK: - Reset
+
+    /// A reset of the browsing preferences leaves model access as the user
+    /// set it: off stays off, and evaluate stays on.
+    func testResetLeavesTheAutomationSwitchesAlone() {
+        let store = makeStore()
+        store.set(false, for: UserSettings.browserAutomationEnabled)
+        store.set(true, for: UserSettings.browserAutomationEvaluate)
+        store.set("example.com", for: UserSettings.browserHomePage)
+        BrowserSettings.reset(in: store)
+        XCTAssertFalse(store.get(UserSettings.browserAutomationEnabled))
+        XCTAssertTrue(store.get(UserSettings.browserAutomationEvaluate))
+        XCTAssertEqual(store.get(UserSettings.browserHomePage), "")
+    }
 
     func testResetRemovesEveryStoredBrowserValue() {
         let store = makeStore()

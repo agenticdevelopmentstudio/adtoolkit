@@ -128,6 +128,11 @@ public enum BrowserSettings {
     /// Listed rather than discovered by prefix: `keys(withPrefix:)` sees only
     /// what has been written, and a reset must also answer "what *are* the
     /// browser settings" to the panel that shows them.
+    ///
+    /// The automation switches are not here on purpose. "Reset browser
+    /// settings" means the browsing preferences; it must not turn model
+    /// access back on for a user who turned it off, nor turn `browser_evaluate`
+    /// off for one who turned it on. Those two are reset from their own panel.
     static let allKeys: [any BrowserSettingKey] = [
         UserSettings.browserHomePage, UserSettings.browserPageZoom, UserSettings.browserMinimumFontSize,
         UserSettings.browserJavaScriptEnabled, UserSettings.browserBlocksPopups,
@@ -137,8 +142,7 @@ public enum BrowserSettings {
         UserSettings.browserUpgradesToHTTPS, UserSettings.browserLockdownMode,
         UserSettings.browserAutoplay, UserSettings.browserAllowsAirPlay, UserSettings.browserMediaCapture,
         UserSettings.browserDownloadDirectory, UserSettings.browserAsksDownloadLocation,
-        UserSettings.browserWebInspectorEnabled,
-        UserSettings.browserAutomationEnabled, UserSettings.browserAutomationEvaluate
+        UserSettings.browserWebInspectorEnabled
     ]
 
     /// The names of every browser key, for a test to hold the list to.
