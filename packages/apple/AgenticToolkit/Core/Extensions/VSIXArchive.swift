@@ -108,7 +108,7 @@ public enum VSIXArchive {
     }
 
     public static func sha256Hex(of data: Data) -> String {
-        SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        SHA256.hash(data: data).hexString
     }
 
     // MARK: - Getting it onto disk
