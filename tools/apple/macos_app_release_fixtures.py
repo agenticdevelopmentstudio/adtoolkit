@@ -21,6 +21,7 @@ import subprocess
 from pathlib import Path
 from typing import Any, Iterable
 
+import macos_release as mr
 from macos_app_release import config as _config
 from macos_app_release.config import ReleaseConfig
 from macos_app_release.shell import Runner
@@ -354,3 +355,17 @@ def with_artifacts(r: Release, *, appcast: bool = True) -> Release:
         r.appcast_path.parent.mkdir(parents=True, exist_ok=True)
         r.appcast_path.write_text(new_appcast(r))
     return r
+
+
+def entry(cfg: ReleaseConfig, *, minimum: str = "26.0", version: str = VERSION,
+          build: int = BUILD) -> mr.ReleaseEntry:
+    """The releases.json entry for `version`, with assets whose URLs follow the
+    config's download prefix (no files are read)."""
+    def asset(suffix: str, sha: str) -> mr.ReleaseAsset:
+        name = f"{cfg.app_name}-{version}.{suffix}"
+        return mr.ReleaseAsset(url=f"{cfg.download_prefix}/v{version}/{name}", size=9,
+                               sha256=sha)
+
+    return mr.ReleaseEntry(version=version, build=build, date="2026-10-16T00:00:00Z",
+                           minimum_system_version=minimum, notes=f"notes/{version}.md",
+                           pkg=asset("pkg", "p" * 64), zip=asset("zip", "z" * 64))
