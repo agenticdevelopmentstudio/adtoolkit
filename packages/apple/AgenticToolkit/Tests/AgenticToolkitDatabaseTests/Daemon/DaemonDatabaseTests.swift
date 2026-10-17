@@ -56,7 +56,6 @@ final class DaemonDatabaseTests: XCTestCase {
         XCTAssertEqual(counter.count(1), 1)
         XCTAssertEqual(counter.count(2), 1)
         XCTAssertEqual(try recordedVersions(store), [1, 2])
-        XCTAssertEqual(store.currentSchemaVersion, 2)
 
         let second = try DaemonDatabase(path: path, migrations: twoMigrations(counter))
         XCTAssertTrue(second.isReady)

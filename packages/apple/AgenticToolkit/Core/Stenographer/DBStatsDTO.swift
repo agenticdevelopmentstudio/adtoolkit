@@ -1,6 +1,6 @@
 import Foundation
 
-/// Per-lane bounded-execution counters, served at `GET /db/stats`.
+/// Per-lane bounded-execution counters, for a daemon's database-stats endpoint.
 public struct DBStatsDTO: Codable, Sendable {
     public struct Pool: Codable, Sendable {
         public let pool: String

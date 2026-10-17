@@ -80,6 +80,12 @@ provider configuration to a daemon over HTTP (`POST /preferences/ai`), built on
 the existing `SettingsSnapshotPush`. Names such as `StenographerHTTPClient` and
 `StenographerDaemonService` stay as they are; renaming is a later cleanup.
 
+## Consumers
+
+macOS 26 is the minimum for every product, and `AgenticToolkitDatabase` links
+`AgenticToolkitCore` on macOS, which requires it. Any consumer still building
+for macOS 14 (ADHDaemon, adhubapp's ADHDPipeline) is a bug in that consumer.
+
 ## Verification
 
 Planned: the `AgenticToolkitMacOS` scheme tests (with `-skipPackagePluginValidation

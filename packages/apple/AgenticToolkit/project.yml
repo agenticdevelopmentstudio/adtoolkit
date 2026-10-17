@@ -344,6 +344,13 @@ targets:
     supportedDestinations: [macOS, iOS]
     templates:
       - SwiftLint
+    # iOS safety rests on the `#if canImport(AgenticToolkitCore)` guard that
+    # opens every file under Database/Daemon, not on the destinationFilters
+    # below: XcodeGen emits no per-source filter for them, so the iOS slice
+    # compiles those files and the guard empties them. Do not remove the guard
+    # (DaemonGuardTests fails if a file lacks it). A generic `-target ... iOS`
+    # build of this framework is expected to fail (it tries to build Core for
+    # iOS); build through the AgenticToolkitiOSAll scheme instead.
     sources:
       - Database
       - path: Database/Daemon
@@ -360,6 +367,10 @@ targets:
         destinationFilters: [macOS]
     settings:
       base:
+        # macOS 26 is the minimum for every product (Database links
+        # AgenticToolkitCore on macOS, and Core requires 26). A consumer still
+        # building for macOS 14, such as ADHDaemon or adhubapp's ADHDPipeline,
+        # is a bug in that consumer.
         SDKROOT: auto
         MACOSX_DEPLOYMENT_TARGET: "26.0"
         IPHONEOS_DEPLOYMENT_TARGET: "26.0"
@@ -465,6 +476,10 @@ targets:
       - sdk: libsqlite3.tbd
     settings:
       base:
+        # macOS 26 is the minimum for every product (Database links
+        # AgenticToolkitCore on macOS, and Core requires 26). A consumer still
+        # building for macOS 14, such as ADHDaemon or adhubapp's ADHDPipeline,
+        # is a bug in that consumer.
         SDKROOT: auto
         MACOSX_DEPLOYMENT_TARGET: "26.0"
         IPHONEOS_DEPLOYMENT_TARGET: "26.0"
@@ -513,6 +528,10 @@ targets:
     settings:
       base:
         PRODUCT_NAME: AgenticToolkitMarkdown
+        # macOS 26 is the minimum for every product (Database links
+        # AgenticToolkitCore on macOS, and Core requires 26). A consumer still
+        # building for macOS 14, such as ADHDaemon or adhubapp's ADHDPipeline,
+        # is a bug in that consumer.
         MACOSX_DEPLOYMENT_TARGET: "26.0"
 
   AgenticToolkitMarkdown-iOS:

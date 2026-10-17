@@ -76,7 +76,7 @@ public final class DaemonDatabase: @unchecked Sendable {
     /// Whether the schema is migrated and the database can serve queries.
     ///
     /// False only during the window between `init(deferMigrations: true)` and
-    /// `migrateNow()`. `StenographerRouter` reads it to answer 503 rather than
+    /// `migrateNow()`. A daemon's HTTP layer reads it to answer 503 rather than
     /// run a query against a half-migrated schema; nothing else should need it,
     /// because everything else is started after the migration by construction.
     public var isReady: Bool {
@@ -154,9 +154,6 @@ public final class DaemonDatabase: @unchecked Sendable {
         readyLock.unlock()
         logger.info("Database ready at \(self.path, privacy: .public)")
     }
-
-    /// The newest schema version of this database's migration chain.
-    public var currentSchemaVersion: Int { migrations.last?.version ?? 0 }
 
     // MARK: - Executor stats (observability)
 
