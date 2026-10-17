@@ -9,6 +9,10 @@ import AppKit
 ///
 /// The status menu carries both because an accessory app has no menu bar of its
 /// own until it is frontmost, so its status menu is where people look.
+///
+/// The toggle appears only where the updater checks in the background. In the
+/// dev channel nothing ever checks unasked, so "install automatically" would be
+/// a checkmark that changes nothing.
 @MainActor
 public final class AppUpdatesFeature: AppFeature {
     private let checkForUpdates: () -> Void
@@ -22,7 +26,8 @@ public final class AppUpdatesFeature: AppFeature {
             checkForUpdates: { updater.checkForUpdates() },
             canCheckForUpdates: { updater.canCheckForUpdates },
             installsUpdatesAutomatically: { updater.installsUpdatesAutomatically },
-            setInstallsUpdatesAutomatically: { updater.installsUpdatesAutomatically = $0 })
+            setInstallsUpdatesAutomatically: { updater.installsUpdatesAutomatically = $0 },
+            offersAutomaticInstall: updater.configuration.checksInBackground)
     }
 
     /// The updater's four operations as closures, so a test drives the menu
@@ -31,7 +36,8 @@ public final class AppUpdatesFeature: AppFeature {
         checkForUpdates: @escaping () -> Void,
         canCheckForUpdates: @escaping () -> Bool,
         installsUpdatesAutomatically: @escaping () -> Bool,
-        setInstallsUpdatesAutomatically: @escaping (Bool) -> Void
+        setInstallsUpdatesAutomatically: @escaping (Bool) -> Void,
+        offersAutomaticInstall: Bool
     ) {
         self.checkForUpdates = checkForUpdates
         self.canCheckForUpdates = canCheckForUpdates
@@ -52,12 +58,14 @@ public final class AppUpdatesFeature: AppFeature {
             MenuContribution(
                 slot: .statusItem(section: 2), title: checkTitle, order: 0,
                 isEnabled: { canCheckForUpdates() },
-                action: { checkForUpdates() }),
-            MenuContribution(
+                action: { checkForUpdates() })
+        ]
+        if offersAutomaticInstall {
+            menuContributions.append(MenuContribution(
                 slot: .statusItem(section: 2), title: "Install Updates Automatically", order: 10,
                 isChecked: { installsUpdatesAutomatically() },
                 identifier: "install-automatically",
-                action: { setInstallsUpdatesAutomatically(!installsUpdatesAutomatically()) })
-        ]
+                action: { setInstallsUpdatesAutomatically(!installsUpdatesAutomatically()) }))
+        }
     }
 }

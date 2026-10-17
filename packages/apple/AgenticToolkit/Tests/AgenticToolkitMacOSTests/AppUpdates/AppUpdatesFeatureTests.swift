@@ -19,13 +19,15 @@ final class AppUpdatesFeatureTests: XCTestCase {
     private func makeFeature(
         canCheck: @escaping () -> Bool = { true },
         automatic: Box<Bool> = Box(false),
+        offersAutomaticInstall: Bool = true,
         onCheck: @escaping () -> Void = {}
     ) -> AppUpdatesFeature {
         let feature = AppUpdatesFeature(
             checkForUpdates: onCheck,
             canCheckForUpdates: canCheck,
             installsUpdatesAutomatically: { automatic.value },
-            setInstallsUpdatesAutomatically: { automatic.value = $0 })
+            setInstallsUpdatesAutomatically: { automatic.value = $0 },
+            offersAutomaticInstall: offersAutomaticInstall)
         made.append(feature)
         return feature
     }
@@ -49,6 +51,15 @@ final class AppUpdatesFeatureTests: XCTestCase {
         app[0].action()
         status[0].action()
         XCTAssertEqual(checks, 2)
+    }
+
+    /// Where nothing checks in the background (the dev channel), the toggle
+    /// would change nothing, so it is not offered; checking by hand still is.
+    func testNoAutomaticInstallToggleWithoutBackgroundChecks() {
+        let feature = makeFeature(offersAutomaticInstall: false)
+        let status = feature.menuContributions.filter { $0.slot == .statusItem(section: 2) }
+        XCTAssertEqual(status.map(\.title), ["Check for Updates…"])
+        XCTAssertNil(feature.menuContributions.first { $0.identifier == "install-automatically" })
     }
 
     func testCheckItemIsDisabledWhileSparkleCannotCheck() throws {
