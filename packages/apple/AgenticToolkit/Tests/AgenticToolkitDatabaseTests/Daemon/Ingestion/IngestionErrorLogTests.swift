@@ -75,6 +75,34 @@ final class IngestionErrorLogTests: XCTestCase {
         XCTAssertEqual(try row("done.json").status, "recovered", "history is not rewritten")
     }
 
+    func testALostEventIsATerminalResolvedRowThatClearLeavesAlone() throws {
+        try store.recordLostIngestionEvent(filename: "empty.json", detectedAt: "2026-03-03T00:00:00Z")
+
+        var entry = try row("empty.json")
+        XCTAssertEqual(entry.status, "lost")
+        XCTAssertEqual(entry.reason, "empty drop file — the event was lost before it was written")
+        XCTAssertEqual(entry.quarantinedAt, "2026-03-03T00:00:00Z")
+        XCTAssertEqual(entry.retryCount, 0)
+        XCTAssertNotNil(entry.resolvedAt, "history, not an open problem")
+
+        try store.clearActiveIngestionErrors()
+        entry = try row("empty.json")
+        XCTAssertEqual(entry.status, "lost")
+    }
+
+    func testAResolvedFilenameQuarantinedAgainTakesAFreshQuarantineTime() throws {
+        try record("again.json", quarantinedAt: "2026-01-01T00:00:00Z")
+        try store.resolveIngestionError(filename: "again.json")
+        XCTAssertEqual(try row("again.json").status, "recovered")
+
+        try record("again.json", quarantinedAt: "2026-05-05T00:00:00Z")
+
+        let entry = try row("again.json")
+        XCTAssertEqual(entry.status, "failing")
+        XCTAssertEqual(entry.quarantinedAt, "2026-05-05T00:00:00Z")
+        XCTAssertNil(entry.resolvedAt)
+    }
+
     func testRecentReturnsTheNewestFirstAndHonoursTheLimit() throws {
         try record("old.json")
         try store.execute("UPDATE ingestion_errors SET updated_at = '2000-01-01 00:00:00'")

@@ -37,13 +37,13 @@ public struct IngestSpoolStatusDTO: Codable, Sendable {
 /// The daemon's staging queue for captured events, in its own SQLite file.
 ///
 /// Capture and storage used to be the same write: a hook POST ran
-/// `DatabaseManager.ingestEvent` inside the request, so anything that made the
+/// the database ingest inside the request, so anything that made the
 /// main database unavailable made the daemon *lose* events rather than merely
 /// delay them. The two worst cases were structural. Migrations ran inside
-/// `DatabaseManager.init`, before the HTTP listener existed, so every POST
+/// the database initializer, before the HTTP listener existed, so every POST
 /// during a migration was refused by a closed port — and Claude Code's native
 /// `http` hook does not retry or spool, so a refused delivery is simply gone.
-/// And even with the daemon up, `StenographerRouter.handleHook` failed open:
+/// And even with the daemon up, the hook handler failed open:
 /// the hook contract forbids ever failing a delivery back to Claude, so an
 /// ingest error was logged and the event discarded.
 ///
@@ -86,7 +86,7 @@ public final class IngestSpool: @unchecked Sendable {
     /// Drain attempts before an event is handed to the file quarantine. Only
     /// *permanent* failures count toward it — a transient DB error backs the
     /// whole batch off and is never charged to an event (see `IngestDrainer`).
-    public static let maxAttempts = 5
+    static let maxAttempts = 5
 
     /// Reads come from the single drain loop, so one reader is the true
     /// concurrency. The second is headroom for `status()`, which the app polls.

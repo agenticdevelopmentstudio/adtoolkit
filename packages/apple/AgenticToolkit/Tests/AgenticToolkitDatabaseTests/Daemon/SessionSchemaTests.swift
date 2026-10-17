@@ -5,18 +5,19 @@ import GRDB
 final class SessionSchemaTests: XCTestCase {
 
     private var path: String!
+    private var created: DaemonDatabase!
 
     override func setUpWithError() throws {
-        path = NSTemporaryDirectory() + "sessionschema-\(UUID().uuidString).db"
+        (created, path) = try TestDaemonDatabase.makeSessionDatabase()
     }
 
     override func tearDownWithError() throws {
-        for suffix in ["", "-wal", "-shm"] {
-            try? FileManager.default.removeItem(atPath: path + suffix)
-        }
+        created = nil
+        TestDaemonDatabase.remove(path: path)
     }
 
-    private func open() throws -> DaemonDatabase {
+    /// A second handle on the same file, for the reopen cases.
+    private func reopen() throws -> DaemonDatabase {
         try DaemonDatabase(
             path: path,
             migrations: SessionSchema.migrations,
@@ -29,7 +30,7 @@ final class SessionSchemaTests: XCTestCase {
     }
 
     func testFreshDatabaseMigratesToTheLatestVersionWithTheCoreTables() throws {
-        let store = try open()
+        let store = try XCTUnwrap(created)
         XCTAssertTrue(store.isReady)
         var newest = 0
         try store.query("SELECT MAX(version) FROM schema_migrations") { row in newest = store.int(row, 0) }
@@ -40,7 +41,7 @@ final class SessionSchemaTests: XCTestCase {
     }
 
     func testSettingsRoundTrip() throws {
-        let store = try open()
+        let store = try XCTUnwrap(created)
         try store.setSetting("k", "v")
         XCTAssertEqual(try store.setting(for: "k"), "v")
         try store.setSetting("k", "w")
@@ -49,11 +50,11 @@ final class SessionSchemaTests: XCTestCase {
     }
 
     func testReopeningRunsEveryEnsureWithoutError() throws {
-        let first = try open()
+        let first = try XCTUnwrap(created)
         // Stamp every recorded migration so a re-run (a fresh INSERT) is visible.
         try first.execute("UPDATE schema_migrations SET applied_at = '2000-01-01 00:00:00'")
 
-        let again = try open()
+        let again = try reopen()
         XCTAssertTrue(again.isReady)
 
         var rows = 0

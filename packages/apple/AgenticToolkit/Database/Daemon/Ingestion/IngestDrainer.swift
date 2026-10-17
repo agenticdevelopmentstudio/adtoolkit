@@ -228,7 +228,7 @@ public final class IngestDrainer: @unchecked Sendable {
             case .event(let parsed):
                 ready.append((row, parsed))
             case .skip(let reason):
-                // Well-formed but untrackable. `EnvelopeBuilder` already drops
+                // Well-formed but untrackable. the envelope builder already drops
                 // these before they are spooled, so reaching here means the rules
                 // changed under a queued event — discard it quietly, exactly as
                 // the drop-file path does, and never light the error badge.

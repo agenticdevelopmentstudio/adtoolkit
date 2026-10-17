@@ -177,7 +177,7 @@ public final class QuarantineService: @unchecked Sendable {
 
     /// Reason text for an empty drop file, shared by the live scan and the retry
     /// path so the log reads the same whichever noticed it first.
-    public static let lostEventReason = "empty drop file — the event was lost before it was written"
+    static let lostEventReason = "empty drop file — the event was lost before it was written"
 
     /// Logs a drop file that arrived empty. The file carries no event and no
     /// retry can conjure one, so it is never quarantined: this writes a terminal

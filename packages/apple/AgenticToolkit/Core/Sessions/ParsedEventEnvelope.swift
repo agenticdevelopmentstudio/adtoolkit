@@ -14,7 +14,7 @@ extension ParsedEvent {
     /// capture path already uses, so spooling adds no second format to keep in
     /// step and no second decoder to get wrong.
     ///
-    /// Built at capture time, never at drain time. `EnvelopeBuilder` resolves the
+    /// Built at capture time, never at drain time. the envelope builder resolves the
     /// live `claude` process by cwd and reads its environment, so the facts in
     /// `context` are only true at the moment the hook fires; deferring the build
     /// would attribute an event to whatever process happens to hold that cwd

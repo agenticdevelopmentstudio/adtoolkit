@@ -53,7 +53,7 @@ public struct QuarantineMeta: Codable, Sendable {
     }
 
     /// True once the retry budget is spent — what lights the menubar badge.
-    public func isExhausted(maxRetries: Int) -> Bool { retryCount >= maxRetries }
+    func isExhausted(maxRetries: Int) -> Bool { retryCount >= maxRetries }
 
     /// The sidecar path for a quarantined event file: `<eventfile>.meta.json`.
     /// Single source of truth for the naming convention, shared by the writer
@@ -63,7 +63,7 @@ public struct QuarantineMeta: Codable, Sendable {
     }
 
     /// Encodes and writes this metadata to `eventURL`'s sidecar. Best-effort.
-    public func writeSidecar(for eventURL: URL) {
+    func writeSidecar(for eventURL: URL) {
         guard let data = try? JSONEncoder().encode(self) else { return }
         try? data.write(to: Self.sidecarURL(for: eventURL))
     }

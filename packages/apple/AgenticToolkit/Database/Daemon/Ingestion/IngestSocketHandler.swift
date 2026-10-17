@@ -47,10 +47,10 @@ public final class IngestSocketHandler: @unchecked Sendable {
     /// by two different routes is two sets of failure modes to reason about;
     /// one queue in front of both is one.
     private let capture: @Sendable (ParsedEvent) throws -> Void
-    /// Turns the bytes of one connection into an event, or nil when they are
-    /// malformed or not a trackable event. The wire format is the hook script's,
+    /// Turns the bytes of one connection into an event, or throws
+    /// `SocketDecodeFailure` when they are malformed or not a trackable event. The wire format is the hook script's,
     /// so it belongs to whoever owns that script, not to this listener.
-    private let decode: @Sendable (Data) -> ParsedEvent?
+    private let decode: @Sendable (Data) throws -> ParsedEvent
     private var listenFD: Int32 = -1
     private var acceptTask: Task<Void, Never>?
     private var drainTask: Task<Void, Never>?
@@ -64,7 +64,7 @@ public final class IngestSocketHandler: @unchecked Sendable {
     public init(
         socketPath: String,
         capture: @escaping @Sendable (ParsedEvent) throws -> Void,
-        decode: @escaping @Sendable (Data) -> ParsedEvent?
+        decode: @escaping @Sendable (Data) throws -> ParsedEvent
     ) {
         self.socketPath = socketPath
         self.capture = capture
@@ -189,7 +189,7 @@ public final class IngestSocketHandler: @unchecked Sendable {
     private func acceptLoop(
         listenFD: Int32,
         continuation: AsyncStream<ParsedEvent>.Continuation,
-        decode: @Sendable (Data) -> ParsedEvent?
+        decode: @Sendable (Data) throws -> ParsedEvent
     ) async {
         let myUID = getuid()
         while !Task.isCancelled {
@@ -232,7 +232,7 @@ public final class IngestSocketHandler: @unchecked Sendable {
     private static func handleConnection(
         fd clientFD: Int32,
         continuation: AsyncStream<ParsedEvent>.Continuation,
-        decode: @Sendable (Data) -> ParsedEvent?
+        decode: @Sendable (Data) throws -> ParsedEvent
     ) {
         defer { close(clientFD) }
 
@@ -245,7 +245,16 @@ public final class IngestSocketHandler: @unchecked Sendable {
         guard let data = readToEOF(fd: clientFD, maxBytes: maxPayloadBytes) else {
             return
         }
-        guard let parsed = decode(data) else {
+        let parsed: ParsedEvent
+        do {
+            parsed = try decode(data)
+        } catch SocketDecodeFailure.malformed {
+            logger.warning("Malformed socket payload (\(data.count) bytes)")
+            return
+        } catch SocketDecodeFailure.unbuildable(let event) {
+            logger.warning("Could not build envelope for event \(event, privacy: .public)")
+            return
+        } catch {
             logger.warning("Undecodable socket payload (\(data.count) bytes)")
             return
         }
@@ -300,6 +309,15 @@ extension IngestSocketHandler: Loggable {
 }
 
 // MARK: - Errors
+
+/// Why a connection's bytes could not become an event, so the listener can log
+/// each case by name. Thrown by the injected `decode`.
+public enum SocketDecodeFailure: Error {
+    /// The bytes are not in the wire format at all.
+    case malformed
+    /// The wire format parsed but no event could be built for `event`.
+    case unbuildable(event: String)
+}
 
 public enum SocketError: Error, LocalizedError {
     case socketFailed(errno: Int32)

@@ -46,7 +46,7 @@ extension ParseResult {
         guard let sessionId = hookData["session_id"] as? String, !sessionId.isEmpty else {
             // Well-formed but not tied to a session — e.g. a StatusLine drop that
             // carries only term_session_id. We don't track session-less events (the
-            // socket path, EnvelopeBuilder.build, drops them too), but that's a
+            // socket path, the envelope builder, drops them too), but that's a
             // deliberate skip, NOT a parse error: never quarantine it.
             return .skip(reason: "no session_id — not a trackable session event")
         }
