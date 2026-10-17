@@ -29,7 +29,7 @@ extension DaemonDatabase {
 
     public func updateSessionGitBranch(_ branch: String, sessionId: String) {
         // A blank is never an improvement on a branch already recorded: it is what a
-        // `git` that declined to answer looks like, and the Sessions window would
+        // `git` that declined to answer looks like, and a sessions list would
         // show the row losing its branch rather than keeping the last known one.
         guard !branch.isEmpty else { return }
         do {
@@ -156,7 +156,7 @@ extension DaemonDatabase {
     /// `SessionStart` this daemon never saw (it was running before the daemon started,
     /// or the hook was installed mid-session) has a version of 0 and no project root,
     /// and until now nothing but a daemon restart's backfill would ever give it one —
-    /// so it sat in the Sessions window labelled and grouped by its `cwd` for as long
+    /// so it sat in a sessions list labelled and grouped by its `cwd` for as long
     /// as it lived.
     ///
     /// The `cwd` travels with the version because the caller needs the session's own
@@ -234,7 +234,7 @@ extension DaemonDatabase {
     /// `LEFT JOIN event_log … COUNT(e.id)` that `fetchSessions` pays — never scanning
     /// the (large) event_log just to pick a handful of sessions to summarize.
     ///
-    /// Two populations, active ones first because they are what the Sessions window
+    /// Two populations, active ones first because they are what a sessions list
     /// is showing right now:
     ///
     ///   1. **Never summarized** (`summary = ''`), any status. This used to be
@@ -302,7 +302,7 @@ extension DaemonDatabase {
     /// returning `eventCount = 0`. The Sessions-window poll hits this every few
     /// seconds and discards the count, so it opts out; the CLI/insights keep it.
     /// `sinceHours` keeps only sessions whose `last_activity_at` is within the
-    /// last N hours, any status — the Sessions window's time filter (nil/0 = all).
+    /// last N hours, any status — a sessions list's time filter (nil/0 = all).
     /// - Parameter limit: hard ceiling on rows materialised, applied in SQL so the
     ///   array can't exceed it. `nil` means unbounded and is only for callers with
     ///   an inherently bounded result; `sessions` grows for the life of the install
@@ -591,7 +591,7 @@ extension DaemonDatabase {
         return result
     }
 
-    /// Sessions currently shown as alive (`active`/`stale`), so LivenessTask can
+    /// Sessions currently shown as alive (`active`/`stale`), so a daemon's liveness task can
     /// end the ones whose `claude` process is gone. (`stale` is legacy — the
     /// process-based reconciliation only produces `active`/`ended`, but old rows
     /// may still carry it.)
@@ -607,7 +607,7 @@ extension DaemonDatabase {
     }
 
     /// The `limit` most-recently-active session IDs in a directory (any status).
-    /// `LivenessTask` uses this to map the `count` live `claude` processes in a
+    /// A liveness task uses this to map the `count` live `claude` processes in a
     /// directory to their sessions — resurrecting one that already ended, since a
     /// session is alive whenever its process is, regardless of idle time. Uses
     /// `idx_sessions_cwd`; `datetime()` normalizes mixed timestamp formats so the
@@ -656,8 +656,8 @@ extension DaemonDatabase {
     /// records the *hook shell's* `$PWD`, which an agent moves whenever it runs a
     /// command from a subdirectory. Exact equality therefore stopped matching the
     /// two the moment a session `cd`-ed into a submodule — liveness ended the
-    /// session, the next hook resurrected it, and the row blinked in and out of the
-    /// Sessions window on alternate ticks.
+    /// session, the next hook resurrected it, and the row blinked in and out of a
+    /// sessions list on alternate ticks.
     ///
     /// Returns more than `limit` on purpose, and returns each row's `cwd` so the
     /// caller can decide ownership: a directory's candidate set spans its whole

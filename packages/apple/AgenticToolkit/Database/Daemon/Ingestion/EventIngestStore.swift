@@ -99,7 +99,7 @@ extension DaemonDatabase {
             // wall-clock `now`: a live hook fires with timestamp≈now (unchanged
             // behavior), but re-ingesting an OLD event (a restart's drop-dir
             // backlog, or a Retry-All of the quarantine) must NOT resurrect a
-            // month-old session as "active now" and flood the Sessions window.
+            // month-old session as "active now" and flood a sessions list.
             // `MAX(existing, event)` also keeps it monotonic against out-of-order
             // replays; `COALESCE(..., now)` falls back if the timestamp is unparseable.
             try execute("""
@@ -116,7 +116,7 @@ extension DaemonDatabase {
                     -- `HookEventType.ambientEventTypes`) leaves both columns alone,
                     -- because it fires for reasons outside the session — a settings
                     -- file saved, a status line redrawn — and moving the clock for it
-                    -- dragged hours-idle sessions back inside the Sessions window's
+                    -- dragged hours-idle sessions back inside a sessions list's
                     -- recency filter and re-lit their status icon.
                     last_activity_at = CASE WHEN ? = 1
                         THEN MAX(sessions.last_activity_at, excluded.last_activity_at)
@@ -126,8 +126,8 @@ extension DaemonDatabase {
                     -- a replay — a spool backlog draining after the migration that
                     -- held it, a restart's drop-dir sweep, a Retry-All of the
                     -- quarantine — and the `claude` behind it is long gone. Marking
-                    -- those active resurrects sessions `LivenessTask` already ended,
-                    -- which is a phantom row in the Sessions window and a spurious
+                    -- those active resurrects sessions a daemon's liveness task already ended,
+                    -- which is a phantom row in a sessions list and a spurious
                     -- status broadcast to every client; for a session with no cwd,
                     -- which liveness deliberately refuses to reconcile, the
                     -- resurrection is permanent. (SQLite evaluates every SET
@@ -148,14 +148,14 @@ extension DaemonDatabase {
                     --
                     -- Ordered against `turn_state_at`, the turn state's OWN clock,
                     -- not `last_activity_at`. This is not the same test, because this
-                    -- upsert is not the only writer: `markTurnInterrupted` advances
+                    -- upsert is not the only writer: the interrupted-turn writer advances
                     -- `turn_state_at` and deliberately leaves `last_activity_at`
                     -- alone (an interrupt is not activity). Measured against activity
                     -- the comparison value therefore froze at the pre-interrupt
                     -- event, so every straggler that arrived afterwards — a drained
                     -- drop-dir backlog, a quarantine Retry-All, an `IngestDrainer`
                     -- replay — still compared `>=` and regressed Interrupted back to
-                    -- a mid-turn state, which `InterruptedTurnTask` then re-marked
+                    -- a mid-turn state, which the interrupted-turn sweeper then re-marked
                     -- five seconds later: a session flickering between working and
                     -- interrupted, with a window that never closed. Both writers
                     -- maintain `turn_state_at`, so ordering on it closes it. (The
@@ -167,7 +167,7 @@ extension DaemonDatabase {
                             THEN excluded.last_event_type
                         ELSE sessions.last_event_type END,
                     -- When that state was set, under the same guard (the fourth flag is
-                    -- `setsTurnState` again). `InterruptedTurnTask` needs it: the
+                    -- `setsTurnState` again). The interrupted-turn sweeper needs it: the
                     -- transcript lags the hooks, so an interrupt marker is only news if
                     -- it is newer than the state it would replace.
                     turn_state_at = CASE
