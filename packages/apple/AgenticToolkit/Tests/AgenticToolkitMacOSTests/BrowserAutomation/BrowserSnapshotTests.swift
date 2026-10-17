@@ -11,7 +11,7 @@ final class BrowserSnapshotTests: XCTestCase {
         try await BrowserSnapshotRuntime.install(in: page.webView)
         let raw = try await page.webView.callAsyncJavaScript(
             "return window.__adkitchen.snapshot(opts)",
-            arguments: ["opts": options.jsArguments], in: nil, contentWorld: .page)
+            arguments: ["opts": options.jsArguments], in: nil, contentWorld: BrowserSnapshotRuntime.world)
         let data = try JSONSerialization.data(withJSONObject: raw as Any)
         let payload = try JSONDecoder().decode(BrowserSnapshotPayload.self, from: data)
         return BrowserSnapshot(payload: payload, includeURLs: options.includeURLs)
@@ -103,10 +103,22 @@ final class BrowserSnapshotTests: XCTestCase {
         try await page.load(fixture: "form")
         _ = try await snapshot(page)
         let raw = try await page.webView.callAsyncJavaScript(
-            "return window.__adkitchen.find(text)", arguments: ["text": "forgot"], in: nil, contentWorld: .page)
+            "return window.__adkitchen.find(text)", arguments: ["text": "forgot"], in: nil,
+            contentWorld: BrowserSnapshotRuntime.world)
         let matches = try XCTUnwrap(raw as? [[String: Any]])
         XCTAssertEqual(matches.map { $0["ref"] as? String }, ["e11"])
         XCTAssertEqual(matches.first?["role"] as? String, "link")
+    }
+
+    /// The page's own scripts must not see or replace the runtime.
+    func testRuntimeIsInvisibleToThePage() async throws {
+        let page = OffscreenWebView()
+        try await page.load(fixture: "form")
+        _ = try await snapshot(page)
+        let seen = try await page.webView.evaluateJavaScript(
+            "String(typeof window.__adkitchen) + ':' + String(typeof document.querySelector('a').__adkitchenRef)",
+            in: nil, contentWorld: .page)
+        XCTAssertEqual(seen as? String, "undefined:undefined")
     }
 
     func testTextReturnsInnerTextOfMain() async throws {
@@ -114,7 +126,8 @@ final class BrowserSnapshotTests: XCTestCase {
         try await page.load(fixture: "form")
         try await BrowserSnapshotRuntime.install(in: page.webView)
         let raw = try await page.webView.callAsyncJavaScript(
-            "return window.__adkitchen.text(scope)", arguments: ["scope": NSNull()], in: nil, contentWorld: .page)
+            "return window.__adkitchen.text(scope)", arguments: ["scope": NSNull()], in: nil,
+            contentWorld: BrowserSnapshotRuntime.world)
         let text = try XCTUnwrap(raw as? String)
         XCTAssertTrue(text.hasPrefix("Sign in"))
         XCTAssertTrue(text.contains("Forgot password?"))

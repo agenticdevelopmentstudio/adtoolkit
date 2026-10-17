@@ -197,7 +197,8 @@ public final class BrowserAutomation: NSObject {
         let body = "return window.__adkitchen.\(function)(\(names.joined(separator: ", ")))"
         let raw: Any?
         do {
-            raw = try await webView.callAsyncJavaScript(body, arguments: arguments, in: nil, contentWorld: .page)
+            raw = try await webView.callAsyncJavaScript(
+                body, arguments: arguments, in: nil, contentWorld: BrowserSnapshotRuntime.world)
         } catch {
             throw BrowserAutomationError.script(error.localizedDescription)
         }

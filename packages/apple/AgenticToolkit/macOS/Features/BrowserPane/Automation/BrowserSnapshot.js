@@ -1,4 +1,7 @@
-// BrowserSnapshot.js — the page-world runtime behind BrowserAutomation.
+// BrowserSnapshot.js — the runtime behind BrowserAutomation, installed in a
+// content world of its own (BrowserSnapshotRuntime.world), so the page's
+// scripts can neither read the ref table nor replace these functions. The
+// DOM is shared across worlds; `window` and element expandos are not.
 // Installed once per document (version-checked); every call returns plain JSON.
 (function () {
   if (window.__adkitchen && window.__adkitchen.version === 1) { return; }

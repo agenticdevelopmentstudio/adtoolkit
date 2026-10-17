@@ -99,9 +99,22 @@ public enum BrowserSnapshotRenderer {
     }
 }
 
-/// Loads and installs `BrowserSnapshot.js` into a web view's page world.
+/// Loads and installs `BrowserSnapshot.js` into a web view, in a content
+/// world of its own.
+///
+/// The runtime sees the page's real DOM from any world, but only an isolated
+/// world keeps its own state out of the page's reach: in the page world a
+/// site's script could read the ref table, retarget a ref at another element,
+/// or replace `window.__adkitchen` wholesale, and the model would then be
+/// clicking what the page chose. Only `BrowserAutomation.evaluate` runs in the
+/// page world, because reading the page's own JavaScript is its purpose.
 public enum BrowserSnapshotRuntime {
     public static let version = 1
+
+    /// The content world the runtime lives in. `WKContentWorld.world(name:)`
+    /// returns the same world for the same name, so this needs no storage.
+    @MainActor
+    public static var world: WKContentWorld { .world(name: "adkitchen.automation") }
 
     public static var source: String {
         get throws {
@@ -116,7 +129,7 @@ public enum BrowserSnapshotRuntime {
     /// Idempotent: the script returns early when the current version is present.
     @MainActor
     public static func install(in webView: WKWebView) async throws {
-        _ = try await webView.evaluateJavaScript(try source, in: nil, contentWorld: .page)
+        _ = try await webView.evaluateJavaScript(try source, in: nil, contentWorld: world)
     }
 }
 
