@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "app": {
+    "name": "AgenticDeveloperKitchen",
+    "bundle_id": "com.agenticdevelopmentstudio.agenticdeveloperkitchen",
+    "title": "Agentic Developer Kitchen"
+  },
+  "version": {
+    "project_yml": "App/project.yml",
+    "must_match": [],
+    "nested_bundles": ["Contents/Applications/ADTerminal.app"],
+    "regenerate": ["xcodegen", "generate", "--spec", "App/project.yml"]
+  },
+  "build": {
+    "command": ["python3", "Scripts/release_build.py"],
+    "derived_data": "~/Library/Developer/Xcode/DerivedData/adkitchen-release",
+    "resolve": {"workspace": "AgenticDeveloperKitchen.xcworkspace", "scheme": "AgenticDeveloperKitchen"},
+    "expect_info": {}
+  },
+  "layout": {
+    "required": ["Contents/MacOS/AgenticDeveloperKitchen", "Contents/Info.plist"],
+    "forbidden": [],
+    "required_globs": []
+  },
+  "checks": [],
+  "signing": {
+    "app_identity": "Developer ID Application",
+    "installer_identity": "Developer ID Installer",
+    "notary_profile": "adkitchen-notary",
+    "entitlements": {".": "App/Sources/Resources/App.entitlements"},
+    "profiles": []
+  },
+  "sparkle": {
+    "account": "adkitchen",
+    "feed_url": "https://kitchen.agenticdevelopmentstudio.com/appcast.xml",
+    "public_key_setting": "ADKITCHEN_SPARKLE_PUBLIC_KEY"
+  },
+  "releases": {"github_repo": "agenticdevelopmentstudio/adkitchen-releases", "branch": "main"},
+  "cask": {"token": "adkitchen", "template": "release/cask.rb.template"},
+  "pkg": {"must_close": []},
+  "hooks": {
+    "tests": ["python3", "Scripts/dev.py", "test"],
+    "warnings_build": ["python3", "Scripts/release_warnings_build.py"]
+  },
+  "warnings_allowlist": "release/warnings-allowlist.json"
+}

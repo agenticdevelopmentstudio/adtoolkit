@@ -1,0 +1,32 @@
+cask "$token" do
+  version "$version"
+  sha256 "$sha256"
+
+  url "$url"
+  name "$name"
+  desc "$name for macOS"
+  homepage "$homepage"
+
+  livecheck do
+    url "$feed"
+    strategy :sparkle
+  end
+
+  auto_updates true
+  depends_on macos: $macos
+
+  pkg "$pkg"
+
+  uninstall quit:    "$bundle_id",
+            pkgutil: "$bundle_id"
+
+  zap trash: [
+    "~/Library/Application Support/$name",
+    "~/Library/Preferences/$bundle_id.plist",
+  ]
+
+  caveats <<~EOS
+    $name updates itself with Sparkle. Update it from the app, or with:
+      brew upgrade --cask $token
+  EOS
+end
