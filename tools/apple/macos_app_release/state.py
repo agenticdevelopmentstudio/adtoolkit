@@ -8,7 +8,7 @@ from pathlib import Path
 
 import macos_release as mr
 
-from .config import ReleaseConfig
+from .config import ReleaseConfig, read_env_file
 from .shell import Runner
 
 PROVENANCE = "provenance.json"
@@ -55,6 +55,9 @@ class Release:
             self.releases_repo = self.cfg.releases_checkout
         if self.derived_data is None:
             self.derived_data = self.cfg.derived_data
+        if self.cfg.env_file is not None:
+            for key, value in read_env_file(self.cfg.env_file).items():
+                self.env.setdefault(key, value)
 
     @property
     def repo(self) -> Path:
@@ -70,11 +73,11 @@ class Release:
 
     @property
     def zip_path(self) -> Path:
-        return self.out / f"{self.cfg.app_name}-{self.version}.zip"
+        return self.out / f"{self.cfg.asset_basename}-{self.version}.zip"
 
     @property
     def pkg_path(self) -> Path:
-        return self.out / f"{self.cfg.app_name}-{self.version}.pkg"
+        return self.out / f"{self.cfg.asset_basename}-{self.version}.pkg"
 
     @property
     def appcast_path(self) -> Path:

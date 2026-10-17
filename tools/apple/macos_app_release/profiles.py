@@ -5,6 +5,7 @@ import plistlib
 import re
 import shutil
 from pathlib import Path
+from typing import Mapping
 from xml.parsers.expat import ExpatError
 
 from .config import Profile, ReleaseConfig
@@ -24,11 +25,12 @@ def bundle_at(app: Path, rel: str) -> Path:
     return app if rel == "." else app / rel
 
 
-def profile_fix(env: str, bundle_id: str) -> str:
+def profile_fix(env: str, bundle_id: str, env_file: Path | None = None) -> str:
+    where = f" in {env_file}" if env_file is not None else ""
     return (f"create a Developer ID provisioning profile for {bundle_id} "
             "(developer.apple.com → Certificates, IDs & Profiles → Profiles → + → "
             "Developer ID, with the Developer ID Application certificate), download it, "
-            f"and set {env}=<path to the .provisionprofile>")
+            f"and set {env}=<path to the .provisionprofile>{where}")
 
 
 def profile_problems(r: Release, profile: Path, bundle_id: str, team: str | None) -> list[str]:
@@ -65,17 +67,17 @@ def profile_failures(r: Release) -> list[str]:
         if not value:
             if profile.required:
                 failures.append(f"{profile.env} is not set — "
-                                f"{profile_fix(profile.env, profile.bundle_id)}")
+                                f"{profile_fix(profile.env, profile.bundle_id, r.cfg.env_file)}")
             continue
         path = Path(value).expanduser()
         if not path.is_file():
             failures.append(f"{profile.env}={value} does not exist — "
-                            f"{profile_fix(profile.env, profile.bundle_id)}")
+                            f"{profile_fix(profile.env, profile.bundle_id, r.cfg.env_file)}")
             continue
         problems = profile_problems(r, path, profile.bundle_id, r.team)
         if problems:
             failures.append(f"{profile.env} ({path}) is not usable: {'; '.join(problems)} — "
-                            f"{profile_fix(profile.env, profile.bundle_id)}")
+                            f"{profile_fix(profile.env, profile.bundle_id, r.cfg.env_file)}")
         else:
             r.profiles[profile.bundle] = path
     return failures
@@ -114,19 +116,78 @@ def check_developer_id_profile(r: Release, rel: str = ".") -> None:
         raise RuntimeError(f"signing.profiles has no entry for {rel!r}")
     profile = bundle_at(r.app, rel) / EMBEDDED_PROFILE
     if not profile.exists():
-        raise RuntimeError(f"{profile} is missing — {profile_fix(entry.env, entry.bundle_id)}")
+        raise RuntimeError(f"{profile} is missing — "
+                           f"{profile_fix(entry.env, entry.bundle_id, r.cfg.env_file)}")
     problems = profile_problems(r, profile, entry.bundle_id, r.team)
     if problems:
         raise RuntimeError(f"the staged {profile.relative_to(r.app.parent)} is not a Developer "
                            f"ID profile: {'; '.join(problems)} — "
-                           f"{profile_fix(entry.env, entry.bundle_id)}")
+                           f"{profile_fix(entry.env, entry.bundle_id, r.cfg.env_file)}")
     bullet(f"{bundle_at(r.app, rel).name}: Developer ID profile verified")
 
 
-def entitlements_map(app: Path, cfg: ReleaseConfig) -> dict[Path, Path]:
-    """Bundle item -> entitlements file, for mr.sign_bundle."""
+_PREFIX_VARIABLES = ("$(AppIdentifierPrefix)", "$(TeamIdentifierPrefix)")
+
+
+def _expand(value: object, prefix: str) -> object:
+    if isinstance(value, str):
+        for variable in _PREFIX_VARIABLES:
+            value = value.replace(variable, prefix)
+        return value
+    if isinstance(value, list):
+        return [_expand(v, prefix) for v in value]
+    if isinstance(value, dict):
+        return {k: _expand(v, prefix) for k, v in value.items()}
+    return value
+
+
+def signing_entitlements(r: Release) -> dict[str, Path]:
+    """signing.entitlements as a Developer ID signature needs them. Xcode expands
+    `$(AppIdentifierPrefix)` and adds the application and team identifiers at build
+    time; a re-signature with the raw file carries neither, and an app whose
+    entitlements a provisioning profile gates (keychain-access-groups) is killed at
+    launch. So a file holding a prefix variable is written expanded, and each item
+    that embeds a Developer ID profile also gets the two identifiers. Anything else
+    is signed with its file unchanged. Rendered files go in `<out>/entitlements/`."""
+    rendered: dict[str, Path] = {}
+    for rel, source in r.cfg.entitlements.items():
+        data = source.read_bytes()
+        profile = _profile_for(r.cfg, rel) if rel in r.profiles else None
+        if profile is None and b"$(" not in data:
+            rendered[rel] = source
+            continue
+        if not r.team:
+            raise RuntimeError(f"{source} needs the team ID to be signed, and preflight "
+                               f"found no '{r.cfg.app_identity}' identity to read it from")
+        prefix = f"{r.team}."
+        try:
+            values = _expand(plistlib.loads(data), prefix)
+        except (plistlib.InvalidFileException, ExpatError, ValueError) as exc:
+            raise RuntimeError(f"{source} is not a property list: {exc}") from exc
+        if not isinstance(values, dict):
+            raise RuntimeError(f"{source} is not an entitlements dictionary")
+        if profile is not None:
+            values["com.apple.application-identifier"] = f"{prefix}{profile.bundle_id}"
+            values["com.apple.developer.team-identifier"] = r.team
+        out = plistlib.dumps(values)
+        if b"$(" in out:
+            raise RuntimeError(f"{source} holds a build variable other than "
+                               f"{' and '.join(_PREFIX_VARIABLES)}, which a re-signature "
+                               "cannot expand -- write its value into the file")
+        name = "app" if rel == "." else rel.replace("/", "_")
+        dest = r.out / "entitlements" / f"{name}.entitlements"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(out)
+        rendered[rel] = dest
+    return rendered
+
+
+def entitlements_map(app: Path, cfg: ReleaseConfig,
+                     sources: Mapping[str, Path] | None = None) -> dict[Path, Path]:
+    """Bundle item -> entitlements file, for mr.sign_bundle. `sources` is
+    signing_entitlements' result; None signs with the configured files as they are."""
     mapping: dict[Path, Path] = {}
-    for rel, source in cfg.entitlements.items():
+    for rel, source in (cfg.entitlements if sources is None else sources).items():
         target = bundle_at(app, rel)
         if not target.exists():
             raise RuntimeError(f"{target} is not in the assembled bundle — "

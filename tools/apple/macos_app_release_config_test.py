@@ -257,3 +257,35 @@ def test_config_is_frozen(tmp_path):
     cfg = config(tmp_path)
     with pytest.raises(Exception):
         cfg.app_name = "x"  # type: ignore[misc]
+
+
+# asset_basename and env_file -----------------------------------------------------------
+
+
+def test_asset_basename_hyphenates_a_spaced_app_name(tmp_path):
+    cfg = config(tmp_path, {"app": {"name": "Agentic Developer Kitchen"}})
+    assert cfg.asset_basename == "Agentic-Developer-Kitchen"
+
+
+def test_asset_basename_of_an_unspaced_name_is_the_name(tmp_path):
+    cfg = config(tmp_path)
+    assert cfg.asset_basename == cfg.app_name
+
+
+def test_env_file_is_optional_and_resolves_like_any_path(tmp_path):
+    assert config(tmp_path).env_file is None
+    cfg = config(tmp_path / "set", {"env_file": "~/.local-env/app.env"})
+    assert cfg.env_file is not None and cfg.env_file.name == "app.env"
+    assert "~" not in str(cfg.env_file)
+
+
+def test_read_env_file_parses_export_quotes_and_comments(tmp_path):
+    from macos_app_release.config import read_env_file
+    env = tmp_path / "app.env"
+    env.write_text("# a comment\n\nexport A=1\nB=\"two words\"\nC='3'\nnot a pair\n")
+    assert read_env_file(env) == {"A": "1", "B": "two words", "C": "3"}
+
+
+def test_read_env_file_of_a_missing_file_is_empty(tmp_path):
+    from macos_app_release.config import read_env_file
+    assert read_env_file(tmp_path / "absent.env") == {}

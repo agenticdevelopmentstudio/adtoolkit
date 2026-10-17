@@ -701,3 +701,113 @@ def test_layout_glob_requires_a_match(tmp_path):
 def test_an_empty_layout_config_checks_nothing(tmp_path):
     cfg = config(tmp_path, overrides={"layout": {"required": []}})
     assert layout.problems(tmp_path / "Nope.app", cfg) == []
+
+
+# asset names ---------------------------------------------------------------------------
+
+SPACED = {"app": {"name": "Agentic Developer Kitchen"}}
+
+
+def test_a_spaced_app_name_gives_hyphenated_artifacts(tmp_path):
+    from macos_app_release import verify
+    r = release(tmp_path, FakeRunner(), overrides=SPACED)
+    assert r.app.name == "Agentic Developer Kitchen.app"
+    assert r.pkg_path.name == f"Agentic-Developer-Kitchen-{VERSION}.pkg"
+    assert r.zip_path.name == f"Agentic-Developer-Kitchen-{VERSION}.zip"
+    exp = verify.Expected(cfg=r.cfg, version=VERSION, build=1, site="https://x.example")
+    assert exp.asset_name("pkg") == r.pkg_path.name
+
+
+def test_a_spaced_app_name_gives_a_hyphenated_cask_pkg(tmp_path):
+    r = release(tmp_path, FakeRunner(), overrides=SPACED)
+    ruby = cask.cask_ruby(entry(r.cfg), r.cfg)
+    assert f"/v#{{version}}/Agentic-Developer-Kitchen-#{{version}}.pkg" in ruby
+    assert " " not in re.search(r'^  url "([^"]+)"', ruby, re.MULTILINE).group(1)
+
+
+# env_file ------------------------------------------------------------------------------
+
+
+def test_env_file_fills_in_what_the_environment_does_not_set(tmp_path):
+    env_file = tmp_path / "app.env"
+    env_file.write_text("APP_PROFILE=/p/app.provisionprofile\nKEPT=from-file\n")
+    r = release(tmp_path, FakeRunner(), overrides={"env_file": str(env_file)},
+                env={"KEPT": "from-env"})
+    assert r.env["APP_PROFILE"] == "/p/app.provisionprofile"
+    assert r.env["KEPT"] == "from-env"
+
+
+def test_a_missing_env_file_sets_nothing(tmp_path):
+    r = release(tmp_path, FakeRunner(), overrides={"env_file": str(tmp_path / "no.env")})
+    assert "APP_PROFILE" not in r.env
+
+
+def test_profile_fix_names_the_env_file():
+    fix = profiles.profile_fix("APP_PROFILE", "com.example.app", Path("/e/app.env"))
+    assert fix.endswith("set APP_PROFILE=<path to the .provisionprofile> in /e/app.env")
+    assert profiles.profile_fix("APP_PROFILE", "com.example.app").endswith(
+        "set APP_PROFILE=<path to the .provisionprofile>")
+
+
+# signing_entitlements ------------------------------------------------------------------
+
+_KEYCHAIN = {"keychain-access-groups": ["$(AppIdentifierPrefix)com.example.app"],
+             "com.apple.security.app-sandbox": False}
+_APP_PROFILE = {"signing": {"profiles": [{"bundle": ".", "env": "APP_PROFILE",
+                                          "bundle_id": "com.example.app",
+                                          "required": True}]}}
+
+
+def _entitled(tmp_path, values=None, *, profile=False, team=TEAM):
+    r = release(tmp_path, FakeRunner(), overrides=_APP_PROFILE if profile else None)
+    if values is not None:
+        r.cfg.entitlements["."].write_bytes(plistlib.dumps(values))
+    if profile:
+        r.profiles["."] = tmp_path / "app.provisionprofile"
+    r.team = team
+    return r
+
+
+def test_plain_entitlements_are_signed_as_they_are(tmp_path):
+    r = _entitled(tmp_path, team=None)
+    assert profiles.signing_entitlements(r) == dict(r.cfg.entitlements)
+
+
+def test_prefix_variables_are_expanded_with_the_team(tmp_path):
+    r = _entitled(tmp_path, _KEYCHAIN)
+    rendered = profiles.signing_entitlements(r)["."]
+    assert rendered.parent == r.out / "entitlements"
+    values = plistlib.loads(rendered.read_bytes())
+    assert values["keychain-access-groups"] == [f"{TEAM}.com.example.app"]
+    assert "com.apple.application-identifier" not in values
+
+
+def test_a_profiled_item_gets_its_application_and_team_identifiers(tmp_path):
+    r = _entitled(tmp_path, _KEYCHAIN, profile=True)
+    values = plistlib.loads(profiles.signing_entitlements(r)["."].read_bytes())
+    assert values["com.apple.application-identifier"] == f"{TEAM}.com.example.app"
+    assert values["com.apple.developer.team-identifier"] == TEAM
+    assert values["keychain-access-groups"] == [f"{TEAM}.com.example.app"]
+    assert values["com.apple.security.app-sandbox"] is False
+
+
+def test_rendering_without_a_team_fails(tmp_path):
+    r = _entitled(tmp_path, _KEYCHAIN, team=None)
+    with pytest.raises(RuntimeError, match="needs the team ID"):
+        profiles.signing_entitlements(r)
+
+
+def test_an_unknown_build_variable_fails(tmp_path):
+    r = _entitled(tmp_path, {"group": "$(PRODUCT_BUNDLE_IDENTIFIER)"})
+    with pytest.raises(RuntimeError, match="other than"):
+        profiles.signing_entitlements(r)
+
+
+def test_entitlements_map_takes_the_rendered_sources(tmp_path):
+    from macos_app_release_fixtures import make_app
+    r = _entitled(tmp_path, _KEYCHAIN, profile=True)
+    make_app(r)
+    rendered = profiles.signing_entitlements(r)
+    assert rendered["."].name == "app.entitlements"
+    mapping = profiles.entitlements_map(r.app, r.cfg, rendered)
+    assert mapping[r.app] == rendered["."]

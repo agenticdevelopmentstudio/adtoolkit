@@ -35,7 +35,7 @@ def cask_ruby(entry: mr.ReleaseEntry, cfg: ReleaseConfig) -> str:
     stops the release before it is public, as an error rather than a traceback.
     """
     where = f"cask.template {cfg.cask_template}"
-    pkg = f"{cfg.app_name}-#{{version}}.pkg"
+    pkg = f"{cfg.asset_basename}-#{{version}}.pkg"
     url = f"{cfg.download_prefix}/v#{{version}}/{pkg}"
     if url.replace("#{version}", entry.version) != entry.pkg.url:
         raise RuntimeError(f"the cask's url {url} would not resolve to the published pkg "

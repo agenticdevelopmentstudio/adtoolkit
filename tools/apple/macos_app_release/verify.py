@@ -123,7 +123,7 @@ class Expected:
         return f"v{self.version}"
 
     def asset_name(self, kind: str) -> str:
-        return f"{self.cfg.app_name}-{self.version}.{kind}"
+        return f"{self.cfg.asset_basename}-{self.version}.{kind}"
 
     def asset_url(self, kind: str) -> str:
         return f"{self.cfg.download_prefix}/{self.tag}/{self.asset_name(kind)}"

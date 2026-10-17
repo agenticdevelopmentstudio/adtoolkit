@@ -107,11 +107,18 @@ class ReleaseConfig:
     hook_health: tuple[str, ...] | None
     warnings_allowlist: Path
     toolkit: Path
+    env_file: Path | None
 
     @property
     def site_origin(self) -> str:
         u = urlparse(self.feed_url)
         return f"{u.scheme}://{u.netloc}"
+
+    @property
+    def asset_basename(self) -> str:
+        """The pkg and zip name: app.name with each run of whitespace a hyphen. It is a
+        URL path segment, and GitHub rewrites a space in an asset name to a dot."""
+        return "-".join(self.app_name.split())
 
     @property
     def download_prefix(self) -> str:
@@ -137,6 +144,7 @@ _TOP: dict[str, tuple[bool, str]] = {
     "notes_dir": (False, "path"),
     "warnings_allowlist": (True, "path"),
     "toolkit": (False, "path"),
+    "env_file": (False, "path"),
 }
 
 _SECTIONS: dict[str, dict[str, tuple[bool, str]]] = {
@@ -405,7 +413,27 @@ def parse_config(data: dict, *, repo: Path, main_checkout: Path,
         warnings_allowlist=path(data["warnings_allowlist"]),
         toolkit=(path(data["toolkit"]) if data.get("toolkit")
                  else repo / "external/agenticdevelopertoolkit"),
+        env_file=path(data["env_file"]) if data.get("env_file") else None,
     )
+
+
+def read_env_file(path: Path) -> dict[str, str]:
+    """`KEY=value` lines (an optional `export`, optional quotes; `#` comments) from
+    `path`. A missing file is an empty result: what it would have set is then
+    reported by whatever needed it, with the file named in the fix."""
+    try:
+        text = path.read_text()
+    except FileNotFoundError:
+        return {}
+    values: dict[str, str] = {}
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        key, sep, value = line.removeprefix("export ").strip().partition("=")
+        if sep and key.strip():
+            values[key.strip()] = value.strip().strip('"').strip("'")
+    return values
 
 
 def load_config(repo: Path, *, main_checkout: Path | None = None,

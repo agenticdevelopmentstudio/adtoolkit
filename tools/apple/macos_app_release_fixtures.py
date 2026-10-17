@@ -164,6 +164,7 @@ STENOGRAPHER: dict[str, Any] = {
     },
     "warnings_allowlist": "scripts/build_warnings_allowlist.json",
     "toolkit": "external/agenticdevelopertoolkit",
+    "env_file": "~/.local-env/stenographer.env",
 }
 
 FLAVORS: dict[str, dict[str, Any]] = {"adkitchen": ADKITCHEN, "stenographer": STENOGRAPHER}
@@ -362,7 +363,7 @@ def entry(cfg: ReleaseConfig, *, minimum: str = "26.0", version: str = VERSION,
     """The releases.json entry for `version`, with assets whose URLs follow the
     config's download prefix (no files are read)."""
     def asset(suffix: str, sha: str) -> mr.ReleaseAsset:
-        name = f"{cfg.app_name}-{version}.{suffix}"
+        name = f"{cfg.asset_basename}-{version}.{suffix}"
         return mr.ReleaseAsset(url=f"{cfg.download_prefix}/v{version}/{name}", size=9,
                                sha256=sha)
 

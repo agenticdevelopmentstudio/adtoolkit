@@ -17,7 +17,7 @@ live site serves it and pushes the tag. You can run every command by hand.
 
 ## Distribution layout
 
-For an app named `<App>` with releases repo `<owner>/<repo>`:
+For an app named `<App>` with releases repo `<owner>/<repo>` (in asset names, `<App>` has each run of spaces replaced by a hyphen -- `Agentic Developer Kitchen` ships `Agentic-Developer-Kitchen-<version>.pkg` -- because GitHub rewrites a space in an asset name to a dot):
 
 | piece | where |
 |---|---|
@@ -93,7 +93,7 @@ Required keys are marked **req**.
 | `signing.app_identity` | string | `Developer ID Application` | The signing identity for the app. |
 | `signing.installer_identity` | string | `Developer ID Installer` | The signing identity for the pkg. |
 | `signing.notary_profile` | string | **req** | The `notarytool` keychain profile. |
-| `signing.entitlements` | object | **req** | Bundle-relative path (`"."` is the app, and is required) to an entitlements file. Every other nested item keeps its own entitlements. |
+| `signing.entitlements` | object | **req** | Bundle-relative path (`"."` is the app, and is required) to an entitlements file. Every other nested item keeps its own entitlements. A file holding `$(AppIdentifierPrefix)` or `$(TeamIdentifierPrefix)` is signed expanded with the Developer ID team, and an item `signing.profiles` provisions also gets `com.apple.application-identifier` and `com.apple.developer.team-identifier` -- what Xcode adds at build time and a re-signature would otherwise drop. Any other `$(...)` stops the build. Rendered files go in `<artifacts>/<version>/entitlements/`. |
 | `signing.profiles` | list | `[]` | `[{"bundle": rel, "env": VAR, "bundle_id": id, "required": bool}]`. Each entry is a Developer ID provisioning profile (read from the file named by environment variable `VAR`) that replaces the development one. A staged bundle embedding a profile no entry replaces stops the build. |
 | `sparkle.account` | string | **req** | The Sparkle keychain account (`generate_keys --account`). |
 | `sparkle.feed_url` | https URL | **req** | What installed apps poll. The bundle's `SUFeedURL` must equal it. Its origin is the site the probe and verifier use. |
@@ -115,6 +115,7 @@ Required keys are marked **req**.
 | `hooks.health` | argv | none | Checks the installed app beyond the generic checks. |
 | `warnings_allowlist` | path | **req** | The accepted-warnings file (see below). |
 | `toolkit` | path | `external/agenticdevelopertoolkit` | Where the app pins this toolkit; reported by `status`. |
+| `env_file` | path | none | `KEY=value` lines (optional `export`, quotes and `#` comments) that fill in every variable the environment does not set -- the `signing.profiles` paths, typically. A missing file sets nothing; a profile it should have named is then reported with the file in the fix. |
 
 ### Hooks
 

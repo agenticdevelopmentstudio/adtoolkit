@@ -18,7 +18,8 @@ from typing import Callable
 import macos_release as mr
 
 from . import layout
-from .profiles import entitlements_map, identity_team, profile_failures, step_provision
+from .profiles import (entitlements_map, identity_team, profile_failures, signing_entitlements,
+                       step_provision)
 from .shell import bullet, check, step
 from .site import site_failures
 from .sparkle import (bundle_info_problems, ensure_sparkle_tools, public_key_failure,
@@ -277,7 +278,8 @@ def step_check_bundle(r: Release) -> None:
 def step_sign(r: Release) -> None:
     identity = r.cfg.app_identity
     step(f"Signing {r.app.name} inside-out with '{identity}'")
-    mr.sign_bundle(r.app, identity=identity, entitlements=entitlements_map(r.app, r.cfg),
+    entitlements = entitlements_map(r.app, r.cfg, signing_entitlements(r))
+    mr.sign_bundle(r.app, identity=identity, entitlements=entitlements,
                    runtime=True, timestamp=True, run=r.run)
     bullet("codesign --verify --deep --strict passes")
 
