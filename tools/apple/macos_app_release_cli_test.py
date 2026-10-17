@@ -255,10 +255,24 @@ def test_hook_runs_from_the_repo_root(tmp_path, capfd):
     assert capfd.readouterr().out.strip() == str(w.repo.resolve())
 
 
+def test_hook_with_a_nonexistent_command_is_an_error_not_a_traceback(tmp_path, capsys):
+    w = World(tmp_path, {"hooks": {"tests": [str(tmp_path / "no-such-hook")]}})
+    assert w.run("hook", "tests") == 1
+    err = capsys.readouterr().err
+    assert err.startswith("error: hooks.tests could not run:") and "no-such-hook" in err
+
+
 # warnings -------------------------------------------------------------------------------
 
 WARN_SCRIPT = ("print('A.swift:1:1: warning: accepted noise'); "
                "print('B.swift:2:2: warning: unaccepted thing')")
+
+
+def test_warnings_with_a_nonexistent_hook_command_is_an_error(tmp_path, capsys):
+    w = World(tmp_path, {"hooks": {"warnings_build": [str(tmp_path / "no-such-hook")]}})
+    assert w.run("warnings", "--log-dir", str(tmp_path / "logs")) == 1
+    err = capsys.readouterr().err
+    assert "error: hooks.warnings_build could not run:" in err and "no-such-hook" in err
 
 
 def test_warnings_exits_1_and_names_the_unaccepted_one(tmp_path, capsys):

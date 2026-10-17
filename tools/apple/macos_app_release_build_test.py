@@ -807,3 +807,37 @@ def test_run_build_end_to_end_through_the_real_check_steps(tmp_path, monkeypatch
     assert bp.run_build(r) == 0, capsys.readouterr().err
     assert seen["later"][0] == "step_provision" and seen["later"][-1] == "step_notarize_pkg"
     assert r.minimum_system_version == "26.0" and r.app.is_dir()
+
+
+# cask render + sparkle resolve in preflight ------------------------------------------
+
+
+def test_preflight_fails_on_a_cask_template_with_an_unknown_variable(tmp_path):
+    r = _world(tmp_path, "adkitchen")
+    r.cfg.cask_template.write_text('cask "$token" do\n  version "$nope"\nend\n')
+    message = _preflight_error(r)
+    assert "cask.template" in message and "$nope" in message
+
+
+def test_preflight_fails_on_a_missing_cask_template(tmp_path):
+    r = _world(tmp_path, "adkitchen")
+    r.cfg.cask_template.unlink()
+    assert "cask.template" in _preflight_error(r)
+
+
+def test_preflight_renders_the_cask_with_the_projects_deployment_target(tmp_path):
+    r = _world(tmp_path, "adkitchen")
+    r.cfg.project_yml.write_text(r.cfg.project_yml.read_text()
+                                 + '    MACOSX_DEPLOYMENT_TARGET: "10.9"\n')
+    assert "HOMEBREW_MACOS" in _preflight_error(r)
+
+
+def test_preflight_reports_a_sparkle_resolve_failure_with_every_other_problem(tmp_path):
+    r = _world(tmp_path, "adkitchen")
+    (r.sparkle_bin / "generate_keys").unlink()
+    r.run.responses.insert(0, (lambda a: a[:2] == ["xcodebuild", "-resolvePackageDependencies"],
+                               1, "", "no network"))
+    r.notes.unlink()
+    message = _preflight_error(r)
+    assert "xcodebuild -resolvePackageDependencies failed" in message
+    assert "release notes missing" in message

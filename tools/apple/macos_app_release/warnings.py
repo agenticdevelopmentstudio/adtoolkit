@@ -30,7 +30,7 @@ from pathlib import Path
 from typing import Callable, Mapping
 
 from .config import ReleaseConfig
-from .shell import capture_hook, step
+from .shell import HookError, capture_hook, step
 
 WARNING = re.compile(r"\bwarning: ")
 LOG_NAME = "warnings-build.log"
@@ -147,8 +147,12 @@ def run_warnings(cfg: ReleaseConfig, *, log_dir: Path | None, as_json: bool,
     derived = Path(tempfile.mkdtemp(prefix="release-warnings-"))
     try:
         say(f"Clean Release build for warnings (DerivedData {derived}); this takes a while")
-        proc = hook(cfg.hook_warnings_build, cwd=cfg.repo,
-                    env={**(env or {}), DERIVED_DATA_ENV: str(derived)})
+        try:
+            proc = hook(cfg.hook_warnings_build, cwd=cfg.repo,
+                        env={**(env or {}), DERIVED_DATA_ENV: str(derived)})
+        except HookError as exc:
+            print(f"error: hooks.warnings_build could not run: {exc}", file=sys.stderr)
+            return 1
         text = (proc.stdout or "") + (proc.stderr or "")
         target = log_dir if log_dir is not None else derived.parent
         try:

@@ -22,7 +22,7 @@ from typing import Callable
 from macos_app_release import (build_pipeline, install as install_mod,
                                prepared, publish, verify, versions, warnings)
 from macos_app_release.config import ReleaseConfig, ReleaseConfigError, load_config
-from macos_app_release.shell import (Runner, main_checkout, run_hook,
+from macos_app_release.shell import (HookError, Runner, main_checkout, run_hook,
                                      subprocess_runner)
 from macos_app_release.state import Release
 
@@ -240,7 +240,11 @@ def cmd_hook(args: argparse.Namespace, cfg: ReleaseConfig, factory: RunnerFactor
     if not argv:
         print(f"error: {args.name} hook is not configured", file=sys.stderr)
         return 2
-    return run_hook(argv, cwd=cfg.repo, env={})
+    try:
+        return run_hook(argv, cwd=cfg.repo, env={})
+    except HookError as exc:
+        print(f"error: hooks.{args.name} could not run: {exc}", file=sys.stderr)
+        return 1
 
 
 def cmd_warnings(args: argparse.Namespace, cfg: ReleaseConfig, factory: RunnerFactory,
@@ -276,9 +280,13 @@ def cmd_installed(args: argparse.Namespace, cfg: ReleaseConfig, factory: RunnerF
     if not failures and cfg.hook_health:
         if not args.json:
             print("running the health hook")
-        health = run_hook(cfg.hook_health, cwd=cfg.repo, env={})
-        if health != 0:
-            failures.append(f"the health hook exited {health}")
+        try:
+            health = run_hook(cfg.hook_health, cwd=cfg.repo, env={})
+        except HookError as exc:
+            failures.append(f"hooks.health could not run: {exc}")
+        else:
+            if health != 0:
+                failures.append(f"the health hook exited {health}")
     ok = not failures
     if args.json:
         print(json.dumps({"ok": ok, "failures": failures,

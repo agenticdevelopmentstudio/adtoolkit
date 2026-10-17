@@ -590,7 +590,8 @@ def test_cask_keeps_the_apps_own_stanzas_literally(tmp_path):
 
 
 @pytest.mark.parametrize("minimum, symbol", [("26.0", ":tahoe"), ("15.4", ":sequoia"),
-                                             ("14.0", ":sonoma")])
+                                             ("14.0", ":sonoma"), ("13.0", ":ventura"),
+                                             ("12.6", ":monterey"), ("11.0", ":big_sur")])
 def test_cask_gates_on_the_apps_minimum_macos(tmp_path, minimum, symbol):
     cfg = config(tmp_path)
     assert f"depends_on macos: {symbol}\n" in cask.cask_ruby(entry(cfg, minimum=minimum), cfg)
@@ -605,7 +606,7 @@ def test_cask_refuses_a_macos_it_has_no_symbol_for(tmp_path):
 def test_cask_unknown_variable_fails(tmp_path):
     cfg = config(tmp_path)
     cfg.cask_template.write_text("cask \"$token\" do\n  version \"$nope\"\nend\n")
-    with pytest.raises(KeyError):
+    with pytest.raises(RuntimeError, match=r"cask\.template .*\$nope"):
         cask.cask_ruby(entry(cfg), cfg)
 
 
@@ -613,14 +614,14 @@ def test_cask_url_must_resolve_to_the_pkg(tmp_path):
     cfg = config(tmp_path)
     cfg.cask_template.write_text('cask "$token" do\n  url "https://example.com/x.pkg"\nend\n')
     # template that hardcodes a url not equal to entry.pkg.url
-    with pytest.raises(ValueError, match="url"):
+    with pytest.raises(RuntimeError, match="url"):
         cask.cask_ruby(entry(cfg), cfg)
 
 
 def test_cask_without_a_url_stanza_is_refused(tmp_path):
     cfg = config(tmp_path)
     cfg.cask_template.write_text('cask "$token" do\n  version "$version"\nend\n')
-    with pytest.raises(ValueError, match="url"):
+    with pytest.raises(RuntimeError, match="url"):
         cask.cask_ruby(entry(cfg), cfg)
 
 
@@ -629,8 +630,22 @@ def test_cask_refuses_a_pkg_url_that_is_not_the_download_prefix(tmp_path):
     e = entry(cfg)
     wrong = e.pkg.__class__(url="https://elsewhere/x.pkg", size=1, sha256="s")
     e = e.__class__(**{**e.__dict__, "pkg": wrong})
-    with pytest.raises(ValueError, match="would not resolve"):
+    with pytest.raises(RuntimeError, match="would not resolve"):
         cask.cask_ruby(e, cfg)
+
+
+def test_cask_missing_template_names_cask_template(tmp_path):
+    cfg = config(tmp_path)
+    cfg.cask_template.unlink()
+    with pytest.raises(RuntimeError, match=r"cask\.template .*cask\.rb\.template"):
+        cask.cask_ruby(entry(cfg), cfg)
+
+
+def test_cask_bad_placeholder_names_cask_template(tmp_path):
+    cfg = config(tmp_path)
+    cfg.cask_template.write_text('cask "$token" do\n  price "$"\nend\n')
+    with pytest.raises(RuntimeError, match=r"cask\.template"):
+        cask.cask_ruby(entry(cfg), cfg)
 
 
 @pytest.mark.skipif(not shutil.which("ruby"), reason="no ruby to syntax-check with")

@@ -9,7 +9,8 @@ import macos_release as mr
 from .config import ReleaseConfig
 
 # LSMinimumSystemVersion's major -> the symbol a cask's `depends_on macos:` takes.
-HOMEBREW_MACOS = {"14": ":sonoma", "15": ":sequoia", "26": ":tahoe"}
+HOMEBREW_MACOS = {"11": ":big_sur", "12": ":monterey", "13": ":ventura", "14": ":sonoma",
+                  "15": ":sequoia", "26": ":tahoe"}
 
 
 def homebrew_macos(minimum_system_version: str) -> str:
@@ -27,25 +28,39 @@ def cask_ruby(entry: mr.ReleaseEntry, cfg: ReleaseConfig) -> str:
     `#{version}` interpolation, the form `brew bump-cask-pr` and livecheck
     expect; it must still name exactly the pkg releases.json lists.
 
-    A template naming any other variable raises KeyError (`substitute`, never
-    `safe_substitute`), so a bad template stops the release before it is public.
+    Every way the cask can fail to render raises RuntimeError naming
+    `cask.template`: a missing or unreadable template, a variable it does not
+    know (`substitute`, never `safe_substitute`), a malformed placeholder, a url
+    that would not resolve to the pkg, an unmapped macOS. So a bad template
+    stops the release before it is public, as an error rather than a traceback.
     """
+    where = f"cask.template {cfg.cask_template}"
     pkg = f"{cfg.app_name}-#{{version}}.pkg"
     url = f"{cfg.download_prefix}/v#{{version}}/{pkg}"
     if url.replace("#{version}", entry.version) != entry.pkg.url:
-        raise ValueError(f"the cask's url {url} would not resolve to the published pkg "
-                         f"{entry.pkg.url}")
-    rendered = string.Template(cfg.cask_template.read_text()).substitute(
-        version=entry.version, sha256=entry.pkg.sha256, url=url, pkg=pkg, name=cfg.title,
-        homepage=f"{cfg.site_origin}/", feed=cfg.feed_url,
-        macos=homebrew_macos(entry.minimum_system_version),
-        bundle_id=cfg.bundle_id, token=cfg.cask_token)
+        raise RuntimeError(f"the cask's url {url} would not resolve to the published pkg "
+                           f"{entry.pkg.url}")
+    try:
+        template = string.Template(cfg.cask_template.read_text())
+        rendered = template.substitute(
+            version=entry.version, sha256=entry.pkg.sha256, url=url, pkg=pkg, name=cfg.title,
+            homepage=f"{cfg.site_origin}/", feed=cfg.feed_url,
+            macos=homebrew_macos(entry.minimum_system_version),
+            bundle_id=cfg.bundle_id, token=cfg.cask_token)
+    except OSError as exc:
+        raise RuntimeError(f"{where} cannot be read: {exc.strerror or exc}") from exc
+    except KeyError as exc:
+        raise RuntimeError(f"{where} uses ${exc.args[0]}, which is not a cask variable "
+                           "(version sha256 url pkg name homepage feed macos bundle_id "
+                           "token); write a literal dollar sign as $$") from exc
+    except ValueError as exc:
+        raise RuntimeError(f"{where} is not a valid template: {exc}") from exc
     # A template may hard-code its url stanza instead of using $url: hold the
     # rendered cask itself to the same rule.
     stanza = re.search(r'^  url "([^"]+)"', rendered, re.MULTILINE)
     if stanza is None:
-        raise ValueError(f"{cfg.cask_template} renders no top-level `url \"...\"` stanza")
+        raise RuntimeError(f"{where} renders no top-level `url \"...\"` stanza")
     if stanza.group(1).replace("#{version}", entry.version) != entry.pkg.url:
-        raise ValueError(f"the rendered cask's url {stanza.group(1)} would not resolve to the "
-                         f"published pkg {entry.pkg.url}")
+        raise RuntimeError(f"the rendered cask's url {stanza.group(1)} would not resolve to the "
+                           f"published pkg {entry.pkg.url}")
     return rendered

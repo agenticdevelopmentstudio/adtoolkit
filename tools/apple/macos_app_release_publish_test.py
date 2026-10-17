@@ -415,6 +415,25 @@ def test_run_publish_reports_already_published_and_exits_zero(tmp_path, stub_pre
     assert not git_calls(run)
 
 
+def test_run_publish_unknown_cask_variable_is_an_error_not_a_traceback(
+        tmp_path, stub_preflight, capsys):
+    r, run = staged(tmp_path, VIEW_MISSING)
+    r.cfg.cask_template.write_text('cask "$token" do\n  version "$nope"\nend\n')
+    assert publish.run_publish(r) == 1
+    err = capsys.readouterr().err
+    assert err.startswith("error:") and "cask.template" in err
+    assert not run.find("gh", "release", "create")
+
+
+def test_run_publish_missing_cask_template_is_an_error_not_a_traceback(
+        tmp_path, stub_preflight, capsys):
+    r, run = staged(tmp_path, VIEW_MISSING)
+    r.cfg.cask_template.unlink()
+    assert publish.run_publish(r) == 1
+    assert capsys.readouterr().err.startswith("error:")
+    assert not run.find("gh", "release", "create")
+
+
 def test_run_publish_exits_one_on_a_preflight_error(tmp_path, stub_preflight, capsys):
     r, run = staged(tmp_path)
     run.responses.insert(0, view_ok(r, **{r.zip_path.name: {"size": 1}}))

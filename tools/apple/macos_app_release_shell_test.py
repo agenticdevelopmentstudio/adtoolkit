@@ -65,3 +65,15 @@ def test_main_checkout_surfaces_a_git_failure(tmp_path):
     run = lambda argv: subprocess.CompletedProcess(argv, 128, "", "not a git repository")
     with pytest.raises(RuntimeError, match="not a git repository"):
         shell.main_checkout(tmp_path, run)
+
+
+def test_run_hook_missing_command_raises_hook_error(tmp_path):
+    with pytest.raises(shell.HookError, match="no-such-hook"):
+        shell.run_hook([str(tmp_path / "no-such-hook")], cwd=tmp_path, env={})
+
+
+def test_capture_hook_non_executable_raises_hook_error(tmp_path):
+    script = tmp_path / "plain.sh"
+    script.write_text("echo hi\n")
+    with pytest.raises(shell.HookError, match="plain.sh"):
+        shell.capture_hook([str(script)], cwd=tmp_path, env={})

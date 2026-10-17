@@ -46,17 +46,27 @@ def _hook_env(env: Mapping[str, str]) -> dict[str, str]:
     return {**os.environ, **env}
 
 
+class HookError(RuntimeError):
+    """A hook's command could not be started (missing, or not executable)."""
+
+
 def run_hook(argv: Sequence[str], *, cwd: Path, env: Mapping[str, str]) -> int:
     """Run a configured hook with its output streaming to ours; return its exit code."""
     sys.stdout.flush()
-    return subprocess.run(list(argv), cwd=str(cwd), env=_hook_env(env)).returncode
+    try:
+        return subprocess.run(list(argv), cwd=str(cwd), env=_hook_env(env)).returncode
+    except OSError as exc:
+        raise HookError(f"{argv[0]}: {exc.strerror or exc}") from exc
 
 
 def capture_hook(argv: Sequence[str], *, cwd: Path,
                  env: Mapping[str, str]) -> subprocess.CompletedProcess[str]:
     """Run a configured hook, capturing stdout and stderr."""
-    return subprocess.run(list(argv), cwd=str(cwd), env=_hook_env(env),
-                          capture_output=True, text=True, errors="replace")
+    try:
+        return subprocess.run(list(argv), cwd=str(cwd), env=_hook_env(env),
+                              capture_output=True, text=True, errors="replace")
+    except OSError as exc:
+        raise HookError(f"{argv[0]}: {exc.strerror or exc}") from exc
 
 
 def main_checkout(repo: Path, run: Runner) -> Path:

@@ -454,8 +454,8 @@ class Installed:
 
     def __init__(self, tmp_path, *, version=VERSION, build=BUILD,
                  authority="Developer ID Application: Someone (K2NA732JAX)", running=(7,),
-                 flavor="stenographer", layout_ok=True):
-        self.cfg = config(tmp_path, flavor=flavor)
+                 flavor="stenographer", layout_ok=True, overrides=None):
+        self.cfg = config(tmp_path, overrides, flavor=flavor)
         self.apps = tmp_path / "Applications"
         self.app = self.apps / f"{self.cfg.app_name}.app"
         if layout_ok:
@@ -497,6 +497,15 @@ def test_installed_not_developer_id_signed(tmp_path):
     assert len(failures) == 1
     assert "not signed Developer ID Application" in failures[0]
     assert "Apple Development" in failures[0]
+
+
+def test_installed_signed_by_another_identity_than_the_pinned_one_fails(tmp_path):
+    w = Installed(tmp_path, authority="Developer ID Application: Other (ZZZZZZZZZZ)",
+                  overrides={"signing": {"app_identity":
+                                         "Developer ID Application: Someone (K2NA732JAX)"}})
+    failures = w.failures()
+    assert len(failures) == 1 and "Other (ZZZZZZZZZZ)" in failures[0]
+    assert "Developer ID Application: Someone (K2NA732JAX)" in failures[0]
 
 
 def test_installed_unsigned_has_no_authority(tmp_path):

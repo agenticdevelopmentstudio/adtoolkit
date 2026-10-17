@@ -26,7 +26,7 @@ from .sparkle import (bundle_info_problems, ensure_sparkle_tools, public_key_fai
                       step_sparkle_verify)
 from .state import (PREPARE_CMD, Release, artifact_failures, git_count, head_sha,
                     source_tag_failures, tag_sha, write_provenance)
-from .versions import must_match_failures
+from .versions import must_match_failures, project_setting
 
 BUILD_STEPS = ["preflight", "build", "check-bundle", "provision", "sign", "notarize-app",
                "update-zip", "appcast", "sparkle-verify", "pkg", "notarize-pkg"]
@@ -46,14 +46,21 @@ def step_preflight(r: Release) -> None:
     step(f"Preflight ({mode} {r.version}, build {r.build_number})")
     failures: list[str] = must_match_failures(r.cfg, r.version)
 
-    ensure_sparkle_tools(r)
+    # A Sparkle tools failure is one more failure, not the end of the report: only
+    # the checks that run Sparkle's generate_keys wait for the tools.
+    sparkle_ready = True
+    try:
+        ensure_sparkle_tools(r)
+    except RuntimeError as exc:
+        sparkle_ready = False
+        failures.append(str(exc))
     public_key = sparkle_public_key(r.cfg)
     r.source_sha = head_sha(r)
 
     if r.publish:
-        publish_preflight(r, public_key, failures)
+        publish_preflight(r, public_key, failures, sparkle_ready=sparkle_ready)
     else:
-        release_preflight(r, public_key, failures)
+        release_preflight(r, public_key, failures, sparkle_ready=sparkle_ready)
 
     if failures:
         raise mr.PreflightError("\n".join(failures))
@@ -66,7 +73,32 @@ def step_preflight(r: Release) -> None:
     r.out.mkdir(parents=True)
 
 
-def release_preflight(r: Release, public_key: str, failures: list[str]) -> None:
+def cask_render_failures(r: Release) -> list[str]:
+    """The cask template rendered with a stand-in entry, so a template that cannot
+    render fails before the notarized build rather than at publish. The OS gate is
+    the project's deployment target (the built app's LSMinimumSystemVersion is not
+    known yet); a project that sets none is rendered at the newest known macOS."""
+    from . import cask
+
+    cfg = r.cfg
+    try:
+        minimum = project_setting("MACOSX_DEPLOYMENT_TARGET", cfg.project_yml.read_text())
+    except (OSError, ValueError):
+        minimum = max(cask.HOMEBREW_MACOS, key=int)
+    asset = mr.ReleaseAsset(url=f"{cfg.download_prefix}/{r.tag}/{r.pkg_path.name}",
+                            size=1, sha256="0" * 64)
+    stand_in = mr.ReleaseEntry(version=r.version, build=r.build_number,
+                               date="1970-01-01T00:00:00Z", minimum_system_version=minimum,
+                               notes=f"notes/{r.version}.md", pkg=asset, zip=asset)
+    try:
+        cask.cask_ruby(stand_in, cfg)
+    except RuntimeError as exc:
+        return [f"cask: {exc}"]
+    return []
+
+
+def release_preflight(r: Release, public_key: str, failures: list[str], *,
+                      sparkle_ready: bool = True) -> None:
     from . import publish
 
     cfg = r.cfg
@@ -80,8 +112,8 @@ def release_preflight(r: Release, public_key: str, failures: list[str]) -> None:
             build=r.build_number,
             require_clean_main=r.repo,
             main_branch=r.branch,
-            sparkle_account=cfg.sparkle_account,
-            generate_keys=r.sparkle_bin / "generate_keys",
+            sparkle_account=cfg.sparkle_account if sparkle_ready else None,
+            generate_keys=r.sparkle_bin / "generate_keys" if sparkle_ready else None,
             github_repo=cfg.github_repo,
         )
     except mr.PreflightError as exc:
@@ -96,6 +128,7 @@ def release_preflight(r: Release, public_key: str, failures: list[str]) -> None:
         failures.append(f"release notes missing -- write {r.notes}")
     failures.extend(releases_repo_failures(r))
     failures.extend(site_failures(r))
+    failures.extend(cask_render_failures(r))
     if tag_sha(r) is not None:
         failures.append(f"tag {r.source_tag} already exists in {r.repo} -- {r.version} was "
                         "already prepared; bump the version, or delete the tag if that "
@@ -105,12 +138,14 @@ def release_preflight(r: Release, public_key: str, failures: list[str]) -> None:
     failures.extend(profile_failures(r))
 
 
-def publish_preflight(r: Release, public_key: str, failures: list[str]) -> None:
+def publish_preflight(r: Release, public_key: str, failures: list[str], *,
+                      sparkle_ready: bool = True) -> None:
     cfg = r.cfg
     try:
         mr.preflight(identities=[], notary_profile=None, releases_json={},
-                     version=r.version, run=r.run, sparkle_account=cfg.sparkle_account,
-                     generate_keys=r.sparkle_bin / "generate_keys",
+                     version=r.version, run=r.run,
+                     sparkle_account=cfg.sparkle_account if sparkle_ready else None,
+                     generate_keys=r.sparkle_bin / "generate_keys" if sparkle_ready else None,
                      require_clean_main=r.repo, main_branch=r.branch)
     except mr.PreflightError as exc:
         failures.extend(str(exc).splitlines())

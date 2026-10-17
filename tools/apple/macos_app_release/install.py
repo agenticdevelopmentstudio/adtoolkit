@@ -155,8 +155,8 @@ def installed_failures(cfg: ReleaseConfig, *, apps_dir: Path | None = None,
                    ((shown.stderr or "") + (shown.stdout or "")).splitlines()
                    if line.startswith("Authority=")]
     if shown.returncode != 0 or not authorities or not authorities[0].startswith(
-            "Developer ID Application"):
-        failures.append(f"installed app is not signed Developer ID Application "
+            cfg.app_identity):
+        failures.append(f"installed app is not signed {cfg.app_identity} "
                         f"(authority: {authorities[0] if authorities else 'none'})")
     failures += [f"layout: {p}" for p in layout.problems(app, cfg)]
     if not pids(app):

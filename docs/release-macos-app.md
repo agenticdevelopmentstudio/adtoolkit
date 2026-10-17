@@ -40,11 +40,11 @@ invocation or bad `release.json` (every problem is listed).
 |---|---|
 | `status [--json]` | Validates `release.json` and prints: `app`, `version`, `build`, `notes` (absolute path), `notes_exists`, `source_tag`, `releases_checkout`, `latest_published` (`{version, publishedAt}` or null, asked of GitHub with `gh release view`), `hooks` (`tests`, `warnings_build`, `health`: set or not), `artifacts_default`, `toolkit`. |
 | `bump patch\|minor [--json]` | Rewrites the marketing version (next patch, or next minor with patch 0), the build number (+1) and every `must_match` group, then runs `version.regenerate`. Prints `<version> (build <n>)`. |
-| `hook tests\|health` | Runs one configured hook from the repo root, streaming its output, and passes its exit code through. A hook that is not set exits 2 with `<name> hook is not configured`. |
+| `hook tests\|health` | Runs one configured hook from the repo root, streaming its output, and passes its exit code through. A hook that is not set exits 2 with `<name> hook is not configured`; one whose command cannot be started (missing, not executable) exits 1 with `error: hooks.<name> could not run: ...`. |
 | `warnings [--log-dir DIR] [--json]` | Runs `hooks.warnings_build` into a fresh DerivedData, writes its output to `DIR/warnings-build.log`, deletes the DerivedData, then holds the log to zero warnings outside the allowlist. A hook failure prints the log tail and exits 1. Without `--log-dir` the log goes next to the temp directory. |
 | `build [--branch B] [--artifacts-root DIR] [--site ORIGIN] [-v]` | The notarized build: `preflight, build, check-bundle, provision, sign, notarize-app, update-zip, appcast, sparkle-verify, pkg, notarize-pkg`. Publishes nothing. |
 | `install ZIP [--apps-dir DIR]` | No-sudo swap-install of the update zip: checks the layout, quits the running app, swaps the bundle in place, reopens it. Refuses when root owns the installed bundle. |
-| `installed [--apps-dir DIR] [--json]` | The installed copy has this version and build, is signed `Developer ID Application`, matches the layout and is running. Then runs `hooks.health` if set. |
+| `installed [--apps-dir DIR] [--json]` | The installed copy has this version and build, is signed with `signing.app_identity` (default `Developer ID Application`), matches the layout and is running. Then runs `hooks.health` if set. |
 | `prepared [--branch B] [--artifacts-root DIR] [--json]` | Main, its release tag and the artifacts all name one commit. Read-only. |
 | `publish [--branch B] [--artifacts-root DIR] [--site ORIGIN] [-v]` | Publishes what `build` left, without rebuilding. Refuses unless HEAD is the `release/<version>` tag and the artifacts' `provenance.json` names that commit. Idempotent and resumable (see below). |
 | `verify [VERSION] [--version V] [--site ORIGIN] [--timeout S] [--interval S] [--artifacts-root DIR] [--json]` | Proves the live release is this build: GitHub release, `releases.json`, cask, downloads page, latest redirect, appcast, pkg and zip. Polls every `--interval` (30) seconds for up to `--timeout` (900); `--timeout 0` checks once. Exit 1 when not ready, 2 when `VERSION` was never published. `--json` lists the checks by name with `ready`. |
@@ -141,7 +141,7 @@ All hooks are argv lists, run from the repo root with the inherited environment.
 `cask.template` is a `string.Template`. The app's own `uninstall`, `zap` and `caveats`
 stanzas live in it literally; a literal dollar sign is written `$$`. The variables are
 `$version $sha256 $url $pkg $name $homepage $feed $macos $bundle_id $token`. A template that
-names any other variable fails rendering, so it stops the release before anything is public.
+names any other variable, or cannot be read, fails rendering. `prepare` renders it before the notarized build (with the project's `MACOSX_DEPLOYMENT_TARGET` as the OS gate, else the newest known macOS), and `publish` renders it before anything is public; either way it is an `error:` naming `cask.template`, not a traceback. `$macos` maps the app's minimum macOS major (11 to 15, 26) to Homebrew's symbol.
 `$url` and `$pkg` use brew's `#{version}` interpolation, and the rendered `url` must resolve
 to the pkg that `releases.json` lists. See
 [`examples/release-macos-app/cask.rb.template`](examples/release-macos-app/cask.rb.template),
