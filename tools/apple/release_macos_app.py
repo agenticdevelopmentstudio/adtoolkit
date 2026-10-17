@@ -196,6 +196,7 @@ def cmd_status(args: argparse.Namespace, cfg: ReleaseConfig, factory: RunnerFact
     latest, latest_error = latest_published(cfg, factory(False, cwd=cfg.repo))
     status = {
         "app": cfg.app_name,
+        "asset_basename": cfg.asset_basename,
         "version": version,
         "build": build,
         "notes": str(notes),

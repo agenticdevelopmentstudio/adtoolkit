@@ -90,7 +90,7 @@ def test_status_json_adkitchen(tmp_path, capsys):
     w = World(tmp_path, gh=LATEST)
     assert w.run("status", "--json") == 0
     s = out_json(capsys)
-    assert set(s) == {"app", "version", "build", "notes", "notes_exists", "source_tag",
+    assert set(s) == {"app", "asset_basename", "version", "build", "notes", "notes_exists", "source_tag",
                       "source_branch", "releases_checkout", "latest_published",
                       "latest_published_error", "hooks", "regenerate", "artifacts_default",
                       "toolkit"}
@@ -98,6 +98,7 @@ def test_status_json_adkitchen(tmp_path, capsys):
     assert s["latest_published_error"] is None
     assert s["regenerate"] is False
     assert (s["app"], s["version"], s["build"]) == ("AgenticDeveloperKitchen", VERSION, BUILD)
+    assert s["asset_basename"] == "AgenticDeveloperKitchen"
     assert s["notes"] == str(w.repo / f"docs/release-notes/{VERSION}.md")
     assert s["notes_exists"] is True
     assert s["source_tag"] == f"release/{VERSION}"
@@ -544,6 +545,7 @@ def skill_invocations(text: str) -> list[tuple[str, list[str]]]:
     for m in COMMAND_RE.finditer(text):
         tail = []
         for token in m.group(2).replace("[", " ").replace("]", " ").split():
+            token = token.strip('"')
             if token.startswith(("(", "—", "-", "<")) or token[0].isalnum() or token[0] == "/":
                 tail.append("placeholder" if "<" in token else token.split("|")[0])
         found.append((m.group(1), tail))
@@ -552,8 +554,9 @@ def skill_invocations(text: str) -> list[tuple[str, list[str]]]:
 
 def test_skill_invocation_extraction():
     got = skill_invocations("`CLI <WT> bump patch|minor`, `CLI publish [--site <origin>]`, "
-                            "the CLI is fine, `CLI <repo>`")
-    assert got == [("bump", ["patch"]), ("publish", ["--site", "placeholder"])]
+                            "the CLI is fine, `CLI <repo>`, `CLI <WT> install \"<MAIN>/a.zip\"`")
+    assert got == [("bump", ["patch"]), ("publish", ["--site", "placeholder"]),
+                   ("install", ["placeholder"])]
 
 
 @pytest.mark.skipif(not SKILL.exists(), reason="the release skill is not installed "
