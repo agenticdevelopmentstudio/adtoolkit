@@ -1,5 +1,7 @@
 # agenticdevelopertoolkit
 
+## This is not ready for consuption yet, it's still getting reworked
+
 A set of reusable per-platform packages — the shared web libraries (`ui`,
 `chat`, `editing`, `markdown`, `search`, `themes`, and more, listed below)
 plus the adh app platform and its feature packages, a workspace of Xcode
