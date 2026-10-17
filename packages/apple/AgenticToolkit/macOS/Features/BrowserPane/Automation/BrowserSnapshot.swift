@@ -148,6 +148,8 @@ public enum BrowserAutomationError: Error, CustomStringConvertible, Equatable, S
     case screenshotTimedOut
     case cspRefusesEvaluation
     case openRefused
+    /// The page is a `file:` URL. Models never drive local files.
+    case localFile
 
     public var description: String {
         switch self {
@@ -161,6 +163,7 @@ public enum BrowserAutomationError: Error, CustomStringConvertible, Equatable, S
         case .screenshotTimedOut: return "the screenshot timed out"
         case .cspRefusesEvaluation: return "the page's Content Security Policy refuses evaluation"
         case .openRefused: return "could not open a Browser pane beside that pane"
+        case .localFile: return "the pane shows a local file, which models may not drive"
         }
     }
 }

@@ -121,6 +121,20 @@ public final class BrowserAutomation: NSObject {
     public var currentURL: String { webView.url?.absoluteString ?? "about:blank" }
     public var currentTitle: String { webView.title ?? "" }
 
+    /// Whether this URL is one a model may drive. Local files are never
+    /// driven: the user's own disk is not the model's to read through a pane.
+    public static func isDrivable(_ url: String) -> Bool {
+        !url.lowercased().hasPrefix("file:")
+    }
+
+    /// Throws when the page now showing is a local file. Every runtime call
+    /// and every action checks this at the moment it runs, not when it was
+    /// queued, so a page that became a local file while the call waited at
+    /// the gate (a back or forward that landed on one, say) is refused too.
+    public func ensureDrivable() throws {
+        guard Self.isDrivable(currentURL) else { throw BrowserAutomationError.localFile }
+    }
+
     // MARK: Driving
 
     /// Every tool call runs inside this so the pane can show its badge and
@@ -189,6 +203,7 @@ public final class BrowserAutomation: NSObject {
     // MARK: Runtime calls
 
     private func call(_ function: String, _ ordered: KeyValuePairs<String, Any> = [:]) async throws -> Any? {
+        try ensureDrivable()
         try await BrowserSnapshotRuntime.install(in: webView)
         // Positional order matters to the JS functions, so keep the caller's order.
         let names = ordered.map(\.key)
@@ -321,6 +336,7 @@ public final class BrowserAutomation: NSObject {
     /// WebKit cannot be told to stop, so its answer, if it ever comes, is
     /// dropped.
     public func evaluate(_ expression: String) async throws -> String {
+        try ensureDrivable()
         let body = "return (\n\(Self.expressionBody(expression))\n);"
         let once = Resumer<String>()
         let timeout = Self.maximumTimeout
@@ -400,6 +416,7 @@ public final class BrowserAutomation: NSObject {
     /// Runs one action and gathers its delta: arm the mutation counter and
     /// navigation counters, act, wait 300 ms, read what moved.
     private func act(_ body: () async throws -> Void) async throws -> BrowserActionDelta {
+        try ensureDrivable()
         let urlBefore = currentURL, titleBefore = currentTitle
         let startedBefore = navigationsStarted, finishedBefore = navigationsFinished
         let mutationsBefore = (try? await call("mutations") as? Int) ?? 0
@@ -414,6 +431,10 @@ public final class BrowserAutomation: NSObject {
             while webView.isLoading && Date() < deadline { try await Task.sleep(nanoseconds: 100_000_000) }
             if webView.isLoading { delta.pending = true } else { delta.navigated = navigationsFinished > finishedBefore }
             lastSnapshotLines = nil
+            // A back or forward can land on a local file the pane once
+            // showed. Nothing below may run against it, the runtime least of
+            // all, so the landing is reported as the refusal it is.
+            try ensureDrivable()
         }
         // A #fragment navigation leaves `navigated` false; this URL diff still reports it.
         if currentURL != urlBefore { delta.url = currentURL }

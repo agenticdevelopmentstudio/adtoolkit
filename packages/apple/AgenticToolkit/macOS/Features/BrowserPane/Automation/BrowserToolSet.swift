@@ -129,12 +129,25 @@ public final class BrowserToolSet: ChatToolSource, @unchecked Sendable {
         throw ToolError(sentence: "no browser pane is open; call browser_open")
     }
 
+    /// Refuses a pane showing a local file before the call is queued, naming
+    /// the pane. `BrowserAutomation` enforces the same rule again at the moment
+    /// each call runs, which is what holds when the page changes meanwhile.
     @MainActor
     private func guardDrivable(_ pane: BrowserPaneHandle) throws -> BrowserPaneHandle {
-        if pane.url.lowercased().hasPrefix("file:") {
+        if !BrowserAutomation.isDrivable(pane.url) {
             throw ToolError(sentence: "pane \(pane.id) shows a local file, which models may not drive")
         }
         return pane
+    }
+
+    /// The switches, checked when a call actually runs. A call waits at the
+    /// pane's drive gate behind earlier callers, and the user may turn
+    /// automation off in the meantime; the check at queue time alone would
+    /// let the queued call through.
+    @MainActor
+    private func requireSwitches(for name: String) throws {
+        try requireEnabled()
+        if name == "browser_evaluate" { try requireEvaluateEnabled() }
     }
 
     @MainActor
@@ -156,18 +169,19 @@ public final class BrowserToolSet: ChatToolSource, @unchecked Sendable {
     @MainActor
     private func dispatch(_ name: String, _ args: Arguments, caller: String?) async throws -> String {
         if name == "browser_list" { return listPanes(caller: caller) }
-        try requireEnabled()
-        if name == "browser_evaluate" { try requireEvaluateEnabled() }
+        try requireSwitches(for: name)
         if name == "browser_open" {
             let url = args.optionalString("url") == nil ? openWithoutURLPage() : try args.url("url")
             let pane = try directory.openBrowserPane(besidePane: caller)
             return try await pane.automation.drive {
+                try self.requireSwitches(for: name)
                 let delta = try await pane.automation.navigate(to: url)
                 return "opened pane \(pane.id)\n" + delta.rendered()
             }
         }
         let automation = try resolvePane(args, caller: caller).automation
         return try await automation.drive {
+            try self.requireSwitches(for: name)
             if let reply = try await self.dispatchNavigation(name, args, automation) { return reply }
             if let reply = try await self.dispatchReading(name, args, automation) { return reply }
             if let reply = try await self.dispatchActions(name, args, automation) { return reply }

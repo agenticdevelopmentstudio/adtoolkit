@@ -159,6 +159,44 @@ final class BrowserToolSetTests: XCTestCase {
         XCTAssertEqual(reply.content, "pane F shows a local file, which models may not drive")
     }
 
+    /// A call queued behind another is checked again when it runs: the switch
+    /// flipped off meanwhile refuses it.
+    func testSwitchTurnedOffWhileQueuedRefusesTheQueuedCall() async throws {
+        let automation = directory.panes[0].automation
+        let store = self.store!
+        let held = Task { @MainActor in
+            try await automation.drive {
+                try await Task.sleep(nanoseconds: 300_000_000)
+                store.set(false, for: UserSettings.browserAutomationEnabled)
+            }
+        }
+        try await Task.sleep(nanoseconds: 50_000_000)
+        let reply = await call("browser_snapshot", ["pane_id": "A"])
+        _ = try await held.value
+        XCTAssertTrue(reply.isError)
+        XCTAssertEqual(reply.content, "browser automation is turned off in Settings")
+    }
+
+    /// A pane that once showed a local file, then a page: a back that lands
+    /// on the file is refused, and nothing is read from it.
+    func testBackOntoALocalFileIsRefused() async throws {
+        let page = OffscreenWebView()
+        let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("local-\(UUID().uuidString).html")
+        try "<p>local</p>".write(to: url, atomically: true, encoding: .utf8)
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            page.webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { done.resume() }
+        }
+        await page.load(html: "<title>Web</title><p>web</p>")
+        directory.panes = [BrowserPaneHandle(id: "F", project: "p", tab: "t", automation: BrowserAutomation(webView: page.webView, console: BrowserConsoleLog()))]
+        let back = await call("browser_back")
+        XCTAssertTrue(back.isError)
+        XCTAssertEqual(back.content, "the pane shows a local file, which models may not drive")
+        let text = await call("browser_text")
+        XCTAssertTrue(text.isError)
+        XCTAssertEqual(text.content, "pane F shows a local file, which models may not drive")
+    }
+
     func testAutomationOffLeavesOnlyList() async {
         store.set(false, for: UserSettings.browserAutomationEnabled)
         let list = await call("browser_list")
