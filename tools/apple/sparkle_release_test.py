@@ -317,10 +317,29 @@ def checkout(tmp_path, *, listed=()):
     return path
 
 
-def state(tmp_path, *, listed=(), view=(0, json.dumps({"assets": []}), ""), ahead="0"):
+def local_files(tmp_path):
+    pkg, zip_path = tmp_path / "Widget-1.2.pkg", tmp_path / ZIP_NAME
+    pkg.write_bytes(b"pkg")
+    zip_path.write_bytes(b"zip")
+    return [pkg, zip_path]
+
+
+def gh_assets(files):
+    """What `gh release view --json assets` says for exactly `files`."""
+    out = []
+    for f in files:
+        a = mr.asset_for(f, "")
+        out.append({"name": f.name, "size": a.size, "digest": f"sha256:{a.sha256}"})
+    return out
+
+
+def state(tmp_path, *, listed=(), view=None, ahead="0", assets=None):
+    files = local_files(tmp_path)
+    if view is None:
+        view = (0, json.dumps({"assets": gh_assets(files) if assets is None else assets}), "")
     run = Fake({"gh release view": view, "rev-list --count": (0, ahead + "\n", "")})
     return run, dict(releases_checkout=checkout(tmp_path, listed=listed), version="1.2",
-                     github_repo=REPO, run=run)
+                     github_repo=REPO, local_artifacts=files, run=run)
 
 
 def test_publish_state_create_when_no_release_exists(tmp_path):
@@ -355,6 +374,46 @@ def test_publish_state_is_published_when_release_and_commit_exist(tmp_path):
     run, kw = state(tmp_path, listed=["1.2"], ahead="0")
     assert sr.publish_state(**kw) == "published"
     assert run.find("rev-list --count origin/main..HEAD")
+
+
+def mismatch(tmp_path, mutate):
+    assets = mutate(gh_assets(local_files(tmp_path)))
+    _, kw = state(tmp_path, listed=["1.2"], assets=assets)
+    with pytest.raises(mr.PreflightError) as exc:
+        sr.publish_state(**kw)
+    msg = str(exc.value)
+    assert f"gh release delete v1.2 --repo {REPO} --cleanup-tag" in msg
+    return msg
+
+
+def test_publish_state_refuses_a_release_missing_an_asset(tmp_path):
+    assert "Widget-1.2.pkg is not attached" in mismatch(tmp_path, lambda a: a[1:])
+
+
+def test_publish_state_refuses_a_release_with_an_extra_asset(tmp_path):
+    msg = mismatch(tmp_path, lambda a: a + [{"name": "stray.txt", "size": 1}])
+    assert "unexpected assets attached: stray.txt" in msg
+
+
+def test_publish_state_refuses_a_size_mismatch(tmp_path):
+    def mutate(a):
+        a[0]["size"] += 1
+        return a
+    assert "bytes on GitHub" in mismatch(tmp_path, mutate)
+
+
+def test_publish_state_refuses_a_digest_mismatch(tmp_path):
+    def mutate(a):
+        a[1]["digest"] = "sha256:deadbeef"
+        return a
+    assert "sha256 differs" in mismatch(tmp_path, mutate)
+
+
+def test_publish_state_ignores_the_digest_when_gh_reports_none(tmp_path):
+    assets = [{k: v for k, v in a.items() if k != "digest"}
+              for a in gh_assets(local_files(tmp_path))]
+    _, kw = state(tmp_path, assets=assets)
+    assert sr.publish_state(**kw) == "commit"
 
 
 # render_cask / homebrew_macos ----------------------------------------------------
@@ -400,6 +459,15 @@ def test_render_cask_includes_extra_stanzas_inside_the_cask():
 
 def test_render_cask_names_the_installed_app_in_its_uninstall():
     assert '"/Applications/Widget.app"' in render()
+
+
+def test_render_cask_interpolates_only_the_tag_and_file_name():
+    base = "https://github.com/owner/widget-1.2-releases/releases/download/v1.2"
+    e = mr.ReleaseEntry("1.2", 7, "d", "26.0", "n",
+                        mr.ReleaseAsset(f"{base}/Widget-1.2.pkg", 1, "s"),
+                        mr.ReleaseAsset(f"{base}/Widget-1.2.zip", 1, "s"))
+    assert ('url "https://github.com/owner/widget-1.2-releases/releases/download/'
+            'v#{version}/Widget-#{version}.pkg"') in render(entry=e)
 
 
 def test_render_cask_refuses_a_pkg_url_without_the_version():

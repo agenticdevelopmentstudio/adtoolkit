@@ -208,7 +208,9 @@ def provenance_failures(path: Path, *, head_sha: str, artifacts: dict[str, Path]
 
 def artifact_failures(*, app: Path, pkg: Path, run: Runner) -> list[str]:
     """Signatures Gatekeeper accepts: the pkg's stapled ticket and install
-    assessment, the staged app's signature, and its Developer ID authority."""
+    assessment, the staged app's signature, and its Developer ID authority.
+    Provenance (commit, digests, notarized) is checked separately, by
+    `provenance_failures`."""
     rebuild = "rebuild and notarize them"
     failures: list[str] = []
     checks = [
@@ -254,13 +256,36 @@ def _commits_ahead(releases_checkout: Path, run: Runner) -> int:
     return int(out) if out.isdigit() else 0
 
 
+def _asset_mismatches(assets: list[dict], local_artifacts: list[Path]) -> list[str]:
+    remote = {a.get("name"): a for a in assets}
+    problems: list[str] = []
+    for local in local_artifacts:
+        mine = mr.asset_for(local, "")
+        theirs = remote.get(local.name)
+        if theirs is None:
+            problems.append(f"{local.name} is not attached")
+            continue
+        if theirs.get("size") != mine.size:
+            problems.append(f"{local.name} is {theirs.get('size')} bytes on GitHub, "
+                            f"{mine.size} locally")
+        digest = theirs.get("digest")
+        if digest and digest != f"sha256:{mine.sha256}":
+            problems.append(f"{local.name}'s sha256 differs from the local file")
+    extra = sorted(set(remote) - {p.name for p in local_artifacts})
+    if extra:
+        problems.append(f"unexpected assets attached: {', '.join(map(str, extra))}")
+    return problems
+
+
 def publish_state(*, releases_checkout: Path, version: str, github_repo: str,
-                  run: Runner) -> PublishState:
+                  local_artifacts: list[Path], run: Runner) -> PublishState:
     """What an interrupted publish has left to do.
 
     "create": no GitHub release yet. "commit": the release exists but the
     releases checkout does not list it. "push": it is committed but not pushed.
-    "published": nothing is left. An inconsistent state raises PreflightError.
+    "published": nothing is left. An inconsistent state raises PreflightError,
+    including a GitHub release whose assets are not exactly `local_artifacts`
+    (same names, sizes, and sha256 where gh reports a digest).
     """
     tag = f"v{version}"
     assets = _github_release_assets(version, github_repo, run)
@@ -271,6 +296,12 @@ def publish_state(*, releases_checkout: Path, version: str, github_repo: str,
                 f"releases.json in {releases_checkout} lists {version} but GitHub has no "
                 f"release {tag} — repair the releases repo by hand")
         return "create"
+    problems = _asset_mismatches(assets, local_artifacts)
+    if problems:
+        raise mr.PreflightError(
+            f"GitHub release {tag} exists but does not match the local artifacts: "
+            f"{'; '.join(problems)} — delete it with `gh release delete {tag} "
+            f"--repo {github_repo} --cleanup-tag` and publish again")
     if not listed:
         return "commit"
     if _commits_ahead(releases_checkout, run) > 0:
@@ -297,12 +328,19 @@ def render_cask(*, token: str, name: str, entry: mr.ReleaseEntry, feed_url: str,
     verbatim, two-space indented and newline-terminated, before the closing end.
     """
     pkg_url = entry.pkg.url
-    pkg_name = pkg_url.rsplit("/", 1)[-1]
-    if entry.version not in pkg_url:
-        raise RuntimeError(f"the pkg url {pkg_url} does not contain the version "
-                           f"{entry.version}, so the cask cannot interpolate it")
-    url = pkg_url.replace(entry.version, "#{version}")
+    directory, _, pkg_name = pkg_url.rpartition("/")
+    # Interpolate only the tag segment and the file name, never a host or repo
+    # name that happens to contain the version string.
+    tag_dir = f"/v{entry.version}"
+    if not directory.endswith(tag_dir) or entry.version not in pkg_name:
+        raise RuntimeError(f"the pkg url {pkg_url} is not <base>/v{entry.version}/"
+                           f"<name containing {entry.version}>, so the cask cannot "
+                           "interpolate the version")
     pkg = pkg_name.replace(entry.version, "#{version}")
+    url = f"{directory[:-len(tag_dir)]}/v#{{version}}/{pkg}"
+    if url.replace("#{version}", entry.version) != pkg_url:
+        raise RuntimeError(f"the cask's url {url} would not resolve to the published pkg "
+                           f"{pkg_url}")
     site = urllib.parse.urlsplit(feed_url)
     return (
         f'cask "{token}" do\n'
