@@ -1,0 +1,30 @@
+{
+  "name": "@agenticdevelopertoolkit/releases",
+  "version": "0.1.0",
+  "description": "Reads a macOS app's public releases repo (releases.json, release notes, Sparkle appcast.xml) and serves it from a site — a validated loader, a newest-first latest lookup and an appcast proxy handler. Knows no product: every call takes the repo's raw base URL.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup && pnpm run build:types",
+    "build:types": "tsc --emitDeclarationOnly -p tsconfig.build.json",
+    "clean": "rm -rf dist",
+    "lint": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test src/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2"
+  }
+}
