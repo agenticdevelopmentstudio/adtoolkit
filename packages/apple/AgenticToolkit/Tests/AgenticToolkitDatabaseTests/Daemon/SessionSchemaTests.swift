@@ -49,8 +49,20 @@ final class SessionSchemaTests: XCTestCase {
     }
 
     func testReopeningRunsEveryEnsureWithoutError() throws {
-        _ = try open()
+        let first = try open()
+        // Stamp every recorded migration so a re-run (a fresh INSERT) is visible.
+        try first.execute("UPDATE schema_migrations SET applied_at = '2000-01-01 00:00:00'")
+
         let again = try open()
         XCTAssertTrue(again.isReady)
+
+        var rows = 0
+        var untouched = 0
+        try again.query("SELECT applied_at FROM schema_migrations") { row in
+            rows += 1
+            if again.string(row, 0) == "2000-01-01 00:00:00" { untouched += 1 }
+        }
+        XCTAssertEqual(rows, SessionSchema.migrations.count, "reopening must not add or drop a record")
+        XCTAssertEqual(untouched, rows, "no migration may re-run on reopen")
     }
 }
