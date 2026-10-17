@@ -51,6 +51,8 @@ agenticdevelopertoolkit/
 
 `docs/planning/planning.md` (milestones), `docs/planning/merge-agentictoolkit.md` (the merge), `docs/planning/ports/`, and point-in-time records under `docs/archive/`.
 
+Also: [`docs/architecture/session-daemon-core.md`](../architecture/session-daemon-core.md) (the planned `Database/Daemon/` tier shared by Stenographer's and the Kitchen's daemons).
+
 ## Build & Test Commands
 
 ```bash
