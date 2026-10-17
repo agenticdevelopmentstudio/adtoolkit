@@ -1829,6 +1829,7 @@
 		C48390E00349F0A386153723 /* RootDataSourceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB10152A99F062FCFF0D06CE /* RootDataSourceTests.swift */; };
 		C48CFDFD4BDAA570273D6B44 /* HubSceneController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B822FFB8DE74977C683E4EC4 /* HubSceneController.swift */; };
 		C491BB02D5D4E5DC71162870 /* OlyloSchemaTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2254EDB52E0164FE7443283 /* OlyloSchemaTests.swift */; };
+		C4963FA6FCA48E719E6882DF /* PluginChatConfigProviderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8CEAC3819317BF9E94FD148B /* PluginChatConfigProviderTests.swift */; };
 		C4992BEC01C9FA867622D750 /* ApplicationsDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D56B32280A26A35129D0481 /* ApplicationsDataSource.swift */; };
 		C49BB3FBED405D30F68D4C6A /* ScreenManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 68548C35B1DD2303A9ED1919 /* ScreenManager.swift */; };
 		C49CC2DEE7EFB751E875923E /* WorkTrackingXPCClientTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 66A8573AA24A9064168D2271 /* WorkTrackingXPCClientTests.swift */; };
@@ -5466,6 +5467,7 @@
 		8C5EBCBE46FB9FF0162C243F /* ComposableTabsPaneViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposableTabsPaneViewController.swift; sourceTree = "<group>"; };
 		8C5ED7659A9B0B9B315F084B /* PopupMenuChoiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PopupMenuChoiceView.swift; sourceTree = "<group>"; };
 		8CA97AA66D7EAB27142E35CA /* SystemWindowControlling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemWindowControlling.swift; sourceTree = "<group>"; };
+		8CEAC3819317BF9E94FD148B /* PluginChatConfigProviderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluginChatConfigProviderTests.swift; sourceTree = "<group>"; };
 		8D01C753A794501FE23CCF26 /* WorkTrackingPrefs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkTrackingPrefs.swift; sourceTree = "<group>"; };
 		8D203235D455143D305E30D2 /* OpenAIModelCatalogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIModelCatalogTests.swift; sourceTree = "<group>"; };
 		8D21F8F899C4B44436BA0F07 /* ScreenMatcherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScreenMatcherTests.swift; sourceTree = "<group>"; };
@@ -8805,6 +8807,7 @@
 				02A0409594B91B8612E5DFA9 /* LLMProvidersListViewModelTests.swift */,
 				2BE0EEBE98883E7CA8730241 /* ModelChooserContentTests.swift */,
 				28E4DA0475CA3E52B78F13FF /* ModelPickerItemTests.swift */,
+				8CEAC3819317BF9E94FD148B /* PluginChatConfigProviderTests.swift */,
 				F22810CE993AF42226F22BA1 /* PluginLoadFailuresPanelTests.swift */,
 				D0904313AC1BEE6662DBB5BC /* ProviderPickerTests.swift */,
 				352356572860CD9B9F8BCFF2 /* SingleConfigurationChatConfigProviderTests.swift */,
@@ -15120,6 +15123,7 @@
 				0C9DB16E6B2C8C9A7A64E984 /* PerIDWindowControllerTests.swift in Sources */,
 				8F0CA7BFA37C7B9724D5EBFB /* PersonaTerminalChatToolsTests.swift in Sources */,
 				145D9A43D78CF7CF3A0A6E59 /* PlaceholderTests.swift in Sources */,
+				C4963FA6FCA48E719E6882DF /* PluginChatConfigProviderTests.swift in Sources */,
 				0C094A9A567FD8F7696CF4F2 /* PluginLoadFailuresPanelTests.swift in Sources */,
 				D21E64220F721413CA25BA5D /* PopupMenuChoiceViewTests.swift in Sources */,
 				82DAF2FAABFB4E009184AB44 /* ProjectBillablesControllerTests.swift in Sources */,
