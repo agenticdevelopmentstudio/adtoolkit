@@ -358,24 +358,24 @@ def test_apps_dir_defaults_to_the_config(tmp_path):
     assert (env.cfg.apps_dir / env.name).is_dir()
 
 
-def test_refuses_an_app_owned_by_someone_else_and_prints_the_pkg_command(tmp_path):
+def test_refuses_an_app_owned_by_someone_else_and_prints_the_chown(tmp_path):
     env = Env(tmp_path)
     (env.apps / env.name).mkdir()
-    pkg = env.zip.with_suffix(".pkg")
-    pkg.write_text("pkg")
     assert env.go(uid=os.getuid() + 1) == 1
     assert env.calls == []
-    assert f"sudo installer -pkg {pkg} -target /" in "\n".join(env.out)
+    said = "\n".join(env.out)
+    assert f'sudo chown -R "$(id -un)" {env.apps / env.name}' in said
+    assert "install again" in said
 
 
-def test_quits_the_installed_app_before_handing_over_the_pkg_and_says_to_reopen(tmp_path):
+def test_a_root_owned_app_is_left_running_and_no_pkg_is_offered(tmp_path):
+    """A second pkg install leaves the bundle root's again, so it is never the fix;
+    and the next install quits the app itself, so refusing must not quit it."""
     env = Env(tmp_path)
     (env.apps / env.name).mkdir()
     assert env.go(uid=os.getuid() + 1) == 1
-    assert env.signals == [(111, signal.SIGTERM)]
-    said = "\n".join(env.out)
-    assert "has been quit" in said
-    assert said.index("sudo installer") < said.index(f"open -a {env.apps / env.name}")
+    assert env.signals == []
+    assert "installer -pkg" not in "\n".join(env.out)
 
 
 def test_quits_only_the_installed_pids_term_first(tmp_path):

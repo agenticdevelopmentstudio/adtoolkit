@@ -7,9 +7,10 @@ in and opens it.
 
 The old bundle is moved aside, not deleted, until the new one is in place; if the
 second move fails the old one goes back. When the installed app belongs to another
-user (the first-install .pkg makes it root's) this quits the installed app,
-refuses, and prints the one-time `sudo installer` command for the owner to run and
-the `open` to follow it; it never runs sudo.
+user (the first-install .pkg makes it root's) this refuses, leaving the app
+running, and prints the one-time `sudo chown` that hands the bundle back, for the
+owner to run before installing again; it never runs sudo. (A second pkg install
+would not do: its payload is root's too.)
 
 `installed_failures` proves the copy in the apps directory is this version and
 build, signed Developer ID, layout-correct and running.
@@ -71,20 +72,14 @@ def install(zip_path: Path, cfg: ReleaseConfig, *, apps_dir: Path | None = None,
         say(f"error: {dest} is a symlink; remove it or install by hand.")
         return 1
     if dest.exists() and dest.lstat().st_uid != uid:
-        pkg = zip_path.with_suffix(".pkg")
-        # The pkg may have no scripts: a copy left running would keep serving the
-        # old code after the bundle is swapped under it.
-        survivors = quit_app(dest, pids=pids, kill=kill, sleep=sleep, monotonic=monotonic)
+        # Installing the pkg again would not help: pkgbuild's payload is root's, so
+        # it leaves the bundle root-owned and the next release refuses the same way.
+        # Handing the bundle back once is what makes every later install sudo-free.
         say(f"error: {dest} is not owned by you (the installer package made it), so it "
             "cannot be replaced without root.")
-        if survivors:
-            say(f"The installed app did not quit (pids {survivors}); quit it from the "
-                "menu bar first.")
-        else:
-            say("The installed app has been quit.")
-        say("Run this once yourself; later releases swap in without sudo:")
-        say(f"  sudo installer -pkg {pkg} -target /")
-        say(f"  open -a {dest}")
+        say("Hand it back to yourself once, then run install again; this and every "
+            "later release then swap in without sudo:")
+        say(f'  sudo chown -R "$(id -un)" {dest}')
         return 1
 
     # Staged inside the apps dir so the swap renames within one volume.
