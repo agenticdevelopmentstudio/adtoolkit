@@ -138,4 +138,17 @@ final class DaemonDatabaseTests: XCTestCase {
         XCTAssertEqual(message, "boom")
         XCTAssertEqual(code, 1)
     }
+
+    // MARK: - Attachments
+
+    private final class Slot: @unchecked Sendable {}
+
+    func testAttachmentIsCreatedOncePerType() throws {
+        let store = try DaemonDatabase(path: path, migrations: twoMigrations(Counter()))
+        var made = 0
+        let first = store.attachment(Slot.self) { made += 1; return Slot() }
+        let second = store.attachment(Slot.self) { made += 1; return Slot() }
+        XCTAssertTrue(first === second)
+        XCTAssertEqual(made, 1)
+    }
 }

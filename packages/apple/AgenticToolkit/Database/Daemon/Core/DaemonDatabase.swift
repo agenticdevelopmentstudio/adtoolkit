@@ -112,6 +112,27 @@ public final class DaemonDatabase: @unchecked Sendable {
         return _isReady
     }
 
+    // MARK: - Attachments
+
+    private let attachmentLock = NSLock()
+    private var attachments: [ObjectIdentifier: AnyObject] = [:]
+
+    /// Per-database state for code that extends `DaemonDatabase` from outside
+    /// this file. An extension cannot hold a stored property, so it keeps its
+    /// caches in one object of its own type and reaches it through here.
+    ///
+    /// The first call for a type runs `make` and keeps the result; every later
+    /// call for that type returns the same instance.
+    public func attachment<T: AnyObject & Sendable>(_ type: T.Type, make: () -> T) -> T {
+        attachmentLock.lock()
+        defer { attachmentLock.unlock() }
+        let key = ObjectIdentifier(type)
+        if let existing = attachments[key] as? T { return existing }
+        let created = make()
+        attachments[key] = created
+        return created
+    }
+
     // MARK: - Initialization
 
     /// Opens the database and, unless `deferMigrations`, migrates it.
