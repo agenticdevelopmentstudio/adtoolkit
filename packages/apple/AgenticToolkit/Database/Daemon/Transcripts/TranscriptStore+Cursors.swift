@@ -68,10 +68,10 @@ extension DaemonDatabase {
     /// Nothing else ever deletes from `transcript_file_cursors`, so without this the
     /// table is the one structure in the database with no retention at all: every
     /// transcript the daemon has ever seen keeps a row, including deleted projects
-    /// and `~/.claude/projects` directories the user has cleaned out. That is not
-    /// just dead rows — `transcriptCursorStats` sums `file_size` across all of them,
-    /// so the cursor stats report a corpus that includes files deleted months
-    /// ago and can only ever grow.
+    /// and `~/.claude/projects` directories the user has cleaned out. Those rows
+    /// are not only dead weight: `transcriptCursorStats` sums `file_size` across all
+    /// of them, so the cursor stats describe a corpus that still counts files deleted
+    /// months ago and can only ever grow.
     ///
     /// Scoped to `root` (a prefix test, not a `LIKE` — a path may legitimately
     /// contain `%` or `_`) so a caller that walked one directory can never delete

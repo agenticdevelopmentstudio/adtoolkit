@@ -6,8 +6,7 @@ import Foundation
 /// that owns the database. The caller supplies the database (or a way to open
 /// one), so the importer never decides where the data lives.
 ///
-/// Used by a CLI `import` command; tests can also call this directly to
-/// exercise the pipeline end-to-end.
+/// A daemon or a test calls this directly to run the pipeline end-to-end.
 public enum ImportCoordinator {
 
     public static func runJSONLImport(

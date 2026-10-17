@@ -52,7 +52,7 @@ public struct JSONLImportPass: Sendable {
         if let raw = try? database.setting(for: Self.lastRunKey), !raw.isEmpty {
             since = formatter.date(from: raw)
         } else if let window = initialImportWindow {
-            since = Date().addingTimeInterval(-window)
+            since = Date().addingTimeInterval(window)
         } else {
             since = nil
         }
@@ -74,6 +74,12 @@ public struct JSONLImportPass: Sendable {
         // `filesScanned == 0` is what makes "nothing was eligible" distinct from
         // "the importer held the cutoff back because a file errored": seeding
         // `now` in the latter case would skip exactly the history that failed.
+        //
+        // A first pass bounded by `initialImportWindow` has `since != nil`, so if it
+        // scans nothing it does NOT seed the cutoff. That follows the same rule: the
+        // window is already the lower bound, and it slides forward with `now` on each
+        // pass until a file is imported and `cutoffISO` takes over. Re-scanning an
+        // empty window is cheap and the importer is idempotent.
         if let cutoffISO = summary.cutoffISO {
             try database.setSetting(Self.lastRunKey, cutoffISO)
         } else if since == nil, summary.filesScanned == 0 {

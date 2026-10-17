@@ -30,7 +30,7 @@ public enum TranscriptPricing {
     /// `session_metrics.total_cost_usd` is *persisted* at import time, and the
     /// importer never revisits an unmodified transcript — so without this a
     /// price change silently applies to new sessions only, and
-    /// `/sessions/:id/metrics` disagrees with `/turns` forever. a daemon
+    /// `/sessions/:id/metrics` disagrees with `/turns` forever. A daemon
     /// records the applied revision in `settings` and re-costs every persisted
     /// row when it moves (see `repriceSessionMetricsIfNeeded`).
     public static let revision = 3

@@ -36,8 +36,11 @@ final class JSONLImportPassTests: XCTestCase {
     private func writeTranscript(_ name: String, mtime: Date, readable: Bool = true) throws {
         let url = root.appendingPathComponent(name)
         let stem = name.replacingOccurrences(of: ".jsonl", with: "")
+        // The turn is stamped at the file's mtime: the importer drops turns older
+        // than `since`, so a fixed timestamp would hide whether a file was imported.
+        let stamp = ISO8601DateFormatter().string(from: mtime)
         let line = """
-        {"type":"assistant","sessionId":"\(stem)","timestamp":"2026-04-14T10:00:00Z",\
+        {"type":"assistant","sessionId":"\(stem)","timestamp":"\(stamp)",\
         "cwd":"/work","message":{"id":"m-\(stem)","model":"claude-sonnet-4-6",\
         "usage":{"input_tokens":10,"output_tokens":5},\
         "content":[{"type":"tool_use","name":"Edit","input":{}}]}}
@@ -87,15 +90,68 @@ final class JSONLImportPassTests: XCTestCase {
         XCTAssertFalse(cursor.isEmpty, "a clean chunk advances the cursor to its newest file")
     }
 
+    /// Whole-second instant `seconds` ago, so the turn stamp and mtime agree exactly.
+    private func ago(_ seconds: TimeInterval) -> Date {
+        Date(timeIntervalSince1970: (Date().timeIntervalSince1970 - seconds).rounded())
+    }
+
+    private func storedCutoff() throws -> Date? {
+        guard let raw = try database.setting(for: JSONLImportPass.lastRunKey), !raw.isEmpty else { return nil }
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return fractional.date(from: raw) ?? ISO8601DateFormatter().date(from: raw)
+    }
+
     /// With no stored cutoff, `initialImportWindow` bounds how far back the first
     /// pass reaches: a transcript older than the window is not imported.
     func testInitialImportWindowSkipsOlderTranscripts() throws {
-        try writeTranscript("old.jsonl", mtime: Date(timeIntervalSinceNow: -10 * 86_400))
-        try writeTranscript("new.jsonl", mtime: Date(timeIntervalSinceNow: -60))
+        try writeTranscript("old.jsonl", mtime: ago(10 * 86_400))
+        let newMtime = ago(60)
+        try writeTranscript("new.jsonl", mtime: newMtime)
 
         let outcome = try pass(filesPerBatch: 10, window: 86_400).run()
         XCTAssertEqual(outcome.summary.filesScanned, 1, "only the file inside the window is eligible")
-        let cursor = try database.setting(for: JSONLImportPass.lastRunKey) ?? ""
-        XCTAssertFalse(cursor.isEmpty, "the pass records where it got to")
+        XCTAssertNotNil(try database.transcriptTurn(messageId: "m-new"), "the in-window file is imported")
+        XCTAssertNil(try database.transcriptTurn(messageId: "m-old"), "the out-of-window file is not")
+
+        let cutoff = try XCTUnwrap(try storedCutoff())
+        XCTAssertEqual(cutoff.timeIntervalSince1970, newMtime.timeIntervalSince1970, accuracy: 2,
+                       "the cutoff is the newest imported file's mtime")
+        XCTAssertGreaterThan(cutoff, Date(timeIntervalSinceNow: -86_400))
+    }
+
+    /// With no window and no stored cutoff, everything is eligible, however old.
+    func testNilWindowWithNoSettingImportsOldTranscripts() throws {
+        let mtime = ago(40 * 86_400)
+        try writeTranscript("ancient.jsonl", mtime: mtime)
+
+        let outcome = try pass(filesPerBatch: 10, window: nil).run()
+        XCTAssertEqual(outcome.summary.filesScanned, 1)
+        XCTAssertNotNil(try database.transcriptTurn(messageId: "m-ancient"), "a 40-day-old file is imported")
+        let cutoff = try XCTUnwrap(try storedCutoff())
+        XCTAssertEqual(cutoff.timeIntervalSince1970, mtime.timeIntervalSince1970, accuracy: 2)
+    }
+
+    /// A stored cutoff beats the window, so a window can never rewind a resume point.
+    func testStoredCutoffWinsOverInitialImportWindow() throws {
+        let storedAt = ago(3_600)
+        let fractional = ISO8601DateFormatter()
+        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        try database.setSetting(JSONLImportPass.lastRunKey, fractional.string(from: storedAt))
+
+        // Inside the 90-day window, but before the stored cutoff.
+        try writeTranscript("between.jsonl", mtime: ago(2 * 86_400))
+        let recentMtime = ago(1_800)
+        try writeTranscript("recent.jsonl", mtime: recentMtime)
+
+        let outcome = try pass(filesPerBatch: 10, window: 90 * 86_400).run()
+        XCTAssertEqual(outcome.summary.filesScanned, 1, "only the file after the stored cutoff is eligible")
+        XCTAssertNotNil(try database.transcriptTurn(messageId: "m-recent"))
+        XCTAssertNil(try database.transcriptTurn(messageId: "m-between"),
+                     "the window must not reach behind a stored cutoff")
+
+        let cutoff = try XCTUnwrap(try storedCutoff())
+        XCTAssertEqual(cutoff.timeIntervalSince1970, recentMtime.timeIntervalSince1970, accuracy: 2)
+        XCTAssertGreaterThan(cutoff, storedAt)
     }
 }

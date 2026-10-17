@@ -12,7 +12,7 @@ extension DaemonDatabase {
     /// Insert the verbatim JSONL lines of one transcript file into
     /// `transcript_lines`, deduplicated by `(session_id, line_hash)` via
     /// `INSERT OR IGNORE`. All lines for the file go in ONE transaction (a
-    /// single `poolWrite`), matching `insertTranscriptTurn`'s pattern. Returns
+    /// single `write`), matching `insertTranscriptTurn`'s pattern. Returns
     /// the number of rows actually inserted (dedup hits excluded), so re-scans
     /// of a grown or already-imported file return the count of only the new
     /// lines. `line_hash` is SHA-256 of the raw line text.
