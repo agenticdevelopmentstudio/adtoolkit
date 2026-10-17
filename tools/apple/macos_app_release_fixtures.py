@@ -369,3 +369,55 @@ def entry(cfg: ReleaseConfig, *, minimum: str = "26.0", version: str = VERSION,
     return mr.ReleaseEntry(version=version, build=build, date="2026-10-16T00:00:00Z",
                            minimum_system_version=minimum, notes=f"notes/{version}.md",
                            pkg=asset("pkg", "p" * 64), zip=asset("zip", "z" * 64))
+
+
+_BUNDLE_SUFFIXES = (".app", ".appex", ".framework", ".xpc", ".aiplugin")
+
+
+def make_app(r: Release, **info: Any) -> Path:
+    """Write a layout-correct bundle at r.app with a matching Info.plist; return it.
+
+    It satisfies `layout.problems`, `bundle_info_problems`, `entitlements_map` and every
+    configured nested bundle. `info` keys override or (None) delete Info.plist entries.
+    """
+    cfg, app = r.cfg, r.app
+    app.mkdir(parents=True, exist_ok=True)
+
+    def place(rel: str) -> None:
+        target = app / rel
+        if target.exists():
+            return
+        if rel.endswith(_BUNDLE_SUFFIXES):
+            target.mkdir(parents=True)
+        else:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("")
+
+    for rel in (*cfg.layout_required, *cfg.entitlements, *cfg.nested_bundles):
+        if rel != ".":
+            place(rel)
+    for pattern in cfg.layout_required_globs:
+        place(pattern.replace("*", "x"))
+    for rel in cfg.nested_bundles:
+        nested = app / rel / "Contents/Info.plist"
+        nested.parent.mkdir(parents=True, exist_ok=True)
+        nested.write_bytes(plistlib.dumps({"CFBundleShortVersionString": r.version,
+                                           "CFBundleVersion": str(r.build_number)}))
+
+    values: dict[str, Any] = {
+        "CFBundleShortVersionString": r.version,
+        "CFBundleVersion": str(r.build_number),
+        "LSMinimumSystemVersion": "26.0",
+        "SUFeedURL": cfg.feed_url,
+        "SUPublicEDKey": "abc=",
+        **cfg.expect_info,
+    }
+    for key, value in info.items():
+        if value is None:
+            values.pop(key, None)
+        else:
+            values[key] = value
+    plist = app / "Contents/Info.plist"
+    plist.parent.mkdir(parents=True, exist_ok=True)
+    plist.write_bytes(plistlib.dumps(values))
+    return app
