@@ -19,7 +19,7 @@ import pytest
 
 import macos_release as mr
 from macos_app_release import build_pipeline as bp
-from macos_app_release.state import PREPARE_CMD, sha256_of
+from macos_app_release.state import RELEASE_CMD, sha256_of
 from macos_app_release_fixtures import (BUILD, FLAVORS, SOURCE_SHA, VERSION, FakeRunner, entry,
                                          make_app, release, with_artifacts)
 
@@ -188,7 +188,7 @@ def test_build_preflight_refuses_a_version_already_tagged(tmp_path, flavor):
 def test_preflight_points_at_publish_when_the_release_exists(tmp_path, flavor):
     r = _world(tmp_path, flavor, (lambda a: a[:3] == ["gh", "release", "view"], 0, ""))
     message = _preflight_error(r)
-    assert bp.PUBLISH_CMD in message
+    assert f"finish it with `{RELEASE_CMD}`" in message
 
 
 @pytest.mark.parametrize("flavor", FLAVOR_NAMES)
@@ -256,7 +256,7 @@ def test_publish_preflight_names_the_missing_artifacts_and_the_prepare_command(t
     failures: list[str] = []
     bp.publish_preflight(r, "abc=", failures)
     for needed in (r.pkg_path, r.zip_path, r.app / "Contents/Info.plist"):
-        assert any(str(needed) in f and PREPARE_CMD in f for f in failures), failures
+        assert any(str(needed) in f and f"without them, run {RELEASE_CMD}" in f for f in failures), failures
 
 
 @pytest.mark.parametrize("flavor", FLAVOR_NAMES)

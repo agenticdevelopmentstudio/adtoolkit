@@ -191,7 +191,7 @@ def test_source_tag_failures_require_the_tag(tmp_path):
     r = release(tmp_path, _tag_runner(None))
     r.source_sha = SOURCE_SHA
     [msg] = state.source_tag_failures(r)
-    assert f"no tag release/{VERSION}" in msg and state.PREPARE_CMD in msg
+    assert f"no tag release/{VERSION}" in msg and f"-- {state.RELEASE_CMD} tags" in msg
 
 
 def test_source_tag_failures_refuse_a_head_that_moved(tmp_path):
@@ -199,7 +199,7 @@ def test_source_tag_failures_refuse_a_head_that_moved(tmp_path):
     r.source_sha = "d" * 40
     [msg] = state.source_tag_failures(r)
     assert "aaaaaaaaaaaa" in msg and "dddddddddddd" in msg
-    assert f"main moved after {state.PREPARE_CMD}" in msg
+    assert f"main moved after {state.RELEASE_CMD}" in msg
 
 
 def test_source_tag_failures_name_the_configured_branch(tmp_path):

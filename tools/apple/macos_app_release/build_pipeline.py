@@ -24,15 +24,13 @@ from .site import site_failures
 from .sparkle import (bundle_info_problems, ensure_sparkle_tools, public_key_failure,
                       sparkle_config_problems, sparkle_public_key, step_appcast,
                       step_sparkle_verify)
-from .state import (PREPARE_CMD, Release, artifact_failures, git_count, head_sha,
+from .state import (RELEASE_CMD, Release, artifact_failures, git_count, head_sha,
                     source_tag_failures, tag_sha, write_provenance)
 from .versions import must_match_failures, project_setting
 
 BUILD_STEPS = ["preflight", "build", "check-bundle", "provision", "sign", "notarize-app",
                "update-zip", "appcast", "sparkle-verify", "pkg", "notarize-pkg"]
 
-#: What a failed build tells the owner to run to finish a half-published version.
-PUBLISH_CMD = "/release-macos-app publish"
 
 
 # Steps -----------------------------------------------------------------------
@@ -121,7 +119,7 @@ def release_preflight(r: Release, public_key: str, failures: list[str], *,
         failures.extend(lines)
         if any("already exists" in ln or "already released" in ln for ln in lines):
             failures.append("if an earlier run of this version failed while publishing, "
-                            f"finish it with `{PUBLISH_CMD}` instead")
+                            f"finish it with `{RELEASE_CMD}` instead")
     if not public_key:
         failures.append(public_key_failure(r))
     if not r.notes.exists():
@@ -160,7 +158,7 @@ def publish_preflight(r: Release, public_key: str, failures: list[str], *,
     for needed in (r.pkg_path, r.zip_path, info_plist):
         if not needed.exists():
             failures.append(f"{needed} is missing -- publish publishes the artifacts "
-                            f"{PREPARE_CMD} built; without them, run {PREPARE_CMD}")
+                            f"{RELEASE_CMD} built; without them, run {RELEASE_CMD}")
     failures.extend(releases_repo_failures(r))
     failures.extend(site_failures(r))
     if info_plist.exists():

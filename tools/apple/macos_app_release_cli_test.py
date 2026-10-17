@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Tests for release_macos_app -- the CLI: one test per command, exit codes, and the
-contract with the /release-macos-app skill that drives it.
+contract with the /release skill that drives it.
 
 Every external command goes through a FakeRunner and every HTTP request through a fake
 fetch; the only real processes are the `python -c` hooks the tests configure themselves.
@@ -24,16 +24,16 @@ from macos_app_release_fixtures import (BUILD, VERSION, FakeRunner, deep_merge, 
                                         write_config)
 
 def _skill() -> Path:
-    """The release-macos-app skill that drives this CLI: $RELEASE_MACOS_APP_SKILL when set
+    """The release skill that drives this CLI: $RELEASE_SKILL when set
     (point it at mydevsetup's source copy while changing both), else an installed copy."""
     import os
-    if os.environ.get("RELEASE_MACOS_APP_SKILL"):
-        return Path(os.environ["RELEASE_MACOS_APP_SKILL"])
+    if os.environ.get("RELEASE_SKILL"):
+        return Path(os.environ["RELEASE_SKILL"])
     for host in (".claude", ".codex"):
-        installed = Path.home() / host / "skills/release-macos-app/SKILL.md"
+        installed = Path.home() / host / "skills/release/SKILL.md"
         if installed.exists():
             return installed
-    return Path("/nonexistent/release-macos-app/SKILL.md")
+    return Path("/nonexistent/release/SKILL.md")
 
 
 SKILL = _skill()
@@ -556,8 +556,8 @@ def test_skill_invocation_extraction():
     assert got == [("bump", ["patch"]), ("publish", ["--site", "placeholder"])]
 
 
-@pytest.mark.skipif(not SKILL.exists(), reason="the release-macos-app skill is not installed "
-                    "(set RELEASE_MACOS_APP_SKILL to its SKILL.md)")
+@pytest.mark.skipif(not SKILL.exists(), reason="the release skill is not installed "
+                    "(set RELEASE_SKILL to its SKILL.md)")
 def test_every_cli_usage_in_the_skill_is_accepted_by_argparse():
     uses = skill_invocations(SKILL.read_text())
     assert len(uses) >= 15, "the extraction should find the skill's CLI calls"

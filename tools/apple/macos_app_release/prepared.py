@@ -48,7 +48,7 @@ def main_failures(r: Release) -> list[str]:
     elif origin != r.source_sha:
         failures.append(f"HEAD {r.source_sha[:12]} is not origin/{r.branch} "
                         f"{origin[:12] or '?'} -- push it, or {r.branch} moved after "
-                        f"{state.PREPARE_CMD}; prepare again")
+                        f"{state.RELEASE_CMD}; prepare again")
     return failures
 
 

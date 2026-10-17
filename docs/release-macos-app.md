@@ -8,10 +8,10 @@ commands; the toolkit holds everything else. Design:
 python3 external/agenticdevelopertoolkit/tools/apple/release_macos_app.py [--repo PATH] <command>
 ```
 
-The `/release-macos-app` skill (mydevsetup) drives this CLI. Its two modes are `prepare`
-(tests, warnings, version and notes, the notarized build, install, merge and a local tag)
-and `publish` (publish that exact build without rebuilding, verify the live site serves it,
-push the tag). You can run every command by hand.
+The `/release [--tests]` skill (mydevsetup) drives this CLI, start to finish. It prepares
+(tests only with `--tests`, warnings, version and notes, the notarized build, install,
+merge and a local tag), then publishes that exact build without rebuilding, verifies the
+live site serves it and pushes the tag. You can run every command by hand.
 
 **The pipeline never deploys the website.** It only probes the site.
 
@@ -174,7 +174,7 @@ starts.
 5. Create the public `<app>-releases` repo on GitHub and clone it where
    `releases.checkout` points (by default beside the app's main checkout).
 6. Gitignore `build/release`.
-7. Run `status` until it passes, then `/release-macos-app prepare`.
+7. Run `status` until it passes, then `/release`.
 
 ## Owner prerequisites
 

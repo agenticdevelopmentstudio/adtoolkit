@@ -14,8 +14,9 @@ from .shell import Runner
 PROVENANCE = "provenance.json"
 SPARKLE_BIN_REL = Path("SourcePackages/artifacts/sparkle/Sparkle/bin")
 
-#: What failure messages tell the owner to run to rebuild: the skill, in prepare mode.
-PREPARE_CMD = "/release-macos-app prepare"
+#: What failure messages tell the owner to run: the skill, which finds where the
+#: version stands and prepares, rebuilds or finishes publishing it.
+RELEASE_CMD = "/release"
 
 
 class AlreadyPublished(Exception):
@@ -128,11 +129,11 @@ def source_tag_failures(r: Release) -> list[str]:
     """publish ships the commit prepare tagged, and nothing else."""
     tagged = tag_sha(r)
     if tagged is None:
-        return [f"no tag {r.source_tag} in {r.repo} -- {PREPARE_CMD} tags the commit it "
+        return [f"no tag {r.source_tag} in {r.repo} -- {RELEASE_CMD} tags the commit it "
                 "built; run it first"]
     if tagged != r.source_sha:
         return [f"{r.source_tag} is {tagged[:12]} but HEAD is {(r.source_sha or '?')[:12]} -- "
-                f"{r.cfg.source_branch} moved after {PREPARE_CMD}; run {PREPARE_CMD} again"]
+                f"{r.cfg.source_branch} moved after {RELEASE_CMD}; run {RELEASE_CMD} again"]
     return []
 
 
@@ -151,7 +152,7 @@ def artifact_failures(r: Release) -> list[str]:
     """publish publishes what is on disk without rebuilding it, so prove it is
     what a finished build of HEAD left: a provenance record saying so, digests that
     still match it, and signatures Gatekeeper accepts."""
-    rerun = f"run {PREPARE_CMD} to rebuild them"
+    rerun = f"run {RELEASE_CMD} to rebuild them"
     try:
         record = json.loads(r.provenance_path.read_text())
     except FileNotFoundError:
