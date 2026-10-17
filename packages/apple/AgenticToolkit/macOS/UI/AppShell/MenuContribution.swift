@@ -47,6 +47,13 @@ public struct MenuContribution {
     /// and disable itself, so the menu does not reshuffle under the pointer
     /// (`principle-of-least-astonishment`).
     public let isHidden: (() -> Bool)?
+    /// Optional dynamic check mark, asked each time the item is validated.
+    /// `nil` — the default — means the item never shows a state.
+    public let isChecked: (() -> Bool)?
+    /// Accessibility identifier suffix, used instead of the slug of `title`
+    /// when the title is too long or too likely to change to name the item.
+    /// `nil` — the default — slugs the title.
+    public let identifier: String?
     /// What to do when the user activates the item.
     public let action: () -> Void
 
@@ -58,6 +65,8 @@ public struct MenuContribution {
         modifiers: NSEvent.ModifierFlags = .command,
         isEnabled: @escaping () -> Bool = { true },
         isHidden: (() -> Bool)? = nil,
+        isChecked: (() -> Bool)? = nil,
+        identifier: String? = nil,
         action: @escaping () -> Void
     ) {
         self.slot = slot
@@ -67,6 +76,8 @@ public struct MenuContribution {
         self.modifiers = modifiers
         self.isEnabled = isEnabled
         self.isHidden = isHidden
+        self.isChecked = isChecked
+        self.identifier = identifier
         self.action = action
     }
 
@@ -132,6 +143,8 @@ public struct MenuContribution {
         self.key = key
         self.modifiers = modifiers
         self.isHidden = isHidden
+        self.isChecked = nil
+        self.identifier = nil
         self.isEnabled = { registry.isEnabled(id: commandID) }
         self.action = {
             do {

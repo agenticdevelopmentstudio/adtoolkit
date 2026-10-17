@@ -9,10 +9,16 @@ public final class ClosureMenuItemTarget: NSObject {
 
     private let action: () -> Void
     private let isEnabled: () -> Bool
+    private let isChecked: (() -> Bool)?
 
-    public init(action: @escaping () -> Void, isEnabled: @escaping () -> Bool = { true }) {
+    public init(
+        action: @escaping () -> Void,
+        isEnabled: @escaping () -> Bool = { true },
+        isChecked: (() -> Bool)? = nil
+    ) {
         self.action = action
         self.isEnabled = isEnabled
+        self.isChecked = isChecked
     }
 
     @objc(performMenuAction:) public func performMenuAction(_ sender: Any?) {
@@ -20,7 +26,8 @@ public final class ClosureMenuItemTarget: NSObject {
     }
 
     @objc public func validateMenuItem(_ item: NSMenuItem) -> Bool {
-        isEnabled()
+        if let isChecked { item.state = isChecked() ? .on : .off }
+        return isEnabled()
     }
 }
 
