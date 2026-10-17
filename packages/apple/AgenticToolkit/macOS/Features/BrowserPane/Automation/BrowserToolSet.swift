@@ -37,9 +37,12 @@ public final class BrowserToolSet: ChatToolSource, @unchecked Sendable {
         }
         let parsed = Arguments(tool: name, values: arguments)
         do {
-            // The hop to the main actor is an unstructured task, so a cancelled
-            // request (a timed-out HTTP call, a stopped chat) is forwarded to
-            // it by hand; otherwise a 60 s wait_for runs on to its end.
+            // The hop to the main actor is an unstructured task, so cancellation
+            // is forwarded to it by hand; otherwise a 60 s wait_for runs on to
+            // its end. Over HTTP it arrives from MCPHTTPEndpoint, which turns a
+            // caller's notifications/cancelled and FlyingFox's request timeout
+            // alike into a cancellation of the SDK's handler task; in a chat it
+            // is the stopped turn.
             let work = Task { @MainActor in try await self.dispatch(name, parsed, caller: caller) }
             let reply = try await withTaskCancellationHandler {
                 try await work.value

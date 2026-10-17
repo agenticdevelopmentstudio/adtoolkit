@@ -4,14 +4,23 @@ import AgenticToolkitCore
 
 final class MCPHTTPEndpointTests: XCTestCase {
 
-    /// A source whose one tool reports the caller it was given.
+    /// A source with two tools: `whoami` reports the caller it was given, and
+    /// `sleep` runs for two seconds and records whether it was cancelled.
     final class CallerSource: ChatToolSource, @unchecked Sendable {
+        static let sleepSeconds: UInt64 = 2
         private let lock = NSLock()
         private var recorded: [String] = []
+        private var recordedOutcomes: [String] = []
         var callers: [String] {
             lock.lock()
             defer { lock.unlock() }
             return recorded
+        }
+        /// "finished" or "cancelled", one per `sleep` call.
+        var outcomes: [String] {
+            lock.lock()
+            defer { lock.unlock() }
+            return recordedOutcomes
         }
 
         private func record(_ caller: String) {
@@ -20,11 +29,28 @@ final class MCPHTTPEndpointTests: XCTestCase {
             lock.unlock()
         }
 
+        private func recordOutcome(_ outcome: String) {
+            lock.lock()
+            recordedOutcomes.append(outcome)
+            lock.unlock()
+        }
+
         func toolDefinitions() async -> [ToolDefinition] {
             [ToolDefinition(name: "whoami", description: "names the caller",
+                            parametersJSONSchema: ToolJSONSchema.object(properties: [:])),
+             ToolDefinition(name: "sleep", description: "sleeps, and notices being cancelled",
                             parametersJSONSchema: ToolJSONSchema.object(properties: [:]))]
         }
         func callTool(name: String, argumentsJSON: Data, caller: String?) async -> (content: String, isError: Bool) {
+            if name == "sleep" {
+                do {
+                    try await Task.sleep(nanoseconds: Self.sleepSeconds * 1_000_000_000)
+                    recordOutcome("finished")
+                } catch {
+                    recordOutcome("cancelled")
+                }
+                return ("slept", false)
+            }
             record(caller ?? "none")
             // Long enough that two concurrent calls overlap.
             try? await Task.sleep(nanoseconds: 300_000_000)
@@ -82,7 +108,66 @@ final class MCPHTTPEndpointTests: XCTestCase {
         let (status, json) = try await send(body: rpc("tools/list"))
         XCTAssertEqual(status, 200)
         let tools = (json?["result"] as? [String: Any])?["tools"] as? [[String: Any]]
-        XCTAssertEqual(tools?.map { $0["name"] as? String }, ["whoami"])
+        XCTAssertEqual(tools?.map { $0["name"] as? String }, ["whoami", "sleep"])
+    }
+
+    // MARK: - Cancellation
+
+    private static let sleepCall =
+        #"{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"sleep","arguments":{}}}"#
+    private static let cancelFive =
+        #"{"jsonrpc":"2.0","method":"notifications/cancelled","params":{"requestId":5,"reason":"gave up"}}"#
+    private static let paneC = [HostMCPServer.callerHeader: "pane-C"]
+
+    /// A caller's `notifications/cancelled` names the id the caller sent. The
+    /// endpoint points it at the id the SDK knows the request by, the tool
+    /// stops, and the waiting call is answered rather than held open.
+    func testCallerCancellationReachesTheTool() async throws {
+        let port = self.port
+        let begin = Date()
+        async let call = Self.post(port: port, body: Self.sleepCall, extraHeaders: Self.paneC)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        let (status, json) = try await send(body: Self.cancelFive, extraHeaders: Self.paneC)
+        XCTAssertEqual(status, 202)
+        XCTAssertNil(json)
+        let (callStatus, callJSON) = try await call
+        XCTAssertLessThan(Date().timeIntervalSince(begin), 1.5, "the call must not run to the sleep's end")
+        XCTAssertEqual(callStatus, 200)
+        XCTAssertEqual(callJSON?["id"] as? Int, 5, "the caller gets its own id back")
+        XCTAssertNotNil(callJSON?["error"])
+        try await Task.sleep(nanoseconds: 200_000_000)
+        XCTAssertEqual(source.outcomes, ["cancelled"])
+    }
+
+    /// Two callers may both be using id 5. A cancellation from one must not
+    /// stop the other's request.
+    func testCancellationFromAnotherCallerCancelsNothing() async throws {
+        let port = self.port
+        async let call = Self.post(port: port, body: Self.sleepCall, extraHeaders: Self.paneC)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        let (status, _) = try await send(body: Self.cancelFive, extraHeaders: [HostMCPServer.callerHeader: "pane-D"])
+        XCTAssertEqual(status, 202)
+        let (callStatus, callJSON) = try await call
+        XCTAssertEqual(callStatus, 200)
+        XCTAssertNotNil(callJSON?["result"])
+        XCTAssertEqual(source.outcomes, ["finished"])
+    }
+
+    /// FlyingFox's timeout cancels only its own handler. The endpoint forwards
+    /// it into the SDK, so the tool stops when the client is told it failed.
+    func testHTTPTimeoutCancelsTheTool() async throws {
+        let slow = CallerSource()
+        let server = HostMCPServer(appName: "Slow", appVersion: "1")
+        await server.register(slow)
+        let endpoint = MCPHTTPEndpoint(server: server, token: token, preferredPort: 0, requestTimeout: 0.5)
+        let port = try await endpoint.start()
+        let begin = Date()
+        let (status, _) = try await Self.post(port: port, body: Self.sleepCall)
+        XCTAssertEqual(status, 500)
+        XCTAssertLessThan(Date().timeIntervalSince(begin), 1.5)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        XCTAssertEqual(slow.outcomes, ["cancelled"])
+        await endpoint.stop()
     }
 
     func testCallerHeaderReachesTheSource() async throws {
