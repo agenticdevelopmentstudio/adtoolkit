@@ -41,7 +41,8 @@ open class ConcealedContainerView: NSView, ConcealsContents {
     open override func accessibilityChildrenInNavigationOrder() -> [any NSAccessibilityElementProtocol]? { [] }
     open override func accessibilityVisibleChildren() -> [Any]? { [] }
     open override func accessibilityHitTest(_ point: NSPoint) -> Any? {
-        superview.flatMap { NSAccessibility.unignoredAncestor(of: $0) }
+        // AppKit asks on the main thread; the override is nonisolated.
+        MainActor.assumeIsolated { superview.flatMap { NSAccessibility.unignoredAncestor(of: $0) } }
     }
 
     open override func viewWillMove(toWindow newWindow: NSWindow?) {
