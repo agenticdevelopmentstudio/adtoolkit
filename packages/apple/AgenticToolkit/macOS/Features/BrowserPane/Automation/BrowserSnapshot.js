@@ -62,6 +62,16 @@
     return null;
   }
 
+  // A link's destination as a string. `el.href` is one on an HTML anchor but
+  // an SVGAnimatedString on an SVG one, and an object in the payload makes the
+  // Swift decoder refuse the whole snapshot; the attribute, resolved against
+  // the document, is a string for both.
+  function linkURL(el) {
+    const href = el.getAttribute('href');
+    if (!href) { return null; }
+    try { return new URL(href, document.baseURI).href; } catch (e) { return href; }
+  }
+
   function isHiddenUncached(el) {
     const tag = el.tagName.toLowerCase();
     if (tag === 'script' || tag === 'style' || tag === 'noscript' || tag === 'template' || tag === 'head') { return true; }
@@ -211,7 +221,10 @@
       const aria = Number(el.getAttribute('aria-level'));
       node.level = m ? Number(m[1]) : (Number.isInteger(aria) && aria >= 1 ? aria : 2);
     }
-    if (role === 'link' && el.href) { node.url = el.href; }
+    if (role === 'link') {
+      const url = linkURL(el);
+      if (url) { node.url = url; }
+    }
     const value = valueOf(el, role);
     if (value !== null) { node.value = value; }
 

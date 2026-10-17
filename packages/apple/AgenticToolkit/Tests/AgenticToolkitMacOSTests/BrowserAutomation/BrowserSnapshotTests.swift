@@ -62,6 +62,22 @@ final class BrowserSnapshotTests: XCTestCase {
         XCTAssertTrue(snap.text.contains("- link \"Forgot password?\" [ref=e11] [url=http://fixture.test/reset]"))
     }
 
+    /// An SVG anchor's `href` property is an SVGAnimatedString, not a string.
+    /// The snapshot must still decode, and name the link's destination.
+    func testSVGLinkHasAStringURL() async throws {
+        let page = OffscreenWebView()
+        await page.load(html: """
+            <svg xmlns="http://www.w3.org/2000/svg" width="100" height="40">
+            <a href="/chart"><text x="0" y="20">Chart</text></a>
+            </svg>
+            """)
+        var options = BrowserSnapshotOptions()
+        options.includeURLs = true
+        let snap = try await snapshot(page, options: options)
+        XCTAssertTrue(snap.text.contains("- link \"Chart\""), snap.text)
+        XCTAssertTrue(snap.text.contains("[url=http://fixture.test/chart]"), snap.text)
+    }
+
     func testScopeByRefSnapshotsOnlyThatSubtree() async throws {
         let page = OffscreenWebView()
         try await page.load(fixture: "landmarks")
