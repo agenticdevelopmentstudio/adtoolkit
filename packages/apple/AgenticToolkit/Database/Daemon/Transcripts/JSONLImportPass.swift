@@ -52,7 +52,7 @@ public struct JSONLImportPass: Sendable {
         if let raw = try? database.setting(for: Self.lastRunKey), !raw.isEmpty {
             since = formatter.date(from: raw)
         } else if let window = initialImportWindow {
-            since = Date().addingTimeInterval(window)
+            since = Date().addingTimeInterval(-window)
         } else {
             since = nil
         }
