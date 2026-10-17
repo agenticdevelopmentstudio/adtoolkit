@@ -150,6 +150,23 @@ final class TopicDialogWindowTests: XCTestCase {
         XCTAssertTrue(dialog.problemLabel.isHidden)
     }
 
+    /// An owner presents the dialog and keeps no reference to it; the dialog
+    /// must still be there when its modal session starts, and gone once finished.
+    func testAPresentedDialogKeepsItselfUntilFinished() {
+        weak var held: ComposableSettings.TopicDialogWindow?
+        autoreleasepool {
+            let dialog = ComposableSettings.TopicDialogWindow(
+                windowID: "test.topic-dialog.\(UUID().uuidString)", title: "Edit",
+                panels: [StubPanel("Only")], validate: { nil }, onFinish: { _ in })
+            held = dialog
+            dialog.present()
+        }
+        guard let dialog = held else { return XCTFail("the dialog was released before it was shown") }
+        // Finishing before the session starts also stops it from starting.
+        dialog.finish(false)
+        XCTAssertFalse(dialog.window?.isVisible ?? false)
+    }
+
     func testAFooterCanBeRemovedAndThePanelsTakeTheHeightBack() {
         let split = ComposableSettings.SplitViewController()
         split.setPanels([StubPanel("One")])

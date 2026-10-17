@@ -45,6 +45,11 @@ extension ComposableSettings {
         private let dialogTitle: String
         /// Set while `NSApp.runModal(for:)` is running this dialog.
         private var isRunningModal = false
+        /// The dialog itself, from `present` until `finish`. Nothing else holds
+        /// a window controller — a window does not keep its own — so an owner
+        /// that presents and lets go would otherwise lose the dialog before
+        /// its modal session starts.
+        private var presentedSelf: TopicDialogWindow?
 
         /// `windowID` keys the dialog's saved size and position.
         public init(windowID: String, title: String, panels: [any ComposableSettingsPanel],
@@ -95,7 +100,8 @@ extension ComposableSettings {
         /// the main queue for as long as the dialog is up, and every `await` the
         /// dialog's own work makes on the main actor would wait for it to close.
         public func present() {
-            guard let window = prepare() else { return }
+            guard !isFinished, let window = prepare() else { return }
+            presentedSelf = self
             CFRunLoopPerformBlock(CFRunLoopGetMain(), CFRunLoopMode.commonModes.rawValue) { [weak self] in
                 MainActor.assumeIsolated {
                     guard let self, !self.isFinished else { return }
@@ -161,6 +167,7 @@ extension ComposableSettings {
             onOK = nil
             validate = { nil }
             finished(accepted)
+            presentedSelf = nil
         }
 
         /// The close button cancels, and `finish` takes the window down.
