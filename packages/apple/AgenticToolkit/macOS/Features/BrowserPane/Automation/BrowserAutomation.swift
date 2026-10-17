@@ -283,7 +283,7 @@ public final class BrowserAutomation: NSObject {
         try await act {
             if native {
                 let r = try await self.rect(ref: ref, generation: generation)
-                try self.nativeClick(atPageX: r.midX, pageY: r.midY)
+                try self.nativeClick(atViewportX: r.midX, viewportY: r.midY)
             } else {
                 _ = try await self.call("click", ["ref": ref, "gen": generation])
             }
@@ -317,8 +317,30 @@ public final class BrowserAutomation: NSObject {
         }
     }
 
+    /// Where the last screenshot's pixels sit in the viewport: a screenshot is
+    /// device pixels, capped to `maximumScreenshotSide` and cropped to an
+    /// element when a ref was given, so a point read off it is neither CSS
+    /// pixels nor viewport-relative until it is mapped through this.
+    struct ScreenshotFrame: Equatable, Sendable {
+        /// CSS pixels per image pixel.
+        var scale: Double
+        /// The image's top-left corner, in viewport CSS pixels.
+        var origin: CGPoint
+
+        func viewportPoint(imageX x: Double, imageY y: Double) -> CGPoint {
+            CGPoint(x: origin.x + x * scale, y: origin.y + y * scale)
+        }
+    }
+
+    private(set) var lastScreenshot: ScreenshotFrame?
+
+    /// A real click at a point of the last screenshot, in that image's pixels.
+    /// Without a screenshot there is nothing the coordinates could be read
+    /// off, so the call is refused rather than guessed at.
     public func clickAt(x: Double, y: Double) async throws -> BrowserActionDelta {
-        try await act { try self.nativeClick(atPageX: x, pageY: y) }
+        guard let frame = lastScreenshot else { throw BrowserAutomationError.noScreenshot }
+        let point = frame.viewportPoint(imageX: x, imageY: y)
+        return try await act { try self.nativeClick(atViewportX: point.x, viewportY: point.y) }
     }
 
     /// Runs `expression` as the body `return (<expression>);` of an async
@@ -514,10 +536,13 @@ public final class BrowserAutomation: NSObject {
     public func screenshot(ref: String?, generation: Int?) async throws -> Data {
         guard let window = webView.window, window.isVisible else { throw BrowserAutomationError.notOnScreen }
         let configuration = WKSnapshotConfiguration()
+        let zoom = webView.pageZoom
+        // The viewport, or the element's rect, in CSS pixels: what the image shows.
+        var shown = CGRect(x: 0, y: 0, width: webView.bounds.width / zoom, height: webView.bounds.height / zoom)
         if let ref, let generation {
-            let r = try await rect(ref: ref, generation: generation)
-            let zoom = webView.pageZoom
-            configuration.rect = CGRect(x: r.minX * zoom, y: r.minY * zoom, width: r.width * zoom, height: r.height * zoom)
+            shown = try await rect(ref: ref, generation: generation)
+            configuration.rect = CGRect(x: shown.minX * zoom, y: shown.minY * zoom,
+                                        width: shown.width * zoom, height: shown.height * zoom)
         }
         let once = Resumer<NSImage>()
         let timeout = Self.screenshotTimeout
@@ -543,12 +568,17 @@ public final class BrowserAutomation: NSObject {
               let png = NSBitmapImageRep(cgImage: cg).representation(using: .png, properties: [:]) else {
             throw BrowserAutomationError.script("could not encode the screenshot")
         }
+        if cg.width > 0, shown.width > 0 {
+            lastScreenshot = ScreenshotFrame(scale: shown.width / Double(cg.width), origin: shown.origin)
+        }
         return png
     }
 
     /// Mouse down/up through the web view's own responder methods, so WebKit
-    /// handles it as a real click. Page coordinates are CSS pixels.
-    private func nativeClick(atPageX x: Double, pageY y: Double) throws {
+    /// handles it as a real click. The point is viewport CSS pixels: the web
+    /// view's bounds are the viewport, so a page coordinate would be off by
+    /// the scroll offset on any page that has scrolled.
+    private func nativeClick(atViewportX x: Double, viewportY y: Double) throws {
         guard let window = webView.window else { throw BrowserAutomationError.noWindow }
         let zoom = webView.pageZoom
         var point = NSPoint(x: x * zoom, y: y * zoom)

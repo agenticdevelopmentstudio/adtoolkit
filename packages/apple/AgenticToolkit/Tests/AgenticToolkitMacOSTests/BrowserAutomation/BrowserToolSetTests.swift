@@ -241,6 +241,12 @@ final class BrowserToolSetTests: XCTestCase {
         XCTAssertEqual(reply.content, "browser_fill needs value as a string")
     }
 
+    func testClickAtBeforeAScreenshotIsASentence() async {
+        let reply = await call("browser_click_at", ["pane_id": "A", "x": 5, "y": 5])
+        XCTAssertTrue(reply.isError)
+        XCTAssertEqual(reply.content, "take a browser_screenshot first; browser_click_at reads its coordinates off that image")
+    }
+
     func testUnknownToolIsASentence() async {
         let reply = await call("browser_fly")
         XCTAssertTrue(reply.isError)

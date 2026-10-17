@@ -379,8 +379,8 @@ public final class BrowserToolSet: ChatToolSource, @unchecked Sendable {
             "load": ToolJSONSchema.boolean("Wait for the page to finish loading"), "idle": ToolJSONSchema.boolean("Wait for the DOM to stop changing"),
             "timeout": ToolJSONSchema.number("Seconds, default 10, at most 60")
         ]),
-        tool("browser_screenshot", "A PNG of the page, or of one element by ref.", refGen),
-        tool("browser_click_at", "A real mouse click at page coordinates.", ["pane_id": paneID, "x": ToolJSONSchema.number("CSS pixels from the left"), "y": ToolJSONSchema.number("CSS pixels from the top")], required: ["x", "y"]),
+        tool("browser_screenshot", "A PNG of the viewport, or of one element by ref. Its pixels are the coordinates browser_click_at takes.", refGen),
+        tool("browser_click_at", "A real mouse click at a point of the last browser_screenshot, in that image's pixels. Take a screenshot first; browser_click by ref is the usual way.", ["pane_id": paneID, "x": ToolJSONSchema.number("Pixels from the left edge of the last screenshot"), "y": ToolJSONSchema.number("Pixels from the top edge of the last screenshot")], required: ["x", "y"]),
         tool("browser_console", "The page's last console messages and errors.", ["pane_id": paneID, "level": ToolJSONSchema.string("log, info, warn, error or debug")]),
         tool("browser_evaluate", "Evaluate a JavaScript expression in the page and return its JSON. Off unless enabled in Settings.", ["pane_id": paneID, "expression": ToolJSONSchema.string("The expression")], required: ["expression"])
     ]

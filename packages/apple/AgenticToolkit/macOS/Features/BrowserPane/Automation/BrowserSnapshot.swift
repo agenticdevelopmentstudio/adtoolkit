@@ -146,6 +146,8 @@ public enum BrowserAutomationError: Error, CustomStringConvertible, Equatable, S
     case noWindow
     case notOnScreen
     case screenshotTimedOut
+    /// `clickAt` before any screenshot: its coordinates are read off one.
+    case noScreenshot
     case cspRefusesEvaluation
     case openRefused
     /// The page is a `file:` URL. Models never drive local files.
@@ -161,6 +163,8 @@ public enum BrowserAutomationError: Error, CustomStringConvertible, Equatable, S
         case .noWindow: return "the pane is not in a window"
         case .notOnScreen: return "the pane is not on screen"
         case .screenshotTimedOut: return "the screenshot timed out"
+        case .noScreenshot:
+            return "take a browser_screenshot first; browser_click_at reads its coordinates off that image"
         case .cspRefusesEvaluation: return "the page's Content Security Policy refuses evaluation"
         case .openRefused: return "could not open a Browser pane beside that pane"
         case .localFile: return "the pane shows a local file, which models may not drive"

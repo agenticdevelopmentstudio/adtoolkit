@@ -423,6 +423,50 @@ final class BrowserAutomationTests: XCTestCase {
         XCTAssertFalse(a.isActionInFlight)
     }
 
+    /// The screenshot is device pixels, capped, so a point read off it is not
+    /// a CSS pixel. The click maps through the image's scale: whatever the
+    /// backing scale and cap, the button's centre in the image hits the button.
+    func testClickAtMapsScreenshotPixelsToTheViewport() async throws {
+        let (page, a) = await make(html: """
+            <button id="b" style="position:absolute;left:10px;top:10px;width:100px;height:40px">Hi</button>
+            <span id="out"></span><script>b.addEventListener('click', () => out.textContent = 'clicked')</script>
+            """)
+        page.orderInOffscreen()
+        let png = try await a.screenshot(ref: nil, generation: nil)
+        let image = try XCTUnwrap(NSBitmapImageRep(data: png))
+        let viewport = page.webView.bounds.size
+        let x = 60 / viewport.width * Double(image.pixelsWide)
+        let y = 30 / viewport.height * Double(image.pixelsHigh)
+        XCTAssertNotEqual(Int(x), 60, "the image must not be 1:1 with CSS pixels for this to test anything")
+        _ = try await a.clickAt(x: x, y: y)
+        _ = try await a.wait(for: .text("clicked"), timeout: 3)
+    }
+
+    /// An element screenshot's origin is the element, not the viewport.
+    func testClickAtOnAnElementScreenshotIsRelativeToTheElement() async throws {
+        let (page, a) = await make(html: """
+            <button id="b" style="position:absolute;left:300px;top:200px;width:100px;height:40px">Hi</button>
+            <span id="out"></span><script>b.addEventListener('click', () => out.textContent = 'clicked')</script>
+            """)
+        page.orderInOffscreen()
+        let snap = try await a.snapshot(.init())
+        let png = try await a.screenshot(ref: "e1", generation: snap.generation)
+        let image = try XCTUnwrap(NSBitmapImageRep(data: png))
+        _ = try await a.clickAt(x: Double(image.pixelsWide) / 2, y: Double(image.pixelsHigh) / 2)
+        _ = try await a.wait(for: .text("clicked"), timeout: 3)
+    }
+
+    func testClickAtWithoutAScreenshotIsASentence() async throws {
+        let (_, a) = await make(html: "<button>Hi</button>")
+        do {
+            _ = try await a.clickAt(x: 5, y: 5)
+            XCTFail("expected a refusal")
+        } catch let error as BrowserAutomationError {
+            XCTAssertEqual(error, .noScreenshot)
+            XCTAssertEqual(error.description, "take a browser_screenshot first; browser_click_at reads its coordinates off that image")
+        }
+    }
+
     func testNativeClickReachesThePage() async throws {
         let (_, a) = await make(html: """
             <button id="b" style="position:absolute;left:10px;top:10px;width:100px;height:40px">Hi</button>
