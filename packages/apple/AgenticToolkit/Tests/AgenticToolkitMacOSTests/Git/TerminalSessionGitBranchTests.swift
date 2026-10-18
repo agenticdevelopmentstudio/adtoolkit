@@ -68,16 +68,23 @@ final class TerminalSessionGitBranchTests: XCTestCase {
         let root = FileManager.default.temporaryDirectory
             .appendingPathComponent("terminal-session-git-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-        try run(["init", "-b", "main"], in: root)
-        try run(["config", "user.email", "test@example.com"], in: root)
-        try run(["config", "user.name", "Test"], in: root)
-        // The developer's own global config may turn signing on; a signing
-        // prompt would hang this commit rather than fail it.
-        try run(["config", "commit.gpgsign", "false"], in: root)
-        try "one\n".write(to: root.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
-        try run(["add", "a.txt"], in: root)
-        try run(["commit", "-m", "initial"], in: root)
-        return root
+        // A throw here never reaches the caller's `defer`, so the half-built
+        // repository is removed before the error propagates.
+        do {
+            try run(["init", "-b", "main"], in: root)
+            try run(["config", "user.email", "test@example.com"], in: root)
+            try run(["config", "user.name", "Test"], in: root)
+            // The developer's own global config may turn signing on; a signing
+            // prompt would hang this commit rather than fail it.
+            try run(["config", "commit.gpgsign", "false"], in: root)
+            try "one\n".write(to: root.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
+            try run(["add", "a.txt"], in: root)
+            try run(["commit", "-m", "initial"], in: root)
+            return root
+        } catch {
+            try? FileManager.default.removeItem(at: root)
+            throw error
+        }
     }
 
     /// Drives the system binary directly, so the fixture never depends on the

@@ -15,20 +15,27 @@ struct GitClientTests {
             let root = FileManager.default.temporaryDirectory
                 .appendingPathComponent("git-client-test-\(UUID().uuidString)")
             try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
-            try await run(["init", "-b", "main"], in: root)
-            try await run(["config", "user.email", "test@example.com"], in: root)
-            try await run(["config", "user.name", "Test"], in: root)
-            // The developer's own global config may turn signing on; a signing
-            // prompt would hang this commit rather than fail it. Mirrors
-            // `TerminalSessionGitBranchTests.makeRepository`.
-            try await run(["config", "commit.gpgsign", "false"], in: root)
-            try "one\n".write(to: root.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
-            try await run(["add", "a.txt"], in: root)
-            try await run(["commit", "-m", "initial"], in: root)
-            let worktree = root.appendingPathComponent("wt-feature")
-            try await run(["worktree", "add", "-b", "feature", worktree.path], in: root)
-            try "two\n".write(to: root.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
-            return Fixture(root: root, worktree: worktree)
+            // A throw here never reaches a caller's tearDown, so the half-built
+            // repository is removed before the error propagates.
+            do {
+                try await run(["init", "-b", "main"], in: root)
+                try await run(["config", "user.email", "test@example.com"], in: root)
+                try await run(["config", "user.name", "Test"], in: root)
+                // The developer's own global config may turn signing on; a signing
+                // prompt would hang this commit rather than fail it. Mirrors
+                // `TerminalSessionGitBranchTests.makeRepository`.
+                try await run(["config", "commit.gpgsign", "false"], in: root)
+                try "one\n".write(to: root.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
+                try await run(["add", "a.txt"], in: root)
+                try await run(["commit", "-m", "initial"], in: root)
+                let worktree = root.appendingPathComponent("wt-feature")
+                try await run(["worktree", "add", "-b", "feature", worktree.path], in: root)
+                try "two\n".write(to: root.appendingPathComponent("a.txt"), atomically: true, encoding: .utf8)
+                return Fixture(root: root, worktree: worktree)
+            } catch {
+                try? FileManager.default.removeItem(at: root)
+                throw error
+            }
         }
 
         func tearDown() {
