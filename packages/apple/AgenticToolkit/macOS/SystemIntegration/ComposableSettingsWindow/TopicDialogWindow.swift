@@ -83,6 +83,8 @@ extension ComposableSettings {
             // enough that a search field would only take room.
             split.sortsPanelsByTitle = false
             split.showsSidebarSearch = false
+            // One topic is the whole dialog: no list to pick it from.
+            split.showsSidebar = panels.count > 1
             split.setPanels(panels)
             split.detailFooterView = makeFooter()
         }
@@ -100,7 +102,7 @@ extension ComposableSettings {
 
         /// "Title — Panel": which record the dialog is about, and which topic is on screen.
         public override func toolbarTitle(forPanel panelTitle: String?) -> String {
-            guard let panelTitle, !panelTitle.isEmpty else { return dialogTitle }
+            guard let panelTitle, !panelTitle.isEmpty, split.showsSidebar else { return dialogTitle }
             return "\(dialogTitle) — \(panelTitle)"
         }
 

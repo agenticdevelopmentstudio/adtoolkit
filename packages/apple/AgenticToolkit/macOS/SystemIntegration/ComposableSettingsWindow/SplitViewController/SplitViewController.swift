@@ -73,6 +73,11 @@ extension ComposableSettings {
         /// by name.
         public var sortsPanelsByTitle: Bool = false
 
+        /// Whether the topic list is shown. Off for a window that has only one
+        /// topic, where the list would be a column naming the one thing on
+        /// screen. Read when the view loads.
+        public var showsSidebar: Bool = true
+
         /// Fired whenever the selection or the trail behind it changes, so a
         /// toolbar can revalidate its back/forward arrows and retitle itself.
         public var onNavigationChange: (() -> Void)?
@@ -290,7 +295,8 @@ extension ComposableSettings {
             // The topic list must never auto-hide — it's the only way to switch
             // panels, so a collapse (from a narrow window or the toolbar toggle)
             // would strand the user in the detail pane.
-            sidebarItem.canCollapse = false
+            sidebarItem.canCollapse = !showsSidebar
+            sidebarItem.isCollapsed = !showsSidebar
             // Higher holding priority than the detail so, on window resize, the
             // detail absorbs the change and the sidebar keeps its width.
             sidebarItem.holdingPriority = .defaultLow + 1
@@ -311,7 +317,9 @@ extension ComposableSettings {
                 // Classic draggable band, width persisted via autosave.
                 sidebarItem.minimumThickness = 160
                 sidebarItem.maximumThickness = 360
-                splitView.autosaveName = sidebarAutosaveName
+                // A hidden list has no width to remember, and a restored
+                // autosave would bring it back.
+                if showsSidebar { splitView.autosaveName = sidebarAutosaveName }
             }
 
             listViewController.onSelectPanel = { [weak self] panel in
@@ -341,6 +349,9 @@ extension ComposableSettings {
             // grey, which a transparent titlebar puts on show along the top.
             applyTheme(ThemePaletteObserver.currentPalette)
             updateSidebarLayout()
+            // Laying the split out can bring a collapsed sidebar back; a hidden
+            // list stays hidden.
+            if !showsSidebar { splitViewItems.first?.isCollapsed = true }
             // Auto-select the first panel so the detail pane is never blank.
             if currentPanel == nil, let first = panels.first {
                 selectPanel(first)

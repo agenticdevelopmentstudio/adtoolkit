@@ -57,11 +57,15 @@ extension ComposableSettings {
         public let isSortable: Bool
         /// Shown when the pointer rests on the header: what the column means.
         public let headerToolTip: String?
+        /// For a `.popUp` column: each pop-up is as wide as its widest choice,
+        /// closed and open, rather than as wide as the column.
+        public let fitsWidestChoice: Bool
 
         /// A column; text columns are read-only unless `kind` says otherwise.
         public init(
             id: String, title: String, width: CGFloat,
-            kind: Kind = .text(editable: false), isSortable: Bool = false, headerToolTip: String? = nil
+            kind: Kind = .text(editable: false), isSortable: Bool = false, headerToolTip: String? = nil,
+            fitsWidestChoice: Bool = false
         ) {
             self.id = id
             self.title = title
@@ -69,6 +73,7 @@ extension ComposableSettings {
             self.kind = kind
             self.isSortable = isSortable
             self.headerToolTip = headerToolTip
+            self.fitsWidestChoice = fitsWidestChoice
         }
     }
 
@@ -159,18 +164,28 @@ extension ComposableSettings {
         /// locked, such as a billed entry. Its edits are refused through
         /// `onRejectedEdit` rather than reported.
         public let isReadOnly: Bool
+        /// Columns whose cell in this row can't be changed, while the rest of
+        /// the row can: a fixed row with one setting of its own.
+        public let readOnlyColumns: Set<String>
 
         /// A row for the record `id`.
         public init(
             id: String,
             cells: [String: EditableTableCellValue],
             isFlagged: Bool = false,
-            isReadOnly: Bool = false
+            isReadOnly: Bool = false,
+            readOnlyColumns: Set<String> = []
         ) {
             self.id = id
             self.cells = cells
             self.isFlagged = isFlagged
             self.isReadOnly = isReadOnly
+            self.readOnlyColumns = readOnlyColumns
+        }
+
+        /// Whether the cell in `columnID` can be changed.
+        public func isEditable(_ columnID: String) -> Bool {
+            !isReadOnly && !readOnlyColumns.contains(columnID)
         }
     }
 
@@ -254,6 +269,7 @@ extension ComposableSettings {
             didSet {
                 footer.addButton.isHidden = !showsAddRemove
                 footer.removeButton.isHidden = !showsAddRemove
+                updateFooterVisibility()
             }
         }
 
@@ -280,8 +296,10 @@ extension ComposableSettings {
             return rows[row].id
         }
 
-        /// The table itself, for layout, tests and accessibility.
-        public let tableView = ThemedTableView()
+        /// The table itself, for layout, tests and accessibility. It takes
+        /// the card's own fill, so rows, the space under them and the card
+        /// around them read as one surface.
+        public let tableView = ThemedTableView(role: .elevatedSurface)
         /// Shown over the table while it has no rows.
         public let emptyLabel = ThemedLabel(role: .secondaryText, textRole: .body)
 
@@ -290,7 +308,7 @@ extension ComposableSettings {
         /// The footer's `−` button.
         public var removeButton: NSButton { footer.removeButton }
 
-        private let columns: [EditableTableColumn]
+        public let columns: [EditableTableColumn]
         private let footer: AddRemoveFooterView
         private var tableHeightConstraint: NSLayoutConstraint?
 
@@ -300,8 +318,23 @@ extension ComposableSettings {
         /// reason `visibleRows` gives. Never less than one row.
         public var tableHeight: CGFloat {
             get { tableHeightConstraint?.constant ?? 0 }
-            set { tableHeightConstraint?.constant = max(newValue, tableView.rowHeight + 2 + 24) }
+            set {
+                let oneRow = tableView.rowHeight + tableView.intercellSpacing.height + 24
+                tableHeightConstraint?.constant = max(newValue, oneRow)
+            }
         }
+        /// The table is exactly as tall as its rows, never scrolling itself:
+        /// for a card inside a pane that scrolls, where a second scroller would
+        /// hide rows behind the first. Off, the table keeps `visibleRows`.
+        public var fitsAllRows = false {
+            didSet {
+                scrollView.hasVerticalScroller = !fitsAllRows
+                scrollView.verticalScrollElasticity = fitsAllRows ? .none : .automatic
+                scrollView.passesVerticalScrollToEnclosingView = fitsAllRows
+                fitHeightToRows()
+            }
+        }
+
         private let scrollView = ThemedScrollView()
         private var heldRows = EditDeferredValue<[EditableTableRow]>()
         private var lastReportedSelection: String??
@@ -311,6 +344,7 @@ extension ComposableSettings {
         private static let cellIdentifier = NSUserInterfaceItemIdentifier("editable-table-cell")
         private static let toggleIdentifier = NSUserInterfaceItemIdentifier("editable-table-toggle")
         private static let popUpIdentifier = NSUserInterfaceItemIdentifier("editable-table-popup")
+        private static let fittedPopUpIdentifier = NSUserInterfaceItemIdentifier("editable-table-fitted-popup")
         private static let indicatorIdentifier = NSUserInterfaceItemIdentifier("editable-table-indicator")
         private static let rowViewIdentifier = NSUserInterfaceItemIdentifier("editable-table-row")
 
@@ -366,7 +400,17 @@ extension ComposableSettings {
             }
             emptyLabel.isHidden = !rows.isEmpty
             tableView.headerView?.isHidden = rows.isEmpty
+            updateFooterVisibility()
+            fitHeightToRows()
             updateButtons()
+        }
+
+        private func fitHeightToRows() {
+            guard fitsAllRows else { return }
+            let rowsHeight = CGFloat(rows.count) * (tableView.rowHeight + tableView.intercellSpacing.height)
+            // Before its first layout the header has no height yet; 24 is what it gets.
+            let header = tableView.headerView.map { max($0.frame.height, 24) } ?? 0
+            tableHeight = rowsHeight + header + 4
         }
 
         /// Replaces the rows whose ids appear in `changed`, redrawing only
@@ -437,7 +481,7 @@ extension ComposableSettings {
         /// refuses it and puts the row back as it was.
         private func route(row: EditableTableRow, columnID: String, text: String) {
             guard let column = columns.first(where: { $0.id == columnID }) else { return }
-            guard !row.isReadOnly else { return reject(row: row, columnID: columnID, text: text) }
+            guard row.isEditable(columnID) else { return reject(row: row, columnID: columnID, text: text) }
             if case .text = column.kind {
                 onEdit?(row.id, columnID, text)
                 return
@@ -537,7 +581,14 @@ extension ComposableSettings {
             _ = button.accessibilityID(identifier)
             footerActions[ObjectIdentifier(button)] = action
             footer.addAccessoryView(button)
+            updateFooterVisibility()
             return button
+        }
+
+        /// A footer with nothing in it would still hold its line under the table.
+        private func updateFooterVisibility() {
+            footer.isHidden = !showsAddRemove && footerActions.isEmpty
+                && footerMenuSources.isEmpty && !rows.isEmpty
         }
 
         @objc private func footerButtonPressed(_ sender: NSButton) {
@@ -561,6 +612,7 @@ extension ComposableSettings {
             button.menu = source.menu
             footerMenuSources.append(source)
             footer.addAccessoryView(button)
+            updateFooterVisibility()
             return button
         }
 
@@ -630,13 +682,17 @@ extension ComposableSettings {
                 }
                 tableView.addTableColumn(tableColumn)
             }
+            tableView.headerView = ThemedTableHeaderView(role: .elevatedSurface)
             tableView.dataSource = self
             tableView.delegate = self
             tableView.usesAlternatingRowBackgroundColors = false
+            // Room between rows, so a column of pop-ups does not read as one block.
+            tableView.intercellSpacing.height = 8
             tableView.allowsMultipleSelection = false
             tableView.accessibilityID("\(accessibilityPrefix).table")
 
             scrollView.documentView = tableView
+            scrollView.backgroundRole = .elevatedSurface
             scrollView.hasVerticalScroller = true
             scrollView.translatesAutoresizingMaskIntoConstraints = false
 
@@ -652,7 +708,7 @@ extension ComposableSettings {
             container.translatesAutoresizingMaskIntoConstraints = false
             container.addSubview(stack)
             let tableHeight = scrollView.heightAnchor.constraint(
-                equalToConstant: CGFloat(visibleRows) * (tableView.rowHeight + 2) + 24)
+                equalToConstant: CGFloat(visibleRows) * (tableView.rowHeight + tableView.intercellSpacing.height) + 24)
             tableHeightConstraint = tableHeight
             NSLayoutConstraint.activate([
                 stack.topAnchor.constraint(equalTo: container.topAnchor),
@@ -676,15 +732,17 @@ extension ComposableSettings {
 
         @objc fileprivate func togglePressed(_ sender: NSButton) {
             let row = sender.tag
-            guard row >= 0, row < rows.count, !rows[row].isReadOnly else { return }
-            guard let columnID = (sender as? EditableTableToggle)?.toggleColumnID else { return }
+            guard row >= 0, row < rows.count,
+                  let columnID = (sender as? EditableTableToggle)?.toggleColumnID,
+                  rows[row].isEditable(columnID) else { return }
             onToggle?(rows[row].id, columnID, sender.state == .on)
         }
 
         @objc fileprivate func popUpChosen(_ sender: NSPopUpButton) {
             let row = sender.tag
-            guard row >= 0, row < rows.count, !rows[row].isReadOnly,
+            guard row >= 0, row < rows.count,
                   let columnID = (sender as? EditableTablePopUp)?.popUpColumnID,
+                  rows[row].isEditable(columnID),
                   let choiceID = sender.selectedItem?.representedObject as? String else { return }
             onChoose?(rows[row].id, columnID, choiceID)
         }
@@ -732,7 +790,7 @@ extension ComposableSettings.EditableTableCard: NSTableViewDelegate {
             // column id is carried in `toggleColumnID`.
             button.toggleColumnID = columnID
             button.tag = row
-            button.isEnabled = !rows[row].isReadOnly
+            button.isEnabled = rows[row].isEditable(columnID)
             if case .toggle(let isOn) = value {
                 button.state = isOn ? .on : .off
             } else {
@@ -742,10 +800,11 @@ extension ComposableSettings.EditableTableCard: NSTableViewDelegate {
             return button
 
         case .popUp:
-            let button = reusablePopUp()
+            let host = column.fitsWidestChoice ? reusableFittedPopUp() : nil
+            let button = host?.popUp ?? reusablePopUp()
             button.popUpColumnID = columnID
             button.tag = row
-            button.isEnabled = !rows[row].isReadOnly
+            button.isEnabled = rows[row].isEditable(columnID)
             button.removeAllItems()
             if case .choice(let selected, let choices) = value {
                 for choice in choices {
@@ -763,7 +822,7 @@ extension ComposableSettings.EditableTableCard: NSTableViewDelegate {
                 }
             }
             button.setAccessibilityLabel(column.title)
-            return button
+            return host ?? button
 
         case .indicator:
             let label = reusableIndicator()
@@ -778,7 +837,7 @@ extension ComposableSettings.EditableTableCard: NSTableViewDelegate {
 
         case .text, .day, .time, .duration, .money:
             let field = reusableField()
-            field.isEditable = column.kind.isEditableText && !rows[row].isReadOnly
+            field.isEditable = column.kind.isEditableText && rows[row].isEditable(columnID)
             field.tag = row
             let (text, placeholder) = display(value)
             field.stringValue = text
@@ -846,8 +905,27 @@ extension ComposableSettings.EditableTableCard: NSTableViewDelegate {
         ) as? ComposableSettings.EditableTablePopUp {
             return reused
         }
-        let button = ComposableSettings.EditableTablePopUp(frame: .zero, pullsDown: false)
+        let button = makePopUp()
         button.identifier = Self.popUpIdentifier
+        return button
+    }
+
+    /// A pop-up at its own width, the widest choice's, against the cell's
+    /// leading edge: the table sizes a cell to its column, so the pop-up sits
+    /// in a host the table can stretch instead.
+    private func reusableFittedPopUp() -> ComposableSettings.EditableTablePopUpHost {
+        if let reused = tableView.makeView(
+            withIdentifier: Self.fittedPopUpIdentifier, owner: self
+        ) as? ComposableSettings.EditableTablePopUpHost {
+            return reused
+        }
+        let host = ComposableSettings.EditableTablePopUpHost(popUp: makePopUp())
+        host.identifier = Self.fittedPopUpIdentifier
+        return host
+    }
+
+    private func makePopUp() -> ComposableSettings.EditableTablePopUp {
+        let button = ComposableSettings.EditableTablePopUp(frame: .zero, pullsDown: false)
         button.controlSize = .small
         button.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
         // A choice that is gone stays shown, disabled, until another is picked.
@@ -972,6 +1050,28 @@ extension ComposableSettings {
     public final class EditableTablePopUp: NSPopUpButton {
         /// The id of the column this pop-up was last filled for.
         public var popUpColumnID: String?
+    }
+
+    /// The cell of a `fitsWidestChoice` column: its pop-up keeps its natural
+    /// width, which `NSPopUpButton` takes from its widest item.
+    public final class EditableTablePopUpHost: NSView {
+        public let popUp: EditableTablePopUp
+
+        init(popUp: EditableTablePopUp) {
+            self.popUp = popUp
+            super.init(frame: .zero)
+            popUp.translatesAutoresizingMaskIntoConstraints = false
+            popUp.setContentHuggingPriority(.required, for: .horizontal)
+            addSubview(popUp)
+            NSLayoutConstraint.activate([
+                popUp.leadingAnchor.constraint(equalTo: leadingAnchor),
+                popUp.centerYAnchor.constraint(equalTo: centerYAnchor),
+                popUp.trailingAnchor.constraint(lessThanOrEqualTo: trailingAnchor)
+            ])
+        }
+
+        @available(*, unavailable)
+        required init?(coder: NSCoder) { fatalError() }
     }
 
     /// A toggle cell. Its `identifier` is the reuse identifier, so the column

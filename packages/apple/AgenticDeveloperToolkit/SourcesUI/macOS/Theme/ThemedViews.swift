@@ -598,6 +598,27 @@ open class ThemedSplitViewController: NSSplitViewController {
 public final class ThemedScrollView: NSScrollView, Themeable {
     private var observer: ThemePaletteObserver?
 
+    /// Hands vertical wheel scrolling to the view around it: for a scroll view
+    /// sized to fit its content inside one that scrolls, which would otherwise
+    /// swallow the wheel and leave the outer one stuck under the pointer.
+    public var passesVerticalScrollToEnclosingView = false
+
+    /// What fills the area its document does not cover. The window's
+    /// background by default; a scroll view inside a card takes the card's
+    /// fill, so a short table never shows a second shade under its rows.
+    public var backgroundRole: ThemeRole = .windowBackground {
+        didSet { applyTheme(ThemePaletteObserver.currentPalette) }
+    }
+
+    public override func scrollWheel(with event: NSEvent) {
+        if passesVerticalScrollToEnclosingView, abs(event.scrollingDeltaY) >= abs(event.scrollingDeltaX),
+           let outer = superview?.enclosingScrollView {
+            outer.scrollWheel(with: event)
+        } else {
+            super.scrollWheel(with: event)
+        }
+    }
+
     public override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
         self.drawsBackground = true
@@ -608,7 +629,7 @@ public final class ThemedScrollView: NSScrollView, Themeable {
     public required init?(coder: NSCoder) { fatalError() }
 
     public func applyTheme(_ palette: SemanticPalette) {
-        backgroundColor = palette.nsColor(.windowBackground)
+        backgroundColor = palette.nsColor(backgroundRole)
     }
 }
 
@@ -639,6 +660,82 @@ public final class ThemedTableView: NSTableView, Themeable {
     public func applyTheme(_ palette: SemanticPalette) {
         backgroundColor = palette.nsColor(role)
         gridColor = palette.nsColor(.divider)
+    }
+}
+
+/// A table header painted from the palette. `NSTableHeaderView` is drawn by
+/// the system to its last pixel, so under a themed table it is a band of
+/// system grey; this one fills itself with `role` and draws each column's
+/// `ThemedTableHeaderCell` (a plain cell gets one) over it.
+@MainActor
+public final class ThemedTableHeaderView: NSTableHeaderView, Themeable {
+    public let role: ThemeRole
+    private var palette: SemanticPalette = ThemePaletteObserver.currentPalette
+    private var observer: ThemePaletteObserver?
+
+    public init(role: ThemeRole = .surface) {
+        self.role = role
+        super.init(frame: NSRect(x: 0, y: 0, width: 0, height: 24))
+        self.observer = ThemePaletteObserver(host: self) { [weak self] palette in self?.applyTheme(palette) }
+    }
+
+    @available(*, unavailable)
+    public required init?(coder: NSCoder) { fatalError() }
+
+    public func applyTheme(_ palette: SemanticPalette) {
+        self.palette = palette
+        needsDisplay = true
+    }
+
+    public override func draw(_ dirtyRect: NSRect) {
+        palette.nsColor(role).setFill()
+        dirtyRect.fill()
+        guard let tableView else { return }
+        let sort = tableView.sortDescriptors.first
+        for (index, column) in tableView.tableColumns.enumerated() where !column.isHidden {
+            let rect = headerRect(ofColumn: index)
+            guard rect.intersects(dirtyRect) else { continue }
+            let cell: ThemedTableHeaderCell
+            if let themed = column.headerCell as? ThemedTableHeaderCell {
+                cell = themed
+            } else {
+                cell = ThemedTableHeaderCell(textCell: column.title)
+                column.headerCell = cell
+            }
+            cell.palette = palette
+            cell.draw(withFrame: rect, in: self)
+            if let key = sort?.key, key == column.sortDescriptorPrototype?.key, let sort {
+                cell.drawSortIndicator(withFrame: rect, in: self, ascending: sort.ascending, priority: 0)
+            }
+        }
+        palette.nsColor(.divider).setFill()
+        NSRect(x: bounds.minX, y: isFlipped ? bounds.maxY - 1 : bounds.minY, width: bounds.width, height: 1).fill()
+    }
+}
+
+/// A column title in the palette's secondary text, with a short divider on
+/// its trailing edge, for `ThemedTableHeaderView`.
+public final class ThemedTableHeaderCell: NSTableHeaderCell {
+    /// Set by the header view before each draw; without one the cell draws as the system does.
+    var palette: SemanticPalette?
+
+    public override func draw(withFrame cellFrame: NSRect, in controlView: NSView) {
+        guard let palette else {
+            super.draw(withFrame: cellFrame, in: controlView)
+            return
+        }
+        let font = palette.font(.caption, weight: .medium)
+        let title = NSAttributedString(string: stringValue, attributes: [
+            .font: font,
+            .foregroundColor: palette.nsColor(.secondaryText)
+        ])
+        let height = title.size().height
+        let textRect = NSRect(
+            x: cellFrame.minX + 5, y: cellFrame.midY - height / 2,
+            width: max(0, cellFrame.width - 10), height: height)
+        title.draw(with: textRect, options: [.usesLineFragmentOrigin, .truncatesLastVisibleLine])
+        palette.nsColor(.divider).setFill()
+        NSRect(x: cellFrame.maxX - 1, y: cellFrame.minY + 5, width: 1, height: cellFrame.height - 10).fill()
     }
 }
 

@@ -138,7 +138,11 @@ extension ComposableSettings {
         private var helpButtonThemeObserver: ThemePaletteObserver?
 
         private func installToolbar(on window: NSWindow) {
-            let toolbar = NSToolbar(identifier: "ComposableSettings.Toolbar")
+            // AppKit keeps toolbars sharing an identifier in step, so a window
+            // without the ‹ › needs its own or it would take them from another.
+            let single = viewController?.showsSidebar == false
+            let toolbar = NSToolbar(identifier: single ? "ComposableSettings.SinglePaneToolbar"
+                                                       : "ComposableSettings.Toolbar")
             toolbar.delegate = self
             toolbar.displayMode = .iconOnly
             toolbar.allowsUserCustomization = false
@@ -232,12 +236,19 @@ extension ComposableSettings {
             .flexibleSpace, .settingsHelp
         ]
 
+        /// With no topic list there is nowhere to go back to, so no ‹ › either:
+        /// hiding the arrows alone would leave their empty toolbar item behind.
+        private var itemIdentifiers: [NSToolbarItem.Identifier] {
+            guard viewController?.showsSidebar == false else { return Self.itemIdentifiers }
+            return Self.itemIdentifiers.filter { $0 != .settingsNavigation }
+        }
+
         public func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-            Self.itemIdentifiers
+            itemIdentifiers
         }
 
         public func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-            Self.itemIdentifiers
+            itemIdentifiers
         }
 
         public func toolbar(

@@ -57,6 +57,34 @@ extension ComposableSettings {
         /// through `subviews`.
         public let cardView: NSView
 
+        /// Whether the caption carries a disclosure triangle after it that
+        /// shows and hides the card. Off by default.
+        public var isDisclosable = false {
+            didSet {
+                disclosureButton.isHidden = !isDisclosable
+                // Only a disclosable header gives up its width: the triangle
+                // sits right after the title, not at the far edge.
+                headerSpacer.isHidden = !isDisclosable
+                header.setContentHuggingPriority(
+                    isDisclosable ? .defaultHigh : .defaultLow, for: .horizontal)
+            }
+        }
+
+        /// Whether the card shows. True by default; the triangle flips it.
+        public var isDisclosed = true {
+            didSet {
+                cardView.isHidden = !isDisclosed
+                disclosureButton.state = isDisclosed ? .on : .off
+                disclosureButton.setAccessibilityLabel(isDisclosed ? "Hide" : "Show")
+            }
+        }
+
+        /// The triangle after the caption, shown while `isDisclosable`.
+        public let disclosureButton = NSButton()
+
+        private let header: NSView
+        private let headerRow = NSStackView()
+        private let headerSpacer = NSView()
         private let outerStack = NSStackView()
         private let rowStack = NSStackView()
         private var rows: [CardRow] = []
@@ -72,6 +100,7 @@ extension ComposableSettings {
                 fill: .elevatedSurface,
                 stroke: nil,
                 cornerRadius: SettingsLayout.default[.cardCornerRadius])
+            self.header = header
 
             super.init(frame: .zero)
             self.translatesAutoresizingMaskIntoConstraints = false
@@ -89,7 +118,22 @@ extension ComposableSettings {
             self.rowStack.translatesAutoresizingMaskIntoConstraints = false
 
             header.translatesAutoresizingMaskIntoConstraints = false
-            self.outerStack.addArrangedSubview(header)
+            self.disclosureButton.bezelStyle = .disclosure
+            self.disclosureButton.setButtonType(.pushOnPushOff)
+            self.disclosureButton.title = ""
+            self.disclosureButton.state = .on
+            self.disclosureButton.setAccessibilityLabel("Hide")
+            self.disclosureButton.target = self
+            self.disclosureButton.action = #selector(disclosurePressed(_:))
+            self.disclosureButton.isHidden = true
+            self.headerSpacer.setContentHuggingPriority(.init(1), for: .horizontal)
+            self.headerSpacer.isHidden = true
+            self.headerRow.orientation = .horizontal
+            self.headerRow.alignment = .centerY
+            self.headerRow.spacing = 4
+            self.headerRow.translatesAutoresizingMaskIntoConstraints = false
+            [header, self.disclosureButton, self.headerSpacer].forEach(self.headerRow.addArrangedSubview)
+            self.outerStack.addArrangedSubview(self.headerRow)
             self.cardView.translatesAutoresizingMaskIntoConstraints = false
             self.outerStack.addArrangedSubview(self.cardView)
             self.cardView.addSubview(self.rowStack)
@@ -98,13 +142,17 @@ extension ComposableSettings {
             // Both bands span the group, so a caption never widens the card and a
             // full-width row (a slider, a grid) actually gets the whole card.
             NSLayoutConstraint.activate([
-                header.widthAnchor.constraint(equalTo: self.outerStack.widthAnchor),
+                self.headerRow.widthAnchor.constraint(equalTo: self.outerStack.widthAnchor),
                 self.cardView.widthAnchor.constraint(equalTo: self.outerStack.widthAnchor)
             ])
         }
 
         public required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
+        }
+
+        @objc private func disclosurePressed(_ sender: NSButton) {
+            isDisclosed = sender.state == .on
         }
 
         // Each group fills its parent stack's width so that any child that
