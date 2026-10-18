@@ -31,8 +31,8 @@ final class ADKDIdentifiersTests: XCTestCase {
     }
 
     func testTheBaseURLIsBuiltFromThePort() {
-        XCTAssertEqual(ADKDIdentifiers.httpPort, 22848)
-        XCTAssertEqual(ADKDIdentifiers.httpBaseURL, "http://127.0.0.1:22848")
+        XCTAssertEqual(ADKDIdentifiers.httpPort, 22849)
+        XCTAssertEqual(ADKDIdentifiers.httpBaseURL, "http://127.0.0.1:22849")
         XCTAssertTrue(ADKDIdentifiers.httpBaseURL.contains(String(ADKDIdentifiers.httpPort)))
     }
 

@@ -16,7 +16,7 @@ public enum ADKDIdentifiers {
     public static let machServiceName = label
     public static let keychainService = "\(label).daemon"
     /// The daemon's localhost HTTP port, and the base URL clients reach it at.
-    public static let httpPort = 22848
+    public static let httpPort = 22849
     public static let httpBaseURL = "http://127.0.0.1:\(httpPort)"
     /// Marks a hook command as installed by this daemon.
     public static let hookMarker = "# adkd-hook"
