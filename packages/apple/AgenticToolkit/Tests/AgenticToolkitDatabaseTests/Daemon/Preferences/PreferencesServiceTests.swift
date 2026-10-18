@@ -77,18 +77,17 @@ final class PreferencesServiceTests: XCTestCase {
         XCTAssertEqual(try db.setting(for: AIProviderConfigKeys.fieldKey(config: id, field: "baseURL")), "http://x")
     }
 
-    func testSyncPersistsTheEnabledFlagAndTheSelectedConfig() throws {
+    func testSyncLeavesTheEnabledFlagAndTheSelectedConfigAlone() throws {
         let service = try makeService()
         let id = UUID()
+        let keep = UUID()
+        try db.setSetting(AIProviderConfigKeys.enabledKey, "true")
+        try db.setSetting(AIProviderConfigKeys.selectedConfigIdKey, keep.uuidString)
         service.applyAIProviderSync(AIProviderConfigSync(
             enabled: false, selectedConfigId: id, configs: [config(id)]
         ))
-        XCTAssertEqual(try db.setting(for: AIProviderConfigKeys.enabledKey), "false")
-        XCTAssertEqual(try db.setting(for: AIProviderConfigKeys.selectedConfigIdKey), id.uuidString)
-
-        service.applyAIProviderSync(AIProviderConfigSync(enabled: true, selectedConfigId: nil, configs: [config(id)]))
         XCTAssertEqual(try db.setting(for: AIProviderConfigKeys.enabledKey), "true")
-        XCTAssertEqual(try db.setting(for: AIProviderConfigKeys.selectedConfigIdKey), "")
+        XCTAssertEqual(try db.setting(for: AIProviderConfigKeys.selectedConfigIdKey), keep.uuidString)
     }
 
     func testFirstSyncClearsTheLegacySelectedPluginAndItsSecrets() throws {

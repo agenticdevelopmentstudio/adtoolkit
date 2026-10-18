@@ -65,9 +65,11 @@ public final class PreferencesService: @unchecked Sendable {
 
     /// Applies a full-set provider-config sync: reconciles the stored registry
     /// against the incoming configurations (upsert present, delete absent) and
-    /// their secrets, records the active selection + enabled flag, and one-time-cleans
-    /// the legacy plugin-keyed layout. Returns `false` (a no-op, no partial wipe) when the body
-    /// can't be decoded so the caller can answer 400 rather than a false success.
+    /// their secrets, and one-time-cleans the legacy plugin-keyed layout. It owns only
+    /// the provider registry: the enabled flag and the selected configuration belong to
+    /// `setSummary` (POST /preferences/summaries) and are never written here.
+    /// Returns `false` (a no-op, no partial wipe) when the body can't be decoded
+    /// so the caller can answer 400 rather than a false success.
     @discardableResult
     public func applyAIProviderSync(from body: Data) -> Bool {
         guard let sync = try? JSONDecoder().decode(AIProviderConfigSync.self, from: body) else {
@@ -78,8 +80,8 @@ public final class PreferencesService: @unchecked Sendable {
         return true
     }
 
-    /// A sync also records the active selection and the enabled flag, so the
-    /// menu-bar app's push can still switch summaries off.
+    /// A sync touches the provider registry only. `sync.enabled` and
+    /// `sync.selectedConfigId` are carried for wire compatibility and ignored.
     public func applyAIProviderSync(_ sync: AIProviderConfigSync) {
         // See `syncLock`: serialize the read-modify-write so HTTP and XPC callers
         // can't interleave and corrupt the registry.
@@ -91,9 +93,6 @@ public final class PreferencesService: @unchecked Sendable {
         // eviction rolls the whole sync back (no partial state — it self-heals on the
         // host's next push). Keychain writes run inline (they aren't transactional).
         try? database.transaction {
-            persistSetting(AIProviderConfigKeys.enabledKey, sync.enabled)
-            persistSetting(AIProviderConfigKeys.selectedConfigIdKey, sync.selectedConfigId?.uuidString ?? "")
-
             let incoming = Set(sync.configs.map(\.id))
             for stored in storedConfigurations() where !incoming.contains(stored.id) {
                 removeStoredConfig(id: stored.id)
