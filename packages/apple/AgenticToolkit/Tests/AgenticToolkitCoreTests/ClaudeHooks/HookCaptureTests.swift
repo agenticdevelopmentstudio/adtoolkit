@@ -46,6 +46,7 @@ final class HookCaptureTests: XCTestCase {
                        "/tmp/x")
         XCTAssertEqual(HookDropWriter.dropDirectory(configuration: adkd, environment: ["ADKD_DROP_DIR": ""]),
                        "~/.claude/adkd-events")
+        // swiftlint:disable:next line_length
         XCTAssertEqual(HookDropWriter.dropDirectory(configuration: adkd, environment: ["STENOGRAPHER_DROP_DIR": "/tmp/y"]),
                        "~/.claude/adkd-events", "another configuration's variable is not read")
     }

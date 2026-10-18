@@ -7,6 +7,7 @@ struct RouteResponseTests {
 
     private struct Sample: Encodable {
         let fooBar: Int
+        // swiftlint:disable:next identifier_name
         let at: Date
     }
 

@@ -98,7 +98,8 @@ public final class ClaudeHookInstaller: Sendable {
 
     public init(configuration: ClaudeHookConfiguration,
                 lockTimeout: TimeInterval = 5,
-                helperIsExecutable: @escaping @Sendable (String) -> Bool = ClaudeHookInstaller.defaultHelperIsExecutable) {
+                helperIsExecutable: @escaping @Sendable (String) -> Bool =
+                    ClaudeHookInstaller.defaultHelperIsExecutable) {
         self.configuration = configuration
         self.lockTimeout = lockTimeout
         self.statusLine = ClaudeStatusLine(
@@ -270,7 +271,8 @@ public final class ClaudeHookInstaller: Sendable {
         // fail silently behind its `exit 0` and capture would stop with no error
         // anywhere. Leave what is registered alone instead.
         guard helperIsExecutable(helperPath) else {
-            let message = "\(URL(fileURLWithPath: helperPath).lastPathComponent) is not an executable file at \(helperPath); hooks left as they are"
+            let helperName = URL(fileURLWithPath: helperPath).lastPathComponent
+            let message = "\(helperName) is not an executable file at \(helperPath); hooks left as they are"
             logger.error("\(message, privacy: .public)")
             return .failed(message)
         }
@@ -449,7 +451,8 @@ public final class ClaudeHookInstaller: Sendable {
         let first = lines.first.map(String.init) ?? ""
         let second = lines.count > 1 ? String(lines[1]) : ""
         guard first.contains(configuration.marker)
-                || configuration.legacy.captureScriptSecondLinePrefixes.contains(where: second.hasPrefix) else { return }
+                || configuration.legacy.captureScriptSecondLinePrefixes
+                    .contains(where: second.hasPrefix) else { return }
         do {
             try FileManager.default.removeItem(at: url)
             logger.info("Removed retired capture script at \(url.path, privacy: .public)")
@@ -725,7 +728,7 @@ public final class ClaudeHookInstaller: Sendable {
     /// hook, or a `command` carrying `marker` (which every marker version
     /// starts with). Whether it is current is `isCurrentHook`'s call alone.
     func isOwnHook(_ hook: [String: Any]) -> Bool {
-        isHTTPHook(hook) || (hook["command"] as? String)?.contains(marker) == true
+        isHTTPHook(hook) || (hook["command"] as? String)?.contains(configuration.marker) == true
     }
 
     /// True when `hook` is exactly what this installer registers for `eventType`.

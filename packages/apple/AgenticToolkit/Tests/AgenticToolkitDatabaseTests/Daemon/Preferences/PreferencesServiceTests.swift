@@ -10,6 +10,7 @@ import AIPluginKit
 final class PreferencesServiceTests: XCTestCase {
 
     private var tmpDir: URL!
+    // swiftlint:disable:next identifier_name
     private var db: DaemonDatabase!
     private var dbPath: String!
     private var secrets: InMemorySecretStore!
@@ -31,6 +32,7 @@ final class PreferencesServiceTests: XCTestCase {
 
     private func makeInstaller() throws -> ClaudeHookInstaller {
         let dispatcher = tmpDir.appendingPathComponent("dispatch.sh")
+        // swiftlint:disable:next line_length
         try "#!/bin/sh\n# claudehelpers-statusline-dispatch 1\n".write(to: dispatcher, atomically: true, encoding: .utf8)
         let configuration = ClaudeHookConfiguration(
             name: "prefs-test",
@@ -157,6 +159,7 @@ final class PreferencesServiceTests: XCTestCase {
         )
         let settingsURL = tmpDir.appendingPathComponent("settings.json")
 
+        // swiftlint:disable:next identifier_name
         let on = try service.setTracking(enabled: true)
         XCTAssertTrue(on.enabled)
         XCTAssertEqual(on.outcome, "installed")

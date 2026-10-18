@@ -2,6 +2,8 @@
 import AgenticToolkitCore
 import Foundation
 
+// swiftlint:disable multiple_closures_with_trailing_closure closure_parameter_position
+
 /// The AI interaction log and the Conversations feed.
 enum AILogRoutes {
 
@@ -61,3 +63,5 @@ enum AILogRoutes {
     }
 }
 #endif
+
+// swiftlint:enable multiple_closures_with_trailing_closure closure_parameter_position

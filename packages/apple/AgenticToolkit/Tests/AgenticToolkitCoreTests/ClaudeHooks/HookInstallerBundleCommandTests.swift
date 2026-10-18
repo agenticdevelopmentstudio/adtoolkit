@@ -75,12 +75,14 @@ final class HookInstallerBundleCommandTests: XCTestCase {
 
     func testBundledStenoPathFromDaemonExecutable() {
         XCTAssertEqual(
+            // swiftlint:disable:next line_length
             ClaudeHookConfiguration.bundledHelperPath(named: "steno", executable: URL(fileURLWithPath: "/Applications/Stenographer.app/Contents/MacOS/stenographerd")),
             "/Applications/Stenographer.app/Contents/Helpers/steno")
     }
 
     func testBundledStenoPathFromTheCLIItself() {
         XCTAssertEqual(
+            // swiftlint:disable:next line_length
             ClaudeHookConfiguration.bundledHelperPath(named: "steno", executable: URL(fileURLWithPath: "/Applications/Stenographer.app/Contents/Helpers/steno")),
             "/Applications/Stenographer.app/Contents/Helpers/steno")
     }

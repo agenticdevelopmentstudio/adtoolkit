@@ -4,8 +4,6 @@ import OSLog
 import AgenticToolkitCore
 import AIPluginKit
 
-// swiftlint:disable identifier_name
-
 /// The single owner of the daemon's preference-write business logic — AI
 /// summarization config (plus plugin secrets) and tracking enablement.
 ///
@@ -418,5 +416,4 @@ extension PreferencesService: Loggable {
     public static nonisolated let logger = makeLogger()
 }
 
-// swiftlint:enable identifier_name
 #endif

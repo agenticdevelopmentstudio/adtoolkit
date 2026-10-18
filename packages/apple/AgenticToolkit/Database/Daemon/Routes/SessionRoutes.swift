@@ -2,6 +2,8 @@
 import AgenticToolkitCore
 import Foundation
 
+// swiftlint:disable multiple_closures_with_trailing_closure closure_parameter_position
+
 /// The endpoint index, `/health`, `/db/stats`, and the session and event reads, plus
 /// the one session write (`POST /sessions/:id/summarize`).
 enum SessionRoutes {
@@ -219,3 +221,5 @@ enum SessionRoutes {
     }
 }
 #endif
+
+// swiftlint:enable multiple_closures_with_trailing_closure closure_parameter_position

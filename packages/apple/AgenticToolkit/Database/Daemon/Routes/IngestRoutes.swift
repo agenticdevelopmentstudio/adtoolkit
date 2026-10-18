@@ -2,6 +2,8 @@
 import AgenticToolkitCore
 import Foundation
 
+// swiftlint:disable multiple_closures_with_trailing_closure
+
 /// The ingestion surface: the capture spool's status, the quarantine list and its
 /// retry, and the native `http` hook endpoint that feeds the spool.
 enum IngestRoutes {
@@ -111,3 +113,5 @@ extension IngestRoutes: Loggable {
     static nonisolated let logger = makeLogger()
 }
 #endif
+
+// swiftlint:enable multiple_closures_with_trailing_closure

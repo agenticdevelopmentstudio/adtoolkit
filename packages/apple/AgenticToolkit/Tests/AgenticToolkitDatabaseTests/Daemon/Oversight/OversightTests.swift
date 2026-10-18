@@ -12,7 +12,24 @@ final class OversightTests: XCTestCase {
     var database: DaemonDatabase!
 
     override func setUpWithError() throws {
-        let opened = try TestDaemonDatabase.makeSessionDatabase()
+        // The toolkit does not own the `StatusLine` → `session_metrics` projection (each
+        // daemon supplies its own hook), so this mirrors the part oversight reads:
+        // remaining_percentage → context_used_pct, plus the window size.
+        let opened = try TestDaemonDatabase.makeSessionDatabase(
+            statusLineIngest: { database, sessionId, hookData, _, _ in
+                let window = hookData["context_window"] as? [String: Any] ?? [:]
+                let size = window["context_window_size"] as? Int ?? 0
+                let remaining = window["remaining_percentage"] as? Double ?? 100
+                let used = max(0, min(100, 100 - Int(remaining.rounded())))
+                try database.execute("""
+                    INSERT INTO session_metrics (session_id, context_window_size, context_used_pct)
+                    VALUES (?, ?, ?)
+                    ON CONFLICT(session_id) DO UPDATE SET
+                        context_window_size = excluded.context_window_size,
+                        context_used_pct = excluded.context_used_pct
+                    """, params: [sessionId, size, used])
+            }
+        )
         database = opened.db
         tmpPath = opened.path
     }

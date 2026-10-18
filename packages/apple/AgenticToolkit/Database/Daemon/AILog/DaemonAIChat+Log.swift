@@ -3,8 +3,6 @@ import AgenticToolkitCore
 import AIPluginKit
 import Foundation
 
-// swiftlint:disable identifier_name
-
 extension DaemonAIChat {
     /// `complete` with a daemon database's settings table as the provider-registry
     /// reader. Every completion is recorded in the `ai_interactions` log (feature,
@@ -87,5 +85,4 @@ extension ScriptAnalyzer {
     }
 }
 
-// swiftlint:enable identifier_name
 #endif

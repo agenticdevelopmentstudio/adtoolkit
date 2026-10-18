@@ -658,7 +658,7 @@ final class HookInstallerTests: XCTestCase {
         // it replaced on the next daemon start — removed, not left alongside
         // (which would double-ingest every event and keep the refused-connection
         // errors coming).
-        let hookDefs = try installOver(["type": "http", "url": Claude"http://127.0.0.1:22847/hook/PreToolUse",
+        let hookDefs = try installOver(["type": "http", "url": "http://127.0.0.1:22847/hook/PreToolUse",
                                         "async": true, "timeout": 10])
         XCTAssertFalse(hookDefs.contains(where: installer.isHTTPHook), "the http hook must be gone")
         XCTAssertEqual(hookDefs.count, 1, "exactly one capture hook must replace it")

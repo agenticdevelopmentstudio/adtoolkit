@@ -246,6 +246,7 @@ final class DaemonAssessmentTests: XCTestCase {
         let answers = Answers(["1.0.173.0", "1.0.174.0"])
         let clock = FakeClock()
         let job = DaemonRestartJob(target: target, bundleVersion: "1.0.174.0", health: { answers.next() },
+                                   // swiftlint:disable:next line_length
                                    commands: commands, grace: .seconds(15), pollInterval: .seconds(1), timeout: .seconds(5),
                                    sleep: { clock.advance($0) }, now: { clock.now() })
         try await runDaemon(job)

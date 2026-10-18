@@ -78,6 +78,7 @@ final class LaunchAgentJobTests: XCTestCase {
             "</plist>",
             ""
         ]
+        // swiftlint:disable:next optional_data_string_conversion
         XCTAssertEqual(String(decoding: LaunchAgentPlist.render(spec()), as: UTF8.self),
                        lines.joined(separator: "\n"))
     }

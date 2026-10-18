@@ -64,6 +64,7 @@ final class DetachedProcessTests: XCTestCase {
     }
 
     func testAnUnwritableLockDirectoryDoesNotStopTheFeed() {
+        // swiftlint:disable:next line_length
         let lock = FeedLock.acquire(sessionID: "s", name: "stenographer", directory: directory.appendingPathComponent("absent"))
         XCTAssertNotNil(lock)
         lock?.release()

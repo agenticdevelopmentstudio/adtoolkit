@@ -1,6 +1,8 @@
 #if canImport(AgenticToolkitCore)
 import AgenticToolkitCore
+import AIPluginKit
 import Foundation
+import OSLog
 
 /// The objects a session daemon needs before it can capture and serve events,
 /// and the steps that bring them up and down, written once.
@@ -223,9 +225,9 @@ public final class SessionDaemonRuntime: @unchecked Sendable {
             summarizeOnStop: behavior.summarizeOnStop,
             footprintSuffix: behavior.footprintSuffix
         )
-        lock.lock()
-        opened = Opened(spool: spool, database: database, pipeline: pipeline, hookDisabled: hookDisabled)
-        lock.unlock()
+        lock.withLock {
+            opened = Opened(spool: spool, database: database, pipeline: pipeline, hookDisabled: hookDisabled)
+        }
     }
 
     /// Phase B: binds the capture socket and reconciles the hook registration
@@ -265,10 +267,11 @@ public final class SessionDaemonRuntime: @unchecked Sendable {
     /// Idempotent. The hook registration is deliberately left in place — see
     /// the daemon's own uninstall path.
     public func shutdown() async {
-        lock.lock()
-        let pipeline = isShutDown ? nil : opened?.pipeline
-        isShutDown = true
-        lock.unlock()
+        let pipeline: IngestionPipeline? = lock.withLock {
+            let current = isShutDown ? nil : opened?.pipeline
+            isShutDown = true
+            return current
+        }
         await pipeline?.stop()
     }
 

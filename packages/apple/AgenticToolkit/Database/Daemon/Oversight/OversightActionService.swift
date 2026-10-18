@@ -1,4 +1,5 @@
 #if canImport(AgenticToolkitCore)
+import AgenticToolkitCore
 import Foundation
 
 /// The write-back half of oversight, daemon-side: decide whether a finding can be acted on

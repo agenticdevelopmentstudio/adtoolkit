@@ -41,6 +41,12 @@ final class GitProcessBottleneckTests: XCTestCase {
     static func isAllowed(_ relativePath: String, _ spelling: String) -> Bool {
         if relativePath.hasPrefix("Core/Git/") { return true }
         if relativePath == "Core/SettingStorage/UserSettings+Git.swift" { return true }
+        // The hook/status-line path (moved here from stenographerd and the CLI): a hook
+        // helper must stay a lean, GRDB-free, GitClient-free binary that runs git with
+        // `GIT_OPTIONAL_LOCKS=0` and a 5 s cap. `ReadOnlyGit` is its one spawn point and
+        // `GitContextFingerprint` the only reader of the output.
+        if relativePath == "Core/Process/ReadOnlyGit.swift"
+            || relativePath == "Core/ClaudeHooks/GitContextFingerprint.swift" { return true }
         if relativePath == "macOS/Features/Git/Settings/GitSettingsPanelViewController.swift" {
             return spelling == "gitExecutablePath"
         }

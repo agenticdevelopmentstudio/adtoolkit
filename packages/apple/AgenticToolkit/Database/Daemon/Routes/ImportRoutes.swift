@@ -2,6 +2,8 @@
 import AgenticToolkitCore
 import Foundation
 
+// swiftlint:disable multiple_closures_with_trailing_closure
+
 /// `POST /import` — a JSONL backfill run in-process.
 enum ImportRoutes {
 
@@ -32,3 +34,5 @@ enum ImportRoutes {
     }
 }
 #endif
+
+// swiftlint:enable multiple_closures_with_trailing_closure

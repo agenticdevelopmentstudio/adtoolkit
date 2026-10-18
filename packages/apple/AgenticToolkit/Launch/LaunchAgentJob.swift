@@ -108,6 +108,7 @@ public struct LaunchAgentJob: StartupJob {
         let currentLoaded = await launchctl("print", "\(domain)/\(label)").status == 0
         var supersededLoaded = false
         for old in supersededLabels {
+            // swiftlint:disable:next for_where
             if await launchctl("print", "\(domain)/\(old)").status == 0 { supersededLoaded = true }
         }
 

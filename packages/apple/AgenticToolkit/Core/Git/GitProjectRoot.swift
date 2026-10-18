@@ -118,6 +118,22 @@ public enum GitProjectRoot {
         return firstWorktreePath(in: listing)
     }
 
+    /// The current branch of the working tree at `cwd` (`HEAD` when detached),
+    /// or nil when `cwd` isn't a working tree or git wouldn't answer.
+    public static func currentBranchName(at cwd: String) -> String? {
+        output(cwd: cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
+    }
+
+    /// The parent of the repository's shared `.git` directory for `dir`, so
+    /// every linked worktree and the primary working tree of one repository
+    /// give the same path; nil when git wouldn't answer.
+    public static func sharedRepositoryRoot(at dir: String) -> String? {
+        guard let gitDir = output(cwd: dir, ["rev-parse", "--path-format=absolute", "--git-common-dir"]) else {
+            return nil
+        }
+        return (gitDir as NSString).deletingLastPathComponent
+    }
+
     /// Runs `git -C <cwd> <args…>` and returns trimmed stdout, or nil when cwd
     /// is missing/empty, git exits non-zero, or the output is empty.
     public static func output(cwd: String, _ args: [String]) -> String? {

@@ -92,7 +92,8 @@ public struct DaemonVersionGate: Sendable {
     /// awaited at launch: the version call may retry for several seconds to cover
     /// the login race, and blocking the caller that long stalls its first frame.
     public func enforce(current: @escaping @Sendable () async -> String?,
-                        present: @escaping @MainActor @Sendable (_ reported: String, _ minimum: DaemonVersion) -> Void) {
+                        present: @escaping @MainActor @Sendable (_ reported: String,
+                                                                 _ minimum: DaemonVersion) -> Void) {
         let minimum = minimum
         Task.detached {
             guard case .tooOld(let reported) = verdict(daemonVersion: await current()) else { return }

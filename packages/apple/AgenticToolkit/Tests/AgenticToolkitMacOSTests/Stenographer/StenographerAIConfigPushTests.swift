@@ -107,6 +107,8 @@ final class StenographerAIConfigPushTests: XCTestCase {
         await StenographerAIConfigPush.awaitPendingPush()
         let chosen = UUID()
         UserSettings.selectedAIProviderConfigurationId.value = chosen.uuidString
+        // The observer hops to the next main-queue turn before it fires.
+        try? await Task.sleep(for: .milliseconds(50))
         await StenographerAIConfigPush.awaitPendingPush()
         XCTAssertEqual(daemon.aiSyncs.count, 2)
         XCTAssertEqual(daemon.aiSyncs.last?.selectedConfigId, chosen)

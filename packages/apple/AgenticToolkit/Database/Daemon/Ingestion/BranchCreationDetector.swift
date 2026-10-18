@@ -117,24 +117,13 @@ extension DaemonDatabase {
     }
 
     /// Resolves a directory to the parent of its shared `.git` directory
-    /// (`git rev-parse --git-common-dir`), so linked worktrees and the
+    /// (via `GitProjectRoot`, the one door to git), so linked worktrees and the
     /// primary working tree for the same repo always produce the same path.
-    /// Falls back to the given path on any error.
+    /// Falls back to the given path on any error; a query still running at
+    /// `GitProjectRoot`'s deadline is parked on a lock or a dead mount and is
+    /// given up on, not waited for.
     private func resolveRepoRoot(path: String) -> String {
-        let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = ["git", "-C", path, "rev-parse", "--path-format=absolute", "--git-common-dir"]
-        // A `rev-parse` is milliseconds; one still running at the deadline is
-        // parked on a lock or a dead mount and is given up on, not waited for.
-        guard let outcome = try? CommandRunner.runToCompletion(process, timeout: Self.repoRootTimeout),
-              !outcome.timedOut, outcome.status == 0
-        else { return path }
-        let gitDir = String(data: outcome.standardOutput, encoding: .utf8)?
-            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !gitDir.isEmpty else { return path }
-        return (gitDir as NSString).deletingLastPathComponent
+        GitProjectRoot.sharedRepositoryRoot(at: path) ?? path
     }
-
-    private static let repoRootTimeout: TimeInterval = 30
 }
 #endif

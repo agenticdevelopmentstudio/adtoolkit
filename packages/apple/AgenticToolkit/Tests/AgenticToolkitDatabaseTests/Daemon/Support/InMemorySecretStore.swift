@@ -1,6 +1,7 @@
 import Foundation
 import AIPluginKit
 
+// swiftlint:disable:next line_length
 /// In-memory `SecretStoring` shared by the daemon test bundles so neither ever touches the login Keychain. Previously each bundle
 /// kept its own private copy; one authoritative fake keeps the behaviour (and the
 /// removal-on-empty contract) identical across both.

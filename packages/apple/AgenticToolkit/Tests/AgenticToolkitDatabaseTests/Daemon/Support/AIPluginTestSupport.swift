@@ -30,6 +30,7 @@ func selectProviderConfig(
     for (field, value) in secrets where !value.isEmpty {
         _ = secretStore.set(value, forKey: AIProviderConfigKeys.fieldKey(config: id, field: field))
     }
+    // swiftlint:disable:next line_length
     try? database.setSetting(AIProviderConfigKeys.secretFieldsKey(config: id), secrets.keys.sorted().joined(separator: "\n"))
     let identities = [AIProviderConfiguration(id: id, name: "T", pluginIdentifier: plugin, templateId: template)]
     if let data = try? JSONEncoder().encode(identities), let json = String(data: data, encoding: .utf8) {

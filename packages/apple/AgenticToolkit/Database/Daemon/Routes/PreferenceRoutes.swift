@@ -2,6 +2,8 @@
 import AgenticToolkitCore
 import Foundation
 
+// swiftlint:disable multiple_closures_with_trailing_closure
+
 /// The `/preferences/*` reads and writes. The business rules live in
 /// `PreferencesService`, shared with the XPC surface; this only decodes and replies.
 enum PreferenceRoutes {
@@ -132,3 +134,5 @@ enum PreferenceRoutes {
     }
 }
 #endif
+
+// swiftlint:enable multiple_closures_with_trailing_closure

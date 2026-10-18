@@ -2,6 +2,8 @@
 import AgenticToolkitCore
 import Foundation
 
+// swiftlint:disable multiple_closures_with_trailing_closure closure_parameter_position
+
 /// Oversight findings and the scripts that decide what the observers record.
 enum OversightRoutes {
 
@@ -126,3 +128,5 @@ enum OversightRoutes {
     }
 }
 #endif
+
+// swiftlint:enable multiple_closures_with_trailing_closure closure_parameter_position

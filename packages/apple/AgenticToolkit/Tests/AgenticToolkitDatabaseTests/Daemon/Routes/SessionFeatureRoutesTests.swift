@@ -19,6 +19,7 @@ final class SessionFeatureRoutesTests: XCTestCase {
     }
 
     private var tmpDir: URL!
+    // swiftlint:disable:next identifier_name
     private var db: DaemonDatabase!
     private var dbPath: String!
     private var captured: Captured!
@@ -43,6 +44,7 @@ final class SessionFeatureRoutesTests: XCTestCase {
         buildHookEvent: @escaping @Sendable (String, Data) -> ParsedEvent? = { _, _ in nil }
     ) throws -> SessionFeatureServices {
         let dispatcher = tmpDir.appendingPathComponent("dispatch.sh")
+        // swiftlint:disable:next line_length
         try "#!/bin/sh\n# claudehelpers-statusline-dispatch 1\n".write(to: dispatcher, atomically: true, encoding: .utf8)
         let installer = ClaudeHookInstaller(
             configuration: ClaudeHookConfiguration(
@@ -88,7 +90,8 @@ final class SessionFeatureRoutesTests: XCTestCase {
         services: SessionFeatureServices
     ) async throws -> RouteResponse {
         let request = RouteRequest(method: method, path: path, queryValues: query, body: Data(body.utf8))
-        return try XCTUnwrap(await SessionFeatureRoutes.table(services).handle(request), "\(method) \(path) unclaimed")
+        let response = await SessionFeatureRoutes.table(services).handle(request)
+        return try XCTUnwrap(response, "\(method) \(path) unclaimed")
     }
 
     private func json(_ response: RouteResponse) throws -> [String: Any] {
@@ -118,6 +121,7 @@ final class SessionFeatureRoutesTests: XCTestCase {
           ]
         }
         """
+        // swiftlint:disable:next optional_data_string_conversion
         XCTAssertEqual(String(decoding: response.body, as: UTF8.self), expected)
     }
 
@@ -205,6 +209,7 @@ final class SessionFeatureRoutesTests: XCTestCase {
     func testAnEmptyHookBodyIsAcceptedAndIgnored() async throws {
         let response = try await send("POST", "/hook/Stop", services: try makeServices())
         XCTAssertEqual(response.status, 200)
+        // swiftlint:disable:next optional_data_string_conversion
         XCTAssertEqual(String(decoding: response.body, as: UTF8.self), "{}")
         XCTAssertEqual(captured.count, 0)
     }
@@ -245,10 +250,10 @@ final class SessionFeatureRoutesTests: XCTestCase {
 
     func testSummaryPreferenceRoundTrips() async throws {
         let services = try makeServices()
-        let set = try await send("POST", "/preferences/summaries", body: #"{"max_words": 33}"#, services: services)
+        let set = try await send("POST", "/preferences/summaries", body: #"{"max_words": 12}"#, services: services)
         XCTAssertEqual(set.status, 200)
         let read = try await send("GET", "/preferences/summaries", services: services)
-        XCTAssertEqual(try json(read)["max_words"] as? Int, 33)
+        XCTAssertEqual(try json(read)["max_words"] as? Int, 12)
     }
 
     // MARK: - Oversight, AI log, conversations

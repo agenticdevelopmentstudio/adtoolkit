@@ -84,7 +84,7 @@ final class IngestionQuarantineTests: XCTestCase {
     }
 
     func testPermanentIngestErrorIsQuarantinedWithSqliteCode() throws {
-        handler.ingestOverride = { _ in throw DatabaseError.stepFailed(message: "constraint", code: 19) }
+        handler.ingestOverride = { _ in throw DaemonDatabaseError.stepFailed(message: "constraint", code: 19) }
         let url = try writeDrop("101-perm.json", validEvent)
         handler.drainDirectoryOnce()
 
@@ -103,7 +103,7 @@ final class IngestionQuarantineTests: XCTestCase {
     }
 
     func testTransientIngestErrorLeavesFileForRetry() throws {
-        handler.ingestOverride = { _ in throw DatabaseError.stepFailed(message: "busy", code: 5) }
+        handler.ingestOverride = { _ in throw DaemonDatabaseError.stepFailed(message: "busy", code: 5) }
         let url = try writeDrop("102-transient.json", validEvent)
         handler.drainDirectoryOnce()
 
@@ -112,7 +112,7 @@ final class IngestionQuarantineTests: XCTestCase {
     }
 
     func testPermanentQuarantineRecordsDBLogRow() throws {
-        handler.ingestOverride = { _ in throw DatabaseError.stepFailed(message: "constraint", code: 19) }
+        handler.ingestOverride = { _ in throw DaemonDatabaseError.stepFailed(message: "constraint", code: 19) }
         _ = try writeDrop("103-log.json", validEvent)
         handler.drainDirectoryOnce()
 

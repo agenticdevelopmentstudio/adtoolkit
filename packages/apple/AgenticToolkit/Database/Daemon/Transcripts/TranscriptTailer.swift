@@ -4,7 +4,6 @@ import Foundation
 import OSLog
 
 // `db` parameters are the one name for the shared DaemonDatabase, as in the toolkit.
-// swiftlint:disable identifier_name
 
 /// Pulls a session's transcript into the database the moment that session
 /// writes, rather than when the next sweep comes round to it.
@@ -268,5 +267,4 @@ public actor TranscriptTailer {
 extension TranscriptTailer: Loggable {
     public static nonisolated let logger = makeLogger()
 }
-// swiftlint:enable identifier_name
 #endif

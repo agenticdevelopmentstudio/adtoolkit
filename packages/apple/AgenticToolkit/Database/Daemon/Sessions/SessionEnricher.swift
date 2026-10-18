@@ -3,10 +3,9 @@ import AgenticToolkitCore
 import Foundation
 
 // `db` parameters are the one name for the shared DaemonDatabase, as in the toolkit.
-// swiftlint:disable identifier_name
 
 /// Derives the session fields the hook payload doesn't carry:
-///   - `git_branch`   — via `git -C <cwd> rev-parse --abbrev-ref HEAD`
+///   - `git_branch`   — via the current branch of the working tree at `cwd`
 ///   - `project_root` — the top-level (non-submodule) git working tree for `cwd`
 ///   - `transcript_title` — from the most recent `custom-title` line in the
 ///                      Claude Code transcript JSONL
@@ -187,7 +186,7 @@ public enum SessionEnricher {
     /// Returns the current branch for `cwd`, or nil if cwd isn't a git
     /// working tree, the command fails, or HEAD is detached.
     public static func gitBranch(at cwd: String) -> String? {
-        guard let branch = runGit(cwd: cwd, ["rev-parse", "--abbrev-ref", "HEAD"]) else { return nil }
+        guard let branch = GitProjectRoot.currentBranchName(at: cwd) else { return nil }
         return branch == "HEAD" ? nil : branch
     }
 
@@ -214,19 +213,12 @@ public enum SessionEnricher {
     }
 
     /// Returns the path of the repository's **main** working tree for `dir`
-    /// (the first `worktree` entry of `git worktree list --porcelain`), or nil
+    /// (the first entry of the worktree listing), or nil
     /// if `dir` isn't in a git repo. For a normal checkout this is the repo
     /// root; for a linked worktree it's the primary checkout the worktree
     /// belongs to — so all worktrees of a project resolve to one root.
     public static func mainWorkingTree(at dir: String) -> String? {
         GitProjectRoot.mainWorkingTree(at: dir)
-    }
-
-    /// Runs `git -C <cwd> <args…>` and returns trimmed stdout, or nil when cwd
-    /// is missing/empty, git exits non-zero, or the output is empty. It still
-    /// serves the branch lookup above.
-    private static func runGit(cwd: String, _ args: [String]) -> String? {
-        GitProjectRoot.output(cwd: cwd, args)
     }
 
     /// Scans a Claude Code transcript `.jsonl` for `custom-title` lines
@@ -463,5 +455,4 @@ public enum SessionEnricher {
         return nil
     }
 }
-// swiftlint:enable identifier_name
 #endif

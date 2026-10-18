@@ -4,8 +4,6 @@ import Foundation
 import GRDB
 import OSLog
 
-// swiftlint:disable identifier_name
-
 /// Deletes old events and empty ended sessions from the daemon database.
 ///
 /// **Opt-in.** Retention permanently deletes event history, so it stays off until
@@ -172,5 +170,4 @@ extension DaemonDatabase {
     }
 }
 
-// swiftlint:enable identifier_name
 #endif
