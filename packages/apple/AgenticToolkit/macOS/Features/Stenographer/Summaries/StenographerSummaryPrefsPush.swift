@@ -68,8 +68,11 @@ public enum StenographerSummaryPrefsPush {
     static func seedFromDaemon(service: any StenographerDaemonService) async -> Bool {
         if UserSettings.stenographerAISummariesSeededFromDaemon.value { return true }
         guard let stored = await service.summaryPreferences() else { return false }
-        UserSettings.stenographerAISummariesEnabled.value = stored.enabled
-        UserSettings.stenographerAISummariesProviderConfigId.value = stored.selectedConfigId
+        // An older daemon's reply carries neither; leave the local value as it is then.
+        if let enabled = stored.enabled { UserSettings.stenographerAISummariesEnabled.value = enabled }
+        if let selected = stored.selectedConfigId {
+            UserSettings.stenographerAISummariesProviderConfigId.value = selected
+        }
         // An unmodified (or never configured) prompt stays at the default, which
         // is not stored, so a later release's wording still applies.
         if stored.prompt.isEmpty || stored.prompt == SummaryDefaults.prompt {

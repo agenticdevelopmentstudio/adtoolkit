@@ -178,14 +178,14 @@ final class PreferencesServiceTests: XCTestCase {
     // MARK: - Summaries
 
     func testSummariesReadBackTheConfiguredDefaultWhenNoRowExists() throws {
-        XCTAssertTrue(try makeService(summariesDefaultEnabled: true).currentSummary().enabled)
-        XCTAssertFalse(try makeService(summariesDefaultEnabled: false).currentSummary().enabled)
+        XCTAssertEqual(try makeService(summariesDefaultEnabled: true).currentSummary().enabled, true)
+        XCTAssertEqual(try makeService(summariesDefaultEnabled: false).currentSummary().enabled, false)
         XCTAssertEqual(try makeService(summariesDefaultEnabled: false).currentAIPreferences()["enabled"], "false")
     }
 
     func testStoredSummariesSwitchBeatsTheDefault() throws {
         let service = try makeService(summariesDefaultEnabled: false)
-        XCTAssertTrue(service.setSummary(enabled: true).enabled)
+        XCTAssertEqual(service.setSummary(enabled: true).enabled, true)
         XCTAssertEqual(try db.setting(for: AIProviderConfigKeys.enabledKey), "true")
     }
 

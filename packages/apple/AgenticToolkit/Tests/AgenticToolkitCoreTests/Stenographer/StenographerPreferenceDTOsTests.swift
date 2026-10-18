@@ -27,6 +27,18 @@ final class StenographerPreferenceDTOsTests: XCTestCase {
             detailChars: 120, intervalMinutes: 5, maxPerRun: 5, timeoutSeconds: 60))
     }
 
+    func testSummaryResponseFromAnOlderDaemonDecodesWithoutEnabledOrSelection() throws {
+        let json = Data("""
+        {"prompt":"p","max_words":8,"activity_lines":60,"detail_chars":120,
+         "interval_minutes":5,"max_per_run":5,"timeout_seconds":60}
+        """.utf8)
+        let response = try StenographerWire.decoder().decode(SummaryPreferenceResponse.self, from: json)
+        XCTAssertNil(response.enabled)
+        XCTAssertNil(response.selectedConfigId)
+        XCTAssertEqual(response.maxWords, 8)
+        XCTAssertEqual(response.timeoutSeconds, 60)
+    }
+
     func testOversightRoundTrip() throws {
         let response = OversightPreferenceResponse(
             enabled: true, contextThresholdPct: 80, llmEnabled: false, selectedConfigId: "claude-cli", model: "")

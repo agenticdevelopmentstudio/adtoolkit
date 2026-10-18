@@ -72,8 +72,12 @@ public struct SummaryPreferenceRequest: Codable, Sendable {
 
 /// `GET /preferences/summaries` and the reply to the POST.
 public struct SummaryPreferenceResponse: Codable, Sendable, Equatable {
-    public let enabled: Bool
-    public let selectedConfigId: String
+    /// Nil when an older daemon's reply does not carry it (before the toolkit's
+    /// shared daemon core, `GET /preferences/summaries` returned neither this nor
+    /// `selectedConfigId`); a missing field must not make the whole reply undecodable.
+    public let enabled: Bool?
+    /// Nil on the same older replies as ``enabled``.
+    public let selectedConfigId: String?
     public let prompt: String
     public let maxWords: Int
     public let activityLines: Int
@@ -83,7 +87,7 @@ public struct SummaryPreferenceResponse: Codable, Sendable, Equatable {
     public let timeoutSeconds: Int
 
     public init(
-        enabled: Bool, selectedConfigId: String, prompt: String, maxWords: Int, activityLines: Int,
+        enabled: Bool?, selectedConfigId: String?, prompt: String, maxWords: Int, activityLines: Int,
         detailChars: Int, intervalMinutes: Int, maxPerRun: Int, timeoutSeconds: Int
     ) {
         self.enabled = enabled
