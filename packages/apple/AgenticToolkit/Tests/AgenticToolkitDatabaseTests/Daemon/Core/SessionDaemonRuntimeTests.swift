@@ -81,6 +81,30 @@ final class SessionDaemonRuntimeTests: XCTestCase {
         await runtime.shutdown()
     }
 
+    func testPreferencesIsOneInstanceSharedWithTheServices() async throws {
+        let runtime = try makeRuntime()
+        try await runtime.openPhaseA()
+        let services = runtime.services(
+            .init(
+                endpointIndex: [],
+                startupDurationMs: { nil },
+                memorySample: { nil },
+                parseQuarantinedEvent: { _ in .lostEvent },
+                buildHookEvent: { _, _ in nil },
+                runImport: { _ in throw Undecodable() }
+            ),
+            startTime: Date()
+        )
+        XCTAssertTrue(runtime.preferences === runtime.preferences, "one sync lock for HTTP and XPC")
+        XCTAssertTrue(services.preferences === runtime.preferences)
+        XCTAssertEqual(services.daemonName, runtime.daemonName)
+        XCTAssertEqual(
+            runtime.summarizer.defaultEnabled, runtime.configuration.summariesDefaultEnabled,
+            "the summaries default has one source: the configuration"
+        )
+        await runtime.shutdown()
+    }
+
     func testStartIngressInstallsHooksIntoTheTempSettings() async throws {
         let runtime = try makeRuntime()
         try await runtime.openPhaseA()

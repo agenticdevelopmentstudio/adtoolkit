@@ -69,9 +69,20 @@ public enum SessionSchema {
     /// CHECK-widening (now migration027), which permanently skips the real
     /// migration026 above — including the guarded self-heal inside it. Cheap
     /// (one PRAGMA table_info per launch) and idempotent.
-    public static let postMigration: [@Sendable (DaemonDatabase) throws -> Void] = [
+    public static let postMigration: [@Sendable (DaemonDatabase) throws -> Void] =
+        postMigrationHead + postMigrationTail
+
+    /// The first shared ensures. A daemon with its own ensures that belong between
+    /// the shared ones composes `head + its own + tail` to keep a fixed order.
+    /// Every ensure must stay order-independent of the others: each is wrapped in
+    /// `try?` upstream, so a hidden dependency would fail silently.
+    public static let postMigrationHead: [@Sendable (DaemonDatabase) throws -> Void] = [
         ensureSessionsAuthMethodColumn,
-        ensureConversationIndex,
+        ensureConversationIndex
+    ]
+
+    /// The last shared ensure, the transcript turn-token index.
+    public static let postMigrationTail: [@Sendable (DaemonDatabase) throws -> Void] = [
         // Only a speed-up, and the one ensure step that builds over millions of
         // rows: a full disk or an overrun deadline must not park the daemon.
         // Logged and retried on the next launch (`IF NOT EXISTS`).

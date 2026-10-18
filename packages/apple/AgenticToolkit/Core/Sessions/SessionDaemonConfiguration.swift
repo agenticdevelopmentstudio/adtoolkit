@@ -29,8 +29,6 @@ public struct SessionDaemonConfiguration: Sendable {
     public var retentionCheckInterval: TimeInterval
     /// The file the signed-in Claude account is read from; nil means `~/.claude.json`.
     public var claudeJSONPath: String?
-    /// How far back the first transcript import reaches; nil means all of it.
-    public var jsonlInitialImportWindow: TimeInterval?
     /// Whether AI summaries are on until the user chooses otherwise.
     public var summariesDefaultEnabled: Bool
 
@@ -50,7 +48,6 @@ public struct SessionDaemonConfiguration: Sendable {
         livenessCheckInterval: TimeInterval = 10,
         retentionCheckInterval: TimeInterval = 86400,
         claudeJSONPath: String? = nil,
-        jsonlInitialImportWindow: TimeInterval? = nil,
         summariesDefaultEnabled: Bool = true
     ) {
         self.label = label
@@ -68,7 +65,6 @@ public struct SessionDaemonConfiguration: Sendable {
         self.livenessCheckInterval = livenessCheckInterval
         self.retentionCheckInterval = retentionCheckInterval
         self.claudeJSONPath = claudeJSONPath
-        self.jsonlInitialImportWindow = jsonlInitialImportWindow
         self.summariesDefaultEnabled = summariesDefaultEnabled
     }
 

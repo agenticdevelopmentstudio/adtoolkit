@@ -11,9 +11,6 @@ public enum ADKDIdentifiers {
     public static let label = "com.agenticdevelopmentstudio.adkd"
     public static let subsystem = label
     public static func subsystem(_ suffix: String) -> String { "\(label).\(suffix)" }
-    /// Reserved: the daemon is HTTP-only and registers no Mach services. Kept so
-    /// a future XPC listener has a fixed name.
-    public static let machServiceName = label
     public static let keychainService = "\(label).daemon"
     /// The daemon's localhost HTTP port, and the base URL clients reach it at.
     public static let httpPort = 22849

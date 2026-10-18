@@ -94,6 +94,7 @@ public final class SessionDaemonRuntime: @unchecked Sendable {
         var database: DaemonDatabase
         var pipeline: IngestionPipeline
         var hookDisabled: Bool
+        var preferences: PreferencesService
     }
     private let lock = NSLock()
     private var opened: Opened?
@@ -146,12 +147,18 @@ public final class SessionDaemonRuntime: @unchecked Sendable {
     /// The conversations feed over the runtime's database.
     public var conversations: ConversationStore { ConversationStore(database: database) }
 
-    /// The preferences service over the runtime's database. Valid after ``openPhaseA()``.
-    public var preferences: PreferencesService {
-        PreferencesService(
-            database: database, secretStore: secretStore, hookInstaller: hookInstaller,
-            summariesDefaultEnabled: configuration.summariesDefaultEnabled
-        )
+    /// The one preferences service over the runtime's database, built once in
+    /// ``openPhaseA()``. HTTP and XPC must share it: its sync lock only serializes
+    /// callers of the same instance. Valid after ``openPhaseA()``.
+    public var preferences: PreferencesService { requireOpened("preferences").preferences }
+
+    /// The daemon's name, as the HTTP routes report it.
+    public var daemonName: String { configuration.hook.name }
+
+    /// The summarizer every daemon task uses, with the default taken from
+    /// ``SessionDaemonConfiguration/summariesDefaultEnabled`` and nowhere else.
+    public var summarizer: DaemonSessionSummarizer {
+        DaemonSessionSummarizer(defaultEnabled: configuration.summariesDefaultEnabled)
     }
 
     /// Everything the shared HTTP routes read. Valid after ``openPhaseA()``.
@@ -165,7 +172,7 @@ public final class SessionDaemonRuntime: @unchecked Sendable {
             preferences: preferences,
             secretStore: secretStore,
             hookInstaller: hookInstaller,
-            daemonName: configuration.hook.name,
+            daemonName: daemonName,
             daemonVersion: configuration.daemonVersion,
             startTime: startTime,
             endpointIndex: wiring.endpointIndex,
@@ -225,8 +232,15 @@ public final class SessionDaemonRuntime: @unchecked Sendable {
             summarizeOnStop: behavior.summarizeOnStop,
             footprintSuffix: behavior.footprintSuffix
         )
+        let preferences = PreferencesService(
+            database: database, secretStore: secretStore, hookInstaller: installer,
+            summariesDefaultEnabled: configuration.summariesDefaultEnabled
+        )
         lock.withLock {
-            opened = Opened(spool: spool, database: database, pipeline: pipeline, hookDisabled: hookDisabled)
+            opened = Opened(
+                spool: spool, database: database, pipeline: pipeline,
+                hookDisabled: hookDisabled, preferences: preferences
+            )
         }
     }
 

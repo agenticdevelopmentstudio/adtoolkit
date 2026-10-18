@@ -65,9 +65,8 @@ public final class PreferencesService: @unchecked Sendable {
 
     /// Applies a full-set provider-config sync: reconciles the stored registry
     /// against the incoming configurations (upsert present, delete absent) and
-    /// their secrets only, and one-time-cleans the legacy plugin-keyed layout. The
-    /// summaries switch and the active selection do not travel here: they arrive
-    /// through `POST /preferences/summaries`. Returns `false` (a no-op, no partial wipe) when the body
+    /// their secrets, records the active selection + enabled flag, and one-time-cleans
+    /// the legacy plugin-keyed layout. Returns `false` (a no-op, no partial wipe) when the body
     /// can't be decoded so the caller can answer 400 rather than a false success.
     @discardableResult
     public func applyAIProviderSync(from body: Data) -> Bool {
@@ -79,8 +78,8 @@ public final class PreferencesService: @unchecked Sendable {
         return true
     }
 
-    /// The summaries switch and selection are pushed by the host through
-    /// `/preferences/summaries`; a sync's `enabled`/`selectedConfigId` are ignored.
+    /// A sync also records the active selection and the enabled flag, so the
+    /// menu-bar app's push can still switch summaries off.
     public func applyAIProviderSync(_ sync: AIProviderConfigSync) {
         // See `syncLock`: serialize the read-modify-write so HTTP and XPC callers
         // can't interleave and corrupt the registry.
@@ -92,6 +91,9 @@ public final class PreferencesService: @unchecked Sendable {
         // eviction rolls the whole sync back (no partial state — it self-heals on the
         // host's next push). Keychain writes run inline (they aren't transactional).
         try? database.transaction {
+            persistSetting(AIProviderConfigKeys.enabledKey, sync.enabled)
+            persistSetting(AIProviderConfigKeys.selectedConfigIdKey, sync.selectedConfigId?.uuidString ?? "")
+
             let incoming = Set(sync.configs.map(\.id))
             for stored in storedConfigurations() where !incoming.contains(stored.id) {
                 removeStoredConfig(id: stored.id)

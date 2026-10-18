@@ -29,6 +29,13 @@ final class SessionSchemaTests: XCTestCase {
         XCTAssertEqual(SessionSchema.migrations.map(\.version), Array(1...45))
     }
 
+    func testPostMigrationIsTheHeadThenTheTail() {
+        XCTAssertEqual(
+            SessionSchema.postMigration.count,
+            SessionSchema.postMigrationHead.count + SessionSchema.postMigrationTail.count
+        )
+    }
+
     func testFreshDatabaseMigratesToTheLatestVersionWithTheCoreTables() throws {
         let store = try XCTUnwrap(created)
         XCTAssertTrue(store.isReady)

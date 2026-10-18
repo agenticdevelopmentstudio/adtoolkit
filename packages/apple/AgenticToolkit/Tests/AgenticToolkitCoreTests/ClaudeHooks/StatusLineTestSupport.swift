@@ -150,7 +150,8 @@ extension ClaudeHookConfiguration {
                 statusLineCommandSuffixes: ["statusline.dispatcher"]))
     }
 
-    /// A second daemon's configuration: its own marker, helper and drop
+    /// A second daemon's configuration, built from the same values as the Kitchen's
+    /// `ClaudeHookConfiguration.adkd()`: its own marker, helper and drop
     /// directory, a tap-only status line and no legacy forms.
     static func adkdFixture(
         helperPath: String = "/Applications/Kitchen.app/Contents/Helpers/adk",
@@ -162,9 +163,13 @@ extension ClaudeHookConfiguration {
             name: "adkd",
             marker: "# adkd-hook",
             hookBinaryPath: helperPath,
+            hookArguments: ["hook", "--event"],
+            statusLineArguments: ["statusline"],
             statusLineTapOnly: true,
             dropDirectory: dropDirectory,
             settingsURL: settingsURL,
+            ownLockName: ".adkd-hooks.lock",
+            statusLineEntryName: "adkd",
             bundledDispatcher: bundledDispatcher,
             legacy: .none)
     }
