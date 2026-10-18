@@ -133,6 +133,17 @@ extension ComposableSettings {
             CFRunLoopWakeUp(CFRunLoopGetMain())
         }
 
+        /// Shows the dialog as an ordinary window, holding up nothing: the rest
+        /// of the app stays usable while it is open, and it keeps its toolbar
+        /// and help drawer. Showing it again brings it forward. `onFinish`
+        /// reports the answer.
+        public func show() {
+            guard !isFinished, sheetParent == nil, let window = prepare() else { return }
+            presentedSelf = self
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+
         /// Shows the dialog as a sheet on `parent`, holding up only that window.
         /// Returns at once; `onFinish` reports the answer once the sheet has ended,
         /// so it can begin the next sheet on the same window.

@@ -88,7 +88,7 @@ public final class PrivacyWordsEditor: NSObject {
         explanation.textColor = .secondaryLabelColor
         explanation.translatesAutoresizingMaskIntoConstraints = false
 
-        let tableArea = TableFillingView(card: card)
+        let tableArea = ComposableSettings.TableFillingView(card: card)
         tableArea.translatesAutoresizingMaskIntoConstraints = false
 
         let cancel = NSButton(title: "Cancel", target: self, action: #selector(cancel(_:)))
@@ -198,37 +198,6 @@ public final class PrivacyWordsEditor: NSObject {
         parentWindow?.endSheet(window)
         window.orderOut(nil)
         retainedSelf = nil
-    }
-}
-
-/// Holds the card at the top and gives its table whatever height is left, so
-/// the table grows and shrinks with the sheet. The card itself keeps a fixed
-/// height by design; telling it the height is the owner's job.
-@MainActor
-private final class TableFillingView: NSView {
-
-    private let card: ComposableSettings.EditableTableCard
-
-    init(card: ComposableSettings.EditableTableCard) {
-        self.card = card
-        super.init(frame: .zero)
-        addSubview(card)
-        NSLayoutConstraint.activate([
-            card.topAnchor.constraint(equalTo: topAnchor),
-            card.leadingAnchor.constraint(equalTo: leadingAnchor)
-        ])
-        // Shrinks below the card's current height so the slack can go negative.
-        let minimum = heightAnchor.constraint(greaterThanOrEqualToConstant: 120)
-        minimum.isActive = true
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError() }
-
-    override func layout() {
-        super.layout()
-        let slack = bounds.height - card.frame.height
-        if abs(slack) > 0.5 { card.tableHeight += slack }
     }
 }
 

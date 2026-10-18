@@ -2016,6 +2016,7 @@
 		D9B386B67255C3A6B3C62BB7 /* FileTypesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBF568C4E57FFEE3670544C8 /* FileTypesSettingsView.swift */; };
 		D9B4CC7D17BEE222CCB78934 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 5B3AE3165D614D3644CA483D /* Sparkle */; };
 		D9C57D9FFF155F40788582F5 /* BillingActivityCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = D280465E595A20A303F1770B /* BillingActivityCache.swift */; };
+		DA3538EF646FBF02C2B9D8B0 /* TableFillingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0DB2EA26AC5F64CF56964CA /* TableFillingView.swift */; };
 		DA485DDD89BAFDB6DCC77F92 /* ProjectsMenuTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F3F977105890D47BB212F99 /* ProjectsMenuTests.swift */; };
 		DA5C67A986AF209BD2D9C620 /* SignInConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7DBE1A7C0E8F8329052D887F /* SignInConfiguration.swift */; };
 		DA62192181BCE82ECF7DF4C5 /* BrowserHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF9392A268D46DD88C92BD2B /* BrowserHistoryStore.swift */; };
@@ -5919,6 +5920,7 @@
 		D0904313AC1BEE6662DBB5BC /* ProviderPickerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProviderPickerTests.swift; sourceTree = "<group>"; };
 		D09BDE8501090F47DEE77632 /* ThemeSettingsWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeSettingsWidgets.swift; sourceTree = "<group>"; };
 		D09D1BB62899DF2C5823CBDC /* ChatErrorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatErrorTests.swift; sourceTree = "<group>"; };
+		D0DB2EA26AC5F64CF56964CA /* TableFillingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TableFillingView.swift; sourceTree = "<group>"; };
 		D11DC671245ACFEC3DFDF0AC /* AISettingsViewPanelController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISettingsViewPanelController.swift; sourceTree = "<group>"; };
 		D14081486465B4EB1C2C6B48 /* MonitorReadingRowView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitorReadingRowView.swift; sourceTree = "<group>"; };
 		D1719C66A637AEF4F14CA8D3 /* MonitorGaugeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitorGaugeView.swift; sourceTree = "<group>"; };
@@ -9272,6 +9274,7 @@
 				93E5BDE4C30A4CBC805A5B01 /* SliderView.swift */,
 				918004B1B4E31BFD1A4DE40B /* StepperView.swift */,
 				05BD9A0A3BC969FF0031625D /* SwatchGridView.swift */,
+				D0DB2EA26AC5F64CF56964CA /* TableFillingView.swift */,
 				DFDFF4C23643458BD9192793 /* TextAreaEditView.swift */,
 				426B8225A1D8E3C1C86F547B /* TextEditView.swift */,
 				B9D78EBD9C75F8215D809DC3 /* ThemePickerView.swift */,
@@ -14034,6 +14037,7 @@
 				6D8EDBE4DA9AB65E0B2082B3 /* TabPaneStatusSymbol.swift in Sources */,
 				359C09B0DC9DBAC6D3A23E33 /* TabPaneView.swift in Sources */,
 				87EC0533FBC84CF8B982922A /* TabPaneViewController.swift in Sources */,
+				DA3538EF646FBF02C2B9D8B0 /* TableFillingView.swift in Sources */,
 				A7729169969C84CBB73A14B3 /* TerminalAppearance.swift in Sources */,
 				52991F58F83F5A1EC39191B8 /* TerminalChatControlServer.swift in Sources */,
 				0B182CD986248AF1A5A6F918 /* TerminalChatSession.swift in Sources */,

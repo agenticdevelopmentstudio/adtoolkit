@@ -14,6 +14,9 @@ extension ComposableSettings {
             case text(editable: Bool)
             /// A switch, reported through `onToggle`.
             case toggle
+            /// A pop-up of the cell's own choices (a `.choice` value), reported
+            /// through `onChoose`.
+            case popUp
             /// A filled or hollow dot — a running timer, a connected server.
             case indicator
             /// A `yyyy-MM-dd` day, typed and read in the card's `timeZone`.
@@ -36,7 +39,7 @@ extension ComposableSettings {
             var isEditableText: Bool {
                 switch self {
                 case .text(let editable): editable
-                case .toggle, .indicator: false
+                case .toggle, .indicator, .popUp: false
                 case .day, .time, .duration, .money: true
                 }
             }
@@ -66,6 +69,35 @@ extension ComposableSettings {
         }
     }
 
+    /// One item of a `.popUp` cell.
+    public struct EditableTableChoice: Sendable, Equatable {
+        /// The caller's key for the choice; what `onChoose` reports.
+        public let id: String
+        public let title: String
+        /// A disabled choice is shown and can stay selected — a target that no
+        /// longer exists — but cannot be chosen.
+        public let isEnabled: Bool
+        /// A line between groups of choices, never chosen.
+        public let isSeparator: Bool
+
+        public init(id: String, title: String, isEnabled: Bool = true) {
+            self.id = id
+            self.title = title
+            self.isEnabled = isEnabled
+            self.isSeparator = false
+        }
+
+        private init(separator: Void) {
+            id = ""
+            title = ""
+            isEnabled = false
+            isSeparator = true
+        }
+
+        /// A separator line.
+        public static let separator = EditableTableChoice(separator: ())
+    }
+
     /// What one cell shows. A cell whose column expects text but which carries
     /// a toggle simply draws nothing: the card reports the mismatch to no one,
     /// because a table that refuses to draw is worse than one with a gap.
@@ -74,6 +106,9 @@ extension ComposableSettings {
         case text(String)
         /// A switch, on or off.
         case toggle(Bool)
+        /// A pop-up's choices and the id of the one shown, for a `.popUp`
+        /// column; a `selected` that names no choice shows the first.
+        case choice(selected: String?, choices: [EditableTableChoice])
         /// A dot, filled when true.
         case indicator(Bool)
         /// Greyed prompt text — a value not set yet, not a value that is empty.
@@ -198,6 +233,8 @@ extension ComposableSettings {
         public var onRejectedEdit: ((_ rowID: String, _ columnID: String, _ text: String) -> Void)?
         /// A toggle cell was flipped.
         public var onToggle: ((_ rowID: String, _ columnID: String, _ isOn: Bool) -> Void)?
+        /// A pop-up cell's choice was changed to the choice `choiceID`.
+        public var onChoose: ((_ rowID: String, _ columnID: String, _ choiceID: String) -> Void)?
         /// A sortable header was clicked. The card does not sort; the owner re-sorts and calls `setRows`.
         public var onSort: ((_ columnID: String, _ ascending: Bool) -> Void)?
 
@@ -270,6 +307,7 @@ extension ComposableSettings {
 
         private static let cellIdentifier = NSUserInterfaceItemIdentifier("editable-table-cell")
         private static let toggleIdentifier = NSUserInterfaceItemIdentifier("editable-table-toggle")
+        private static let popUpIdentifier = NSUserInterfaceItemIdentifier("editable-table-popup")
         private static let indicatorIdentifier = NSUserInterfaceItemIdentifier("editable-table-indicator")
         private static let rowViewIdentifier = NSUserInterfaceItemIdentifier("editable-table-row")
 
@@ -475,7 +513,7 @@ extension ComposableSettings {
                 guard let cents = MoneyFormatter(currency: currency).cents(parsing: text),
                       range.contains(cents) else { return nil }
                 return .money(cents)
-            case .text, .toggle, .indicator:
+            case .text, .toggle, .indicator, .popUp:
                 return nil
             }
         }
@@ -638,6 +676,14 @@ extension ComposableSettings {
             guard let columnID = (sender as? EditableTableToggle)?.toggleColumnID else { return }
             onToggle?(rows[row].id, columnID, sender.state == .on)
         }
+
+        @objc fileprivate func popUpChosen(_ sender: NSPopUpButton) {
+            let row = sender.tag
+            guard row >= 0, row < rows.count, !rows[row].isReadOnly,
+                  let columnID = (sender as? EditableTablePopUp)?.popUpColumnID,
+                  let choiceID = sender.selectedItem?.representedObject as? String else { return }
+            onChoose?(rows[row].id, columnID, choiceID)
+        }
     }
 }
 
@@ -691,6 +737,30 @@ extension ComposableSettings.EditableTableCard: NSTableViewDelegate {
             button.setAccessibilityLabel(column.title)
             return button
 
+        case .popUp:
+            let button = reusablePopUp()
+            button.popUpColumnID = columnID
+            button.tag = row
+            button.isEnabled = !rows[row].isReadOnly
+            button.removeAllItems()
+            if case .choice(let selected, let choices) = value {
+                for choice in choices {
+                    if choice.isSeparator {
+                        button.menu?.addItem(.separator())
+                        continue
+                    }
+                    let item = NSMenuItem(title: choice.title, action: nil, keyEquivalent: "")
+                    item.representedObject = choice.id
+                    item.isEnabled = choice.isEnabled
+                    button.menu?.addItem(item)
+                }
+                if let index = choices.firstIndex(where: { !$0.isSeparator && $0.id == selected }) {
+                    button.selectItem(at: index)
+                }
+            }
+            button.setAccessibilityLabel(column.title)
+            return button
+
         case .indicator:
             let label = reusableIndicator()
             if case .indicator(let isOn) = value {
@@ -733,7 +803,7 @@ extension ComposableSettings.EditableTableCard: NSTableViewDelegate {
         case .duration(let seconds): (DurationFormatter.decimalHours(seconds: seconds), nil)
         case .money(let cents, let currency, let placeholder):
             cents.map { (MoneyFormatter(currency: currency).editableString(cents: $0), nil) } ?? ("", placeholder)
-        case .toggle, .indicator, nil: ("", nil)
+        case .toggle, .indicator, .choice, nil: ("", nil)
         }
     }
 
@@ -761,6 +831,23 @@ extension ComposableSettings.EditableTableCard: NSTableViewDelegate {
         let button = ComposableSettings.EditableTableToggle(
             checkboxWithTitle: "", target: self, action: #selector(togglePressed(_:)))
         button.identifier = Self.toggleIdentifier
+        return button
+    }
+
+    private func reusablePopUp() -> ComposableSettings.EditableTablePopUp {
+        if let reused = tableView.makeView(
+            withIdentifier: Self.popUpIdentifier, owner: self
+        ) as? ComposableSettings.EditableTablePopUp {
+            return reused
+        }
+        let button = ComposableSettings.EditableTablePopUp(frame: .zero, pullsDown: false)
+        button.identifier = Self.popUpIdentifier
+        button.controlSize = .small
+        button.font = .systemFont(ofSize: NSFont.smallSystemFontSize)
+        // A choice that is gone stays shown, disabled, until another is picked.
+        button.autoenablesItems = false
+        button.target = self
+        button.action = #selector(popUpChosen(_:))
         return button
     }
 
@@ -872,6 +959,13 @@ extension ComposableSettings {
             menu.addItem(withTitle: title, action: nil, keyEquivalent: "")
             items().forEach(menu.addItem)
         }
+    }
+
+    /// A pop-up cell. Its `identifier` is the reuse identifier, so the column
+    /// it reports for is carried separately.
+    public final class EditableTablePopUp: NSPopUpButton {
+        /// The id of the column this pop-up was last filled for.
+        public var popUpColumnID: String?
     }
 
     /// A toggle cell. Its `identifier` is the reuse identifier, so the column
