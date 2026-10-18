@@ -23,6 +23,10 @@ public enum StenographerAIConfigPush {
     private static var configScopedObservers: [UserSettingObserver<String>] = []
     private static var observedManager: AIPluginManager?
     private static var onChange: (@MainActor () -> Void)?
+    /// The ids this host last pushed. The daemon's registry is shared with other hosts, so
+    /// a push names only the ones dropped from this list and never deletes anyone else's.
+    private nonisolated static let ledger = AIConfigPushLedger(
+        key: "stenographer.aiConfigPush.http.lastPushedIds")
 
     /// Installs the observers and reconciles the daemon now and on every
     /// reconnect. Call once at startup, after the plugin manager exists.
@@ -40,7 +44,9 @@ public enum StenographerAIConfigPush {
                 guard let sync = try? JSONDecoder().decode(AIProviderConfigSync.self, from: body) else {
                     return false
                 }
-                return await service.setAIPreferences(sync)
+                let landed = await service.setAIPreferences(sync)
+                if landed { ledger.recordLanded(sync) }
+                return landed
             },
             registerReconnect: { service.onReconnect($0) }
         )
@@ -102,19 +108,21 @@ public enum StenographerAIConfigPush {
         }
     }
 
-    /// Assembles the full-set sync from all configurations. `resolve` returns
+    /// Assembles the sync from all configurations. `resolve` returns
     /// the already-split wire config for a configuration, or nil to skip it
     /// (plugin uninstalled / template gone). Pure and injectable.
     static func makeSync(
         configurations: [AIProviderConfiguration],
         selectedConfigId: String,
         enabled: Bool,
+        removedConfigIds: [UUID]? = nil,
         resolve: (AIProviderConfiguration) -> ResolvedProviderConfig?
     ) -> AIProviderConfigSync {
         AIProviderConfigSync(
             enabled: enabled,
             selectedConfigId: UUID(uuidString: selectedConfigId),
-            configs: configurations.compactMap(resolve)
+            configs: configurations.compactMap(resolve),
+            removedConfigIds: removedConfigIds
         )
     }
 
@@ -157,8 +165,9 @@ public enum StenographerAIConfigPush {
 
     /// The registry the daemon receives, encoded; nil when it must not be sent.
     ///
-    /// A nil manager resolves nothing, and pushing an empty set would
-    /// reconcile-DELETE the daemon's whole registry, so nothing is sent. Nor is
+    /// A nil manager resolves nothing, so nothing is sent. The sync is partial: it
+    /// names the configurations this host dropped since its last push and the daemon
+    /// deletes only those. Nor is
     /// anything sent while a stored secret cannot be read: an empty secret is a
     /// delete on the daemon side, and the empty value is not the user's.
     private static func currentBody() -> Data? {
@@ -167,6 +176,7 @@ public enum StenographerAIConfigPush {
             configurations: UserSettings.aiProviderConfigurations.value,
             selectedConfigId: UserSettings.selectedAIProviderConfigurationId.value,
             enabled: true,
+            removedConfigIds: ledger.removed(configured: UserSettings.aiProviderConfigurations.value.map(\.id)),
             resolve: { config in
                 guard let resolved = AIProviderResolver.resolve(config, manager: manager) else { return nil }
                 return wireConfig(config, resolved: resolved)

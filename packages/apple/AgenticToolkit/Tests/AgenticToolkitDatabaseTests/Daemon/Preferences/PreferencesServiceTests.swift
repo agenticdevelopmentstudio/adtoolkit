@@ -127,6 +127,48 @@ final class PreferencesServiceTests: XCTestCase {
         XCTAssertTrue(service.storedConfigurations().isEmpty)
     }
 
+    func testPartialSyncUpsertsAndLeavesOtherHostsConfigurationsAlone() throws {
+        let service = try makeService()
+        let theirs = UUID(), mine = UUID()
+        service.applyAIProviderSync(AIProviderConfigSync(
+            enabled: true, selectedConfigId: nil, configs: [config(theirs, secrets: ["apiKey": "theirs"])]
+        ))
+        service.applyAIProviderSync(AIProviderConfigSync(
+            enabled: true, selectedConfigId: nil, configs: [config(mine, secrets: ["apiKey": "mine"])],
+            removedConfigIds: []
+        ))
+        XCTAssertEqual(Set(service.storedConfigurations().map(\.id)), [theirs, mine])
+        XCTAssertEqual(secrets.get(forKey: AIProviderConfigKeys.fieldKey(config: theirs, field: "apiKey")), "theirs")
+        XCTAssertEqual(secrets.get(forKey: AIProviderConfigKeys.fieldKey(config: mine, field: "apiKey")), "mine")
+    }
+
+    func testPartialSyncDeletesExactlyTheListedIdsAndTheirSecrets() throws {
+        let service = try makeService()
+        let gone = UUID(), kept = UUID()
+        service.applyAIProviderSync(AIProviderConfigSync(
+            enabled: true, selectedConfigId: nil,
+            configs: [config(gone, secrets: ["apiKey": "g"]), config(kept, secrets: ["apiKey": "k"])]
+        ))
+        service.applyAIProviderSync(AIProviderConfigSync(
+            enabled: true, selectedConfigId: nil, configs: [], removedConfigIds: [gone]
+        ))
+        XCTAssertEqual(service.storedConfigurations().map(\.id), [kept])
+        XCTAssertNil(secrets.get(forKey: AIProviderConfigKeys.fieldKey(config: gone, field: "apiKey")))
+        XCTAssertEqual(secrets.get(forKey: AIProviderConfigKeys.fieldKey(config: kept, field: "apiKey")), "k")
+    }
+
+    func testSyncBodyWithoutRemovedConfigIdsStillDecodesAndReconcilesTheFullSet() throws {
+        let service = try makeService()
+        let old = UUID(), fresh = UUID()
+        service.applyAIProviderSync(AIProviderConfigSync(enabled: true, selectedConfigId: nil, configs: [config(old)]))
+        let body = Data("""
+        {"enabled": true, "configs": [{"id": "\(fresh.uuidString)", "name": "T", "pluginIdentifier": "test.fake",
+        "templateId": "custom", "model": "m", "values": {}, "secrets": {}}]}
+        """.utf8)
+        XCTAssertTrue(service.applyAIProviderSync(from: body))
+        XCTAssertEqual(service.storedConfigurations().map(\.id), [fresh])
+    }
+
     func testUndecodableSyncBodyIsRejectedWithoutWriting() throws {
         let service = try makeService()
         XCTAssertFalse(service.applyAIProviderSync(from: Data("not json".utf8)))

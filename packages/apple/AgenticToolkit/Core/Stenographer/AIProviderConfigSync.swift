@@ -11,11 +11,20 @@ public struct AIProviderConfigSync: Codable, Sendable, Equatable {
     public var selectedConfigId: UUID?
     /// Every configured provider, fully resolved (values + secrets).
     public var configs: [ResolvedProviderConfig]
+    /// nil (or absent, as an older host sends): `configs` is the complete registry and
+    /// the daemon deletes every stored configuration it lists no longer. Non-nil: a
+    /// partial sync; the daemon upserts `configs`, deletes exactly these ids, and leaves
+    /// every other stored configuration alone.
+    public var removedConfigIds: [UUID]?
 
-    public init(enabled: Bool, selectedConfigId: UUID?, configs: [ResolvedProviderConfig]) {
+    public init(
+        enabled: Bool, selectedConfigId: UUID?, configs: [ResolvedProviderConfig],
+        removedConfigIds: [UUID]? = nil
+    ) {
         self.enabled = enabled
         self.selectedConfigId = selectedConfigId
         self.configs = configs
+        self.removedConfigIds = removedConfigIds
     }
 }
 

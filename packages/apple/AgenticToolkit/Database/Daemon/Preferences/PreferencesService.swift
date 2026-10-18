@@ -63,11 +63,12 @@ public final class PreferencesService: @unchecked Sendable {
 
     // MARK: - AI provider-config registry sync
 
-    /// Applies a full-set provider-config sync: reconciles the stored registry
-    /// against the incoming configurations (upsert present, delete absent) and
-    /// their secrets, and one-time-cleans the legacy plugin-keyed layout. It owns only
-    /// the provider registry: the enabled flag and the selected configuration belong to
-    /// `setSummary` (POST /preferences/summaries) and are never written here.
+    /// Applies a provider-config sync. Without `removedConfigIds` it is a full-set
+    /// reconcile (upsert present, delete absent); with it, a partial one (upsert the
+    /// sent configurations, delete exactly the listed ids). Secrets follow, and the
+    /// legacy plugin-keyed layout is cleaned once.
+    /// It owns only the provider registry: the enabled flag and the selected
+    /// configuration belong to `setSummary` (POST /preferences/summaries) and are never written here.
     /// Returns `false` (a no-op, no partial wipe) when the body can't be decoded
     /// so the caller can answer 400 rather than a false success.
     @discardableResult
@@ -93,15 +94,29 @@ public final class PreferencesService: @unchecked Sendable {
         // eviction rolls the whole sync back (no partial state — it self-heals on the
         // host's next push). Keychain writes run inline (they aren't transactional).
         try? database.transaction {
-            let incoming = Set(sync.configs.map(\.id))
-            for stored in storedConfigurations() where !incoming.contains(stored.id) {
-                removeStoredConfig(id: stored.id)
+            if let removed = sync.removedConfigIds {
+                // Partial sync: delete exactly the listed ids, upsert what was sent, and
+                // leave every other stored configuration (another host's) alone.
+                for id in removed { removeStoredConfig(id: id) }
+            } else {
+                // Full-set sync from a host that predates `removedConfigIds`.
+                let incoming = Set(sync.configs.map(\.id))
+                for stored in storedConfigurations() where !incoming.contains(stored.id) {
+                    removeStoredConfig(id: stored.id)
+                }
             }
             for config in sync.configs { upsertStoredConfig(config) }
 
-            let identities = sync.configs.map {
+            let sent = sync.configs.map {
                 AIProviderConfiguration(id: $0.id, name: $0.name,
                                         pluginIdentifier: $0.pluginIdentifier, templateId: $0.templateId)
+            }
+            let identities: [AIProviderConfiguration]
+            if let removed = sync.removedConfigIds {
+                let drop = Set(removed).union(sent.map(\.id))
+                identities = storedConfigurations().filter { !drop.contains($0.id) } + sent
+            } else {
+                identities = sent
             }
             if let data = try? JSONEncoder().encode(identities), let json = String(data: data, encoding: .utf8) {
                 persistSetting(AIProviderConfigKeys.configurationsKey, json)
