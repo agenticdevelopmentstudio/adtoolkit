@@ -822,6 +822,8 @@ extension ComposableSettings.EditableTableCard: NSTableViewDelegate {
         field.isBordered = false
         field.drawsBackground = false
         field.lineBreakMode = .byTruncatingTail
+        // A cut-off value shows in full under the pointer.
+        field.allowsExpansionToolTips = true
         field.delegate = self
         return field
     }
