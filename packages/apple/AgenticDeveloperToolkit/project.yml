@@ -17,6 +17,8 @@ settings:
     GENERATE_INFOPLIST_FILE: YES
     CURRENT_PROJECT_VERSION: "1"
     MARKETING_VERSION: "0.1.0"
+    LM_FILTER_WARNINGS: YES
+    OTHER_LDFLAGS: "$(inherited) -weak_framework AppIntents"
 
 targets:
   AgenticDeveloperToolkit-macOS:
