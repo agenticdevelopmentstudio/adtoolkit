@@ -6,16 +6,19 @@ import AgenticToolkitSync
 
 final class GRDBSyncStoreTests: XCTestCase {
 
+    private var dir: URL!
     private var path: String!
 
     override func setUpWithError() throws {
-        path = NSTemporaryDirectory() + "sync-\(UUID().uuidString).db"
+        dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("sync-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        path = dir.appendingPathComponent("sync.db").path
     }
 
     override func tearDownWithError() throws {
-        for suffix in ["", "-wal", "-shm"] {
-            try? FileManager.default.removeItem(atPath: path + suffix)
-        }
+        // The whole directory, so the db's -wal and -shm go with it.
+        try? FileManager.default.removeItem(at: dir)
     }
 
     private func makeStore(pullOnlyResources: Set<String> = []) throws -> GRDBSyncStore {

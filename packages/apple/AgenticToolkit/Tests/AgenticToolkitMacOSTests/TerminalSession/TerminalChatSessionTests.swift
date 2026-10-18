@@ -75,6 +75,7 @@ final class TerminalChatSessionTests: XCTestCase {
 
     /// A chat connected to a freshly started shell, once its first prompt is up.
     private func connectedShell() async throws -> (TerminalChatSession, TerminalSession) {
+        // temp-leak-check: ok path only, nothing written
         let terminal = TerminalSession(name: "test", workingDirectory: NSTemporaryDirectory(),
                                        shell: "/bin/sh")
         _ = terminal.terminalView

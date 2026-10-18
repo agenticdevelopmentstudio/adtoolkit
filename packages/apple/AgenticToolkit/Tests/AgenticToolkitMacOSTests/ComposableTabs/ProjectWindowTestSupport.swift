@@ -1,7 +1,52 @@
 import AppKit
+import Synchronization
 import XCTest
 @testable import AgenticToolkitLanguage
 @testable import AgenticToolkitMacOS
+
+/// One unique directory per call under the system temp directory, removed
+/// when the test process exits.
+///
+/// Factories that hand back an object with no handle on its directory
+/// (`makeProject`, each suite's `makeWorkspace`) cannot clean up after
+/// themselves, and a SQLite database leaves `-wal` and `-shm` beside its
+/// `.db`, so the whole directory is what has to go. Everything a test writes
+/// goes inside the directory this returns; nothing is written to the temp root.
+enum TestTempDirectory {
+    private static let created = Mutex<[URL]>([])
+
+    /// `atexit` takes a function that captures nothing, so it calls back into
+    /// this type; the lazy static makes the registration happen exactly once.
+    private static let removeAtExit: Void = {
+        atexit { TestTempDirectory.removeAll() }
+    }()
+
+    /// Makes `<temp>/<label>-<UUID>/` and schedules its removal.
+    static func make(label: String) -> URL {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("\(label)-\(UUID().uuidString)", isDirectory: true)
+        // swiftlint:disable:next force_try
+        try! FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        register(directory)
+        return directory
+    }
+
+    /// Schedules removal of a directory a suite made itself.
+    static func register(_ directory: URL) {
+        _ = removeAtExit
+        created.withLock { $0.append(directory) }
+    }
+
+    static func removeAll() {
+        let directories = created.withLock { directories -> [URL] in
+            defer { directories.removeAll() }
+            return directories
+        }
+        for directory in directories {
+            try? FileManager.default.removeItem(at: directory)
+        }
+    }
+}
 
 /// Scaffolding shared by the project-window suites.
 ///
@@ -57,8 +102,7 @@ enum ProjectWindowTestSupport {
         registered: Bool = true,
         languageServices: ProjectLanguageServices? = nil
     ) -> ProjectWorkspace {
-        let path = FileManager.default.temporaryDirectory
-            .appendingPathComponent("\(label)-\(UUID().uuidString)")
+        let path = TestTempDirectory.make(label: label)
             .appendingPathComponent("Test.db").path
         let repo = GitRepo(path: NSTemporaryDirectory(), name: name)
         // swiftlint:disable:next force_try

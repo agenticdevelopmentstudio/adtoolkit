@@ -4,21 +4,26 @@ import Combine
 
 @MainActor
 final class SqliteStorageProviderTests: XCTestCase {
+    var dbDirectory: URL!
     var dbURL: URL!
     var store: SqliteStorageProvider!
     var cancellables: Set<AnyCancellable>!
 
     override func setUp() async throws {
         try await super.setUp()
-        dbURL = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent("SqliteSettings-\(UUID().uuidString).sqlite")
+        dbDirectory = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("SqliteSettings-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dbDirectory, withIntermediateDirectories: true)
+        dbURL = dbDirectory.appendingPathComponent("settings.sqlite")
         store = try SqliteStorageProvider(path: dbURL.path)
         cancellables = []
     }
 
     override func tearDown() async throws {
         store = nil
-        if let dbURL { try? FileManager.default.removeItem(at: dbURL) }
+        // The whole directory, so any -wal/-shm beside the db go with it.
+        if let dbDirectory { try? FileManager.default.removeItem(at: dbDirectory) }
+        dbDirectory = nil
         dbURL = nil
         cancellables = nil
         try await super.tearDown()

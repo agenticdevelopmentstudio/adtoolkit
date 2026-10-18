@@ -36,6 +36,7 @@ struct FakeLanguageServerSessionFidelityTests {
         return FakeLanguageServerSession(
             configuration: configuration,
             environment: [:],
+            // temp-leak-check: ok path only, nothing written
             rootURL: URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true),
             log: log,
             behavior: FakeSessionBehavior(holdsStop: true)

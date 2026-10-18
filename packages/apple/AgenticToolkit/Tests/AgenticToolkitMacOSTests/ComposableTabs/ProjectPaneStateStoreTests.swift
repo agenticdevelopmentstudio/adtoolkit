@@ -22,10 +22,9 @@ final class ProjectPaneStateStoreTests: XCTestCase {
     /// fixture the situation these tests are about.
     @MainActor
     private static func makeWorkspace() -> ProjectWorkspace {
-        let path = FileManager.default.temporaryDirectory
-            .appendingPathComponent("PaneStateStoreTests-\(UUID().uuidString)")
+        let path = TestTempDirectory.make(label: "PaneStateStoreTests")
             .appendingPathComponent("Test.db").path
-        let repo = GitRepo(path: NSTemporaryDirectory(), name: "Test")
+        let repo = GitRepo(path: NSTemporaryDirectory(), name: "Test") // temp-leak-check: ok path only, nothing written
         // A failure here is a broken test environment, not a case to handle.
         // swiftlint:disable:next force_try
         let database = try! ProjectDatabase(path: path)

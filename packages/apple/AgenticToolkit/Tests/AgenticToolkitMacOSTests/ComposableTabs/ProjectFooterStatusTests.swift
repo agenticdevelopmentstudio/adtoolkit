@@ -88,12 +88,12 @@ final class ProjectFooterStatusTests: XCTestCase {
     }
 
     private func makeWorkspace() -> ProjectWorkspace {
-        let path = FileManager.default.temporaryDirectory
-            .appendingPathComponent("FooterStatusTests-\(UUID().uuidString)")
+        let path = TestTempDirectory.make(label: "FooterStatusTests")
             .appendingPathComponent("Test.db").path
         // swiftlint:disable:next force_try
         let database = try! ProjectDatabase(path: path)
         return ProjectWorkspace(
+            // temp-leak-check: ok path only, nothing written
             repo: GitRepo(path: NSTemporaryDirectory(), name: "api-server"),
             database: database
         )

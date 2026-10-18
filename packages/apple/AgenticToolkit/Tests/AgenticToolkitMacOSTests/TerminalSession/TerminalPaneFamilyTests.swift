@@ -15,6 +15,7 @@ final class TerminalPaneFamilyTests: XCTestCase {
     }
 
     private func pluginManager() -> AIPluginManager {
+        // temp-leak-check: ok path only, nothing written
         AIPluginManager(searchPaths: [FileManager.default.temporaryDirectory
             .appendingPathComponent("TerminalPaneFamilyTests-\(UUID().uuidString)")])
     }

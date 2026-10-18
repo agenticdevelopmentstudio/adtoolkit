@@ -57,6 +57,7 @@ struct DiagnosticStoreTests {
                 rootMarkers: [".git"]
             ),
             environment: [:],
+            // temp-leak-check: ok path only, nothing written
             rootURL: URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true),
             log: log
         )
@@ -237,6 +238,7 @@ struct DiagnosticStoreTests {
         )
         let registry = LanguageServerRegistry(
             store: settings,
+            // temp-leak-check: ok path only, nothing written
             workspaceURL: URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true),
             builtInConfigurations: [],
             sessionFactory: { configuration, secrets, rootURL in
@@ -536,6 +538,7 @@ struct PublishedDiagnosticsStreamTests {
             languageIds: ["swift"],
             executableURL: URL(fileURLWithPath: "/bin/sh"),
             arguments: ["-c", script],
+            // temp-leak-check: ok path only, nothing written
             rootURL: URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true),
             initializeBudgetSeconds: Self.initializeBudget,
             shutdownBudgetSeconds: Self.shutdownBudget

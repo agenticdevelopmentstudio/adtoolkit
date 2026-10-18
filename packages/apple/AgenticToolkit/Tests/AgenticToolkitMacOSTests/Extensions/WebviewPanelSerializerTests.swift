@@ -24,10 +24,9 @@ struct WebviewPanelSerializerTests {
     /// the database has never heard of silently refuses every write — and a
     /// test about persistence would pass on the strength of two absences.
     private static func makeWorkspace() -> ProjectWorkspace {
-        let path = FileManager.default.temporaryDirectory
-            .appendingPathComponent("WebviewPanelSerializerTests-\(UUID().uuidString)")
+        let path = TestTempDirectory.make(label: "WebviewPanelSerializerTests")
             .appendingPathComponent("Test.db").path
-        let repo = GitRepo(path: NSTemporaryDirectory(), name: "Test")
+        let repo = GitRepo(path: NSTemporaryDirectory(), name: "Test") // temp-leak-check: ok path only, nothing written
         // A failure here is a broken test environment, not a case to handle.
         // swiftlint:disable force_try
         let database = try! ProjectDatabase(path: path)
@@ -57,6 +56,7 @@ struct WebviewPanelSerializerTests {
             for: WebviewPanelSerializer.viewID,
             nodeID: nodeID,
             project: project,
+            // temp-leak-check: ok path only, nothing written
             workingDirectory: URL(fileURLWithPath: NSTemporaryDirectory()),
             paneNumber: paneNumber)
     }

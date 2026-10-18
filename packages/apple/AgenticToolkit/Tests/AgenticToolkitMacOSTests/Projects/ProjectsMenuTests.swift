@@ -7,8 +7,8 @@ import XCTest
 /// coordinator's `init` builds, never a project actually open.
 @MainActor
 private func makeProjectsCoordinator() throws -> ProjectsCoordinator {
-    let databasePath = FileManager.default.temporaryDirectory
-        .appendingPathComponent("projects-menu-test-\(UUID().uuidString).db")
+    let databasePath = TestTempDirectory.make(label: "projects-menu-test")
+        .appendingPathComponent("Test.db")
         .path
     let database = try ProjectDatabase(path: databasePath)
     return try ProjectsCoordinator(database: database, scanner: nil, commandRegistry: CommandRegistry())

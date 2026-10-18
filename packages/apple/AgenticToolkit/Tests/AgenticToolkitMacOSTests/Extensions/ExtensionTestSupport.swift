@@ -82,8 +82,14 @@ enum ExtensionFixtures {
     /// resolution that slips one level up lands where no writer can have put a
     /// file, and fails loudly. Put a file directly here — even in a `defer`,
     /// even as a marker — and the next base-resolution regression passes.
-    static let sandboxRoot = FileManager.default.temporaryDirectory
-        .appendingPathComponent("AgenticToolkitExtensionTests", isDirectory: true)
+    static let sandboxRoot: URL = {
+        // temp-leak-check: ok removed at exit via TestTempDirectory.register
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent("AgenticToolkitExtensionTests", isDirectory: true)
+        // Callers remove their own folders; the root itself goes at process exit.
+        TestTempDirectory.register(root)
+        return root
+    }()
 
     /// A folder of this run's own, named for the suite that asked and unique to
     /// the call. Callers remove it; nothing here is ever read by a later run.

@@ -12,16 +12,19 @@ import AgenticToolkitSync
 /// stale baseVersion that would self-conflict on the server.
 final class SyncEngineGRDBIntegrationTests: XCTestCase {
 
+    private var dir: URL!
     private var path: String!
 
     override func setUpWithError() throws {
-        path = NSTemporaryDirectory() + "sync-engine-\(UUID().uuidString).db"
+        dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("sync-engine-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        path = dir.appendingPathComponent("sync-engine.db").path
     }
 
     override func tearDownWithError() throws {
-        for suffix in ["", "-wal", "-shm"] {
-            try? FileManager.default.removeItem(atPath: path + suffix)
-        }
+        // The whole directory, so the db's -wal and -shm go with it.
+        try? FileManager.default.removeItem(at: dir)
     }
 
     private let notes = SyncResource(resource: "personal.notes", schemaVersion: 1)

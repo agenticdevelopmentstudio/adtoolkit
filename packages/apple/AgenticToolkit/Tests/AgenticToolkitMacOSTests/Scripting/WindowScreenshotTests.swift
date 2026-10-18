@@ -21,6 +21,7 @@ final class WindowScreenshotTests: XCTestCase {
         let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(
             "window-screenshot-test-\(UUID()).png"
         )
+        defer { try? FileManager.default.removeItem(at: tmp) }
         XCTAssertFalse(WindowScreenshot.writePNG(of: window, to: tmp))
         XCTAssertFalse(FileManager.default.fileExists(atPath: tmp.path))
     }

@@ -148,6 +148,7 @@ final class BrowserToolSetTests: XCTestCase {
     func testFilePaneIsRefused() async {
         let page = OffscreenWebView()
         let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("local-\(UUID().uuidString).html")
+        defer { try? FileManager.default.removeItem(at: url) }
         try! "<p>local</p>".write(to: url, atomically: true, encoding: .utf8)
         await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
             page.webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
@@ -182,6 +183,7 @@ final class BrowserToolSetTests: XCTestCase {
     func testBackOntoALocalFileIsRefused() async throws {
         let page = OffscreenWebView()
         let url = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent("local-\(UUID().uuidString).html")
+        defer { try? FileManager.default.removeItem(at: url) }
         try "<p>local</p>".write(to: url, atomically: true, encoding: .utf8)
         await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
             page.webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())

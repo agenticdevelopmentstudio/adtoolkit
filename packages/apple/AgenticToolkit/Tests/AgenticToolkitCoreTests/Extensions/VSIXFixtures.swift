@@ -13,6 +13,7 @@ import Foundation
 enum VSIXFixtures {
 
     static func makeTemporaryDirectory(_ name: String) throws -> URL {
+        // temp-leak-check: ok factory; every caller removes the directory it gets back
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("VSIXFixtures-\(name)-\(UUID().uuidString)", isDirectory: true)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)

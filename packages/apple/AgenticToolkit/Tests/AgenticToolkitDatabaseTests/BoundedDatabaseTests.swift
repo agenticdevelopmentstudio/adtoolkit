@@ -4,16 +4,19 @@ import GRDB
 
 final class BoundedDatabaseTests: XCTestCase {
 
+    private var dir: URL!
     private var path: String!
 
     override func setUpWithError() throws {
-        path = NSTemporaryDirectory() + "bdb-\(UUID().uuidString).db"
+        dir = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("bdb-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        path = dir.appendingPathComponent("bdb.db").path
     }
 
     override func tearDownWithError() throws {
-        for suffix in ["", "-wal", "-shm"] {
-            try? FileManager.default.removeItem(atPath: path + suffix)
-        }
+        // The whole directory, so the db's -wal and -shm go with it.
+        try? FileManager.default.removeItem(at: dir)
     }
 
     func testWriteThenReadAcrossLanes() throws {

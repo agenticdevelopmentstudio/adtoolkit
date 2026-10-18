@@ -21,14 +21,13 @@ final class ProjectPaneContentTests: XCTestCase {
     /// row back — they need a project only because panes are built from one.
     @MainActor
     private static func makeWorkspace() -> ProjectWorkspace {
-        let path = FileManager.default.temporaryDirectory
-            .appendingPathComponent("ComposableTabsTests-\(UUID().uuidString)")
+        let path = TestTempDirectory.make(label: "ComposableTabsTests")
             .appendingPathComponent("Test.db").path
         // A failure here is a broken test environment, not a case to handle.
         // swiftlint:disable:next force_try
         let database = try! ProjectDatabase(path: path)
         return ProjectWorkspace(
-            repo: GitRepo(path: NSTemporaryDirectory(), name: "Test"),
+            repo: GitRepo(path: NSTemporaryDirectory(), name: "Test"), // temp-leak-check: ok path only, nothing written
             database: database
         )
     }

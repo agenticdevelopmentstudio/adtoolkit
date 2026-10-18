@@ -116,6 +116,7 @@ struct LanguageServerSessionTests {
             languageIds: ["swift"],
             executableURL: URL(fileURLWithPath: "/bin/sh"),
             arguments: ["-c", script],
+            // temp-leak-check: ok path only, nothing written
             rootURL: URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true),
             initializeBudgetSeconds: Self.initializeBudget,
             shutdownBudgetSeconds: shutdownBudget
