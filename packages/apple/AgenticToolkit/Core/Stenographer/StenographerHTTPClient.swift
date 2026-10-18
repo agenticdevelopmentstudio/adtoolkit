@@ -217,7 +217,7 @@ public final class StenographerHTTPClient: StenographerDaemonService, @unchecked
         guard let url = components.url else { return nil }
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = method
-        urlRequest.timeoutInterval = method == "POST" && path.hasSuffix("/summarize") ? 90 : 10
+        urlRequest.timeoutInterval = Self.timeout(method: method, path: path)
         if let body {
             urlRequest.httpBody = body
             urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -225,6 +225,18 @@ public final class StenographerHTTPClient: StenographerDaemonService, @unchecked
         guard let (data, response) = try? await session.data(for: urlRequest),
               let http = response as? HTTPURLResponse else { return nil }
         return Reply(status: http.statusCode, body: data)
+    }
+
+    /// How long a request may take. A summary runs inline on the daemon for up to the
+    /// user's largest "Give up after" (600 s), so it gets that plus 5 s. The heavy reads
+    /// can be slow on a cold cache and get 15 s. Everything else is a quick read: 10 s.
+    static func timeout(method: String, path: String) -> TimeInterval {
+        if method == "POST" && path.hasSuffix("/summarize") { return 605 }
+        if method == "GET" && (path == "/conversations" || path == "/ai/interactions"
+                               || path.hasPrefix("/ai/interactions/")) {
+            return 15
+        }
+        return 10
     }
 
     /// The `{"error": "…"}` body DaemonKit's `HTTPResponse.error` produces.
