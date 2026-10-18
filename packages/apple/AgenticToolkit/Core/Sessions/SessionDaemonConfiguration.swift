@@ -29,7 +29,9 @@ public struct SessionDaemonConfiguration: Sendable {
     public var retentionCheckInterval: TimeInterval
     /// The file the signed-in Claude account is read from; nil means `~/.claude.json`.
     public var claudeJSONPath: String?
-    /// Whether AI summaries are on until the user chooses otherwise.
+    /// Whether AI summaries are on until the user chooses otherwise. Every daemon
+    /// states its own: one that must not double LLM spend over sessions another
+    /// daemon already summarizes passes false. There is deliberately no default.
     public var summariesDefaultEnabled: Bool
 
     public init(
@@ -48,7 +50,7 @@ public struct SessionDaemonConfiguration: Sendable {
         livenessCheckInterval: TimeInterval = 10,
         retentionCheckInterval: TimeInterval = 86400,
         claudeJSONPath: String? = nil,
-        summariesDefaultEnabled: Bool = true
+        summariesDefaultEnabled: Bool
     ) {
         self.label = label
         self.subsystem = subsystem ?? label
@@ -91,7 +93,8 @@ public struct SessionDaemonConfiguration: Sendable {
                 settingsURL: base.appendingPathComponent("settings.json")
             ),
             livenessCheckInterval: 1,
-            claudeJSONPath: base.appendingPathComponent("claude.json").path
+            claudeJSONPath: base.appendingPathComponent("claude.json").path,
+            summariesDefaultEnabled: false
         )
     }
 }
