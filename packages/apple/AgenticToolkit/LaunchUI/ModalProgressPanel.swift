@@ -140,29 +140,55 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
         releasePresentedWaiters()
     }
 
+    /// A modal alert of its own, never a sheet on the progress panel: a sheet
+    /// reads as part of the panel, and the failure is the one thing the user
+    /// must answer before anything else happens.
     public func reportFailures(_ failures: [StartupFailure]) async -> Bool {
-        let alert = makeFailureAlert(appName: appName, failures)
-        // A `.last` job orders the panel out; a sheet on an invisible window is
-        // never seen and never answers, so fall back to the standalone alert.
-        guard let panel, panel.isVisible else {
-            return await runAlert(alert) == .alertFirstButtonReturn
-        }
-        return await withCheckedContinuation { cont in
-            alert.beginSheetModal(for: panel) { cont.resume(returning: $0 == .alertFirstButtonReturn) }
-        }
+        await runAlert(makeFailureAlert(appName: appName, failures)) == .alertFirstButtonReturn
     }
 }
 
 /// The retry-or-continue alert. The first button retries the failed jobs.
+///
+/// The informative text names each failed step with one short line of why; the
+/// full error, which can be a tool's entire stderr, goes behind `AlertDetails`.
 @MainActor
 func makeFailureAlert(appName: String, _ failures: [StartupFailure]) -> NSAlert {
     let alert = NSAlert()
     alert.alertStyle = .warning
     alert.messageText = "\(appName) couldn’t finish setting up"
-    alert.informativeText = failures
-        .map { "• \($0.job.title): \($0.error.localizedDescription)" }
-        .joined(separator: "\n")
+    alert.informativeText = failureSummary(failures)
+    let details = failureDetails(failures)
+    if !details.isEmpty { AlertDetails.attach(details, to: alert) }
     alert.addButton(withTitle: "Retry Failed")
     alert.addButton(withTitle: "Continue")
     return alert
+}
+
+/// The longest a summary line's reason runs before it is cut with an ellipsis.
+let failureSummaryLimit = 120
+
+/// One line per failed step: its title, and the first line of its error.
+func failureSummary(_ failures: [StartupFailure]) -> String {
+    failures.map { failure in
+        let firstLine = failure.error.localizedDescription
+            .split(whereSeparator: \.isNewline).first
+            .map { $0.trimmingCharacters(in: .whitespaces) } ?? ""
+        guard !firstLine.isEmpty else { return "• \(failure.job.title)" }
+        let reason = firstLine.count > failureSummaryLimit
+            ? firstLine.prefix(failureSummaryLimit) + "…" : firstLine
+        return "• \(failure.job.title): \(reason)"
+    }.joined(separator: "\n")
+}
+
+/// Every step's full error, headed by its title. Empty when no error says more
+/// than its summary line already did, so a one-line failure gets no disclosure.
+func failureDetails(_ failures: [StartupFailure]) -> String {
+    let full = failures.map {
+        (title: $0.job.title,
+         text: $0.error.localizedDescription.trimmingCharacters(in: .whitespacesAndNewlines))
+    }
+    let saysMore = full.contains { $0.text.contains(where: \.isNewline) || $0.text.count > failureSummaryLimit }
+    guard saysMore else { return "" }
+    return full.map { "\($0.title)\n\($0.text)" }.joined(separator: "\n\n")
 }

@@ -1723,6 +1723,7 @@
 		B6B2D8F61C25776A5B6B23EA /* TopicListViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D6391E1372A83A76D72944F /* TopicListViewController.swift */; };
 		B6CE2B177FDC43A8B95EDD7D /* MainThreadLanguagesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69CCEB55C67CF3F03C30221E /* MainThreadLanguagesTests.swift */; };
 		B6DD01A409C6D8DEF9125041 /* ButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBFE6A254091C292617E372F /* ButtonView.swift */; };
+		B70FE46576954E9123BABC12 /* AlertDetails.swift in Sources */ = {isa = PBXBuildFile; fileRef = 885F56114F988F525C95377E /* AlertDetails.swift */; };
 		B73787CB076FB50ADBF81F9F /* BillingActivityViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F853E0CE36BC9A04139B3B4 /* BillingActivityViewController.swift */; };
 		B7BCE17617DABDBE84098073 /* ExtensionEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86530A7DCF73CB6006D908BB /* ExtensionEvent.swift */; };
 		B7D8CCB89905B91B0E323DD5 /* PasskeyAssertionProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 064172AD29BB6BE81A2F7F9A /* PasskeyAssertionProvider.swift */; };
@@ -5442,6 +5443,7 @@
 		87FACF75C8B5C9FB431A189E /* SubprocessTransportTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubprocessTransportTests.swift; sourceTree = "<group>"; };
 		880521D0B4DA5A8DB83B006C /* CoreGraphicsDisplaySystemTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreGraphicsDisplaySystemTests.swift; sourceTree = "<group>"; };
 		8848B656BD19606185586DC7 /* PrivacyWordStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyWordStore.swift; sourceTree = "<group>"; };
+		885F56114F988F525C95377E /* AlertDetails.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlertDetails.swift; sourceTree = "<group>"; };
 		888766E929BF423C81D662B0 /* VSIXArchive.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSIXArchive.swift; sourceTree = "<group>"; };
 		88CC81802D37F9BE7A21B1E7 /* AIPluginDescriptor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPluginDescriptor.swift; sourceTree = "<group>"; };
 		88FAED5D8E9BC07D386D1AF1 /* ComposableTabsPaneHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ComposableTabsPaneHost.swift; sourceTree = "<group>"; };
@@ -6974,6 +6976,7 @@
 		06DC00782B1F900F256675C6 /* LaunchUI */ = {
 			isa = PBXGroup;
 			children = (
+				885F56114F988F525C95377E /* AlertDetails.swift */,
 				20DCCAE4C76A263901FCC229 /* AppleScriptPrivilegedRunner.swift */,
 				2F0843F78AB5133AF35A89D1 /* DialogFirstRunExperience.swift */,
 				05A2976006910F93336AEF5D /* FirstRunDialog.swift */,
@@ -14133,6 +14136,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B70FE46576954E9123BABC12 /* AlertDetails.swift in Sources */,
 				7AABBCFA48C6D21864EA7690 /* AppleScriptPrivilegedRunner.swift in Sources */,
 				DF92ACFB73164B8FC1A5DF39 /* DialogFirstRunExperience.swift in Sources */,
 				79404B1DD6D0948D5A72F69E /* FirstRunDialog.swift in Sources */,

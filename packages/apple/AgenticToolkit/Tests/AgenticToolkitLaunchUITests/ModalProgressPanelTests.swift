@@ -42,7 +42,14 @@ private func spinNestedRunLoop() {
 
 private enum TestError: Error, LocalizedError {
     case boom
-    var errorDescription: String? { "boom" }
+    /// A privileged tool's whole stderr, as the AppleScript runner reports it.
+    case wall
+    var errorDescription: String? {
+        switch self {
+        case .boom: "boom"
+        case .wall: (1...40).map { "chown: file\($0): Operation not permitted" }.joined(separator: "\n")
+        }
+    }
 }
 
 @MainActor
@@ -163,12 +170,61 @@ private func drainMainRunLoop() async {
         #expect(alert.messageText == "Stenographer couldn’t finish setting up")
         #expect(alert.informativeText == "• Restarting the daemon: boom")
         #expect(alert.buttons.map(\.title) == ["Retry Failed", "Continue"])
+        #expect(alert.accessoryView == nil)   // nothing more to say, so no Details
     }
 
-    @Test func withoutPanelFirstButtonRetriesSecondContinues() async {
+    /// A tool's whole stderr is summarized by its first line; the rest waits,
+    /// collapsed, in the Details disclosure rather than in the alert's text.
+    @Test func multilineErrorIsSummarizedAndDetailedSeparately() throws {
+        let failures = [StartupFailure(job: NamedJob(id: "a", title: "Letting S update itself"),
+                                       error: TestError.wall)]
+        let alert = makeFailureAlert(appName: "S", failures)
+        #expect(alert.informativeText == "• Letting S update itself: chown: file1: Operation not permitted")
+        let details = try #require(alert.accessoryView as? AlertDetails)
+        #expect(details.textView.string.hasPrefix("Letting S update itself\nchown: file1:"))
+        #expect(details.textView.string.hasSuffix("chown: file40: Operation not permitted"))
+        #expect(!details.isExpanded)
+        #expect(!details.textView.isEditable && details.textView.isSelectable)
+    }
+
+    @Test func detailsDisclosureExpandsAndCollapses() {
+        let alert = NSAlert()
+        let details = AlertDetails.attach("line one\nline two", to: alert)
+        let collapsed = details.frame.height
+        details.disclosure.performClick(nil)
+        #expect(details.isExpanded)
+        #expect(details.frame.height > collapsed + 100)
+        details.disclosure.performClick(nil)
+        #expect(!details.isExpanded)
+        #expect(details.frame.height == collapsed)
+    }
+
+    @Test func longSingleLineIsCutInTheSummaryAndKeptWholeInDetails() {
+        struct Long: LocalizedError { var errorDescription: String? { String(repeating: "x", count: 300) } }
+        let failures = [StartupFailure(job: NamedJob(id: "a", title: "Step"), error: Long())]
+        #expect(failureSummary(failures) == "• Step: " + String(repeating: "x", count: failureSummaryLimit) + "…")
+        #expect(failureDetails(failures) == "Step\n" + String(repeating: "x", count: 300))
+    }
+
+    @Test func firstButtonRetriesSecondContinues() async {
         let retry = ModalProgressPanel(appName: "S", modal: RecordingSession()) { _ in .alertFirstButtonReturn }
         let skip = ModalProgressPanel(appName: "S", modal: RecordingSession()) { _ in .alertSecondButtonReturn }
         #expect(await retry.reportFailures([]) == true)
         #expect(await skip.reportFailures([]) == false)
+    }
+
+    /// Never a sheet: with the progress panel up, the failure still runs as an
+    /// application-modal alert of its own.
+    @Test func failuresRunAsAModalAlertEvenWithThePanelUp() async {
+        var ran = 0
+        let presenter = ModalProgressPanel(appName: "S", modal: RecordingSession()) { _ in
+            ran += 1
+            return .alertSecondButtonReturn
+        }
+        presenter.begin(needsAdministrator: false)
+        #expect(await presenter.reportFailures([]) == false)
+        #expect(ran == 1)
+        #expect(presenter.panel?.attachedSheet == nil)
+        presenter.finish()
     }
 }
