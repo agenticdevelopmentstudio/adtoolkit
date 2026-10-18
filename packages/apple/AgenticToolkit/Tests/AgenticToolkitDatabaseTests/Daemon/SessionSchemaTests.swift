@@ -29,6 +29,11 @@ final class SessionSchemaTests: XCTestCase {
         XCTAssertEqual(SessionSchema.migrations.map(\.version), Array(1...45))
     }
 
+    /// 46-1000 are each daemon's own; a shared migration is 1-45 or 1001 and up.
+    func testSharedMigrationsStayOutOfTheDaemonRange() {
+        XCTAssertTrue(SessionSchema.migrations.map(\.version).allSatisfy { $0 <= 45 || $0 >= 1001 })
+    }
+
     func testPostMigrationIsTheHeadThenTheTail() {
         XCTAssertEqual(
             SessionSchema.postMigration.count,

@@ -78,15 +78,46 @@ final class DaemonDatabaseTests: XCTestCase {
         XCTAssertTrue(store.isReady)
     }
 
-    func testBrokenMigrationChainFailsFast() {
+    func testAGapInTheVersionsIsAccepted() throws {
+        let counter = Counter()
+        let migrations = [1, 3, 1001].map { version in
+            DaemonMigration(version: version) { _ in counter.note("m\(version)") }
+        }
+        _ = try DaemonDatabase(path: path, migrations: migrations)
+        XCTAssertEqual(counter.labels, ["m1", "m3", "m1001"])
+    }
+
+    func testADaemonMigrationAddedAfterAHigherSharedOneHasRunStillRuns() throws {
+        let counter = Counter()
+        func migration(_ version: Int) -> DaemonMigration {
+            DaemonMigration(version: version) { _ in counter.note("m\(version)") }
+        }
+        _ = try DaemonDatabase(path: path, migrations: [migration(1), migration(1001)])
+        XCTAssertEqual(counter.labels, ["m1", "m1001"])
+
+        // The daemon later ships its own 46; the database has already applied 1001.
+        _ = try DaemonDatabase(path: path, migrations: [migration(1), migration(1001), migration(46)])
+        XCTAssertEqual(counter.labels, ["m1", "m1001", "m46"], "46 runs once; 1 and 1001 do not rerun")
+    }
+
+    func testMigrationsRunInAscendingOrderWhateverOrderTheyArePassedIn() throws {
+        let counter = Counter()
+        let migrations = [1001, 46, 1].map { version in
+            DaemonMigration(version: version) { _ in counter.note("m\(version)") }
+        }
+        _ = try DaemonDatabase(path: path, migrations: migrations)
+        XCTAssertEqual(counter.labels, ["m1", "m46", "m1001"])
+    }
+
+    func testDuplicateOrNonPositiveVersionsAreRefused() {
         let noop: @Sendable (DaemonDatabase) throws -> Void = { _ in }
-        for versions in [[1, 3], [2, 3]] {
+        for versions in [[1, 2, 2], [1, 46, 1, 46], [0, 1], [-1]] {
             let migrations = versions.map { DaemonMigration(version: $0, run: noop) }
             XCTAssertThrowsError(try DaemonDatabase(path: path, migrations: migrations)) { error in
                 guard case DaemonDatabaseError.openFailed(let message) = error else {
                     return XCTFail("expected openFailed, got \(error)")
                 }
-                XCTAssertTrue(message.contains("contiguously"), message)
+                XCTAssertTrue(message.contains("unique"), message)
             }
         }
     }

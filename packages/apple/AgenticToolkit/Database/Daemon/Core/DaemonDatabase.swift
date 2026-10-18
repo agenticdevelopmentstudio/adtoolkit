@@ -151,8 +151,13 @@ public final class DaemonDatabase: @unchecked Sendable {
     ///   sites to express a state that lasts seconds at startup; one `isReady`
     ///   flag, checked at the one boundary that faces the outside world, says
     ///   the same thing without contorting the rest of the daemon.
-    /// - Parameter migrations: the schema, numbered `1…n` contiguously and in order.
-    ///   A broken chain throws `openFailed` rather than skipping or double-applying a step.
+    /// - Parameter migrations: the schema. Versions are positive and unique; they need not
+    ///   be contiguous, and run in ascending order whatever order they are passed in.
+    ///   Shared (`SessionSchema`) migrations are 1-45 and any new shared one is numbered
+    ///   from 1001 upward; a daemon's own are 46-1000. Every version not yet recorded in
+    ///   `schema_migrations` runs, so a daemon migration added later still runs on a
+    ///   database that has already applied a higher shared one. A repeated or non-positive
+    ///   version throws `openFailed` rather than double-applying a step.
     /// - Parameter postMigration: ensure steps run after every migration pass, outside
     ///   the version gate (each must be idempotent).
     /// - Parameter statusLineIngest: optional extra handling of a `StatusLine`
@@ -169,14 +174,14 @@ public final class DaemonDatabase: @unchecked Sendable {
         sessionUpsertHook: SessionUpsertHook? = nil
     ) throws {
         let versions = migrations.map(\.version)
-        guard versions == (0..<versions.count).map({ $0 + 1 }) else {
+        guard versions.allSatisfy({ $0 >= 1 }), Set(versions).count == versions.count else {
             throw DaemonDatabaseError.openFailed(
-                "migrations must be numbered 1…n contiguously; found \(versions)"
+                "migration versions must be unique positive integers; found \(versions)"
             )
         }
         self.path = path
         self.accountResolver = accountResolver
-        self.migrations = migrations
+        self.migrations = migrations.sorted { $0.version < $1.version }
         self.postMigration = postMigration
         self.statusLineIngest = statusLineIngest
         self.sessionUpsertHook = sessionUpsertHook

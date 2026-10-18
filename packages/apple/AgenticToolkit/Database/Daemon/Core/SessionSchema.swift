@@ -8,13 +8,16 @@ import OSLog
 /// The session-event schema every session daemon shares: migrations 001-045, the
 /// tables behind hook events, sessions, transcripts, settings and the daily
 /// rollup. A daemon passes `SessionSchema.migrations` (then appends its own,
-/// numbered from 46) and `SessionSchema.postMigration` to ``DaemonDatabase``.
+/// numbered 46-1000) and `SessionSchema.postMigration` to ``DaemonDatabase``.
 ///
 /// Moved verbatim from Stenographer's `DatabaseManager`: the bodies are unchanged
 /// apart from reaching the database through the `db` parameter.
 public enum SessionSchema {
 
-    /// Every shared migration, in the order it runs. Adding one is one line here.
+    /// Every shared migration, in the order it runs. 1-45 exist now; a new shared one is
+    /// numbered from 1001 upward (never 46-1000, which are each daemon's own), then added
+    /// here. A daemon's database runs every version it has not recorded, so a shared step
+    /// added later runs on databases that already applied the daemon's own. Never renumber.
     public static let migrations: [DaemonMigration] = [
         DaemonMigration(version: 1, run: migration001),
         DaemonMigration(version: 2, run: migration002),

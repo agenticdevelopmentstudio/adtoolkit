@@ -101,7 +101,7 @@ public final class SessionDaemonRuntime: @unchecked Sendable {
     private var isShutDown = false
 
     /// - Parameters:
-    ///   - migrations: the schema, numbered `1…n` contiguously.
+    ///   - migrations: the schema: unique versions, shared ones 1-45 or 1001 and up, the daemon's own 46-1000.
     ///   - postMigration: ensure steps run after every migration pass.
     ///   - hookInstaller: defaults to one driven by `configuration.hook`.
     public init(
