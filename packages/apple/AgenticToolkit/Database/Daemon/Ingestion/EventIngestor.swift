@@ -522,13 +522,13 @@ public final class EventIngestor: @unchecked Sendable {
         }
     }
 
-    /// Moves a file that could not be ingested into `errors/` and writes a
+    /// Moves a file that could not be ingested into the quarantine's errors directory and writes a
     /// sibling `<name>.meta.json` recording why, so the failure is inspectable
     /// (and recoverable) via the Ingestion Errors surface instead of vanishing
     /// into the log. Reserved for permanent failures — transient errors are
     /// left in place for retry, never quarantined.
     private func quarantine(_ url: URL, parsed: ParsedEvent?, reason: String, code: Int32?) {
-        let errDir = dropDirectory.appendingPathComponent("errors")
+        let errDir = self.quarantine.errorsDirectory
         let dest = errDir.appendingPathComponent("error-\(url.lastPathComponent)")
         do {
             try FileManager.default.createDirectory(at: errDir, withIntermediateDirectories: true)

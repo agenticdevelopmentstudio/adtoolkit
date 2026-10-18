@@ -14,7 +14,9 @@ import OSLog
 /// retrying it and the menubar badge lights (only exhausted files alert). A
 /// manual "Retry All" force-retries everything, exhausted included.
 public final class QuarantineService: @unchecked Sendable {
-    private let errorsDirectory: URL
+    /// Where quarantined events live; `EventIngestor` moves bad drop files here, so the
+    /// files it quarantines are always the ones this service lists.
+    let errorsDirectory: URL
     /// Persistent error log mirror. Optional so tests can construct the service
     /// without a database; DB writes become no-ops when nil.
     private let database: DaemonDatabase?

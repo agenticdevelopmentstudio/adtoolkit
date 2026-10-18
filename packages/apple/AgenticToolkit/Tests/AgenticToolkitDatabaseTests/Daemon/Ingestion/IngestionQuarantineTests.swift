@@ -70,6 +70,24 @@ final class IngestionQuarantineTests: XCTestCase {
         XCTAssertFalse(meta.reason.isEmpty)
     }
 
+    func testBadFileGoesToTheConfiguredErrorsDirectoryNotDropErrors() throws {
+        let elsewhere = tmpDir.appendingPathComponent("support/errors")
+        let custom = EventIngestor(
+            dropDirectory: dropDir,
+            database: database,
+            sink: RecordingSink(),
+            quarantine: QuarantineService(errorsDirectory: elsewhere, database: database),
+            tailerQueueLabel: "test.transcript-tailer"
+        )
+        let url = try writeDrop("105-elsewhere.json", "this is not json")
+        custom.drainDirectoryOnce()
+
+        XCTAssertFalse(FileManager.default.fileExists(atPath: url.path), "source removed")
+        XCTAssertTrue(FileManager.default.fileExists(
+            atPath: elsewhere.appendingPathComponent("error-105-elsewhere.json").path))
+        XCTAssertTrue(errorFiles().isEmpty, "nothing lands in <drop>/errors")
+    }
+
     func testValidSessionlessEventIsSkippedNotQuarantined() throws {
         // A StatusLine drop: valid JSON + event, but no session_id. It must be
         // discarded (source removed) WITHOUT quarantining — quarantining a non-error
