@@ -18,6 +18,11 @@
       "development": "./src/index.ts",
       "import": "./dist/index.js"
     },
+    "./mark": {
+      "types": "./dist/mark.d.ts",
+      "development": "./src/mark.ts",
+      "import": "./dist/mark.js"
+    },
     "./css/bitbag-dock.css": {
       "development": "./src/styles/bitbag-dock.css",
       "default": "./dist/css/bitbag-dock.css"

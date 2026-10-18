@@ -1,10 +1,11 @@
 import { defineConfig } from 'tsup'
 import { preserveDirectivesPlugin } from 'esbuild-plugin-preserve-directives'
 
-// Single build: every entry here is a client component, so there is no
-// server/client chunk graph to contaminate.
+// Single build: `index` is all client components and `mark` is one hook-free
+// SVG that is safe on either side, so there is no server/client chunk graph to
+// contaminate.
 export default defineConfig({
-  entry: { index: 'src/index.ts' },
+  entry: { index: 'src/index.ts', mark: 'src/mark.ts' },
   outDir: 'dist',
   format: ['esm'],
   target: 'es2022',

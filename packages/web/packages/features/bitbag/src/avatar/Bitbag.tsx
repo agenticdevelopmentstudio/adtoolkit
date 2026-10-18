@@ -10,11 +10,24 @@ import {
   type Tuning,
 } from "@agenticdevelopertoolkit/avatar";
 import { POSES, type BitbagExpression } from "./expressions";
-
-const GOLD = "#e8a33d"; // bb's lit resting color — his signature ember (see expressions.ts BODY)
-const IRIS = "#ffe9c6"; // warm cream iris spark (fixed — pops bright against the ember ring)
-const EYE_BG = "#17130f"; // eye interior — warm near-black ink, opaque (not a see-through hole)
-const IRIS_BASE_R = 9; // base iris radius (viewBox units); poses scale it via `pupil`
+import {
+  BROW_LEFT,
+  BROW_OPACITY,
+  BROW_RIGHT,
+  BROW_WIDTH,
+  EYE_BG,
+  EYE_COUNTER_R,
+  EYE_LEFT_X,
+  EYE_RIGHT_X,
+  EYE_RING_R,
+  EYE_Y,
+  GOLD,
+  IRIS,
+  IRIS_BASE_R,
+  STEM_LEFT,
+  STEM_RIGHT,
+  STEM_WIDTH,
+} from "./geometry";
 
 // ── How bitbag configures the engine's behavior (all mood-vocabulary lives here,
 //    not in the engine) ──
@@ -278,11 +291,11 @@ export function Bitbag({
                     rings) recolors together via the per-pose `body` tween; only
                     the irises keep a fixed lit fill. Each brow tilts/raises about
                     its own centre via the rig's brow origins. */}
-                <g ref={browLeftRef} opacity={0.85}>
-                  <path d="M106,-27 Q128,-43 150,-27" fill="none" stroke="currentColor" strokeWidth={5} strokeLinecap="round" />
+                <g ref={browLeftRef} opacity={BROW_OPACITY}>
+                  <path d={BROW_LEFT} fill="none" stroke="currentColor" strokeWidth={BROW_WIDTH} strokeLinecap="round" />
                 </g>
-                <g ref={browRightRef} opacity={0.85}>
-                  <path d="M180,-27 Q202,-43 224,-27" fill="none" stroke="currentColor" strokeWidth={5} strokeLinecap="round" />
+                <g ref={browRightRef} opacity={BROW_OPACITY}>
+                  <path d={BROW_RIGHT} fill="none" stroke="currentColor" strokeWidth={BROW_WIDTH} strokeLinecap="round" />
                 </g>
 
                 {/* left b — the ascender STEM is a static part of the letterform
@@ -294,31 +307,31 @@ export function Bitbag({
                     further left than the eye, and it runs the full height of the
                     bowl (down to ~baseline) so the left side reads as the straight
                     vertical wall of a 'b' rather than curling into a '6'. */}
-                <path d="M92.5,-12 L92.5,103" stroke="currentColor" strokeWidth={9} fill="none" strokeLinecap="round" />
+                <path d={STEM_LEFT} stroke="currentColor" strokeWidth={STEM_WIDTH} fill="none" strokeLinecap="round" />
                 <g ref={leftEyeRef}>
                   <g ref={leftBlinkRef}>
-                    <circle cx={123} cy={72} r={35} fill="currentColor" />
-                    <circle cx={123} cy={72} r={27} fill={EYE_BG} />
-                    <circle ref={leftIrisRef} cx={123} cy={72} r={IRIS_BASE_R} fill={IRIS} />
+                    <circle cx={EYE_LEFT_X} cy={EYE_Y} r={EYE_RING_R} fill="currentColor" />
+                    <circle cx={EYE_LEFT_X} cy={EYE_Y} r={EYE_COUNTER_R} fill={EYE_BG} />
+                    <circle ref={leftIrisRef} cx={EYE_LEFT_X} cy={EYE_Y} r={IRIS_BASE_R} fill={IRIS} />
                   </g>
                 </g>
 
                 {/* right b — ascender stem + bowl (stem tangent to the bowl's
                     left edge: center 166.5 − 4.5 = 162 = bowl leftmost) */}
-                <path d="M166.5,-12 L166.5,103" stroke="currentColor" strokeWidth={9} fill="none" strokeLinecap="round" />
+                <path d={STEM_RIGHT} stroke="currentColor" strokeWidth={STEM_WIDTH} fill="none" strokeLinecap="round" />
                 <g ref={rightEyeRef}>
                   <g ref={rightBlinkRef}>
-                    <circle cx={197} cy={72} r={35} fill="currentColor" />
-                    <circle cx={197} cy={72} r={27} fill={EYE_BG} />
-                    <circle ref={rightIrisRef} cx={197} cy={72} r={IRIS_BASE_R} fill={IRIS} />
+                    <circle cx={EYE_RIGHT_X} cy={EYE_Y} r={EYE_RING_R} fill="currentColor" />
+                    <circle cx={EYE_RIGHT_X} cy={EYE_Y} r={EYE_COUNTER_R} fill={EYE_BG} />
+                    <circle ref={rightIrisRef} cx={EYE_RIGHT_X} cy={EYE_Y} r={IRIS_BASE_R} fill={IRIS} />
                   </g>
                 </g>
               </g>
 
               {/* tiny pinprick pupils — OUTSIDE the face + eye-scale groups, so no
                   tint and no eyelid-squish. Faded in only when his eyes shut. */}
-              <circle ref={leftDotRef} cx={123} cy={72} r={2.6} fill={IRIS} opacity={0} style={{ filter: "drop-shadow(0 0 3px #ffe9c6) drop-shadow(0 0 1.5px #ffe9c6)" }} />
-              <circle ref={rightDotRef} cx={197} cy={72} r={2.6} fill={IRIS} opacity={0} style={{ filter: "drop-shadow(0 0 3px #ffe9c6) drop-shadow(0 0 1.5px #ffe9c6)" }} />
+              <circle ref={leftDotRef} cx={EYE_LEFT_X} cy={EYE_Y} r={2.6} fill={IRIS} opacity={0} style={{ filter: "drop-shadow(0 0 3px #ffe9c6) drop-shadow(0 0 1.5px #ffe9c6)" }} />
+              <circle ref={rightDotRef} cx={EYE_RIGHT_X} cy={EYE_Y} r={2.6} fill={IRIS} opacity={0} style={{ filter: "drop-shadow(0 0 3px #ffe9c6) drop-shadow(0 0 1.5px #ffe9c6)" }} />
             </g>
           </g>
         </g>
