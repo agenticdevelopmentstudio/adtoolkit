@@ -5,7 +5,7 @@ import AgenticToolkitCore
 /// The single owner of the "oversight preferences → daemon" contract.
 ///
 /// The settings pane and the AI Oversight window's options dialog edit the same
-/// prefs (enabled, LLM judgment, provider selection, per-config model). One set
+/// prefs (enabled, LLM judgment, provider selection; never a model). One set
 /// of observers lives here; on any change, at startup and on every daemon
 /// reconnect the full idempotent snapshot is pushed, so a daemon restart cannot
 /// strand a stale value. The engine is Core's `SettingsSnapshotPush`.
@@ -20,7 +20,6 @@ import AgenticToolkitCore
 public enum StenographerOversightPrefsPush {
 
     private static var push: SettingsSnapshotPush?
-    private static var modelObserver: UserSettingObserver<String>?
 
     /// Installs the observers and reconciles the daemon now and on every
     /// reconnect. Call once at startup.
@@ -43,15 +42,11 @@ public enum StenographerOversightPrefsPush {
             seed: { await seedFromDaemon(service: service) }
         )
         push = engine
-        resubscribeModelObserver()
         engine.start { onChange -> [AnyObject] in
             [
                 UserSettingObserver(UserSettings.stenographerAIOversightEnabled) { _ in onChange() },
                 UserSettingObserver(UserSettings.stenographerAIOversightLLMEnabled) { _ in onChange() },
-                UserSettingObserver(UserSettings.stenographerAIOversightProviderConfigId) { _ in
-                    Self.resubscribeModelObserver()
-                    onChange()
-                }
+                UserSettingObserver(UserSettings.stenographerAIOversightProviderConfigId) { _ in onChange() }
             ]
         }
     }
@@ -59,19 +54,16 @@ public enum StenographerOversightPrefsPush {
     /// Takes the daemon's stored values into the local settings once (marker
     /// `stenographerAIOversightSeededFromDaemon`). True when the store is now
     /// current or needs no seeding; false when the daemon could not be reached.
-    /// The response's `contextThresholdPct` has no local setting and is ignored.
+    /// The response's `contextThresholdPct` has no local setting and is ignored, and so
+    /// is its `model`: no toolkit pane shows or edits a model override, so copying the
+    /// daemon's would pin a hidden value that outlives the configuration's own model.
     static func seedFromDaemon(service: any StenographerDaemonService) async -> Bool {
         if UserSettings.stenographerAIOversightSeededFromDaemon.value { return true }
         guard let stored = await service.oversightPreferences() else { return false }
         UserSettings.stenographerAIOversightEnabled.value = stored.enabled
         UserSettings.stenographerAIOversightLLMEnabled.value = stored.llmEnabled
         UserSettings.stenographerAIOversightProviderConfigId.value = stored.selectedConfigId
-        if let id = UUID(uuidString: stored.selectedConfigId) {
-            UserSettings.oversightModelSetting(config: id).value = stored.model
-        }
         UserSettings.stenographerAIOversightSeededFromDaemon.value = true
-        // The selection may have changed, so the model observer follows it.
-        resubscribeModelObserver()
         return true
     }
 
@@ -79,7 +71,6 @@ public enum StenographerOversightPrefsPush {
     public static func stopObserving() {
         push?.stop()
         push = nil
-        modelObserver = nil
     }
 
     /// Awaits the most recent push (test-only determinism hook).
@@ -87,24 +78,9 @@ public enum StenographerOversightPrefsPush {
         await push?.awaitPendingPush()
     }
 
-    /// The configuration id the selection names, or nil for the sentinels.
-    private static func selectedConfigurationId() -> UUID? {
-        UUID(uuidString: UserSettings.stenographerAIOversightProviderConfigId.value)
-    }
-
-    private static func resubscribeModelObserver() {
-        guard let id = selectedConfigurationId() else {
-            modelObserver = nil
-            return
-        }
-        modelObserver = UserSettingObserver(UserSettings.oversightModelSetting(config: id)) { _ in
-            Self.push?.push()
-        }
-    }
-
     /// The full snapshot the daemon receives — pure so it is unit-testable. The
-    /// model travels only when a dedicated configuration is selected; the
-    /// sentinels push "" (= the configuration's own model / not applicable).
+    /// model is always "" (= the configuration's own model): the toolkit has no model
+    /// override to send, so the daemon configuration's model is the one oversight uses.
     static func makeRequest(
         enabled: Bool, llmEnabled: Bool, selectedConfigId: String, model: String
     ) -> OversightPreferenceRequest {
@@ -113,12 +89,11 @@ public enum StenographerOversightPrefsPush {
     }
 
     private static func currentBody() -> Data? {
-        let model = selectedConfigurationId().map { UserSettings.oversightModelSetting(config: $0).value } ?? ""
         let request = makeRequest(
             enabled: UserSettings.stenographerAIOversightEnabled.value,
             llmEnabled: UserSettings.stenographerAIOversightLLMEnabled.value,
             selectedConfigId: UserSettings.stenographerAIOversightProviderConfigId.value,
-            model: model
+            model: ""
         )
         return try? StenographerWire.encoder().encode(request)
     }

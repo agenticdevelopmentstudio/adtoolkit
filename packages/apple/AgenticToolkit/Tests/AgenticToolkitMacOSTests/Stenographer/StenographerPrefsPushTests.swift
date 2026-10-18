@@ -17,7 +17,6 @@ final class StenographerPrefsPushTests: XCTestCase {
         UserSettings.stenographerAIOversightLLMEnabled.remove()
         UserSettings.stenographerAISummariesSeededFromDaemon.remove()
         UserSettings.stenographerAIOversightSeededFromDaemon.remove()
-        UserSettings.oversightModelSetting(config: Self.configId).remove()
     }
 
     private static let configId = UUID(uuidString: "0A1B2C3D-0000-4000-8000-000000000001")!
@@ -77,7 +76,9 @@ final class StenographerPrefsPushTests: XCTestCase {
         XCTAssertEqual(UserSettings.stenographerAIOversightEnabled.value, true)
         XCTAssertEqual(UserSettings.stenographerAIOversightLLMEnabled.value, true)
         XCTAssertEqual(UserSettings.stenographerAIOversightProviderConfigId.value, Self.configId.uuidString)
-        XCTAssertEqual(UserSettings.oversightModelSetting(config: Self.configId).value, "big-model")
+        let hidden = UserDefaults.standard.dictionaryRepresentation().keys
+            .filter { $0.hasPrefix("stenographer_oversight_model") }
+        XCTAssertTrue(hidden.isEmpty, "the daemon's model is not copied into a hidden local setting")
         XCTAssertTrue(UserSettings.stenographerAIOversightSeededFromDaemon.value)
         await settle()
         XCTAssertEqual(daemon.oversightRequests.count, 1, "seeding must not itself trigger a push")
@@ -85,7 +86,7 @@ final class StenographerPrefsPushTests: XCTestCase {
         XCTAssertEqual(body?.enabled, true)
         XCTAssertEqual(body?.llmEnabled, true)
         XCTAssertEqual(body?.selectedConfigId, Self.configId.uuidString)
-        XCTAssertEqual(body?.model, "big-model")
+        XCTAssertEqual(body?.model, "", "the push never sends a model, whatever the daemon stored")
     }
 
     func testSeededMarkerSkipsTheDaemonRead() async {

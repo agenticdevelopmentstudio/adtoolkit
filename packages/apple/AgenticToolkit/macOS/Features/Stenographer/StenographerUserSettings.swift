@@ -140,12 +140,6 @@ extension UserSettings {
         default: false
     )
 
-    /// The oversight model override for one daemon provider configuration; ""
-    /// means "the configuration's own model".
-    public static func oversightModelSetting(config id: UUID) -> UserSetting<String> {
-        UserSetting<String>("stenographer_oversight_model.\(id.uuidString)", default: "")
-    }
-
     /// Whether the Sessions window floats above all other windows.
     public static let stenographerSessionsWindowAlwaysOnTop = UserSetting<Bool>(
         "stenographer_sessions_window_always_on_top",
