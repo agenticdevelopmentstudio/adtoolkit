@@ -299,7 +299,7 @@ final class HookInstallerBundleCommandTests: XCTestCase {
             process.waitUntilExit()
             XCTAssertEqual(process.terminationStatus, 0,
                            "sh -n rejected the hook for U+\(mark.unicodeScalars.last!.value)")
-            XCTAssertEqual(ShellQuote.word("a'\(mark)b"), "'a'\"'\"'\(mark)b'")
+            XCTAssertEqual(ShellQuoting.quoteIfNeeded("a'\(mark)b"), "'a'\"'\"'\(mark)b'")
         }
     }
 
@@ -341,9 +341,9 @@ final class HookInstallerBundleCommandTests: XCTestCase {
             "'/x'; rm -rf ~/foo; '/A.app/Contents/Helpers/steno' statusline"))
         // A path with a space and an apostrophe round-trips through shellQuote.
         let odd = "/Users/O'Brien Apps/Stenographer.app/Contents/Helpers/steno"
-        XCTAssertTrue(installer().isBundleStatusLineCommand("\(ShellQuote.word(odd)) statusline"))
+        XCTAssertTrue(installer().isBundleStatusLineCommand("\(ShellQuoting.quoteIfNeeded(odd)) statusline"))
         XCTAssertTrue(installer().isBundleStatusLineCommand(
-            "\(ShellQuote.word(odd)) statusline --capture-only"))
+            "\(ShellQuoting.quoteIfNeeded(odd)) statusline --capture-only"))
         try write(["statusLine": ["type": "command", "command": wrapper]])
         installer().installHooks()
         XCTAssertEqual(adopted(), [wrapper], "a wrapper is another tool's: kept showing, not replaced")

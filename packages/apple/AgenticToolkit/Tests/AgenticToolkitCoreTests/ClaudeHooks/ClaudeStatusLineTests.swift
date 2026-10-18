@@ -97,7 +97,7 @@ final class ClaudeStatusLineTests: XCTestCase {
         let expected = claudeDir.appendingPathComponent("claudehelpers/statusline/dispatch.sh")
         XCTAssertEqual(statusLine.dispatcherURL.standardizedFileURL.path, expected.standardizedFileURL.path)
         XCTAssertEqual(statusLine.dispatcherCommand,
-                       "sh \(ShellQuote.word(statusLine.dispatcherURL.path)) # claudehelpers-statusline")
+                       "sh \(ShellQuoting.quoteIfNeeded(statusLine.dispatcherURL.path)) # claudehelpers-statusline")
         XCTAssertTrue(ClaudeStatusLine.isDispatcherCommand(statusLine.dispatcherCommand))
     }
 
@@ -153,7 +153,8 @@ final class ClaudeStatusLineTests: XCTestCase {
     func testConformanceWithClaudeHelpers() throws {
         let cases = try StatusLineConformance.load()
         for quote in cases.shellQuote {
-            XCTAssertEqual(ShellQuote.word(quote.word), quote.quoted, "shlex.quote(\(quote.word.debugDescription))")
+            XCTAssertEqual(ShellQuoting.quoteIfNeeded(quote.word), quote.quoted,
+                           "shlex.quote(\(quote.word.debugDescription))")
         }
         for check in cases.isDispatcherCommand {
             XCTAssertEqual(ClaudeStatusLine.isDispatcherCommand(check.command), check.expected,

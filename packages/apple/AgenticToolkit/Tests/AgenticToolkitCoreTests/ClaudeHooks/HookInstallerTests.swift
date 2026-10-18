@@ -704,10 +704,10 @@ final class HookInstallerTests: XCTestCase {
     }
 
     func testShellQuoteLeavesSafeWordsBareAndQuotesTheRest() {
-        XCTAssertEqual(ShellQuote.word("/usr/bin/python3"), "/usr/bin/python3")
-        XCTAssertEqual(ShellQuote.word("a b"), "'a b'")
-        XCTAssertEqual(ShellQuote.word("it's"), #"'it'"'"'s'"#)
-        XCTAssertEqual(ShellQuote.word(""), "''")
+        XCTAssertEqual(ShellQuoting.quoteIfNeeded("/usr/bin/python3"), "/usr/bin/python3")
+        XCTAssertEqual(ShellQuoting.quoteIfNeeded("a b"), "'a b'")
+        XCTAssertEqual(ShellQuoting.quoteIfNeeded("it's"), #"'it'"'"'s'"#)
+        XCTAssertEqual(ShellQuoting.quoteIfNeeded(""), "''")
     }
 
     func testStatusLineCommandIsAbsolute() {

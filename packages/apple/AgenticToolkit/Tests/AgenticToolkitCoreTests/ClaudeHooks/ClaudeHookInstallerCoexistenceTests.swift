@@ -72,7 +72,7 @@ final class ClaudeHookInstallerCoexistenceTests: XCTestCase {
         XCTAssertEqual(entry.command, second.statusLineCommand)
         XCTAssertEqual(
             entry.command,
-            ShellQuote.word("/Applications/Kitchen.app/Contents/Helpers/adk") + " statusline --capture-only",
+            ShellQuoting.quoteIfNeeded("/Applications/Kitchen.app/Contents/Helpers/adk") + " statusline --capture-only",
             "the flag appears exactly once")
         XCTAssertTrue(second.statusLine.entries().filter { $0.kind == .renderers }.isEmpty)
         XCTAssertFalse(second.isStatusLineDisplayed)

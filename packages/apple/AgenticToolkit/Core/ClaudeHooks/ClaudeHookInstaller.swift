@@ -120,7 +120,7 @@ public final class ClaudeHookInstaller: Sendable {
     /// tap-only configuration, it adds `--capture-only` and is registered as a
     /// tap: Claude Code still feeds the payload but nothing is rendered.
     public var statusLineCommand: String {
-        ([ShellQuote.word(helperPath)] + configuration.statusLineArguments).joined(separator: " ")
+        ([ShellQuoting.quoteIfNeeded(helperPath)] + configuration.statusLineArguments).joined(separator: " ")
             + (isStatusLineDisplayWanted ? "" : " --capture-only")
     }
 
@@ -588,11 +588,11 @@ public final class ClaudeHookInstaller: Sendable {
             path = String(rest.dropFirst().dropLast())
                 .replacingOccurrences(of: "'\"'\"'", with: "'", options: .literal)
         }
-        // The token must round-trip through ShellQuote exactly (or be that
+        // The token must round-trip through ShellQuoting exactly (or be that
         // path always-quoted), so a quoted wrapper such as
         // `'/opt/my tool' && '…/<helper>'` can never pass for one quoted path.
         let alwaysQuoted = "'" + path.replacingOccurrences(of: "'", with: "'\"'\"'", options: .literal) + "'"
-        guard rest == ShellQuote.word(path) || rest == alwaysQuoted else { return false }
+        guard rest == ShellQuoting.quoteIfNeeded(path) || rest == alwaysQuoted else { return false }
         return path.hasPrefix("/")
             && path.hasSuffix("/Contents/Helpers/" + URL(fileURLWithPath: helperPath).lastPathComponent)
     }
@@ -842,8 +842,8 @@ public final class ClaudeHookInstaller: Sendable {
     /// the hook helper finds the `claude` pid itself, so
     /// the command `isCurrentHook` compares against stays this one line.
     public func makeCommand(eventType: String) -> String {
-        ([configuration.marker + "\n" + ShellQuote.word(helperPath)] + configuration.hookArguments
-            + [ShellQuote.word(eventType)]).joined(separator: " ") + "\nexit 0"
+        ([configuration.marker + "\n" + ShellQuoting.quoteIfNeeded(helperPath)] + configuration.hookArguments
+            + [ShellQuoting.quoteIfNeeded(eventType)]).joined(separator: " ") + "\nexit 0"
     }
 
     // MARK: - Settings I/O

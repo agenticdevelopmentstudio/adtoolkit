@@ -68,10 +68,10 @@ struct ClaudeStatusLine: Sendable {
     var dispatcherURL: URL { directory.appendingPathComponent("dispatch.sh") }
 
     /// The `statusLine.command` that runs the dispatcher: the same string
-    /// claudehelpers' Python writes (`ShellQuote.word` matches `shlex.quote`),
+    /// claudehelpers' Python writes (`ShellQuoting.quoteIfNeeded` matches `shlex.quote`),
     /// so the two never fight over the slot.
     var dispatcherCommand: String {
-        "sh \(ShellQuote.word(dispatcherURL.path)) \(Self.marker)"
+        "sh \(ShellQuoting.quoteIfNeeded(dispatcherURL.path)) \(Self.marker)"
     }
 
     /// A command shaped like the dispatcher's, `sh <path> # claudehelpers-statusline`,
