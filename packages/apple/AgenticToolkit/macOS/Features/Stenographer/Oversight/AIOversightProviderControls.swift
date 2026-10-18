@@ -22,7 +22,8 @@ enum AIOversightProviderControls {
     static let claudeCLIValue = OversightProviderSelection.claudeCLISentinel
 
     /// A picker bound to the oversight prefs. The caller must retain it: it owns
-    /// the setting observers that keep the provider list and model row live.
+    /// the setting observer that follows the selection, and it reloads the daemon's
+    /// configurations each time its menu is about to open.
     static func makePicker(service: any StenographerDaemonService) -> DaemonProviderPickerView {
         DaemonProviderPickerView(
             service: service,

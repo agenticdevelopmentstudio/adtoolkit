@@ -30,11 +30,10 @@ public final class SessionsWindowController: SingleWindowController {
     /// `StenographerAIConfigPush` owns pushing them to the daemon; this controller
     /// applies the appearance prefs via its own observers below.
     private let configDialog: WindowOptionsDialog
-    /// Retained because it owns the observers that rebuild the provider popup and
-    /// model row when the configuration list or selection changes (same story as
-    /// the AI Summaries settings panel's picker). The dialog builds its content
-    /// afresh on every open, so a property — not just the closure capture — keeps
-    /// these live.
+    /// Retained because it owns the selection observer and reloads the daemon's
+    /// configurations each time its menu opens (same story as the AI Summaries
+    /// settings panel's picker). The dialog builds its content afresh on every
+    /// open, so a property — not just the closure capture — keeps it alive.
     private let aiSummariesPicker: DaemonProviderPickerView
     private let listSource: StenographerSessionListSource
 

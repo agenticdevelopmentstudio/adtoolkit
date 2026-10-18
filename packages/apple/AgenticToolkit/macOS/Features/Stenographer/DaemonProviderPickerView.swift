@@ -9,7 +9,9 @@ import AgenticToolkitCoreUI
 /// The registry is the daemon's — the one Stenographer's LLM Providers pane
 /// pushed — not this process's plugin manager, which is why this is not the
 /// toolkit's `LLMPickerView`. There is no model row: the model is the daemon
-/// configuration's own.
+/// configuration's own. The list is read from the daemon at init and again each
+/// time the menu is about to open, not pushed live, and the selection follows the
+/// bound setting across a reload.
 @MainActor
 public final class DaemonProviderPickerView: NSView {
 
@@ -59,6 +61,16 @@ public final class DaemonProviderPickerView: NSView {
 
         rebuildMenu(configs: [])
         observer = UserSettingObserver(selectedSetting) { [weak self] _ in self?.syncSelection() }
+        // Load now, and again every time the menu is about to open, so a daemon that was
+        // not up (or was migrating) at init, or a configuration added later, still appears.
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(menuWillOpen), name: NSPopUpButton.willPopUpNotification, object: popup)
+        Task { [weak self] in await self?.reload() }
+    }
+
+    deinit { NotificationCenter.default.removeObserver(self) }
+
+    @objc private func menuWillOpen() {
         Task { [weak self] in await self?.reload() }
     }
 
@@ -66,8 +78,11 @@ public final class DaemonProviderPickerView: NSView {
     required init?(coder: NSCoder) { fatalError() }
 
     /// Re-reads the daemon's configurations; an unreachable daemon keeps the menu as is.
+    /// The menu is rebuilt (keeping the selected value) only when the list changed.
     public func reload() async {
         guard let configs = await service.aiProviderConfigs() else { return }
+        let fresh = Self.menuChoices(leading: leadingChoices, configs: configs)
+        guard fresh.map(\.value) != choices.map(\.value) || fresh.map(\.label) != choices.map(\.label) else { return }
         rebuildMenu(configs: configs)
     }
 

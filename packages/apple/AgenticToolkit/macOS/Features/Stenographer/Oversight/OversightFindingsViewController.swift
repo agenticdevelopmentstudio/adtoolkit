@@ -23,8 +23,8 @@ final class OversightFindingsViewController: NSViewController {
     /// selection. The controls only edit prefs — `StenographerOversightPrefsPush`
     /// owns pushing them to the daemon.
     private let configDialog: WindowOptionsDialog
-    /// Retained because it owns the observers that rebuild the provider popup and
-    /// model row live; the dialog builds its rows afresh on every open.
+    /// Retained because it owns the selection observer and reloads the daemon's
+    /// configurations when its menu opens; the dialog builds its rows afresh on every open.
     private let oversightPicker: DaemonProviderPickerView
     /// Guards against overlapping reloads.
     private var isBusy = false
