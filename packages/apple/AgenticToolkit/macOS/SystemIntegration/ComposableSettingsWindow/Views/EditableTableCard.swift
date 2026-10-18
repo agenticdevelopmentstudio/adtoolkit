@@ -55,17 +55,20 @@ extension ComposableSettings {
         public let kind: Kind
         /// Whether clicking the header reports a sort through `onSort`.
         public let isSortable: Bool
+        /// Shown when the pointer rests on the header: what the column means.
+        public let headerToolTip: String?
 
         /// A column; text columns are read-only unless `kind` says otherwise.
         public init(
             id: String, title: String, width: CGFloat,
-            kind: Kind = .text(editable: false), isSortable: Bool = false
+            kind: Kind = .text(editable: false), isSortable: Bool = false, headerToolTip: String? = nil
         ) {
             self.id = id
             self.title = title
             self.width = width
             self.kind = kind
             self.isSortable = isSortable
+            self.headerToolTip = headerToolTip
         }
     }
 
@@ -620,6 +623,7 @@ extension ComposableSettings {
                 let tableColumn = NSTableColumn(identifier: NSUserInterfaceItemIdentifier(column.id))
                 tableColumn.title = column.title
                 tableColumn.width = column.width
+                tableColumn.headerToolTip = column.headerToolTip
                 if column.isSortable {
                     tableColumn.sortDescriptorPrototype =
                         NSSortDescriptor(key: column.id, ascending: true)

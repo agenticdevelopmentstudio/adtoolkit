@@ -1,4 +1,5 @@
 import AppKit
+import AgenticToolkitCore
 import AgenticToolkitCoreMacOS
 import AgenticDeveloperToolkitUI
 
@@ -65,6 +66,11 @@ extension ComposableSettings {
         /// `false`, so this isn't forced on every consumer.
         open var activatesOnShow: Bool { true }
 
+        /// Where this window's help drawer is remembered for the next window of
+        /// its kind. The drawer itself is each window's own: its ? opens and
+        /// shuts only that window's drawer.
+        open var helpDrawerMemory: UserSetting<Bool> { UserSettings.settingsHelpDrawerVisible }
+
         /// Attaches the help drawer and the unified toolbar to the window.
         ///
         /// Deliberately deprecated: `HelpDrawerController` wraps `NSDrawer`, and
@@ -74,7 +80,8 @@ extension ComposableSettings {
         @available(macOS, deprecated: 10.13, message: "Builds the NSDrawer-backed help presenter")
         open override func configureWindow(_ window: NSWindow) {
             super.configureWindow(window)
-            viewController?.helpPresenter = HelpDrawerController(parentWindow: window)
+            viewController?.helpPresenter = HelpDrawerController(
+                parentWindow: window, remembered: helpDrawerMemory)
             installToolbar(on: window)
         }
 

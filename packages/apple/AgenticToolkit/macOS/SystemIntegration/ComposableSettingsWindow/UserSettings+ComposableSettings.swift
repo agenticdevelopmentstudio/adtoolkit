@@ -16,4 +16,12 @@ extension UserSettings {
         "settingsHelpDrawerVisible",
         default: true
     )
+
+    /// Whether a topic dialog (a settings-style window editing one record)
+    /// opens with its help drawer disclosed. Kept apart from the settings
+    /// window's, and only a seed: each open dialog's drawer is its own.
+    public static let topicDialogHelpDrawerVisible = UserSetting<Bool>(
+        "topicDialogHelpDrawerVisible",
+        default: true
+    )
 }

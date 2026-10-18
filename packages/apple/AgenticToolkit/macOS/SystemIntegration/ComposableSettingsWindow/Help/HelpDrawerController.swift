@@ -28,7 +28,9 @@ extension ComposableSettings {
         private static let helpTabIdentifier = "help"
 
         private let helpView = HelpContentView()
-        private let preference: UserSettingObserver<Bool>
+        /// What the next window of this kind opens with. Written on every
+        /// change, never read back: each window's drawer is its own.
+        private let remembered: UserSetting<Bool>
         /// The drawer itself, so the suite that covers this controller can
         /// drive the delegate callbacks AppKit drives. Not `public`: nothing
         /// outside the framework has any business reaching past
@@ -57,7 +59,12 @@ extension ComposableSettings {
         /// nobody asked for and which reads as the window flinching. A panel
         /// with nothing to say now says so *inside* the drawer, where it costs
         /// a line of text instead of a change of layout.
-        public var isHelpVisible: Bool { self.preference.value }
+        ///
+        /// It belongs to this window alone. It was the shared preference
+        /// itself, so the ? in one window opened and shut the drawer in every
+        /// other window built on this controller; now the preference only
+        /// seeds a window as it opens.
+        public private(set) var isHelpVisible: Bool
 
         /// True only while `applyVisibility()` is moving the drawer itself. The
         /// drawer announces every move, including the ones this controller
@@ -81,8 +88,12 @@ extension ComposableSettings {
         /// controller is dropped when its window closes.
         private var isTearingDown = false
 
-        public init(parentWindow: NSWindow) {
-            self.preference = UserSettingObserver(UserSettings.settingsHelpDrawerVisible)
+        /// `remembered` is what the window opens with and where its choice is
+        /// kept for the next window of its kind.
+        public init(parentWindow: NSWindow,
+                    remembered: UserSetting<Bool> = UserSettings.settingsHelpDrawerVisible) {
+            self.remembered = remembered
+            self.isHelpVisible = remembered.currentValue
             super.init()
 
             let helpView = self.helpView
@@ -98,9 +109,6 @@ extension ComposableSettings {
                 ],
                 contentWidth: Self.contentWidth)
 
-            self.preference.onChange = { [weak self] _ in
-                self?.applyVisibility()
-            }
             // `WindowDrawer` remembers nothing; this is what it re-asserts when
             // the window finally appears, so a remembered-open drawer opens on
             // launch rather than on the second try.
@@ -137,10 +145,8 @@ extension ComposableSettings {
         }
 
         /// The drawer moved, and it was not `applyVisibility()` that moved it:
-        /// the reader dragged it shut. The preference is the truth about what
-        /// they want, so it is what gets corrected — and correcting it comes
-        /// back round through `preference.onChange` on the next turn, which
-        /// finds the drawer already closed and does nothing.
+        /// the reader dragged it shut. That is what they want, so the window's
+        /// own state and the remembered one are both corrected.
         ///
         /// Idempotent on purpose: one move can be announced twice, once from
         /// `WindowDrawer.close()` and once from `NSDrawer`'s delegate.
@@ -150,7 +156,9 @@ extension ComposableSettings {
             // at all is the drawer's question, and `WindowDrawer` answers it for
             // every owner rather than each one re-deriving it.
             guard self.drawer.closeIsAttributableToTheReader, self.isHelpVisible else { return }
-            self.preference.value = false
+            self.isHelpVisible = false
+            self.remembered.value = false
+            self.onVisibilityChange?()
         }
 
         /// Everything announced from here on is AppKit taking the window apart,
@@ -167,7 +175,9 @@ extension ComposableSettings {
         }
 
         public func toggleHelp() {
-            self.preference.value.toggle()
+            self.isHelpVisible.toggle()
+            self.remembered.value = self.isHelpVisible
+            self.applyVisibility()
         }
 
         /// Which tab the drawer is showing. The settings drawer has exactly one

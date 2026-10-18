@@ -1,4 +1,5 @@
 import AppKit
+import AgenticToolkitCore
 
 extension ComposableSettings {
 
@@ -93,6 +94,9 @@ extension ComposableSettings {
             static let sidebarAutosave = "ComposableSettings.TopicDialogSidebar"
             override var sidebarAutosaveName: String? { Self.sidebarAutosave }
         }
+
+        /// A dialog remembers its drawer apart from the settings window's.
+        public override var helpDrawerMemory: UserSetting<Bool> { UserSettings.topicDialogHelpDrawerVisible }
 
         /// "Title — Panel": which record the dialog is about, and which topic is on screen.
         public override func toolbarTitle(forPanel panelTitle: String?) -> String {

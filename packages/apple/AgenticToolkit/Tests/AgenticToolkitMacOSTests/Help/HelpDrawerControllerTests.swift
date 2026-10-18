@@ -3,8 +3,8 @@ import XCTest
 import AgenticToolkitCore
 @testable import AgenticToolkitMacOS
 
-/// After the rewrite, the only thing this controller still decides is which
-/// preference remembers the drawer. These tests pin that, and pin the behaviour
+/// After the rewrite, the only thing this controller still decides is that
+/// each window's drawer is its own and which preference seeds the next one. These tests pin that, and pin the behaviour
 /// its own doc comment argued for: a panel with no prose says so inside the
 /// drawer instead of making the window flinch.
 @available(macOS, deprecated: 10.13)
@@ -29,19 +29,42 @@ final class HelpDrawerControllerTests: XCTestCase {
         try await super.tearDown()
     }
 
-    func testVisibilityIsThePreferenceAndNothingElse() {
-        let controller = ComposableSettings.HelpDrawerController(parentWindow: self.window)
-        XCTAssertFalse(controller.isHelpVisible)
-
+    func testAWindowOpensWithTheRememberedValue() {
+        XCTAssertFalse(ComposableSettings.HelpDrawerController(parentWindow: self.window).isHelpVisible)
         UserSettings.settingsHelpDrawerVisible.value = true
-        XCTAssertTrue(controller.isHelpVisible)
+        XCTAssertTrue(ComposableSettings.HelpDrawerController(parentWindow: self.window).isHelpVisible)
     }
 
-    func testToggleFlipsThePreference() {
+    func testToggleFlipsThisWindowAndIsRemembered() {
         let controller = ComposableSettings.HelpDrawerController(parentWindow: self.window)
         controller.toggleHelp()
+        XCTAssertTrue(controller.isHelpVisible)
         XCTAssertTrue(UserSettings.settingsHelpDrawerVisible.value)
         controller.toggleHelp()
+        XCTAssertFalse(controller.isHelpVisible)
+        XCTAssertFalse(UserSettings.settingsHelpDrawerVisible.value)
+    }
+
+    /// The ? in one window must not open or shut the drawer of another.
+    func testEachWindowsDrawerIsItsOwn() {
+        let other = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 600, height: 400),
+            styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+        let first = ComposableSettings.HelpDrawerController(parentWindow: self.window)
+        let second = ComposableSettings.HelpDrawerController(parentWindow: other)
+        first.toggleHelp()
+        RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        XCTAssertTrue(first.isHelpVisible)
+        XCTAssertFalse(second.isHelpVisible)
+    }
+
+    func testAWindowCanRememberApartFromTheSettingsWindow() {
+        UserSettings.topicDialogHelpDrawerVisible.value = false
+        defer { UserSettings.topicDialogHelpDrawerVisible.value = true }
+        let controller = ComposableSettings.HelpDrawerController(
+            parentWindow: self.window, remembered: UserSettings.topicDialogHelpDrawerVisible)
+        controller.toggleHelp()
+        XCTAssertTrue(UserSettings.topicDialogHelpDrawerVisible.value)
         XCTAssertFalse(UserSettings.settingsHelpDrawerVisible.value)
     }
 
@@ -49,8 +72,8 @@ final class HelpDrawerControllerTests: XCTestCase {
     /// slam shut on the way to a panel with nothing to say and slide open again
     /// on the way out.
     func testAPanelWithNoHelpDoesNotCloseTheDrawer() {
-        let controller = ComposableSettings.HelpDrawerController(parentWindow: self.window)
         UserSettings.settingsHelpDrawerVisible.value = true
+        let controller = ComposableSettings.HelpDrawerController(parentWindow: self.window)
 
         controller.setHelp(HelpContent(topics: [HelpContent.Topic(title: "T", body: "B")]))
         XCTAssertTrue(controller.isHelpVisible)
@@ -64,13 +87,6 @@ final class HelpDrawerControllerTests: XCTestCase {
         var announcements = 0
         controller.onVisibilityChange = { announcements += 1 }
         controller.toggleHelp()
-        // `preference.onChange` is wired through `UserSettingObserver`, whose
-        // `@Published` pipeline hops to the next main-queue turn on purpose
-        // (see UserSetting.swift) — it never fires synchronously within
-        // `toggleHelp()`. Drain that turn before asserting, matching the same
-        // wait already used for another `UserSettingObserver`-driven callback
-        // in ThemeManagerTests.swift.
-        RunLoop.current.run(until: Date().addingTimeInterval(0.1))
         XCTAssertGreaterThan(announcements, 0)
     }
 
@@ -79,8 +95,8 @@ final class HelpDrawerControllerTests: XCTestCase {
     /// and the next window focus slides the drawer back out — two clicks to put
     /// away a drawer that will not stay away.
     func testADrawerDraggedShutIsForgotten() throws {
-        let controller = ComposableSettings.HelpDrawerController(parentWindow: self.window)
         UserSettings.settingsHelpDrawerVisible.value = true
+        let controller = ComposableSettings.HelpDrawerController(parentWindow: self.window)
         controller.setHelp(HelpContent(topics: [HelpContent.Topic(title: "T", body: "B")]))
         XCTAssertTrue(controller.isHelpVisible)
 
@@ -98,8 +114,8 @@ final class HelpDrawerControllerTests: XCTestCase {
     /// it through the same callback a drag uses. A settings window that is
     /// simply closed must not be read as the reader putting help away.
     func testClosingTheWindowDoesNotForgetADisclosedDrawer() throws {
-        let controller = ComposableSettings.HelpDrawerController(parentWindow: self.window)
         UserSettings.settingsHelpDrawerVisible.value = true
+        let controller = ComposableSettings.HelpDrawerController(parentWindow: self.window)
         controller.setHelp(HelpContent(topics: [HelpContent.Topic(title: "T", body: "B")]))
         XCTAssertTrue(controller.isHelpVisible)
 
@@ -120,8 +136,8 @@ final class HelpDrawerControllerTests: XCTestCase {
     /// comes back. Close it, reopen it, then drag the drawer shut: that drag is
     /// the reader putting help away, and must be remembered as one.
     func testADrawerDraggedShutAfterTheWindowReopensIsForgotten() throws {
-        let controller = ComposableSettings.HelpDrawerController(parentWindow: self.window)
         UserSettings.settingsHelpDrawerVisible.value = true
+        let controller = ComposableSettings.HelpDrawerController(parentWindow: self.window)
         controller.setHelp(HelpContent(topics: [HelpContent.Topic(title: "T", body: "B")]))
         XCTAssertTrue(controller.isHelpVisible)
 
@@ -150,8 +166,8 @@ final class HelpDrawerControllerTests: XCTestCase {
     /// put there instead of on the window's return would unlatch a window on its
     /// way out and lose exactly the preference the ⌘W was supposed to keep.
     func testHelpChangingDuringTeardownDoesNotUnlatchTheClose() throws {
-        let controller = ComposableSettings.HelpDrawerController(parentWindow: self.window)
         UserSettings.settingsHelpDrawerVisible.value = true
+        let controller = ComposableSettings.HelpDrawerController(parentWindow: self.window)
         controller.setHelp(HelpContent(topics: [HelpContent.Topic(title: "T", body: "B")]))
 
         NotificationCenter.default.post(name: NSWindow.willCloseNotification, object: self.window)
