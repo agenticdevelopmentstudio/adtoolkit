@@ -247,6 +247,26 @@ public final class ClaudeHookInstaller: Sendable {
         }
     }
 
+    // MARK: - Other settings keys
+
+    /// Reads `settings.json`, lets `body` change it, and saves it, all under
+    /// the settings lock, for a daemon's own keys beside the hooks and the
+    /// status line. A missing or empty file reads as `[:]`; nothing is written
+    /// when `body` leaves the settings equal to what was read, or throws.
+    /// Saved the way the installer saves (atomic, mode kept).
+    @discardableResult
+    public func modifySettings<T>(_ body: (inout [String: Any]) throws -> T) throws -> T {
+        try withSettingsLock {
+            let before = try loadSettings()
+            var settings = before
+            let result = try body(&settings)
+            if !NSDictionary(dictionary: before).isEqual(to: settings) {
+                try saveSettings(settings)
+            }
+            return result
+        }
+    }
+
     // MARK: - Install
 
     public enum InstallResult: Equatable {

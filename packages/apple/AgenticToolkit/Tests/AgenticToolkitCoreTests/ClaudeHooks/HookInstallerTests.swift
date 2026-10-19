@@ -1072,4 +1072,38 @@ final class HookInstallerTests: XCTestCase {
             }
         }
     }
+
+    // MARK: - modifySettings
+
+    func testModifySettingsKeepsEveryOtherKey() throws {
+        try writeSettings(["model": "opus", "env": ["OTHER": "x"]])
+        try installer.modifySettings { settings in
+            var env = settings["env"] as? [String: Any] ?? [:]
+            env["MINE"] = "y"
+            settings["env"] = env
+        }
+        let after = try installer.loadSettings()
+        XCTAssertEqual(after["model"] as? String, "opus")
+        XCTAssertEqual(after["env"] as? [String: String], ["OTHER": "x", "MINE": "y"])
+    }
+
+    func testModifySettingsWithoutAChangeWritesNothing() throws {
+        XCTAssertEqual(try installer.modifySettings { _ in 7 }, 7)
+        XCTAssertFalse(FileManager.default.fileExists(atPath: settingsURL.path))
+        try writeSettings(["model": "opus"])
+        let before = try Data(contentsOf: settingsURL)
+        try installer.modifySettings { settings in settings["model"] = "opus" }
+        XCTAssertEqual(try Data(contentsOf: settingsURL), before)
+    }
+
+    func testModifySettingsThatThrowsWritesNothing() throws {
+        struct Refused: Error {}
+        try writeSettings(["model": "opus"])
+        let before = try Data(contentsOf: settingsURL)
+        XCTAssertThrowsError(try installer.modifySettings { settings in
+            settings["model"] = "haiku"
+            throw Refused()
+        })
+        XCTAssertEqual(try Data(contentsOf: settingsURL), before)
+    }
 }

@@ -16,6 +16,10 @@ public enum StenographerIdentifiers {
     /// The daemon's localhost HTTP port, and the base URL clients reach it at.
     public static let httpPort = 22847
     public static let httpBaseURL = "http://127.0.0.1:\(httpPort)"
+    /// The account router's loopback port: where `ANTHROPIC_BASE_URL` points
+    /// when routing is used. Beside `httpPort`, never the same listener.
+    public static let routerPort = 22848
+    public static let routerBaseURL = "http://127.0.0.1:\(routerPort)"
 }
 
 public struct StenographerPaths: Sendable {

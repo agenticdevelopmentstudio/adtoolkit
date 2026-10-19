@@ -23,5 +23,10 @@ extension DaemonDatabase {
             ON CONFLICT(key) DO UPDATE SET value = excluded.value
         """, params: [key, value])
     }
+
+    /// Removes a settings row, so the reader's default applies again. No row is not an error.
+    public func deleteSetting(_ key: String) throws {
+        try execute("DELETE FROM settings WHERE key = ?", params: [key])
+    }
 }
 #endif
