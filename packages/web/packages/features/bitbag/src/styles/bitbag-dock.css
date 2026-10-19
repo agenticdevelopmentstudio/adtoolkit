@@ -204,7 +204,7 @@
   transform: scale(0.5);
 }
 
-/* --- the avatar-only rest (`rest="avatar"`) --------------------------------
+/* --- the avatar-only rest (`rest="avatar"`, the default) ---------------------
  *
  * No entry line: his face alone, the whole dock. BitbagDock halves his LAYOUT
  * width here instead of leaning on the doze transform above — a scaled box keeps

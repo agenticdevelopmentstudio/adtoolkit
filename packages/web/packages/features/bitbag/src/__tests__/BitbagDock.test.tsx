@@ -52,15 +52,22 @@ function chatReports(engaged: boolean): void {
 }
 
 describe('BitbagDock', () => {
-  it('rests on his entry line by default — the chat is always shown and he is not a button', () => {
+  it('rests as his face alone by default — the chat hidden, him a button at half width', () => {
     const { container } = render(<BitbagDock />)
+    expect(panelOf(container).hidden).toBe(true)
+    expect(screen.getByRole('button', { name: 'Chat with bitbag' })).toBeInTheDocument()
+    expect((container.querySelector('.bb-dock__avatar') as HTMLElement).style.width).toBe('66px')
+  })
+
+  it("rests on his entry line with rest='entry' — the chat is always shown and he is not a button", () => {
+    const { container } = render(<BitbagDock rest="entry" />)
     expect(panelOf(container).hidden).toBe(false)
     expect(screen.queryByRole('button', { name: /bitbag/i })).toBeNull()
     expect((container.querySelector('.bb-dock__avatar') as HTMLElement).style.width).toBe('132px')
   })
 
   it('holds the page still only while his always-shown chat is engaged', () => {
-    render(<BitbagDock />)
+    render(<BitbagDock rest="entry" />)
     expect(pageLock.active).toBe(false)
     chatReports(true)
     expect(pageLock.active).toBe(true)
@@ -105,7 +112,7 @@ describe('BitbagDock', () => {
     })
 
     it('keeps the send button for the resting modes that are not him', () => {
-      render(<BitbagDock />)
+      render(<BitbagDock rest="entry" />)
       expect(chat.props.sendButton).toBe(true)
     })
 
@@ -359,7 +366,7 @@ describe('BitbagDock', () => {
 
       it('never travels in the dock that rests on its entry line', () => {
         travels.calls = []
-        render(<BitbagDock />)
+        render(<BitbagDock rest="entry" />)
         chatReports(true)
         chatReports(false)
         expect(travels.calls).toHaveLength(0)

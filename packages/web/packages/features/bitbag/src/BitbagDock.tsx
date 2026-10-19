@@ -68,16 +68,17 @@ export interface BitbagDockProps {
   /**
    * What he looks like while nobody is talking to him.
    *
-   * - `'entry'` (default) — his chat folds to a single entry line and he dozes on
-   *   top of it. fishlamp's rig: there the dock is the page's only chrome on the
-   *   bottom edge, so an always-visible composer is an invitation, not clutter.
-   * - `'avatar'` — his face alone, at half size, with no entry line under him.
-   *   For a host whose bottom edge is already a bar of its own (the adh footer):
-   *   a 560px composer across the middle of it covered the bar's links and made
-   *   every page reserve room for it. Tapping him opens his chat, with the caret
-   *   in it, and he moves onto its lower-right corner in place of the send button:
-   *   tapping him there sends what you typed, and he giggles. When the chat folds
-   *   (a tap away, Escape) he goes back to being just a face in the bar.
+   * - `'avatar'` (default) — his face alone, at half size, with no entry line
+   *   under him. What both of his hosts want: on the adh footer a 560px composer
+   *   across the middle of the bar covered its links and made every page reserve
+   *   room for it, and fishlamp.com chose the same quiet face over an always-open
+   *   composer. Tapping him opens his chat, with the caret in it, and he moves
+   *   onto its lower-right corner in place of the send button: tapping him there
+   *   sends what you typed, and he giggles. When the chat folds (a tap away,
+   *   Escape) he goes back to being just a face.
+   * - `'entry'` — his chat folds to a single entry line and he dozes on top of
+   *   it: an always-visible composer, for a host that wants the invitation on
+   *   the page rather than behind a tap.
    */
   rest?: 'entry' | 'avatar'
 }
@@ -111,7 +112,7 @@ export function BitbagDock({
   backend,
   size = 132,
   className,
-  rest = 'entry',
+  rest = 'avatar',
 }: BitbagDockProps) {
   // The wiring between his chat and his face: the chat reports how the
   // conversation is going and the avatar reacts. His expression follows the
