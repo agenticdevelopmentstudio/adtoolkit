@@ -1,13 +1,16 @@
 import Foundation
 
 /// The app→daemon wire contract for AI provider configuration. Replaces the old
-/// flattened `[String: Any]` push: carries the WHOLE set of configurations plus a
-/// pointer to the active one, so the daemon mirrors the full registry (keyed by
-/// configuration identity) rather than a single plugin-keyed slot.
+/// flattened `[String: Any]` push: carries the WHOLE set of configurations, so the
+/// daemon mirrors the full registry (keyed by configuration identity) rather than a
+/// single plugin-keyed slot. The summaries switch and the summaries configuration
+/// are not part of it: `POST /preferences/summaries` is their only writer.
 public struct AIProviderConfigSync: Codable, Sendable, Equatable {
-    /// Whether AI summaries are enabled.
+    /// Kept for wire compatibility only: the daemon ignores it. Whether summaries
+    /// run is set through `POST /preferences/summaries`.
     public var enabled: Bool
-    /// The configuration used for summaries; nil / absent == zero-config path.
+    /// Kept for wire compatibility only: the daemon ignores it. The summaries
+    /// configuration is set through `POST /preferences/summaries`.
     public var selectedConfigId: UUID?
     /// Every configured provider, fully resolved (values + secrets).
     public var configs: [ResolvedProviderConfig]

@@ -8,8 +8,10 @@ import AIPluginKit
 /// The LLM Providers pane edits the configuration list, the selection and each
 /// configuration's model and fields. One set of observers lives here; on any
 /// change, at startup and on every daemon reconnect the whole registry (every
-/// configuration fully resolved, secrets read from the Keychain, plus the
-/// selected id) is pushed through `POST /preferences/ai`. The engine is Core's
+/// configuration fully resolved, secrets read from the Keychain) is pushed
+/// through `POST /preferences/ai`. The body still carries `enabled` and
+/// `selectedConfigId`, which the daemon ignores; it takes the summaries switch
+/// and configuration only from `POST /preferences/summaries`. The engine is Core's
 /// `SettingsSnapshotPush`; the transport is the service's `setAIPreferences`.
 ///
 /// The configuration-scoped observers are dynamic: they re-subscribe to EVERY
@@ -172,6 +174,8 @@ public enum StenographerAIConfigPush {
     /// delete on the daemon side, and the empty value is not the user's.
     private static func currentBody() -> Data? {
         guard let manager = observedManager else { return nil }
+        // `selectedConfigId` and `enabled` fill fields the wire format still requires;
+        // the daemon ignores both (POST /preferences/summaries owns them).
         let sync = makeSync(
             configurations: UserSettings.aiProviderConfigurations.value,
             selectedConfigId: UserSettings.selectedAIProviderConfigurationId.value,
