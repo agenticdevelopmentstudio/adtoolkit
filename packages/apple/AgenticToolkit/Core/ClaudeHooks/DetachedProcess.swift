@@ -74,6 +74,17 @@ public struct FeedLock {
 
     private let descriptor: Int32
 
+    /// Where the lock for `sessionID` of the daemon called `name` lives
+    /// (`<name>-statusline-feed-<session>.lock`, with the session id reduced to
+    /// ASCII letters, digits and `-`). Tests remove it to start clean.
+    public static func fileURL(sessionID: String, name: String,
+                               directory: URL = URL(fileURLWithPath: NSTemporaryDirectory())) -> URL {
+        let safe = String(String.UnicodeScalarView(sessionID.unicodeScalars.prefix(128).map {
+            $0.isASCII && (CharacterSet.alphanumerics.contains($0) || $0 == "-") ? $0 : "_"
+        }))
+        return directory.appendingPathComponent("\(name)-statusline-feed-\(safe).lock")
+    }
+
     /// The lock for `sessionID` of the daemon called `name`
     /// (`<name>-statusline-feed-<session>.lock`, with the session id reduced to
     /// ASCII letters, digits and `-`), or nil when another feed holds it. When no
@@ -82,10 +93,7 @@ public struct FeedLock {
     public static func acquire(sessionID: String, name: String,
                                directory: URL = URL(fileURLWithPath: NSTemporaryDirectory()))
         -> FeedLock? {
-        let safe = String(String.UnicodeScalarView(sessionID.unicodeScalars.prefix(128).map {
-            $0.isASCII && (CharacterSet.alphanumerics.contains($0) || $0 == "-") ? $0 : "_"
-        }))
-        let path = directory.appendingPathComponent("\(name)-statusline-feed-\(safe).lock").path
+        let path = fileURL(sessionID: sessionID, name: name, directory: directory).path
         let descriptor = open(path, O_RDWR | O_CREAT | O_CLOEXEC, 0o600)
         guard descriptor >= 0 else { return FeedLock(descriptor: -1) }
         guard flock(descriptor, LOCK_EX | LOCK_NB) == 0 else {

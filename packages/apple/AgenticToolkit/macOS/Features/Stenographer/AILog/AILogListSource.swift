@@ -5,7 +5,7 @@ import AgenticToolkitCore
 /// The row → cell mapping is a pure static function so it is unit-tested without
 /// a daemon. Read-only.
 @MainActor
-final class AILogListSource {
+public final class AILogListSource {
     private let service: any StenographerDaemonService
     private(set) var rows: [AIInteractionDTO] = []
 
@@ -81,7 +81,7 @@ final class AILogListSource {
         return parts.isEmpty ? "—" : parts.joined(separator: " · ")
     }
 
-    nonisolated static func durationText(milliseconds: Int) -> String {
+    public nonisolated static func durationText(milliseconds: Int) -> String {
         milliseconds < 1000
             ? "\(milliseconds) ms"
             : String(format: "%.1f s", Double(milliseconds) / 1000)
