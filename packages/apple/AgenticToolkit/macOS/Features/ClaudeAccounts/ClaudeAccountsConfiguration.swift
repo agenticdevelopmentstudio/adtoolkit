@@ -18,11 +18,27 @@ public struct ClaudeAccountsConfiguration: Sendable, Equatable {
     public var identifier: String
     /// The keychain service every saved account is stored under.
     public var savedAccountsService: String
+    /// Keep this-Mac-only logins in the data-protection keychain instead of the
+    /// file-based login keychain (`ClaudeKeychainLocation.login`).
+    ///
+    /// An item in the login keychain is guarded by an ACL naming the binary
+    /// that wrote it, so every differently signed build of the app — a Debug
+    /// build, then the Developer ID release — asks for the password once per
+    /// saved login. A data-protection item is guarded by the app's keychain
+    /// access group instead, which every build the team signs carries, so none
+    /// of them ask. Turn it on only in an app whose every build has the
+    /// `keychain-access-groups` entitlement; existing login-keychain items are
+    /// moved over once (`ClaudeKeychain.moveLoginItemsToDataProtection`).
+    public var keepsLoginsInDataProtectionKeychain: Bool
 
-    public init(appName: String, identifier: String, savedAccountsService: String? = nil) {
+    public init(
+        appName: String, identifier: String, savedAccountsService: String? = nil,
+        keepsLoginsInDataProtectionKeychain: Bool = false
+    ) {
         self.appName = appName
         self.identifier = identifier
         self.savedAccountsService = savedAccountsService ?? "\(appName) Claude Accounts"
+        self.keepsLoginsInDataProtectionKeychain = keepsLoginsInDataProtectionKeychain
     }
 
     /// A service nothing stores under, read to learn whether a keychain is

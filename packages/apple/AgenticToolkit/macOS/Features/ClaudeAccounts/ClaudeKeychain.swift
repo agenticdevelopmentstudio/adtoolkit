@@ -1,17 +1,21 @@
 import AgenticToolkitCore
 import Foundation
+import os
 import Security
 
 /// Where a saved credential is kept.
 ///
 /// The two cases are two different keychains, not two folders in one:
 ///
-/// - `.login` is the **file-based login keychain** — the same one `claude`,
-///   `security(1)` and Keychain Access work in. Items there are guarded by an
-///   ACL, which is what makes macOS put up *"the app wants to use your
-///   confidential information…"* the first time this app reads one. That prompt
-///   is the permission grant, and it names the app, so the user always knows
-///   who asked.
+/// - `.login` stays on this Mac. By default it is the **file-based login
+///   keychain** — the same one `claude`, `security(1)` and Keychain Access work
+///   in. Items there are guarded by an ACL naming the binary that wrote them,
+///   which is what makes macOS put up *"the app wants to use your confidential
+///   information…"* — once per item, and again for every differently signed
+///   build. An app that sets
+///   `ClaudeAccountsConfiguration.keepsLoginsInDataProtectionKeychain` keeps
+///   them in the **data-protection keychain, not synchronized** instead: guarded
+///   by the app's access group like `.shared`, so no build its team signs asks.
 /// - `.shared` is the **data-protection keychain with `kSecAttrSynchronizable`
 ///   set** — iCloud Keychain. Apple's own sync machinery copies those items to
 ///   every Mac signed into the same Apple Account, so a second machine running
@@ -49,7 +53,7 @@ public enum ClaudeKeychainLocation: String, CaseIterable, Sendable, Codable {
     /// nothing about what matters, which is whether a credential leaves this Mac.
     public var title: String {
         switch self {
-        case .login: return "This Mac only (login keychain)"
+        case .login: return "This Mac only"
         case .shared: return "All my Macs (iCloud Keychain)"
         }
     }
@@ -120,10 +124,13 @@ public enum ClaudeKeychain {
         if let account { query[kSecAttrAccount as String] = account }
         switch location {
         case .login:
-            // Legacy, file-based, ACL-guarded. `false` rather than absent: an
-            // absent `synchronizable` matches BOTH kinds, and a delete that
-            // matched both would take the iCloud copy with it.
+            // `false` rather than absent: an absent `synchronizable` matches
+            // BOTH kinds, and a delete that matched both would take the iCloud
+            // copy with it.
             query[kSecAttrSynchronizable as String] = kCFBooleanFalse
+            if ClaudeAccounts.configuration.keepsLoginsInDataProtectionKeychain {
+                query[kSecUseDataProtectionKeychain as String] = kCFBooleanTrue
+            }
         case .shared:
             query[kSecUseDataProtectionKeychain as String] = kCFBooleanTrue
             query[kSecAttrSynchronizable as String] = kCFBooleanTrue
@@ -254,7 +261,12 @@ public enum ClaudeKeychain {
             // the daemon and the widget refresh on a schedule, and an item that
             // needs the screen unlocked would simply be missing on a Mac left
             // running at a login window.
-            insert[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+            // A this-Mac-only item in the data-protection keychain says so
+            // here too, so a backup restored onto another Mac can't carry it.
+            insert[kSecAttrAccessible as String] = location == .login
+                && ClaudeAccounts.configuration.keepsLoginsInDataProtectionKeychain
+                ? kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+                : kSecAttrAccessibleAfterFirstUnlock
             let added = SecItemAdd(insert as CFDictionary, nil)
             guard added == errSecSuccess else {
                 throw KeychainError(
@@ -278,6 +290,82 @@ public enum ClaudeKeychain {
                     location: location)
             }
         }
+    }
+
+    // MARK: - Moving logins out of the login keychain
+
+    /// Whether this launch already moved the login-keychain items.
+    private static let movedLoginItems = OSAllocatedUnfairLock(initialState: false)
+
+    /// Moves every item under `service` from the file-based login keychain into
+    /// the data-protection keychain, once per launch, when the app keeps its
+    /// logins there (`keepsLoginsInDataProtectionKeychain`).
+    ///
+    /// Each item is read one last time — the last prompt the user sees for
+    /// it — added to the data-protection keychain, and then deleted from the
+    /// login keychain. The delete is not tidiness: a login's refresh token is
+    /// single-use, so a stale copy another build goes on refreshing would void
+    /// the live one ("Login expired"). An item already in the data-protection
+    /// keychain wins, and only the old copy goes. Nothing is deleted that was
+    /// not stored first, and a refusal leaves the item where it was, so no
+    /// login is ever lost. Returns the names it could not move.
+    @discardableResult
+    public static func moveLoginItemsToDataProtection(service: String) async -> [String] {
+        guard ClaudeAccounts.configuration.keepsLoginsInDataProtectionKeychain else { return [] }
+        let first = movedLoginItems.withLock { moved -> Bool in
+            defer { moved = true }
+            return !moved
+        }
+        guard first else { return [] }
+        return (try? await off { moveLoginItems(service: service) }) ?? []
+    }
+
+    private static func moveLoginItems(service: String) -> [String] {
+        // The file keychain: no `kSecUseDataProtectionKeychain`. Attributes
+        // only, which never prompts.
+        let fileItems: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrSynchronizable as String: kCFBooleanFalse as Any
+        ]
+        var listing = fileItems
+        listing[kSecReturnAttributes as String] = kCFBooleanTrue
+        listing[kSecMatchLimit as String] = kSecMatchLimitAll
+        var items: CFTypeRef?
+        guard SecItemCopyMatching(listing as CFDictionary, &items) == errSecSuccess else { return [] }
+
+        var unmoved: [String] = []
+        for attributes in items as? [[String: Any]] ?? [] {
+            guard let account = attributes[kSecAttrAccount as String] as? String else { continue }
+            var old = fileItems
+            old[kSecAttrAccount as String] = account
+
+            let current = query(service: service, account: account, location: .login)
+            if SecItemCopyMatching(current as CFDictionary, nil) != errSecSuccess {
+                var read = old
+                read[kSecReturnData as String] = kCFBooleanTrue
+                read[kSecMatchLimit as String] = kSecMatchLimitOne
+                var value: CFTypeRef?
+                guard SecItemCopyMatching(read as CFDictionary, &value) == errSecSuccess,
+                      let data = value as? Data else {
+                    unmoved.append(account)
+                    continue
+                }
+                var insert = current
+                insert[kSecValueData as String] = data
+                if let label = attributes[kSecAttrLabel as String] as? String {
+                    insert[kSecAttrLabel as String] = label
+                }
+                insert[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+                let added = SecItemAdd(insert as CFDictionary, nil)
+                guard added == errSecSuccess || added == errSecDuplicateItem else {
+                    unmoved.append(account)
+                    continue
+                }
+            }
+            SecItemDelete(old as CFDictionary)
+        }
+        return unmoved
     }
 
     // MARK: - Availability

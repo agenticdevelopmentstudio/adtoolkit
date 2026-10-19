@@ -162,6 +162,12 @@ public enum ClaudeAccountKeychainStore {
     /// verb in this store deals only with kind-keyed items in their kind's
     /// keychain, instead of each one growing a legacy branch of its own.
     public static func all() async throws -> [Located] {
+        let unmoved = await ClaudeKeychain.moveLoginItemsToDataProtection(
+            service: ClaudeKeychain.savedAccountsService)
+        if !unmoved.isEmpty {
+            logger.error(
+                "Left \(unmoved.count, privacy: .public) saved login(s) in the login keychain: they could not be moved")
+        }
         var found: [Located] = []
         var legacy: [LegacyItem] = []
         var firstFailure: Error?

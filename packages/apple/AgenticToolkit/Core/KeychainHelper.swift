@@ -15,6 +15,29 @@ public enum KeychainHelper {
     /// default) preserves the original per-binary behavior.
     nonisolated(unsafe) public static var accessGroup: String?
 
+    /// Keep secrets in the data-protection keychain, under the app's default
+    /// access group, instead of the file-based login keychain.
+    ///
+    /// The login keychain guards each item with an ACL naming the binary that
+    /// wrote it, so a build signed differently — a Developer ID release after a
+    /// development build, or the reverse — gets one password prompt per item.
+    /// The data-protection keychain is guarded by the team's access group
+    /// instead, which every build the team signs carries, so nothing prompts.
+    /// It needs the `keychain-access-groups` entitlement (and the profile that
+    /// grants it): set this only in a binary that has one. No explicit group is
+    /// passed, so an app signed under a wildcard team profile is not refused.
+    ///
+    /// A secret still in the login keychain is found on a miss and re-stored
+    /// here — that one read may prompt, once. The old copy is left where it is,
+    /// like a retired service's, and `delete` removes it too.
+    nonisolated(unsafe) public static var usesDataProtectionKeychain = false
+
+    /// Whether the file-based login keychain can hold a copy `get` should
+    /// recover: true whenever this helper writes somewhere else.
+    private static var readsFileKeychainFallback: Bool {
+        accessGroup != nil || usesDataProtectionKeychain
+    }
+
     /// Service identifiers this app used to write under, newest first.
     ///
     /// The service defaults to the bundle identifier, so changing the bundle
@@ -49,10 +72,12 @@ public enum KeychainHelper {
 
     /// Builds the base generic-password query for an account key. When an access
     /// group is in play, scopes the item to it and forces the macOS data-protection
-    /// keychain (required for access groups on macOS).
+    /// keychain (required for access groups on macOS). Without one,
+    /// `dataProtection` alone picks the data-protection keychain.
     static func makeQuery(
         account: String,
         accessGroup: String? = KeychainHelper.accessGroup,
+        dataProtection: Bool = KeychainHelper.usesDataProtectionKeychain,
         service: String = KeychainHelper.service
     ) -> [String: Any] {
         var query: [String: Any] = [
@@ -62,6 +87,8 @@ public enum KeychainHelper {
         ]
         if let accessGroup {
             query[kSecAttrAccessGroup as String] = accessGroup
+            query[kSecUseDataProtectionKeychain as String] = true
+        } else if dataProtection {
             query[kSecUseDataProtectionKeychain as String] = true
         }
         return query
@@ -76,7 +103,7 @@ public enum KeychainHelper {
 
         var query = makeQuery(account: key)
         query[kSecValueData as String] = data
-        if accessGroup != nil {
+        if readsFileKeychainFallback {
             // Data-protection items default to `WhenUnlocked`. A co-signed daemon may
             // run before first unlock or while the screen is locked, so make shared
             // secrets readable after first unlock. `ThisDeviceOnly`: local app↔daemon
@@ -100,7 +127,8 @@ public enum KeychainHelper {
         // in the default keychain and are invisible to access-group / data-protection
         // queries (and to a co-signed daemon). Recover one if present and re-store it
         // under the current group so future reads — including the daemon's — succeed.
-        if accessGroup != nil, let legacy = copyValue(forKey: key, accessGroup: nil) {
+        if readsFileKeychainFallback,
+           let legacy = copyValue(forKey: key, accessGroup: nil, dataProtection: false) {
             set(legacy, forKey: key)
             return legacy
         }
@@ -110,8 +138,8 @@ public enum KeychainHelper {
         // current service. The old item is left where it is.
         for legacyService in legacyServices {
             if let legacy = copyValue(forKey: key, accessGroup: accessGroup, service: legacyService)
-                ?? (accessGroup != nil
-                    ? copyValue(forKey: key, accessGroup: nil, service: legacyService)
+                ?? (readsFileKeychainFallback
+                    ? copyValue(forKey: key, accessGroup: nil, dataProtection: false, service: legacyService)
                     : nil) {
                 logger.info("Recovered '\(key, privacy: .public)' from retired Keychain service")
                 set(legacy, forKey: key)
@@ -125,9 +153,11 @@ public enum KeychainHelper {
     private static func copyValue(
         forKey key: String,
         accessGroup: String?,
+        dataProtection: Bool = KeychainHelper.usesDataProtectionKeychain,
         service: String = KeychainHelper.service
     ) -> String? {
-        var query = makeQuery(account: key, accessGroup: accessGroup, service: service)
+        var query = makeQuery(
+            account: key, accessGroup: accessGroup, dataProtection: dataProtection, service: service)
         query[kSecReturnData as String] = true
         query[kSecMatchLimit as String] = kSecMatchLimitOne
 
@@ -150,10 +180,14 @@ public enum KeychainHelper {
     @discardableResult
     public static func delete(forKey key: String) -> Bool {
         var deleted = deleteItem(makeQuery(account: key))
+        if readsFileKeychainFallback {
+            deleted = deleteItem(makeQuery(account: key, accessGroup: nil, dataProtection: false)) && deleted
+        }
         for legacyService in legacyServices {
             deleted = deleteItem(makeQuery(account: key, service: legacyService)) && deleted
-            if accessGroup != nil {
-                deleted = deleteItem(makeQuery(account: key, accessGroup: nil, service: legacyService)) && deleted
+            if readsFileKeychainFallback {
+                deleted = deleteItem(makeQuery(
+                    account: key, accessGroup: nil, dataProtection: false, service: legacyService)) && deleted
             }
         }
         return deleted
@@ -177,10 +211,22 @@ public enum KeychainHelper {
         if SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess {
             return true
         }
+        // Asking whether an item exists reads no secret, so the login
+        // keychain answers without a prompt.
+        func present(_ query: [String: Any]) -> Bool {
+            var query = query
+            query[kSecMatchLimit as String] = kSecMatchLimitOne
+            return SecItemCopyMatching(query as CFDictionary, nil) == errSecSuccess
+        }
+        if readsFileKeychainFallback,
+           present(makeQuery(account: key, accessGroup: nil, dataProtection: false)) {
+            return true
+        }
         return legacyServices.contains { legacyService in
-            var legacyQuery = makeQuery(account: key, service: legacyService)
-            legacyQuery[kSecMatchLimit as String] = kSecMatchLimitOne
-            return SecItemCopyMatching(legacyQuery as CFDictionary, nil) == errSecSuccess
+            present(makeQuery(account: key, service: legacyService))
+                || (readsFileKeychainFallback
+                    && present(makeQuery(
+                        account: key, accessGroup: nil, dataProtection: false, service: legacyService)))
         }
     }
 }
