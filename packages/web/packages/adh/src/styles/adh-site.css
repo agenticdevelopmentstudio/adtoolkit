@@ -248,16 +248,20 @@ a.adh-footer__brand-link:focus-visible {
    centre, which is bitbag's own default rather than a guess.
 
    His resting face also sat on the bar's bottom edge, reading as cut off rather than
-   centred in it, so he is lifted 6px over bitbag's own 0.1rem rest margin.
+   centred in it, so he is lifted over bitbag's own 0.1rem rest margin — by
+   `--bb-dock-parked-lift`, bitbag-dock.css's ONE copy of how high a parked face sits,
+   which `BitbagStandalone` (his mounting on a page with no footer) reads too. It was
+   a literal 6px here, and a footerless page would have needed a second one that
+   nothing kept equal to this; now either mounting lands him in the same place.
 
    Both reach him through bitbag's resting HOOKS — `--bb-dock-rest-x` and
    `--bb-dock-rest-lift`, which its resting rule reads (bitbag-dock.css) — set here on
    the dock's own root. This used to restate both of that rule's selectors instead, one
    class stronger so it would win when bitbag's sheet landed later, and it held only
    while the two copies stayed in step, which nothing checked. A hook needs no
-   specificity contest: nothing but this rule sets them. The values are adh's, not
+   specificity contest: nothing but this rule sets them. The x is adh's, not
    bitbag's: the bar and its slot are this footer's, and the dock knows nothing of
-   either.
+   either. The lift is bitbag's, because it is the one thing both mountings share.
 
    His chat is wider here than bitbag's default 560px — 784px, two-fifths more — so a
    conversation on a desktop reads as a panel rather than a strip. Same kind of hook,
@@ -265,7 +269,7 @@ a.adh-footer__brand-link:focus-visible {
    640px, whatever this says. */
 .bb-dock.adh-footer__chat {
   --bb-dock-rest-x: var(--adh-footer-rest-x, 0px);
-  --bb-dock-rest-lift: 6px;
+  --bb-dock-rest-lift: var(--bb-dock-parked-lift);
   --bb-dock-panel-width: min(784px, calc(100% - 2rem));
 }
 

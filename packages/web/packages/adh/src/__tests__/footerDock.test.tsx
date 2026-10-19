@@ -34,6 +34,7 @@ import { render, cleanup } from '@testing-library/react'
 import { ThemeStyle, type ThemeKey } from '@agenticdevelopertoolkit/themes'
 import { DEFAULT_THEME } from '@agentic-toolkit/bitbag'
 import { REST_DOCK_SELECTOR } from '../footer/useFooterRestOffset'
+import { adhStylesheet, bitbagStylesheet, styleRules } from './stylesheetRules'
 
 /** Mirrors footer/chat-theme-store.ts — the localStorage key the Debug console writes. */
 const STORAGE_KEY = 'adh-chat-theme'
@@ -149,6 +150,17 @@ describe('his resting box and the slot the bar keeps for it', () => {
     // the left edge of Legal and took its clicks.
     expect(slot![1]!.trim()).toMatch(/^\d+(\.\d+)?px$/)
     expect(parseFloat(slot![1]!)).toBeGreaterThanOrEqual(parseFloat(box))
+  })
+
+  it('is lifted by the lift bitbag declares, so a page without the footer lands him in the same place', () => {
+    // `BitbagStandalone` mounts him on a footerless page by reading `--bb-dock-parked-lift`
+    // (bitbag-dock.css, where it is declared — the only copy). This rule reading the same
+    // property, rather than a number of its own, is what keeps the two mountings level.
+    const footer = styleRules(adhStylesheet('adh-site.css')).find((r) => r.selectors.includes(REST_DOCK_SELECTOR))
+    expect(footer, `no ${REST_DOCK_SELECTOR} rule in adh-site.css — did it move?`).toBeDefined()
+    expect(footer!.get('--bb-dock-rest-lift')).toBe('var(--bb-dock-parked-lift)')
+    const rig = styleRules(bitbagStylesheet('bitbag-dock.css')).find((r) => r.selectors.includes('.bb-dock'))
+    expect(rig?.get('--bb-dock-parked-lift')).toMatch(/^\d+(\.\d+)?px$/)
   })
 })
 

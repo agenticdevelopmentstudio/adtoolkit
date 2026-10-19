@@ -554,7 +554,17 @@ describe('what is no longer a contest', () => {
     expect(resting.get('margin-bottom')).toContain('var(--bb-dock-rest-lift')
     // The chat's width is bitbag's to lay out; the host only says how wide it may be.
     expect(rule('bitbag .bb-dock').get('--bb-dock-panel-w')).toContain('var(--bb-dock-panel-width')
-    for (const r of rulesOf('bitbag')) expect(r.properties.filter((p) => hooks.includes(p))).toEqual([])
+    // bitbag's own sheet sets a hook in ONE rule: its standalone mount, `BitbagStandalone`,
+    // which is his mounting for a page with no footer and has to land him where the footer
+    // does. It sets the lift alone, and reads it from `--bb-dock-parked-lift` — the one
+    // copy, declared on `.bb-dock` — never as a number; the x and the chat's width stay
+    // the host's. The footer reads the same copy (footerDock.test.tsx), which is what
+    // keeps the two mountings level.
+    const standalone = rule('bitbag .bb-dock--standalone')
+    expect(standalone.properties).toEqual(['--bb-dock-rest-lift'])
+    expect(standalone.get('--bb-dock-rest-lift')).toBe('var(--bb-dock-parked-lift)')
+    for (const r of rulesOf('bitbag'))
+      if (r !== standalone) expect(r.properties.filter((p) => hooks.includes(p))).toEqual([])
     for (const sheet of HOSTS)
       for (const r of rulesOf(sheet))
         for (const s of r.selectors) expect(subjectClasses(s), `${sheet} ${s}`).not.toContain('bb-dock__avatar')

@@ -87,6 +87,17 @@
    * Percentages here resolve against the dock, which is viewport-wide. */
   --bb-dock-panel-w: var(--bb-dock-panel-width, min(560px, calc(100% - 2rem)));
 
+  /* WHERE HIS RESTING FACE SITS, measured from the bottom edge: the ONE copy of it.
+   * Both of his mountings read it — the adh footer, which parks him in its bar and
+   * lifts him this much so he reads as sitting in the bar rather than cut off by its
+   * edge, and `BitbagStandalone` (`.bb-dock--standalone` below), which mounts him on a
+   * page with no bar and has to land him in the SAME place, so a site whose pages mix
+   * the two (fishlamp.com: a marketing page without the footer, app pages with it)
+   * shows one bitbag, not one who hops 6px between pages. The footer used to carry
+   * this number as a literal of its own; the standalone mount would have been a
+   * second, and nothing would have kept the two in step. */
+  --bb-dock-parked-lift: 6px;
+
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -225,7 +236,9 @@
  *                        so waking slides him back to the centre on the same curve; a
  *                        layout move would jump, because a margin or a justify doesn't
  *                        animate.
- *   --bb-dock-rest-lift  room under him beyond this rule's own 0.1rem.
+ *   --bb-dock-rest-lift  room under him beyond this rule's own 0.1rem. A host that
+ *                        parks him at bar height sets it to `--bb-dock-parked-lift`
+ *                        (declared on `.bb-dock`), never to a number of its own.
  * The adh footer sets both on its dock, to park him in the slot its bar keeps for
  * him. Before these existed it restated both selectors below, one class stronger,
  * which held only while the two copies stayed in step — and nothing checked that.
@@ -246,6 +259,13 @@
 .bb-dock--closing .bb-dock__avatar {
   position: relative;
   z-index: 1;
+}
+/* `BitbagStandalone`: the dock on a page that gives him no bar. No slot to measure,
+ * so he rests at the column's centre (`--bb-dock-rest-x`'s own fallback), lifted by
+ * the shared parked lift above — the height the footer's bar parks him at — so he
+ * sits where the footer would have put him. */
+.bb-dock--standalone {
+  --bb-dock-rest-lift: var(--bb-dock-parked-lift);
 }
 /* Open, he moves onto his chat's lower-right corner, in place of the send button —
  * tapping him there is the send (BitbagDock), and he giggles for it. Out of the
