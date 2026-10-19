@@ -21,14 +21,13 @@ import '@agentic-toolkit/bitbag/css/bitbag-dock.css';
  *
  * No `backend` prop: he speaks his built-in scripted voice.
  *
- * `rest="avatar"` is the one way he differs from fishlamp's mounting, and it is a
- * difference of CONTEXT, not a fork: here he shares the bottom edge with the footer
- * bar, so at rest he is his face alone, in the slot the bar keeps just left of its
- * Legal menu (of Terms, where a browser without popovers shows the inline pair), and
- * when he is tapped he grows back to the centre with his chat opening under him (the
- * slot is adh-site.css's; `useFooterRestOffset` measures where it is and writes it on
- * this dock). His resting entry line used to lie across the middle of the bar, over its
- * links, and made every page reserve 6rem for it.
+ * At rest he is his face alone — the dock's default, and fishlamp's mounting too —
+ * in the slot the bar keeps just left of its Legal menu (of Terms, where a browser
+ * without popovers shows the inline pair), and when he is tapped he grows back to
+ * the centre with his chat opening under him (the slot is adh-site.css's;
+ * `useFooterRestOffset` measures where it is and writes it on this dock). His
+ * resting entry line used to lie across the middle of the bar, over its links, and
+ * made every page reserve 6rem for it.
  *
  * PORTALLED TO `document.body`, not rendered in place. The dock positions itself
  * (`position: fixed`, bottom-centred, riding the keyboard — see bitbag-dock.css),

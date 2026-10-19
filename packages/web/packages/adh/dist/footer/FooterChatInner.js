@@ -112,7 +112,7 @@ function FooterChatInner() {
   useFooterRestOffset();
   if (typeof document === "undefined") return null;
   return createPortal(
-    /* @__PURE__ */ jsx(BitbagDock, { className: "adh-footer__chat", theme: chatTheme ?? void 0, rest: "avatar" }),
+    /* @__PURE__ */ jsx(BitbagDock, { className: "adh-footer__chat", theme: chatTheme ?? void 0 }),
     document.body
   );
 }
