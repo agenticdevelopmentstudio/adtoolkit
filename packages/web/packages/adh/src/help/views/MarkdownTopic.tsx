@@ -21,7 +21,7 @@ import { topicBySlug } from '../topics'
  * processing, so the pane paints instantly with no "Rendering…" flash. The docs sites render the
  * exact same HTML server-side, so a topic looks identical in the modal and on its page.
  *
- * The shared content's cross-links are site-relative help paths (`/quickstart`, `/reference/errors`,
+ * The shared content's cross-links are site-relative help paths (`/overview`, `/mcp/connect`,
  * `/rest-api`, `/mcp/overview`, …) — correct on the help site, but dead in the modal,
  * which is mounted on every site (none of which have those routes). So here we intercept clicks on
  * links whose path is a known help topic slug and navigate the modal's OWN topic tree instead,

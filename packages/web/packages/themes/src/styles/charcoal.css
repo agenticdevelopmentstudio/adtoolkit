@@ -1,7 +1,7 @@
 /* Charcoal — the ADH family's own palette: near-black charcoal surfaces, brand gold,
- * warm off-white text. This is DEFAULT_SITE_THEME, the look every family site wears.
- * It exists as a theme in its own right because that is what kept it pickable — and
- * RECOVERABLE — through the stretch when `fishlamp` held that job instead.
+ * warm off-white text. It was DEFAULT_SITE_THEME, the look every family site wore,
+ * until `fishlamp` took that job on 2026-10-19. It exists as a theme in its own right
+ * because that is what keeps it pickable — and RECOVERABLE — while another holds the job.
  *
  * It is DARK-ALWAYS: the site is dark whatever the device says. The light-mode
  * selectors are named alongside the dark one and given the dark values, so a visitor

@@ -11,7 +11,7 @@ var ADH_THEMES = [
   { key: "adh-fira", label: "Fira" }
 ].filter((t) => !isBaseCutAlias(t.key));
 var DEFAULT_ADH_THEME = "adh";
-var DEFAULT_SITE_THEME = "charcoal";
+var DEFAULT_SITE_THEME = "fishlamp";
 var LEGACY_THEME_ID = "agenticcookbookweb";
 var RENAMED_THEME_ID = "agenticdevelopmentstudioweb";
 function normalizeThemeKey(key) {

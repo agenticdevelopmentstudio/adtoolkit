@@ -8,7 +8,7 @@
 export interface DocsNavLink {
     /** Row label. */
     label: string;
-    /** Base-relative slug, no leading slash (e.g. `quickstart`, `oauth/overview`). `''` = the base
+    /** Base-relative slug, no leading slash (e.g. `quickstart`, `hub-features`). `''` = the base
      *  index page. */
     slug: string;
 }

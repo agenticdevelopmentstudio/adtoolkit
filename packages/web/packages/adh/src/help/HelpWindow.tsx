@@ -9,11 +9,11 @@ import { buildTopicLevels, type HelpTopic } from './topics'
 import { topicIcon } from './topic-icons'
 import { MarkdownTopic } from './views/MarkdownTopic'
 import { ApiTopic } from './views/ApiTopic'
-import { ChatTopic } from './views/ChatTopic'
+import { HubTopic } from './views/HubTopic'
 
 /** The detail pane for the deepest selected topic, chosen by its `view`/`contentKey`. A node that
- *  has content AND children (a section page like Quickstart) still renders its content here — its
- *  children open as the next level. A pure branch with no content shows its blurb. */
+ *  has content AND children (a section page) still renders its content here — its children open as
+ *  the next level. A pure branch with no content shows its blurb. */
 function topicView(topic: HelpTopic | null): ReactNode {
   if (!topic) {
     return (
@@ -21,7 +21,7 @@ function topicView(topic: HelpTopic | null): ReactNode {
     )
   }
   if (topic.view === 'api') return <ApiTopic />
-  if (topic.view === 'chat') return <ChatTopic />
+  if (topic.view === 'hub') return <HubTopic />
   if (topic.contentKey) return <MarkdownTopic contentKey={topic.contentKey} />
   return <EmptyState className="m-4" title={topic.label} description={topic.description ?? 'Choose a subtopic.'} />
 }

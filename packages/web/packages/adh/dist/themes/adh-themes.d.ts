@@ -78,14 +78,14 @@ export type SwitcherThemeKey = AdhThemeKey | FullPaletteThemeKey;
  *  This ONE constant dresses all ~45 family sites: no site passes a theme, they all render
  *  `<AdhThemeStyle />` with no props, so changing it here is the whole change.
  *
- *  It is `charcoal` — the palette the family wore before `fishlamp` briefly replaced it,
- *  kept as a theme in its own right for exactly this reason. The value before either of
- *  them was DEFAULT_ADH_THEME itself, which is why SiteDefaultTheme has a branch for the
- *  two matching (it renders nothing then, the base block already being the site's theme);
- *  that branch stays the un-taken one — `charcoal` is a full-palette theme, not the base —
- *  and the base stays emitted underneath for the `.text-*` typography utilities no
- *  full-palette theme defines. `fishlamp` remains pickable in the switcher, so swapping the
- *  family back to it is a one-word edit here.
+ *  It is `fishlamp`, since 2026-10-19; `charcoal` wore the job before it (and `fishlamp`
+ *  briefly before that), and stays a theme in its own right for exactly this reason. The
+ *  value before either of them was DEFAULT_ADH_THEME itself, which is why SiteDefaultTheme
+ *  has a branch for the two matching (it renders nothing then, the base block already being
+ *  the site's theme); that branch stays the un-taken one — `fishlamp` is a full-palette
+ *  theme, not the base — and the base stays emitted underneath for the `.text-*` typography
+ *  utilities no full-palette theme defines. `charcoal` remains pickable in the switcher, so
+ *  swapping the family back to it is a one-word edit here.
  *
  *  Whatever this names must be DARK-ALWAYS. The family ships one presentation and it is
  *  dark whatever the device says, and this constant is the only thing that decides which

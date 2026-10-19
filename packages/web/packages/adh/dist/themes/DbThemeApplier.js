@@ -54,9 +54,9 @@ var FULL_PALETTE_THEMES = [
   "green-matrix",
   "green-matrix-glass",
   "old-school-terminal",
-  // The ADH family's own two. `charcoal` is the family default (see DEFAULT_SITE_THEME);
-  // it was saved as a theme in its own right when `fishlamp` briefly held that job, which
-  // is what made pointing the default back at it a one-word edit rather than a re-authoring.
+  // The ADH family's own two. `fishlamp` is the family default (see DEFAULT_SITE_THEME);
+  // `charcoal` held that job before it and stays a theme in its own right, which is what
+  // makes pointing the default back at it a one-word edit rather than a re-authoring.
   "charcoal",
   "fishlamp"
 ];

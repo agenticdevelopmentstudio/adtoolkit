@@ -390,18 +390,21 @@ export const SITE_BUILD: Partial<Record<SiteId, SiteBuildConfig>> = {
   help: {
     extraRedirects: [
       { source: '/api', destination: 'https://help.agenticdeveloperhub.com/rest-api', permanent: true },
-      { source: '/docs', destination: 'https://help.agenticdeveloperhub.com/quickstart', permanent: true },
-      { source: '/docs/quickstart', destination: 'https://help.agenticdeveloperhub.com/quickstart', permanent: true },
+      // Quickstart and the Reference section (errors, webhooks, changelog) were retired on
+      // 2026-10-19: their published addresses land on the browsing root and on the REST API
+      // reference, which is where that material now lives.
+      { source: '/docs', destination: 'https://help.agenticdeveloperhub.com/home', permanent: true },
+      { source: '/docs/quickstart', destination: 'https://help.agenticdeveloperhub.com/home', permanent: true },
       { source: '/docs/hub-features', destination: 'https://help.agenticdeveloperhub.com/hub', permanent: true },
       { source: '/docs/api', destination: 'https://help.agenticdeveloperhub.com/rest-api', permanent: true },
       { source: '/docs/mcp', destination: 'https://help.agenticdeveloperhub.com/mcp', permanent: true },
-      { source: '/docs/errors', destination: 'https://help.agenticdeveloperhub.com/reference/errors', permanent: true },
-      { source: '/docs/webhooks', destination: 'https://help.agenticdeveloperhub.com/reference/webhooks', permanent: true },
-      { source: '/docs/changelog', destination: 'https://help.agenticdeveloperhub.com/reference/changelog', permanent: true },
+      { source: '/docs/errors', destination: 'https://help.agenticdeveloperhub.com/rest-api', permanent: true },
+      { source: '/docs/webhooks', destination: 'https://help.agenticdeveloperhub.com/rest-api', permanent: true },
+      { source: '/docs/changelog', destination: 'https://help.agenticdeveloperhub.com/rest-api', permanent: true },
       // The OAuth step pages were removed on 2026-10-06 (stale: they described a flow the hub never
-      // shipped). The old `/docs/oauth/*` addresses were published, so they land on the section
-      // that held them instead of 404ing.
-      { source: '/docs/oauth/:step*', destination: 'https://help.agenticdeveloperhub.com/quickstart', permanent: true },
+      // shipped). The old `/docs/oauth/*` addresses were published, so they land on the browsing
+      // root instead of 404ing.
+      { source: '/docs/oauth/:step*', destination: 'https://help.agenticdeveloperhub.com/home', permanent: true },
     ],
   },
   dashboards: { legacyHomePaths: true },

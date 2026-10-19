@@ -50,16 +50,14 @@
   overflow: hidden;
 }
 
-/* The chat leaf: the conversation panel sits bottom-center in the pane with breathing room on
- * every side. The chat is content-hugging and grows upward from its input, so anchoring the
- * panel to the bottom keeps the input stationary while the transcript stacks above it. Applies
- * to the site's live chat island and the modal's chat CTA alike, so the two surfaces match. */
-.adh-help-topic--chat {
-  justify-content: flex-end;
+/* The Hub Features leaf in the modal: the document lives on the help site, so the modal shows a
+ * short line and a link out, centred in the pane. */
+.adh-help-topic--hub {
+  justify-content: center;
   align-items: center;
   padding: 1.5rem;
 }
-.adh-help-topic--chat > * {
+.adh-help-topic--hub > * {
   width: 100%;
   max-width: 44rem;
 }

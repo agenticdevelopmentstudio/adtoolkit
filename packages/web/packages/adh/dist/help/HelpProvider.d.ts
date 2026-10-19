@@ -2,7 +2,7 @@ import { type ReactNode } from 'react';
 import { type HelpTopicId } from './topics';
 export interface HelpContextValue {
     isOpen: boolean;
-    /** Open the modal. Pass a topic id to deep-link straight to it (e.g. `open('errors')`). */
+    /** Open the modal. Pass a topic id to deep-link straight to it (e.g. `open('mcp')`). */
     open: (topicId?: HelpTopicId) => void;
     close: () => void;
 }

@@ -22,9 +22,8 @@ export interface HelpTopic {
   id: HelpTopicId
   /** Row label + breadcrumb crumb. */
   label: string
-  /** Base-relative route slug (NO leading slash), e.g. `quickstart`, `mcp/connect`,
-   *  `reference/errors`. The help site generates one SSR route per slug; the slug path mirrors the
-   *  id path down the tree. */
+  /** Base-relative route slug (NO leading slash), e.g. `overview`, `mcp/connect`. The help site
+   *  generates one SSR route per slug; the slug path mirrors the id path down the tree. */
   slug: string
   /** One/two-sentence blurb. It renders as the `EmptyState` body when this topic is SELECTED and has
    *  no content of its own (`HelpSurface.tsx:47`, `HelpWindow.tsx:26`). It used to also land an
@@ -47,41 +46,19 @@ export interface HelpTopic {
    *  markdown. May coexist with `children` (section page); mutually exclusive with `view`. */
   contentKey?: string
   /** A built-in non-markdown detail view. `api` = the REST API reference (a link-out to the
-   *  standalone `/rest-api` reference on the site; the interactive browser in the modal). `chat` =
-   *  the assistant chat. Mutually exclusive with `contentKey`. */
-  view?: 'api' | 'chat'
+   *  standalone `/rest-api` reference on the site; the interactive browser in the modal). `hub` =
+   *  the Hub Features document, which the help site serves from its own content tree under `/hub`
+   *  (the modal links out to it). Mutually exclusive with `contentKey`. */
+  view?: 'api' | 'hub'
 }
 
 export const HELP_TOPICS: HelpTopic[] = [
   {
-    id: 'chat',
-    label: 'Chat',
-    slug: 'chat',
-    description: 'Ask bitbag anything about building on the Agentic Developer Hub.',
-    view: 'chat',
-  },
-  {
-    // Placeholder: no guide content of its own. The old walkthrough was stale and was removed, and
-    // so (2026-10-06) were the OAuth step pages that used to sit beneath it — they described a
-    // flow the hub never shipped (`client_secret`, `/api/oauth/signin/start?client_id`, a
-    // `temporal.today` host), and a wrong walkthrough costs more than none. Selecting it shows the
-    // description as the EmptyState body. Give it a `contentKey` when a real quickstart guide is
-    // written against the sign-in flow the Client auth panel actually registers.
-    id: 'quickstart',
-    label: 'Quickstart',
-    slug: 'quickstart',
-    description: 'Register an app, get a token, and make your first call.',
-  },
-  {
-    id: 'reference',
-    label: 'Reference',
-    slug: 'reference',
-    description: 'Error codes, webhooks, and what changed.',
-    children: [
-      { id: 'errors', label: 'Errors', slug: 'reference/errors', description: 'Error codes and what they mean.', contentKey: 'errors' },
-      { id: 'webhooks', label: 'Webhooks', slug: 'reference/webhooks', description: 'Events the hub can push to you.', contentKey: 'webhooks' },
-      { id: 'changelog', label: 'Changelog', slug: 'reference/changelog', description: 'Recent API changes.', contentKey: 'changelog' },
-    ],
+    id: 'overview',
+    label: 'Overview',
+    slug: 'overview',
+    description: 'What this site holds, and where to start.',
+    contentKey: 'overview',
   },
   {
     id: 'rest-api',
@@ -92,10 +69,10 @@ export const HELP_TOPICS: HelpTopic[] = [
   },
   {
     // A section, not a monolithic page: the old single mcp.md split into per-concern child topics.
-    // Unlike Quickstart and Reference it does NOT land on the children's select nudge: /mcp is the
-    // published address of the MCP docs (the MCP host's root redirects a browser here, as do three
-    // `/docs/mcp` redirects), so arriving there must read as documentation, not as a menu. The
-    // `landingChildId` auto-selects Overview — the reader lands on prose with the siblings beside it.
+    // It does NOT land on the children's select nudge: /mcp is the published address of the MCP
+    // docs (the MCP host's root redirects a browser here, as does the `/docs/mcp` redirect), so
+    // arriving there must read as documentation, not as a menu. The `landingChildId` auto-selects
+    // Overview — the reader lands on prose with the siblings beside it.
     id: 'mcp',
     label: 'MCP',
     slug: 'mcp',
@@ -109,25 +86,15 @@ export const HELP_TOPICS: HelpTopic[] = [
     ],
   },
   {
-    // Same split as MCP: the old hub-features.md's H2 sections are now child topics, one per
-    // feature area, so /hub lands on the children level's select nudge with those children in the
-    // rail beside it — the same landing Quickstart, Reference and MCP get.
+    // The Hub Features document is not markdown in this package: the help site builds it with
+    // content-buildr from `content/hub-features/` in adhubwebsite and serves it under `/hub` with
+    // its own cascading lists, one per level of the document. So this is a leaf with a `view`, like
+    // the REST API: on the site the `/hub` route owns it, and the modal links out to it.
     id: 'hub',
     label: 'Hub Features',
     slug: 'hub',
-    description: 'What you can do across the Agentic Developer Hub.',
-    children: [
-      { id: 'hub-overview', label: 'Overview', slug: 'hub/overview', description: 'How workspaces scope everything you do in the Hub.', contentKey: 'hub-overview' },
-      { id: 'hub-workspaces', label: 'Workspaces & account', slug: 'hub/workspaces', description: 'Workspaces, settings, members, and API tokens.', contentKey: 'hub-workspaces' },
-      { id: 'hub-personas', label: 'Personas', slug: 'hub/personas', description: 'Design, register, and run AI personas.', contentKey: 'hub-personas' },
-      { id: 'hub-products', label: 'Products', slug: 'hub/products', description: 'Ecosystems: apps, tokens, customers, flags, and gamification.', contentKey: 'hub-products' },
-      { id: 'hub-storage', label: 'Storage & data', slug: 'hub/storage', description: 'Buckets, files, access, and data integrations.', contentKey: 'hub-storage' },
-      { id: 'hub-plan', label: 'Plan', slug: 'hub/plan', description: 'Projects, narratives, and research.', contentKey: 'hub-plan' },
-      { id: 'hub-teams', label: 'Teams', slug: 'hub/teams', description: 'Member teams, the team registry, and the team builder.', contentKey: 'hub-teams' },
-      { id: 'hub-community', label: 'Community & support', slug: 'hub/community', description: 'Discussions, support, news, and messaging.', contentKey: 'hub-community' },
-      { id: 'hub-monitoring', label: 'Monitoring', slug: 'hub/monitoring', description: 'Dashboards that watch your sites and endpoints.', contentKey: 'hub-monitoring' },
-      { id: 'hub-apis', label: 'APIs & agents', slug: 'hub/apis', description: 'The REST API, MCP, OAuth, and reusable tools.', contentKey: 'hub-apis' },
-    ],
+    description: 'Every feature of the Agentic Developer Hub, described one at a time.',
+    view: 'hub',
   },
 ]
 

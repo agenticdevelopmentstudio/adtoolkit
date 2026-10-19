@@ -977,6 +977,20 @@ export function HierarchicalTopicDetail({
       patchSurface((p) => ({ ...p, autoSelected: { ...p.autoSelected, [level.id]: key } }))
       level.onSelect(wanted, { replace: true })
     })
+    // A level the host stopped RENDERING is gone the same way an unselected parent's child is —
+    // but the loop above never sees it, so it was never disarmed. The help site's Hub Features
+    // document builds its child rails along the selected trail only: leave an entry, and its
+    // level drops out of `levels` with its spent key still recorded, so the next visit to that
+    // entry landed on the select nudge instead of its Overview. Sweep the orphans here.
+    const live = new Set(levels.map((l) => l.id))
+    const orphans = Object.keys(surface.autoSelected).filter((id) => !live.has(id))
+    if (orphans.length > 0) {
+      patchSurface((p) => {
+        const next = { ...p.autoSelected }
+        for (const id of orphans) delete next[id]
+        return { ...p, autoSelected: next }
+      })
+    }
   })
 
   // ONE DETAIL HOST that survives every stack flip. The three stacks are different component

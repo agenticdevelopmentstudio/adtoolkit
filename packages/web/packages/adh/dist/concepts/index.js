@@ -260,8 +260,7 @@ var structure_default = {
           related: [
             "customers",
             "domains"
-          ],
-          docs: "quickstart/oauth/overview"
+          ]
         },
         {
           id: "teamregistry",

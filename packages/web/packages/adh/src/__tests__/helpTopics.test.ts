@@ -4,6 +4,9 @@ import {
   buildTopicLevels,
   canonicalSlug,
   flattenTopics,
+  hasDetail,
+  isLeaf,
+  topicBySlug,
   topicPathForSlug,
 } from '../help/topics'
 
@@ -13,6 +16,25 @@ function frontier(path: string[]) {
   return { level: levels[levels.length - 1]!, activeTopic }
 }
 
+describe('the root topics', () => {
+  it('start with the Overview, a markdown page', () => {
+    const first = HELP_TOPICS[0]!
+    expect(first.id).toBe('overview')
+    expect(first.contentKey).toBe('overview')
+    expect(isLeaf(first)).toBe(true)
+  })
+
+  it('serve Hub Features from the site route, not from markdown here', () => {
+    // The document is built by the help site with content-buildr, so the topic is a leaf with a
+    // view: on the site `/hub` owns it, and the modal links out to it.
+    const hub = topicBySlug('hub')!
+    expect(hub.view).toBe('hub')
+    expect(hub.contentKey).toBeUndefined()
+    expect(isLeaf(hub)).toBe(true)
+    expect(hasDetail(hub)).toBe(true)
+  })
+})
+
 describe('buildTopicLevels landing child', () => {
   it('auto-selects the MCP section landing so /mcp reads Overview, not a select nudge', () => {
     const { level, activeTopic } = frontier(topicPathForSlug('mcp') ?? [])
@@ -21,11 +43,10 @@ describe('buildTopicLevels landing child', () => {
     expect(activeTopic?.contentKey).toBe('mcp-overview')
   })
 
-  it('leaves a section with no landing child on its unselected frontier', () => {
-    // Hub declares no landing child, so it keeps the select nudge every other section shows.
-    const { level, activeTopic } = frontier(topicPathForSlug('hub') ?? [])
-    expect(level.parentId).toBe('hub')
-    expect(level.selectedId).toBeNull()
+  it('stops on a leaf: Hub Features opens no child level', () => {
+    const { levels, activeTopic } = buildTopicLevels(topicPathForSlug('hub') ?? [])
+    expect(levels).toHaveLength(1)
+    expect(levels[0]!.selectedId).toBe('hub')
     expect(activeTopic?.id).toBe('hub')
   })
 
@@ -62,8 +83,8 @@ describe('canonicalSlug', () => {
   it('leaves the section itself, an ordinary topic, and an unknown slug alone', () => {
     expect(canonicalSlug('mcp')).toBe('mcp')
     expect(canonicalSlug('mcp/connect')).toBe('mcp/connect')
-    // hub/overview is NOT a landing child — Hub declares none — so it stays its own canonical.
-    expect(canonicalSlug('hub/overview')).toBe('hub/overview')
+    expect(canonicalSlug('overview')).toBe('overview')
+    expect(canonicalSlug('hub')).toBe('hub')
     expect(canonicalSlug('nope/nowhere')).toBe('nope/nowhere')
   })
 })

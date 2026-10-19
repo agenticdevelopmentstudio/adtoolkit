@@ -4,8 +4,8 @@
 // (which is 'use client'). The topic data is pure, so inlining a copy into this chunk is harmless
 // (unlike the HelpContext, which must stay a single instance — see tsup.config.ts).
 
-export { HelpSurface, helpHref } from './HelpSurface'
-export type { HelpRouteLevel } from './HelpMasterDetail'
+export { HELP_ROOT_LEVEL_KEY, HelpSurface, helpHref, helpRootLevel } from './HelpSurface'
+export type { HelpRouteItem, HelpRouteLevel } from './HelpMasterDetail'
 // The per-topic row glyph, shared with both HMDV rails — re-exported here so the hub-help REST API
 // route (a server component consuming this same barrel) gives its root rows the identical icons.
 export { topicIcon } from './topic-icons'

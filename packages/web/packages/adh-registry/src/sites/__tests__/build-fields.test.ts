@@ -57,15 +57,15 @@ describe("site build fields", () => {
   it("pins help's exact redirect entries", () => {
     expect(SITE_BUILD.help?.extraRedirects).toEqual([
       { source: "/api", destination: "https://help.agenticdeveloperhub.com/rest-api", permanent: true },
-      { source: "/docs", destination: "https://help.agenticdeveloperhub.com/quickstart", permanent: true },
-      { source: "/docs/quickstart", destination: "https://help.agenticdeveloperhub.com/quickstart", permanent: true },
+      { source: "/docs", destination: "https://help.agenticdeveloperhub.com/home", permanent: true },
+      { source: "/docs/quickstart", destination: "https://help.agenticdeveloperhub.com/home", permanent: true },
       { source: "/docs/hub-features", destination: "https://help.agenticdeveloperhub.com/hub", permanent: true },
       { source: "/docs/api", destination: "https://help.agenticdeveloperhub.com/rest-api", permanent: true },
       { source: "/docs/mcp", destination: "https://help.agenticdeveloperhub.com/mcp", permanent: true },
-      { source: "/docs/errors", destination: "https://help.agenticdeveloperhub.com/reference/errors", permanent: true },
-      { source: "/docs/webhooks", destination: "https://help.agenticdeveloperhub.com/reference/webhooks", permanent: true },
-      { source: "/docs/changelog", destination: "https://help.agenticdeveloperhub.com/reference/changelog", permanent: true },
-      { source: "/docs/oauth/:step*", destination: "https://help.agenticdeveloperhub.com/quickstart", permanent: true },
+      { source: "/docs/errors", destination: "https://help.agenticdeveloperhub.com/rest-api", permanent: true },
+      { source: "/docs/webhooks", destination: "https://help.agenticdeveloperhub.com/rest-api", permanent: true },
+      { source: "/docs/changelog", destination: "https://help.agenticdeveloperhub.com/rest-api", permanent: true },
+      { source: "/docs/oauth/:step*", destination: "https://help.agenticdeveloperhub.com/home", permanent: true },
     ]);
   });
 

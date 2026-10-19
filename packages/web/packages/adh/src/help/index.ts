@@ -4,8 +4,8 @@
  * @agentic-toolkit/adh/help — the shared Help modal.
  *
  * A draggable {@link FloatingWindow} (same shell as the debug console) whose
- * {@link HierarchicalDetailView} navigates a data-driven topic tree: Quickstart, Hub Features,
- * the interactive API browser, MCP, and Reference. Mount {@link HelpProvider} once (the
+ * {@link HierarchicalDetailView} navigates a data-driven topic tree: Overview, the interactive
+ * API browser, MCP, and Hub Features. Mount {@link HelpProvider} once (the
  * shared AppShell does this) and open it from anywhere with {@link useHelp}.
  *
  * Import the CSS once per app: `@import "@agentic-toolkit/adh/help.css"` in the app's globals —

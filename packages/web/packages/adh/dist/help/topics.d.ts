@@ -20,9 +20,8 @@ export interface HelpTopic {
     id: HelpTopicId;
     /** Row label + breadcrumb crumb. */
     label: string;
-    /** Base-relative route slug (NO leading slash), e.g. `quickstart`, `quickstart/oauth/authorize`,
-     *  `reference/errors`. The help site generates one SSR route per slug; the slug path mirrors the
-     *  id path down the tree. */
+    /** Base-relative route slug (NO leading slash), e.g. `overview`, `mcp/connect`. The help site
+     *  generates one SSR route per slug; the slug path mirrors the id path down the tree. */
     slug: string;
     /** One/two-sentence blurb. It renders as the `EmptyState` body when this topic is SELECTED and has
      *  no content of its own (`HelpSurface.tsx:47`, `HelpWindow.tsx:26`). It used to also land an
@@ -45,9 +44,10 @@ export interface HelpTopic {
      *  markdown. May coexist with `children` (section page); mutually exclusive with `view`. */
     contentKey?: string;
     /** A built-in non-markdown detail view. `api` = the REST API reference (a link-out to the
-     *  standalone `/rest-api` reference on the site; the interactive browser in the modal). `chat` =
-     *  the assistant chat. Mutually exclusive with `contentKey`. */
-    view?: 'api' | 'chat';
+     *  standalone `/rest-api` reference on the site; the interactive browser in the modal). `hub` =
+     *  the Hub Features document, which the help site serves from its own content tree under `/hub`
+     *  (the modal links out to it). Mutually exclusive with `contentKey`. */
+    view?: 'api' | 'hub';
 }
 export declare const HELP_TOPICS: HelpTopic[];
 /** True when the node opens no child level (its detail pane is the frontier). */
