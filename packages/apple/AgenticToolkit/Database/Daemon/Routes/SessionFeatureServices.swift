@@ -70,6 +70,9 @@ public struct SessionFeatureServices: Sendable {
     public let captureHook: @Sendable (ParsedEvent) throws -> Void
     /// Runs a JSONL backfill as asked over HTTP, against the daemon's own database.
     public let runImport: @Sendable (ImportRequestDTO) throws -> ImportSummary
+    /// How the summarize route loads AI plugins. Defaults to `.live` (the default
+    /// folders only); `SessionDaemonRuntime.services` passes the daemon's own.
+    public let pluginRuntime: DaemonAIChat.PluginRuntime
 
     public init(
         database: DaemonDatabase,
@@ -89,7 +92,8 @@ public struct SessionFeatureServices: Sendable {
         retryIngest: @escaping @Sendable (ParsedEvent) throws -> Void,
         buildHookEvent: @escaping @Sendable (_ event: String, _ payload: Data) -> ParsedEvent?,
         captureHook: @escaping @Sendable (ParsedEvent) throws -> Void,
-        runImport: @escaping @Sendable (ImportRequestDTO) throws -> ImportSummary
+        runImport: @escaping @Sendable (ImportRequestDTO) throws -> ImportSummary,
+        pluginRuntime: DaemonAIChat.PluginRuntime = .live
     ) {
         self.database = database
         self.conversations = conversations
@@ -109,6 +113,7 @@ public struct SessionFeatureServices: Sendable {
         self.buildHookEvent = buildHookEvent
         self.captureHook = captureHook
         self.runImport = runImport
+        self.pluginRuntime = pluginRuntime
     }
 }
 #endif

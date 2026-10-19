@@ -212,7 +212,8 @@ enum SessionRoutes {
             // plugin secrets from the same place the preferences path wrote them (and
             // tests stay off the real Keychain).
             let summary = try await DaemonSessionSummarizer.summarizeAndStore(
-                sessionId: sessionId, database: services.database, secretStore: services.secretStore
+                sessionId: sessionId, database: services.database,
+                runtime: services.pluginRuntime, secretStore: services.secretStore
             )
             return .json(["session_id": sessionId, "summary": summary])
         } catch {

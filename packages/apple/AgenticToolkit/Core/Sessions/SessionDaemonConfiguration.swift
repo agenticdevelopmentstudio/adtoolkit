@@ -29,6 +29,10 @@ public struct SessionDaemonConfiguration: Sendable {
     public var retentionCheckInterval: TimeInterval
     /// The file the signed-in Claude account is read from; nil means `~/.claude.json`.
     public var claudeJSONPath: String?
+    /// Folders scanned for `.aiplugin` bundles in addition to the default
+    /// `~/.agenticplugins` and the bundle's `PlugIns`: where this daemon's host app
+    /// installs AI plugins. Empty means only the defaults.
+    public var pluginSearchPaths: [URL]
     /// Whether AI summaries are on until the user chooses otherwise. Every daemon
     /// states its own: one that must not double LLM spend over sessions another
     /// daemon already summarizes passes false. There is deliberately no default.
@@ -50,6 +54,7 @@ public struct SessionDaemonConfiguration: Sendable {
         livenessCheckInterval: TimeInterval = 10,
         retentionCheckInterval: TimeInterval = 86400,
         claudeJSONPath: String? = nil,
+        pluginSearchPaths: [URL] = [],
         summariesDefaultEnabled: Bool
     ) {
         self.label = label
@@ -67,6 +72,7 @@ public struct SessionDaemonConfiguration: Sendable {
         self.livenessCheckInterval = livenessCheckInterval
         self.retentionCheckInterval = retentionCheckInterval
         self.claudeJSONPath = claudeJSONPath
+        self.pluginSearchPaths = pluginSearchPaths
         self.summariesDefaultEnabled = summariesDefaultEnabled
     }
 

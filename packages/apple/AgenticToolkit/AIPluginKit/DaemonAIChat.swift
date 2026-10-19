@@ -40,14 +40,23 @@ public enum DaemonAIChat {
             self.run = run
         }
 
-        public static let live = PluginRuntime(
-            load: { identifier, searchPaths in
-                try await MainActor.run {
-                    try LivePluginCache.load(identifier: identifier, searchPaths: searchPaths)
-                }
-            },
-            run: PluginTransport.run
-        )
+        public static let live = PluginRuntime.live(additionalSearchPaths: [])
+
+        /// `.live`, also scanning `additionalSearchPaths` after the default
+        /// `DaemonAIChat.pluginSearchPaths()`. A daemon whose host app installs plugins
+        /// in a folder of its own passes that folder here, through its configuration,
+        /// so this kit never names any one host's directory.
+        public static func live(additionalSearchPaths: [URL]) -> PluginRuntime {
+            PluginRuntime(
+                load: { identifier, searchPaths in
+                    let paths = searchPaths + additionalSearchPaths.filter { !searchPaths.contains($0) }
+                    return try await MainActor.run {
+                        try LivePluginCache.load(identifier: identifier, searchPaths: paths)
+                    }
+                },
+                run: PluginTransport.run
+            )
+        }
     }
 
     /// Injectable runner for the zero-config `claude -p` default path. Production

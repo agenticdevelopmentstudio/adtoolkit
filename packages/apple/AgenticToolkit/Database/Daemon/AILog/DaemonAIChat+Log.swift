@@ -74,12 +74,16 @@ extension DaemonAIChat {
 extension ScriptAnalyzer {
     /// The live model path: a one-shot completion through `DaemonAIChat`, recorded in the
     /// `ai_interactions` log against the database the observer passes in.
-    public static var live: ScriptAnalyzer {
+    public static var live: ScriptAnalyzer { live(runtime: .live) }
+
+    /// `live`, loading plugins through `runtime` (a daemon's
+    /// `SessionDaemonRuntime.pluginRuntime`, which adds its configured folders).
+    public static func live(runtime: DaemonAIChat.PluginRuntime) -> ScriptAnalyzer {
         ScriptAnalyzer(chat: { systemPrompt, userPrompt, sessionId, database in
             try await DaemonAIChat.complete(
                 feature: .oversight, sessionId: sessionId,
                 systemPrompt: systemPrompt, userPrompt: userPrompt, maxTokens: 48,
-                cliModel: "haiku", database: database
+                cliModel: "haiku", database: database, runtime: runtime
             )
         })
     }

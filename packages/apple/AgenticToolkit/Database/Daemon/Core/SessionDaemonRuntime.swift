@@ -158,7 +158,15 @@ public final class SessionDaemonRuntime: @unchecked Sendable {
     /// The summarizer every daemon task uses, with the default taken from
     /// ``SessionDaemonConfiguration/summariesDefaultEnabled`` and nowhere else.
     public var summarizer: DaemonSessionSummarizer {
-        DaemonSessionSummarizer(defaultEnabled: configuration.summariesDefaultEnabled)
+        DaemonSessionSummarizer(defaultEnabled: configuration.summariesDefaultEnabled,
+                                pluginRuntime: pluginRuntime)
+    }
+
+    /// How this daemon loads AI plugins: the default folders plus
+    /// ``SessionDaemonConfiguration/pluginSearchPaths``. Summaries, oversight and the
+    /// summarize route all load through it.
+    public var pluginRuntime: DaemonAIChat.PluginRuntime {
+        .live(additionalSearchPaths: configuration.pluginSearchPaths)
     }
 
     /// Everything the shared HTTP routes read. Valid after ``openPhaseA()``.
@@ -182,7 +190,8 @@ public final class SessionDaemonRuntime: @unchecked Sendable {
             retryIngest: opened.pipeline.retryIngest,
             buildHookEvent: wiring.buildHookEvent,
             captureHook: opened.pipeline.capture,
-            runImport: wiring.runImport
+            runImport: wiring.runImport,
+            pluginRuntime: pluginRuntime
         )
     }
 

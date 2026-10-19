@@ -17,9 +17,14 @@ public struct DaemonSessionSummarizer: Sendable {
     /// Each daemon states its own default: one that always summarizes passes `true`,
     /// one that must not double LLM spend passes `false`.
     public let defaultEnabled: Bool
+    /// How this daemon loads AI plugins: `.live`, plus any folders its configuration
+    /// names (`SessionDaemonConfiguration.pluginSearchPaths`). Callers of the static
+    /// entry points pass it as `runtime:`.
+    public let pluginRuntime: PluginRuntime
 
-    public init(defaultEnabled: Bool) {
+    public init(defaultEnabled: Bool, pluginRuntime: PluginRuntime = .live) {
         self.defaultEnabled = defaultEnabled
+        self.pluginRuntime = pluginRuntime
     }
 
     /// Transport seams, re-exported from `DaemonAIChat` so call sites and tests that
