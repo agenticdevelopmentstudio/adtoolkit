@@ -274,7 +274,7 @@ extension DaemonDatabase {
                 for (key, value) in hookData {
                     if key == "session_id" || key == "cwd" || key == "timestamp" { continue }
                     if value is [String: Any] || value is [Any] { continue }
-                    perType[key] = value
+                    perType[Self.payloadColumnName(key)] = value
                 }
                 if knownType == .statusLine {
                     // The status-line payload's substance is all nested — model,
@@ -301,7 +301,7 @@ extension DaemonDatabase {
                     // field before it can reach the 2000 either.
                     for (key, value) in Self.flattenLeaves(hookData) {
                         if key == "session_id" || key == "cwd" || key == "timestamp" { continue }
-                        perType[key] = value
+                        perType[Self.payloadColumnName(key)] = value
                     }
                 }
                 // Both of these name a `file_path` whose *contents* are the
@@ -331,7 +331,9 @@ extension DaemonDatabase {
             if let toolInput = hookData["tool_input"] as? [String: Any] {
                 var fields: [String: Any] = ["event_log_id": eventLogId, "event_type": eventType]
                 for (key, value) in toolInput {
-                    if !(value is [String: Any]) && !(value is [Any]) { fields[key] = value }
+                    if !(value is [String: Any]) && !(value is [Any]) {
+                        fields[Self.payloadColumnName(key)] = value
+                    }
                 }
                 if fields.count > 2 {  // more than just the fixed cols
                     try insertDynamic(table: "tool_inputs", fields: fields)
@@ -342,7 +344,9 @@ extension DaemonDatabase {
             if let toolResponse = hookData["tool_response"] as? [String: Any] {
                 var fields: [String: Any] = ["event_log_id": eventLogId]
                 for (key, value) in toolResponse {
-                    if !(value is [String: Any]) && !(value is [Any]) { fields[key] = value }
+                    if !(value is [String: Any]) && !(value is [Any]) {
+                        fields[Self.payloadColumnName(key)] = value
+                    }
                 }
                 if fields.count > 1 {
                     try insertDynamic(table: "tool_responses", fields: fields)
@@ -391,6 +395,20 @@ extension DaemonDatabase {
     }
 
     // MARK: - Payload flattening
+
+    /// Columns a dynamic row sets itself. `id` is the row's INTEGER PRIMARY
+    /// KEY, so a payload that carries its own `id` — CronCreate's tool response
+    /// is `{"id": "e96a2840", …}` — fails the whole event with `datatype
+    /// mismatch`, and every retry fails the same way. `event_log_id` and
+    /// `event_type` would silently replace the values the row is filed under.
+    static let rowOwnedColumns: Set<String> = ["id", "event_log_id", "event_type"]
+
+    /// The column a payload key is stored under: the key itself, or
+    /// `payload_<key>` when the row already owns that name, so the payload's
+    /// value is kept rather than dropped.
+    static func payloadColumnName(_ key: String) -> String {
+        rowOwnedColumns.contains(key) ? "payload_\(key)" : key
+    }
 
     /// Every leaf of a nested payload, keyed by its underscore-joined path:
     /// `prompt_cache.hit_ratio` becomes `prompt_cache_hit_ratio`.

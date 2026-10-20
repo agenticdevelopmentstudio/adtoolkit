@@ -86,4 +86,34 @@ final class EventIngestStoreTests: XCTestCase {
         XCTAssertEqual(newest.first?.timestamp, "2026-06-01T12:05:00Z")
         XCTAssertTrue(newest.first?.detail.hasPrefix("Edit") ?? false)
     }
+
+    func testAToolResponseWithItsOwnIdIsStoredBesideTheRowId() throws {
+        try store.ingestEvent(
+            eventType: "PostToolUse", timestamp: "2026-10-19T00:25:08Z",
+            hookData: [
+                "session_id": "cron", "cwd": "/tmp", "tool_name": "CronCreate",
+                "tool_input": ["id": "in-1", "cron": "7 10 25 10 *"],
+                "tool_response": ["id": "e96a2840", "event_log_id": "bogus", "recurring": false]
+            ]
+        )
+
+        XCTAssertEqual(try eventLogCount(sessionId: "cron"), 1)
+        var responseId: String?
+        var eventLogMatches = false
+        try store.query(
+            """
+            SELECT r.payload_id, r.event_log_id = e.id FROM tool_responses r
+            JOIN event_log e ON e.id = r.event_log_id WHERE e.session_id = ?
+            """,
+            params: ["cron"]
+        ) { row in
+            responseId = store.string(row, 0)
+            eventLogMatches = store.int(row, 1) == 1
+        }
+        XCTAssertEqual(responseId, "e96a2840")
+        XCTAssertTrue(eventLogMatches, "the payload's event_log_id must not replace the row's")
+        var inputId: String?
+        try store.query("SELECT payload_id FROM tool_inputs", params: []) { inputId = store.string($0, 0) }
+        XCTAssertEqual(inputId, "in-1")
+    }
 }
