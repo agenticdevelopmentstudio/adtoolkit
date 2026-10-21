@@ -127,3 +127,43 @@ export function useClearDefaultConfigSet() {
     onSuccess: () => qc.invalidateQueries({ queryKey: processingKeys.configSets() }),
   });
 }
+
+/** Nodes re-register every 60 s, so a 30 s poll keeps Online/Offline honest without a refresh. */
+export const useNodes = () =>
+  useQuery({
+    queryKey: processingKeys.nodes(),
+    queryFn: listNodes,
+    select: (body) => body.nodes,
+    refetchInterval: 30_000,
+  });
+
+export const NODE_LOG_PAGE_SIZE = 50;
+
+/** One node's logs, newest first; each further page is the older entries after `nextBefore`. */
+export const useNodeLogs = (nodeId: string, level?: LogLevel) =>
+  useInfiniteQuery({
+    queryKey: processingKeys.logs(nodeId, { level }),
+    queryFn: ({ pageParam }) =>
+      listNodeLogs(nodeId, { level, before: pageParam, limit: NODE_LOG_PAGE_SIZE }),
+    initialPageParam: undefined as number | undefined,
+    getNextPageParam: (page) => page.nextBefore ?? undefined,
+  });
+
+export function useDeleteNode() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteNode,
+    onSuccess: () => qc.invalidateQueries({ queryKey: processingKeys.nodes() }),
+  });
+}
+
+export const useProcessingSettings = () =>
+  useQuery({ queryKey: processingKeys.settings(), queryFn: getProcessingSettings });
+
+export function usePutProcessingSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: putProcessingSettings,
+    onSuccess: () => qc.invalidateQueries({ queryKey: processingKeys.settings() }),
+  });
+}
