@@ -37,6 +37,11 @@ function literalKeyHeads(): string[][] {
 }
 
 describe("admin query freshness", () => {
+  it("pins the processing-admin prefix the config-set and node reads key under", () => {
+    const client = applyAdminQueryDefaults(new QueryClient());
+    expect(client.getQueryDefaults(["processing-admin", "nodes"]).staleTime).toBe(ADMIN_STALE_TIME);
+  });
+
   it("pins every admin key prefix to the admin staleTime", () => {
     const client = applyAdminQueryDefaults(new QueryClient());
     for (const prefix of ADMIN_QUERY_KEY_PREFIXES) {

@@ -14,6 +14,8 @@ import {
   ChartLine,
   ChartPie,
   KeyRound,
+  Cpu,
+  SlidersHorizontal,
   type LucideIcon,
 } from "lucide-react";
 
@@ -41,7 +43,9 @@ export type AdminTopicId =
   | "costs"
   | "usage-overview"
   | "breakdown"
-  | "reserved-identifiers";
+  | "reserved-identifiers"
+  | "ai-nodes"
+  | "processing-configs";
 
 /** One admin section. `id` doubles as the route segment, both on the admin site's own path
  *  scheme (`/<id>`) and on a host that mounts `AdminFeature` under `<basePath>/<id>`. */
@@ -136,6 +140,18 @@ export const ADMIN_TOPICS: AdminTopic[] = [
     label: "Reserved Identifiers",
     description: "Names held with nothing using them",
     icon: KeyRound,
+  },
+  {
+    id: "ai-nodes",
+    label: "AI Nodes",
+    description: "Deployed processing nodes, their config and logs",
+    icon: Cpu,
+  },
+  {
+    id: "processing-configs",
+    label: "Processing Configs",
+    description: "LLM config sets that processing jobs run on",
+    icon: SlidersHorizontal,
   },
 ];
 

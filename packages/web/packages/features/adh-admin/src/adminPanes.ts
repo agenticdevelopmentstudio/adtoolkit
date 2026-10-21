@@ -1,5 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 
+import { AiNodesPane } from "./panes/AiNodesPane";
 import { AuditPane } from "./panes/AuditPane";
 import { AuthenticationPane } from "./panes/AuthenticationPane";
 import { BreakdownPane } from "./panes/BreakdownPane";
@@ -9,6 +10,7 @@ import { FeedbackPane } from "./panes/FeedbackPane";
 import { InvitationsPane } from "./panes/InvitationsPane";
 import { LlmProvidersPane } from "./panes/LlmProvidersPane";
 import { MessagingPane } from "./panes/MessagingPane";
+import { ProcessingConfigsPane } from "./panes/ProcessingConfigsPane";
 import { ReservedIdentifiersPane } from "./panes/ReservedIdentifiersPane";
 import { ServerBagsPane } from "./panes/ServerBagsPane";
 import { SyncPane } from "./panes/SyncPane";
@@ -42,4 +44,6 @@ export const ADMIN_PANES: Record<AdminTopicId, ComponentType<{ help?: ReactNode 
   "usage-overview": UsageOverviewPane,
   breakdown: BreakdownPane,
   "reserved-identifiers": ReservedIdentifiersPane,
+  "ai-nodes": AiNodesPane,
+  "processing-configs": ProcessingConfigsPane,
 };

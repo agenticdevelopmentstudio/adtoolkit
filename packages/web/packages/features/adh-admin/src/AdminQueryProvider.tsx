@@ -22,6 +22,8 @@ export const ADMIN_STALE_TIME = 30 * 1000;
 // be added here — `adminQueryDefaults.test.ts` holds this list to the keys the sources use.
 export const ADMIN_QUERY_KEY_PREFIXES: readonly (readonly string[])[] = [
   ["admin"],
+  // Config sets, nodes, logs and retention: changed by other operators and by the nodes themselves.
+  ["processing-admin"],
   // Two segments where the first is a word other features also key under (`auth`, `system`):
   // the admin freshness must not leak onto a non-admin read that happens to share the client.
   ["auth", "invitation-requests"],

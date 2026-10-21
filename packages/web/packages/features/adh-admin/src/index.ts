@@ -21,6 +21,7 @@ export { AdminFeature } from "./AdminFeature";
 // Every pane, standalone — the admin site's twelve app/(admin)/<topic>/page.tsx mounts import
 // their own pane directly rather than going through ADMIN_PANES, since a page.tsx's default
 // export must be that one component, named, not a map lookup.
+export { AiNodesPane } from "./panes/AiNodesPane";
 export { AuditPane } from "./panes/AuditPane";
 export { AuthenticationPane } from "./panes/AuthenticationPane";
 export { FeatureFlagsPane, FlagDialog } from "./panes/FeatureFlagsPane";
@@ -28,6 +29,7 @@ export { FeedbackPane, FeedbackDialog } from "./panes/FeedbackPane";
 export { InvitationsPane } from "./panes/InvitationsPane";
 export { LlmProvidersPane } from "./panes/LlmProvidersPane";
 export { MessagingPane } from "./panes/MessagingPane";
+export { ProcessingConfigsPane } from "./panes/ProcessingConfigsPane";
 export { ReservedIdentifiersPane } from "./panes/ReservedIdentifiersPane";
 export { ServerBagsPane, BagDialog } from "./panes/ServerBagsPane";
 export { SyncPane } from "./panes/SyncPane";
