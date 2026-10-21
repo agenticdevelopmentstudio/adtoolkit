@@ -2,8 +2,11 @@
 // URL, method and body, and the query keys all sit under the `processing-admin` prefix.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { authedJson } = vi.hoisted(() => ({ authedJson: vi.fn() }));
-vi.mock("../http", () => ({ authedJson }));
+const { authedJson, authedRequest } = vi.hoisted(() => ({
+  authedJson: vi.fn(),
+  authedRequest: vi.fn(),
+}));
+vi.mock("../http", () => ({ authedJson, authedRequest }));
 
 import {
   PROCESSING_ADMIN_KEY,
@@ -26,6 +29,7 @@ const BASE = "/api/processing/admin";
 
 beforeEach(() => {
   authedJson.mockReset();
+  authedRequest.mockReset();
   authedJson.mockResolvedValue({});
 });
 
@@ -52,15 +56,16 @@ describe("config sets", () => {
   });
 
   it("deletes", async () => {
+    // 204 No Content: authedJson would throw on the empty body, so deletes go through authedRequest.
     await deleteConfigSet("abc");
-    expect(authedJson).toHaveBeenCalledWith(`${BASE}/config-sets/abc`, { method: "DELETE" });
+    expect(authedRequest).toHaveBeenCalledWith(`${BASE}/config-sets/abc`, { method: "DELETE" });
   });
 
   it("makes a set the default, and clears the default", async () => {
     await setDefaultConfigSet("abc");
     expect(authedJson).toHaveBeenCalledWith(`${BASE}/config-sets/abc/default`, { method: "POST" });
     await clearDefaultConfigSet();
-    expect(authedJson).toHaveBeenCalledWith(`${BASE}/config-sets/default`, { method: "DELETE" });
+    expect(authedRequest).toHaveBeenCalledWith(`${BASE}/config-sets/default`, { method: "DELETE" });
   });
 });
 
@@ -71,7 +76,7 @@ describe("nodes", () => {
     await getNode("n 1");
     expect(authedJson).toHaveBeenCalledWith(`${BASE}/nodes/n%201`);
     await deleteNode("n 1");
-    expect(authedJson).toHaveBeenCalledWith(`${BASE}/nodes/n%201`, { method: "DELETE" });
+    expect(authedRequest).toHaveBeenCalledWith(`${BASE}/nodes/n%201`, { method: "DELETE" });
   });
 
   it("pages logs with only the filters given", async () => {

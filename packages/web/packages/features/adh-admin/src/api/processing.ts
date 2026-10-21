@@ -1,7 +1,13 @@
 "use client";
 
 import type { RequestBody, SuccessBody, components } from "@agentic-toolkit/adh-api-types";
-import { authedJson } from "./http";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { authedJson, authedRequest } from "./http";
 
 // ── AI processing: config sets, nodes, logs, retention ──────────────────────
 //
@@ -50,18 +56,19 @@ export const createConfigSet = (input: ConfigSetInput) =>
   authedJson<ConfigSet>(`${BASE}/config-sets`, send("POST", input));
 export const updateConfigSet = (id: string, input: ConfigSetInput) =>
   authedJson<ConfigSet>(`${BASE}/config-sets/${encodeURIComponent(id)}`, send("PUT", input));
+// The deletes answer 204 No Content, which `authedJson` rejects as an empty body.
 export const deleteConfigSet = (id: string) =>
-  authedJson<unknown>(`${BASE}/config-sets/${encodeURIComponent(id)}`, send("DELETE"));
+  authedRequest(`${BASE}/config-sets/${encodeURIComponent(id)}`, send("DELETE"));
 export const setDefaultConfigSet = (id: string) =>
-  authedJson<unknown>(`${BASE}/config-sets/${encodeURIComponent(id)}/default`, send("POST"));
+  authedJson<ConfigSet>(`${BASE}/config-sets/${encodeURIComponent(id)}/default`, send("POST"));
 export const clearDefaultConfigSet = () =>
-  authedJson<unknown>(`${BASE}/config-sets/default`, send("DELETE"));
+  authedRequest(`${BASE}/config-sets/default`, send("DELETE"));
 
 export const listNodes = () => authedJson<NodeList>(`${BASE}/nodes`);
 export const getNode = (id: string) =>
   authedJson<ProcessingNode>(`${BASE}/nodes/${encodeURIComponent(id)}`);
 export const deleteNode = (id: string) =>
-  authedJson<unknown>(`${BASE}/nodes/${encodeURIComponent(id)}`, send("DELETE"));
+  authedRequest(`${BASE}/nodes/${encodeURIComponent(id)}`, send("DELETE"));
 
 export function listNodeLogs(nodeId: string, query: NodeLogQuery = {}) {
   const params = new URLSearchParams();
@@ -77,3 +84,46 @@ export function listNodeLogs(nodeId: string, query: NodeLogQuery = {}) {
 export const getProcessingSettings = () => authedJson<ProcessingSettings>(`${BASE}/settings`);
 export const putProcessingSettings = (settings: ProcessingSettings) =>
   authedJson<ProcessingSettings>(`${BASE}/settings`, send("PUT", settings));
+
+// ── react-query hooks ───────────────────────────────────────────────────────
+
+export const useConfigSets = () =>
+  useQuery({
+    queryKey: processingKeys.configSets(),
+    queryFn: listConfigSets,
+    select: (body) => body.configSets,
+  });
+
+/** Create (no `id`) or update (with `id`) one config set. */
+export function useSaveConfigSet() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, input }: { id?: string; input: ConfigSetInput }) =>
+      id ? updateConfigSet(id, input) : createConfigSet(input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: processingKeys.configSets() }),
+  });
+}
+
+export function useDeleteConfigSet() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: deleteConfigSet,
+    onSuccess: () => qc.invalidateQueries({ queryKey: processingKeys.configSets() }),
+  });
+}
+
+export function useSetDefaultConfigSet() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: setDefaultConfigSet,
+    onSuccess: () => qc.invalidateQueries({ queryKey: processingKeys.configSets() }),
+  });
+}
+
+export function useClearDefaultConfigSet() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: clearDefaultConfigSet,
+    onSuccess: () => qc.invalidateQueries({ queryKey: processingKeys.configSets() }),
+  });
+}
