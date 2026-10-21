@@ -144,11 +144,13 @@ public final class ModalProgressPanel: NSObject, LaunchPresenter {
     /// reads as part of the panel, and the failure is the one thing the user
     /// must answer before anything else happens.
     public func reportFailures(_ failures: [StartupFailure]) async -> Bool {
-        await runAlert(makeFailureAlert(appName: appName, failures)) == .alertFirstButtonReturn
+        await runAlert(makeFailureAlert(appName: appName, failures)) == .alertSecondButtonReturn
     }
 }
 
-/// The retry-or-continue alert. The first button retries the failed jobs.
+/// The retry-or-continue alert. Continue is the first button, so it sits on
+/// the right and Return answers it; Try Again, on its left, retries the
+/// failed jobs.
 ///
 /// The informative text names each failed step with one short line of why; the
 /// full error, which can be a tool's entire stderr, goes behind `AlertDetails`.
@@ -160,8 +162,8 @@ func makeFailureAlert(appName: String, _ failures: [StartupFailure]) -> NSAlert 
     alert.informativeText = failureSummary(failures)
     let details = failureDetails(failures)
     if !details.isEmpty { AlertDetails.attach(details, to: alert) }
-    alert.addButton(withTitle: "Retry Failed")
     alert.addButton(withTitle: "Continue")
+    alert.addButton(withTitle: "Try Again")
     return alert
 }
 

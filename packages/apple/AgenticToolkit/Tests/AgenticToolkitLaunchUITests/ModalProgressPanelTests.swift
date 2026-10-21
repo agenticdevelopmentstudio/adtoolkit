@@ -169,7 +169,7 @@ private func drainMainRunLoop() async {
         let alert = makeFailureAlert(appName: "Stenographer", failures)
         #expect(alert.messageText == "Stenographer couldn’t finish setting up")
         #expect(alert.informativeText == "• Restarting the daemon: boom")
-        #expect(alert.buttons.map(\.title) == ["Retry Failed", "Continue"])
+        #expect(alert.buttons.map(\.title) == ["Continue", "Try Again"])
         #expect(alert.accessoryView == nil)   // nothing more to say, so no Details
     }
 
@@ -206,9 +206,9 @@ private func drainMainRunLoop() async {
         #expect(failureDetails(failures) == "Step\n" + String(repeating: "x", count: 300))
     }
 
-    @Test func firstButtonRetriesSecondContinues() async {
-        let retry = ModalProgressPanel(appName: "S", modal: RecordingSession()) { _ in .alertFirstButtonReturn }
-        let skip = ModalProgressPanel(appName: "S", modal: RecordingSession()) { _ in .alertSecondButtonReturn }
+    @Test func firstButtonContinuesSecondRetries() async {
+        let retry = ModalProgressPanel(appName: "S", modal: RecordingSession()) { _ in .alertSecondButtonReturn }
+        let skip = ModalProgressPanel(appName: "S", modal: RecordingSession()) { _ in .alertFirstButtonReturn }
         #expect(await retry.reportFailures([]) == true)
         #expect(await skip.reportFailures([]) == false)
     }
@@ -219,7 +219,7 @@ private func drainMainRunLoop() async {
         var ran = 0
         let presenter = ModalProgressPanel(appName: "S", modal: RecordingSession()) { _ in
             ran += 1
-            return .alertSecondButtonReturn
+            return .alertFirstButtonReturn
         }
         presenter.begin(needsAdministrator: false)
         #expect(await presenter.reportFailures([]) == false)
