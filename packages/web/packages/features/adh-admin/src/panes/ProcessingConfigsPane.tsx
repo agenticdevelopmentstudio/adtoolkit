@@ -42,7 +42,6 @@ const PROVIDER_BADGE_VARIANT: Record<
   local: "neutral",
 };
 
-
 export function ProcessingConfigsPane({ help }: { help?: ReactNode } = {}) {
   const router = useRouter();
   const sets = useConfigSets();

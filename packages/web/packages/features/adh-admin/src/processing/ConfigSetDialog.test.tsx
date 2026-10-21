@@ -48,6 +48,13 @@ const type = (label: string, value: string) =>
 const save = () => fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
 describe("ConfigSetDialog", () => {
+  it("explains that paid services must use the provider's own API host", () => {
+    mount();
+    expect(
+      screen.getByText(/Paid services must use the provider's own API host\./),
+    ).toBeTruthy();
+  });
+
   it("saves a local set: free-text model, no service, timeout in seconds sent as ms", async () => {
     const { onClose } = mount();
     type("Name", "Local llama");

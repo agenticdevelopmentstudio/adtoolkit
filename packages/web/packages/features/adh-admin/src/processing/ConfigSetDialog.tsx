@@ -146,7 +146,7 @@ export function ConfigSetDialog({
               disabled={save.busy}
             />
           </Field>
-          <Field label="Service" hint="Where the model runs.">
+          <Field label="Service" hint="Where the model runs. Paid services must use the provider's own API host.">
             <Select
               aria-label="Service"
               value={form.serviceId}
