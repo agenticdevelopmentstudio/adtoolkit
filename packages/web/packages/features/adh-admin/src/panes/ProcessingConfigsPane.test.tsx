@@ -108,6 +108,30 @@ describe("ProcessingConfigsPane", () => {
     expect(await screen.findByText("Config set is not usable as default")).toBeTruthy();
   });
 
+  it("moves the Default badge after Make default (the list refetches)", async () => {
+    authedJson.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url.endsWith("/default") && init?.method === "POST") {
+        sets = sets.map((x) => ({ ...x, isDefault: x.id === "cs-1" }));
+        return {};
+      }
+      return { configSets: sets };
+    });
+    mount();
+    await select("Local llama");
+    fireEvent.click(screen.getByRole("button", { name: /make default/i }));
+    await waitFor(() => {
+      const badge = screen.getByText("Default");
+      expect(badge.closest("[role=row]")?.textContent).toContain("Local llama");
+    });
+  });
+
+  it("says that jobs pinned to a deleted set fall back to the default", async () => {
+    mount();
+    await select("Local llama");
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(await screen.findByText(/fall back to the default set/)).toBeTruthy();
+  });
+
   it("Clear default calls DELETE on the default", async () => {
     mount();
     await screen.findByText("Local llama");
@@ -120,7 +144,7 @@ describe("ProcessingConfigsPane", () => {
   });
 
   it("deletes the selected set after confirmation, surfacing a refusal", async () => {
-    authedRequest.mockRejectedValue(new Error("Config set is in use by 2 jobs"));
+    authedRequest.mockRejectedValue(new Error("config set not found"));
     mount();
     await select("Local llama");
     fireEvent.click(screen.getByRole("button", { name: "Delete" }));
@@ -133,6 +157,6 @@ describe("ProcessingConfigsPane", () => {
         method: "DELETE",
       }),
     );
-    expect(await screen.findByText(/Config set is in use by 2 jobs/)).toBeTruthy();
+    expect(await screen.findByText(/config set not found/)).toBeTruthy();
   });
 });

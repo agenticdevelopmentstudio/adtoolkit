@@ -5,6 +5,7 @@ import { Badge } from "@agenticdevelopertoolkit/ui/components/badge";
 import { Button } from "@agenticdevelopertoolkit/ui/components/button";
 import { ErrorText } from "@agenticdevelopertoolkit/ui/components/error-text";
 import { Select } from "@agenticdevelopertoolkit/ui/components/select";
+import { errorMessage } from "@agenticdevelopertoolkit/ui/lib/errors";
 import { useNodeLogs, type LogLevel } from "../api/processing";
 import { formatDateTime } from "../lib/timestamps";
 
@@ -17,7 +18,14 @@ const LEVEL_VARIANT: Record<LogLevel, "neutral" | "blue" | "orange" | "error"> =
   error: "error",
 };
 
-/** One node's log, newest first, filtered by minimum level server-side and paged with Load more. */
+/**
+ * One node's log, newest first, filtered by MINIMUM level server-side (the chosen level and
+ * everything more severe) and paged with Load more.
+ *
+ * Hand-rolled rather than the shared `LogPanel` (`@agenticdevelopertoolkit/controls/logging-panel`):
+ * that panel is a tail-following console for a live stream, and this is a newest-first list paged
+ * backwards through `nextBefore` with per-row level badges, which its follow model does not fit.
+ */
 export function NodeLogs({ nodeId }: { nodeId: string }) {
   const [level, setLevel] = useState<LogLevel | "">("");
   const logs = useNodeLogs(nodeId, level || undefined);
@@ -39,13 +47,13 @@ export function NodeLogs({ nodeId }: { nodeId: string }) {
             <option value="">All levels</option>
             {LEVELS.map((l) => (
               <option key={l} value={l}>
-                {l}
+                {l === "debug" ? l : `${l} and above`}
               </option>
             ))}
           </Select>
         </div>
       </div>
-      {logs.error && <ErrorText error={logs.error instanceof Error ? logs.error.message : String(logs.error)} />}
+      {logs.error && <ErrorText error={errorMessage(logs.error)} />}
       {logs.isLoading ? (
         <p className="text-sm text-apt-text-muted">Loading logs…</p>
       ) : entries.length === 0 ? (

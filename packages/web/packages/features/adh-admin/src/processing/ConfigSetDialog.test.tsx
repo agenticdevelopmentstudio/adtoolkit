@@ -18,7 +18,8 @@ const services = [
     models: [{ id: "gpt-a", displayName: "GPT A" }, { id: "gpt-b" }],
   },
   { id: "svc-claude", name: "My Claude", providerKind: "anthropic", models: [{ id: "claude-x" }] },
-  { id: "svc-empty", name: "Bare", providerKind: "external", models: [] },
+  { id: "svc-empty", name: "Bare", providerKind: "gemini", models: [] },
+  { id: "svc-ext", name: "Custom endpoint", providerKind: "external", models: [{ id: "x" }] },
 ];
 vi.mock("./useConfigSetServices", () => ({
   useConfigSetServices: () => ({ items: services, isFetching: false, error: null }),
@@ -77,6 +78,34 @@ describe("ConfigSetDialog", () => {
       "My Claude",
       "Bare",
     ]);
+  });
+
+  it("does not offer services of a kind no node can run", () => {
+    mount();
+    const names = within(screen.getByLabelText("Service")).getAllByRole("option").map((o) => o.textContent);
+    expect(names).not.toContain("Custom endpoint");
+  });
+
+  it("keeps showing the service of a set that is not among the admin's own", () => {
+    const set: ConfigSet = {
+      id: "cs-9",
+      name: "Shared",
+      description: null,
+      service: { id: "svc-other", name: "Team Claude", providerKind: "anthropic" },
+      provider: "anthropic",
+      model: "claude-z",
+      params: {},
+      isDefault: false,
+      createdAt: "2026-10-01T00:00:00Z",
+      updatedAt: "2026-10-01T00:00:00Z",
+    };
+    mount(set);
+    const service = screen.getByLabelText("Service") as HTMLSelectElement;
+    expect(service.value).toBe("svc-other");
+    expect(within(service).getByRole("option", { name: /Team Claude/ })).toBeTruthy();
+    // Its models are unknown here, so the model is free text.
+    expect((screen.getByLabelText("Model") as HTMLInputElement).value).toBe("claude-z");
+    expect(screen.getByLabelText("Model").tagName).toBe("INPUT");
   });
 
   it("limits the model options to the chosen service's models", () => {

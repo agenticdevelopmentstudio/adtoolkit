@@ -71,6 +71,7 @@ function mount() {
       <AiNodesPane />
     </QueryClientProvider>,
   );
+  return client;
 }
 
 const openNode = async (id: string) =>
@@ -145,7 +146,52 @@ describe("AiNodesPane detail", () => {
   });
 });
 
+describe("AiNodesPane node delete copy", () => {
+  it("says the registry row goes and the logs stay until retention", async () => {
+    mount();
+    await openNode("node-b");
+    fireEvent.click(screen.getByRole("button", { name: "Delete" }));
+    expect(await screen.findByText(/removed from the registry/)).toBeTruthy();
+    expect(screen.getByText(/logs are kept until the retention window/)).toBeTruthy();
+  });
+});
+
+describe("AiNodesPane logs level label", () => {
+  it("labels the filter as a minimum level", async () => {
+    mount();
+    await openNode("node-a");
+    const level = await screen.findByLabelText("Level");
+    expect(within(level).getByRole("option", { name: "warn and above" })).toBeTruthy();
+  });
+});
+
 describe("AiNodesPane retention", () => {
+  it("shows a failed settings read", async () => {
+    const base = authedJson.getMockImplementation()!;
+    authedJson.mockImplementation(async (url: string, init?: unknown) => {
+      if (url === "/api/processing/admin/settings") throw new Error("settings unavailable");
+      return base(url, init);
+    });
+    mount();
+    expect(await screen.findByText("settings unavailable")).toBeTruthy();
+  });
+
+  it("does not overwrite what the admin is typing when the stored value changes", async () => {
+    const client = mount();
+    const input = (await screen.findByLabelText("Log retention (days)")) as HTMLInputElement;
+    await waitFor(() => expect(input.value).toBe("14"));
+    fireEvent.change(input, { target: { value: "99" } });
+    expect(input.value).toBe("99");
+    // a refetch returning a different stored value must leave the typed text alone
+    authedJson.mockImplementation(async (url: string) =>
+      url === "/api/processing/admin/settings" ? { logRetentionDays: 20 } : { nodes: [] },
+    );
+    const calls = authedJson.mock.calls.length;
+    await client.invalidateQueries({ queryKey: ["processing-admin", "settings"] });
+    await waitFor(() => expect(authedJson.mock.calls.length).toBeGreaterThan(calls));
+    expect(input.value).toBe("99");
+  });
+
   it("rejects a value outside 1..365 and saves a valid one", async () => {
     mount();
     const input = (await screen.findByLabelText("Log retention (days)")) as HTMLInputElement;

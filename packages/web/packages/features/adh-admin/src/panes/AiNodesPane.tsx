@@ -11,6 +11,7 @@ import {
 } from "../api/processing";
 import { Badge } from "@agenticdevelopertoolkit/ui/components/badge";
 import { Button } from "@agenticdevelopertoolkit/ui/components/button";
+import { errorMessage } from "@agenticdevelopertoolkit/ui/lib/errors";
 import { ErrorText } from "@agenticdevelopertoolkit/ui/components/error-text";
 import { Input } from "@agenticdevelopertoolkit/ui/components/input";
 import { FeatureTitle } from "@agentic-toolkit/resource";
@@ -25,7 +26,6 @@ import { formatRelativeTime } from "../llm-providers/sync-format";
 import { NodeLogs } from "../processing/NodeLogs";
 import { RETENTION_ERROR, parseRetentionDays } from "../processing/retention";
 
-const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 /** How long node logs are kept — one setting for the whole fleet. */
 function RetentionStrip() {
@@ -33,10 +33,12 @@ function RetentionStrip() {
   const put = usePutProcessingSettings();
   const stored = settings.data?.logRetentionDays;
   const [text, setText] = useState("");
-  // Follow the stored value until the admin starts typing over it.
+  // Follow the stored value until the admin starts typing over it; after that a background
+  // refetch (another operator saved) must not replace what is in the box.
+  const [touched, setTouched] = useState(false);
   useEffect(() => {
-    if (stored !== undefined) setText(String(stored));
-  }, [stored]);
+    if (stored !== undefined && !touched) setText(String(stored));
+  }, [stored, touched]);
 
   const days = parseRetentionDays(text);
   const invalid = text !== "" && days === null;
@@ -57,6 +59,7 @@ function RetentionStrip() {
             value={text}
             onChange={(e) => {
               put.reset();
+              setTouched(true);
               setText(e.target.value);
             }}
           />
@@ -65,7 +68,10 @@ function RetentionStrip() {
           size="sm"
           variant="secondary"
           disabled={!canSave}
-          onClick={() => days !== null && put.mutate({ logRetentionDays: days })}
+          onClick={() =>
+            days !== null &&
+            put.mutate({ logRetentionDays: days }, { onSuccess: () => setTouched(false) })
+          }
         >
           Save retention
         </Button>
@@ -75,7 +81,8 @@ function RetentionStrip() {
           {RETENTION_ERROR}
         </p>
       )}
-      {put.error && <ErrorText error={errorText(put.error)} />}
+      {settings.error && <ErrorText error={errorMessage(settings.error)} />}
+      {put.error && <ErrorText error={errorMessage(put.error)} />}
     </div>
   );
 }
@@ -236,15 +243,15 @@ export function AiNodesPane({ help }: { help?: ReactNode } = {}) {
           title="Delete this node?"
           description={
             <>
-              {selected[0]?.id} and its logs will be removed. A node that is still running
-              registers again within a minute.
+              {selected[0]?.id} will be removed from the registry; its logs are kept until the retention
+              window expires. If the node is still running it will register again within a minute.
             </>
           }
           confirmValue="delete"
           valueNoun="word"
           confirmLabel="Delete"
           busy={deleteNode.isPending}
-          error={deleteNode.error ? errorText(deleteNode.error) : undefined}
+          error={deleteNode.error ? errorMessage(deleteNode.error) : undefined}
           onCancel={() => {
             deleteNode.reset();
             setConfirmDelete(false);

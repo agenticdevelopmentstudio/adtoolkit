@@ -12,6 +12,7 @@ import {
 } from "../api/processing";
 import { Button } from "@agenticdevelopertoolkit/ui/components/button";
 import { Badge } from "@agenticdevelopertoolkit/ui/components/badge";
+import { errorMessage } from "@agenticdevelopertoolkit/ui/lib/errors";
 import { ErrorText } from "@agenticdevelopertoolkit/ui/components/error-text";
 import { UnsavedChangesGuard } from "@agenticdevelopertoolkit/ui/components/unsaved-changes-guard";
 import { FeatureTitle } from "@agentic-toolkit/resource";
@@ -41,7 +42,6 @@ const PROVIDER_BADGE_VARIANT: Record<
   local: "neutral",
 };
 
-const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 export function ProcessingConfigsPane({ help }: { help?: ReactNode } = {}) {
   const router = useRouter();
@@ -119,7 +119,7 @@ export function ProcessingConfigsPane({ help }: { help?: ReactNode } = {}) {
     try {
       await action();
     } catch (e) {
-      setActionError(errorText(e));
+      setActionError(errorMessage(e));
     }
   }
 
@@ -227,12 +227,12 @@ export function ProcessingConfigsPane({ help }: { help?: ReactNode } = {}) {
         <TypeToConfirmDialog
           open={confirmDelete}
           title="Delete this config set?"
-          description={<>{selected[0]?.name} will be removed. A set that jobs still use can't be deleted.</>}
+          description={<>{selected[0]?.name} will be removed. Jobs pinned to it will fall back to the default set.</>}
           confirmValue="delete"
           valueNoun="word"
           confirmLabel="Delete"
           busy={deleteSet.isPending}
-          error={deleteSet.error ? errorText(deleteSet.error) : undefined}
+          error={deleteSet.error ? errorMessage(deleteSet.error) : undefined}
           onCancel={() => {
             deleteSet.reset();
             setConfirmDelete(false);

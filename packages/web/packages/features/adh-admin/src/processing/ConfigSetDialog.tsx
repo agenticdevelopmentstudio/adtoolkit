@@ -27,6 +27,9 @@ import {
 } from "./config-set-form";
 import { useConfigSetServices } from "./useConfigSetServices";
 
+/** The kinds a node can run (the backend rejects any other); `external` and the like are not. */
+const RUNNABLE_KINDS: ReadonlySet<string> = new Set(["openai", "anthropic", "gemini"]);
+
 /** A service's model list as the picker sees it: the column is jsonb, so an entry may be a bare
  *  string or an object with an `id` (and optionally a `displayName`). */
 function modelOptions(models: readonly unknown[] | undefined): { id: string; label: string }[] {
@@ -63,7 +66,18 @@ export function ConfigSetDialog({
 }) {
   const saveSet = useSaveConfigSet();
   const save = useAction();
-  const { items: services } = useConfigSetServices();
+  const { items: ownServices } = useConfigSetServices();
+  const services = useMemo(
+    () => (ownServices ?? []).filter((s) => RUNNABLE_KINDS.has(s.providerKind)),
+    [ownServices],
+  );
+  // Config sets are global but the picker lists only the signed-in admin's own services. A set
+  // built on someone else's (or a shared) service would otherwise render as "local"; keep its
+  // service selectable, with an unknown model list (so the model is free text).
+  const foreignService =
+    configSet?.service && !services.some((s) => s.id === configSet.service!.id)
+      ? configSet.service
+      : null;
   const initial = useMemo(() => stateFromConfigSet(configSet), [configSet]);
   const [form, setForm] = useState<ConfigSetFormState>(initial);
   const formRef = useRef<HTMLFormElement>(null);
@@ -72,7 +86,7 @@ export function ConfigSetDialog({
   const patch = (p: Partial<ConfigSetFormState>) => setForm((f) => ({ ...f, ...p }));
 
   const activeService = useMemo(
-    () => (services ?? []).find((s) => s.id === form.serviceId) ?? null,
+    () => services.find((s) => s.id === form.serviceId) ?? null,
     [services, form.serviceId],
   );
   const options = useMemo(() => modelOptions(activeService?.models), [activeService]);
@@ -120,6 +134,7 @@ export function ConfigSetDialog({
               aria-label="Name"
               value={form.name}
               onChange={(e) => patch({ name: e.target.value })}
+              disabled={save.busy}
               placeholder="e.g. Claude fast"
             />
           </Field>
@@ -140,7 +155,12 @@ export function ConfigSetDialog({
               onChange={(e) => patch({ serviceId: e.target.value, model: "" })}
             >
               <option value={LOCAL_SERVICE}>Node's local LLM</option>
-              {(services ?? []).map((s) => (
+              {foreignService && (
+                <option value={foreignService.id}>
+                  {foreignService.name} (not in your services)
+                </option>
+              )}
+              {services.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
                 </option>
