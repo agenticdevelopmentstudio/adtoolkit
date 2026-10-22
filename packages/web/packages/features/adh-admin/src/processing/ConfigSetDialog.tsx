@@ -23,6 +23,7 @@ import {
   buildConfigSetInput,
   formBlockedReason,
   stateFromConfigSet,
+  withService,
   type ConfigSetFormState,
 } from "./config-set-form";
 import { useConfigSetServices } from "./useConfigSetServices";
@@ -150,9 +151,7 @@ export function ConfigSetDialog({
             <Select
               aria-label="Service"
               value={form.serviceId}
-              // A model belongs to its service: switching service clears it rather than leaving a
-              // name the new service doesn't know.
-              onChange={(e) => patch({ serviceId: e.target.value, model: "" })}
+              onChange={(e) => setForm((f) => withService(f, e.target.value))}
             >
               <option value={LOCAL_SERVICE}>Node's local LLM</option>
               {foreignService && (
@@ -196,7 +195,11 @@ export function ConfigSetDialog({
           </Field>
           <FieldGroup title="Parameters">
             <div className="flex flex-col gap-3 sm:flex-row">
-              <Field label="Temperature" className="flex-1" hint="0 to 2">
+              <Field
+                label="Temperature"
+                className="flex-1"
+                hint="0 to 2. Clear it for reasoning models, which reject it."
+              >
                 <Input
                   aria-label="Temperature"
                   type="number"

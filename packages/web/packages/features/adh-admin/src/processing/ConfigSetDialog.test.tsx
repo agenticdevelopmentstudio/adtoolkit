@@ -76,6 +76,54 @@ describe("ConfigSetDialog", () => {
     });
   });
 
+  const params = () =>
+    ["Temperature", "Max output tokens", "Timeout (seconds)"].map(
+      (l) => (screen.getByLabelText(l) as HTMLInputElement).value,
+    );
+
+  it("prefills a new local set with the local tier's defaults and sends them", async () => {
+    const { onClose } = mount();
+    expect(params()).toEqual(["0.2", "512", "300"]);
+    type("Name", "Background");
+    type("Model", "llama3.2");
+    save();
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(JSON.parse(authedJson.mock.calls[0]![1].body).params).toEqual({
+      temperature: 0.2,
+      maxOutputTokens: 512,
+      timeoutMs: 300000,
+    });
+  });
+
+  it("swaps to the paid tier's defaults when a service is picked, and back for local", () => {
+    mount();
+    type("Service", "svc-claude");
+    expect(params()).toEqual(["0.2", "1024", "60"]);
+    type("Service", "");
+    expect(params()).toEqual(["0.2", "512", "300"]);
+  });
+
+  it("keeps a parameter the admin changed when the service changes; the rest follow the tier", () => {
+    mount();
+    type("Timeout (seconds)", "120");
+    type("Service", "svc-openai");
+    expect(params()).toEqual(["0.2", "1024", "120"]);
+  });
+
+  it("does not prefill an existing set's blank parameters", () => {
+    mount({
+      id: "cs-blank",
+      name: "Old",
+      description: null,
+      service: null,
+      provider: "local",
+      model: "llama3.2",
+      params: {},
+      isDefault: false,
+    } as unknown as ConfigSet);
+    expect(params()).toEqual(["", "", ""]);
+  });
+
   it("offers the node's local LLM first, then the services", () => {
     mount();
     const options = within(screen.getByLabelText("Service")).getAllByRole("option");

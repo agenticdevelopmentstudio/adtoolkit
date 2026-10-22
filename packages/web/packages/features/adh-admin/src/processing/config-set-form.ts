@@ -16,15 +16,43 @@ export interface ConfigSetFormState {
   timeoutSeconds: string;
 }
 
+type TierParams = Pick<ConfigSetFormState, "temperature" | "maxOutputTokens" | "timeoutSeconds">;
+
+/**
+ * What a new set starts with, per tier. Today's jobs (categorize and tag) want a short, repeatable
+ * JSON answer: a low temperature and a modest token cap. A node's Ollama on a CPU container is
+ * slow, worst on the first call while the model loads; a paid API answers in seconds.
+ */
+export const TIER_DEFAULTS: { local: TierParams; paid: TierParams } = {
+  local: { temperature: "0.2", maxOutputTokens: "512", timeoutSeconds: "300" },
+  paid: { temperature: "0.2", maxOutputTokens: "1024", timeoutSeconds: "60" },
+};
+
+const tierDefaults = (serviceId: string): TierParams =>
+  serviceId === LOCAL_SERVICE ? TIER_DEFAULTS.local : TIER_DEFAULTS.paid;
+
 export const EMPTY_FORM: ConfigSetFormState = {
   name: "",
   description: "",
   serviceId: LOCAL_SERVICE,
   model: "",
-  temperature: "",
-  maxOutputTokens: "",
-  timeoutSeconds: "",
+  ...TIER_DEFAULTS.local,
 };
+
+/**
+ * The form after the service changes to `serviceId`. The model belongs to the old service, so it
+ * clears. Each parameter still holding the old tier's default takes the new tier's; one the admin
+ * changed (or an existing set's stored value that differs) stays.
+ */
+export function withService(f: ConfigSetFormState, serviceId: string): ConfigSetFormState {
+  const from = tierDefaults(f.serviceId);
+  const to = tierDefaults(serviceId);
+  const next: ConfigSetFormState = { ...f, serviceId, model: "" };
+  for (const k of Object.keys(to) as (keyof TierParams)[]) {
+    if (f[k] === from[k]) next[k] = to[k];
+  }
+  return next;
+}
 
 export function stateFromConfigSet(set: ConfigSet | null): ConfigSetFormState {
   if (!set) return EMPTY_FORM;
