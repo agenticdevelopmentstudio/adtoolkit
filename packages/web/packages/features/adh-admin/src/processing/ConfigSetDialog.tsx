@@ -50,7 +50,7 @@ function modelOptions(models: readonly unknown[] | undefined): { id: string; lab
  *
  * A set with no service is the node's own LLM (its model is the free-text Ollama model name); a
  * set with a service picks that service's model. The dialog never touches an API key: a paid
- * provider's key is an env var on the nodes, not something an admin enters here.
+ * set uses the key stored on its personas service, which the backend refuses if it has none.
  */
 export function ConfigSetDialog({
   open,
