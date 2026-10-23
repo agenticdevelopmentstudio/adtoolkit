@@ -389,6 +389,7 @@ export function HierarchicalMenuDetail({
   minDetailWidth = "28rem",
   detailTitle,
   detailHelp,
+  detailActions,
   exitGuard = null,
   manualCollapse = true,
   disclosureStyle = "covered",
@@ -428,6 +429,10 @@ export function HierarchicalMenuDetail({
    *  always carries the view's API button and "?" on its far right — a pane portals its own in,
    *  and what nothing claims is drawn disabled (see {@link DetailHeaderRow}). */
   detailHelp?: ReactNode
+  /** Controls about the whole view, in the detail header just left of its API button (the REST API
+   *  help's Download OpenAPI JSON) — the header row rather than a `toolbar` strip of their own,
+   *  which cost a full-width bar for one button. */
+  detailActions?: ReactNode
   /** The leaf editor's unsaved-work guard. When dirty, Back / breadcrumb-up / re-click /
    *  selecting a shallower row / swapping to a sibling at the deepest level first raises a
    *  Discard/Stay alert. Omit for no guard. */
@@ -1010,7 +1015,7 @@ export function HierarchicalMenuDetail({
   }
 
   return (
-    <DetailHeaderProvider fallbackHelp={detailHelp}>
+    <DetailHeaderProvider fallbackHelp={detailHelp} actions={detailActions}>
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <TopBar
         rootLabel={rootLabel}

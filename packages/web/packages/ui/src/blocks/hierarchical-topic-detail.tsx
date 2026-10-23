@@ -638,6 +638,7 @@ export function HierarchicalTopicDetail({
   detailWidth,
   detailTitle,
   detailHelp,
+  detailActions,
   exitGuard = null,
   manualCollapse = true,
   disclosureStyle = "covered",
@@ -702,6 +703,10 @@ export function HierarchicalTopicDetail({
    *  always carries the view's API button and "?" on its far right — a pane portals its own in,
    *  and what nothing claims is drawn disabled (see {@link DetailHeaderRow}). */
   detailHelp?: ReactNode
+  /** Controls about the whole view, in the detail header just left of its API button (the REST API
+   *  help's Download OpenAPI JSON) — the header row rather than a `toolbar` strip of their own,
+   *  which cost a full-width bar for one button. */
+  detailActions?: ReactNode
   /** The leaf editor's unsaved-work guard. When dirty, Back / breadcrumb-up / re-click /
    *  selecting a shallower row / swapping to a sibling at the deepest level first raise the
    *  platform's discard alert (Discard / Stay). Omit for no guard. */
@@ -1158,7 +1163,7 @@ export function HierarchicalTopicDetail({
     // internally. A root that could outgrow that height (a flex item's default `min-height:
     // auto` is its content's height) would push the page past the viewport instead of
     // scrolling its own panes.
-    <DetailHeaderProvider fallbackHelp={detailHelp}>
+    <DetailHeaderProvider fallbackHelp={detailHelp} actions={detailActions}>
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       <TopBar
         rootLabel={rootLabel}

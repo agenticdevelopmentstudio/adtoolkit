@@ -58,7 +58,8 @@ export interface HelpRouteLevel {
  * is fully server-side; this component only adds the interactive rail. It is the same HMDV the
  * Help modal uses, so the standalone site and the modal look and behave identically.
  *
- * `toolbar` is the button bar above the breadcrumb (the REST API's Download OpenAPI JSON button),
+ * `toolbar` is the button bar above the breadcrumb, `detailActions` the controls about the whole
+ * view that sit in the details header beside its API button (the REST API's Download OpenAPI JSON),
  * `detailTitle` the strip's own title for the open leaf (the Hub Features document's selected
  * entry), and `ssrDetail` asks the stack to put the leaf in the server HTML too, for a surface
  * whose detail should be crawlable.
@@ -67,6 +68,7 @@ export function HelpMasterDetail({
   levels,
   rootLabel,
   toolbar,
+  detailActions,
   detailTitle,
   ssrDetail,
   children,
@@ -74,6 +76,7 @@ export function HelpMasterDetail({
   levels: HelpRouteLevel[]
   rootLabel: string
   toolbar?: ReactNode
+  detailActions?: ReactNode
   detailTitle?: ReactNode
   ssrDetail?: boolean
   children: ReactNode
@@ -141,6 +144,7 @@ export function HelpMasterDetail({
       autoHideTopics
       exitGuard={null}
       toolbar={toolbar}
+      detailActions={detailActions}
       detailTitle={detailTitle}
       ssrDetail={ssrDetail}
     >

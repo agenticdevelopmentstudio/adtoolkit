@@ -93,6 +93,7 @@ interface DetailHeaderState {
   setApiSlot: (el: HTMLDivElement | null) => void
   setHelpSlot: (el: HTMLDivElement | null) => void
   fallbackHelp: ReactNode
+  actions: ReactNode
 }
 
 const DetailHeaderContext = createContext<DetailHeaderState | null>(null)
@@ -106,10 +107,15 @@ const DetailHeaderContext = createContext<DetailHeaderState | null>(null)
  */
 export function DetailHeaderProvider({
   fallbackHelp,
+  actions,
   children,
 }: {
   /** The stack's own help, in the "?" slot while no pane claims it. */
   fallbackHelp?: ReactNode
+  /** Controls about the whole view, drawn just left of the [API][?] pair on every header row the
+   *  stack draws (the REST API help's Download OpenAPI JSON). Not a claimable slot: the stack that
+   *  owns the view owns these, so no pane below can displace them. */
+  actions?: ReactNode
   children: ReactNode
 }) {
   const [apiSlot, setApiSlot] = useState<HTMLDivElement | null>(null)
@@ -132,7 +138,10 @@ export function DetailHeaderProvider({
     () => ({ apiSlot, helpSlot, apiOwner, helpOwner, claim }),
     [apiSlot, helpSlot, apiOwner, helpOwner, claim],
   )
-  const state = useMemo(() => ({ host, setApiSlot, setHelpSlot, fallbackHelp }), [host, fallbackHelp])
+  const state = useMemo(
+    () => ({ host, setApiSlot, setHelpSlot, fallbackHelp, actions }),
+    [host, fallbackHelp, actions],
+  )
   return <DetailHeaderContext.Provider value={state}>{children}</DetailHeaderContext.Provider>
 }
 
@@ -168,8 +177,8 @@ export function DetailHeaderPortal({ kind, children }: { kind: DetailHeaderKind;
   return owner === id && slot ? createPortal(children, slot) : null
 }
 
-/** The header's right-hand pair: the API slot, then the help slot on the far right — both always
- *  drawn, each holding its fallback until a pane claims it. */
+/** The header's right-hand group: the stack's own `actions` (if any), the API slot, then the help
+ *  slot on the far right — the pair always drawn, each holding its fallback until a pane claims it. */
 function DetailHeaderSlots() {
   const state = useContext(DetailHeaderContext)
   if (!state) {
@@ -180,9 +189,16 @@ function DetailHeaderSlots() {
       </>
     )
   }
-  const { host, setApiSlot, setHelpSlot, fallbackHelp } = state
+  const { host, setApiSlot, setHelpSlot, fallbackHelp, actions } = state
   return (
     <>
+      {/* Its own box, not a bare sibling: a host's server-rendered node arrives here as a child of
+          a client component, and React flagged it as a keyless list child beside the two slots. */}
+      {actions !== undefined && actions !== null && actions !== false && (
+        <div data-adh-detail-actions="" className="flex items-center gap-1">
+          {actions}
+        </div>
+      )}
       <div data-adh-detail-api-slot="" ref={setApiSlot} className="flex items-center">
         {host.apiOwner === null && <DisabledApiButton />}
       </div>

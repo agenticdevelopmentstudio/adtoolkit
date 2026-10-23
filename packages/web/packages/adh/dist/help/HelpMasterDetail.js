@@ -26,6 +26,7 @@ function HelpMasterDetail({
   levels,
   rootLabel,
   toolbar,
+  detailActions,
   detailTitle,
   ssrDetail,
   children
@@ -89,6 +90,7 @@ function HelpMasterDetail({
       autoHideTopics: true,
       exitGuard: null,
       toolbar,
+      detailActions,
       detailTitle,
       ssrDetail,
       children
