@@ -15,7 +15,13 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }))
 
-import { ADMIN_MENU_GROUPS, ADMIN_SECTION, FLEET_MENU_GROUPS, FLEET_SECTION } from '../fleetMenuGroups'
+import {
+  ADMIN_MENU_GROUPS,
+  ADMIN_SECTION,
+  FLEET_MENU_GROUPS,
+  FLEET_SECTION,
+  HUB_LANDING_MENU_GROUPS,
+} from '../fleetMenuGroups'
 import { useSiteMenu, type UseSiteMenuOpts } from '../useSiteMenu'
 import { type MenuGroup, type MenuLink } from '../SiteMenu'
 import { type PopoverEntry } from '@agentic-toolkit/adh/header'
@@ -153,6 +159,45 @@ describe('FLEET_MENU_GROUPS', () => {
       if (!('href' in l)) continue
       const id = hosts.get(new URL(l.href).host)
       expect(id, `${l.label} is site '${id}' now — make it { site: '${id}' }`).toBeUndefined()
+    }
+  })
+})
+
+// The hub's own marketing menu: the seven sites the repo owner chose for it (Mike,
+// 2026-10-23). Pinned as a SET of sites, so a row that sneaks back in fails here rather
+// than on screen.
+describe('HUB_LANDING_MENU_GROUPS', () => {
+  it('is Bitbag, Hub, Build and Persona Registry, in that order', () => {
+    const entries = resolve({ groups: HUB_LANDING_MENU_GROUPS })
+    expect(entries.map((e) => (e.kind === 'topic' ? e.label : e.item.label))).toEqual([
+      'Bitbag',
+      'Hub',
+      'Build',
+      'Persona Registry',
+    ])
+    for (const e of entries) expect(e.section).toBe(FLEET_SECTION)
+  })
+
+  it("links only the seven chosen sites, plus the hub's own Contact page", () => {
+    const links = allLinks(HUB_LANDING_MENU_GROUPS)
+    const sites = new Set(links.flatMap((l) => ('site' in l ? [l.site] : [])))
+    expect([...sites].sort()).toEqual(
+      ['bitbag', 'cookbook', 'devteam', 'hub', 'hub-help', 'personaregistry', 'toolkit'].sort(),
+    )
+    expect(links.flatMap((l) => ('route' in l ? [l.route] : []))).toEqual(['/contact'])
+    expect(links.some((l) => 'href' in l)).toBe(false)
+  })
+
+  it('gives every row an icon and a tagline, like the family tree', () => {
+    for (const e of resolve({ groups: HUB_LANDING_MENU_GROUPS })) {
+      const rows =
+        e.kind === 'topic'
+          ? [{ label: e.label, icon: e.icon, description: e.description }, ...e.items]
+          : [e.item]
+      for (const r of rows) {
+        expect(r.icon, `${r.label} has no icon`).toBeTruthy()
+        expect(r.description?.trim(), `${r.label} has no tagline`).toBeTruthy()
+      }
     }
   })
 })

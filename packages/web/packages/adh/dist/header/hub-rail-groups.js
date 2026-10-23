@@ -156,6 +156,32 @@ var FLEET_MENU_GROUPS = [
     ]
   })
 ];
+var HUB_LANDING_MENU_GROUPS = [
+  leaf({ site: "bitbag", description: "The hub's AI persona" }),
+  topic({
+    label: "Hub",
+    description: "The center of it all",
+    link: { site: "hub" },
+    links: [
+      { route: "/contact", label: "Contact", description: "Get in touch" },
+      { site: "hub-help" },
+      {
+        site: "hub-help",
+        path: "/hub/~overview",
+        label: "Details",
+        description: "What the hub does",
+        iconKey: "/details"
+      }
+    ]
+  }),
+  topic({
+    label: "Build",
+    description: "Make it",
+    iconKey: "build",
+    links: [{ site: "devteam", label: "Dev Team" }, { site: "cookbook" }, { site: "toolkit" }]
+  }),
+  leaf({ site: "personaregistry" })
+];
 var ADMIN_MENU_GROUPS = [
   {
     kind: "topic",
