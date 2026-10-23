@@ -119,7 +119,7 @@ export interface PendingPartition<T> {
    *  HOW one is monitored, not whether — see {@link noDomain}. */
   addable: T[];
   /** The pending projects with no domain (a worker, a queue consumer). They are still
-   *  added, as deploy-only monitors: no URL to probe, so HTTP monitoring is off, but their
+   *  added, as deploy-only monitors: no URL to probe, so the cycle never probes them, but their
    *  builds and deploys are tracked like any other project's. Leaving them out is what kept
    *  a worker's failed builds off the board entirely — "nothing to probe" is not "nothing
    *  to watch". */

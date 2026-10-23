@@ -25,7 +25,7 @@ export interface FakeVercelAccount {
    *  serving `domain` as a custom domain in its `production` environment. Only takes
    *  effect when the account was stubbed with `{ railway: true }`; without that there is
    *  no railway integration row, so the enumeration never asks Railway anything. */
-  addRailway(projectName: string, domain: string): void;
+  addRailway(projectName: string, domain: string | null): void;
 }
 
 /**
@@ -67,7 +67,7 @@ export async function stubVercelAccount(db: Db, opts: { railway?: boolean } = {}
   }
 
   const projects = new Map<string, string | null>();
-  const railwayProjects = new Map<string, string>();
+  const railwayProjects = new Map<string, string | null>();
   const deadHosts = new Set<string>();
   let broken = false;
 
@@ -86,8 +86,9 @@ export async function stubVercelAccount(db: Db, opts: { railway?: boolean } = {}
           });
         }
         const name = (variables?.id ?? '').replace(/^proj_/, '');
-        const domain = railwayProjects.get(name);
-        if (!domain) return Response.json({ data: { project: null } });
+        if (!railwayProjects.has(name)) return Response.json({ data: { project: null } });
+        // null → a service with no domain at all (a worker): enumerates env-less.
+        const domain = railwayProjects.get(name) ?? null;
         return Response.json({
           data: {
             project: {
@@ -101,7 +102,7 @@ export async function stubVercelAccount(db: Db, opts: { railway?: boolean } = {}
                           {
                             node: {
                               environmentId: 'env_production',
-                              domains: { serviceDomains: [], customDomains: [{ domain }] },
+                              domains: { serviceDomains: [], customDomains: domain ? [{ domain }] : [] },
                             },
                           },
                         ],

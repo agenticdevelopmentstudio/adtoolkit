@@ -620,6 +620,21 @@ describe('auto-configure across a platform migration', () => {
     expect(body.notes[0]!.note).toContain('adh-status-monitoring-site');
   });
 
+  it('a Railway worker with no domain reads MONITORED once Auto Configure adds it', async () => {
+    // The env-less entry a domainless Railway project enumerates as must be claimed by the
+    // deploy-only monitor created for it — or the banner keeps saying "1 project not
+    // monitored" right after the operator configured it.
+    const group = (await (await postJson('/config/site-groups', { name: 'G', slug: 'g' })).json()) as { id: string };
+    accounts.addRailway('ai-processing-node', null);
+
+    const unconfigured = async () =>
+      ((await (await app.request('/deploy-projects/unconfigured?fresh=1', { headers: adminAuth })).json()) as { pending: { projectName: string }[] }).pending.map((p) => p.projectName);
+    expect(await unconfigured()).toEqual(['ai-processing-node']);
+
+    expect(await (await postJson('/auto-configure', { create: { groupId: group.id } })).json()).toMatchObject({ created: 1, noDomain: 1 });
+    expect(await unconfigured()).toEqual([]);
+  });
+
   it('does NOT repair when the OTHER platform\'s read FAILED — an unverifiable list proves no absence', async () => {
     // Same migration shape, minus the one fact that licensed it: Vercel's API is down, so
     // "the old project isn't in the Vercel list" is a read we couldn't complete, not a

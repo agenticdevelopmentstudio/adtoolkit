@@ -13,6 +13,7 @@ import type { BuildPhase, DeployPhase } from '../monitor/deploy-status';
 import { deployEventsSince } from '../monitor/live-buffer';
 import { providerDeployToDTO, type ProviderDeploy } from '../monitor/provider-deploy';
 import { deployTargetKey, platformCanon } from '../monitor/overview';
+import { deployProjectKey } from '@agentic-toolkit/deploy-platform/canon';
 import { envFromProject } from '../monitor/deploy-view';
 import { hostOf } from '../monitor/url';
 import type { StatusConfig } from '../config/port';
@@ -733,9 +734,13 @@ export function correlateDeployProjects(
     railwayEnvsByProject.set(p.projectName, list);
   }
   const wired = new Set<string>();
+  // Every project SOME endpoint is wired to, environment aside — for a Railway project
+  // enumerated with no environment at all (below).
+  const wiredProjects = new Set<string>();
   for (const e of eps) {
     const key = deployTargetKey(e.platform, e.deployProject, e.environment);
     if (key) wired.add(key);
+    if (e.platform && e.deployProject) wiredProjects.add(deployProjectKey(e.platform, e.deployProject));
     // Host-membership fallback: a Railway endpoint added before per-env wiring was tagged
     // env="production" by host-parsing (a provider host has no env prefix), so its staging/
     // testing project entry would wrongly read "not monitored". Attribute it instead to the
@@ -766,7 +771,15 @@ export function correlateDeployProjects(
       latestAt: null,
       deployCount: 0,
       latestStatus: null,
-      wired: targetKey !== null && wired.has(targetKey),
+      // A Railway project whose services expose no domain enumerates as ONE entry with no
+      // environment, standing for the whole project — so any endpoint wired to the project
+      // monitors it. Keyed per env it never matched: its deploy-only monitor is created on
+      // the env deploys report ("production"), and the banner went on counting the project
+      // as unmonitored after Auto Configure had set it up.
+      wired:
+        targetKey !== null &&
+        (wired.has(targetKey) ||
+          (platformCanon(p.platform) === 'railway' && p.environment === null && wiredProjects.has(deployProjectKey(p.platform, p.projectName)))),
       ignored: ignored.has(`${platformCanon(p.platform)}|${p.projectName}`),
       domain: p.domain,
       domains: p.domains,

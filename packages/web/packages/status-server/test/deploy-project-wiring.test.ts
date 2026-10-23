@@ -90,6 +90,15 @@ describe('correlateDeployProjects — wired', () => {
     expect(rows[0]!.wired).toBe(true);
   });
 
+  it('a Railway project enumerated with NO environment is wired by any endpoint on the project', () => {
+    // A worker service with no domain enumerates as one env-less entry; Auto Configure
+    // gives its deploy-only monitor the env its deploys report. It must read monitored,
+    // or the banner keeps counting a project that was just configured.
+    const worker = proj({ platform: 'railway', projectName: 'ai-processing-node', environment: null, domain: null, domains: [] });
+    expect(only([worker], [ep({ platform: 'railway', deployProject: 'ai-processing-node', environment: 'production', url: 'https://' })]).wired).toBe(true);
+    expect(only([worker], [ep({ platform: 'railway', deployProject: 'other', environment: 'production', url: 'https://' })]).wired).toBe(false);
+  });
+
   it('ignores environment for Vercel — the project name carries it', () => {
     expect(only([proj({ projectName: 'site-staging' })], [ep({ deployProject: 'site-staging', environment: 'staging' })]).wired).toBe(true);
     expect(only([proj({ projectName: 'site-staging' })], [ep({ deployProject: 'site-staging', environment: 'production' })]).wired).toBe(true);
