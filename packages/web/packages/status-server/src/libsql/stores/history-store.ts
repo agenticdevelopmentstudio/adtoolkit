@@ -35,9 +35,17 @@ export function createHistoryStore(db: Db): HistoryStore {
         .orderBy(healthChecks.checkedAt);
     },
 
-    /** One endpoint's per-UTC-day check counts over the last `days`, ascending. */
+    /** One endpoint's per-UTC-day check counts over the last `days`, ascending.
+     *
+     *  Summed from `metrics_hourly`, never counted from `health_checks`: /uptime asks for
+     *  90 days for every endpoint, and counting raw checks walked every row in the
+     *  window, about 20k per endpoint per fortnight. That ran on the API thread for 6 to
+     *  87 seconds at a time on 2026-10-23, so /health timed out and logins hung. The
+     *  rollup has one row per endpoint-hour and keeps 90 days, so the read is small and
+     *  the full window is actually there. The cost is that the window starts at the
+     *  cutoff's whole hour. */
     async dailyCounts(slug: string, days: number): Promise<DailyCountsRow[]> {
-      const cutoff = new Date(Date.now() - days * 86_400_000);
+      const cutoffSec = Math.floor((Date.now() - days * 86_400_000) / 1000);
       const rows = await db.all<{
         day: string;
         total: number;
@@ -46,13 +54,13 @@ export function createHistoryStore(db: Db): HistoryStore {
         down: number;
       }>(sql`
         select
-          strftime('%Y-%m-%d', checked_at, 'unixepoch') as day,
-          count(*) as total,
-          sum(case when status = 'healthy' then 1 else 0 end) as healthy,
-          sum(case when status = 'degraded' then 1 else 0 end) as degraded,
-          sum(case when status = 'down' then 1 else 0 end) as down
-        from health_checks
-        where service_slug = ${slug} and checked_at >= ${Math.floor(cutoff.getTime() / 1000)}
+          strftime('%Y-%m-%d', hour, 'unixepoch') as day,
+          sum(total_checks) as total,
+          sum(healthy_checks) as healthy,
+          sum(degraded_checks) as degraded,
+          sum(down_checks) as down
+        from metrics_hourly
+        where service_slug = ${slug} and hour >= ${cutoffSec - (cutoffSec % 3600)}
         group by day
         order by day asc
       `);

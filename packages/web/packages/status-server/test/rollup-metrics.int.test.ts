@@ -10,23 +10,29 @@ describe('rollupMetrics', () => {
     db = await freshDb();
   });
 
-  it('aggregates ONLY the current hour, ignoring older history', async () => {
+  it('aggregates the current and previous hour, ignoring older history', async () => {
     const now = new Date();
-    const anHourAgo = new Date(Date.now() - 90 * 60 * 1000);
+    const hourStartSec = Math.floor(Date.now() / 3_600_000) * 3600;
+    // One second before this hour began: the tail a cycle straddling the hour leaves
+    // behind, which this rollup must still fold into the previous hour's bucket.
+    const lastHourTail = new Date((hourStartSec - 1) * 1000);
+    const threeHoursAgo = new Date(Date.now() - 3 * 3_600_000);
     await db.insert(healthChecks).values([
       { serviceSlug: 'svc-a', status: 'healthy', responseTimeMs: 100, statusCode: 200, checkedAt: now },
       { serviceSlug: 'svc-a', status: 'healthy', responseTimeMs: 300, statusCode: 200, checkedAt: now },
       { serviceSlug: 'svc-a', status: 'down', responseTimeMs: 500, statusCode: 500, checkedAt: now },
-      // Older history must NOT be folded into this hour's bucket.
-      { serviceSlug: 'svc-a', status: 'down', responseTimeMs: 900, statusCode: 500, checkedAt: anHourAgo },
-      { serviceSlug: 'svc-a', status: 'down', responseTimeMs: 900, statusCode: 500, checkedAt: anHourAgo },
+      { serviceSlug: 'svc-a', status: 'down', responseTimeMs: 700, statusCode: 500, checkedAt: lastHourTail },
+      // Older history must NOT be folded into either bucket.
+      { serviceSlug: 'svc-a', status: 'down', responseTimeMs: 900, statusCode: 500, checkedAt: threeHoursAgo },
+      { serviceSlug: 'svc-a', status: 'down', responseTimeMs: 900, statusCode: 500, checkedAt: threeHoursAgo },
     ]);
 
     await db.run(rollupMetricsSql(['svc-a']));
 
-    const rows = await db.select().from(metricsHourly);
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({
+    const rows = await db.select().from(metricsHourly).orderBy(metricsHourly.hour);
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toMatchObject({ serviceSlug: 'svc-a', totalChecks: 1, downChecks: 1, minResponseTimeMs: 700 });
+    expect(rows[1]).toMatchObject({
       serviceSlug: 'svc-a',
       totalChecks: 3,
       healthyChecks: 2,

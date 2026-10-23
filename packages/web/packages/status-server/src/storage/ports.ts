@@ -693,7 +693,7 @@ export interface SnapshotOptions {
 }
 
 export interface MaintenanceStore {
-  /** Roll up `metrics_hourly` for the given services' current hour bucket. */
+  /** Roll up `metrics_hourly` for the given services' previous and current hour buckets. */
   rollupMetrics(serviceSlugs: string[]): Promise<void>;
   /** Retention prune across every accruing table, WAL-checkpointing when the
    *  adapter has a live connection — see the libsql implementation. */
@@ -817,7 +817,8 @@ export interface HistoryStore {
   newestCheckAt(): Promise<Date | null>;
   /** One endpoint's samples within the last `hours`, ascending. */
   checksFor(slug: string, hours: number): Promise<HistoryCheckRow[]>;
-  /** One endpoint's per-UTC-day counts over the last `days`, ascending. */
+  /** One endpoint's per-UTC-day counts over the last `days`, ascending, read from the
+   *  hourly rollup (whole hours: the first day starts at the cutoff's hour). */
   dailyCounts(slug: string, days: number): Promise<DailyCountsRow[]>;
   /** Portfolio-wide response-time sparkline: `buckets` buckets over the last
    *  `hours` (oldest → newest), each the avg response of UP checks, null where no

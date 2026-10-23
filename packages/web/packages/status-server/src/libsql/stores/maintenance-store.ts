@@ -18,6 +18,11 @@ import type { MaintenanceStore, SnapshotOptions } from "../../storage/ports";
  *
  * The hour predicate must stay a RANGE OVER THE BARE COLUMN — see the original comment
  * in `monitor/sync.ts` git history for the sargability regression this guards against.
+ *
+ * It recomputes the PREVIOUS hour as well as the current one. A cycle that starts just
+ * before the hour turns writes its checks into the old hour and then rolls up the new
+ * one, so without the second pass the last minute or so of every hour never reached
+ * the rollup. /uptime counts from this table, so those checks have to be in it.
  */
 export function rollupMetricsSql(serviceSlugs: string[]): SQL {
   return sql`
@@ -37,7 +42,7 @@ export function rollupMetricsSql(serviceSlugs: string[]): SQL {
       max(response_time_ms)
     from health_checks
     where service_slug in (${sql.join(serviceSlugs, sql`, `)})
-      and checked_at >= (unixepoch() / 3600) * 3600
+      and checked_at >= (unixepoch() / 3600) * 3600 - 3600
       and checked_at < (unixepoch() / 3600) * 3600 + 3600
     group by service_slug, hour
     on conflict(service_slug, hour) do update set
@@ -116,9 +121,9 @@ export function createMaintenanceStore(db: Db, conn?: LibsqlConnection): Mainten
     );
   };
   return {
-    /** Roll up `metrics_hourly` for the hour buckets touched by this cycle's checks.
-     *  Recomputes each (service, hour) bucket from `health_checks` and upserts it, so
-     *  reruns are idempotent. */
+    /** Roll up `metrics_hourly` for the previous and current hour buckets. Recomputes
+     *  each (service, hour) bucket from `health_checks` and upserts it, so reruns are
+     *  idempotent. */
     async rollupMetrics(serviceSlugs: string[]): Promise<void> {
       const slugs = [...new Set(serviceSlugs)];
       if (slugs.length === 0) return;
