@@ -15,7 +15,8 @@ vi.mock('node:dns', () => ({
 }));
 
 import { createApp } from '../src/app';
-import { deployProjectMeta, monitoredEndpoints } from '../src/libsql/schema';
+import { deployProjectMeta, healthChecks, monitoredEndpoints } from '../src/libsql/schema';
+import { PLACEHOLDER_URL } from '@agentic-toolkit/deploy-platform/engine';
 import { statusAdapter } from '../src/routes/auto-configure';
 import { runAutoConfigure } from '@agentic-toolkit/deploy-platform/engine';
 import { createLibsqlStorage } from '../src/libsql';
@@ -109,6 +110,30 @@ describe('server-side auto-configure', () => {
       deployProject: 'new-app',
       siteId: sites[0]!.id,
     });
+  });
+
+  it('creates a DEPLOY-ONLY monitor for a project with no domain — wired, never probed', async () => {
+    // A worker service with no public URL: its builds and deploys still need watching, so
+    // Auto Configure creates it like any other project — but there is nothing to probe.
+    const group = await makeGroup('g');
+    vercel.add('worker', null);
+
+    const pending = await app.request('/deploy-projects/unconfigured?fresh=1', { headers: adminAuth });
+    const listed = (await pending.json()) as { addable: { projectName: string }[]; noDomain: { projectName: string }[] };
+    expect(listed.addable.map((p) => p.projectName)).toContain('worker');
+    expect(listed.noDomain.map((p) => p.projectName)).toEqual(['worker']);
+
+    const res = await postJson('/auto-configure', { create: { groupId: group.id } }, adminAuth);
+    expect(await res.json()).toMatchObject({ created: 1, noDomain: 1 });
+    const endpoints = await storage.config.listEndpoints();
+    expect(endpoints).toHaveLength(1);
+    expect(endpoints[0]).toMatchObject({ url: PLACEHOLDER_URL, platform: 'vercel', deployProject: 'worker' });
+
+    await runCycle(storage, testConfig());
+
+    // Still there (a live project is not retired for lacking a URL), and never probed.
+    expect(await storage.config.listEndpoints()).toHaveLength(1);
+    expect(await db.select().from(healthChecks)).toEqual([]);
   });
 
   it('adds a per-env project to the site whose production endpoint is `www.` — no second site', async () => {

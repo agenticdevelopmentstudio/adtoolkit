@@ -23,7 +23,7 @@ export const autoConfigurePaths: Paths = {
             created: { type: 'number' },
             wired: { type: 'number' },
             skipped: { type: 'number' },
-            noDomain: { type: 'number' },
+            noDomain: { type: 'number', description: 'How many of the projects configured this run have no domain — deploy-only monitors, with no URL to probe' },
           },
         }),
         ...errors(400, 401, 403),

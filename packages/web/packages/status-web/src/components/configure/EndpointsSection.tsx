@@ -13,7 +13,7 @@ import { cn } from "@agenticdevelopertoolkit/ui/lib/utils";
 import { useStatusApi } from "../../api/client";
 import * as api from "../../api/monitored-sites";
 import { type SiteGroupView, type SiteView, type EndpointView } from "../../api/monitored-sites";
-import type { EndpointConfigStatus } from "@agentic-toolkit/deploy-platform/engine";
+import { endpointHasUrl, type EndpointConfigStatus } from "@agentic-toolkit/deploy-platform/engine";
 import { hostEnv } from "@agentic-toolkit/deploy-platform/canon";
 // The classifiers are this app's wrappers (they fold in the paused-monitor opt-out).
 import { endpointConfigStatus, endpointUnconfigured } from "../../lib/config-status";
@@ -21,7 +21,7 @@ import { PLATFORM_NONE, allPlatformKeys, platformFilterOptions } from "../../lib
 import { platformCanon } from "../../lib/deploy-view";
 import { platformIcon } from "../../lib/platform-icon";
 import { platformLabel } from "../../lib/deploy-display";
-import { hostOf } from "../../lib/url";
+import { hostOf, siteNameForUrl } from "../../lib/url";
 import { slugify } from "../../lib/slug";
 import { useDeployProjects } from "../../hooks/use-deploy-projects";
 import { useSettingsEntityLevel } from "../settings-level";
@@ -72,8 +72,8 @@ function envOf(url: string): string {
  *  endpoints share a host (different path), so include the path to tell them
  *  apart. */
 function siteUrlLabel(url: string): string {
+  if (!endpointHasUrl(url)) return "(no url · deploys only)";
   const host = hostOf(url);
-  if (!host) return url || "(no url)";
   try {
     const path = new URL(url).pathname;
     return path && path !== "/" ? host + path : host;
@@ -411,9 +411,10 @@ export function EndpointsSection({
         const onlyEndpoint = endpoints.filter((e) => e.siteId === current.siteId).length === 1;
         const sitePatch: { name?: string; slug?: string; groupId?: string } = {};
         if (draft.groupId && draft.groupId !== currentSite.groupId) sitePatch.groupId = draft.groupId;
-        if (onlyEndpoint && currentSite.name !== host) {
-          sitePatch.name = host;
-          sitePatch.slug = slugify(host);
+        const siteName = siteNameForUrl(url);
+        if (onlyEndpoint && siteName && currentSite.name !== siteName) {
+          sitePatch.name = siteName;
+          sitePatch.slug = slugify(siteName);
         }
         if (Object.keys(sitePatch).length > 0) await api.updateSite(apiClient, current.siteId, sitePatch);
         await api.updateEndpoint(apiClient, current.id, { url, ...writeFields(env, current.kind) });

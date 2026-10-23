@@ -217,6 +217,25 @@ describe("endpointsClaimedByNothing — what it refuses to judge", () => {
     expect(ids(r)).toEqual([]);
   });
 
+  it("judges a WIRED deploy-only monitor by its project — no URL is no exemption", () => {
+    // A worker with no domain is monitored by its deploys alone. When its project is
+    // deleted the monitor describes nothing, exactly like a wired monitor with a URL —
+    // exempting it for having no host would leave it on the board forever.
+    const endpoints = [
+      ep("e1", "https://", { platform: "railway", deployProject: "worker-gone" }),
+      ep("e2", "https://", { platform: "railway", deployProject: "worker-live" }),
+      ep("e3", "https://live.example.com", { platform: "railway", deployProject: "site" }),
+    ];
+    const projects = [project("worker-live", [], "railway"), project("site", ["live.example.com"], "railway")];
+    const r = endpointsClaimedByNothing(endpoints, projects, {
+      configuredPlatforms: ["railway"],
+      verifiedPlatforms: ["railway"],
+      verifiedDomains: ["railway"],
+    });
+
+    expect(ids(r)).toEqual(["e1"]);
+  });
+
   it("matches a host case-insensitively and ignores its port", () => {
     const endpoints = [ep("e1", "https://LIVE.example.com:8443", { platform: null, deployProject: null }), ep("e2", "https://other.example.com")];
     const r = endpointsClaimedByNothing(endpoints, [project("alpha", ["live.example.com", "other.example.com"])], ALL_SEEN);

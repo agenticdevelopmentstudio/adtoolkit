@@ -115,7 +115,8 @@ describe("partitionPending", () => {
       proj({ projectName: "no-domain", domain: null }), // pending, no domain
     ]);
     expect(r.pending.map((p) => p.projectName).sort()).toEqual(["no-domain", "unwired"]);
-    expect(r.addable.map((p) => p.projectName)).toEqual(["unwired"]);
+    // A domainless project is addable too — as a deploy-only monitor (no URL to probe).
+    expect(r.addable.map((p) => p.projectName).sort()).toEqual(["no-domain", "unwired"]);
     expect(r.noDomain).toBe(1);
   });
 });

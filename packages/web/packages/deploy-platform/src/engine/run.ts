@@ -15,7 +15,7 @@
 // builder runner so their sequencing/skip-collection semantics can't drift.
 // ---------------------------------------------------------------------------
 import { deployProjectKey, domainFamily, epHost, platformCanon, slugify } from "../canon/index.js";
-import { PLACEHOLDER_URL, indexLiveProjects, planAddProject, type EndpointLite, type LiveProjectIndex, type PlanOpts, type ProjectLite } from "./plan.js";
+import { indexLiveProjects, urlHost, planAddProject, type EndpointLite, type LiveProjectIndex, type PlanOpts, type ProjectLite } from "./plan.js";
 import { endpointNeedsWiring, endpointUnconfigured, type EndpointLike } from "./classify.js";
 
 /** Render an unknown thrown value as a display string (Error → message, else String). */
@@ -251,7 +251,7 @@ async function executeAdd(p: ProjectLite, working: Working, api: StatusAddApi, c
   // new families) unless the operator forced their pick, and its slug is disambiguated
   // against the ones already taken in that group — an unavoidable 409 here doesn't just
   // fail this run, it strands the project on every future one.
-  const host = plan.url === PLACEHOLDER_URL ? "" : epHost(plan.url);
+  const host = urlHost(plan.url);
   const groupId = create.forceGroup ? create.groupId : groupForNewSite(host, working, create.groupId);
   // Landing somewhere other than the selected group is a decision we made FOR the operator;
   // say so rather than let the run read as "it went where you said".
@@ -436,24 +436,6 @@ export function hostOmittedFromDomainLists(host: string): boolean {
   return UNLISTED_PROVIDER_SUFFIXES.some((suffix) => host.endsWith(suffix));
 }
 
-/**
- * The endpoint's host, or "" when its URL isn't a URL at all.
- *
- * `epHost` deliberately falls back to the RAW string, which is right for the wiring
- * match (a bare `example.com` still matches a project domain) and wrong here: a value
- * no domain list could ever contain would read as a vanished host every pass. That
- * covers real config — `PLACEHOLDER_URL` ("https://"), the URL-less row the create path
- * leaves for a domain-less project to be filled in — which is unfinished config, not
- * config describing something deleted.
- */
-function judgeableHost(url: string): string {
-  try {
-    return epHost(new URL(url).href);
-  } catch {
-    return "";
-  }
-}
-
 /** The endpoint fields the removal rule reads: the configuration axis
  *  ({@link EndpointLike}) plus the URL whose host is looked up in the claim index. */
 export type ClaimableEndpoint = EndpointLike & { url: string };
@@ -531,11 +513,15 @@ export function endpointsClaimedByNothing<T extends ClaimableEndpoint>(
   const claims = indexEndpointWiring([...projects]);
 
   // Removal candidates: deploy-backed kinds the operator hasn't exempted, with a
-  // parseable host the domain lists actually cover.
+  // parseable host the domain lists actually cover — or, with no host at all, WIRED to a
+  // project (a deploy-only monitor), which the wired branch judges by its project alone.
   const candidates = endpoints
     .filter((e) => endpointNeedsWiring(e.kind) && !e.ignoreProjectWarning)
-    .map((e) => ({ e, host: judgeableHost(e.url) }))
-    .filter((c) => !!c.host && !hostOmittedFromDomainLists(c.host));
+    // `urlHost`, not `epHost`: a value no domain list could ever contain would read as a
+    // vanished host every pass. That covers real config — a deploy-only monitor's
+    // `PLACEHOLDER_URL` — which describes something with no URL, not something deleted.
+    .map((e) => ({ e, host: urlHost(e.url) }))
+    .filter((c) => (c.host ? !hostOmittedFromDomainLists(c.host) : !!c.e.platform && !!c.e.deployProject));
   if (candidates.length === 0) return { doomed: [], withheld };
 
   // Do the two lists describe the same fleet at all? `null` (a host two projects claim)
@@ -576,6 +562,7 @@ export function endpointsClaimedByNothing<T extends ClaimableEndpoint>(
   }
 
   // ── Unwired: the domain lists are the authority ───────────────────────────
+  // (Every unwired candidate has a host — the filter above admits a hostless one only when wired.)
   const unwired = candidates.filter((c) => !c.e.platform || !c.e.deployProject);
   if (unwired.length > 0) {
     // Any platform could be the one serving these hosts, so judging them needs EVERY
@@ -601,22 +588,24 @@ export interface AutoConfigureSummary {
   /** Existing endpoints wired to their deploy project by the endpoint axis (the
    *  non-canonical / redirect-alias domains the project axis can't reach). */
   wired: number;
-  /** Pending projects with no known domain — nothing to match a site against. */
-  noDomain: number;
-  /** Projects with a domain but no site monitors it yet, plus any conflicts. */
+  /** How many of the projects configured this run (`added` + `created`) had no domain,
+   *  and so are monitored by their deploys only — no URL to probe. Optional so a caller
+   *  with nothing to say about it can omit it. */
+  noDomain?: number;
+  /** Projects no site monitors yet (match-only) or that couldn't be configured (a
+   *  conflict, a failed write) — the leftovers. */
   skipped: number;
 }
 
 const projectsCount = (n: number): string => plural(n, "project");
 const noSite = (n: number): string => `${projectsCount(n)} ${n === 1 ? "has" : "have"} no site yet`;
 
-/** Why the leftover projects couldn't be matched: no domain to match against, or a
- *  domain conflict. The dominant "no site monitors this domain" case is the headline. */
-function manualDetail(r: AutoConfigureSummary): string {
-  const parts: string[] = [];
-  if (r.noDomain > 0) parts.push(`${r.noDomain} with no domain`);
-  if (r.skipped > 0) parts.push(`${r.skipped} unmatched`);
-  return parts.length ? ` (${parts.join(", ")})` : "";
+/** The deploy-only caveat: a project with no domain WAS configured, but there is no URL
+ *  to probe, so the operator should know its site will show deploys and no uptime. */
+function deployOnlyDetail(r: AutoConfigureSummary): string {
+  const n = r.noDomain ?? 0;
+  if (n === 0) return "";
+  return ` — ${projectsCount(n)} with no domain ${n === 1 ? "is" : "are"} tracked by ${n === 1 ? "its" : "their"} deploys only`;
 }
 
 /**
@@ -628,7 +617,7 @@ function manualDetail(r: AutoConfigureSummary): string {
  */
 export function summarizeAutoConfigure(r: AutoConfigureSummary): string {
   const created = r.created ?? 0;
-  const manual = r.noDomain + r.skipped;
+  const manual = r.skipped;
   const did: string[] = [];
   if (r.added > 0) did.push(`matched ${projectsCount(r.added)} to ${r.added === 1 ? "its site" : "their sites"}`);
   if (created > 0) did.push(`created ${plural(created, "site")}`);
@@ -636,8 +625,8 @@ export function summarizeAutoConfigure(r: AutoConfigureSummary): string {
   if (did.length === 0) {
     return manual === 0
       ? "Nothing to match — every monitored site is already wired to its deploy project."
-      : `No new matches — ${noSite(manual)}${manualDetail(r)}.`;
+      : `No new matches — ${noSite(manual)}.`;
   }
-  const sentence = did.join(", ").replace(/^./, (c) => c.toUpperCase());
-  return manual === 0 ? `${sentence}.` : `${sentence}; ${noSite(manual)}${manualDetail(r)}.`;
+  const sentence = did.join(", ").replace(/^./, (c) => c.toUpperCase()) + deployOnlyDetail(r);
+  return manual === 0 ? `${sentence}.` : `${sentence}; ${noSite(manual)}.`;
 }

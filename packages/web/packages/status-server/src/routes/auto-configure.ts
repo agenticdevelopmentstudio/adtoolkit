@@ -178,7 +178,7 @@ export async function performAutoConfigure(storage: Storage, config: StatusConfi
   //    the banner derive from.
   const all = await buildDeployProjects(storage, enumerated);
   const projects = vercel.ok ? all : all.filter((p) => platformCanon(p.platform) !== 'vercel');
-  const { addable, noDomain } = partitionPending(projects);
+  const { addable } = partitionPending(projects);
 
   const api = statusAdapter(storage);
   // 4. Project axis: match each addable project to the site that monitors its domain,
@@ -229,9 +229,10 @@ export async function performAutoConfigure(storage: Storage, config: StatusConfi
       notes.map((n) => ({ project: n.project.projectName, note: n.note })),
       (n) => `${n.project}|${n.note}`,
     ),
-    // Carried so the web's summarizeAutoConfigure can name the "(N with no domain)"
-    // leftovers — pending projects with no domain the project axis can't match.
-    noDomain,
+    // How many of the projects configured this run had no domain, and so are monitored by
+    // their deploys only — carried so the web's summarizeAutoConfigure can say so (a site
+    // that will show builds and never an uptime figure should not be a surprise).
+    noDomain: [...added, ...created].filter((p) => !p.domain).length,
     // true → Vercel IS configured here, but its project list couldn't be verified this run,
     // so it was skipped entirely. Reported rather than swallowed: "nothing to match" and
     // "we didn't look" must not read the same to the operator. Gated on `configured` so an

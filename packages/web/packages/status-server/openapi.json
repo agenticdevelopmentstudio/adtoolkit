@@ -2109,7 +2109,8 @@
                       "type": "array",
                       "items": {
                         "$ref": "#/components/schemas/DeployProject"
-                      }
+                      },
+                      "description": "The pending projects with no domain — added as deploy-only monitors (no URL to probe)"
                     },
                     "unconfiguredSites": {
                       "type": "array",
@@ -6247,7 +6248,8 @@
                       "type": "number"
                     },
                     "noDomain": {
-                      "type": "number"
+                      "type": "number",
+                      "description": "How many of the projects configured this run have no domain — deploy-only monitors, with no URL to probe"
                     }
                   }
                 }

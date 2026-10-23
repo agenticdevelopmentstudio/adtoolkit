@@ -1,9 +1,35 @@
 import { platformCanon, deployProjectKey, envFromProject, hostEnv, siteApex, projectBaseName, epHost, slugify } from "../canon/index.js";
 import { endpointNeedsWiring } from "./classify.js";
 
-// A project with no known domain (e.g. a Cloudflare Worker) still gets a site +
-// endpoint on Add — with this placeholder URL the operator fills in afterwards.
+// A project with no known domain (a Cloudflare Worker, a Railway worker service) still
+// gets a site + endpoint on Add — a DEPLOY-ONLY monitor, whose URL is this placeholder.
+// There is nothing to probe, so the cycle skips it (`endpointHasUrl`); its builds and
+// deploys are tracked like any other project's. The URL is the ONLY thing that decides
+// this: give the endpoint a real URL in the editor and it is probed from the next tick,
+// with no second switch to remember.
 export const PLACEHOLDER_URL = "https://";
+
+/**
+ * The host an endpoint URL names, or "" when it names none.
+ *
+ * `epHost` deliberately falls back to the RAW string, which is right for the wiring match
+ * (a bare `example.com` still matches a project domain) and wrong wherever the question is
+ * "is there anything at this URL at all" — {@link PLACEHOLDER_URL} is the case that matters.
+ */
+export function urlHost(url: string): string {
+  try {
+    return epHost(new URL(url).href);
+  } catch {
+    return "";
+  }
+}
+
+/** True when an endpoint's URL names a host something could be probed at — false for a
+ *  deploy-only monitor ({@link PLACEHOLDER_URL}) or any other URL that names nothing. The
+ *  ONE answer to "probe it?" and "does it have a live link?". */
+export function endpointHasUrl(url: string): boolean {
+  return urlHost(url) !== "";
+}
 
 // ---------------------------------------------------------------------------
 // "Add" planning — given a deploy project (with a domain attached, e.g.
@@ -136,8 +162,8 @@ export function planAddProject(project: ProjectLite, endpoints: EndpointLite[], 
   // a provider host like `svc-testing.up.railway.app` has no env-prefix a regex can read.
   const explicitEnv = project.environment?.trim() || null;
 
-  // No domain (e.g. a Cloudflare Worker) → still monitorable, with a placeholder URL the
-  // operator fills in afterwards, and its env read from the NAME (no host to read it from).
+  // No domain (e.g. a Cloudflare Worker) → still monitored, deploy-only, with the
+  // placeholder URL, and its env read from the NAME (no host to read it from).
   const env = explicitEnv ?? (domain ? hostEnv(domain) : envFromProject(project.projectName));
   const url = domain ? `https://${domain}` : PLACEHOLDER_URL;
   const base = siteApex(domain);

@@ -384,7 +384,7 @@ export const readsPaths: Paths = {
           properties: {
             pending: { type: 'array', items: ref('DeployProject') },
             addable: { type: 'array', items: ref('DeployProject') },
-            noDomain: { type: 'array', items: ref('DeployProject') },
+            noDomain: { type: 'array', items: ref('DeployProject'), description: 'The pending projects with no domain — added as deploy-only monitors (no URL to probe)' },
             unconfiguredSites: { type: 'array', items: unconfiguredSite },
           },
         }),

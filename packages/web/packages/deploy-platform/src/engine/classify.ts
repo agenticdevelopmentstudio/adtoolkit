@@ -115,16 +115,20 @@ export function projectUnconfigured(p: { wired: boolean; ignored: boolean }): bo
 export interface PendingPartition<T> {
   /** Unconfigured projects (no endpoint, not ignored) — what the banner counts. */
   pending: T[];
-  /** The domain-backed subset — the ones Auto Configure / "Add all" can add. */
+  /** What Auto Configure / "Add all" can add: EVERY pending project. A domain decides only
+   *  HOW one is monitored, not whether — see {@link noDomain}. */
   addable: T[];
-  /** Pending projects with no domain — left for manual setup. */
+  /** The pending projects with no domain (a worker, a queue consumer). They are still
+   *  added, as deploy-only monitors: no URL to probe, so HTTP monitoring is off, but their
+   *  builds and deploys are tracked like any other project's. Leaving them out is what kept
+   *  a worker's failed builds off the board entirely — "nothing to probe" is not "nothing
+   *  to watch". */
   noDomain: number;
 }
 
 export function partitionPending<T extends ProjectLike>(projects: T[]): PendingPartition<T> {
   const pending = projects.filter(projectUnconfigured);
-  const addable = pending.filter((p) => !!p.domain);
-  return { pending, addable, noDomain: pending.length - addable.length };
+  return { pending, addable: pending, noDomain: pending.filter((p) => !p.domain).length };
 }
 
 // ── The aggregate ────────────────────────────────────────────────────────────
@@ -136,9 +140,9 @@ export interface ConfigStatus<E extends EndpointLike = EndpointLike, P extends P
   unconfiguredSites: E[];
   /** Deploy projects no endpoint monitors and the operator hasn't ignored. */
   unmonitoredProjects: P[];
-  /** Domain-backed subset of `unmonitoredProjects` — what Auto Configure can add. */
+  /** What Auto Configure can add — every unmonitored project (see `partitionPending`). */
   addableProjects: P[];
-  /** Unmonitored projects with no domain — can't be auto-added (need a URL). */
+  /** Unmonitored projects with no domain — added as deploy-only monitors (no URL to probe). */
   noDomainProjects: number;
   /** Unmonitored-project count keyed by CANONICAL platform (the Platforms badges). */
   unmonitoredByPlatform: Map<string, number>;

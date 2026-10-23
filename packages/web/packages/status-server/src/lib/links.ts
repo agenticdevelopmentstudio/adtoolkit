@@ -1,3 +1,4 @@
+import { endpointHasUrl } from '@agentic-toolkit/deploy-platform';
 import { platformCanon } from '../monitor/overview';
 
 // ---------------------------------------------------------------------------
@@ -76,14 +77,16 @@ export function platformDashboardUrl(
  * The canonical links for a site / project: its live production URL and its
  * platform dashboard. `live` is the PRODUCTION endpoint's URL (falling back to the
  * first endpoint), normalized to an absolute URL; null when the site has no
- * endpoint/domain. `platform` is the deploy-platform dashboard (nullable).
+ * endpoint/domain — a deploy-only monitor's placeholder is not a URL anyone can open.
+ * `platform` is the deploy-platform dashboard (nullable).
  */
 export function siteLinks(
   site: { platform: string | null; projectName: string | null },
   endpoints: { url: string; environment?: string | null }[],
   meta?: PlatformMeta,
 ): SiteLinks {
-  const prod = endpoints.find((e) => e.environment === 'production') ?? endpoints[0];
+  const withUrl = endpoints.filter((e) => endpointHasUrl(liveUrl(e.url)));
+  const prod = withUrl.find((e) => e.environment === 'production') ?? withUrl[0];
   return {
     live: prod ? liveUrl(prod.url) : null,
     platform: platformDashboardUrl(site.platform, site.projectName, meta),

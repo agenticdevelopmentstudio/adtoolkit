@@ -5,7 +5,7 @@ import { matchRosterEntry, reconcileBoardLedger, rosterTargets } from "../board"
 import type { RosterEntry } from "../board/types";
 import type { PlatformObservationInput } from "../storage/ports";
 import { type ProviderConn } from "@agentic-toolkit/deploy-platform/conn";
-import { endpointsClaimedByNothing, platformCanon } from "@agentic-toolkit/deploy-platform";
+import { endpointHasUrl, endpointsClaimedByNothing, platformCanon } from "@agentic-toolkit/deploy-platform";
 import { enumerateDeployProjects, providerConn } from "./provider-conn";
 import { fetchVercelDeployments } from "./fetch-vercel";
 import { fetchVercelProductionStates, type VercelProjectsResult } from "./fetch-vercel-projects";
@@ -280,8 +280,12 @@ export async function runCycle(
   let stillServing: ReadonlySet<string> = new Set<string>();
 
   // --- 2-5. probe → record → rollup ----------------------------------------
-  if (endpoints.length > 0) {
-    const results = await probeEndpoints(endpoints);
+  // Only endpoints with a URL. A deploy-only monitor (a project with no domain — a worker)
+  // has nothing to probe: probing its placeholder recorded a "down" check every tick for a
+  // service that was never meant to answer HTTP. It is watched through its deploys below.
+  const probeable = endpoints.filter((e) => endpointHasUrl(e.url));
+  if (probeable.length > 0) {
+    const results = await probeEndpoints(probeable);
     stillServing = new Set(results.filter((r) => r.status === "healthy").map((r) => r.slug));
 
     await storage.health.recordChecks(

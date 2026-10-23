@@ -17,7 +17,8 @@ import { StatusMatrix } from "./StatusMatrix";
 import { DetailPanel } from "./DetailPanel";
 import { GlobalPanel } from "./GlobalPanel";
 import { StatusDot } from "./StatusDot";
-import { hostOf } from "../lib/url";
+import { endpointLabel } from "../lib/url";
+import { endpointHasUrl } from "@agentic-toolkit/deploy-platform/engine";
 
 import { COLORS, PALETTE, envBadgeLabel, envColor } from "../lib/colors";
 const SPLIT_KEY = "adh-status-split";
@@ -170,7 +171,7 @@ export function Dashboard(): ReactElement {
               <span style={{ display: "inline-flex", alignItems: "center", gap: 8, minWidth: 0 }}>
                 {selectedSvc && <StatusDot status={selectedSvc.status === "unknown" ? "down" : selectedSvc.status} size={8} />}
                 <span style={{ color: PALETTE.text, fontWeight: 600, fontSize: 12 }}>
-                  {selectedSvc ? hostOf(selectedSvc.url) : selectedSlug}
+                  {selectedSvc ? endpointLabel(selectedSvc) : selectedSlug}
                 </span>
                 {selectedSvc?.environment && (
                   <span
@@ -191,7 +192,8 @@ export function Dashboard(): ReactElement {
             )
           }
           headerActions={
-            selectedSvc ? (
+            // A deploy-only monitor has no URL to open.
+            selectedSvc && endpointHasUrl(selectedSvc.url) ? (
               <a
                 href={selectedSvc.url.replace(/\/health$/, "")}
                 target="_blank"

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { indexLiveProjects, type EndpointLite, type ProjectLite } from "./plan.js";
+import { PLACEHOLDER_URL, endpointHasUrl, indexLiveProjects, type EndpointLite, type ProjectLite } from "./plan.js";
 import {
   indexEndpointWiring,
   runAutoConfigure,
@@ -366,6 +366,30 @@ function makeStore(initial: EndpointLite[] = []): { api: StatusAddApi; endpoints
   return { api, endpoints, sites };
 }
 
+describe("runAutoConfigure — a project with no domain", () => {
+  it("creates a deploy-only monitor: placeholder URL, wired to its project", async () => {
+    const { api, endpoints, sites } = makeStore();
+
+    const res = await runAutoConfigure([proj("ai-processing-node-deployment", null, "railway")], { api, create: { groupId: "g1" } });
+
+    expect(res.created).toHaveLength(1);
+    expect(sites).toHaveLength(1);
+    expect(endpoints).toHaveLength(1);
+    expect(endpoints[0]).toMatchObject({ url: PLACEHOLDER_URL, platform: "railway", deployProject: "ai-processing-node-deployment" });
+    expect(endpointHasUrl(endpoints[0]!.url)).toBe(false); // → the cycle never probes it
+  });
+});
+
+describe("endpointHasUrl", () => {
+  it("is false only for a URL that names no host", () => {
+    expect(endpointHasUrl(PLACEHOLDER_URL)).toBe(false);
+    expect(endpointHasUrl("")).toBe(false);
+    expect(endpointHasUrl("not a url")).toBe(false);
+    expect(endpointHasUrl("https://agenticdeveloperhelp.com")).toBe(true);
+    expect(endpointHasUrl("https://api.example.com/health")).toBe(true);
+  });
+});
+
 describe("runAutoConfigure — match-only (no `create`)", () => {
   it("does NOT create a site/endpoint for a project no site monitors — it's left for the operator", async () => {
     // The per-platform "Match" buttons omit `create` for exactly this reason: a browser
@@ -475,61 +499,58 @@ describe("wireMatchingEndpoints — endpoint-axis wiring by full domain list", (
 
 describe("summarizeAutoConfigure", () => {
   it("matched many, some have no site yet", () => {
-    const msg = summarizeAutoConfigure({ added: 100, wired: 0, noDomain: 21, skipped: 0 });
+    const msg = summarizeAutoConfigure({ added: 100, wired: 0, skipped: 21 });
     expect(msg).toContain("Matched 100 projects to their sites");
     expect(msg).toContain("21 projects have no site yet");
     expect(msg).not.toContain("Nothing");
   });
 
   it("everything matched (plural)", () => {
-    expect(summarizeAutoConfigure({ added: 5, wired: 0, noDomain: 0, skipped: 0 })).toBe("Matched 5 projects to their sites.");
+    expect(summarizeAutoConfigure({ added: 5, wired: 0, skipped: 0 })).toBe("Matched 5 projects to their sites.");
   });
 
   it("singular uses 'its site'", () => {
-    expect(summarizeAutoConfigure({ added: 1, wired: 0, noDomain: 0, skipped: 0 })).toBe("Matched 1 project to its site.");
+    expect(summarizeAutoConfigure({ added: 1, wired: 0, skipped: 0 })).toBe("Matched 1 project to its site.");
   });
 
   it("reports wired sites (endpoint axis) alongside matched projects", () => {
-    expect(summarizeAutoConfigure({ added: 2, wired: 3, noDomain: 0, skipped: 0 })).toBe("Matched 2 projects to their sites, wired 3 sites.");
+    expect(summarizeAutoConfigure({ added: 2, wired: 3, skipped: 0 })).toBe("Matched 2 projects to their sites, wired 3 sites.");
   });
 
   it("reports created sites alongside matched + wired", () => {
-    expect(summarizeAutoConfigure({ added: 2, created: 3, wired: 1, noDomain: 0, skipped: 0 })).toBe(
+    expect(summarizeAutoConfigure({ added: 2, created: 3, wired: 1, skipped: 0 })).toBe(
       "Matched 2 projects to their sites, created 3 sites, wired 1 site.",
     );
   });
 
   it("created only (singular)", () => {
-    expect(summarizeAutoConfigure({ added: 0, created: 1, wired: 0, noDomain: 0, skipped: 0 })).toBe("Created 1 site.");
+    expect(summarizeAutoConfigure({ added: 0, created: 1, wired: 0, skipped: 0 })).toBe("Created 1 site.");
   });
 
   it("reports ONLY wired sites when no projects were matched", () => {
-    expect(summarizeAutoConfigure({ added: 0, wired: 1, noDomain: 0, skipped: 0 })).toBe("Wired 1 site.");
+    expect(summarizeAutoConfigure({ added: 0, wired: 1, skipped: 0 })).toBe("Wired 1 site.");
   });
 
   it("nothing to do because every site is already wired", () => {
-    expect(summarizeAutoConfigure({ added: 0, wired: 0, noDomain: 0, skipped: 0 })).toBe(
+    expect(summarizeAutoConfigure({ added: 0, wired: 0, skipped: 0 })).toBe(
       "Nothing to match — every monitored site is already wired to its deploy project.",
     );
   });
 
-  it("no matches but projects remain (no domain + conflict)", () => {
-    const msg = summarizeAutoConfigure({ added: 0, wired: 0, noDomain: 3, skipped: 1 });
-    expect(msg).toContain("No new matches");
-    expect(msg).toContain("4 projects have no site yet");
-    expect(msg).toContain("3 with no domain");
-    expect(msg).toContain("1 unmatched");
-  });
-
-  it("matched some, some remain — the count matches the banner's residual", () => {
-    const msg = summarizeAutoConfigure({ added: 116, wired: 0, noDomain: 5, skipped: 0 });
-    expect(msg).toContain("Matched 116 projects to their sites");
-    expect(msg).toContain("5 projects have no site yet");
+  it("no matches but projects remain", () => {
+    expect(summarizeAutoConfigure({ added: 0, wired: 0, skipped: 4 })).toBe("No new matches — 4 projects have no site yet.");
   });
 
   it("singular verb for a single leftover", () => {
-    expect(summarizeAutoConfigure({ added: 3, wired: 0, noDomain: 1, skipped: 0 })).toBe(
-      "Matched 3 projects to their sites; 1 project has no site yet (1 with no domain).",
+    expect(summarizeAutoConfigure({ added: 3, wired: 0, skipped: 1 })).toBe("Matched 3 projects to their sites; 1 project has no site yet.");
+  });
+
+  it("names the deploy-only projects among those configured", () => {
+    expect(summarizeAutoConfigure({ added: 0, created: 1, wired: 0, noDomain: 1, skipped: 0 })).toBe(
+      "Created 1 site — 1 project with no domain is tracked by its deploys only.",
+    );
+    expect(summarizeAutoConfigure({ added: 1, created: 2, wired: 0, noDomain: 2, skipped: 1 })).toBe(
+      "Matched 1 project to its site, created 2 sites — 2 projects with no domain are tracked by their deploys only; 1 project has no site yet.",
     );
   });
 });

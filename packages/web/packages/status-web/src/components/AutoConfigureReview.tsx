@@ -85,7 +85,8 @@ export function AutoConfigureReview({ projects, groups, busy, progress, onApply,
   const sections = useMemo(() => bySection(projects), [projects]);
   const ignoring = ignore.size;
   const configuring = useMemo(
-    () => projects.filter((p) => !ignore.has(projectKeyOf(p)) && !!p.domain).length,
+    // Every kept project is configured — one with no domain as a deploy-only monitor.
+    () => projects.filter((p) => !ignore.has(projectKeyOf(p))).length,
     [projects, ignore],
   );
 
@@ -122,7 +123,8 @@ export function AutoConfigureReview({ projects, groups, busy, progress, onApply,
           <DialogTitle className="text-apt-gold">⚙ Review discovered projects</DialogTitle>
           <DialogDescription>
             {projects.length} {projects.length === 1 ? "project isn't" : "projects aren't"} monitored yet. Check the ones to
-            ignore — the rest are configured (matched to a site, or a new site is created).
+            ignore — the rest are configured (matched to a site, or a new site is created). A project with no domain
+            is monitored by its builds and deploys only — there is no URL to probe.
           </DialogDescription>
         </DialogHeader>
 
@@ -159,8 +161,11 @@ export function AutoConfigureReview({ projects, groups, busy, progress, onApply,
                       <span className={on ? "font-semibold text-apt-text-dim line-through" : "font-semibold text-apt-text"}>
                         {p.projectName}
                       </span>
-                      <span className={`ml-auto text-[11px] ${p.domain ? "text-apt-text-muted" : "text-apt-text-dim"}`}>
-                        {p.domain ?? "no domain"}
+                      <span
+                        className={`ml-auto text-[11px] ${p.domain ? "text-apt-text-muted" : "text-apt-text-dim"}`}
+                        title={p.domain ? undefined : "no URL to probe — its builds and deploys are tracked"}
+                      >
+                        {p.domain ?? "no domain · deploys only"}
                       </span>
                     </label>
                   );

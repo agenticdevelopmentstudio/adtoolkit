@@ -101,9 +101,12 @@ export function PlatformProjects({ platform, onChanged }: { platform: string; on
   const liveProjects = indexLiveProjects(data?.projects ?? [], data?.verifiedPlatforms ?? []);
   const projects = (data?.projects ?? []).filter((p) => platformCanon(p.platform) === canon);
   // Every unconfigured project (Match or Ignore each). "Match all" only acts on the
-  // domain-backed ones — a no-domain project has no host to match a site against.
-  // Shared with the banner provider so the per-platform counts can't drift from it.
-  const { pending, addable: addableAll } = partitionPending(projects);
+  // domain-backed ones: Match is match-only (it never creates a site), and a no-domain
+  // project has no host to match a site against — Auto Configure is what adds it, as a
+  // deploy-only monitor. Shared with the banner provider so the per-platform counts can't
+  // drift from it.
+  const { pending, addable } = partitionPending(projects);
+  const addableAll = addable.filter((p) => !!p.domain);
   // The list as narrowed by the status filter. Match all / Ignore all act on the
   // unmonitored (`pending`) set, so they're only coherent when that group is
   // actually shown — gating on this keeps the bulk buttons from acting on rows the
@@ -282,7 +285,7 @@ export function PlatformProjects({ platform, onChanged }: { platform: string; on
                   <>
                     {/* No domain → nothing to match a site against (Match wires by domain). */}
                     {!p.domain && (
-                      <span title="no domain — nothing to match a site against" className="shrink-0 font-mono text-[0.66rem] text-apt-text-dim">no domain</span>
+                      <span title="no domain — nothing to match a site against; Auto Configure adds it as a deploy-only monitor" className="shrink-0 font-mono text-[0.66rem] text-apt-text-dim">no domain</span>
                     )}
                     <Button size="xs" variant="outline" className="border-apt-green/40 text-apt-green hover:bg-apt-green/10" disabled={working || !p.domain} onClick={() => void addOne(p)}>
                       {acting ? "…" : "Match"}

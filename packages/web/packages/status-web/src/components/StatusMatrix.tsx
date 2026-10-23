@@ -5,7 +5,7 @@ import {
   latestTerminalForEndpoint,
   failuresForEndpoint,
 } from "../lib/deploy-view";
-import { hostOf } from "../lib/url";
+import { endpointLabel } from "../lib/url";
 import { platformGlyph, deployStatusColor } from "../lib/deploy-display";
 import { COLORS, PALETTE, TINT, envBadgeLabel, envColor } from "../lib/colors";
 import { timeAgo } from "../lib/time-ago";
@@ -142,7 +142,7 @@ export function StatusMatrix({
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
                     }}>
-                      {hostOf(svc.url)}
+                      {endpointLabel(svc)}
                     </span>
                   </td>
 
