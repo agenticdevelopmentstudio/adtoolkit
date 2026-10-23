@@ -81,7 +81,7 @@ async function checkStatsStore(storage: Storage): Promise<IntegrationCheck> {
   const id = "stats";
   const label = "Stats store";
   const s = await storage.health.checksSummary();
-  const detail = `persistent · ${s.samples} samples across ${s.services} services`;
+  const detail = `persistent · ${s.samplesLast24h} samples in the last 24h across ${s.services} services`;
   return { id, label, configured: true, ok: true, state: "ok", detail };
 }
 

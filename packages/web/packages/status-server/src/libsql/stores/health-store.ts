@@ -76,6 +76,23 @@ function badRunOnsetBySlugSql(slugs: string[]) {
 }
 
 /** Build the `HealthStore` port over one connection. */
+/** The two statements behind `checksSummary`, exported so a test can EXPLAIN exactly
+ *  what runs: a range count on idx_health_checked, and a skip-scan of
+ *  idx_health_service_checked (each step seeks the next slug after the last). */
+export function checksSummarySql(sinceSec: number) {
+  return {
+    samples: sql`select count(*) as n from health_checks where checked_at >= ${sinceSec}`,
+    services: sql`
+      with recursive slugs(slug) as (
+        select min(service_slug) from health_checks
+        union all
+        select (select min(service_slug) from health_checks where service_slug > slugs.slug)
+        from slugs where slugs.slug is not null
+      )
+      select count(slug) as n from slugs`,
+  };
+}
+
 export function createHealthStore(db: Db): HealthStore {
   return {
     latestChecks(slugs: string[]): Promise<LatestCheckRow[]> {
@@ -101,16 +118,17 @@ export function createHealthStore(db: Db): HealthStore {
       );
     },
 
-    /** Aggregate stats over every persisted check: total samples + distinct
-     *  services (mirrors the old statsStore.summary()). */
-    async checksSummary(): Promise<{ samples: number; services: number }> {
-      const [row] = await db
-        .select({
-          samples: sql<number>`count(*)`,
-          services: sql<number>`count(distinct ${healthChecks.serviceSlug})`,
-        })
-        .from(healthChecks);
-      return { samples: Number(row?.samples ?? 0), services: Number(row?.services ?? 0) };
+    /** Checks in the last 24h + distinct services with any check. This backs a label on
+     *  the integrations self-check, and it used to be `count(*)` + `count(distinct
+     *  service_slug)` over the WHOLE table: 30-38s per call in prod, and since every
+     *  Storage call queues on the one database thread, every request behind it waited
+     *  that long too (the Next proxy dropped them). Both halves are now index seeks:
+     *  the count is a range on idx_health_checked, and the services are a skip-scan of
+     *  idx_health_service_checked — one seek per service, not one read per row. */
+    async checksSummary(): Promise<{ samplesLast24h: number; services: number }> {
+      const q = checksSummarySql(Math.floor(Date.now() / 1000) - 86_400);
+      const [recent, services] = await Promise.all([db.get<{ n: number }>(q.samples), db.get<{ n: number }>(q.services)]);
+      return { samplesLast24h: Number(recent?.n ?? 0), services: Number(services?.n ?? 0) };
     },
 
     /** Most recent health-check time in ms, or null when no checks have run yet

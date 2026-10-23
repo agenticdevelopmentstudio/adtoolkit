@@ -407,8 +407,9 @@ export interface HealthStore {
 
   /** Persist one health_checks row per probe result. */
   recordChecks(checks: HealthCheckInput[]): Promise<void>;
-  /** Aggregate stats over every persisted check: total samples + distinct services. */
-  checksSummary(): Promise<{ samples: number; services: number }>;
+  /** The stats store at a glance: checks recorded in the last 24h + distinct services
+   *  with any persisted check. Index seeks only — never a scan of health_checks. */
+  checksSummary(): Promise<{ samplesLast24h: number; services: number }>;
   /** The most recent check's epoch-ms timestamp, or null when none have run yet. */
   lastCheckedAtMs(): Promise<number | null>;
 }
