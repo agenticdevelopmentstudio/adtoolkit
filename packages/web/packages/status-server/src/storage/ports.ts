@@ -515,8 +515,11 @@ export interface DeployStore {
   ): Promise<void>;
   /** Delete deploy rows older than `days`. */
   pruneOlderThanDays(days: number): Promise<void>;
-  /** Every deploy row's correlation fields, for the live-host reconcile. */
-  listForLiveHostStamp(): Promise<DeployHostRow[]>;
+  /** The correlation fields of every deploy row the live-host reconcile can change: the
+   *  rows `owned` claims (see `ownedDeploysWhere`) and the rows that currently carry a
+   *  host. Any other row computes a null host and already has one, so reading it would
+   *  only re-confirm that. */
+  listForLiveHostStamp(owned: OwnedProjects): Promise<DeployHostRow[]>;
   /** Persist one deploy's reconciled live host. */
   setLiveHost(id: string, host: string | null): Promise<void>;
 

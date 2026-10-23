@@ -1,5 +1,5 @@
 import {
-  and, desc, eq, getTableColumns, gte, inArray, isNotNull, isNull, lt, lte, max, ne, not, or, notInArray, sql,
+  and, desc, eq, getTableColumns, gte, inArray, isNotNull, isNull, lt, lte, or, sql,
 } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import type { Db } from "../client";
@@ -7,7 +7,7 @@ import {
   deployProjectMeta, deployments, errors, issues, monitoredEndpoints, monitoredSites, platformHealthState,
   vercelProdState,
 } from "../schema";
-import { inFlightSql } from "../../monitor/deploy-status";
+import { outcomeBinSql } from "../../monitor/deploy-status";
 import type { BuildPhase, DeployPhase } from "../../monitor/deploy-status";
 import type { IssueSource } from "../../monitor/issue-sources";
 import { ownedDeploysWhere } from "./owned-deploys";
@@ -22,26 +22,58 @@ import type { BoardStore, OwnedProjects, PageCursor, SourcePage } from "../../st
 // `deriveBoard`, `deriveActivity`, `monitoredTargets`) stays in `src/board/` and
 // calls these methods for its facts.
 
-/**
- * Rows that will never carry a verdict, whatever happens next. `canceled` is the absence
- * of a verdict, and a lifecycle that expired to `unknown` masks the last real verdict —
- * see `board/facts.ts`'s prior documentation of this predicate for the full reasoning.
- */
-const HAS_OUTCOME = and(
-  or(isNull(deployments.buildPhase), notInArray(deployments.buildPhase, ["canceled", "unknown"])),
-  ne(deployments.deployPhase, "unknown"),
-);
-
-/** A row with no build lifecycle AND no deploy entry has nothing to conclude — binned
- *  with the in-flight rows (see `board/facts.ts`'s original comment on this predicate). */
-const NO_LIFECYCLE = sql`(${deployments.buildPhase} is null and ${deployments.deployPhase} = 'none')`;
-
-const CONCLUDED = and(HAS_OUTCOME, not(sql.raw(inFlightSql())), not(NO_LIFECYCLE));
-const IN_FLIGHT = and(HAS_OUTCOME, or(sql.raw(inFlightSql()), NO_LIFECYCLE));
+/** The two outcome bins — see `outcomeBinSql`, which also defines the partial index each
+ *  one seeks (`idx_deploy_concluded_latest`, `idx_deploy_inflight_latest`). */
+const CONCLUDED = sql.raw(outcomeBinSql("concluded"));
+const IN_FLIGHT = sql.raw(outcomeBinSql("in-flight"));
 
 /** A Vercel row with no environment target is a PREVIEW/branch build — see
  *  `isRealEnvDeployRow` (`monitor/deploy-view.ts`), spelled for the planner. */
 const NOT_PREVIEW = sql`not (${deployments.platform} = 'vercel' and (${deployments.environment} is null or ${deployments.environment} = ''))`;
+
+/**
+ * The newest row of every (platform, project, environment) group in one outcome bin, in
+ * ascending group order — what `GROUP BY platform, project_name, environment` with
+ * `max(created_at)` returned, without reading every row the bin holds.
+ *
+ * A skip scan over the bin's partial index, which is keyed (platform, project_name,
+ * environment, created_at, id): walking it DESCENDING, the first entry of each group is
+ * that group's newest row, and the next group is found by seeking strictly below the
+ * current one. Each step is one `limit 1` seek, so a read costs one seek per deploy target
+ * (plus at most two misses) however much history the table keeps; the GROUP BY it replaces
+ * read all of it, on every board read. Within a group, rows tied on `created_at` resolve
+ * to the larger id.
+ *
+ * `environment` is nullable and NULL sorts LAST descending, so below a non-null
+ * environment the same project still has its NULL-environment group to visit.
+ */
+async function latestPerTarget(db: Db, bin: SQL): Promise<(typeof deployments.$inferSelect)[]> {
+  const newest = async (...below: SQL[]) =>
+    (
+      await db
+        .select()
+        .from(deployments)
+        .where(and(bin, ...below))
+        .orderBy(
+          desc(deployments.platform), desc(deployments.projectName), desc(deployments.environment),
+          desc(deployments.createdAt), desc(deployments.id),
+        )
+        .limit(1)
+    )[0];
+  const out: (typeof deployments.$inferSelect)[] = [];
+  let row = await newest();
+  while (row) {
+    out.push(row);
+    const { platform: p, projectName: n, environment: e } = row;
+    const sameProject = [eq(deployments.platform, p), eq(deployments.projectName, n)];
+    row =
+      (e !== null ? await newest(...sameProject, lt(deployments.environment, e)) : undefined) ??
+      (e !== null ? await newest(...sameProject, isNull(deployments.environment)) : undefined) ??
+      (await newest(eq(deployments.platform, p), lt(deployments.projectName, n))) ??
+      (await newest(lt(deployments.platform, p)));
+  }
+  return out.reverse();
+}
 
 /** One `deployments` row → one `DeployFact`. */
 function toDeployFact(d: typeof deployments.$inferSelect): DeployFact {
@@ -139,16 +171,8 @@ export function createBoardStore(db: Db): BoardStore {
       // Two indexed pre-filters (concluded vs. in-flight), concatenated — `binByOutcome`
       // (pure, in `board/facts.ts`) re-derives the authoritative partition from
       // `combinedStatus` itself, so these predicates only decide what is worth READING.
-      const concludedRows = await db
-        .select({ ...getTableColumns(deployments), _latest: max(deployments.createdAt) })
-        .from(deployments)
-        .where(CONCLUDED)
-        .groupBy(deployments.platform, deployments.projectName, deployments.environment);
-      const inFlightRows = await db
-        .select({ ...getTableColumns(deployments), _latest: max(deployments.createdAt) })
-        .from(deployments)
-        .where(IN_FLIGHT)
-        .groupBy(deployments.platform, deployments.projectName, deployments.environment);
+      const concludedRows = await latestPerTarget(db, CONCLUDED);
+      const inFlightRows = await latestPerTarget(db, IN_FLIGHT);
       return [...concludedRows.map(toDeployFact), ...inFlightRows.map(toDeployFact)];
     },
 

@@ -44,6 +44,33 @@ export function inFlightSql(prefix: "" | "excluded." = ""): string {
   return `(${prefix}build_phase IN (${list}) OR ${prefix}deploy_phase = '${IN_FLIGHT_DEPLOY_PHASE}')`;
 }
 
+/** A row that will never carry a verdict whatever happens next is outside both bins:
+ *  `canceled` is the absence of a verdict, and a lifecycle that expired to `unknown`
+ *  masks the last real verdict. */
+const HAS_OUTCOME_SQL = "(build_phase IS NULL OR build_phase NOT IN ('canceled', 'unknown')) AND deploy_phase <> 'unknown'";
+
+/** No build lifecycle AND no deploy entry — nothing to conclude, so it bins with the
+ *  in-flight rows. */
+const NO_LIFECYCLE_SQL = "(build_phase IS NULL AND deploy_phase = 'none')";
+
+/**
+ * The board's two outcome bins over a stored `deployments` row, as raw SQL. Raw text
+ * rather than a drizzle expression because BOTH the read (`readDeployOutcomeCandidates`)
+ * and the partial index each bin seeks (`idx_deploy_concluded_latest`,
+ * `idx_deploy_inflight_latest`) are built from it: SQLite uses a partial index only when
+ * the query's WHERE contains the index's WHERE term for term, so the two must be the same
+ * literals, never bound parameters.
+ *
+ * Note the three-valued logic is load-bearing and kept as it shipped: for a row with
+ * `build_phase IS NULL`, `NOT (inFlight)` is NULL rather than true, so such a row lands
+ * in NEITHER bin unless it is deploying or has no lifecycle.
+ */
+export function outcomeBinSql(bin: "concluded" | "in-flight"): string {
+  return bin === "concluded"
+    ? `(${HAS_OUTCOME_SQL} AND NOT ${inFlightSql()} AND NOT ${NO_LIFECYCLE_SQL})`
+    : `(${HAS_OUTCOME_SQL} AND (${inFlightSql()} OR ${NO_LIFECYCLE_SQL}))`;
+}
+
 /** States a fresh report may ALWAYS overwrite for ONE lifecycle column: that column in
  *  flight (still changing) or `unknown` (the monitor's own gave-up marker, not a provider
  *  verdict). PER-COLUMN on purpose. The webhook regression guard must still protect a real

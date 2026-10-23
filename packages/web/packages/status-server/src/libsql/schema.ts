@@ -1,7 +1,7 @@
 import { sqliteTable, integer, text, real, index, uniqueIndex } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
-import { inFlightSql } from "../monitor/deploy-status";
+import { inFlightSql, outcomeBinSql } from "../monitor/deploy-status";
 
 // Timestamps are stored as INTEGER unix-seconds (`integer({ mode: "timestamp" })`),
 // so Drizzle-typed reads/writes still see JS `Date`s while raw SQL does plain
@@ -115,6 +115,25 @@ export const deployments = sqliteTable(
     // inFlightSql the queries use (literal phase values, no bound params), so it matches
     // textually and SQLite actually picks it up for that OR-predicate.
     index("idx_deploy_inflight").on(t.fetchedAt).where(sql.raw(inFlightSql(""))),
+    // The board's "latest row per (platform, project, environment)" in each outcome bin.
+    // `readDeployOutcomeCandidates` walks these one group at a time, newest first, so a
+    // board read costs one seek per deploy target instead of a GROUP BY over every row
+    // ever kept. Partial on the SAME `outcomeBinSql` literals the read uses.
+    index("idx_deploy_concluded_latest")
+      .on(t.platform, t.projectName, t.environment, t.createdAt, t.id)
+      .where(sql.raw(outcomeBinSql("concluded"))),
+    index("idx_deploy_inflight_latest")
+      .on(t.platform, t.projectName, t.environment, t.createdAt, t.id)
+      .where(sql.raw(outcomeBinSql("in-flight"))),
+    // The owned-deploy feeds (`ownedDeploysWhere`) select a handful of projects out of
+    // every project the tokens can see, by name or by provider id, newest first. One
+    // index per spelling lets each OR arm seek its own projects instead of walking
+    // `idx_deploy_created` past every unowned row.
+    index("idx_deploy_project_created").on(t.platform, t.projectName, t.createdAt),
+    index("idx_deploy_provider_created").on(t.platform, t.providerProjectId, t.createdAt),
+    // The live-host reconcile re-reads every row that currently HAS a host (to null the
+    // ones no endpoint owns any more); rows without one are the vast majority.
+    index("idx_deploy_live_host").on(t.liveHost).where(sql`live_host is not null`),
   ],
 );
 
@@ -158,6 +177,11 @@ export const issues = sqliteTable(
     // — the per-request-cost-grows-with-history trap that took the container down via
     // health_checks, and the same reason idx_deploy_inflight exists on deployments.
     index("idx_issue_opened").on(t.openedAt),
+    // The activity pages filter to the monitored targets before ordering; leading with
+    // `target` lets each target seek its own rows rather than walk the time index past
+    // every unmonitored target's.
+    index("idx_issue_target_opened").on(t.target, t.openedAt),
+    index("idx_issue_target_resolved").on(t.target, t.resolvedAt),
   ],
 );
 
@@ -383,7 +407,13 @@ export const errors = sqliteTable(
     resolved: integer("resolved", { mode: "boolean" }).notNull().default(false),
     fetchedAt: integer("fetched_at", { mode: "timestamp" }).notNull().default(now),
   },
-  (t) => [uniqueIndex("uniq_error_issue").on(t.issueKey), index("idx_error_last_seen").on(t.lastSeen)],
+  (t) => [
+    uniqueIndex("uniq_error_issue").on(t.issueKey),
+    index("idx_error_last_seen").on(t.lastSeen),
+    // Every read and the resolve sweep filter to `resolved = false` first; resolved rows
+    // only accumulate.
+    index("idx_error_open_last_seen").on(t.resolved, t.lastSeen, t.issueKey),
+  ],
 );
 
 // Periodic snapshots of headline analytics KPIs (anonymous, aggregate) pulled
@@ -440,7 +470,11 @@ export const sessions = sqliteTable(
     expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull().default(now),
   },
-  (t) => [uniqueIndex("uniq_session_token").on(t.tokenHash), index("idx_session_user").on(t.userId)],
+  (t) => [
+    uniqueIndex("uniq_session_token").on(t.tokenHash),
+    index("idx_session_user").on(t.userId),
+    index("idx_session_expires").on(t.expiresAt), // the expiry reaper
+  ],
 );
 
 // Opaque API bearer tokens (`sts_<64 hex>`) for CLI / MCP / machine callers — the
@@ -467,7 +501,12 @@ export const apiTokens = sqliteTable(
     expiresAt: integer("expires_at", { mode: "timestamp" }),
     revokedAt: integer("revoked_at", { mode: "timestamp" }),
   },
-  (t) => [uniqueIndex("uniq_api_token_hash").on(t.tokenHash)],
+  (t) => [
+    uniqueIndex("uniq_api_token_hash").on(t.tokenHash),
+    // Foreign-key child column: without it every users insert/delete scans this table to
+    // check (or cascade to) the tokens a user created.
+    index("idx_api_token_created_by").on(t.createdBy),
+  ],
 );
 
 // Device authorization grants (RFC 8628-shaped CLI/device flow). A CLI POSTs
@@ -495,7 +534,15 @@ export const deviceAuthorizations = sqliteTable(
     expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
     lastPollAt: integer("last_poll_at", { mode: "timestamp" }),
   },
-  (t) => [uniqueIndex("uniq_device_code").on(t.deviceCodeHash), uniqueIndex("uniq_user_code").on(t.userCodeHash)],
+  (t) => [
+    uniqueIndex("uniq_device_code").on(t.deviceCodeHash),
+    uniqueIndex("uniq_user_code").on(t.userCodeHash),
+    index("idx_device_auth_expires").on(t.expiresAt), // the TTL reaper
+    // Foreign-key child columns: without them every api_tokens/users write scans this
+    // table to check (or set null on) the grants that point at the parent row.
+    index("idx_device_auth_token").on(t.tokenId),
+    index("idx_device_auth_approved_by").on(t.approvedBy),
+  ],
 );
 
 export type User = typeof users.$inferSelect;

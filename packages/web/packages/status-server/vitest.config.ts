@@ -8,5 +8,7 @@ export default defineConfig({
   test: {
     include: ["test/**/*.test.ts"],
     testTimeout: 30_000,
+    // Inert unless SQL_CAPTURE is set — see the file.
+    setupFiles: ["test/helpers/sql-capture.ts"],
   },
 });

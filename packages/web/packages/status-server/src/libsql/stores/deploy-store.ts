@@ -1,4 +1,5 @@
-import { sql, eq, and, or, gt, lt, isNull, inArray, notInArray, desc } from "drizzle-orm";
+import { sql, eq, and, or, gt, lt, isNull, isNotNull, inArray, notInArray, desc } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import type { Db } from "../client";
 import { deployments, monitoredEndpoints, deployProjectMeta } from "../schema";
 import { platformCanon } from "@agentic-toolkit/deploy-platform";
@@ -176,17 +177,27 @@ export function createDeployStore(db: Db): DeployStore {
       await db.delete(deployments).where(sql`${deployments.createdAt} < unixepoch() - ${days} * 86400`);
     },
 
-    async listForLiveHostStamp(): Promise<DeployHostRow[]> {
-      return db
-        .select({
-          id: deployments.id,
-          platform: deployments.platform,
-          providerProjectId: deployments.providerProjectId,
-          projectName: deployments.projectName,
-          environment: deployments.environment,
-          liveHost: deployments.liveHost,
-        })
-        .from(deployments);
+    async listForLiveHostStamp(owned: OwnedProjects): Promise<DeployHostRow[]> {
+      const read = (where: SQL | undefined) =>
+        db
+          .select({
+            id: deployments.id,
+            platform: deployments.platform,
+            providerProjectId: deployments.providerProjectId,
+            projectName: deployments.projectName,
+            environment: deployments.environment,
+            liveHost: deployments.liveHost,
+          })
+          .from(deployments)
+          .where(where);
+      // Two reads, not one OR: SQLite cannot seek `live_host is not null` as an arm of an
+      // OR, so the single statement fell back to scanning the table. Each read on its own
+      // seeks its index (`ownedDeploysWhere`'s pair, `idx_deploy_live_host`).
+      const byId = new Map<string, DeployHostRow>();
+      for (const r of [...(await read(ownedDeploysWhere(owned))), ...(await read(isNotNull(deployments.liveHost)))]) {
+        byId.set(r.id, r);
+      }
+      return [...byId.values()];
     },
 
     async setLiveHost(id: string, host: string | null): Promise<void> {

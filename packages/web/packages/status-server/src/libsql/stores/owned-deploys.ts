@@ -31,17 +31,21 @@ const PLATFORM_SPELLINGS: [canon: string, raw: string[]][] = [
  * Crunchy clusters aren't site-bound and are always included.
  */
 export function ownedDeploysWhere(projects: OwnedProjects): SQL | undefined {
+  // A FLAT OR of (platform, project) pairs, one arm per spelling, rather than
+  // `platform in … and (name in … or id in …)`. Same rows; but each flat arm is exactly
+  // the prefix of one index (`idx_deploy_project_created`, `idx_deploy_provider_created`),
+  // so SQLite seeks every arm and unions them instead of walking `idx_deploy_created`
+  // past every unowned row until the limit fills.
   const clauses: SQL[] = [eq(deployments.platform, "crunchy")];
   for (const [canon, raw] of PLATFORM_SPELLINGS) {
     const bucket = projects.get(canon);
     if (!bucket) continue;
-    const spellings = [
-      bucket.names.size > 0 ? inArray(deployments.projectName, [...bucket.names]) : undefined,
-      bucket.ids.size > 0 ? inArray(deployments.providerProjectId, [...bucket.ids]) : undefined,
-    ].filter((c): c is SQL => c !== undefined);
-    if (spellings.length === 0) continue;
-    const clause = and(inArray(deployments.platform, raw), or(...spellings));
-    if (clause) clauses.push(clause);
+    if (bucket.names.size > 0) {
+      clauses.push(and(inArray(deployments.platform, raw), inArray(deployments.projectName, [...bucket.names]))!);
+    }
+    if (bucket.ids.size > 0) {
+      clauses.push(and(inArray(deployments.platform, raw), inArray(deployments.providerProjectId, [...bucket.ids]))!);
+    }
   }
   return or(...clauses);
 }

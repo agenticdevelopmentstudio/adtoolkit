@@ -1,7 +1,7 @@
 import type { StatusConfig } from "../config/port";
 import type { ConfiguredEndpoint, Storage } from "../storage/ports";
 import { probeEndpoints } from "./probe";
-import { matchRosterEntry, reconcileBoardLedger, rosterTargets } from "../board";
+import { matchRosterEntry, reconcileBoardLedger, rosterDeployProjects, rosterTargets } from "../board";
 import type { RosterEntry } from "../board/types";
 import type { PlatformObservationInput } from "../storage/ports";
 import { type ProviderConn } from "@agentic-toolkit/deploy-platform/conn";
@@ -539,7 +539,10 @@ async function stampLiveHosts(storage: Storage, roster: RosterEntry[]): Promise<
   // deleted Vercel project is a Problems decision, not a correlation one. An empty
   // set is `rosterTargets`' documented way to say so — it narrows nothing.
   const { byId, byName } = rosterTargets(roster, []);
-  const rows = await storage.deploy.listForLiveHostStamp();
+  // Only rows a roster entry could own, or that hold a host to clear — not the table.
+  // `rosterDeployProjects` is the SQL superset of `matchRosterEntry` for every platform
+  // the fetchers write, so no row this loop would stamp is left unread.
+  const rows = await storage.deploy.listForLiveHostStamp(rosterDeployProjects(roster));
   for (const d of rows) {
     const owner = matchRosterEntry(d, byId, byName);
     const host = (owner?.url ? hostOf(owner.url).toLowerCase() : "") || null;

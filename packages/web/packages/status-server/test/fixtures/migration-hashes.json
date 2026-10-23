@@ -78,5 +78,10 @@
     "tag": "0015_aromatic_vengeance",
     "when": 1786984834065,
     "sha256": "c88392271f32cae22f44831c80e98f959d32b4b4050d0875f6e37d74d32f3f14"
+  },
+  {
+    "tag": "0016_thankful_goliath",
+    "when": 1792791533550,
+    "sha256": "388245ee6ce9acf8931a76a237df056dfde7c571fb9baca9951ea473cddbacc2"
   }
 ]
