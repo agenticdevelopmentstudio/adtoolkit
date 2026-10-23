@@ -672,6 +672,8 @@ export function ActivityPanel({
         <ResizableSplit
           className="h-full"
           storageKey={`adh-status-split-${kind}`}
+          // Each list's Details pane reopens shown or hidden, the way the operator left it.
+          collapsedStorageKey={`adh-status-details-${kind}`}
           defaultRatio={0.6}
           top={listPane}
           bottom={detailsPane}

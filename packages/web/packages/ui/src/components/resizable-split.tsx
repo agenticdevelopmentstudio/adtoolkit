@@ -14,6 +14,13 @@ export interface ResizableSplitProps {
   storageKey?: string
   collapsed?: boolean
   onCollapsedChange?: (collapsed: boolean) => void
+  /**
+   * Remember the bottom pane's shown/hidden state in localStorage under this key, so
+   * it comes back the way the user left it. Uncontrolled use only — a caller passing
+   * `collapsed` owns that state, and this is ignored. Separate from `storageKey`
+   * (the ratio) so turning it on is a choice, not a side effect of remembering size.
+   */
+  collapsedStorageKey?: string
   bottomLabel?: string
   /**
    * Render the divider as the bottom pane's HEADER BAR — a real strip (always
@@ -64,6 +71,7 @@ export function ResizableSplit({
   storageKey,
   collapsed,
   onCollapsedChange,
+  collapsedStorageKey,
   bottomLabel = "Details",
   header,
   headerActions,
@@ -111,6 +119,20 @@ export function ResizableSplit({
   const [internalCollapsed, setInternalCollapsed] = React.useState(false)
   const isCollapsed = collapsed ?? internalCollapsed
 
+  // Load the remembered shown/hidden state after mount, for the same hydration reason
+  // as the ratio above. Restored without the toggle animation: it is where the pane
+  // already was, not a change.
+  React.useEffect(() => {
+    if (!collapsedStorageKey || collapsed !== undefined) return
+    try {
+      const raw = window.localStorage.getItem(collapsedStorageKey)
+      if (raw === "true" || raw === "false") setInternalCollapsed(raw === "true")
+    } catch {
+      // storage unavailable — start expanded
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- read once per key; a controlled caller owns its state
+  }, [collapsedStorageKey])
+
   // Hide/show animates the top pane's flex-basis; armed per-toggle so a drag is
   // never animated. Gated on the app-level appearance setting
   // (`html[data-reduce-motion="on"]` — the toolkit themes' reduce-motion pref),
@@ -140,6 +162,13 @@ export function ResizableSplit({
       onCollapsedChange(next)
     } else {
       setInternalCollapsed(next)
+    }
+    if (collapsedStorageKey && collapsed === undefined) {
+      try {
+        window.localStorage.setItem(collapsedStorageKey, String(next))
+      } catch {
+        // storage unavailable — skip persistence
+      }
     }
   }
 

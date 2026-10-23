@@ -34,6 +34,32 @@ describe('ResizableSplit', () => {
     localStorage.clear()
   })
 
+  describe('collapsedStorageKey', () => {
+    afterEach(() => localStorage.clear())
+    const isHidden = () => screen.getByText('B').closest('[inert]') !== null
+
+    it('remembers a hidden pane across a remount', () => {
+      const { unmount } = render(<ResizableSplit top={<div>T</div>} bottom={<div>B</div>} header="Details" bottomLabel="Details" collapsedStorageKey="details-test" />)
+      expect(isHidden()).toBe(false)
+      fireEvent.click(screen.getByRole('button', { name: 'Details' }))
+      expect(isHidden()).toBe(true)
+      unmount()
+
+      render(<ResizableSplit top={<div>T</div>} bottom={<div>B</div>} header="Details" bottomLabel="Details" collapsedStorageKey="details-test" />)
+      expect(isHidden()).toBe(true)
+      fireEvent.click(screen.getByRole('button', { name: 'Details' }))
+      expect(localStorage.getItem('details-test')).toBe('false')
+    })
+
+    it('stays out of a controlled split', () => {
+      localStorage.setItem('details-test', 'true')
+      render(<ResizableSplit top={<div>T</div>} bottom={<div>B</div>} collapsed={false} onCollapsedChange={() => {}} bottomLabel="Details" collapsedStorageKey="details-test" />)
+      expect(isHidden()).toBe(false)
+      fireEvent.click(screen.getByRole('button', { name: 'Details' }))
+      expect(localStorage.getItem('details-test')).toBe('true')
+    })
+  })
+
   describe('header-bar variant', () => {
     it('renders the header content on the divider bar with the chevron far right', () => {
       render(<ResizableSplit top={<div>T</div>} bottom={<div>B</div>} header="Details" bottomLabel="Details" />)

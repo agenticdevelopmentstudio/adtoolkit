@@ -219,3 +219,25 @@ describe("ActivityPanel scroll-back", () => {
     expect(onLoadOlder).not.toHaveBeenCalled();
   });
 });
+
+describe("ActivityPanel Details pane", () => {
+  afterEach(() => localStorage.clear());
+  const detailsHidden = (): boolean =>
+    screen.getByRole("button", { name: "Details" }).getAttribute("aria-expanded") === "false";
+
+  it("reopens hidden when it was hidden, separately for each list", () => {
+    const first = render(<ActivityPanel {...activityProps()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Details" }));
+    expect(detailsHidden()).toBe(true);
+    first.unmount();
+
+    // Recent Activity remembers its hidden pane…
+    const again = render(<ActivityPanel {...activityProps()} />);
+    expect(detailsHidden()).toBe(true);
+    again.unmount();
+
+    // …and Problems keeps its own state.
+    render(<ActivityPanel {...activityProps({ kind: "problems", title: "Problems" })} />);
+    expect(detailsHidden()).toBe(false);
+  });
+});
