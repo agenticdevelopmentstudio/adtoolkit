@@ -11,6 +11,7 @@ export default defineConfig({
     "src/libsql/index.ts",
     "src/auth/index.ts",
     "src/monitor/worker.ts",
+    "src/libsql/storage-worker.ts",
     "src/board/index.ts",
     "src/board/derive-activity.ts",
     "src/monitor/deploy-status.ts",

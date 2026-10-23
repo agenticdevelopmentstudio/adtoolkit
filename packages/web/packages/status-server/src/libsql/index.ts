@@ -3,6 +3,7 @@
 // concrete `Storage` port adapters (the only place in this package permitted to
 // speak drizzle/@libsql — see ../storage/ports.ts for the interfaces themselves).
 export * from "./client";
+export * from "./storage-thread";
 export * as schema from "./schema";
 
 import type { Db, LibsqlConnection } from "./client";

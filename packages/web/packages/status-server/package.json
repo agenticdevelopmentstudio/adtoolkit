@@ -36,6 +36,12 @@
       "import": "./dist/monitor/worker.js",
       "default": "./dist/monitor/worker.js"
     },
+    "./storage-worker": {
+      "types": "./dist/libsql/storage-worker.d.ts",
+      "development": "./src/libsql/storage-worker.ts",
+      "import": "./dist/libsql/storage-worker.js",
+      "default": "./dist/libsql/storage-worker.js"
+    },
     "./board": {
       "types": "./dist/board/index.d.ts",
       "development": "./src/board/index.ts",

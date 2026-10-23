@@ -2,6 +2,7 @@ import { parentPort, workerData } from "node:worker_threads";
 import { openLibsql, tuneDbForConcurrency, type LibsqlConnection } from "../libsql/client";
 import { attachCooldownState } from "@agentic-toolkit/deploy-platform/cooldown";
 import { createLibsqlStorage } from "../libsql";
+import { connectStorage } from "../storage/remote";
 import { runMonitorCycle } from "./cycle-runner";
 import type { CycleRequest, CycleReply, MonitorWorkerData } from "./worker-client";
 
@@ -19,8 +20,8 @@ if (!port) throw new Error("monitor worker must be spawned via worker_threads (s
 // Fail fast on a malformed spawn rather than surfacing a confusing crash deep inside
 // openLibsql/runMonitorCycle: `db`/`config` are the two things the client MUST supply
 // (see MonitorWorkerData) and a missing one means the client itself is broken.
-const { db: conn, config, cooldowns } = (workerData ?? {}) as Partial<MonitorWorkerData<LibsqlConnection>>;
-if (!conn?.url) throw new Error("monitor worker spawned without workerData.db.url (see MonitorWorkerData)");
+const { db: conn, storage: storagePort, config, cooldowns } = (workerData ?? {}) as Partial<MonitorWorkerData<LibsqlConnection>>;
+if (!storagePort && !conn?.url) throw new Error("monitor worker spawned without workerData.storage or workerData.db.url (see MonitorWorkerData)");
 if (!config) throw new Error("monitor worker spawned without workerData.config (see MonitorWorkerData)");
 
 // Adopt the parent's provider-cooldown state: the cycle here and the API thread's
@@ -29,10 +30,16 @@ if (!config) throw new Error("monitor worker spawned without workerData.config (
 // keep hammering a provider the API thread already knows is throttled.
 attachCooldownState(cooldowns);
 
-// Migrations already ran on the main thread before this worker was spawned.
-const db = openLibsql(conn);
-await tuneDbForConcurrency(db, conn);
-const storage = createLibsqlStorage(db, conn);
+// With a storage port, every DB call goes through the host's database thread and this
+// worker holds no connection. Otherwise it opens its own (migrations already ran on the
+// main thread before this worker was spawned).
+const storage = storagePort ? await connectStorage(storagePort) : await openOwnStorage(conn!);
+
+async function openOwnStorage(conn: LibsqlConnection) {
+  const db = openLibsql(conn);
+  await tuneDbForConcurrency(db, conn);
+  return createLibsqlStorage(db, conn);
+}
 
 port.on("message", (msg: CycleRequest) => {
   void (async (): Promise<void> => {

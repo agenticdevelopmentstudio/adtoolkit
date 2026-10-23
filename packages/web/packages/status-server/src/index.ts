@@ -12,6 +12,7 @@ export { createDeployCadence, FIRST_FULL_SYNC_DELAY_MS, type DeployCadence } fro
 export { MonitorWorkerClient, type CycleRequest, type CycleReply, type MonitorWorkerData } from "./monitor/worker-client";
 export { runMonitorCycle } from "./monitor/cycle-runner";
 export { emitLiveUpdate } from "./live/live-events";
+export { connectStorage, createStorageServer, type StorageServer } from "./storage/remote";
 export { buildOpenApiSpec } from "./openapi/build";
 export * from "./config";
 export type { Db, Schema, LibsqlConnection } from "./libsql/client";

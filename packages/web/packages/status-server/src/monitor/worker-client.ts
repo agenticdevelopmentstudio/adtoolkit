@@ -1,4 +1,4 @@
-import { Worker } from "node:worker_threads";
+import { Worker, type MessagePort } from "node:worker_threads";
 import { createRequire } from "node:module";
 import { cooldownState } from "@agentic-toolkit/deploy-platform/cooldown";
 import type { StatusConfig } from "../config/port";
@@ -30,9 +30,14 @@ export interface CycleReply {
  *  function. `cooldowns` is attached by the client at spawn time, not supplied by
  *  the host — see {@link MonitorWorkerClient.spawn}. Generic over the connection
  *  shape so this module never has to name `LibsqlConnection` (it lives under
- *  `../libsql/`, which this file — unlike `worker.ts` — may not import). */
+ *  `../libsql/`, which this file — unlike `worker.ts` — may not import).
+ *
+ *  Exactly one of `db` / `storage`: `db` makes the worker open its OWN connection;
+ *  `storage` is a transferred port to the host's database thread (startStorageThread),
+ *  so the worker holds no connection at all. */
 export interface MonitorWorkerData<Conn = unknown> {
-  db: Conn;
+  db?: Conn;
+  storage?: MessagePort;
   config: StatusConfig;
   cooldowns?: SharedArrayBuffer;
 }
@@ -51,7 +56,10 @@ export class MonitorWorkerClient<Conn = unknown> {
   constructor(
     private readonly opts: {
       cycleTimeoutMs: number;
-      workerData: { db: Conn; config: StatusConfig };
+      workerData: { db: Conn; config: StatusConfig } | { config: StatusConfig };
+      /** A fresh port to the database thread per spawn (a respawned worker needs its
+       *  own; the old one closed with the old thread). Omit to use `workerData.db`. */
+      storagePort?: () => MessagePort;
     },
   ) {}
 
@@ -89,11 +97,14 @@ export class MonitorWorkerClient<Conn = unknown> {
     // the API thread's dashboard enumerations poll the SAME provider tokens, so a
     // 429 either one sees has to back BOTH off. A respawned worker re-adopts the
     // same buffer, so an in-force cooldown survives the respawn.
+    const storage = this.opts.storagePort?.();
     const worker = new Worker(entry, {
       workerData: {
         ...this.opts.workerData,
+        storage,
         cooldowns: cooldownState(),
       } satisfies MonitorWorkerData<Conn>,
+      transferList: storage ? [storage] : [],
     });
     worker.on("message", (msg: CycleReply) => {
       const entry = this.pending.get(msg.seq);
