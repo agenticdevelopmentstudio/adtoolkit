@@ -25,6 +25,7 @@ import {
 import { formatRelativeTime } from "../llm-providers/sync-format";
 import { NodeLogs } from "../processing/NodeLogs";
 import { RETENTION_ERROR, parseRetentionDays } from "../processing/retention";
+import { WorkerTokens } from "../processing/WorkerTokens";
 
 
 /** How long node logs are kept — one setting for the whole fleet. */
@@ -206,6 +207,7 @@ export function AiNodesPane({ help }: { help?: ReactNode } = {}) {
           The processing nodes that have registered with the backend. A node is online when it has
           checked in within the last two minutes. Select one to see what it reported and its logs.
         </p>
+        <WorkerTokens />
         <RetentionStrip />
         <EditableList<ProcessingNode>
           list={list}

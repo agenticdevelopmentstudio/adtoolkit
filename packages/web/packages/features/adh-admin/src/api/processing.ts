@@ -13,8 +13,9 @@ import { authedJson, authedRequest } from "./http";
 //
 // Admin-gated reads and writes over `/processing/admin/*`. Plain functions at the `authedJson`
 // boundary plus a key factory; the panes wrap them in react-query. Types are spec-derived so a
-// backend change fails this file's tsc. No API key appears anywhere here: paid-provider keys live
-// as env vars on the nodes, never in an admin payload.
+// backend change fails this file's tsc. No LLM key appears anywhere here: a node receives the
+// provider key with each claimed job. The one secret this file handles is a worker token's raw value,
+// which the backend returns once, on create, and never again.
 
 export type ConfigSet = components["schemas"]["AiProcessingConfigSet"];
 export type ConfigSetInput = RequestBody<"/processing/admin/config-sets", "post">;
@@ -26,6 +27,11 @@ export type LogLevel = NodeLog["level"];
 export type ProcessingSettings = components["schemas"]["AiProcessingSettings"];
 export type ConfigSetList = SuccessBody<"/processing/admin/config-sets", "get">;
 export type NodeList = SuccessBody<"/processing/admin/nodes", "get">;
+export type WorkerToken = components["schemas"]["AiProcessingWorkerToken"];
+export type WorkerTokenInput = components["schemas"]["AiProcessingWorkerTokenInput"];
+export type WorkerTokenList = SuccessBody<"/processing/admin/worker-tokens", "get">;
+/** The create response: the listed token plus its raw value, shown this once. */
+export type CreatedWorkerToken = SuccessBody<"/processing/admin/worker-tokens", "post", 201>;
 
 export interface NodeLogQuery {
   level?: LogLevel;
@@ -43,6 +49,7 @@ export const processingKeys = {
   logs: (id: string, query: Omit<NodeLogQuery, "before"> = {}) =>
     [...PROCESSING_ADMIN_KEY, "logs", id, query] as const,
   settings: () => [...PROCESSING_ADMIN_KEY, "settings"] as const,
+  workerTokens: () => [...PROCESSING_ADMIN_KEY, "worker-tokens"] as const,
 };
 
 const BASE = "/api/processing/admin";
@@ -84,6 +91,12 @@ export function listNodeLogs(nodeId: string, query: NodeLogQuery = {}) {
 export const getProcessingSettings = () => authedJson<ProcessingSettings>(`${BASE}/settings`);
 export const putProcessingSettings = (settings: ProcessingSettings) =>
   authedJson<ProcessingSettings>(`${BASE}/settings`, send("PUT", settings));
+
+export const listWorkerTokens = () => authedJson<WorkerTokenList>(`${BASE}/worker-tokens`);
+export const createWorkerToken = (input: WorkerTokenInput) =>
+  authedJson<CreatedWorkerToken>(`${BASE}/worker-tokens`, send("POST", input));
+export const revokeWorkerToken = (id: string) =>
+  authedRequest(`${BASE}/worker-tokens/${encodeURIComponent(id)}`, send("DELETE"));
 
 // ── react-query hooks ───────────────────────────────────────────────────────
 
@@ -165,5 +178,28 @@ export function usePutProcessingSettings() {
   return useMutation({
     mutationFn: putProcessingSettings,
     onSuccess: () => qc.invalidateQueries({ queryKey: processingKeys.settings() }),
+  });
+}
+
+export const useWorkerTokens = () =>
+  useQuery({
+    queryKey: processingKeys.workerTokens(),
+    queryFn: listWorkerTokens,
+    select: (body) => body.workerTokens,
+  });
+
+export function useCreateWorkerToken() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: createWorkerToken,
+    onSuccess: () => qc.invalidateQueries({ queryKey: processingKeys.workerTokens() }),
+  });
+}
+
+export function useRevokeWorkerToken() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: revokeWorkerToken,
+    onSuccess: () => qc.invalidateQueries({ queryKey: processingKeys.workerTokens() }),
   });
 }

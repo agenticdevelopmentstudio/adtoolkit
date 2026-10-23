@@ -16,7 +16,8 @@ vi.mock("@agentic-toolkit/resource", () => ({
   },
   useBasePathRoute: () => ({ pushSegment: h.pushSegment }),
 }));
-vi.mock("@agenticdevelopertoolkit/ui/lib/navigation-guard", () => ({
+vi.mock("@agenticdevelopertoolkit/ui/lib/navigation-guard", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@agenticdevelopertoolkit/ui/lib/navigation-guard")>()),
   confirmNavigation: h.confirm,
 }));
 

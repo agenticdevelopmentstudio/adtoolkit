@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import type { NodeLog, ProcessingNode } from "../api/processing";
+import type { NodeLog, ProcessingNode, WorkerToken } from "../api/processing";
 
 const { authedJson, authedRequest } = vi.hoisted(() => ({
   authedJson: vi.fn(),
@@ -41,6 +41,17 @@ const log = (id: number, over: Partial<NodeLog> = {}): NodeLog => ({
   ...over,
 });
 
+const workerToken = (over: Partial<WorkerToken>): WorkerToken => ({
+  id: "tok-1",
+  name: "railway-staging",
+  prefix: "tmp_ab12",
+  createdAt: "2026-10-20T00:00:00Z",
+  expiresAt: null,
+  lastUsedAt: null,
+  nodes: [],
+  ...over,
+});
+
 let logPages: Record<string, { entries: NodeLog[]; nextBefore: number | null }>;
 
 beforeEach(() => {
@@ -48,7 +59,7 @@ beforeEach(() => {
   authedRequest.mockReset();
   authedRequest.mockResolvedValue(undefined);
   logPages = {};
-  authedJson.mockImplementation(async (url: string) => {
+  authedJson.mockImplementation(async (url: string, init?: unknown) => {
     if (url === "/api/processing/admin/nodes") {
       return {
         nodes: [
@@ -58,6 +69,17 @@ beforeEach(() => {
       };
     }
     if (url === "/api/processing/admin/settings") return { logRetentionDays: 14 };
+    if (url === "/api/processing/admin/worker-tokens") {
+      if ((init as RequestInit | undefined)?.method === "POST") {
+        return { ...workerToken({ id: "tok-new", name: "railway-testing" }), token: "tmp_secretvalue" };
+      }
+      return {
+        workerTokens: [
+          workerToken({ nodes: ["node-a"], lastUsedAt: new Date().toISOString() }),
+          workerToken({ id: "tok-2", name: "laptop", prefix: "tmp_cd34" }),
+        ],
+      };
+    }
     if (url.includes("/logs")) return logPages[url] ?? { entries: [], nextBefore: null };
     return {};
   });
@@ -212,6 +234,80 @@ describe("AiNodesPane retention", () => {
       expect(authedJson).toHaveBeenCalledWith("/api/processing/admin/settings", {
         method: "PUT",
         body: JSON.stringify({ logRetentionDays: 30 }),
+      }),
+    );
+  });
+});
+
+describe("AiNodesPane worker tokens", () => {
+  it("lists each token with its prefix and the nodes using it", async () => {
+    mount();
+    const section = await screen.findByRole("region", { name: "Worker tokens" });
+    expect(await within(section).findByText("railway-staging")).toBeTruthy();
+    expect(within(section).getByText("tmp_ab12…")).toBeTruthy();
+    expect(within(section).getByText("node-a")).toBeTruthy();
+    expect(within(section).getByText("No node yet")).toBeTruthy();
+    expect(within(section).getByText("Never")).toBeTruthy();
+  });
+
+  it("creates a token and shows its value once, with the env var to set", async () => {
+    mount();
+    fireEvent.click(await screen.findByRole("button", { name: "New worker token" }));
+    const create = screen.getByRole("button", { name: "Create token" }) as HTMLButtonElement;
+    expect(create.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "  railway-testing " } });
+    fireEvent.click(create);
+    await waitFor(() =>
+      expect(authedJson).toHaveBeenCalledWith("/api/processing/admin/worker-tokens", {
+        method: "POST",
+        body: JSON.stringify({ name: "railway-testing" }),
+      }),
+    );
+    const value = (await screen.findByLabelText("Worker token")) as HTMLInputElement;
+    expect(value.value).toBe("tmp_secretvalue");
+    expect(screen.getByText(/Set it as AI_NODE_API_TOKEN on the node/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Done" }));
+    await waitFor(() => expect(screen.queryByLabelText("Worker token")).toBeNull());
+    fireEvent.click(screen.getByRole("button", { name: "New worker token" }));
+    expect(screen.queryByText("tmp_secretvalue")).toBeNull();
+    expect(screen.queryByLabelText("Worker token")).toBeNull();
+  });
+
+  it("asks before an Escape throws the unseen-again value away", async () => {
+    mount();
+    fireEvent.click(await screen.findByRole("button", { name: "New worker token" }));
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "x" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create token" }));
+    const value = await screen.findByLabelText("Worker token");
+    fireEvent.keyDown(value, { key: "Escape" });
+    expect(await screen.findByText("Close without copying?")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Keep open" }));
+    expect(screen.getByLabelText("Worker token")).toBeTruthy();
+  });
+
+  it("shows why a create failed", async () => {
+    const base = authedJson.getMockImplementation()!;
+    authedJson.mockImplementation(async (url: string, init?: unknown) => {
+      if ((init as RequestInit | undefined)?.method === "POST") throw new Error("name is required");
+      return base(url, init);
+    });
+    mount();
+    fireEvent.click(await screen.findByRole("button", { name: "New worker token" }));
+    fireEvent.change(screen.getByLabelText("Name"), { target: { value: "x" } });
+    fireEvent.click(screen.getByRole("button", { name: "Create token" }));
+    expect(await screen.findByText("name is required")).toBeTruthy();
+  });
+
+  it("revokes the selected token after confirmation", async () => {
+    mount();
+    fireEvent.click(await screen.findByRole("checkbox", { name: "Select laptop" }));
+    fireEvent.click(screen.getByRole("button", { name: "Revoke" }));
+    expect(await screen.findByText(/Every node using it stops getting jobs/)).toBeTruthy();
+    fireEvent.click(screen.getAllByRole("button", { name: "Revoke" }).at(-1)!);
+    await waitFor(() =>
+      expect(authedRequest).toHaveBeenCalledWith("/api/processing/admin/worker-tokens/tok-2", {
+        method: "DELETE",
       }),
     );
   });

@@ -12,6 +12,7 @@ import {
   PROCESSING_ADMIN_KEY,
   clearDefaultConfigSet,
   createConfigSet,
+  createWorkerToken,
   deleteConfigSet,
   deleteNode,
   getNode,
@@ -19,8 +20,10 @@ import {
   listConfigSets,
   listNodeLogs,
   listNodes,
+  listWorkerTokens,
   processingKeys,
   putProcessingSettings,
+  revokeWorkerToken,
   setDefaultConfigSet,
   updateConfigSet,
 } from "../processing";
@@ -111,5 +114,30 @@ describe("query keys", () => {
       processingKeys.settings(),
     ];
     for (const k of keys) expect(k[0]).toBe(PROCESSING_ADMIN_KEY[0]);
+  });
+});
+
+describe("worker tokens", () => {
+  it("lists", async () => {
+    await listWorkerTokens();
+    expect(authedJson).toHaveBeenCalledWith(`${BASE}/worker-tokens`);
+  });
+
+  it("creates with a POST body", async () => {
+    await createWorkerToken({ name: "railway-staging" });
+    expect(authedJson).toHaveBeenCalledWith(`${BASE}/worker-tokens`, {
+      method: "POST",
+      body: JSON.stringify({ name: "railway-staging" }),
+    });
+  });
+
+  it("revokes through authedRequest (204), encoding the id", async () => {
+    await revokeWorkerToken("a/b");
+    expect(authedRequest).toHaveBeenCalledWith(`${BASE}/worker-tokens/a%2Fb`, { method: "DELETE" });
+    expect(authedJson).not.toHaveBeenCalled();
+  });
+
+  it("keys under the processing-admin prefix", () => {
+    expect(processingKeys.workerTokens().slice(0, 1)).toEqual([...PROCESSING_ADMIN_KEY]);
   });
 });

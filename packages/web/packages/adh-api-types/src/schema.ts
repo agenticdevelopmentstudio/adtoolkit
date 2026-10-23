@@ -4762,7 +4762,7 @@ export interface paths {
                         version: string;
                         host: string;
                         providers: components["schemas"]["AiProcessingProviderKind"][];
-                        /** @description Non-secret configuration the node reports */
+                        /** @description Non-secret configuration the node reports; at most 8 KB serialized */
                         config: {
                             [key: string]: unknown;
                         };
@@ -4822,7 +4822,7 @@ export interface paths {
         put?: never;
         /**
          * Ship a batch of node log entries (worker)
-         * @description At most 200 entries; the whole batch is rejected if any entry is invalid. The node must be registered (404 otherwise). `data` is at most 8 KB serialized and must not contain a credential-looking key.
+         * @description At most 200 entries; a structurally invalid entry rejects the batch (400). The node must be registered (404 otherwise). `message` is at most 4096 bytes of UTF-8. An entry whose `data` is over 8 KB serialized or contains a credential-looking key is dropped alone and counted in the response `dropped`.
          */
         post: {
             parameters: {
@@ -4841,6 +4841,7 @@ export interface paths {
                             occurredAt: string;
                             level: components["schemas"]["AiProcessingLogLevel"];
                             event: string;
+                            /** @description At most 4096 bytes of UTF-8 */
                             message: string;
                             jobId?: string;
                             data?: {
@@ -4856,7 +4857,12 @@ export interface paths {
                     headers: {
                         [name: string]: unknown;
                     };
-                    content?: never;
+                    content: {
+                        "application/json": {
+                            accepted: number;
+                            dropped: number;
+                        };
+                    };
                 };
                 /** @description Error */
                 400: {
@@ -4944,7 +4950,7 @@ export interface paths {
         put?: never;
         /**
          * Create an LLM config set (admin)
-         * @description A set names a personas service plus a model, or no service = the node local LLM. A service whose kind no node can run, or a model the service does not offer, is 400; a duplicate name is 409.
+         * @description A set names a personas service plus a model, or no service = the node local LLM. A service whose kind no node can run, a paid service (openai, anthropic, gemini) whose base URL host is not that provider's own API host, or a model the service does not offer, is 400; a duplicate name is 409.
          */
         post: {
             parameters: {
@@ -5461,6 +5467,190 @@ export interface paths {
             requestBody?: never;
             responses: {
                 /** @description Deleted */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/processing/admin/worker-tokens": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List AI node worker tokens (admin)
+         * @description Metadata only; the raw value is shown once, on create.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Worker tokens, newest first */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            workerTokens: components["schemas"]["AiProcessingWorkerToken"][];
+                        };
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        /**
+         * Mint an AI node worker token (admin)
+         * @description A token scoped ai-processing:worker, for a node to set as AI_NODE_API_TOKEN. The raw value is in `token` and is returned only here.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["AiProcessingWorkerTokenInput"];
+                };
+            };
+            responses: {
+                /** @description Worker token created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["AiProcessingWorkerToken"] & {
+                            /** @description The raw token, shown once */
+                            token: string;
+                        };
+                    };
+                };
+                /** @description Error */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                401: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+                /** @description Error */
+                403: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/processing/admin/worker-tokens/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke an AI node worker token (admin)
+         * @description A node still using it gets 401 on its next call.
+         */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Revoked */
                 204: {
                     headers: {
                         [name: string]: unknown;
@@ -74690,6 +74880,8 @@ export interface components {
                 /** @description Query parameters the provider call always carries */
                 defaultQuery?: unknown;
             } | null;
+            /** @description The service's API key for a paid target; null for local */
+            apiKey: string | null;
             params: components["schemas"]["AiProcessingConfigSetParams"];
         };
         AiProcessingClaimedJob: {
@@ -74819,6 +75011,23 @@ export interface components {
         };
         AiProcessingSettings: {
             logRetentionDays: number;
+        };
+        AiProcessingWorkerToken: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @description The first 12 characters, for recognising a token */
+            prefix: string;
+            createdAt: string;
+            expiresAt: string | null;
+            lastUsedAt: string | null;
+            /** @description Ids of the registered nodes that last registered with this token */
+            nodes: string[];
+        };
+        AiProcessingWorkerTokenInput: {
+            name: string;
+            /** Format: date-time */
+            expiresAt?: string | null;
         };
         TokenPrincipal: {
             id: string;
