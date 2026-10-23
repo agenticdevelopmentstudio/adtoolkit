@@ -217,6 +217,48 @@ export const FLEET_MENU_GROUPS: MenuGroup[] = [
 ]
 
 /**
+ * The hub's OWN marketing menu — the landing `/` and the hub's other non-workspace pages —
+ * cut down to the seven sites the repo owner chose to show there (Mike, 2026-10-23): the
+ * hub, Help (hub-help), Bitbag, Dev Team, Cookbook, Toolkit and Persona Registry. Every
+ * other host, satellites included, still shows the whole {@link FLEET_MENU_GROUPS}.
+ *
+ * A separate constant, not a filter over the fleet tree: `hub-rail-groups.ts` derives the
+ * hub's rail from FLEET_MENU_GROUPS, so the fleet tree has to stay whole, and a filter would
+ * leave Plan, Learn and the rest as empty triggers. The rows it keeps are written the same
+ * way they are written above, with the same labels and groups (`Hub`, `Build`), so a site
+ * reads the same here as everywhere else in the family.
+ *
+ * Contact and Details stay under Hub because they are hub pages, not other sites: Contact is
+ * a hub route, and Details is the help site's own overview of the hub.
+ */
+export const HUB_LANDING_MENU_GROUPS: MenuGroup[] = [
+  leaf({ site: 'bitbag', description: "The hub's AI persona" }),
+  topic({
+    label: 'Hub',
+    description: 'The center of it all',
+    link: { site: 'hub' },
+    links: [
+      { route: '/contact', label: 'Contact', description: 'Get in touch' },
+      { site: 'hub-help' },
+      {
+        site: 'hub-help',
+        path: '/hub/~overview',
+        label: 'Details',
+        description: 'What the hub does',
+        iconKey: '/details',
+      },
+    ],
+  }),
+  topic({
+    label: 'Build',
+    description: 'Make it',
+    iconKey: 'build',
+    links: [{ site: 'devteam', label: 'Dev Team' }, { site: 'cookbook' }, { site: 'toolkit' }],
+  }),
+  leaf({ site: 'personaregistry' }),
+]
+
+/**
  * The consoles, for admins only — rendered by {@link SiteMenu} beneath the fleet
  * tree when (and ONLY when) the header resolves the signed-in user as an adh
  * admin. A separate export rather than a flag on a row in the tree above, because
