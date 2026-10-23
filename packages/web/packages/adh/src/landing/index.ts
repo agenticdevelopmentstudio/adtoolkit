@@ -7,6 +7,10 @@
 // index drawer — belongs to two of them.
 export { LandingDeck, LandingTour } from './LandingDeck'
 export type { LandingDeckProps } from './LandingDeck'
+// The same content as a continuous scroll of bands instead of a snap deck — the layout
+// `@agenticdevelopertoolkit/landing`'s `Flow` draws. A site picks one per route.
+export { LandingFlow, LandingFlowTour } from './LandingFlow'
+export type { LandingFlowProps } from './LandingFlow'
 export { landingFromData } from './fromData'
 export type { InlineNode, LandingDataOptions } from './fromData'
 export type {

@@ -44,6 +44,11 @@
 @import "@agenticdevelopertoolkit/landing/css/base.css";
 @import "@agenticdevelopertoolkit/landing/css/chrome.css";
 @import "@agenticdevelopertoolkit/landing/css/blocks.css";
+/* The flow layout — bands instead of screens — for a route that mounts `LandingFlow`.
+ * Safe site-wide for base.css's reason: every selector in it is a class only `Flow`'s own
+ * components put on the page (`.lp-band`, `.lp-hero-flow`, …), and it touches neither
+ * <html> nor <body>. */
+@import "@agenticdevelopertoolkit/landing/css/flow.css";
 @import "./adh-landing-bridge.css";
 
 /* Reserve the scrollbar's width whether or not the page scrolls, so navigating between
@@ -78,6 +83,29 @@ body {
      only by coming later, which it does. Said outside the deck's gate on purpose: the
      workspace, /privacy, /terms and /details want the horizontal guard too. */
   overflow-x: clip;
+}
+
+/* The flow hero's mark and its emphasis, both of which the landing package leaves to the
+ * host.
+ *
+ * The mark is every site's own `public/glyph.svg`, and `flow.css` sizes no image because
+ * its hero takes the mark as a ReactNode. 112px is the size the flow layout was drawn at
+ * (agenticdeveloperstenographer.com) — smaller than the deck's 132px because the mark now
+ * shares the composition with a sub-line, a button row and a meta line.
+ *
+ * The family's headlines mark their accent word with `*em*` in the markdown — the deck's
+ * heading grammar — while `flow.css` styles only `<b>`. Without the second rule the hub's
+ * "Agentic Developer *Hub*" set in italic body ink instead of the accent. */
+.lp-hero-flow img {
+  display: block;
+  width: min(112px, 26vw);
+  height: auto;
+  margin: 0 auto 1.8rem;
+}
+
+.lp-hero-flow h1 em {
+  color: var(--lp-accent, #d8d8d8);
+  font-style: normal;
 }
 
 ::selection {

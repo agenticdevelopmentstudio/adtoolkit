@@ -1,4 +1,8 @@
 // src/landing/LandingDeck.tsx
+import { Deck, DeckScript, Head, Hero, Screen, TourStrip, Wrap } from "@agenticdevelopertoolkit/landing";
+import { NavChrome } from "@agenticdevelopertoolkit/landing/client";
+
+// src/landing/blocks.tsx
 import { siteProdUrl } from "@agentic-toolkit/adh-registry";
 import {
   Btn,
@@ -9,27 +13,19 @@ import {
   Closer,
   Code,
   Cta,
-  Deck,
-  DeckScript,
   Faq,
-  Head,
-  Hero,
   Lede,
   Points,
   Roadmap,
   Rule,
-  Screen,
   Shot,
   Stats,
   StatusPill,
   Table,
-  TourStrip,
   Trust,
-  Versus,
-  Wrap
+  Versus
 } from "@agenticdevelopertoolkit/landing";
-import { NavChrome } from "@agenticdevelopertoolkit/landing/client";
-import { Fragment, jsx, jsxs } from "react/jsx-runtime";
+import { jsx } from "react/jsx-runtime";
 var TOUR_SCREEN_ID = "tour";
 function prose(paragraphs) {
   return paragraphs.map((text, i) => /* @__PURE__ */ jsx("p", { children: text }, i));
@@ -95,29 +91,36 @@ function renderBlock(block, key) {
     }
   }
 }
-function renderSection(section, key) {
-  return /* @__PURE__ */ jsx(Screen, { id: section.id, children: /* @__PURE__ */ jsxs(Wrap, { children: [
-    section.headingInBlock === true ? null : /* @__PURE__ */ jsx(Head, { eyebrow: section.eyebrow, title: section.title }),
-    section.blocks.map((block, i) => renderBlock(block, i))
-  ] }) }, key);
-}
 function indexRows(content) {
   return content.sections.map((section) => ({
     href: `#${section.id}`,
     label: section.eyebrow
   }));
 }
+function tourStep(edge) {
+  if (edge === void 0) return void 0;
+  return { href: siteProdUrl(edge.site, "/tour"), label: edge.label, note: edge.note };
+}
+
+// src/landing/LandingDeck.tsx
+import { Fragment, jsx as jsx2, jsxs } from "react/jsx-runtime";
+function renderSection(section, key) {
+  return /* @__PURE__ */ jsx2(Screen, { id: section.id, children: /* @__PURE__ */ jsxs(Wrap, { children: [
+    section.headingInBlock === true ? null : /* @__PURE__ */ jsx2(Head, { eyebrow: section.eyebrow, title: section.title }),
+    section.blocks.map((block, i) => renderBlock(block, i))
+  ] }) }, key);
+}
 function deck(content, lead, leadRow) {
   const rows = leadRow === void 0 ? indexRows(content) : [leadRow, ...indexRows(content)];
   return /* @__PURE__ */ jsxs(Fragment, { children: [
-    /* @__PURE__ */ jsx(DeckScript, {}),
+    /* @__PURE__ */ jsx2(DeckScript, {}),
     /* @__PURE__ */ jsxs(Deck, { children: [
-      /* @__PURE__ */ jsx(NavChrome, { navLabel: "Sections", links: rows }),
+      /* @__PURE__ */ jsx2(NavChrome, { navLabel: "Sections", links: rows }),
       lead,
-      /* @__PURE__ */ jsx(
+      /* @__PURE__ */ jsx2(
         Hero,
         {
-          mark: /* @__PURE__ */ jsx("img", { src: "/glyph.svg", alt: "" }),
+          mark: /* @__PURE__ */ jsx2("img", { src: "/glyph.svg", alt: "" }),
           headline: content.hero.headline,
           tagline: content.hero.tagline,
           children: content.hero.blocks.map((block, i) => renderBlock(block, i))
@@ -133,7 +136,7 @@ function LandingDeck({ content }) {
 function LandingTour({ content }) {
   const { tour } = content;
   if (tour === void 0) return deck(content, null, void 0);
-  const lead = /* @__PURE__ */ jsx(
+  const lead = /* @__PURE__ */ jsx2(
     TourStrip,
     {
       eyebrow: tour.eyebrow,
@@ -146,13 +149,91 @@ function LandingTour({ content }) {
   );
   return deck(content, lead, { href: `#${TOUR_SCREEN_ID}`, label: tour.eyebrow });
 }
-function tourStep(edge) {
-  if (edge === void 0) return void 0;
-  return { href: siteProdUrl(edge.site, "/tour"), label: edge.label, note: edge.note };
+
+// src/landing/LandingFlow.tsx
+import { Band, Btn as Btn2, DeckScript as DeckScript2, Flow, FlowHero, Head as Head2, TourStrip as TourStrip2 } from "@agenticdevelopertoolkit/landing";
+import { NavChrome as NavChrome2, Reveal } from "@agenticdevelopertoolkit/landing/client";
+import { Fragment as Fragment2, jsx as jsx3, jsxs as jsxs2 } from "react/jsx-runtime";
+var TONES = ["soft", "dark"];
+function renderBand(section, key) {
+  return /* @__PURE__ */ jsx3(Band, { id: section.id, tone: TONES[key % TONES.length], children: /* @__PURE__ */ jsxs2(Reveal, { children: [
+    section.headingInBlock === true ? null : /* @__PURE__ */ jsx3(Head2, { eyebrow: section.eyebrow, title: section.title }),
+    section.blocks.map((block, i) => renderBlock(block, i))
+  ] }) }, key);
+}
+function heroSlots(hero) {
+  const actions = [];
+  const meta = [];
+  hero.blocks.forEach((block) => {
+    switch (block.kind) {
+      case "Cta":
+        block.buttons.forEach(
+          (button) => actions.push(
+            /* @__PURE__ */ jsx3(Btn2, { href: button.href, variant: button.variant, children: button.label }, actions.length)
+          )
+        );
+        return;
+      case "Trust":
+        meta.push(...block.items);
+        return;
+      default:
+        throw new Error(
+          `LandingFlow: a '${block.kind}' block has no slot in the flow hero \u2014 only 'Cta' and 'Trust' do. Move it into a section, or render this page as a LandingDeck.`
+        );
+    }
+  });
+  return { actions, meta };
+}
+function joined(items) {
+  return items.map((item, i) => /* @__PURE__ */ jsxs2("span", { children: [
+    i > 0 ? " \xB7 " : null,
+    item
+  ] }, i));
+}
+function flow(content, lead, leadRow) {
+  const rows = leadRow === void 0 ? indexRows(content) : [leadRow, ...indexRows(content)];
+  const { actions, meta } = heroSlots(content.hero);
+  return /* @__PURE__ */ jsxs2(Fragment2, { children: [
+    /* @__PURE__ */ jsx3(DeckScript2, { armSnapping: false, openAtTop: false }),
+    /* @__PURE__ */ jsxs2(Flow, { children: [
+      /* @__PURE__ */ jsx3(NavChrome2, { navLabel: "Sections", links: rows }),
+      lead,
+      /* @__PURE__ */ jsx3(
+        FlowHero,
+        {
+          mark: /* @__PURE__ */ jsx3("img", { src: "/glyph.svg", alt: "" }),
+          headline: content.hero.headline,
+          sub: content.hero.tagline,
+          meta: meta.length === 0 ? void 0 : joined(meta),
+          children: actions.length === 0 ? void 0 : actions
+        }
+      ),
+      content.sections.map((section, i) => renderBand(section, i))
+    ] })
+  ] });
+}
+function LandingFlow({ content }) {
+  return flow(content, null, void 0);
+}
+function LandingFlowTour({ content }) {
+  const { tour } = content;
+  if (tour === void 0) return flow(content, null, void 0);
+  const lead = /* @__PURE__ */ jsx3(
+    TourStrip2,
+    {
+      eyebrow: tour.eyebrow,
+      promise: tour.promise,
+      position: tour.position,
+      pillars: tour.pillars,
+      back: tourStep(tour.back),
+      next: tourStep(tour.next)
+    }
+  );
+  return flow(content, lead, { href: `#${TOUR_SCREEN_ID}`, label: tour.eyebrow });
 }
 
 // src/landing/fromData.ts
-import { createElement, Fragment as Fragment2 } from "react";
+import { createElement, Fragment as Fragment3 } from "react";
 function landingFromData(data, options = {}) {
   return revive(data, options);
 }
@@ -161,7 +242,7 @@ function revive(value, options) {
   if (value === null || typeof value !== "object") return value;
   if ("$inline" in value) {
     const nodes = value.$inline;
-    return createElement(Fragment2, null, ...nodes.map((n) => node(n, options)));
+    return createElement(Fragment3, null, ...nodes.map((n) => node(n, options)));
   }
   const out = {};
   for (const [key, v] of Object.entries(value)) {
@@ -183,6 +264,8 @@ function node(n, options) {
 }
 export {
   LandingDeck,
+  LandingFlow,
+  LandingFlowTour,
   LandingTour,
   landingFromData
 };

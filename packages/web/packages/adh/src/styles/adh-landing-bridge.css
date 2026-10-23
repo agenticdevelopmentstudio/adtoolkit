@@ -45,8 +45,16 @@
    * `--lp-paper-dim` has no third role to reach for: it is landing's own ratio
    * (its #5c5c5c between #171717 ink and #f4f4f4 paper, ~69% of the way to the
    * ink) re-expressed as a mix of the two roles, so it stays a *quiet* paper
-   * ink at whatever the two ends turn out to be. */
-  --lp-tone-soft: var(--color-surface-container-low);
+   * ink at whatever the two ends turn out to be.
+   *
+   * The soft tone is a MIX, not `surface-container-low`. It was that role first,
+   * and the hub's first flow page drew every band in one colour: its theme sets
+   * container-low equal to surface (#0b0a09 both), which M3 permits, so "one step
+   * off the ground" was no step at all and the alternation disappeared. A 4% lean
+   * toward `on-surface` is a step in every theme by construction — lighter on a
+   * dark one, darker on a light one — and about the step the flow layout was
+   * drawn with (#101010 → #171717 on agenticdeveloperstenographer.com). */
+  --lp-tone-soft: color-mix(in srgb, var(--color-on-surface) 4%, var(--color-surface));
   --lp-tone-paper: var(--color-inverse-surface);
   --lp-paper-ink: var(--color-inverse-on-surface);
   --lp-paper-dim: color-mix(
