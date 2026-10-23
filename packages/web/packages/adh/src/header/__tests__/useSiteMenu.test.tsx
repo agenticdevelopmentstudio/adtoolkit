@@ -416,6 +416,34 @@ describe('useSiteMenu', () => {
     })
   })
 
+  // A `{ site, path }` row is one page of a site: the hub's Details row is hub-help's hub
+  // overview, beside hub-help's own Help row. It must keep the env-aware host a written-out
+  // URL would lose, must not take the in-hub reroute or the workspace carry a plain site row
+  // takes, and must not collide with that site's own row.
+  describe('`path` rows', () => {
+    const details = (hostname: string, pathname: string) =>
+      at(hostname, pathname, () =>
+        renderHook(() =>
+          useSiteMenu(FLEET_MENU_GROUPS, {
+            currentSiteId: 'hub',
+            authenticated: true,
+            hubOffersFeature: () => true,
+          }),
+        ).result.current.entries,
+      )
+
+    it('resolves to that page on the site, in the current env, even inside a workspace', () => {
+      const entries = details('staging.agenticdeveloperhub.com', '/acme/products')
+      const href = row(entries, 'hub-help:/hub/~overview')?.href
+      expect(href).toBeDefined()
+      const url = new URL(href!)
+      expect(url.host).toBe('staging.help.agenticdeveloperhub.com')
+      expect(url.pathname).toBe('/hub/~overview')
+      // ...and the site's own row is still there, keyed apart from it.
+      expect(row(entries, 'hub-help')?.href).not.toBe(href)
+    })
+  })
+
   // The SSO wrap is what makes a cross-site hop land ALREADY signed in (the AS bounces
   // an exchange #code straight to the destination). The suite has a real AS that
   // allow-lists `https://*.dev.local`, so a local hop must be wrapped exactly like a

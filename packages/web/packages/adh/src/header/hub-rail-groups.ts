@@ -50,7 +50,8 @@ const PROMOTED_GROUP_LABEL = 'Hub'
 const LEFTOVER_GROUP_LABEL = 'More'
 
 function siteOf(link: MenuLink): SiteId | undefined {
-  return 'site' in link ? link.site : undefined
+  // A `{ site, path }` row is one page of that site, not the site, so it leads to no segment.
+  return 'site' in link && link.path === undefined ? link.site : undefined
 }
 
 /** The segment a menu link leads to in the hub, or undefined when it leads somewhere the hub has

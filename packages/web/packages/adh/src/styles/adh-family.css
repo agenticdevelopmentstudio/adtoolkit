@@ -108,6 +108,25 @@ body {
   font-style: normal;
 }
 
+/* Inside a flow band, prose runs the width of the band's centred `.lp-wrap`.
+ *
+ * `blocks.css` caps each block's line length (`.lp-head` 48rem, `.lp-lede` 72ch,
+ * `.lp-points` 76ch, the FAQ and its answers, the closer's line), and those caps were drawn
+ * for the deck, where a screen centres one block in empty space. In a band the wrap is
+ * already the measure, and the caps broke lines short of it at their own place: the hub's
+ * /details "What it does" list stopped at about 570px inside a 1152px container, which
+ * read as a column that ran out rather than a paragraph that ended. Scoped to `.lp-band`
+ * so the deck keeps its measure, and one class deeper than each cap, so it wins on
+ * specificity rather than import order. */
+.lp-band .lp-head,
+.lp-band .lp-lede,
+.lp-band .lp-points,
+.lp-band .lp-faq,
+.lp-band .lp-faq details p,
+.lp-band .lp-closer p {
+  max-width: none;
+}
+
 ::selection {
   background: var(--color-accent-dim);
   color: var(--color-accent);

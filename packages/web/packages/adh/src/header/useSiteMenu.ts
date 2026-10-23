@@ -174,7 +174,22 @@ export function useSiteMenu(
   }, [currentSiteId, workspaceSlug, authenticated, pathname, hubOffersFeature])
 
   const hrefFor = useCallback(
-    (site: SiteDef, external?: boolean): string => {
+    (site: SiteDef, external?: boolean, path?: string): string => {
+      // A row that names a PATH is an exact page on that site (MenuLink's `path`), so neither
+      // carry below applies: the workspace carry and the in-hub reroute both answer "the same
+      // area on another site", and a named page is not an area. It still gets everything else
+      // a site row gets — the per-env host, the theme carry and the SSO wrap.
+      if (path !== undefined) {
+        if (site.id === currentSiteId) return path
+        if (!hostname) return '#'
+        const href = carryTheme(siteUrl(site.id, path, hostname))
+        if (!resolveHref) return href
+        try {
+          return detectEnv(new URL(href).hostname) === currentEnv ? resolveHref(href) : href
+        } catch {
+          return href
+        }
+      }
       // Carry the workspace: switching sites from inside one lands in the SAME
       // workspace on the site you picked, at THAT site's own workspace route —
       // `/<slug>`, `/home/<slug>` or `/<slug>/home`, per its shape (siteWorkspaceHref).
@@ -327,6 +342,19 @@ export function useSiteMenu(
       }
       const site = getSite(link.site)
       if (!site) return null
+      // A page on a site is its own row, beside that site's: keyed and iconed apart from it (the
+      // hub's Help and Details are both hub-help), and current only on that page itself.
+      if (link.path !== undefined) {
+        const pageHref = hrefFor(site, link.external, link.path)
+        return {
+          key: `${site.id}:${link.path}`,
+          label: link.label ?? site.label,
+          description: link.description ?? site.description,
+          href: pageHref,
+          icon: menuIcon(link.iconKey ?? site.id),
+          current: site.id === currentSiteId && path === link.path,
+        }
+      }
       const href = hrefFor(site, link.external)
       // `current` asks WHERE THE VISITOR IS, and on the hub that stopped being answered by
       // "which site is this header" the moment a row could resolve to a ROUTE onto another

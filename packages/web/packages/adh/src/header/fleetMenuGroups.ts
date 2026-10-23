@@ -83,8 +83,8 @@ export const FLEET_MENU_GROUPS: MenuGroup[] = [
     links: [
       { site: 'news' },
       { site: 'status' },
-      // Hub ROUTES, not sites: `/contact` and `/details` exist on the hub and are
-      // resolved through it from every other site (see useSiteMenu's routeHref).
+      // A hub ROUTE, not a site: `/contact` exists on the hub and is resolved through
+      // it from every other site (see useSiteMenu's routeHref).
       { route: '/contact', label: 'Contact', description: 'Get in touch' },
       { site: 'community' },
       // hub-help (help.adh.com), not the delisted 'help' landing — the family's Help
@@ -93,7 +93,18 @@ export const FLEET_MENU_GROUPS: MenuGroup[] = [
       { site: 'hub-help' },
       { site: 'support' },
       { site: 'store' },
-      { route: '/details', label: 'Details', description: 'What the hub does' },
+      // A page of hub-help, not `{ route: '/details' }`: the hub's `/details` brochure was
+      // folded into its landing and only redirects to `/` now, so "Details" is the help site's
+      // hub overview. `{ site, path }` rather than a written-out URL, so it keeps its per-env
+      // host and SSO wrap (fleetMenuGroups.test pins why an absolute row to a real site is a
+      // defect).
+      {
+        site: 'hub-help',
+        path: '/hub/~overview',
+        label: 'Details',
+        description: 'What the hub does',
+        iconKey: '/details',
+      },
     ],
   }),
   leaf({ site: 'orgs' }),

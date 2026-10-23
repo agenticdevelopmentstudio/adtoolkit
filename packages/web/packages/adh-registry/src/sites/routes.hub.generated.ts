@@ -21,6 +21,7 @@ import type { SiteId } from './registry'
 export const SITE_ROUTES_HUB: Partial<Record<SiteId, readonly string[]>> = {
   admin: [
     '/',
+    '/ai-nodes',
     '/audit',
     '/auth/callback',
     '/authentication',
@@ -31,6 +32,7 @@ export const SITE_ROUTES_HUB: Partial<Record<SiteId, readonly string[]>> = {
     '/login',
     '/messaging',
     '/privacy',
+    '/processing-configs',
     '/reserved-identifiers',
     '/server-bags',
     '/sync',

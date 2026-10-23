@@ -6,6 +6,8 @@ export type MenuLink = {
     label?: string;
     description?: string;
     external?: boolean;
+    path?: string;
+    iconKey?: string;
 } | {
     route: string;
     label: string;

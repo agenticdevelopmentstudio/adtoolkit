@@ -65,7 +65,17 @@ import { useHelp } from '@agentic-toolkit/adh/help'
 // dev-tools dropdown; what it promises is pinned in useSiteMenu.test. See
 // useSiteMenu's hrefFor.
 export type MenuLink =
-  | { site: SiteId; label?: string; description?: string; external?: boolean }
+  // `path` makes the row ONE PAGE of that site rather than the site: resolved env-aware and
+  // SSO-wrapped like any site row, but never carried into a workspace or rerouted in-hub (see
+  // hrefFor). `iconKey` names the page's own icon; without it the row takes the site's.
+  | {
+      site: SiteId
+      label?: string
+      description?: string
+      external?: boolean
+      path?: string
+      iconKey?: string
+    }
   | { route: string; label: string; description?: string }
   // A destination with no registry site and no in-hub route: an absolute URL,
   // written out. This is how the menu names a site that does not exist as an app
