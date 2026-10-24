@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach, vi } from 'vitest'
 import { readdirSync, statSync, existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
@@ -10,7 +10,7 @@ import { dirname, resolve } from 'node:path'
 // (TS7053) even though "does the hub route this site?" is exactly what these cases ask. The
 // accessor is where that widening is supposed to live — see its doc comment in registry.ts.
 import type { SiteId } from '../sites/registry'
-import { SITES, LISTED_SITES, FOOTER_SITES, MAIN_SITE_IDS, MARKETING_SITE_IDS, SITE_CATEGORIES, groupSitesByCategory, getSite, detectEnv, buildSiteHref, ssoReturnOrigins, HUB_FEATURE_SEGMENT, hubFeatureSegment, SITE_FOR_HUB_SEGMENT, HUB_WORKSPACE_SEGMENTS, siteWorkspaceHref, siteWorkspaceSlug, SITE_LANDING_SEGMENTS, HUB_ROUTE_SEGMENTS, siteIdForDir } from '../sites/registry'
+import { SITES, LISTED_SITES, FOOTER_SITES, MAIN_SITE_IDS, MARKETING_SITE_IDS, SITE_CATEGORIES, groupSitesByCategory, getSite, detectEnv, buildSiteHref, siteUrl, ssoReturnOrigins, HUB_FEATURE_SEGMENT, hubFeatureSegment, SITE_FOR_HUB_SEGMENT, HUB_WORKSPACE_SEGMENTS, siteWorkspaceHref, siteWorkspaceSlug, SITE_LANDING_SEGMENTS, HUB_ROUTE_SEGMENTS, siteIdForDir } from '../sites/registry'
 // The generated route map — imported ONLY here. `registry.ts` keeps its landing-segment
 // set as a hand-written literal so the always-loaded header never pulls the family's
 // whole route inventory into its bundle; this is the oracle that keeps the two equal.
@@ -201,6 +201,46 @@ describe('local cross-site origins', () => {
     // Local-only subdomain; testing/prod derive from prodHost (agenticpersonaregistry.com).
     expect(buildSiteHref(registry, 'testing.agenticdeveloperhub.com', '/home')).toBe(
       'https://testing.agenticpersonaregistry.com/',
+    )
+  })
+})
+
+// A local server that runs only some sites names them in NEXT_PUBLIC_LOCAL_SITES, and a hop
+// to any other site goes to its production host: serve-local.py runs the hub alone, and its
+// sibling rows pointed at hosts nothing answered (Mike, 2026-10-24).
+describe('local hops to a site the local server does not run', () => {
+  afterEach(() => vi.unstubAllEnvs())
+
+  it('go to the production host', () => {
+    vi.stubEnv('NEXT_PUBLIC_LOCAL_SITES', 'hub')
+    expect(buildSiteHref(cookbook, 'hub-site-menu2.sites.localhost', '/')).toBe(
+      'https://agenticdevelopercookbook.com/',
+    )
+    expect(buildSiteHref(hubHelp, 'hub-site-menu2.sites.localhost', '/')).toBe(
+      'https://help.agenticdeveloperhub.com/',
+    )
+    expect(buildSiteHref(getSite('bitbag')!, 'hub-site-menu2.sites.localhost', '/')).toBe(
+      'https://bitbag.ai/',
+    )
+    expect(siteUrl('cookbook', '/x', 'hub-site-menu2.sites.localhost')).toBe(
+      'https://agenticdevelopercookbook.com/x',
+    )
+  })
+
+  it('stay local for a site on the list', () => {
+    vi.stubEnv('NEXT_PUBLIC_LOCAL_SITES', 'hub, cookbook')
+    expect(buildSiteHref(cookbook, 'hub-site-menu2.sites.localhost', '/')).toBe(
+      'https://cookbook.hub-site-menu2.sites.localhost/',
+    )
+    expect(buildSiteHref(hub, 'cookbook.hub-site-menu2.sites.localhost', '/')).toBe(
+      'https://hub-site-menu2.sites.localhost/',
+    )
+  })
+
+  it('stay local for every site when the list is unset (the full suite)', () => {
+    vi.stubEnv('NEXT_PUBLIC_LOCAL_SITES', '')
+    expect(buildSiteHref(cookbook, 'hub-site-menu2.sites.localhost', '/')).toBe(
+      'https://cookbook.hub-site-menu2.sites.localhost/',
     )
   })
 })

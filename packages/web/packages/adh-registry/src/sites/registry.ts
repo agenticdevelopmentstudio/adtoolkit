@@ -763,6 +763,25 @@ function localOrigin(target: SiteDef, currentHost: string): string {
   return `http://${sub}localhost${suffix}`
 }
 
+/** Whether the local server answers for `target`, so a local hop to it can stay local.
+ *
+ *  `NEXT_PUBLIC_LOCAL_SITES` is the comma-separated list of site ids the local server
+ *  actually runs. Unset means "all of them", which is the full `dev.local` suite the
+ *  `<id>.<suite>.<domain>` scheme above was written for. It is set by the hub's
+ *  `tools/serve-local.py`, which serves the hub and NOTHING else at
+ *  `hub-<branch>.sites.localhost`: every sibling row on that menu used to point at
+ *  `bitbag.hub-<branch>.sites.localhost`, a host no server answers, so Bitbag, Cookbook
+ *  and Help all went nowhere (Mike, 2026-10-24). A site off the list goes to its
+ *  PRODUCTION host instead, the address the visitor meant.
+ *
+ *  Read on each call, and spelled out in full, because Next inlines a
+ *  `process.env.NEXT_PUBLIC_*` reference only where the literal text appears. */
+function servedLocally(target: SiteDef): boolean {
+  const list = process.env.NEXT_PUBLIC_LOCAL_SITES
+  if (!list) return true
+  return list.split(',').some((id) => id.trim() === target.id)
+}
+
 /** Map the current path onto the path to open on the target site.
  *  Only `/` and `/home` are guaranteed to exist on every chrome site, so:
  *   - root and site-specific deep routes → the target's landing `/`
@@ -782,7 +801,11 @@ function carryPath(target: SiteDef, pathname: string): string {
  *  preserving the environment and matching route per the rules above. */
 export function buildSiteHref(target: SiteDef, currentHostname: string, pathname: string): string {
   const env = detectEnv(currentHostname)
-  if (env === 'local') return `${localOrigin(target, currentHostname)}${carryPath(target, pathname)}`
+  if (env === 'local' && servedLocally(target)) {
+    return `${localOrigin(target, currentHostname)}${carryPath(target, pathname)}`
+  }
+  // A local site the local server does not run falls through to here, and hostForEnv
+  // answers `local` with the production host (see servedLocally).
   const host = hostForEnv(target, env)
   return `https://${host}${carryPath(target, pathname)}`
 }
@@ -1280,7 +1303,7 @@ export function siteUrl(id: SiteId, path: string, currentHostname: string): stri
   const site = getSite(id)
   if (!site) return path
   const env = detectEnv(currentHostname)
-  if (env === 'local') return `${localOrigin(site, currentHostname)}${path}`
+  if (env === 'local' && servedLocally(site)) return `${localOrigin(site, currentHostname)}${path}`
   return `https://${hostForEnv(site, env)}${path}`
 }
 
