@@ -53,7 +53,7 @@ export function Dashboard(): ReactElement {
   // ✓ behind the matrix. This used to be re-derived from /api/status services + live
   // deploys, which made the watermark a SECOND producer of "everything is fine": a
   // board problem with no matching monitored endpoint — a platform-unreachable
-  // provider, a Crunchy cluster (which by design owns no roster entry), a project with
+  // provider, a Crunchy cluster (watched by a deploy-only monitor), a project with
   // no probe — left the ✓ painted while the Problems list beside it was non-empty.
   // `board === null` — for any reason `BoardUnavailableReason` lists — paints NOTHING:
   // unknown is not clear, and a ✓ from an absence of data is exactly the forbidden

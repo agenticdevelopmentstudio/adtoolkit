@@ -120,6 +120,13 @@
       "when": 1792791533550,
       "tag": "0016_thankful_goliath",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1792863699986,
+      "tag": "0017_harsh_star_brand",
+      "breakpoints": true
     }
   ]
 }

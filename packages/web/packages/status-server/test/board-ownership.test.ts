@@ -210,16 +210,25 @@ describe("Railway: TARGET ownership is environment-scoped, PROJECT ownership is 
   });
 });
 
-describe("crunchy is owned by nobody and visible always", () => {
-  // A Crunchy cluster has no HTTP host, so no roster entry can ever be wired to one.
-  // Without the carve-out the fold derives no crunchy Problem and `applyBoardToLedger`
-  // would resolve every open crunchy issue on its first sweep.
-  it("mints a target from the row itself against an EMPTY roster", () => {
-    const index = targetsOf([]);
-    const row = deploy({ platform: "crunchy", projectName: "adh-pg", environment: "production" });
-    // Non-Vercel, so `env` is the environment the platform itself reported.
-    expect(ownedDeployTarget(row, index)).toEqual({ owner: null, target: "crunchy|adh-pg|", env: "production" });
-    expect(ownsDeployProject(row, rosterDeployProjects([]))).toBe(true);
+describe("crunchy is owned like every other platform — by a deploy-only monitor", () => {
+  // A Crunchy cluster has no HTTP host, so the entry that owns it is a domainless,
+  // deploy-only monitor Auto Configure wires to the cluster id. There is no carve-out
+  // any more: an unwired cluster is invisible, exactly like an unwired Vercel project.
+  const wired = entry({
+    endpointId: "ep-pg", platform: "crunchy", providerProjectId: "cl_1", projectName: "adh-pg",
+    environment: null, monitorHttp: false,
+  });
+
+  it("an UNWIRED cluster is owned by nobody and mints no target", () => {
+    const row = deploy({ platform: "crunchy", providerProjectId: "cl_1", projectName: "adh-pg", environment: "production" });
+    expect(ownedDeployTarget(row, targetsOf([]))).toBeNull();
+    expect(ownsDeployProject(row, rosterDeployProjects([]))).toBe(false);
+  });
+
+  it("a WIRED cluster is owned by its monitor, under the cluster id", () => {
+    const row = deploy({ platform: "crunchy", providerProjectId: "cl_1", projectName: "adh-pg", environment: "production" });
+    expect(ownedDeployTarget(row, targetsOf([wired]))).toMatchObject({ owner: wired, target: "crunchy|cl_1|" });
+    expect(ownsDeployProject(row, rosterDeployProjects([wired]))).toBe(true);
   });
 });
 

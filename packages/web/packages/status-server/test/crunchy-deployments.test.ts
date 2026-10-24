@@ -35,6 +35,8 @@ describe("fetchCrunchyClusters", () => {
       ["adh-testing", "failed"],
     ]);
     expect(out.deploys[0]).toMatchObject({ id: "cr_fq2z", platform: "crunchy", buildPhase: null, environment: "production" });
+    // The cluster id is the provider project id, so a renamed cluster stays one target.
+    expect(out.deploys.map((d) => d.providerProjectId)).toEqual(["fq2z", "qki2", "72o5"]);
   });
 
   it("sends the token as a Bearer header to /clusters", async () => {

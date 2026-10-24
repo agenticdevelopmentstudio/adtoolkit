@@ -248,18 +248,24 @@ describe('the orphan sweep is now membership in monitoredTargets', () => {
     expect((await openRows(db)).map((r) => r.target)).toEqual(['platform-health|vercel']);
   });
 
-  it('exempts crunchy deploy targets (platform-owned, always-configured; not site-bound)', async () => {
+  it('keeps a crunchy target open while its deploy-only monitor watches the cluster', async () => {
     const db = await freshDb();
-    // A cluster has no HTTP host, so no roster entry can ever own one — it is watched and
-    // judged with no site behind it. `boardTargetKey` leaves the env segment empty for
-    // every platform but Railway, so the target is `crunchy|adh-testing|`.
-    const target = boardTargetKey('crunchy', 'adh-testing', 'testing')!;
+    // A cluster has no HTTP host, so its owner is a domainless, deploy-only monitor
+    // (placeholder URL) wired to the cluster id — and the target is keyed by that id.
+    // `boardTargetKey` leaves the env segment empty for every platform but Railway.
+    await db.insert(siteGroups).values({ id: 'grp-1', name: 'DB', slug: 'db' });
+    await db.insert(monitoredSites).values({ id: 'site-1', siteGroupId: 'grp-1', name: 'adh-testing', slug: 'adh-testing' });
+    await db.insert(monitoredEndpoints).values({
+      id: 'ep-pg', siteId: 'site-1', url: 'https://', platform: 'crunchy',
+      deployProject: 'adh-testing', deployProjectId: 'cl_1', isActive: true, monitorHttp: false,
+    });
+    const target = boardTargetKey('crunchy', 'cl_1', 'testing')!;
     await insertOpen(db, target, 'crunchy');
     await db.insert(deployments).values({
-      id: 'cr_1', platform: 'crunchy', projectName: 'adh-testing', environment: 'testing',
-      buildPhase: 'failed', deployPhase: 'none', createdAt: new Date(),
+      id: 'cr_cl_1', platform: 'crunchy', providerProjectId: 'cl_1', projectName: 'adh-testing', environment: 'testing',
+      buildPhase: null, deployPhase: 'failed', createdAt: new Date(),
     });
-    await reconcileBoardLedger(createLibsqlStorage(db), testConfig()); // no sites at all
+    await reconcileBoardLedger(createLibsqlStorage(db), testConfig());
     expect((await openRows(db)).map((r) => r.target)).toEqual([target]); // survives, not resolved
   });
 

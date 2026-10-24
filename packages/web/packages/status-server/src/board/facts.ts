@@ -23,7 +23,7 @@ import type { ActivityCursor, ActivityPage, BoardFacts, DeployFact, EndpointFact
  * `canceled`/`unknown` rows fall out of both lists: they are the absence of a verdict,
  * and the board claims nothing from an absence.
  */
-function binByOutcome(rows: DeployFact[]): { concluded: DeployFact[]; inFlight: DeployFact[] } {
+export function binByOutcome(rows: DeployFact[]): { concluded: DeployFact[]; inFlight: DeployFact[] } {
   const concluded: DeployFact[] = [];
   const inFlight: DeployFact[] = [];
   for (const f of rows) {

@@ -184,12 +184,12 @@ describe('buildLiveSnapshot deploy-target narrowing', () => {
     expect(projectsOf(snap)).toEqual(['api-svc', 'edge-worker']);
   });
 
-  it('always serves crunchy builds — its targets are not site-bound', async () => {
+  it('serves a crunchy cluster\'s builds once a deploy-only monitor wires it, and not before', async () => {
     await seedFailedDeploy(db, 'crunchy', 'primary-cluster');
+    expect(projectsOf(await buildLiveSnapshot(storage, testConfig()))).toEqual([]);
 
-    const snap = await buildLiveSnapshot(storage, testConfig());
-
-    expect(projectsOf(snap)).toEqual(['primary-cluster']);
+    await seedWiredEndpoint(db, { slug: 'primary-cluster', platform: 'crunchy', deployProject: 'primary-cluster' });
+    expect(projectsOf(await buildLiveSnapshot(storage, testConfig()))).toEqual(['primary-cluster']);
   });
 
   it('spends the MAX_DEPLOYS window on OWNED rows — unowned history cannot starve it', async () => {

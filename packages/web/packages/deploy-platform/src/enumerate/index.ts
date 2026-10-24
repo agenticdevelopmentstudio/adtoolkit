@@ -13,10 +13,11 @@ import {
   listWorkerCustomDomains,
   canonicalHostByWorker,
   fetchProjectDomains,
+  listCrunchyClusters,
 } from "../providers/index.js";
 
 /** A deploy project as enumerated from the providers (Vercel meta + live Railway +
- *  live Cloudflare) — the ONE enumeration of "what projects exist", surfaced by
+ *  live Cloudflare + live Crunchy Bridge) — the ONE enumeration of "what projects exist", surfaced by
  *  /deploy-projects. */
 export interface EnumeratedProject {
   platform: string;
@@ -137,7 +138,17 @@ export async function enumerateDeployProjectsFrom({ conn, projectMeta: metas }: 
   ).finally(() => railwayTimer.done());
   const railwayProjectsP = railwayListingP.then((l) => l.projects);
 
-  const [railwayListing, cf, railwayDomains] = await Promise.all([
+  // Crunchy Bridge clusters, listed live under their own box. Null when there is no
+  // token or the listing failed — and unlike Railway there is no configured fallback
+  // list, so a failed listing enumerates no clusters and verifies nothing.
+  const crunchyP: Promise<{ id: string; name: string }[] | null> = conn.crunchy.token
+    ? (() => {
+        const timer = withTimeout(6_000);
+        return listCrunchyClusters(conn.crunchy.token, timer.signal).finally(() => timer.done());
+      })()
+    : Promise.resolve(null);
+
+  const [railwayListing, cf, railwayDomains, crunchyClusters] = await Promise.all([
     railwayListingP,
     // Resolve the CF account ONCE (a blank CLOUDFLARE_ACCOUNT_ID is discovered from the
     // token), then fan out to the worker list + the live custom-domain map under that
@@ -153,6 +164,7 @@ export async function enumerateDeployProjectsFrom({ conn, projectMeta: metas }: 
     // Railway writes no project meta either, so resolve one representative host per
     // project. Chained off the SAME project list so it overlaps the Cloudflare fetch.
     railwayProjectsP.then((projects) => resolveRailwayDomains(conn.railway.token, projects)),
+    crunchyP,
   ]);
 
   const railwayProjects = railwayListing.projects;
@@ -244,10 +256,31 @@ export async function enumerateDeployProjectsFrom({ conn, projectMeta: metas }: 
     }));
   });
 
+  // Crunchy Bridge: one domain-less entry per cluster. A cluster is a database — no HTTP
+  // host, so nothing to probe — but its health arrives as deploy rows, and a deploy-only
+  // monitor wired to it is what puts those rows on the board. environment null: a
+  // cluster's key carries no environment segment (`deployTargetKey`), and its env comes
+  // from its name downstream (envFromProject), as Vercel's and Cloudflare's do.
+  const crunchy: EnumeratedProject[] = (crunchyClusters ?? []).map((c) => ({
+    platform: 'crunchy',
+    projectName: c.name,
+    environment: null,
+    domain: null,
+    domains: [],
+    gitRepo: null,
+    gitBranch: null,
+    rootDirectory: null,
+    framework: null,
+  }));
+
   // Same rule as Railway's: `cf.scripts` is null when the worker listing failed or the
   // account couldn't be resolved, and `workerScripts` then falls back to the configured
   // list — which cannot be read as the complete truth about what exists.
-  const verifiedPlatforms = [...(railwayListing.live ? ["railway"] : []), ...(cf?.scripts ? ["cloudflare"] : [])];
+  const verifiedPlatforms = [
+    ...(railwayListing.live ? ["railway"] : []),
+    ...(cf?.scripts ? ["cloudflare"] : []),
+    ...(crunchyClusters ? ["crunchy"] : []),
+  ];
 
   // Domain provenance, per platform. Each needs BOTH halves — a complete project list AND
   // complete domain reads over it — because a project missing from the list contributes no
@@ -257,9 +290,13 @@ export async function enumerateDeployProjectsFrom({ conn, projectMeta: metas }: 
     ...(vercelDomainsLive ? ["vercel"] : []),
     ...(railwayListing.live && railwayDomains.complete ? ["railway"] : []),
     ...(cf?.scripts && cf.hostToWorker ? ["cloudflare"] : []),
+    // A cluster serves no host, so a complete cluster list IS a complete domain list (an
+    // empty one). Without this, a configured Crunchy token would leave every UNWIRED
+    // monitor unjudgeable, since an unwired host needs every configured platform's list.
+    ...(crunchyClusters ? ["crunchy"] : []),
   ];
 
-  const projects = [...vercelCf, ...railway].sort(
+  const projects = [...vercelCf, ...railway, ...crunchy].sort(
     (a, b) =>
       a.platform.localeCompare(b.platform) ||
       a.projectName.localeCompare(b.projectName) ||

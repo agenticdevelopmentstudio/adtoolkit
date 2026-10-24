@@ -383,15 +383,17 @@ describe("deriveActivity — deployments", () => {
     expect(deriveActivity(f, NOW)).toEqual([]);
   });
 
-  it("a CRUNCHY cluster has no roster entry and is recorded anyway", () => {
-    const f = facts({
-      roster: [],
-      deployEvents: [deploy({ platform: "crunchy", projectName: "prod-cluster", environment: "production", buildPhase: null, deployPhase: "failed" })],
-    });
-    const rows = deriveActivity(f, NOW);
+  it("a CRUNCHY cluster is recorded under its deploy-only monitor, and only when wired", () => {
+    const cluster = deploy({ platform: "crunchy", providerProjectId: "cl_1", projectName: "prod-cluster",
+      environment: "production", buildPhase: null, deployPhase: "failed" });
+    const monitor = entry({ endpointId: "ep-pg", platform: "crunchy", providerProjectId: "cl_1",
+      projectName: "prod-cluster", environment: null, monitorHttp: false });
+    const rows = deriveActivity(facts({ roster: [monitor], deployEvents: [cluster] }), NOW);
     // No build phase → no build row; the cluster's health wears a deploy row's clothes.
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ kind: "deploy", step: "deploy", verb: "deploy failed", tone: "bad", target: "crunchy|prod-cluster|" });
+    expect(rows[0]).toMatchObject({ kind: "deploy", step: "deploy", verb: "deploy failed", tone: "bad", target: "crunchy|cl_1|" });
+    // Unwired, it is invisible like any other platform's unmonitored project.
+    expect(deriveActivity(facts({ roster: [], deployEvents: [cluster] }), NOW)).toEqual([]);
   });
 });
 

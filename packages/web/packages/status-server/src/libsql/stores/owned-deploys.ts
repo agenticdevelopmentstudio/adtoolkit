@@ -1,4 +1,4 @@
-import { and, eq, inArray, or } from "drizzle-orm";
+import { and, inArray, or } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import { deployments } from "../schema";
 import type { OwnedProjects } from "../../storage/ports";
@@ -14,6 +14,7 @@ const PLATFORM_SPELLINGS: [canon: string, raw: string[]][] = [
   ["vercel", ["vercel"]],
   ["railway", ["railway"]],
   ["cloudflare", ["cloudflare", "cloudflare-pages"]],
+  ["crunchy", ["crunchy"]],
 ];
 
 /**
@@ -28,15 +29,19 @@ const PLATFORM_SPELLINGS: [canon: string, raw: string[]][] = [
  * belong to the same monitored project. The TypeScript ownership rule (`board/ownership.ts`)
  * runs afterwards and is what actually decides; this only bounds what gets read.
  *
- * Crunchy clusters aren't site-bound and are always included.
+ * NULL when no live site monitors anything, and every caller then skips its read: the
+ * answer is "no rows" without asking. Never undefined, which drizzle reads as "no WHERE"
+ * and would hand every caller the whole table — and not a constant-false `where 0`
+ * either, which reads nothing but still EXPLAINs as a table SCAN, so the query-plan
+ * audit could not tell it from a real one.
  */
-export function ownedDeploysWhere(projects: OwnedProjects): SQL | undefined {
+export function ownedDeploysWhere(projects: OwnedProjects): SQL | null {
   // A FLAT OR of (platform, project) pairs, one arm per spelling, rather than
   // `platform in … and (name in … or id in …)`. Same rows; but each flat arm is exactly
   // the prefix of one index (`idx_deploy_project_created`, `idx_deploy_provider_created`),
   // so SQLite seeks every arm and unions them instead of walking `idx_deploy_created`
   // past every unowned row until the limit fills.
-  const clauses: SQL[] = [eq(deployments.platform, "crunchy")];
+  const clauses: SQL[] = [];
   for (const [canon, raw] of PLATFORM_SPELLINGS) {
     const bucket = projects.get(canon);
     if (!bucket) continue;
@@ -47,5 +52,5 @@ export function ownedDeploysWhere(projects: OwnedProjects): SQL | undefined {
       clauses.push(and(inArray(deployments.platform, raw), inArray(deployments.providerProjectId, [...bucket.ids]))!);
     }
   }
-  return or(...clauses);
+  return clauses.length > 0 ? or(...clauses)! : null;
 }

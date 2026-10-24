@@ -33,8 +33,14 @@ import type { DeployFact, RosterEntry } from "./types";
  *    on the endpoint, which is a narrowing neither surface ever made.
  *
  * Both granularities read the SAME roster and the SAME identity rule (provider id first,
- * project name second, crunchy always owned), so they can differ only where this file
- * says they differ.
+ * project name second), so they can differ only where this file says they differ.
+ *
+ * Every platform is owned the same way, Crunchy Bridge included. A cluster has no HTTP
+ * host, so it is owned through a deploy-only monitor (an endpoint wired to the cluster
+ * with no URL), exactly like a Railway project that serves no domain. It used to be
+ * ALWAYS owned, with no roster entry at all — a carve-out that kept every cluster the
+ * token could see on the board whether or not anyone had chosen to watch it, and that
+ * the configure flow could neither ignore nor retire.
  */
 
 /**
@@ -176,17 +182,6 @@ export function matchRosterEntry(
 }
 
 /**
- * A Crunchy cluster is a deploy row with no site behind it — it has no HTTP host, so no
- * roster entry can ever own one, and it is ALWAYS visible. That was `isConfiguredDeployTarget`'s
- * carve-out (`if (p === "crunchy") return true`) and it is load-bearing in the fold: without
- * it no crunchy Problem is ever derived, and `applyBoardToLedger` would resolve every open
- * crunchy issue on its first sweep — silently retiring the DB alerting the spec keeps.
- */
-function isCrunchy(platform: string | null): boolean {
-  return platformCanon(platform) === "crunchy";
-}
-
-/**
  * Who owns this deploy row, and under what target key — the ONE gate that decides
  * whether a deployment is visible to the BOARD at all. Null means invisible by design:
  * a Vercel PREVIEW row (no live environment), a row whose project has been DELETED at
@@ -228,7 +223,7 @@ function isCrunchy(platform: string | null): boolean {
 export function ownedDeployTarget(
   d: DeployFact,
   index: RosterIndex,
-): { owner: RosterEntry | null; target: string; env: string } | null {
+): { owner: RosterEntry; target: string; env: string } | null {
   // A Vercel row with no environment (or an empty one) is a PREVIEW/branch build. It
   // is not a deployment of any live environment, so a failed preview must never
   // become a "production deploy failed" Problem. Shared with the issue recorder
@@ -247,12 +242,10 @@ export function ownedDeployTarget(
   // "unmonitored" rather than as a recovery nobody observed.
   if (platformCanon(d.platform) === "vercel" && index.vanishedVercel.has(d.projectName)) return null;
   const owner = matchRosterEntry(d, index.byId, index.byName);
-  if (!owner && !isCrunchy(d.platform)) return null; // no live site owns this target
+  if (!owner) return null; // no live site owns this target
 
-  // The roster entry mints the key when there is one; a Crunchy row speaks for itself.
-  const target = owner
-    ? boardTargetKey(owner.platform, entryIdentity(owner), d.environment)
-    : boardTargetKey(d.platform, d.projectName, d.environment);
+  // The roster entry mints the key, so a renamed project keeps its target.
+  const target = boardTargetKey(owner.platform, entryIdentity(owner), d.environment);
   if (!target) return null;
   return { owner, target, env: deployEnv(d.platform, d.projectName, d.environment, d.branch) };
 }
@@ -288,7 +281,6 @@ export function ownsDeployProject(
   d: DeployIdentity,
   projects: Map<string, { ids: Set<string>; names: Set<string> }>,
 ): boolean {
-  if (isCrunchy(d.platform)) return true;
   const p = platformCanon(d.platform);
   if (!p) return false;
   const bucket = projects.get(p);

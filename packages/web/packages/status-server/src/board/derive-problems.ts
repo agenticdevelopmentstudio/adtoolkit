@@ -103,7 +103,7 @@ export function parsePlatformHealthTarget(target: string): string | null {
 }
 
 /** One deploy fact, already resolved to the board target that owns it. */
-type OwnedDeploy = { owner: RosterEntry | null; target: string; env: string; fact: DeployFact };
+type OwnedDeploy = { owner: RosterEntry; target: string; env: string; fact: DeployFact };
 
 /**
  * Does `a` supersede `b` as THE current row for their shared target? Newest wins.
@@ -226,7 +226,7 @@ export function deployProblems(facts: BoardFacts, nowMs: number, index?: RosterI
       // string (`schema.ts:61`), and `issues.ts:373` (`source: d.platform as IssueSource`)
       // is the existing convention this reuses rather than re-deriving.
       source: d.platform as IssueSource,
-      name: owner?.projectName ?? d.projectName,
+      name: owner.projectName ?? d.projectName,
       // The LOGICAL TIER `ownedDeployTarget` derived, never `d.environment` — see
       // `staleProdProblems` below, which has always drawn the same distinction.
       environment: judged.env,
@@ -740,22 +740,15 @@ export function monitoredTargets(facts: BoardFacts, index?: RosterIndex): string
   // A Railway deploy target is keyed per ENVIRONMENT, and one roster entry names only
   // its own env — so a target the roster reaches by NAME counts as watched too.
   //
-  // Crunchy is watched with no roster entry at all, the same carve-out `deployProblems`
-  // makes: a cluster has no HTTP host for a site to own. Omitting it here would make
-  // every crunchy close look UNMONITORED, so a cluster that genuinely recovered would
-  // never page on-call to say so.
-  //
   // BOTH state lists are read: a target whose only rows are still in flight can be judged
   // `stuck` by `deployProblems`, and a Problem on a target this function omits is one the
   // ledger writer closes as unmonitored the instant it is opened.
   //
   // THE SAME CALL `deployProblems` MAKES, not a re-spelling of its rules. This loop used
   // to open-code them: a crunchy row short-circuited to its OWN `d.projectName` key before
-  // the owner lookup ran, and the preview gate was missing. The narrow, concrete failure is
-  // a crunchy row that a roster entry DOES claim — `deployProblems` mints its target from
-  // the OWNER's identity (`crunchy|<providerProjectId>|`), this minted it from the row's
-  // name (`crunchy|<projectName>|`), so the Problem opened under one spelling and was
-  // closed as "unmonitored" under the other on the very next sweep, silently, with no
+  // the owner lookup ran, and the preview gate was missing — so a Problem minted from the
+  // OWNER's identity (`crunchy|<providerProjectId>|`) was closed as "unmonitored" under
+  // the row's name (`crunchy|<projectName>|`) on the very next sweep, silently, with no
   // recovery page. The general point is the one this whole file exists to make: two
   // functions answering "which targets are these deploy rows" is the shape that keeps
   // producing that bug, whatever the day's spelling difference happens to be.

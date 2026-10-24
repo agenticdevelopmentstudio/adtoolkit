@@ -18,7 +18,7 @@ import { timeAgo } from "../../lib/time-ago";
 // Platforms, in display order. The chooser is a popup menu listing EVERY known
 // platform, so a provider with no synced projects yet (e.g. railway before its first
 // deploy lands) is still selectable rather than silently dropped from the menu.
-const PROVIDER_ORDER = ["vercel", "railway", "cloudflare-pages"] as const;
+const PROVIDER_ORDER = ["vercel", "railway", "cloudflare-pages", "crunchy"] as const;
 
 const groupHead = "px-1 pt-0.5 pb-[3px] font-mono text-[0.62rem] uppercase tracking-[0.08em] text-apt-text-dim";
 const fieldCap = "font-mono text-[0.62rem] uppercase tracking-[0.08em] text-apt-text-dim";

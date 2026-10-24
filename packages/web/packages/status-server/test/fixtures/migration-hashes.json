@@ -83,5 +83,10 @@
     "tag": "0016_thankful_goliath",
     "when": 1792791533550,
     "sha256": "388245ee6ce9acf8931a76a237df056dfde7c571fb9baca9951ea473cddbacc2"
+  },
+  {
+    "tag": "0017_harsh_star_brand",
+    "when": 1792863699986,
+    "sha256": "052ef149db29f9a0d8ef48f97c270507291ac20fa7424f013d98cacc119f29cb"
   }
 ]

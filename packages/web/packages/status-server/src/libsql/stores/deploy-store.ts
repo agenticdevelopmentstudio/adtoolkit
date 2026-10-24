@@ -194,7 +194,8 @@ export function createDeployStore(db: Db): DeployStore {
       // OR, so the single statement fell back to scanning the table. Each read on its own
       // seeks its index (`ownedDeploysWhere`'s pair, `idx_deploy_live_host`).
       const byId = new Map<string, DeployHostRow>();
-      for (const r of [...(await read(ownedDeploysWhere(owned))), ...(await read(isNotNull(deployments.liveHost)))]) {
+      const ownership = ownedDeploysWhere(owned);
+      for (const r of [...(ownership ? await read(ownership) : []), ...(await read(isNotNull(deployments.liveHost)))]) {
         byId.set(r.id, r);
       }
       return [...byId.values()];
@@ -363,10 +364,12 @@ export function createDeployStore(db: Db): DeployStore {
     /** The most recent `limit` deploys some live site monitors (see `ownedDeploysWhere`),
      *  newest-created first — the Deployments-tab feed. */
     async listRecentOwned(owned: OwnedProjects, limit: number): Promise<DeploymentRow[]> {
+      const ownership = ownedDeploysWhere(owned);
+      if (!ownership) return [];
       return db
         .select()
         .from(deployments)
-        .where(ownedDeploysWhere(owned))
+        .where(ownership)
         .orderBy(desc(deployments.createdAt))
         .limit(limit);
     },

@@ -355,17 +355,23 @@ describe("readBoardFacts", () => {
     expect(facts.deployEvents.map((d) => d.projectName)).toEqual(["hub-help-testing"]);
   });
 
-  it("keeps a CRUNCHY cluster in the activity budget — nobody owns one, everybody watches it", async () => {
-    // The pre-filter is the SQL spelling of `ownsDeployProject`, whose crunchy carve-out is
-    // load-bearing: narrowing to the roster alone would drop every cluster event, and no
-    // roster entry can ever be wired to a database with no HTTP host.
+  it("keeps a WIRED crunchy cluster in the activity budget, under its cluster id", async () => {
+    // A cluster has no HTTP host, so its owner is a domainless, deploy-only monitor
+    // (placeholder URL) wired to the cluster id. The pre-filter matches it like any other
+    // platform's project, and drops a cluster nothing wires.
     const db = await freshDb();
     await seedSite(db);
-    const now = Date.UTC(2026, 7, 2, 12, 0, 0);
-    await db.insert(deployments).values({
-      platform: "crunchy", projectName: "prod-cluster", environment: null,
-      id: "cr_1", buildPhase: null, deployPhase: "failed", createdAt: new Date(now - 60_000),
+    await db.insert(monitoredEndpoints).values({
+      id: "ep-pg", siteId: "site-1", url: "https://", platform: "crunchy",
+      deployProject: "prod-cluster", deployProjectId: "cl_1", environment: null, isActive: true, monitorHttp: false,
     });
+    const now = Date.UTC(2026, 7, 2, 12, 0, 0);
+    await db.insert(deployments).values([
+      { platform: "crunchy", providerProjectId: "cl_1", projectName: "prod-cluster", environment: "production",
+        id: "cr_cl_1", buildPhase: null, deployPhase: "failed", createdAt: new Date(now - 60_000) },
+      { platform: "crunchy", providerProjectId: "cl_2", projectName: "scratch", environment: "production",
+        id: "cr_cl_2", buildPhase: null, deployPhase: "failed", createdAt: new Date(now - 30_000) },
+    ]);
     const facts = await readBoardFacts(createLibsqlStorage(db),now, config);
     expect(facts.deployEvents.map((d) => d.projectName)).toEqual(["prod-cluster"]);
   });

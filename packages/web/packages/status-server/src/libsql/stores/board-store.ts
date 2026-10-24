@@ -177,10 +177,12 @@ export function createBoardStore(db: Db): BoardStore {
     },
 
     async readDeployEvents(sinceMs: number, owned: OwnedProjects): Promise<DeployFact[]> {
+      const ownership = ownedDeploysWhere(owned);
+      if (!ownership) return [];
       const rows = await db
         .select()
         .from(deployments)
-        .where(and(gte(deployments.createdAt, new Date(sinceMs)), NOT_PREVIEW, ownedDeploysWhere(owned)))
+        .where(and(gte(deployments.createdAt, new Date(sinceMs)), NOT_PREVIEW, ownership))
         .orderBy(desc(deployments.createdAt))
         .limit(MAX_ACTIVITY_ROWS);
       return rows.map(toDeployFact);
@@ -258,7 +260,9 @@ export function createBoardStore(db: Db): BoardStore {
     },
 
     async readDeployActivityPage(cursor: PageCursor, owned: OwnedProjects): Promise<SourcePage<DeployFact>> {
-      const deployOwnership = and(NOT_PREVIEW, ownedDeploysWhere(owned));
+      const ownership = ownedDeploysWhere(owned);
+      if (!ownership) return { rows: [], floorMs: null };
+      const deployOwnership = and(NOT_PREVIEW, ownership);
       const page = await db
         .select()
         .from(deployments)

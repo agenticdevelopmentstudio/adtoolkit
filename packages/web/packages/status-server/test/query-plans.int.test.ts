@@ -55,6 +55,7 @@ const OWNED: OwnedProjects = new Map([
   ['vercel', { ids: new Set(['prj_web']), names: new Set(['web', 'docs']) }],
   ['railway', { ids: new Set(['rw_api']), names: new Set(['api']) }],
   ['cloudflare', { ids: new Set<string>(), names: new Set(['edge']) }],
+  ['crunchy', { ids: new Set(['cl_db']), names: new Set<string>() }],
 ]);
 
 async function seedDeploys(db: Db): Promise<void> {
@@ -69,7 +70,7 @@ async function seedDeploys(db: Db): Promise<void> {
     row('a3', 'railway', 'api', 'staging', { providerProjectId: 'rw_api' }),
     row('a4', 'railway', 'api', null),
     row('a5', 'cloudflare-pages', 'edge', 'production'),
-    row('a6', 'crunchy', 'db', null, { buildPhase: null, deployPhase: 'failed' }),
+    row('a6', 'crunchy', 'db', null, { providerProjectId: 'cl_db', buildPhase: null, deployPhase: 'failed' }),
     row('a7', 'vercel', 'unowned', 'production'),
   ]);
 }
@@ -98,6 +99,16 @@ describe('formerly-scanning reads now go through an index', () => {
     );
   });
 
+  it('an EMPTY owned set reads no deploy rows — never the whole table', async () => {
+    // `ownedDeploysWhere` returns FALSE for it; an undefined WHERE would hand back every row.
+    const db = await freshDb();
+    await seedDeploys(db);
+    const storage = createLibsqlStorage(db);
+    const none: OwnedProjects = new Map();
+    expect(await storage.deploy.listRecentOwned(none, 50)).toEqual([]);
+    expect(await storage.board.readDeployEvents(0, none)).toEqual([]);
+  });
+
   it('deploy.listForLiveHostStamp reads owned rows and hosted rows, not the table', async () => {
     const db = await freshDb();
     await seedDeploys(db);
@@ -105,7 +116,7 @@ describe('formerly-scanning reads now go through an index', () => {
     const plans = await plansOf(db, () => storage.deploy.listForLiveHostStamp(OWNED));
     expectIndexed(plans);
     const rows = await storage.deploy.listForLiveHostStamp(OWNED);
-    // Every owned row, the crunchy row, and nothing unowned without a host.
+    // Every owned row (the crunchy cluster by its id) and nothing unowned without a host.
     expect(rows.map((r) => r.id).sort()).toEqual(['a1', 'a2', 'a3', 'a4', 'a5', 'a6']);
     await storage.deploy.setLiveHost('a7', 'stale.example.com');
     expect((await storage.deploy.listForLiveHostStamp(OWNED)).map((r) => r.id)).toContain('a7');

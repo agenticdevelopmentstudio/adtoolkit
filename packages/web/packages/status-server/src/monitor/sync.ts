@@ -478,6 +478,7 @@ export async function runCycle(
           ...(has.vercelToken ? ["vercel"] : []),
           ...(has.railwayToken ? ["railway"] : []),
           ...(has.cloudflareToken ? ["cloudflare"] : []),
+          ...(has.crunchyToken ? ["crunchy"] : []),
         ],
         verifiedPlatforms,
         verifiedDomains: enumerated.verifiedDomains.filter((p) => verifiedPlatforms.includes(p)),

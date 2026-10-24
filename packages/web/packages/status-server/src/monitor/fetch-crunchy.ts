@@ -1,49 +1,32 @@
 import { crunchyPhases } from "./deploy-status";
 import { toValidDate, type ProviderDeploy } from "./provider-deploy";
-import { noteRateLimited, rateLimitedUntil } from "@agentic-toolkit/deploy-platform/cooldown";
-
-interface CrunchyCluster {
-  id: string;
-  name: string;
-  state: string;
-  is_suspended?: boolean;
-  environment?: string | null;
-  created_at?: string | null;
-}
-
-interface ClustersBody {
-  clusters?: CrunchyCluster[];
-}
+import { listCrunchyClusters } from "@agentic-toolkit/deploy-platform/providers";
 
 /**
- * List every cluster in the team (testing/staging/prod + any future cluster or replica)
- * and map each to a deploy row whose phase IS its health (see crunchyPhases). Poll-only,
- * mirroring fetch-cloudflare: missing token → dormant; any failure → ok:false so the
- * platform-health path opens a "can't reach Crunchy" blind-spot issue. The raw cbkey_ key
- * is a direct Bearer token (no exchange).
+ * List every cluster in the team and map each to a deploy row whose phase IS its health
+ * (see crunchyPhases). Poll-only, mirroring fetch-cloudflare: missing token → dormant; any
+ * failure → ok:false so the platform-health path opens a "can't reach Crunchy" blind-spot
+ * issue. The listing itself is `listCrunchyClusters`, the same call the project
+ * enumeration makes, so every cluster with rows here is one Auto Configure can wire.
+ *
+ * `providerProjectId` is the cluster id, as Railway's is its project id: a cluster renamed
+ * at Crunchy keeps its identity, and `learnProjectIds` adopts the id onto the endpoint
+ * that monitors it.
  */
 export async function fetchCrunchyClusters(env: {
   CRUNCHY_API_TOKEN?: string;
 }): Promise<{ ok: boolean; deploys: ProviderDeploy[] }> {
   if (!env.CRUNCHY_API_TOKEN) return { ok: true, deploys: [] };
-  if (rateLimitedUntil("crunchy")) return { ok: false, deploys: [] }; // cooling down after a 429
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 6_000);
   try {
-    const res = await fetch("https://api.crunchybridge.com/clusters", {
-      headers: { Authorization: `Bearer ${env.CRUNCHY_API_TOKEN}` },
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      if (res.status === 429) noteRateLimited("crunchy", res.headers.get("retry-after"));
-      console.error(`Crunchy /clusters ${res.status}`);
-      return { ok: false, deploys: [] };
-    }
-    const body = (await res.json()) as ClustersBody;
-    const deploys: ProviderDeploy[] = (body.clusters ?? []).map((c) => ({
+    const clusters = await listCrunchyClusters(env.CRUNCHY_API_TOKEN, controller.signal);
+    if (!clusters) return { ok: false, deploys: [] };
+    const deploys: ProviderDeploy[] = clusters.map((c) => ({
       id: `cr_${c.id}`,
       platform: "crunchy",
       projectName: c.name,
+      providerProjectId: c.id,
       ...crunchyPhases(c.state, Boolean(c.is_suspended)),
       environment: c.environment ?? "production",
       commitHash: null,
@@ -54,9 +37,6 @@ export async function fetchCrunchyClusters(env: {
       createdAt: toValidDate(c.created_at) ?? new Date(), // fall back to poll time, never Invalid Date
     }));
     return { ok: true, deploys };
-  } catch (err) {
-    console.error("Crunchy /clusters fetch", err);
-    return { ok: false, deploys: [] };
   } finally {
     clearTimeout(timer);
   }

@@ -225,7 +225,7 @@ export function deriveActivity(
       // (`derive-problems.ts:182`): `IssueSource` carries the literal `"cloudflare-pages"`,
       // and `platformCanon` folds that to `"cloudflare"`, which is not a member of the type.
       source: d.platform as IssueSource,
-      name: owner?.projectName ?? d.projectName,
+      name: owner.projectName ?? d.projectName,
       // The LOGICAL TIER from `ownedDeployTarget`, never `d.environment` — that column is
       // the provider's promotion target, and every Vercel project's is "production".
       environment: env,

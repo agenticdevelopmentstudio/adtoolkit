@@ -248,32 +248,41 @@ describe("a project deleted at Vercel is off the board, deploy rules included", 
 });
 
 describe("Crunchy has no HTTP host, but must still be WATCHED", () => {
-  // No roster entry ever owns a crunchy cluster — it has no HTTP host — yet
-  // deployProblems always judges it (issue-sources.ts's crunchy carve-out). If
-  // monitoredTargets omitted it, Task 12's ledger writer would read a genuine
-  // recovery as "no longer monitored" and close the issue silently instead of
-  // paging on-call that the outage cleared.
+  // A cluster is owned by a domainless, deploy-only monitor (Auto Configure wires one per
+  // cluster id). Its target must be in monitoredTargets whatever the verdict, or Task 12's
+  // ledger writer would read a genuine recovery as "no longer monitored" and close the
+  // issue silently instead of paging on-call that the outage cleared.
   function crunchyDeploy(over: Partial<DeployFact> = {}): DeployFact {
     return {
       deploymentId: `dpl_${++deploySeq}`,
-      platform: "crunchy", providerProjectId: null, projectName: "prod-cluster",
+      platform: "crunchy", providerProjectId: "cl_9", projectName: "prod-cluster",
       environment: null, branch: null, buildPhase: null, deployPhase: "failed",
       createdAtMs: NOW - 60_000, commitHash: null, commitMessage: null,
       commitRepo: null, errorText: null, sourceUrl: null, liveUrl: null, ...over,
     };
   }
-  const TARGET = "crunchy|prod-cluster|";
+  const monitor = entry({
+    endpointId: "ep-pg", label: "Prod PG", platform: "crunchy",
+    providerProjectId: "cl_9", projectName: "prod-cluster", environment: null, monitorHttp: false,
+  });
+  const TARGET = "crunchy|cl_9|";
 
   it("a failed cluster is a Problem, and its target is watched", () => {
-    const board = deriveBoard(facts({ roster: [], deploys: [crunchyDeploy()] }), NOW);
+    const board = deriveBoard(facts({ roster: [monitor], deploys: [crunchyDeploy()] }), NOW);
     expect(board.problems.map((p) => p.target)).toEqual([TARGET]);
     expect(board.monitoredTargets).toContain(TARGET);
   });
 
   it("a healthy cluster has no Problem but is STILL watched — the case the ledger writer resolves", () => {
-    const board = deriveBoard(facts({ roster: [], deploys: [crunchyDeploy({ deployPhase: "deployed" })] }), NOW);
+    const board = deriveBoard(facts({ roster: [monitor], deploys: [crunchyDeploy({ deployPhase: "deployed" })] }), NOW);
     expect(board.problems).toEqual([]);
     expect(board.monitoredTargets).toContain(TARGET);
+  });
+
+  it("a cluster no monitor wires is neither a Problem nor watched", () => {
+    const board = deriveBoard(facts({ roster: [], deploys: [crunchyDeploy()] }), NOW);
+    expect(board.problems).toEqual([]);
+    expect(board.monitoredTargets).not.toContain(TARGET);
   });
 
   it("a cluster a roster entry DOES claim is watched under the OWNER's spelling", () => {
@@ -281,18 +290,18 @@ describe("Crunchy has no HTTP host, but must still be WATCHED", () => {
     // key BEFORE asking who owns it, while `deployProblems` minted the target from the
     // owner's identity. With an id on the entry the two spellings differ, so the Problem
     // opened under `crunchy|cl_9|` and `applyBoardToLedger` closed it as UNMONITORED on the
-    // next sweep — the exact silent-close this whole file is about, and invisible to every
-    // other case here because the unowned crunchy path (above) agrees either way.
+    // next sweep — the exact silent-close this whole file is about. The row here predates
+    // the cluster id (no providerProjectId), so it is claimed by NAME.
     const owner = entry({
       endpointId: "ep-pg", label: "Prod PG", platform: "crunchy",
       providerProjectId: "cl_9", projectName: "prod-cluster", environment: null,
       monitorHttp: false,
     });
-    const board = deriveBoard(facts({ roster: [owner], deploys: [crunchyDeploy()] }), NOW);
+    const board = deriveBoard(facts({ roster: [owner], deploys: [crunchyDeploy({ providerProjectId: null })] }), NOW);
     expect(board.problems.map((p) => p.target)).toEqual(["crunchy|cl_9|"]);
     expect(board.monitoredTargets).toContain("crunchy|cl_9|");
     // And NOT under the row's own name — a second spelling of one target is the defect.
-    expect(board.monitoredTargets).not.toContain(TARGET);
+    expect(board.monitoredTargets).not.toContain("crunchy|prod-cluster|");
   });
 });
 

@@ -46,12 +46,24 @@ export function inFlightSql(prefix: "" | "excluded." = ""): string {
 
 /** A row that will never carry a verdict whatever happens next is outside both bins:
  *  `canceled` is the absence of a verdict, and a lifecycle that expired to `unknown`
- *  masks the last real verdict. */
-const HAS_OUTCOME_SQL = "(build_phase IS NULL OR build_phase NOT IN ('canceled', 'unknown')) AND deploy_phase <> 'unknown'";
+ *  masks the last real verdict. EXCEPT a `failed` phase, which `combinedStatus` checks
+ *  first and so outranks both: a build that failed and a deploy that then expired to
+ *  `unknown` is still a failure, and leaving it out of both bins hid it from the board. */
+const HAS_OUTCOME_SQL = "(build_phase = 'failed' OR deploy_phase = 'failed' OR ((build_phase IS NULL OR build_phase NOT IN ('canceled', 'unknown')) AND deploy_phase <> 'unknown'))";
 
 /** No build lifecycle AND no deploy entry — nothing to conclude, so it bins with the
  *  in-flight rows. */
 const NO_LIFECYCLE_SQL = "(build_phase IS NULL AND deploy_phase = 'none')";
+
+/** "Not in flight", spelled NULL-safe. `NOT ${inFlightSql()}` is NOT the same predicate:
+ *  for a row with `build_phase IS NULL`, `build_phase IN (…)` is NULL, so the negation is
+ *  NULL — and a WHERE treats NULL as false. That silently dropped every row with no build
+ *  lifecycle from the concluded bin: no Crunchy cluster verdict (`crunchyPhases` always
+ *  yields a null build) and no Cloudflare Worker deploy ever reached the board's Problem
+ *  rules. `inFlightSql` itself keeps its shipped text — `idx_deploy_inflight` and the
+ *  reconcile/expiry reads match it literally, and for them a NULL build is correctly
+ *  "not in flight" already. */
+const NOT_IN_FLIGHT_SQL = `((build_phase IS NULL OR build_phase NOT IN (${IN_FLIGHT_BUILD_PHASES.map((p) => `'${p}'`).join(", ")})) AND deploy_phase <> '${IN_FLIGHT_DEPLOY_PHASE}')`;
 
 /**
  * The board's two outcome bins over a stored `deployments` row, as raw SQL. Raw text
@@ -61,13 +73,15 @@ const NO_LIFECYCLE_SQL = "(build_phase IS NULL AND deploy_phase = 'none')";
  * the query's WHERE contains the index's WHERE term for term, so the two must be the same
  * literals, never bound parameters.
  *
- * Note the three-valued logic is load-bearing and kept as it shipped: for a row with
- * `build_phase IS NULL`, `NOT (inFlight)` is NULL rather than true, so such a row lands
- * in NEITHER bin unless it is deploying or has no lifecycle.
+ * Every term is NULL-safe on `build_phase`, so each bin is a true/false predicate for
+ * every row — `binByOutcome` (`board/facts.ts`) is the authoritative split, and these
+ * must read a SUPERSET of it (`test/outcome-bins.int.test.ts` pins that over every phase
+ * pair). Changing this text changes the partial indexes' WHERE, which needs a migration
+ * that recreates them.
  */
 export function outcomeBinSql(bin: "concluded" | "in-flight"): string {
   return bin === "concluded"
-    ? `(${HAS_OUTCOME_SQL} AND NOT ${inFlightSql()} AND NOT ${NO_LIFECYCLE_SQL})`
+    ? `(${HAS_OUTCOME_SQL} AND ${NOT_IN_FLIGHT_SQL} AND NOT ${NO_LIFECYCLE_SQL})`
     : `(${HAS_OUTCOME_SQL} AND (${inFlightSql()} OR ${NO_LIFECYCLE_SQL}))`;
 }
 

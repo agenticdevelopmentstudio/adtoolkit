@@ -240,27 +240,24 @@ describe("deployProblems — verdicts", () => {
     expect(p[0].name).toBe("hub-help-testing-renamed");
   });
 
-  // 15/16 pin the Crunchy carve-out. A cluster has no HTTP host, so NO roster entry can
-  // ever own it — rule 8 ("a target no roster entry owns is invisible") would silence
-  // every database alert we have, and the ledger writer would then resolve them all.
-  it("15. an unhealthy Crunchy cluster IS a problem despite owning no roster entry", () => {
-    const f = facts({
-      roster: [],
-      deploys: [deploy({ platform: "crunchy", projectName: "adh-prod", environment: "production",
-        buildPhase: null, deployPhase: "failed" })],
-    });
-    const p = deployProblems(f, NOW);
+  // 15/16 pin Crunchy under the ordinary ownership rule. A cluster has no HTTP host, so its
+  // owner is a domainless, deploy-only monitor wired to the cluster id; an unwired cluster
+  // is invisible (rule 8), exactly like any other platform's unmonitored project.
+  const pgMonitor = entry({ endpointId: "ep-pg", platform: "crunchy", providerProjectId: "cl_prod",
+    projectName: "adh-prod", environment: null, monitorHttp: false });
+  const cluster = (deployPhase: "failed" | "deployed") =>
+    deploy({ platform: "crunchy", providerProjectId: "cl_prod", projectName: "adh-prod",
+      environment: "production", buildPhase: null, deployPhase });
+
+  it("15. an unhealthy Crunchy cluster IS a problem once a deploy-only monitor wires it", () => {
+    const p = deployProblems(facts({ roster: [pgMonitor], deploys: [cluster("failed")] }), NOW);
     expect(p).toHaveLength(1);
-    expect(p[0]).toMatchObject({ target: "crunchy|adh-prod|", source: "crunchy", name: "adh-prod" });
+    expect(p[0]).toMatchObject({ target: "crunchy|cl_prod|", source: "crunchy", name: "adh-prod" });
+    expect(deployProblems(facts({ roster: [], deploys: [cluster("failed")] }), NOW)).toEqual([]);
   });
 
   it("16. a healthy Crunchy cluster is not a problem", () => {
-    const f = facts({
-      roster: [],
-      deploys: [deploy({ platform: "crunchy", projectName: "adh-prod", environment: "production",
-        buildPhase: null, deployPhase: "deployed" })],
-    });
-    expect(deployProblems(f, NOW)).toEqual([]);
+    expect(deployProblems(facts({ roster: [pgMonitor], deploys: [cluster("deployed")] }), NOW)).toEqual([]);
   });
 
   it("17. deactivating one Railway environment's roster entry does not silence its still-active sibling, nor does the sibling adopt the deactivated one's problem", () => {

@@ -563,8 +563,7 @@ export interface DeployStore {
   deleteProjectMeta(platform: string, names: string[]): Promise<void>;
 
   /** The most recent `limit` deploys some live site monitors (see `OwnedProjects`),
-   *  newest-created first — the Deployments-tab feed. Crunchy clusters (not
-   *  site-bound) are always included. */
+   *  newest-created first — the Deployments-tab feed. */
   listRecentOwned(owned: OwnedProjects, limit: number): Promise<DeploymentRow[]>;
 
   /** One deployment's identity + persisted failure summary, for `GET /deployments/:id/log` —
