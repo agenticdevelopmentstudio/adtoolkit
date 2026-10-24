@@ -4,6 +4,10 @@ export declare const FLEET_SECTION = 1;
 /** The section {@link ADMIN_MENU_GROUPS} carries — one more than the fleet's, so a
  *  divider falls between the family and the consoles. */
 export declare const ADMIN_SECTION: number;
+/** The section of the hub landing menu's Help / Contact block — one more than the
+ *  fleet's, so a divider falls above it. It shares ADMIN_SECTION's number, which is safe
+ *  only because the hub's landing menu never shows the admin block (MarketingSiteMenu). */
+export declare const HUB_HELP_SECTION: number;
 /**
  * The family, in the order it is meant to be read.
  *
@@ -21,16 +25,18 @@ export declare const FLEET_MENU_GROUPS: MenuGroup[];
  * Every site is its OWN top-level row (Mike, 2026-10-24): with only seven of them there is
  * nothing to fold away, so the fleet tree's grouping headers (`Build`) and its Hub ▸ Help
  * nesting are dropped here — a site one hover deep in a seven-row menu is a site the
- * visitor has to hunt for.
+ * visitor has to hunt for. Hub is a plain row too: its Contact / Details submenu went the
+ * same day, at the owner's word.
+ *
+ * Help and Contact are a block of their own at the foot, below a divider and just above
+ * the studio wordmark (Mike, 2026-10-24): they are where to go for help with the family,
+ * not members of it. Details went with the Hub submenu; it was the help site's overview of
+ * the hub, which Help itself now reaches.
  *
  * A separate constant, not a filter over the fleet tree: `hub-rail-groups.ts` derives the
  * hub's rail from FLEET_MENU_GROUPS, so the fleet tree has to stay whole, and a filter would
  * leave Plan, Learn and the rest as empty triggers. Each row reads the same as its
  * counterpart in the fleet tree (same label, same tagline).
- *
- * Hub is still a topic, and still a destination itself: Contact and Details are hub pages,
- * not other sites, so they stay under it rather than becoming rows of their own — Contact
- * is a hub route, and Details is the help site's own overview of the hub.
  */
 export declare const HUB_LANDING_MENU_GROUPS: MenuGroup[];
 /**

@@ -39,10 +39,16 @@ describe('MarketingSiteMenu', () => {
     ])
       expect(screen.queryByRole('menuitem', { name: gone })).toBeNull()
     expect(screen.queryByRole('button', { name: 'User settings' })).toBeNull()
-    // The search row keeps a trailing control: the sites overview, as it has signed out.
-    expect(
-      screen.getByRole('button', { name: 'About the Agentic Developer family' }),
-    ).toBeInTheDocument()
+    // Nor the "?" that used to stand in for it (Mike, 2026-10-24).
+    expect(screen.queryByRole('button', { name: 'About the Agentic Developer family' })).toBeNull()
+    // Nor SiteMenu's own chrome rows: Home and the Help modal row (the one menuitem that
+    // is not a link).
+    expect(screen.queryByRole('menuitem', { name: /^Home/ })).toBeNull()
+    for (const help of screen.getAllByRole('menuitem', { name: /^Help/ }))
+      expect(help).toHaveAttribute('href')
+    // Help is still in the menu, as the help site's row in the foot block, beside Contact.
+    expect(screen.getAllByRole('menuitem', { name: /^Help/ })).toHaveLength(1)
+    expect(screen.getByRole('menuitem', { name: /^Contact/ })).toBeInTheDocument()
   })
 
   it('on the hub shows an admin no Admin block', async () => {
@@ -59,6 +65,8 @@ describe('MarketingSiteMenu', () => {
     await openMenu()
     expect(screen.getByRole('menuitem', { name: /^Products/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'User settings' })).toBeInTheDocument()
+    // Non-vacuity for the chrome rows the hub drops: a satellite keeps Home.
+    expect(screen.getByRole('menuitem', { name: /^Home/ })).toBeInTheDocument()
     // Non-vacuity for the hub case above: the same props DO produce the row elsewhere.
     expect(screen.getByRole('menuitem', { name: /^Admin/ })).toBeInTheDocument()
   })

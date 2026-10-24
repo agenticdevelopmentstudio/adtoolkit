@@ -20,6 +20,7 @@ import {
   ADMIN_SECTION,
   FLEET_MENU_GROUPS,
   FLEET_SECTION,
+  HUB_HELP_SECTION,
   HUB_LANDING_MENU_GROUPS,
 } from '../fleetMenuGroups'
 import { useSiteMenu, type UseSiteMenuOpts } from '../useSiteMenu'
@@ -167,24 +168,29 @@ describe('FLEET_MENU_GROUPS', () => {
 // 2026-10-23). Pinned as a SET of sites, so a row that sneaks back in fails here rather
 // than on screen.
 describe('HUB_LANDING_MENU_GROUPS', () => {
-  // Every site is its own row (Mike, 2026-10-24); Hub is the one topic, holding only the
-  // hub's own pages.
-  it('puts every site at the top level, in the order they are meant to be read', () => {
+  // Every site is its own row, Hub included, and Help and Contact are a block of their
+  // own below a divider (Mike, 2026-10-24).
+  it('is the six sites, then the Help / Contact block, with no submenus', () => {
     const entries = resolve({ groups: HUB_LANDING_MENU_GROUPS })
-    expect(entries.map((e) => (e.kind === 'topic' ? e.label : e.item.label))).toEqual([
+    const label = (e: PopoverEntry): string => (e.kind === 'topic' ? e.label : e.item.label)
+    expect(entries.map(label)).toEqual([
       'Bitbag',
       'Hub',
-      'Help',
       'Dev Team',
       'Cookbook',
       'Toolkit',
       'Persona Registry',
+      'Help',
+      'Contact',
     ])
-    for (const e of entries) expect(e.section).toBe(FLEET_SECTION)
-    const topics = entries.flatMap((e) => (e.kind === 'topic' ? [e] : []))
-    expect(topics.map((t) => t.label)).toEqual(['Hub'])
-    expect(topics[0]!.href, 'Hub is a destination too').toBeTruthy()
-    expect(topics[0]!.items.map((i) => i.label)).toEqual(['Contact', 'Details'])
+    expect(entries.filter((e) => e.kind !== 'leaf')).toEqual([])
+    expect(entries.map((e) => e.section)).toEqual([
+      ...Array<number>(6).fill(FLEET_SECTION),
+      HUB_HELP_SECTION,
+      HUB_HELP_SECTION,
+    ])
+    // A different section number is what draws the divider above Help.
+    expect(HUB_HELP_SECTION).not.toBe(FLEET_SECTION)
   })
 
   it("links only the seven chosen sites, plus the hub's own Contact page", () => {

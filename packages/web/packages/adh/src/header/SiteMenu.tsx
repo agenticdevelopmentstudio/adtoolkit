@@ -196,6 +196,14 @@ export type SiteMenuProps = SiteMenuChromeProps & {
    *  (MarketingSiteMenu / WorkspaceSiteMenu). This base holds ALL the logic; the
    *  subclass holds ONLY this. */
   groups: MenuGroup[]
+  /** Drops the menu's own chrome rows: the signed-in Home row, its Workspaces flyout and
+   *  the Help modal row. Signed-out Login / Sign up stay. The hub's landing menu sets it
+   *  because its owner wants that menu to be the sites and nothing else (Mike, 2026-10-24);
+   *  its tree carries Help as a row of its own instead. */
+  omitChromeRows?: boolean
+  /** Drops the search row's "?" family-overview button, so with no gear the row has no
+   *  trailing control at all. Set by the hub's landing menu (Mike, 2026-10-24). */
+  omitHelpButton?: boolean
 }
 
 /**
@@ -228,6 +236,8 @@ export function SiteMenu({
   loginHref,
   signupHref,
   navLinks,
+  omitChromeRows,
+  omitHelpButton,
 }: SiteMenuProps): ReactElement {
   // The trigger is always the hub brand ("Agentic Developer Hub") — this menu is
   // the family launcher, not a breadcrumb, so the label never reflects the site
@@ -270,6 +280,7 @@ export function SiteMenu({
       if (signupHref) out.push({ kind: 'leaf', section: 0, item: { key: 'signup', label: 'Sign up', href: signupHref, icon: menuIcon('signup') } })
       return out
     }
+    if (omitChromeRows) return []
     const out: PopoverEntry[] = [
       {
         kind: 'leaf',
@@ -310,7 +321,7 @@ export function SiteMenu({
       })
     }
     return out
-  }, [authenticated, loginHref, signupHref, homeHref, workspacesMenu, pathname])
+  }, [authenticated, loginHref, signupHref, homeHref, workspacesMenu, pathname, omitChromeRows])
 
   // Recents — a flyout of the last places visited, newest-first; hidden when empty, and
   // signed-out (the store only ever records workspace routes). It HEADS the fleet block
@@ -387,8 +398,14 @@ export function SiteMenu({
   // that is the whole of what the bar handed over. Reaching a page on the site you are
   // already on should not mean scrolling past the family launcher to get to it.
   const allEntries = useMemo<PopoverEntry[]>(
-    () => [...navSection, ...topSection, helpEntry(openHelp, 0), ...recentsSection, ...entries],
-    [navSection, topSection, recentsSection, entries, openHelp],
+    () => [
+      ...navSection,
+      ...topSection,
+      ...(omitChromeRows ? [] : [helpEntry(openHelp, 0)]),
+      ...recentsSection,
+      ...entries,
+    ],
+    [navSection, topSection, recentsSection, entries, openHelp, omitChromeRows],
   )
 
   // Open the single shared sites-overview popover (rendered by the always-present
@@ -457,6 +474,7 @@ export function SiteMenu({
       // or signed in on a host with no settings surface, the family-overview "?" button.
       commandTrailing={({ close }) => {
         const gear = authenticated ? settingsTrailing({ close, onSettings, settingsHref }) : null
+        if (omitHelpButton) return gear
         return (
           gear ?? (
             <button

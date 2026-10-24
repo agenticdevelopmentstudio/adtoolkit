@@ -113,6 +113,14 @@ export type SiteMenuProps = SiteMenuChromeProps & {
      *  (MarketingSiteMenu / WorkspaceSiteMenu). This base holds ALL the logic; the
      *  subclass holds ONLY this. */
     groups: MenuGroup[];
+    /** Drops the menu's own chrome rows: the signed-in Home row, its Workspaces flyout and
+     *  the Help modal row. Signed-out Login / Sign up stay. The hub's landing menu sets it
+     *  because its owner wants that menu to be the sites and nothing else (Mike, 2026-10-24);
+     *  its tree carries Help as a row of its own instead. */
+    omitChromeRows?: boolean;
+    /** Drops the search row's "?" family-overview button, so with no gear the row has no
+     *  trailing control at all. Set by the hub's landing menu (Mike, 2026-10-24). */
+    omitHelpButton?: boolean;
 };
 /**
  * The shared site-menu base: the header's site-switcher trigger rendered as a
@@ -129,5 +137,5 @@ export type SiteMenuProps = SiteMenuChromeProps & {
  * The config-only subclasses (MarketingSiteMenu, WorkspaceSiteMenu) supply nothing
  * but their `groups`; the dispatcher (SiteMenuSwitcher) picks which to render by route.
  */
-export declare function SiteMenu({ groups, currentSiteId, authenticated, userIsAdmin, triggerContent, triggerClassName, resolveHref, personalSlug, hubOffersFeature, settingsHref, onSettings, loginHref, signupHref, navLinks, }: SiteMenuProps): ReactElement;
+export declare function SiteMenu({ groups, currentSiteId, authenticated, userIsAdmin, triggerContent, triggerClassName, resolveHref, personalSlug, hubOffersFeature, settingsHref, onSettings, loginHref, signupHref, navLinks, omitChromeRows, omitHelpButton, }: SiteMenuProps): ReactElement;
 //# sourceMappingURL=SiteMenu.d.ts.map

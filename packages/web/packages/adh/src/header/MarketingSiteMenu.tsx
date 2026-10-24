@@ -13,9 +13,13 @@ import { FLEET_MENU_GROUPS, HUB_LANDING_MENU_GROUPS } from './fleetMenuGroups'
 // On the hub the tree is HUB_LANDING_MENU_GROUPS, the seven sites the repo owner
 // chose for the hub's own pages; every other host gets the whole FLEET_MENU_GROUPS.
 // The hub's version also carries no settings gear: the owner took it off the
-// landing menu (Mike, 2026-10-23), so the search row falls back to the "?" sites
-// overview button, as it does signed out. User Settings is still the avatar menu's
-// row, and the workspace menu keeps its gear.
+// landing menu (Mike, 2026-10-23). The "?" sites-overview button that took its place
+// went the next day (Mike, 2026-10-24), so the search row has no trailing control on the
+// hub. User Settings is still the avatar menu's row, and the workspace menu keeps its gear.
+//
+// The hub's menu also drops SiteMenu's own chrome rows — Home, Workspaces and the Help
+// modal row (Mike, 2026-10-24) — so it is the sites and the Help / Contact block, nothing
+// else. Signed out it still opens on Login / Sign up.
 //
 // Nor does it carry the Admin consoles, for an admin or anyone else: the owner took
 // them off the hub's menu too (Mike, 2026-10-24). This is the only place the hub
@@ -40,6 +44,8 @@ export function MarketingSiteMenu(props: SiteMenuChromeProps): ReactElement {
         onSettings={undefined}
         settingsHref={undefined}
         userIsAdmin={false}
+        omitChromeRows
+        omitHelpButton
       />
     )
   }

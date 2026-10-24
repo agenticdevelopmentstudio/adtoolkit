@@ -1759,6 +1759,7 @@ function settingsTrailing({
 import { ADMIN_SITE_IDS } from "@agentic-toolkit/adh-registry";
 var FLEET_SECTION = 1;
 var ADMIN_SECTION = FLEET_SECTION + 1;
+var HUB_HELP_SECTION = FLEET_SECTION + 1;
 function leaf(link) {
   return { kind: "leaf", section: FLEET_SECTION, blurb: true, link };
 }
@@ -1909,26 +1910,19 @@ var FLEET_MENU_GROUPS = [
 ];
 var HUB_LANDING_MENU_GROUPS = [
   leaf({ site: "bitbag", description: "The hub's AI persona" }),
-  topic({
-    label: "Hub",
-    description: "The center of it all",
-    link: { site: "hub" },
-    links: [
-      { route: "/contact", label: "Contact", description: "Get in touch" },
-      {
-        site: "hub-help",
-        path: "/hub/~overview",
-        label: "Details",
-        description: "What the hub does",
-        iconKey: "/details"
-      }
-    ]
-  }),
-  leaf({ site: "hub-help" }),
+  leaf({ site: "hub", description: "The center of it all" }),
   leaf({ site: "devteam", label: "Dev Team" }),
   leaf({ site: "cookbook" }),
   leaf({ site: "toolkit" }),
-  leaf({ site: "personaregistry" })
+  leaf({ site: "personaregistry" }),
+  { kind: "leaf", section: HUB_HELP_SECTION, blurb: true, link: { site: "hub-help" } },
+  {
+    kind: "leaf",
+    section: HUB_HELP_SECTION,
+    blurb: true,
+    // A hub ROUTE, as in the fleet tree's Hub ▸ Contact.
+    link: { route: "/contact", label: "Contact", description: "Get in touch" }
+  }
 ];
 var ADMIN_MENU_GROUPS = [
   {
@@ -1985,7 +1979,9 @@ function SiteMenu({
   onSettings,
   loginHref,
   signupHref,
-  navLinks
+  navLinks,
+  omitChromeRows,
+  omitHelpButton
 }) {
   const hub = getSite2("hub");
   const label = hub ? siteHeaderTitle(hub) : "Agentic Developer Hub";
@@ -2011,6 +2007,7 @@ function SiteMenu({
       if (signupHref) out2.push({ kind: "leaf", section: 0, item: { key: "signup", label: "Sign up", href: signupHref, icon: menuIcon("signup") } });
       return out2;
     }
+    if (omitChromeRows) return [];
     const out = [
       {
         kind: "leaf",
@@ -2041,7 +2038,7 @@ function SiteMenu({
       });
     }
     return out;
-  }, [authenticated, loginHref, signupHref, homeHref, workspacesMenu, pathname]);
+  }, [authenticated, loginHref, signupHref, homeHref, workspacesMenu, pathname, omitChromeRows]);
   const recentsSection = useMemo3(() => {
     if (!authenticated || !recents.length) return [];
     const items = recents.map((r) => ({
@@ -2077,8 +2074,14 @@ function SiteMenu({
   );
   const openHelp = useHelp().open;
   const allEntries = useMemo3(
-    () => [...navSection, ...topSection, helpEntry(openHelp, 0), ...recentsSection, ...entries],
-    [navSection, topSection, recentsSection, entries, openHelp]
+    () => [
+      ...navSection,
+      ...topSection,
+      ...omitChromeRows ? [] : [helpEntry(openHelp, 0)],
+      ...recentsSection,
+      ...entries
+    ],
+    [navSection, topSection, recentsSection, entries, openHelp, omitChromeRows]
   );
   function showOverview() {
     requestAnimationFrame(() => {
@@ -2125,6 +2128,7 @@ function SiteMenu({
       },
       commandTrailing: ({ close }) => {
         const gear = authenticated ? settingsTrailing({ close, onSettings, settingsHref }) : null;
+        if (omitHelpButton) return gear;
         return gear ?? /* @__PURE__ */ jsx15(
           "button",
           {
@@ -2155,7 +2159,9 @@ function MarketingSiteMenu(props) {
         ...props,
         onSettings: void 0,
         settingsHref: void 0,
-        userIsAdmin: false
+        userIsAdmin: false,
+        omitChromeRows: true,
+        omitHelpButton: true
       }
     );
   }
