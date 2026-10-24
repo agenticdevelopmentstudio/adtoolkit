@@ -1,5 +1,6 @@
 /** MarketingSiteMenu's one decision: on the hub it shows the hub's own short tree and no
- *  settings gear (Mike, 2026-10-23); on every other host, the whole family with the gear. */
+ *  settings gear (Mike, 2026-10-23) and no Admin block (2026-10-24); on every other host, the
+ *  whole family with the gear and, for an admin, the consoles. */
 /// <reference types="@testing-library/jest-dom/vitest" />
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import { describe, it, expect, afterEach, vi } from 'vitest'
@@ -44,10 +45,21 @@ describe('MarketingSiteMenu', () => {
     ).toBeInTheDocument()
   })
 
-  it('on a satellite keeps the whole family and the gear', async () => {
-    render(<MarketingSiteMenu currentSiteId="toolkit" authenticated onSettings={vi.fn()} />)
+  it('on the hub shows an admin no Admin block', async () => {
+    render(<MarketingSiteMenu currentSiteId="hub" authenticated userIsAdmin />)
+    await openMenu()
+    expect(screen.getByRole('menuitem', { name: /^Bitbag/ })).toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', { name: /^Admin/ })).toBeNull()
+  })
+
+  it('on a satellite keeps the whole family, the gear and the Admin block', async () => {
+    render(
+      <MarketingSiteMenu currentSiteId="toolkit" authenticated userIsAdmin onSettings={vi.fn()} />,
+    )
     await openMenu()
     expect(screen.getByRole('menuitem', { name: /^Products/ })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'User settings' })).toBeInTheDocument()
+    // Non-vacuity for the hub case above: the same props DO produce the row elsewhere.
+    expect(screen.getByRole('menuitem', { name: /^Admin/ })).toBeInTheDocument()
   })
 })

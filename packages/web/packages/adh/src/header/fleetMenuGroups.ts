@@ -222,14 +222,19 @@ export const FLEET_MENU_GROUPS: MenuGroup[] = [
  * hub, Help (hub-help), Bitbag, Dev Team, Cookbook, Toolkit and Persona Registry. Every
  * other host, satellites included, still shows the whole {@link FLEET_MENU_GROUPS}.
  *
+ * Every site is its OWN top-level row (Mike, 2026-10-24): with only seven of them there is
+ * nothing to fold away, so the fleet tree's grouping headers (`Build`) and its Hub ▸ Help
+ * nesting are dropped here — a site one hover deep in a seven-row menu is a site the
+ * visitor has to hunt for.
+ *
  * A separate constant, not a filter over the fleet tree: `hub-rail-groups.ts` derives the
  * hub's rail from FLEET_MENU_GROUPS, so the fleet tree has to stay whole, and a filter would
- * leave Plan, Learn and the rest as empty triggers. The rows it keeps are written the same
- * way they are written above, with the same labels and groups (`Hub`, `Build`), so a site
- * reads the same here as everywhere else in the family.
+ * leave Plan, Learn and the rest as empty triggers. Each row reads the same as its
+ * counterpart in the fleet tree (same label, same tagline).
  *
- * Contact and Details stay under Hub because they are hub pages, not other sites: Contact is
- * a hub route, and Details is the help site's own overview of the hub.
+ * Hub is still a topic, and still a destination itself: Contact and Details are hub pages,
+ * not other sites, so they stay under it rather than becoming rows of their own — Contact
+ * is a hub route, and Details is the help site's own overview of the hub.
  */
 export const HUB_LANDING_MENU_GROUPS: MenuGroup[] = [
   leaf({ site: 'bitbag', description: "The hub's AI persona" }),
@@ -239,7 +244,6 @@ export const HUB_LANDING_MENU_GROUPS: MenuGroup[] = [
     link: { site: 'hub' },
     links: [
       { route: '/contact', label: 'Contact', description: 'Get in touch' },
-      { site: 'hub-help' },
       {
         site: 'hub-help',
         path: '/hub/~overview',
@@ -249,12 +253,10 @@ export const HUB_LANDING_MENU_GROUPS: MenuGroup[] = [
       },
     ],
   }),
-  topic({
-    label: 'Build',
-    description: 'Make it',
-    iconKey: 'build',
-    links: [{ site: 'devteam', label: 'Dev Team' }, { site: 'cookbook' }, { site: 'toolkit' }],
-  }),
+  leaf({ site: 'hub-help' }),
+  leaf({ site: 'devteam', label: 'Dev Team' }),
+  leaf({ site: 'cookbook' }),
+  leaf({ site: 'toolkit' }),
   leaf({ site: 'personaregistry' }),
 ]
 

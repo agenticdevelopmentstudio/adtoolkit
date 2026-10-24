@@ -17,6 +17,12 @@ import { FLEET_MENU_GROUPS, HUB_LANDING_MENU_GROUPS } from './fleetMenuGroups'
 // overview button, as it does signed out. User Settings is still the avatar menu's
 // row, and the workspace menu keeps its gear.
 //
+// Nor does it carry the Admin consoles, for an admin or anyone else: the owner took
+// them off the hub's menu too (Mike, 2026-10-24). This is the only place the hub
+// showed them — its workspace routes swap in the WorkspaceMenu, which never had them
+// (see SiteMenuSwitcher) — so an admin reaches the consoles by their own addresses.
+// Satellites keep the Admin block.
+//
 // Kept as its own component (distinct from the workspace menu) so the two can
 // diverge without churn. The built-in search/filter box is always present
 // (rendered by SiteMenu itself).
@@ -33,6 +39,7 @@ export function MarketingSiteMenu(props: SiteMenuChromeProps): ReactElement {
         {...props}
         onSettings={undefined}
         settingsHref={undefined}
+        userIsAdmin={false}
       />
     )
   }

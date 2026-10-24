@@ -1915,7 +1915,6 @@ var HUB_LANDING_MENU_GROUPS = [
     link: { site: "hub" },
     links: [
       { route: "/contact", label: "Contact", description: "Get in touch" },
-      { site: "hub-help" },
       {
         site: "hub-help",
         path: "/hub/~overview",
@@ -1925,12 +1924,10 @@ var HUB_LANDING_MENU_GROUPS = [
       }
     ]
   }),
-  topic({
-    label: "Build",
-    description: "Make it",
-    iconKey: "build",
-    links: [{ site: "devteam", label: "Dev Team" }, { site: "cookbook" }, { site: "toolkit" }]
-  }),
+  leaf({ site: "hub-help" }),
+  leaf({ site: "devteam", label: "Dev Team" }),
+  leaf({ site: "cookbook" }),
+  leaf({ site: "toolkit" }),
   leaf({ site: "personaregistry" })
 ];
 var ADMIN_MENU_GROUPS = [
@@ -2157,7 +2154,8 @@ function MarketingSiteMenu(props) {
         groups: HUB_LANDING_MENU_GROUPS,
         ...props,
         onSettings: void 0,
-        settingsHref: void 0
+        settingsHref: void 0,
+        userIsAdmin: false
       }
     );
   }

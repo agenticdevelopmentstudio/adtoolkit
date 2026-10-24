@@ -167,15 +167,24 @@ describe('FLEET_MENU_GROUPS', () => {
 // 2026-10-23). Pinned as a SET of sites, so a row that sneaks back in fails here rather
 // than on screen.
 describe('HUB_LANDING_MENU_GROUPS', () => {
-  it('is Bitbag, Hub, Build and Persona Registry, in that order', () => {
+  // Every site is its own row (Mike, 2026-10-24); Hub is the one topic, holding only the
+  // hub's own pages.
+  it('puts every site at the top level, in the order they are meant to be read', () => {
     const entries = resolve({ groups: HUB_LANDING_MENU_GROUPS })
     expect(entries.map((e) => (e.kind === 'topic' ? e.label : e.item.label))).toEqual([
       'Bitbag',
       'Hub',
-      'Build',
+      'Help',
+      'Dev Team',
+      'Cookbook',
+      'Toolkit',
       'Persona Registry',
     ])
     for (const e of entries) expect(e.section).toBe(FLEET_SECTION)
+    const topics = entries.flatMap((e) => (e.kind === 'topic' ? [e] : []))
+    expect(topics.map((t) => t.label)).toEqual(['Hub'])
+    expect(topics[0]!.href, 'Hub is a destination too').toBeTruthy()
+    expect(topics[0]!.items.map((i) => i.label)).toEqual(['Contact', 'Details'])
   })
 
   it("links only the seven chosen sites, plus the hub's own Contact page", () => {
