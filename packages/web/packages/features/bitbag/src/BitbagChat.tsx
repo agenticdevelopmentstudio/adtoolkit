@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from 'react'
 import {
   CHAT_INPUT_SELECTOR,
   InlineChatView,
+  ProfileInfoButton,
   useBlockCursor,
   useChatSession,
   useConnectRitual,
@@ -36,6 +37,7 @@ import {
 } from './voice'
 
 const PERSONA = { name: 'bitbag' }
+const PROFILE_LABEL = 'bitbag’s profile on the Agentic Persona Registry'
 
 /** While a reply is in flight he cycles engaged moods so he reads as pondering. */
 const FLIGHT_MOODS: readonly BitbagExpression[] = ['thinking', 'inquisitive', 'excited']
@@ -124,6 +126,12 @@ export interface BitbagChatProps {
    * for his greeting when the chat appeared. Dock variant only.
    */
   summoned?: boolean
+  /**
+   * His profile page (e.g. on the Agentic Persona Registry). When set, a circled
+   * "i" on the chat frame's top-left corner links there; the host imports
+   * `css/chat/components/profile-info.css` from `@agentic-toolkit/persona`.
+   */
+  profileUrl?: string
 }
 
 export function BitbagChat({
@@ -140,6 +148,7 @@ export function BitbagChat({
   onEngagedChange,
   sendButton,
   summoned = false,
+  profileUrl,
 }: BitbagChatProps) {
   const isDock = variant === 'dock'
   // Default to the built-in scripted mock so existing consumers are byte-for-byte
@@ -280,7 +289,12 @@ export function BitbagChat({
   const rootClass = [THEME_SCOPE, className].filter(Boolean).join(' ')
 
   return (
-    <div ref={wrapperRef} className={rootClass}>
+    <div
+      ref={wrapperRef}
+      className={rootClass}
+      // The info button anchors to this box's corner.
+      style={profileUrl ? { position: 'relative' } : undefined}
+    >
       <ThemeStyle theme={theme} scope={`.${THEME_SCOPE}`} />
       <InlineChatView
         session={session}
@@ -306,6 +320,7 @@ export function BitbagChat({
         engaged={engaged}
         onEngagedChange={onEngagedChange}
       />
+      {profileUrl && <ProfileInfoButton profileUrl={profileUrl} label={PROFILE_LABEL} />}
       {/* Block cursor. left/top/width/height are viewport coords from
           caretMetrics — position:fixed (set in the theme CSS) resolves them
           against the viewport. */}

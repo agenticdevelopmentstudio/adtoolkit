@@ -19,6 +19,8 @@ export { ContentOverlay } from './components/ContentOverlay'
 export type { ContentOverlayProps } from './components/ContentOverlay'
 export { RegistryMark } from './components/RegistryMark'
 export type { RegistryMarkProps } from './components/RegistryMark'
+export { ProfileInfoButton } from './components/ProfileInfoButton'
+export type { ProfileInfoButtonProps } from './components/ProfileInfoButton'
 
 // Backends
 export { MockBackend } from './backends/MockBackend'

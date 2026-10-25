@@ -1,0 +1,40 @@
+/*
+ * ProfileInfoButton — a circled "i" centered on the top-left corner of the
+ * host's position:relative wrapper (the same wrapper that contains the chat
+ * view), linking to the persona's profile. It overhangs that box by half its
+ * size, so no ancestor within that distance may overflow-clip.
+ *
+ * Opt-in: import this file only where the button is rendered.
+ *
+ * Knobs:
+ *   --pc-pi-size — circle diameter (default 20px).
+ * Colors come from the chat theme tokens, with dark-terminal fallbacks.
+ */
+.pc-profile-info {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--pc-pi-size, 20px);
+  height: var(--pc-pi-size, 20px);
+  border-radius: 50%;
+  border: 1px solid var(--pc-input-border, rgba(255, 255, 255, 0.35));
+  background: var(--pc-surface, #050805);
+  color: var(--pc-persona-text, #d0d0d0);
+  font-family: var(--pc-font-mono, ui-monospace, monospace);
+  font-size: calc(var(--pc-pi-size, 20px) * 0.6);
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.pc-profile-info:hover,
+.pc-profile-info:focus-visible {
+  border-color: currentColor;
+  box-shadow: 0 0 6px color-mix(in srgb, currentColor 45%, transparent);
+  outline: none;
+}

@@ -28,6 +28,8 @@ export interface BitbagStageProps {
   logo?: ReactNode
   /** Extra classes on the chat's viewport shell. */
   className?: string
+  /** His profile page — shows the circled "i" on the chat (see BitbagChat). */
+  profileUrl?: string
 }
 
 /**
@@ -42,6 +44,7 @@ export function BitbagStage({
   size = 160,
   expressionOverride = null,
   logo,
+  profileUrl,
   className = 'relative z-10 max-w-2xl mx-auto px-4',
 }: BitbagStageProps) {
   const [chatHint, setChatHint] = useState<BitbagExpression | null>(null)
@@ -85,6 +88,7 @@ export function BitbagStage({
             utterance={utterance}
             onMute={onMute}
             anchorRef={bitbagRef}
+            profileUrl={profileUrl}
           />
         </ViewportComposer>
       </ViewportShell>
