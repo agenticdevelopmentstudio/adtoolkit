@@ -35,7 +35,7 @@
    * then all three are equally soft. That is a property of where the button is
    * put, not of the icon, and it cannot be fixed from in here — what can be
    * fixed is that the three bars agree, which is what the eye is reading. */
-  --menu-bar-thickness: 3px;
+  --menu-bar-thickness: 2px;
   --menu-bar-gap: 3px;
   /* Half the button wide: enough to read as a mark at this weight, and it
    * leaves the same air either side as the gaps put between the bars. */

@@ -55,7 +55,7 @@ on the button colours the figure, and the rest is custom properties:
 |---|---|---|
 | `--menu-size` | `32px` | the button's box, `border-box` |
 | `--menu-bar-width` | `16px` | |
-| `--menu-bar-thickness` | `3px` | **keep it a whole number of pixels** |
+| `--menu-bar-thickness` | `2px` | **keep it a whole number of pixels** |
 | `--menu-bar-gap` | `3px` | **keep thickness + gap a whole number too** |
 | `--menu-hit` | `44px` | the invisible tap target, centred on the button |
 

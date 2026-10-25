@@ -70,15 +70,21 @@
   position: absolute;
   inset: -6px;
 }
-/* Proportions, not pixels picked one at a time: each bar is half the button
- * wide and a twelfth of it thick, and the gap is a little over one bar. Solid
- * strokes with fully rounded caps — at this weight a hairline would read as a
- * seam rather than a mark, and square ends would fight the button's own
- * rounding. */
+/* Each bar is half the button wide, with solid strokes and fully rounded caps.
+ * Square ends would fight the button's own rounding.
+ *
+ * The thickness and the pitch (thickness + gap) are both WHOLE pixels, and that
+ * is what makes the three bars identical. The rasteriser rounds each edge of a
+ * bar to a device pixel independently, so a fractional thickness comes out a
+ * different weight depending on where the bar starts. At the previous 2.5px
+ * bars on a 5.5px pitch, the middle bar sat half a pixel out of phase with the
+ * other two and rendered visibly thinner. With 2px bars on a 5px pitch, all
+ * three round the same way wherever the button lands. This is the same rule
+ * @agenticdevelopertoolkit/chrome's MenuButton states, at the same weight. */
 .lp-burger span {
   display: block;
   width: 16px;
-  height: 2.5px;
+  height: 2px;
   border-radius: 999px;
   background: var(--lp-accent, #9a9a9a);
   transition: 0.25s;
