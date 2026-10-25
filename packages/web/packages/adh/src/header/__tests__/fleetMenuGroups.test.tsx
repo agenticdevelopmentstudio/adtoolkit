@@ -20,8 +20,8 @@ import {
   ADMIN_SECTION,
   FLEET_MENU_GROUPS,
   FLEET_SECTION,
-  HUB_HELP_SECTION,
-  HUB_LANDING_MENU_GROUPS,
+  HELP_SECTION,
+  SITE_MENU_GROUPS,
 } from '../fleetMenuGroups'
 import { useSiteMenu, type UseSiteMenuOpts } from '../useSiteMenu'
 import { type MenuGroup, type MenuLink } from '../SiteMenu'
@@ -164,14 +164,14 @@ describe('FLEET_MENU_GROUPS', () => {
   })
 })
 
-// The hub's own marketing menu: the seven sites the repo owner chose for it (Mike,
-// 2026-10-23). Pinned as a SET of sites, so a row that sneaks back in fails here rather
+// The marketing menu every site shows: the seven sites the repo owner chose (Mike,
+// 2026-10-23; every site, not just the hub, 2026-10-25). Pinned as a SET of sites, so a row that sneaks back in fails here rather
 // than on screen.
-describe('HUB_LANDING_MENU_GROUPS', () => {
+describe('SITE_MENU_GROUPS', () => {
   // Every site is its own row, Hub included, and Help and Contact are a block of their
   // own below a divider (Mike, 2026-10-24).
   it('is the six sites, then the Help / Contact block, with no submenus', () => {
-    const entries = resolve({ groups: HUB_LANDING_MENU_GROUPS })
+    const entries = resolve({ groups: SITE_MENU_GROUPS })
     const label = (e: PopoverEntry): string => (e.kind === 'topic' ? e.label : e.item.label)
     expect(entries.map(label)).toEqual([
       'Bitbag',
@@ -186,15 +186,15 @@ describe('HUB_LANDING_MENU_GROUPS', () => {
     expect(entries.filter((e) => e.kind !== 'leaf')).toEqual([])
     expect(entries.map((e) => e.section)).toEqual([
       ...Array<number>(6).fill(FLEET_SECTION),
-      HUB_HELP_SECTION,
-      HUB_HELP_SECTION,
+      HELP_SECTION,
+      HELP_SECTION,
     ])
     // A different section number is what draws the divider above Help.
-    expect(HUB_HELP_SECTION).not.toBe(FLEET_SECTION)
+    expect(HELP_SECTION).not.toBe(FLEET_SECTION)
   })
 
   it("links only the seven chosen sites, plus the hub's own Contact page", () => {
-    const links = allLinks(HUB_LANDING_MENU_GROUPS)
+    const links = allLinks(SITE_MENU_GROUPS)
     const sites = new Set(links.flatMap((l) => ('site' in l ? [l.site] : [])))
     expect([...sites].sort()).toEqual(
       ['bitbag', 'cookbook', 'devteam', 'hub', 'hub-help', 'personaregistry', 'toolkit'].sort(),
@@ -204,7 +204,7 @@ describe('HUB_LANDING_MENU_GROUPS', () => {
   })
 
   it('gives every row an icon and a tagline, like the family tree', () => {
-    for (const e of resolve({ groups: HUB_LANDING_MENU_GROUPS })) {
+    for (const e of resolve({ groups: SITE_MENU_GROUPS })) {
       const rows =
         e.kind === 'topic'
           ? [{ label: e.label, icon: e.icon, description: e.description }, ...e.items]

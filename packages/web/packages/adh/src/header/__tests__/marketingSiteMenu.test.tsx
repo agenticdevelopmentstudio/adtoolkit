@@ -1,6 +1,6 @@
-/** MarketingSiteMenu's one decision: on the hub it shows the hub's own short tree and no
- *  settings gear (Mike, 2026-10-23) and no Admin block (2026-10-24); on every other host, the
- *  whole family with the gear and, for an admin, the consoles. */
+/** MarketingSiteMenu shows ONE menu on every site (Mike, 2026-10-25): the short tree, no
+ *  settings gear (2026-10-23), no Admin block and no chrome rows (2026-10-24). The hub and a
+ *  satellite are asserted alike, so a per-site branch that creeps back in fails here. */
 /// <reference types="@testing-library/jest-dom/vitest" />
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import { describe, it, expect, afterEach, vi } from 'vitest'
@@ -10,6 +10,7 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn() }),
 }))
 
+import type { SiteId } from '@agentic-toolkit/adh-registry'
 import { MarketingSiteMenu } from '../MarketingSiteMenu'
 
 afterEach(cleanup)
@@ -58,16 +59,35 @@ describe('MarketingSiteMenu', () => {
     expect(screen.queryByRole('menuitem', { name: /^Admin/ })).toBeNull()
   })
 
-  it('on a satellite keeps the whole family, the gear and the Admin block', async () => {
-    render(
-      <MarketingSiteMenu currentSiteId="toolkit" authenticated userIsAdmin onSettings={vi.fn()} />,
-    )
-    await openMenu()
-    expect(screen.getByRole('menuitem', { name: /^Products/ })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'User settings' })).toBeInTheDocument()
-    // Non-vacuity for the chrome rows the hub drops: a satellite keeps Home.
-    expect(screen.getByRole('menuitem', { name: /^Home/ })).toBeInTheDocument()
-    // Non-vacuity for the hub case above: the same props DO produce the row elsewhere.
-    expect(screen.getByRole('menuitem', { name: /^Admin/ })).toBeInTheDocument()
-  })
+  // The menu is shared code, so a satellite shows exactly what the hub does (Mike, 2026-10-25).
+  it.each<SiteId>(['hub', 'toolkit', 'cookbook', 'hub-help'])(
+    'on %s, signed in as an admin, shows the same short menu',
+    async (site) => {
+      render(
+        <MarketingSiteMenu currentSiteId={site} authenticated userIsAdmin onSettings={vi.fn()} />,
+      )
+      await openMenu()
+      const labels = screen
+        .getAllByRole('menuitem')
+        .map((el) => el.textContent ?? '')
+      for (const want of [
+        /^Bitbag/,
+        /^Hub/,
+        /^Dev Team/,
+        /^Cookbook/,
+        /^Toolkit/,
+        /^Persona Registry/,
+        /^Help/,
+        /^Contact/,
+      ])
+        expect(labels.filter((l) => want.test(l)), `${want} on ${site}`).toHaveLength(1)
+      expect(screen.queryByRole('menuitem', { name: /^Products/ })).toBeNull()
+      expect(screen.queryByRole('menuitem', { name: /^Home/ })).toBeNull()
+      expect(screen.queryByRole('menuitem', { name: /^Admin/ })).toBeNull()
+      expect(screen.queryByRole('button', { name: 'User settings' })).toBeNull()
+      expect(
+        screen.queryByRole('button', { name: 'About the Agentic Developer family' }),
+      ).toBeNull()
+    },
+  )
 })

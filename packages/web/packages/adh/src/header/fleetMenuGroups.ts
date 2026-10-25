@@ -48,10 +48,10 @@ export const FLEET_SECTION = 1
  *  divider falls between the family and the consoles. */
 export const ADMIN_SECTION = FLEET_SECTION + 1
 
-/** The section of the hub landing menu's Help / Contact block — one more than the
- *  fleet's, so a divider falls above it. It shares ADMIN_SECTION's number, which is safe
- *  only because the hub's landing menu never shows the admin block (MarketingSiteMenu). */
-export const HUB_HELP_SECTION = FLEET_SECTION + 1
+/** The section of the site menu's Help / Contact block — one more than the fleet's, so a
+ *  divider falls above it. It shares ADMIN_SECTION's number, which is safe only because
+ *  the site menu never shows the admin block (MarketingSiteMenu). */
+export const HELP_SECTION = FLEET_SECTION + 1
 
 /** A top-level row that is a destination and nothing else. `blurb` surfaces its
  *  description as the trailing tagline, matching every other row. */
@@ -222,10 +222,11 @@ export const FLEET_MENU_GROUPS: MenuGroup[] = [
 ]
 
 /**
- * The hub's OWN marketing menu — the landing `/` and the hub's other non-workspace pages —
- * cut down to the seven sites the repo owner chose to show there (Mike, 2026-10-23): the
- * hub, Help (hub-help), Bitbag, Dev Team, Cookbook, Toolkit and Persona Registry. Every
- * other host, satellites included, still shows the whole {@link FLEET_MENU_GROUPS}.
+ * The site menu EVERY site shows on its marketing pages (MarketingSiteMenu), cut down to
+ * the seven sites the repo owner chose (Mike, 2026-10-23): the hub, Help (hub-help),
+ * Bitbag, Dev Team, Cookbook, Toolkit and Persona Registry. It began as the hub's own
+ * menu, with satellites keeping the whole {@link FLEET_MENU_GROUPS}; the owner ruled that
+ * the menu is shared code and every site gets this same one (Mike, 2026-10-25).
  *
  * Every site is its OWN top-level row (Mike, 2026-10-24): with only seven of them there is
  * nothing to fold away, so the fleet tree's grouping headers (`Build`) and its Hub ▸ Help
@@ -243,17 +244,17 @@ export const FLEET_MENU_GROUPS: MenuGroup[] = [
  * leave Plan, Learn and the rest as empty triggers. Each row reads the same as its
  * counterpart in the fleet tree (same label, same tagline).
  */
-export const HUB_LANDING_MENU_GROUPS: MenuGroup[] = [
+export const SITE_MENU_GROUPS: MenuGroup[] = [
   leaf({ site: 'bitbag', description: "The hub's AI persona" }),
   leaf({ site: 'hub', description: 'The center of it all' }),
   leaf({ site: 'devteam', label: 'Dev Team' }),
   leaf({ site: 'cookbook' }),
   leaf({ site: 'toolkit' }),
   leaf({ site: 'personaregistry' }),
-  { kind: 'leaf', section: HUB_HELP_SECTION, blurb: true, link: { site: 'hub-help' } },
+  { kind: 'leaf', section: HELP_SECTION, blurb: true, link: { site: 'hub-help' } },
   {
     kind: 'leaf',
-    section: HUB_HELP_SECTION,
+    section: HELP_SECTION,
     blurb: true,
     // A hub ROUTE, as in the fleet tree's Hub ▸ Contact.
     link: { route: '/contact', label: 'Contact', description: 'Get in touch' },
