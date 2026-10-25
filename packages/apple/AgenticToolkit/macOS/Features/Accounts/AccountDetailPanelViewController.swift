@@ -3,8 +3,9 @@ import AgenticToolkitCore
 import AgenticToolkitCoreMacOS
 import os
 
-/// One account's detail: who is signed in, or how to sign in. Renders
-/// entirely from `account`; keeps no copy of its state.
+/// One account's detail: who is signed in, or the controls to sign in. Renders
+/// entirely from `account`; keeps no copy of its state. What the account is for
+/// (its `summary`) is explanation, so it is the help drawer's, not the body's.
 @MainActor
 final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelViewController {
     static let restoringText = "Checking sign-in…"
@@ -14,7 +15,6 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
     let account: any Account
     private let openURL: @MainActor (URL) -> Bool
 
-    let summaryLabel = ThemedLabel.wrapping("", width: wrapWidth, role: .secondaryText, textRole: .body)
     let statusLabel = ThemedLabel(string: restoringText, role: .secondaryText, textRole: .body)
     let spinner = NSProgressIndicator()
     let avatarView = AccountAvatarView()
@@ -52,9 +52,15 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
         ["account", "login", "sign in", "sign up", "logout", account.displayName]
     }
 
+    override var helpContent: ComposableSettings.PanelHelp? {
+        guard !account.summary.isEmpty else { return nil }
+        return ComposableSettings.PanelHelp(topics: [
+            .init(title: "Account", body: account.summary)
+        ])
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        summaryLabel.setAccessibilityIdentifier("accounts.detail.summary")
         nameLabel.setAccessibilityIdentifier("accounts.detail.name")
         emailLabel.setAccessibilityIdentifier("accounts.detail.email")
         messageLabel.setAccessibilityIdentifier("accounts.detail.message")
@@ -91,7 +97,7 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
         buttons.orientation = .horizontal
         buttons.spacing = 8
 
-        let column = NSStackView(views: [identityRow, summaryLabel, statusRow, buttons, messageLabel])
+        let column = NSStackView(views: [identityRow, statusRow, buttons, messageLabel])
         column.orientation = .vertical
         column.alignment = .leading
         column.spacing = 12
@@ -129,8 +135,6 @@ final class AccountDetailPanelViewController: ComposableSettings.SettingsPanelVi
         nameLabel.stringValue = shownUser?.name ?? ""
         emailLabel.stringValue = shownUser?.email ?? ""
 
-        summaryLabel.stringValue = account.summary
-        summaryLabel.isHidden = !signedOutLike
         statusLabel.isHidden = !restoring
         statusRow.isHidden = !(restoring || busy)
         if restoring || busy { spinner.startAnimation(nil) } else { spinner.stopAnimation(nil) }

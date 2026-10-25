@@ -144,13 +144,6 @@ public final class ConfigurationContributionPoint: ContributionPoint {
             let group = ComposableSettings.GroupView(withTitle: section.title)
             for setting in section.settings {
                 group.addSettingSubview(row(for: setting))
-                if let explanation = setting.explanation, !explanation.isEmpty {
-                    // `.continuation` so the prose reads as part of the row
-                    // above it rather than as a row of its own.
-                    group.addSettingSubview(
-                        ComposableSettings.ExplanationView(withText: explanation),
-                        style: .continuation)
-                }
             }
             panel.addGroup(group)
         }
@@ -160,16 +153,22 @@ public final class ConfigurationContributionPoint: ContributionPoint {
     // MARK: - Rows
 
     private func row(for setting: ContributedSetting) -> NSView {
+        // Handed to the view model rather than drawn under the row: the help
+        // drawer collects it, so the description stays one click away without
+        // taking up the panel.
+        let explanation = setting.explanation.flatMap { $0.isEmpty ? nil : $0 }
         switch setting.kind {
         case .toggle(let value):
             return ComposableSettings.CheckboxView(with: ComposableSettings.ViewModel(
                 title: setting.key,
-                setting: UserSetting(setting.storageName, default: value)))
+                setting: UserSetting(setting.storageName, default: value),
+                explanation: explanation))
 
         case .text(let value, let multiline):
             let viewModel = ComposableSettings.ViewModel(
                 title: setting.key,
-                setting: UserSetting(setting.storageName, default: value))
+                setting: UserSetting(setting.storageName, default: value),
+                explanation: explanation)
             return multiline
                 ? ComposableSettings.TextAreaEditView(with: viewModel)
                 : ComposableSettings.TextEditView(with: viewModel)
@@ -179,13 +178,15 @@ public final class ConfigurationContributionPoint: ContributionPoint {
                 viewModel: ComposableSettings.ChoiceViewModel(
                     title: setting.key,
                     setting: UserSetting(setting.storageName, default: value),
-                    choices: options.map { .init(label: $0.label, value: $0.value) }))
+                    choices: options.map { .init(label: $0.label, value: $0.value) },
+                    explanation: explanation))
 
         case .number(let value, let minimum, let maximum):
             return ComposableSettings.NumberFieldView(
                 viewModel: ComposableSettings.ViewModel(
                     title: setting.key,
-                    setting: UserSetting(setting.storageName, default: value)),
+                    setting: UserSetting(setting.storageName, default: value),
+                    explanation: explanation),
                 minimum: minimum,
                 maximum: maximum)
 
@@ -193,14 +194,16 @@ public final class ConfigurationContributionPoint: ContributionPoint {
             return ComposableSettings.NumberFieldView(
                 viewModel: ComposableSettings.ViewModel(
                     title: setting.key,
-                    setting: UserSetting(setting.storageName, default: value)),
+                    setting: UserSetting(setting.storageName, default: value),
+                    explanation: explanation),
                 minimum: minimum,
                 maximum: maximum)
 
         case .json(let text):
             return JSONTextAreaEditView(with: ComposableSettings.ViewModel(
                 title: setting.key,
-                setting: UserSetting(setting.storageName, default: text)))
+                setting: UserSetting(setting.storageName, default: text),
+                explanation: explanation))
         }
     }
 }

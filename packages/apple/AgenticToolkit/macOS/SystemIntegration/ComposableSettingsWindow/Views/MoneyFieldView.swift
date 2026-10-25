@@ -21,6 +21,7 @@ extension ComposableSettings {
         public var textField: NSTextField { row.textField }
 
         /// The explanation drawn under the row by its ``GroupView``.
+        public var settingTitle: String? { viewModel.title }
         public var settingExplanation: String? { viewModel.explanation }
 
         /// What a blank field stands for, drawn as the placeholder. Nil draws none.

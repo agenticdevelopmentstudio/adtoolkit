@@ -23,6 +23,7 @@ extension ComposableSettings {
         private let field: NumberFieldView<Int>
 
         /// The explanation of the view model the field was built from.
+        public var settingTitle: String? { field.settingTitle }
         public var settingExplanation: String? { field.settingExplanation }
 
         /// - Parameters:

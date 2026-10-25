@@ -22,6 +22,11 @@ extension ComposableSettings {
         NSView, SettingsViewProtocol, SelfHidingSettingsView {
         public let child: NSView
 
+        /// The child's label, when the child is a setting that has one.
+        public var settingTitle: String? {
+            (child as? any ExplainedSettingsView)?.settingTitle
+        }
+
         /// The child's explanation, when the child is a setting that has one.
         public var settingExplanation: String? {
             (child as? any ExplainedSettingsView)?.settingExplanation

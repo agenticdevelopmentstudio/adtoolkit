@@ -4,7 +4,7 @@ import AgenticToolkitCoreMacOS
 
 /// "Details" topic: what the theme is called, whether it is a light or a dark
 /// theme, and who made it. Editable for a custom theme; for a locked one the
-/// fields are read-only and a lock note leads.
+/// fields are read-only and a lock status leads.
 @MainActor
 final class ThemeDetailsTopicPanel: ThemeTopicPanel {
 
@@ -96,7 +96,8 @@ final class ThemeDetailsTopicPanel: ThemeTopicPanel {
         return grid
     }
 
-    /// A lock glyph + guidance shown at the top of a locked theme's Details.
+    /// A lock glyph + status shown at the top of a locked theme's Details; how to
+    /// get an editable copy is in the "Locked Themes" help topic.
     private func makeLockRow() -> NSView {
         let icon = NSImageView()
         icon.image = NSImage(systemSymbolName: "lock.fill", accessibilityDescription: "Locked")
@@ -104,8 +105,8 @@ final class ThemeDetailsTopicPanel: ThemeTopicPanel {
         icon.setContentHuggingPriority(.required, for: .horizontal)
 
         let label = NSTextField(wrappingLabelWithString: context.theme.isBuiltIn
-            ? "Built-in theme — duplicate it to customize its colors and fonts."
-            : "Imported theme — duplicate it to customize its colors and fonts.")
+            ? "Built-in theme (locked)"
+            : "Imported theme (locked)")
         label.textColor = view.resolvedThemeScope.palette.secondaryTextColor
         label.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 

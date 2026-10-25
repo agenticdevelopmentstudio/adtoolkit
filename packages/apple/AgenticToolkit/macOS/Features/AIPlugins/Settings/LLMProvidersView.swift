@@ -54,14 +54,13 @@ struct LLMProviderEditorView: View {
         return AIProviderConfigStore.selectedModel(config: configuration, template: template)
     }
 
-    /// Why "Chat…" is unavailable, or what it does when it isn't. A configuration
-    /// whose plugin failed to load has no template, and the chat window can't build a
-    /// backend without one — it would open on an empty provider row and fail at the
-    /// first send, with nothing on screen saying why.
-    private var chatHint: String {
-        template == nil
-            ? "This provider's plugin isn't loaded, so it can't be used."
-            : "Try this provider out and choose its model."
+    /// Why "Chat…" is unavailable, or nil when it is available (what it does lives
+    /// in the panel's help). A configuration whose plugin failed to load has no
+    /// template, and the chat window can't build a backend without one — it would
+    /// open on an empty provider row and fail at the first send, with nothing on
+    /// screen saying why.
+    private var chatHint: String? {
+        template == nil ? "This provider's plugin isn't loaded, so it can't be used." : nil
     }
 
     /// Provider · LLM · Config Type, e.g. "Anthropic · Claude · API Key".
@@ -108,9 +107,11 @@ struct LLMProviderEditorView: View {
             HStack {
                 Button("Chat…") { viewModel.onRequestChat?(configuration) }
                     .disabled(template == nil)
-                Text(chatHint)
-                    .font(theme.font(.caption))
-                    .foregroundStyle(theme.secondaryText)
+                if let chatHint {
+                    Text(chatHint)
+                        .font(theme.font(.caption))
+                        .foregroundStyle(theme.secondaryText)
+                }
             }
 
             Spacer(minLength: 0)

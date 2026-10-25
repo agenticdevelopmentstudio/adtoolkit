@@ -2,8 +2,8 @@ import AppKit
 import AgenticToolkitCore
 import AgenticToolkitDatabase
 
-/// General app-startup panel. The launch-at-login coachmark renders inline
-/// until the user dismisses it via "Got It".
+/// General app-startup panel. Its explanations, including the nudge to enable
+/// launch at login, live in the help drawer rather than inline.
 @MainActor
 public final class GeneralSettingsPanelViewController: ComposableSettings.SettingsPanelViewController {
 
@@ -22,7 +22,9 @@ public final class GeneralSettingsPanelViewController: ComposableSettings.Settin
         ComposableSettings.PanelHelp(topics: [
             .init(
                 title: "Launch at Login",
-                body: "Registers the app with macOS so it starts when you log in. This uses "
+                body: "\(AppStorageLocation.displayName) works best when it starts automatically "
+                    + "with your Mac. Enable launch at login so you never miss a Claude Code "
+                    + "session. It registers the app with macOS so it starts when you log in, using "
                     + "the system's own login-items service, so macOS lists it under General "
                     + "› Login Items and can turn it off there too — which is where to look "
                     + "if the checkbox here keeps coming back unchecked."
@@ -56,13 +58,6 @@ public final class GeneralSettingsPanelViewController: ComposableSettings.Settin
                 title: "Launch at Login",
                 setting: UserSettings.launchAtLogin
             )
-        ))
-
-        group.addSettingSubview(ComposableSettings.DismissibleHintView(
-            text: "\(AppStorageLocation.displayName) works best when it starts automatically "
-                + "with your Mac. "
-                + "Enable launch at login so you never miss a Claude Code session.",
-            dismissedSetting: UserSettings.launchAtLoginHintDismissed
         ))
 
         return group

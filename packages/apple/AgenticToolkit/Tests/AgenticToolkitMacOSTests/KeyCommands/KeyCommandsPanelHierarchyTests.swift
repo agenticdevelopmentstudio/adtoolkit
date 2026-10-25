@@ -124,10 +124,9 @@ final class KeyCommandsPanelHierarchyTests: XCTestCase {
         ])
     }
 
-    /// The scope heading is where the panel says what a scope *is* — every
-    /// section under it fires the same way, so saying it per section said the
-    /// same sentence twice on the way down the page.
-    func testTheScopeHeadingCarriesTheExplanation() throws {
+    /// What a scope *is* is explanation, so it lives in the help drawer; the
+    /// heading carries only the scope's name.
+    func testTheScopeHeadingCarriesNoInlineExplanation() throws {
         let registry = KeyCommandRegistry()
         registry.install(KeyCommandSection(
             title: "Windows",
@@ -137,7 +136,7 @@ final class KeyCommandsPanelHierarchyTests: XCTestCase {
         let headings = headings(of: panel(over: registry))
         let global = try XCTUnwrap(headings.first)
         XCTAssertEqual(global.titleLabel.stringValue, "Global")
-        XCTAssertEqual(global.captionLabel?.stringValue, KeyCommandScope.global.settingsCaption)
+        XCTAssertNil(global.captionLabel)
     }
 
     func testAPanelWithNothingDeclaredSaysSoRatherThanShowingHeadings() {

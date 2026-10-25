@@ -220,12 +220,6 @@ final class ExtensionsBrowsePanel: ComposableSettings.SettingsPanelViewControlle
         row.addSubview(searchField)
         NSView.pinToEdges(searchField, of: row)
         group.addSettingSubview(row)
-        group.addSettingSubview(
-            ComposableSettings.ExplanationView(
-                withText: "Extensions come from Open VSX. The Visual Studio Marketplace is "
-                    + "not searched — its terms allow only Microsoft's own products to "
-                    + "download from it."),
-            style: .continuation)
         return group
     }
 

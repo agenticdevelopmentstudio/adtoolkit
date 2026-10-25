@@ -219,9 +219,6 @@ public final class GitSettingsPanelViewController: ComposableSettings.SettingsPa
 
     private func makeGlobalConfigGroup() -> ComposableSettings.GroupView {
         let group = ComposableSettings.GroupView(withTitle: "Global Configuration")
-        group.addSettingSubview(ComposableSettings.ExplanationView(
-            withText: "Edits are written with git config --global as you commit each cell."
-        ))
         // The table already refuses to commit a placeholder with an empty key
         // (see `GitGlobalConfigTableView.commitEdit`), but these callbacks do
         // not trust that alone before handing a key to git: an empty key

@@ -23,10 +23,18 @@ extension ComposableSettings {
         /// whole topic list.
         open var helpContent: PanelHelp? { nil }
 
-        /// The selected topic's help, falling back to this panel's own for a
-        /// topic that offers none — a topic list is a selection, and the reader
-        /// is asking about the topic, not about the list.
-        open var effectiveHelpContent: PanelHelp? { effectiveHelp ?? helpContent }
+        /// The selected topic's help first — a topic list is a selection, and
+        /// the reader is mostly asking about the topic — then this panel's own,
+        /// minus any topic the selection already titled the same. The panel's
+        /// help follows rather than yielding: a selection always exists, so help
+        /// that only showed when the selection had none was never seen at all.
+        open var effectiveHelpContent: PanelHelp? {
+            let selected = effectiveHelp?.topics ?? []
+            let titles = Set(selected.map(\.title))
+            let own = (helpContent?.topics ?? []).filter { !titles.contains($0.title) }
+            let topics = selected + own
+            return topics.isEmpty ? nil : PanelHelp(topics: topics)
+        }
 
         /// Nothing by default: a nested split is searched through the panels
         /// it hosts. Redeclared for the same dispatch reason as `helpContent`.

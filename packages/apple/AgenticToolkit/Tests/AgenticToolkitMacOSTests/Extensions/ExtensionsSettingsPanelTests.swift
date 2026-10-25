@@ -217,22 +217,23 @@ struct ExtensionsSettingsPanelTests {
         }
     }
 
-    @Test("no extensions renders the empty state, not a blank pane")
-    func noExtensionsRendersTheEmptyStateNotABlankPane() throws {
+    @Test("no extensions lists no fake row, and the folders are in help")
+    func noExtensionsListsNoFakeRowAndTheFoldersAreInHelp() throws {
         try withInMemorySettings {
             let root = try makeTempDirectory()
             defer { try? FileManager.default.removeItem(at: root) }
 
             try withPanel(searchPaths: [root]) { _, panel in
                 #expect(panel.extensionPanels.isEmpty)
-                let empty = try #require(panel.panels.compactMap { $0 as? ExtensionsEmptyStatePanel }.first)
-                _ = empty.view
+                // Only real rows: with nothing installed that is Browse & Install.
+                #expect(panel.panels.map(\.descriptor.title) == ["Browse & Install"])
+                #expect(panel.panels.count == 1)
 
-                let text = labels(in: empty.view)
-                // The one thing a user in this state can act on is where to put
-                // an extension, so the path has to be on screen verbatim.
-                #expect(text.contains(root.path))
-                #expect(text.contains { $0.contains("relaunch") })
+                // Where to put an extension is reference prose, so it is in the
+                // help drawer, with the path verbatim.
+                let topic = try #require(panel.helpContent?.topics.first { $0.title == "Extension Folders" })
+                #expect(topic.body.contains(root.path))
+                #expect(!(panel.helpContent?.topics.contains { $0.body.contains("listed under Extensions") } ?? false))
             }
         }
     }
@@ -331,7 +332,10 @@ struct ExtensionsSettingsPanelTests {
                 // Ruling GE. This extension's views generate no notes at all, so
                 // a sentence derived from the notes would leave this list of
                 // panes unexplained — and a reader would conclude they work.
-                #expect(treeText.contains { $0.contains("These panes are registered and can be opened") })
+                #expect(!treeText.contains { $0.contains("These panes are registered and can be opened") })
+                #expect(treeOnly.helpContent?.topics.contains {
+                    $0.title == "Views" && $0.body.contains("These panes are registered and can be opened")
+                } == true)
                 #expect(!treeText.contains { $0.contains("is a webview") })
 
                 let mixed = try #require(panels["test.mixed"])
@@ -347,7 +351,8 @@ struct ExtensionsSettingsPanelTests {
                 #expect(
                     mixedText.filter {
                         $0.contains("These panes are registered and can be opened")
-                    }.count == 1)
+                    }.isEmpty)
+                #expect(mixed.helpContent?.topics.filter { $0.title == "Views" }.count == 1)
                 #expect(!mixedText.contains { $0.contains("is a webview") })
             }
         }

@@ -31,7 +31,12 @@ public final class KeyCommandsSettingsPanelViewController: ComposableSettings.Se
     }
 
     public override var helpContent: ComposableSettings.PanelHelp? {
-        ComposableSettings.PanelHelp(topics: [
+        // What a section says about itself is the declaring app's own prose, so
+        // it follows the registry rather than being written here.
+        let sectionTopics: [ComposableSettings.PanelHelp.Topic] = registry.sections.compactMap { section in
+            section.caption.map { .init(title: section.title, body: $0) }
+        }
+        return ComposableSettings.PanelHelp(topics: [
             .init(
                 title: "Recording a key command",
                 body: "Click the field beside a command and press the keys you want. "
@@ -57,7 +62,7 @@ public final class KeyCommandsSettingsPanelViewController: ComposableSettings.Se
                     + "the system-wide ones ship switched off: turn on the ones you want "
                     + "and leave the rest alone."
             )
-        ])
+        ] + sectionTopics)
     }
 
     public override func viewDidLoad() {
@@ -75,7 +80,8 @@ public final class KeyCommandsSettingsPanelViewController: ComposableSettings.Se
             let sections = registry.sections(in: scope)
             guard !sections.isEmpty else { continue }
 
-            settingsView.addHeading(scope.settingsHeading, caption: scope.settingsCaption)
+            // What a scope means is in the "App and system-wide commands" help topic.
+            settingsView.addHeading(scope.settingsHeading)
             for section in sections {
                 settingsView.addGroup(makeGroup(for: section))
             }
@@ -84,10 +90,6 @@ public final class KeyCommandsSettingsPanelViewController: ComposableSettings.Se
 
     private func makeGroup(for section: KeyCommandSection) -> ComposableSettings.GroupView {
         let group = ComposableSettings.GroupView(withTitle: section.title)
-
-        if let caption = section.caption {
-            group.addSettingSubview(ComposableSettings.ExplanationView(withText: caption))
-        }
 
         for command in section.commands {
             group.addSettingSubview(KeyCommandRowView(command: command, registry: registry))

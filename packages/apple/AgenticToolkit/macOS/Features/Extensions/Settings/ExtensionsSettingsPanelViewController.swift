@@ -37,7 +37,8 @@ public final class ExtensionsSettingsPanelViewController: ComposableSettings.Set
     }
 
     public override var helpContent: ComposableSettings.PanelHelp? {
-        ComposableSettings.PanelHelp(topics: [
+        let folders = coordinator.searchPaths.map(\.path).joined(separator: "\n")
+        return ComposableSettings.PanelHelp(topics: [
             .init(
                 title: "What an Extension Is",
                 body: "A VS Code extension folder — a package.json plus the files it names. "
@@ -56,8 +57,13 @@ public final class ExtensionsSettingsPanelViewController: ComposableSettings.Set
                     + "installs from it — verified against the digest and signature the "
                     + "publisher published, and live immediately, with no relaunch. An "
                     + "extension can also be unpacked by hand (a .vsix file is a zip) into "
-                    + "one of the folders listed under Extensions; those are read at startup, "
+                    + "one of the folders under Extension Folders; those are read at startup, "
                     + "so that route does need a relaunch."
+            ),
+            .init(
+                title: "Extension Folders",
+                body: "Extensions are looked for in these folders; Browse & Install puts "
+                    + "new ones in the first.\n\n" + folders
             ),
             .init(
                 title: "Turning One Off",
@@ -127,13 +133,6 @@ public final class ExtensionsSettingsPanelViewController: ComposableSettings.Set
             )
         }
 
-        // No extensions is the normal case today. A blank detail pane reads as a
-        // broken panel; saying where extensions are looked for is the one thing
-        // a user in that state can act on.
-        if built.isEmpty {
-            built.append(ExtensionsEmptyStatePanel(searchPaths: coordinator.searchPaths))
-        }
-
         // Before the load problems, because it is not one: nothing failed to
         // load, everything works, and the whole thing is slower than it should
         // be. A build this is true of is broken in a way no test catches, so
@@ -157,6 +156,8 @@ public final class ExtensionsSettingsPanelViewController: ComposableSettings.Set
         // land a row off otherwise.
         built.append(browsePanel)
 
+        // With nothing installed the list is only the rows that are not
+        // extensions, so the default selection lands on the first of those.
         setPanels(built)
         selectPanel(at: min(max(index, 0), built.count - 1))
     }
@@ -216,7 +217,25 @@ final class ExtensionDetailPanel: ComposableSettings.SettingsPanelViewController
     }
 
     override var helpContent: ComposableSettings.PanelHelp? {
-        ComposableSettings.PanelHelp(topics: [
+        var topics: [ComposableSettings.PanelHelp.Topic] = [
+            .init(
+                title: "Status",
+                body: "Turning this off withdraws everything the extension contributed, "
+                    + "without deleting it."
+            )
+        ]
+        // Only when the Views group is on screen, so the drawer lists what the
+        // panel shows.
+        if !(coordinator.viewsPoint?.views(for: extensionIdentifier) ?? []).isEmpty {
+            topics.append(.init(
+                title: "Views",
+                body: "These panes are registered and can be opened. What they show comes "
+                    + "from the extension's own code: both kinds draw as soon as the extension "
+                    + "registers a provider for them. A pane whose extension registers nothing "
+                    + "says so on the pane itself."
+            ))
+        }
+        topics += [
             .init(
                 title: "What This App Decided",
                 body: "An extension declares more than any one editor can honour. Where a "
@@ -235,7 +254,8 @@ final class ExtensionDetailPanel: ComposableSettings.SettingsPanelViewController
                     + "the extension — none of it means the extension is "
                     + "misbehaving."
             )
-        ])
+        ]
+        return ComposableSettings.PanelHelp(topics: topics)
     }
 
     override func viewDidLoad() {
@@ -315,11 +335,6 @@ final class ExtensionDetailPanel: ComposableSettings.SettingsPanelViewController
         NSView.pinToEdges(content, of: row)
         group.addSettingSubview(row)
 
-        group.addSettingSubview(
-            ComposableSettings.ExplanationView(
-                withText: "Turning this off withdraws everything the extension contributed, "
-                    + "without deleting it."),
-            style: .continuation)
         return group
     }
 
@@ -340,16 +355,6 @@ final class ExtensionDetailPanel: ComposableSettings.SettingsPanelViewController
         guard !views.isEmpty else { return }
 
         let group = ComposableSettings.GroupView(withTitle: "Views")
-        // Stated unconditionally, as a property of the group rather than a
-        // rendering of the notes: neither kind produces a note of its own —
-        // see `ContributedViewsBuilder` — so a sentence derived from the notes
-        // would be no sentence at all, beside a silent list of tree views that
-        // leaves the reader concluding those draw something.
-        group.addSettingSubview(ComposableSettings.ExplanationView(
-            withText: "These panes are registered and can be opened. What they show comes "
-                + "from the extension's own code: both kinds draw as soon as the extension "
-                + "registers a provider for them. A pane whose extension registers nothing "
-                + "says so on the pane itself."))
         for view in views {
             group.addSettingSubview(
                 ComposableSettings.ExplanationView(withText: "\(view.name) (\(view.viewID))"))
@@ -662,45 +667,6 @@ final class ExtensionDetailPanel: ComposableSettings.SettingsPanelViewController
     /// is not one of them — reusing it would read as asserting otherwise.
     private static func pluralTimes(_ count: Int) -> String {
         count == 1 ? "time" : "times"
-    }
-}
-
-// MARK: - Nothing installed
-
-/// What the panel shows when no extension loaded — which is every install
-/// today. A blank detail pane reads as a defect; this reads as a place to put
-/// something.
-@MainActor
-final class ExtensionsEmptyStatePanel: ComposableSettings.SettingsPanelViewController {
-
-    private let searchPaths: [URL]
-
-    init(searchPaths: [URL]) {
-        self.searchPaths = searchPaths
-        super.init(with: ComposableSettings.SettingsPanelDescriptor(
-            title: "No Extensions Installed",
-            icon: NSImage(systemSymbolName: "puzzlepiece.extension", accessibilityDescription: nil)
-        ))
-    }
-
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        let group = ComposableSettings.GroupView(withTitle: "Where Extensions Are Looked For")
-        for path in searchPaths {
-            group.addSettingSubview(ComposableSettings.PathView(withPath: path.path))
-        }
-        group.addSettingSubview(
-            ComposableSettings.ExplanationView(
-                withText: "Browse & Install, at the bottom of this list, searches the Open "
-                    + "VSX registry and installs into the first of these folders — no "
-                    + "relaunch needed. A folder unpacked here by hand works too, but is "
-                    + "only read at startup."),
-            style: .continuation)
-        addGroup(group)
     }
 }
 

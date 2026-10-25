@@ -32,14 +32,32 @@ extension ComposableSettings {
     /// A setting row built from a view model, carrying that model's
     /// ``AbstractViewModel/explanation``.
     ///
-    /// `GroupView` draws the explanation as a secondary-label line tucked under
-    /// the row — the same ``ExplanationView`` a caller would add by hand, as a
-    /// `.continuation`. Before this, every view model took an `explanation:`
-    /// and no view drew it, so a panel's prose was silently thrown away.
+    /// The explanation is reference prose, and reference prose lives in the
+    /// panel's help drawer, never under the control: a blurb under every row is
+    /// read once and then costs the panel its height for good. `GroupView`
+    /// collects it as a ``HelpNote`` instead of drawing it, and
+    /// `SettingsPanelViewController` adds the notes to the drawer — so an
+    /// `explanation:` written anywhere reaches the drawer without its panel
+    /// having to repeat it.
     @MainActor
     public protocol ExplainedSettingsView: NSView {
-        /// The sentence to show under the row; nil or empty shows nothing.
+        /// The setting's own label, naming it in the help drawer.
+        var settingTitle: String? { get }
+        /// The prose to put in the help drawer; nil or empty adds nothing.
         var settingExplanation: String? { get }
+    }
+
+    /// One setting's explanation, on its way to the help drawer.
+    public struct HelpNote: Sendable, Equatable {
+        public let setting: String?
+        public let text: String
+
+        /// The paragraph the drawer shows: the setting named first, so a note
+        /// that says "when on" still says what is on.
+        public var paragraph: String {
+            guard let setting, !setting.isEmpty else { return text }
+            return "\(setting): \(text)"
+        }
     }
 
     /// A group of settings, drawn the way System Settings draws one: a caption
@@ -89,8 +107,17 @@ extension ComposableSettings {
         private let rowStack = NSStackView()
         private var rows: [CardRow] = []
 
+        /// The caption over the card, which titles this group's help topic.
+        /// Nil for a group headed by a custom view.
+        public private(set) var title: String?
+
+        /// The explanations of the settings in this card, top to bottom, for the
+        /// help drawer. See ``ExplainedSettingsView``.
+        public private(set) var helpNotes: [HelpNote] = []
+
         public convenience init(withTitle title: String) {
             self.init(withHeaderView: HeaderView(title: title))
+            self.title = title
         }
 
         /// A group headed by an arbitrary view instead of the standard caption
@@ -175,24 +202,18 @@ extension ComposableSettings {
         /// card is not knowable from what class it is.
         ///
         /// A view built from a view model with an `explanation`
-        /// (``ExplainedSettingsView``) brings it along: the explanation is added
-        /// as a `.continuation` right under it, and comes and goes with it.
+        /// (``ExplainedSettingsView``) brings it along into ``helpNotes``, for
+        /// the help drawer — not into the card.
         public func addSettingSubview(_ view: NSView, style: CardRowStyle = .row) {
-            let explanation = Self.explanationView(for: view)
+            if let note = Self.helpNote(for: view) { helpNotes.append(note) }
             let row = CardRow(content: view, style: style)
             if let selfHiding = view as? any SelfHidingSettingsView {
-                selfHiding.onVisibilityChange = { [weak self, weak row, weak view, weak explanation] in
+                selfHiding.onVisibilityChange = { [weak self, weak row] in
                     row?.syncVisibility()
-                    // Its own `onVisibilityChange` closes its row up with it.
-                    if let view { explanation?.isHidden = view.isHidden }
                     self?.updateSeparators()
                 }
             }
             append(row)
-            if let explanation {
-                explanation.isHidden = view.isHidden
-                addSettingSubview(explanation, style: .continuation)
-            }
         }
 
         private func append(_ row: CardRow) {
@@ -202,13 +223,13 @@ extension ComposableSettings {
             updateSeparators()
         }
 
-        /// The line drawn under `view` for its view model's explanation, or nil
-        /// when it has none.
-        private static func explanationView(for view: NSView) -> ExplanationView? {
-            guard let text = (view as? any ExplainedSettingsView)?.settingExplanation,
-                  !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        /// `view`'s view-model explanation as a help note, or nil when it has none.
+        private static func helpNote(for view: NSView) -> HelpNote? {
+            guard let explained = view as? any ExplainedSettingsView,
+                  let text = explained.settingExplanation?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !text.isEmpty
             else { return nil }
-            return ExplanationView(withText: text)
+            return HelpNote(setting: explained.settingTitle, text: text)
         }
 
         /// A divider belongs above a row only when there is a visible row for it

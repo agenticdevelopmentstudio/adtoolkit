@@ -131,10 +131,10 @@ struct AccountDetailPanelTests {
         #expect(detail.loginButton.isHidden && detail.signupButton.isHidden && detail.logoutButton.isHidden)
     }
 
-    @Test("signed out shows summary, Login and Signup")
+    @Test("signed out shows Login and Signup, with the summary in help")
     func signedOut() {
         let detail = makeDetail(FakeAccount(id: "a", displayName: "Alpha"))
-        #expect(detail.summaryLabel.stringValue == "Sign in to try it.")
+        #expect(detail.helpContent?.topics.first?.body == "Sign in to try it.")
         #expect(!detail.loginButton.isHidden && detail.loginButton.isEnabled)
         #expect(!detail.signupButton.isHidden && detail.signupButton.isEnabled)
         #expect(detail.logoutButton.isHidden)

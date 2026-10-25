@@ -919,9 +919,6 @@ private final class BrowserResetPanel: BrowserTopicPanel {
     override func viewDidLoad() {
         super.viewDidLoad()
         let group = ComposableSettings.GroupView(withTitle: "Reset")
-        group.addSettingSubview(ComposableSettings.ExplanationView(
-            withText: "Returns every Browser setting to its default. History and site data are kept."
-        ))
         let reset = ComposableSettings.ButtonViewModel(title: "Reset Browser Settings…") { [weak self] in
             self?.confirmReset()
         }

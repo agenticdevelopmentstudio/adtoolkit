@@ -12,6 +12,7 @@ extension ComposableSettings {
 
         /// The view model's ``AbstractViewModel/explanation``, which the
         /// ``GroupView`` this is placed in draws under the row.
+        public var settingTitle: String? { viewModel.title }
         public var settingExplanation: String? { viewModel.explanation }
 
         /// Greys out the whole row — the popup and its title — the way

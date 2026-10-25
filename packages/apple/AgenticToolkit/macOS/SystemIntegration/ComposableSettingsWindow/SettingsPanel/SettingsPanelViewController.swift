@@ -28,9 +28,46 @@ extension ComposableSettings {
         /// is redeclared for the same reason.
         open var helpContent: PanelHelp? { nil }
 
-        /// A plain panel holds no selection, so what it shows is simply its own
-        /// help. Redeclared for the same dispatch reason as `helpContent`.
-        open var effectiveHelpContent: PanelHelp? { helpContent }
+        /// A plain panel holds no selection, so what it shows is its own help —
+        /// plus the explanations its settings carry, which `GroupView` hands
+        /// here rather than drawing under the controls (see
+        /// `ExplainedSettingsView`). Redeclared for the same dispatch reason as
+        /// `helpContent`.
+        open var effectiveHelpContent: PanelHelp? {
+            Self.help(helpContent, adding: isViewLoaded ? Self.groups(in: view) : [])
+        }
+
+        /// Every group in `root`'s tree, top to bottom — found by walking rather
+        /// than asked of `settingsView`, because a panel may lay its groups out
+        /// in a stack of its own.
+        static func groups(in root: NSView) -> [GroupView] {
+            root.subviews.flatMap { subview -> [GroupView] in
+                if let group = subview as? GroupView { return [group] }
+                return groups(in: subview)
+            }
+        }
+
+        /// `help` with each group's notes filed under the topic of the same
+        /// title, or under a new topic after the authored ones. A note whose text
+        /// the authored help already says is left out, so a panel that wrote its
+        /// help by hand is not told everything twice.
+        static func help(_ help: PanelHelp?, adding groups: [GroupView]) -> PanelHelp? {
+            var topics = help?.topics ?? []
+            for group in groups where !group.helpNotes.isEmpty {
+                let title = group.title ?? "Settings"
+                let index = topics.firstIndex { $0.title == title }
+                let said = index.map { topics[$0].body } ?? ""
+                let fresh = group.helpNotes.filter { !said.contains($0.text) }.map(\.paragraph)
+                guard !fresh.isEmpty else { continue }
+                let body = ([said].filter { !$0.isEmpty } + fresh).joined(separator: "\n\n")
+                if let index {
+                    topics[index] = .init(title: title, body: body)
+                } else {
+                    topics.append(.init(title: title, body: body))
+                }
+            }
+            return topics.isEmpty ? nil : PanelHelp(topics: topics)
+        }
 
         open var hostsOwnScroll: Bool { false }
 
