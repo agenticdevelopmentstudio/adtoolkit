@@ -33,17 +33,31 @@
   /* The gutter the burger sits in — the corner it is inset into. Two tokens
    * rather than one shorthand because the drawer's ✕ reads the same pair (see
    * .lp-drawer-close), and a shorthand cannot be split back apart. A host
-   * aligning the burger with its own header's container padding sets these. */
-  padding: var(--lp-bar-pad-y, 1.1rem) var(--lp-bar-pad-x, 1.25rem);
+   * aligning the burger with its own header's container padding sets these.
+   *
+   * The vertical one is rounded to a whole pixel: 1.1rem is 17.6px, and a
+   * chip that starts between pixels is composited there (its backdrop blur
+   * makes it a layer of its own), so its hairline bars land across two device
+   * rows and blur by different amounts. */
+  padding: round(var(--lp-bar-pad-y, 1.1rem), 1px) var(--lp-bar-pad-x, 1.25rem);
   background: var(--lp-bar-bg, linear-gradient(var(--lp-ground, #101010) 40%, transparent));
   pointer-events: none;
 }
 .lp-burger {
   pointer-events: auto;
   position: relative;
+  /* Stated rather than inherited: the stack is centred in the room left INSIDE
+   * the border, so the size of that room has to be a fact of this file and not
+   * of whatever reset the host ships. */
+  box-sizing: border-box;
   width: 32px;
   height: 32px;
   border: 1px solid var(--lp-hairline, rgba(216, 216, 216, 0.18));
+  /* The three 1px bars and their two 4px gaps make an 11px stack, and the room
+   * inside the border is 30px, so plain centring puts the stack 9.5px down:
+   * every bar half a pixel off, smeared over two rows. One pixel of top padding
+   * makes the room odd like the stack, and the centring lands on 9. */
+  padding: 1px 0 0;
   border-radius: 8px;
   /* Translucent chip backdrop behind the icon — not one of the site's named
    * palette variables originally, just a literal rgba baked into the rule, so
@@ -59,7 +73,7 @@
    * proportions, and `gap` is what sets them. */
   place-content: center;
   justify-items: center;
-  gap: 3px;
+  gap: 4px;
   cursor: pointer;
 }
 /* The button is drawn small; it is not TAPPED small. This pseudo-element pushes
@@ -78,13 +92,15 @@
  * bar to a device pixel independently, so a fractional thickness comes out a
  * different weight depending on where the bar starts. At the previous 2.5px
  * bars on a 5.5px pitch, the middle bar sat half a pixel out of phase with the
- * other two and rendered visibly thinner. With 2px bars on a 5px pitch, all
+ * other two and rendered visibly thinner. With 1px bars on a 5px pitch, all
  * three round the same way wherever the button lands. This is the same rule
- * @agenticdevelopertoolkit/chrome's MenuButton states, at the same weight. */
+ * @agenticdevelopertoolkit/chrome's MenuButton states, at the same weight.
+ * The weight is a light 1px so the mark reads as a line drawing beside the
+ * chip's own hairline border rather than as a heavier glyph sitting on it. */
 .lp-burger span {
   display: block;
   width: 16px;
-  height: 2px;
+  height: 1px;
   border-radius: 999px;
   background: var(--lp-accent, #9a9a9a);
   transition: 0.25s;
@@ -215,7 +231,7 @@
  * exactly concentric, which is what anyone setting it is asking for. */
 .lp-drawer-close {
   position: absolute;
-  top: var(--lp-bar-pad-y, 1.15rem);
+  top: round(var(--lp-bar-pad-y, 1.15rem), 1px);
   left: var(--lp-bar-pad-x, 1.25rem);
 }
 /* The close glyph is the burger with a bar removed and the other two crossed.

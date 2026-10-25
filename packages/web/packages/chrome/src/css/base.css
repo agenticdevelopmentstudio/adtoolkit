@@ -35,8 +35,8 @@
    * then all three are equally soft. That is a property of where the button is
    * put, not of the icon, and it cannot be fixed from in here — what can be
    * fixed is that the three bars agree, which is what the eye is reading. */
-  --menu-bar-thickness: 2px;
-  --menu-bar-gap: 3px;
+  --menu-bar-thickness: 1px;
+  --menu-bar-gap: 4px;
   /* Half the button wide: enough to read as a mark at this weight, and it
    * leaves the same air either side as the gaps put between the bars. */
   --menu-bar-width: 16px;
@@ -61,7 +61,11 @@
   box-sizing: border-box;
   width: var(--menu-size);
   height: var(--menu-size);
-  padding: 0;
+  /* Three 1px bars and two 4px gaps make an 11px stack, an odd height, and the
+   * room it is centred in is even (32px, or 30px inside a 1px border), so plain
+   * centring leaves every bar half a pixel off and smeared over two rows. One
+   * pixel of top padding makes the room odd too, and the stack lands whole. */
+  padding: 1px 0 0;
   border: 0;
   background: none;
   color: inherit;
