@@ -8,7 +8,7 @@ import {
 import { ADMIN_SITE_IDS } from "@agentic-toolkit/adh-registry";
 var FLEET_SECTION = 1;
 var ADMIN_SECTION = FLEET_SECTION + 1;
-var HUB_HELP_SECTION = FLEET_SECTION + 1;
+var HELP_SECTION = FLEET_SECTION + 1;
 function leaf(link) {
   return { kind: "leaf", section: FLEET_SECTION, blurb: true, link };
 }
@@ -157,17 +157,17 @@ var FLEET_MENU_GROUPS = [
     ]
   })
 ];
-var HUB_LANDING_MENU_GROUPS = [
+var SITE_MENU_GROUPS = [
   leaf({ site: "bitbag", description: "The hub's AI persona" }),
   leaf({ site: "hub", description: "The center of it all" }),
   leaf({ site: "devteam", label: "Dev Team" }),
   leaf({ site: "cookbook" }),
   leaf({ site: "toolkit" }),
   leaf({ site: "personaregistry" }),
-  { kind: "leaf", section: HUB_HELP_SECTION, blurb: true, link: { site: "hub-help" } },
+  { kind: "leaf", section: HELP_SECTION, blurb: true, link: { site: "hub-help" } },
   {
     kind: "leaf",
-    section: HUB_HELP_SECTION,
+    section: HELP_SECTION,
     blurb: true,
     // A hub ROUTE, as in the fleet tree's Hub ▸ Contact.
     link: { route: "/contact", label: "Contact", description: "Get in touch" }

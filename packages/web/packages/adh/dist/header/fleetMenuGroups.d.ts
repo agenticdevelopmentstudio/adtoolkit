@@ -4,10 +4,10 @@ export declare const FLEET_SECTION = 1;
 /** The section {@link ADMIN_MENU_GROUPS} carries — one more than the fleet's, so a
  *  divider falls between the family and the consoles. */
 export declare const ADMIN_SECTION: number;
-/** The section of the hub landing menu's Help / Contact block — one more than the
- *  fleet's, so a divider falls above it. It shares ADMIN_SECTION's number, which is safe
- *  only because the hub's landing menu never shows the admin block (MarketingSiteMenu). */
-export declare const HUB_HELP_SECTION: number;
+/** The section of the site menu's Help / Contact block — one more than the fleet's, so a
+ *  divider falls above it. It shares ADMIN_SECTION's number, which is safe only because
+ *  the site menu never shows the admin block (MarketingSiteMenu). */
+export declare const HELP_SECTION: number;
 /**
  * The family, in the order it is meant to be read.
  *
@@ -17,10 +17,11 @@ export declare const HUB_HELP_SECTION: number;
  */
 export declare const FLEET_MENU_GROUPS: MenuGroup[];
 /**
- * The hub's OWN marketing menu — the landing `/` and the hub's other non-workspace pages —
- * cut down to the seven sites the repo owner chose to show there (Mike, 2026-10-23): the
- * hub, Help (hub-help), Bitbag, Dev Team, Cookbook, Toolkit and Persona Registry. Every
- * other host, satellites included, still shows the whole {@link FLEET_MENU_GROUPS}.
+ * The site menu EVERY site shows on its marketing pages (MarketingSiteMenu), cut down to
+ * the seven sites the repo owner chose (Mike, 2026-10-23): the hub, Help (hub-help),
+ * Bitbag, Dev Team, Cookbook, Toolkit and Persona Registry. It began as the hub's own
+ * menu, with satellites keeping the whole {@link FLEET_MENU_GROUPS}; the owner ruled that
+ * the menu is shared code and every site gets this same one (Mike, 2026-10-25).
  *
  * Every site is its OWN top-level row (Mike, 2026-10-24): with only seven of them there is
  * nothing to fold away, so the fleet tree's grouping headers (`Build`) and its Hub ▸ Help
@@ -38,7 +39,7 @@ export declare const FLEET_MENU_GROUPS: MenuGroup[];
  * leave Plan, Learn and the rest as empty triggers. Each row reads the same as its
  * counterpart in the fleet tree (same label, same tagline).
  */
-export declare const HUB_LANDING_MENU_GROUPS: MenuGroup[];
+export declare const SITE_MENU_GROUPS: MenuGroup[];
 /**
  * The consoles, for admins only — rendered by {@link SiteMenu} beneath the fleet
  * tree when (and ONLY when) the header resolves the signed-in user as an adh

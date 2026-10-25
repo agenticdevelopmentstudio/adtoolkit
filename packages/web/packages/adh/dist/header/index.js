@@ -1759,7 +1759,7 @@ function settingsTrailing({
 import { ADMIN_SITE_IDS } from "@agentic-toolkit/adh-registry";
 var FLEET_SECTION = 1;
 var ADMIN_SECTION = FLEET_SECTION + 1;
-var HUB_HELP_SECTION = FLEET_SECTION + 1;
+var HELP_SECTION = FLEET_SECTION + 1;
 function leaf(link) {
   return { kind: "leaf", section: FLEET_SECTION, blurb: true, link };
 }
@@ -1908,17 +1908,17 @@ var FLEET_MENU_GROUPS = [
     ]
   })
 ];
-var HUB_LANDING_MENU_GROUPS = [
+var SITE_MENU_GROUPS = [
   leaf({ site: "bitbag", description: "The hub's AI persona" }),
   leaf({ site: "hub", description: "The center of it all" }),
   leaf({ site: "devteam", label: "Dev Team" }),
   leaf({ site: "cookbook" }),
   leaf({ site: "toolkit" }),
   leaf({ site: "personaregistry" }),
-  { kind: "leaf", section: HUB_HELP_SECTION, blurb: true, link: { site: "hub-help" } },
+  { kind: "leaf", section: HELP_SECTION, blurb: true, link: { site: "hub-help" } },
   {
     kind: "leaf",
-    section: HUB_HELP_SECTION,
+    section: HELP_SECTION,
     blurb: true,
     // A hub ROUTE, as in the fleet tree's Hub ▸ Contact.
     link: { route: "/contact", label: "Contact", description: "Get in touch" }
@@ -2151,21 +2151,18 @@ function SiteMenu({
 import "react";
 import { jsx as jsx16 } from "react/jsx-runtime";
 function MarketingSiteMenu(props) {
-  if (props.currentSiteId === "hub") {
-    return /* @__PURE__ */ jsx16(
-      SiteMenu,
-      {
-        groups: HUB_LANDING_MENU_GROUPS,
-        ...props,
-        onSettings: void 0,
-        settingsHref: void 0,
-        userIsAdmin: false,
-        omitChromeRows: true,
-        omitHelpButton: true
-      }
-    );
-  }
-  return /* @__PURE__ */ jsx16(SiteMenu, { groups: FLEET_MENU_GROUPS, ...props });
+  return /* @__PURE__ */ jsx16(
+    SiteMenu,
+    {
+      groups: SITE_MENU_GROUPS,
+      ...props,
+      onSettings: void 0,
+      settingsHref: void 0,
+      userIsAdmin: false,
+      omitChromeRows: true,
+      omitHelpButton: true
+    }
+  );
 }
 
 // src/header/WorkspaceSiteMenu.tsx
@@ -2188,7 +2185,7 @@ import { useHubPreferences as useHubPreferences2 } from "@agentic-toolkit/adh/he
 import { useHelp as useHelp2 } from "@agentic-toolkit/adh/help";
 import { Fragment as Fragment6, jsx as jsx18, jsxs as jsxs10 } from "react/jsx-runtime";
 var WORKSPACES_SECTION = 0;
-var HELP_SECTION = 1;
+var HELP_SECTION2 = 1;
 var SECTION_LABELS = { [WORKSPACES_SECTION]: "Workspaces" };
 var NO_SITE_GROUPS = [];
 function WorkspaceMenu({
@@ -2248,7 +2245,7 @@ function WorkspaceMenu({
     [linksCollapsed, navLinks, pathname]
   );
   const entries = useMemo4(
-    () => [...navSection, ...workspaceRows, helpEntry(openHelp, HELP_SECTION)],
+    () => [...navSection, ...workspaceRows, helpEntry(openHelp, HELP_SECTION2)],
     [navSection, workspaceRows, openHelp]
   );
   const navigate = useCallback4(
