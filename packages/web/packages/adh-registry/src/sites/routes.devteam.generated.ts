@@ -26,6 +26,7 @@ export const SITE_ROUTES_DEVTEAM: Partial<Record<SiteId, readonly string[]>> = {
     '/auth/callback',
     '/details/[[...path]]',
     '/home',
+    '/old',
     '/privacy',
     '/terms',
     '/tour',
