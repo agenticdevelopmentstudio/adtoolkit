@@ -38,7 +38,9 @@ describe('SITE_STORIES', () => {
       'cookbook',
       'fishlamp',
       'fishlampdesign',
+      'kitchen',
       'personaregistry',
+      'stenographer',
       'toolkit',
     ])
   })

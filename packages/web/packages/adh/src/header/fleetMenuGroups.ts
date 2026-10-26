@@ -156,6 +156,8 @@ export const FLEET_MENU_GROUPS: MenuGroup[] = [
       { site: 'tools' },
       { site: 'testing' },
       { site: 'shipr' },
+      { site: 'kitchen' },
+      { site: 'stenographer' },
     ],
   }),
   topic({

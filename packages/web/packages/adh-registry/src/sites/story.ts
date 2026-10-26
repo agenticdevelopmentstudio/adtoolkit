@@ -143,6 +143,11 @@ export const SITE_STORIES: Record<SiteId, SiteStory> = {
   consulting: { tier: 'chapter', pillar: 'build', funnelStage: 'adopt', nextStep: 'fishlamp' },
   fishlamp: { tier: 'satellite', pillar: 'build', funnelStage: 'discover', nextStep: 'hub' },
   fishlampdesign: { tier: 'satellite', pillar: 'build', funnelStage: 'discover', nextStep: 'fishlamp' },
+  // --- the macOS native tools: own-identity products with their own audience (people
+  // who want the app), from the same studio. Neither is a hub chapter, so each story
+  // hands straight to the hub. ---
+  kitchen: { tier: 'satellite', pillar: 'build', funnelStage: 'build', nextStep: 'hub' },
+  stenographer: { tier: 'satellite', pillar: 'build', funnelStage: 'build', nextStep: 'hub' },
   // --- operational consoles ---
   admin: { tier: 'chapter', pillar: 'backend', funnelStage: 'ship', nextStep: 'hub' },
   status: { tier: 'chapter', pillar: 'backend', funnelStage: 'ship', nextStep: 'hub' },

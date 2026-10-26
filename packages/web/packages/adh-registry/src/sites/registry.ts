@@ -72,6 +72,10 @@ export type SiteId =
   // same site. `external: true` — they are link-outs, not apps in this repo.
   | 'fishlamp'
   | 'fishlampdesign'
+  // kitchen / stenographer: the sites for two macOS native tools. `nativeApp: true` —
+  // they talk to no adh backend and never begin an ADH login.
+  | 'kitchen'
+  | 'stenographer'
 
 export type SiteRedirect = {
   readonly source: string
@@ -191,6 +195,20 @@ export interface SiteDef {
    *  `return` target. (It also has no `frontend/src/*` folder, so it is absent
    *  from MAIN_SITE_IDS/MARKETING_SITE_IDS and from the generated route map.) */
   external?: boolean
+  /** The site for a macOS native tool (Kitchen, Stenographer), not an ADH web app:
+   *  its own repo builds and deploys it, but it has no adh backend, no `/home`, no
+   *  workspace route and no `/auth/callback`. It is a family site in every roster
+   *  that lists sites — the switcher, the footer, the overview — and absent from
+   *  every list about ADH apps:
+   *   - `ssoReturnOrigins` excludes it in every env, for the reason `external` is
+   *     excluded: an origin that can't complete an ADH login is no `return` target.
+   *     ⚠️ That exclusion is the safety, not a nicety — the return-origin sync is
+   *     additive, so an origin listed once stays listed.
+   *   - it is in neither MAIN_SITE_IDS nor MARKETING_SITE_IDS, which adh-tools
+   *     provisions and auth-probes from.
+   *  Distinct from `external`: that is a site we own but do not build here; this is
+   *  a site we build, for a product that is not the hub. */
+  nativeApp?: true
   /** Is a live, crawlable HTML site. Defaults to true; set false for hosts that
    *  aren't an indexable web page (e.g. the MCP server endpoint) so they're
    *  excluded from the SEO interlink row in the footer. */
@@ -208,14 +226,18 @@ export interface SiteDef {
 //   1. bitbag — the Agentic Developer persona, set apart at the very top.
 //   2. the core site family (hub … research).
 //   3. consultants — the services CTA, its own section above the studio brand.
-//   4. fishlamp — FishLamp Design, the design & consulting studio (marked
+//   4. kitchen + stenographer — the macOS native tools' sites (`nativeApp`).
+//   5. fishlamp — FishLamp Design, the design & consulting studio (marked
 //      `featured`, currently unrendered), followed by its second domain.
-//   5. admin + status + builds — the operational consoles, set apart at the end.
+//   6. admin + status + builds — the operational consoles, set apart at the end.
 // `dividerBefore` on the first entry of a section draws the separator above it.
-// There is no `studio` entry: FishLamp Design replaced Agentic Developer Studio
-// and the studio app was deleted from the repo, so agenticdeveloper.studio and
-// agenticdevelopmentstudio.com are no longer sites this family knows about. Both
-// domains are dead — nothing redirects them at fishlamp.com. Do not re-add them.
+// There is no `studio` entry. The Agentic Developer Studio site app was deleted and
+// agenticdeveloper.studio went with it. agenticdevelopmentstudio.com is LIVE — it is
+// the site of Agentic Development Studio, the company the family sits under, built
+// from its own repo (adswebsite) — but the company deliberately has no registry
+// entry: the site menu links it by absolute href (see fleetMenuGroups), and an entry
+// here would add its origin to the generated route map and the OAuth return
+// allowlist. Do not add either host.
 export const SITES: SiteDef[] = [
   // --- bitbag: the ADH persona, its own section at the top. Opens the
   // "Core platform" group in the footer sites-overview popover. ---
@@ -300,6 +322,12 @@ export const SITES: SiteDef[] = [
   // pruning) — stays registered (its own header resolves, /details keep serving)
   // but it leaves the switcher + footer. ---
   { id: 'consulting', label: 'Consulting', description: 'Let us help you', prodHost: 'agenticdeveloperconsulting.com', hasStaging: true, hasTesting: true, hasHome: true, workspaceRoute: 'root', listed: false },
+  // --- the macOS native tools: each site is the home page of a Mac app, built and
+  // deployed from its own repo (production + testing, no staging). `nativeApp`:
+  // neither has an adh backend or an ADH login, so neither joins the SSO return
+  // allowlist or the ADH app rosters. ---
+  { id: 'kitchen', label: 'Kitchen', fullLabel: 'Agentic Developer Kitchen', description: 'Notes, AI chat & terminals in your menu bar', prodHost: 'agenticdeveloperkitchen.com', hasStaging: false, hasTesting: true, hasHome: false, nativeApp: true, dividerBefore: true, sectionLabel: 'Mac apps' },
+  { id: 'stenographer', label: 'Stenographer', fullLabel: 'Agentic Developer Stenographer', description: 'Records every Claude Code session', prodHost: 'agenticdeveloperstenographer.com', hasStaging: false, hasTesting: true, hasHome: false, nativeApp: true },
   // --- FishLamp Design: the design & consulting studio (consulting, above, is
   // folded into it). NOT the company behind the Hub, and no longer the name in
   // the copyright: both are Agentic Development Studio's, which has no registry
@@ -581,10 +609,11 @@ export const SITE_CATEGORIES: { label: string; ids: SiteId[] }[] = [
   { label: 'Plan', ids: ['projects', 'narratives', 'notebook', 'research', 'docs'] },
   // mcp has no menu row of its own (it is an endpoint, not a page — `crawlable:
   // false` keeps it out of the overview too), and Build is where the rest of the
-  // developer tooling sits, so that is where it is filed.
+  // developer tooling sits, so that is where it is filed. kitchen and stenographer
+  // are developer tools too, on the Mac rather than the web, so they file here.
   {
     label: 'Build',
-    ids: ['devteam', 'codereviews', 'cookbook', 'toolkit', 'tools', 'testing', 'shipr', 'mcp'],
+    ids: ['devteam', 'codereviews', 'cookbook', 'toolkit', 'tools', 'testing', 'shipr', 'kitchen', 'stenographer', 'mcp'],
   },
   {
     label: 'Personas',
@@ -1341,6 +1370,8 @@ export function siteHomePath(id: SiteId): string {
  *  `external` sites (FishLamp Design) are excluded from EVERY env: they are
  *  link-outs, not ADH apps — they have no `/auth/callback` and never begin an
  *  ADH login, so listing them would widen the OAuth redirect surface for nothing.
+ *  `nativeApp` sites (Kitchen, Stenographer) are excluded from every env for the
+ *  same reason: they are a Mac app's home page, with no ADH login to return to.
  *
  *  ⚠️ `hasStaging` / `hasTesting` ARE THE OAUTH REDIRECT SURFACE, and editing one
  *  is a one-way door. The enforcement point is a DB column, and the deploy-time
@@ -1369,6 +1400,7 @@ export function ssoReturnOrigins(env: 'production' | 'staging' | 'testing'): str
   return SITES.filter(
     (s) =>
       !s.external &&
+      !s.nativeApp &&
       (env === 'production' ? true : env === 'staging' ? s.hasStaging : s.hasTesting),
   ).map((s) => `https://${prefix}${s.prodHost}`)
 }

@@ -49,6 +49,7 @@ import {
   ClipboardList,
   Code,
   Contact,
+  CookingPot,
   CreditCard,
   Database,
   Fingerprint,
@@ -67,6 +68,7 @@ import {
   Hexagon,
   History,
   House,
+  Keyboard,
   KeyRound,
   LayoutDashboard,
   LayoutGrid,
@@ -202,6 +204,10 @@ const ICONS: Record<string, LucideIcon> = {
   api: Code,
   builds: HardHat, // the build console
   shipr: Rocket, // walks a commit from main to production
+
+  // --- the macOS native tools' sites (registry `nativeApp`), for their Build rows. ---
+  kitchen: CookingPot, // the menu bar app; ChefHat is cookbook's
+  stenographer: Keyboard, // records every Claude Code session
   status: Activity, // system status / pulse
   support: LifeBuoy,
 

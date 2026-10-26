@@ -246,9 +246,9 @@ describe('local hops to a site the local server does not run', () => {
 })
 
 describe('ssoReturnOrigins (central adh SSO client allowlist, per env)', () => {
-  it('production = every non-external site as a bare-host origin (no env prefix)', () => {
+  it('production = every ADH app site as a bare-host origin (no env prefix)', () => {
     const origins = ssoReturnOrigins('production')
-    expect(origins.length).toBe(SITES.filter((s) => !s.external).length)
+    expect(origins.length).toBe(SITES.filter((s) => !s.external && !s.nativeApp).length)
     // one origin per site, scheme + bare prod host, no path
     expect(origins).toContain('https://agenticdeveloperhub.com')
     expect(origins).toContain('https://agenticdevelopercookbook.com')
@@ -276,9 +276,32 @@ describe('ssoReturnOrigins (central adh SSO client allowlist, per env)', () => {
     }
   })
 
+  it('never allows a native-app site origin, in any env', () => {
+    // Kitchen and Stenographer are the sites of macOS native tools. They are
+    // deployed (production + testing), so their tier flags are true, but they have
+    // no adh backend and no /auth/callback. The return-origin sync never prunes, so
+    // one listing would be permanent: the exclusion has to hold in every env.
+    const natives = SITES.filter((s) => s.nativeApp)
+    expect(natives.map((s) => s.id).sort()).toEqual(['kitchen', 'stenographer'])
+    for (const env of ['production', 'staging', 'testing'] as const) {
+      const origins = ssoReturnOrigins(env)
+      for (const s of natives) {
+        expect(origins.some((o) => o.includes(s.prodHost)), `${s.id} in ${env}`).toBe(false)
+      }
+    }
+  })
+
+  it('keeps native-app sites out of the ADH app rosters', () => {
+    for (const s of SITES.filter((s) => s.nativeApp)) {
+      expect(MAIN_SITE_IDS, s.id).not.toContain(s.id)
+      expect(MARKETING_SITE_IDS, s.id).not.toContain(s.id)
+      expect(s.external, s.id).toBeFalsy()
+    }
+  })
+
   it('testing = only sites with a testing deploy, prefixed testing.', () => {
     const origins = ssoReturnOrigins('testing')
-    const testingSites = SITES.filter((s) => s.hasTesting && !s.external)
+    const testingSites = SITES.filter((s) => s.hasTesting && !s.external && !s.nativeApp)
     expect(origins.length).toBe(testingSites.length)
     expect(new Set(origins)).toEqual(
       new Set(testingSites.map((s) => `https://testing.${s.prodHost}`)),
@@ -290,7 +313,7 @@ describe('ssoReturnOrigins (central adh SSO client allowlist, per env)', () => {
 
   it('staging = every staging-deploy site, prefixed staging.', () => {
     const origins = ssoReturnOrigins('staging')
-    const stagingSites = SITES.filter((s) => s.hasStaging && !s.external)
+    const stagingSites = SITES.filter((s) => s.hasStaging && !s.external && !s.nativeApp)
     expect(origins.length).toBe(stagingSites.length)
     expect(origins).toContain('https://staging.agenticdevelopercookbook.com')
     expect(origins).toContain('https://staging.agenticdeveloperhub.com')
@@ -367,6 +390,8 @@ describe('LISTED_SITES (the family roster)', () => {
       'messages',
       'shipr',
       // </gen:order>
+      'kitchen',
+      'stenographer',
       'fishlamp',
       'fishlampdesign',
       'status',
@@ -408,18 +433,17 @@ describe('LISTED_SITES (the family roster)', () => {
       expect(ids).not.toContain(folded)
     }
   })
-  it('has no trace of the retired studio site, on either dead domain', () => {
-    // Agentic Developer Studio was not folded like the sites above — the app was
-    // deleted and the brand replaced by FishLamp Design, so nothing in the family
-    // should still know either host. Both domains are dead: nothing redirects
-    // them at fishlamp.com. Pinned because the registry is what drives the
-    // generated route map, the switcher, the footer interlinks AND the OAuth
-    // return-origin allowlist — a leftover entry would quietly re-add a dead
-    // origin to all four.
-    for (const dead of ['agenticdeveloper.studio', 'agenticdevelopmentstudio.com'] as const) {
-      expect(SITES.map((s) => s.prodHost), dead).not.toContain(dead)
+  it('has no entry for either studio host', () => {
+    // agenticdeveloper.studio went with the deleted Agentic Developer Studio app.
+    // agenticdevelopmentstudio.com is live — the site of Agentic Development Studio,
+    // the company behind the family, built from its own repo — and the site menu
+    // links it by absolute href. Neither has a registry entry, on purpose: the
+    // registry drives the generated route map, the switcher, the footer interlinks
+    // AND the OAuth return-origin allowlist, and the company site belongs in none.
+    for (const host of ['agenticdeveloper.studio', 'agenticdevelopmentstudio.com'] as const) {
+      expect(SITES.map((s) => s.prodHost), host).not.toContain(host)
       for (const env of ['production', 'staging', 'testing'] as const) {
-        expect(ssoReturnOrigins(env).join('|'), `${dead} in ${env}`).not.toContain(dead)
+        expect(ssoReturnOrigins(env).join('|'), `${host} in ${env}`).not.toContain(host)
       }
     }
   })
@@ -980,6 +1004,8 @@ describe('FOOTER_SITES (SEO interlinks)', () => {
       'messages',
       'shipr',
       // </gen:order>
+      'kitchen',
+      'stenographer',
       'fishlamp',
       'fishlampdesign',
       // admin and builds are adminOnly — registry sites, and on the roster, but
@@ -1023,6 +1049,7 @@ describe('FOOTER_SITES (SEO interlinks)', () => {
     expect(labels).toEqual([
       'Core platform',
       'Developer platform',
+      'Mac apps',
       'Studio & consulting',
       'Operations',
     ])
