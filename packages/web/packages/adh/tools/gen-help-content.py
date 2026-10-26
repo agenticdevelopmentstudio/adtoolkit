@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
-"""Generate src/help/content.generated.ts from the Markdown files under
-src/help/content/.
+"""Generate src/help/content.generated.ts from the help topics' Markdown.
 
-Each *.md file under the content directory is the single source of truth for
-one help/doc topic. This script walks that tree, keys each file by its path
-relative to content/ (path separators -> "-", extension stripped), and PRE-
+The topics come from TWO roots. The MCP topics are `src/help/content/mcp/` here, beside
+the catalog code they describe. Every other topic (the Overview) is product copy, and
+product copy lives in `adswebsites/adhcontent` with the rest of the fleet's words, at
+`content/adtoolkit/help/`, named to this script through `ADH_HELP_CONTENT` (see
+`_help_content_dir()`).
+
+Each *.md file under either root is the single source of truth for one help/doc
+topic. This script walks both, keys each file by its path relative to its root
+(path separators -> "-", extension stripped), fails on a key both roots hold, and PRE-
 RENDERS each file to sanitised, shiki-highlighted HTML at generation time —
 emitting a committed TypeScript module mapping topic key -> HTML string.
 
@@ -22,7 +27,7 @@ orchestrates (walk files, derive keys, format the module) and invokes `node`
 purely as the rendering engine: it pipes {key: markdown} in and reads
 {key: html} out. Nothing is reimplemented in Python.
 
-Runnable from anywhere (content dir is resolved relative to this script, not cwd):
+Runnable from anywhere (this repo's content dir is resolved relative to this script, not cwd):
   python3 tools/gen-help-content.py            # from packages/web/packages/adh
   python3 packages/web/packages/adh/tools/gen-help-content.py   # from the toolkit root
   python3 tools/gen-help-content.py --check    # assert the committed module is fresh
@@ -32,8 +37,8 @@ stale in exactly the way an unguarded derived artifact does: the MCP catalog gai
 tools (Teams, Persona Knowledge, searchMyData) and the corpus kept advertising 47. The
 backend's side of that chain was already pinned (`test/mcp/catalog-snapshot.test.ts` holds
 catalog.generated.json against the live registry) — this second hop was not, so the catalog
-moved and the help text silently did not. Wired into adh's ci.yml, since that is the job
-that has both halves to hand (see the note below).
+moved and the help text silently did not. Nothing runs it on push; run it by hand
+with both inputs below named.
 
 REQUIRES THE BACKEND'S CATALOG — the one input in this package that comes from outside the
 repo. The MCP topic (see MCP_COUNT_PLACEHOLDER below) is filled from
@@ -106,10 +111,31 @@ process.stdout.write(JSON.stringify(out))
 """
 
 
-def topic_key(md_path: Path) -> str:
+def topic_key(md_path: Path, root: Path) -> str:
     """content/mcp/tools.md -> mcp-tools"""
-    rel = md_path.relative_to(CONTENT_DIR).with_suffix("")
+    rel = md_path.relative_to(root).with_suffix("")
     return "-".join(rel.parts)
+
+
+def _help_content_dir() -> Path:
+    """adhcontent's `content/adtoolkit/help/`, which is an INPUT, like the MCP catalog.
+
+    Named rather than derived for the same reason `_mcp_catalog_path()` gives: this repo is
+    consumed as a submodule by repos that have no adhcontent beside them, so there is no
+    relative location it could honestly compute.
+    """
+    raw = os.environ.get("ADH_HELP_CONTENT")
+    if not raw:
+        raise SystemExit(
+            "no help content given. The Overview topic's Markdown does not live in this "
+            "repo: it is in adswebsites/adhcontent. Set ADH_HELP_CONTENT:\n"
+            "  ADH_HELP_CONTENT=<adhcontent>/content/adtoolkit/help "
+            "ADH_MCP_CATALOG=... python3 tools/gen-help-content.py --check"
+        )
+    path = Path(raw).expanduser().resolve()
+    if not path.is_dir():
+        raise SystemExit(f"ADH_HELP_CONTENT names {path}, which is not a directory")
+    return path
 
 
 def _mcp_catalog_path() -> Path:
@@ -211,16 +237,16 @@ def render_html(entries: dict[str, str]) -> dict[str, str]:
 
 def render_module() -> tuple[str, int]:
     """The exact bytes content.generated.ts should hold right now, and the topic count."""
-    md_files = sorted(CONTENT_DIR.rglob("*.md"))
-    if not md_files:
-        raise SystemExit(f"no *.md files found under {CONTENT_DIR}")
-
     entries: dict[str, str] = {}
-    for md_path in md_files:
-        key = topic_key(md_path)
-        if key in entries:
-            raise SystemExit(f"duplicate topic key {key!r} from {md_path}")
-        entries[key] = inject_mcp_catalog(md_path.read_text(encoding="utf-8"))
+    for root in (CONTENT_DIR, _help_content_dir()):
+        md_files = sorted(root.rglob("*.md"))
+        if not md_files:
+            raise SystemExit(f"no *.md files found under {root}")
+        for md_path in md_files:
+            key = topic_key(md_path, root)
+            if key in entries:
+                raise SystemExit(f"duplicate topic key {key!r} from {md_path}")
+            entries[key] = inject_mcp_catalog(md_path.read_text(encoding="utf-8"))
 
     rendered = render_html(entries)
 
@@ -235,7 +261,7 @@ def check(module: str, topics: int) -> int:
     """Compare the committed module against what this run produces. Returns an exit code.
 
     Byte comparison rather than a numeric spot-check on purpose: this file is derived from
-    TWO inputs — the Markdown corpus and adh's MCP catalog snapshot — and either can move
+    THREE inputs — this repo's Markdown, adhcontent's, and adh's MCP catalog snapshot — and any can move
     without the other. Only a full compare catches both, and it costs one extra read.
     """
     if not OUT_PATH.exists():
@@ -248,7 +274,8 @@ def check(module: str, topics: int) -> int:
         f"STALE: {OUT_PATH} does not match its sources.\n"
         "  Regenerate with `python3 tools/gen-help-content.py` from packages/web/packages/adh\n"
         "  and commit the result. Causes, in order of likelihood: a *.md file under\n"
-        f"  {CONTENT_DIR.name}/ changed, or a tool was added/renamed/removed in adh's MCP\n"
+        f"  {CONTENT_DIR.name}/ or adhcontent's content/adtoolkit/help/ changed, or a tool\n"
+        "  was added/renamed/removed in adh's MCP\n"
         "  registry (which moves catalog.generated.json, which this module embeds).",
         file=sys.stderr,
     )
