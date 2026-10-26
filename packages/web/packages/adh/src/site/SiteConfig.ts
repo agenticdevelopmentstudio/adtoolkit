@@ -65,7 +65,7 @@ export type SiteSitemap = SiteRoute[] | (() => SiteRoute[] | Promise<SiteRoute[]
  * Everything else under `app/` is a mount of shared code that reads this, so the fields
  * here are exactly the per-site tokens that used to be spelled inline in 38 copies of the
  * same file: the id (which appeared in `layout.tsx` twice, `robots.ts`, `sitemap.ts` and
- * both `details` pages), the two SEO strings only a human can write, and the six seams
+ * both `details` pages), the two SEO strings only a human can write, and the seams
  * <MarketingRootHtml> opens.
  */
 export interface SiteDefinition {
@@ -101,6 +101,9 @@ export interface SiteDefinition {
   /** Whether the cold-load silent-SSO probe runs on the site's non-landing routes
    *  (default `true`). See the prop's own doc on MarketingRootHtmlProps. */
   silentSso?: boolean
+  /** Whether the header and footer render on the current route. See the prop's own doc on
+   *  MarketingRootHtmlProps. */
+  chromeGate?: MarketingRootHtmlProps['chromeGate']
   /** This site's gate for `/home`, in place of the family's `<HomeGate>`.
    *
    *  The same kind of seam as `header` and `providers`, opened for the same reason: one
@@ -223,6 +226,7 @@ export function defineSite(site: SiteDefinition): SiteConfig {
       trailingNavLinks: site.trailingNavLinks,
       footerLinks: site.footerLinks,
       silentSso: site.silentSso,
+      chromeGate: site.chromeGate,
       // Derived, not required: every site already describes its purpose in `seo.description`,
       // and a fourth copy of that sentence is how the cookbook's sections.ts ended up warning
       // that "Nothing reports a disagreement between the two". A site's own entry wins.

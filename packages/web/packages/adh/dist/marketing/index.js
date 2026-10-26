@@ -224,6 +224,7 @@ function MarketingRootHtml({
   header,
   providers,
   help,
+  chromeGate,
   children
 }) {
   const loc = getLocale();
@@ -246,6 +247,7 @@ function MarketingRootHtml({
             }
           ),
           footer: { links: footerLinks ?? [] },
+          chromeGate,
           children
         }
       ) }) }) }) })

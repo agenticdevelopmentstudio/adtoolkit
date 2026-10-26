@@ -81,6 +81,23 @@ export type MarketingRootHtmlProps = {
      *  replace the shared header entirely (four do), and a prop would reach the
      *  shared header and miss them. */
     help?: SiteHelp;
+    /**
+     * Whether the header and footer render on the current route — a client component that
+     * wraps each of them and returns its children or nothing.
+     *
+     * A gate rather than a route list because the question is the site's to answer: on the
+     * registry the root segment is a published handle, so "is this a profile" means "is the
+     * first segment anything but one of the site's own pages", which no static list can say.
+     * Being a client component, it reads the route with `usePathname()`, which Next resolves
+     * during the server render too — so a gated-off route ships without the chrome rather than
+     * removing it after hydration.
+     *
+     * It wraps the chrome and never the page, so it cannot change what a route renders, only
+     * whether the shared frame is around it. Omitted, the chrome always renders.
+     */
+    chromeGate?: ComponentType<{
+        children: ReactNode;
+    }>;
     children: ReactNode;
 };
 /**
@@ -116,7 +133,8 @@ export type MarketingRootHtmlProps = {
  * and it is not waivable by recording an exception, because the four documents that were once
  * excused are what taught us the cost: each was a copy of this file made to reach ONE slot, and
  * each silently dropped `dir` and the locale seam on the way. The per-site seams are
- * `header`, `providers`, `navLinks`, `trailingNavLinks`, `footerLinks` and `silentSso`.
+ * `header`, `providers`, `navLinks`, `trailingNavLinks`, `footerLinks`, `silentSso` and
+ * `chromeGate`.
  *
  * A server component: it renders the client `AuthProvider`/`SiteHeader` exactly as a
  * site layout would. Per-site `metadata` (the one genuinely per-site, SEO-bearing
@@ -130,6 +148,6 @@ export type MarketingRootHtmlProps = {
  * paths (kept external by tsup) so their 'use client' boundaries survive bundling,
  * mirroring the graph subsystem.
  */
-export declare function MarketingRootHtml({ siteId, navLinks, trailingNavLinks, footerLinks, silentSso, header, providers, help, children, }: MarketingRootHtmlProps): ReactElement;
+export declare function MarketingRootHtml({ siteId, navLinks, trailingNavLinks, footerLinks, silentSso, header, providers, help, chromeGate, children, }: MarketingRootHtmlProps): ReactElement;
 export {};
 //# sourceMappingURL=MarketingRootHtml.d.ts.map

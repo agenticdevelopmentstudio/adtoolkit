@@ -134,4 +134,13 @@ describe('@agentic-toolkit/adh/marketing', () => {
     const own = <header id="site-own" />
     expect(openDocument({ header: own }).shell.props.header).toBe(own)
   })
+
+  it('hands the site’s chrome gate to AppShell, and nothing when there is none', () => {
+    // The gate itself is applied inside AppShell (around the header and the footer, never the
+    // page); the document's job is only to pass it down untouched, BY IDENTITY — it is a
+    // component type, and a rebuilt one would remount the chrome on every render.
+    expect(openDocument().shell.props.chromeGate).toBeUndefined()
+    const Gate = ({ children }: { children: ReactNode }) => <>{children}</>
+    expect(openDocument({ chromeGate: Gate }).shell.props.chromeGate).toBe(Gate)
+  })
 })

@@ -25,6 +25,7 @@ function defineSite(site) {
       trailingNavLinks: site.trailingNavLinks,
       footerLinks: site.footerLinks,
       silentSso: site.silentSso,
+      chromeGate: site.chromeGate,
       // Derived, not required: every site already describes its purpose in `seo.description`,
       // and a fourth copy of that sentence is how the cookbook's sections.ts ended up warning
       // that "Nothing reports a disagreement between the two". A site's own entry wins.

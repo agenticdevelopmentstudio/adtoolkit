@@ -53,12 +53,14 @@ describe('defineSite', () => {
       navLinks,
       trailingNavLinks,
       footerLinks,
+      chromeGate: Providers,
     })
     expect(site.shell.header).toBe(header)
     expect(site.shell.providers).toBe(Providers)
     expect(site.shell.navLinks).toBe(navLinks)
     expect(site.shell.trailingNavLinks).toBe(trailingNavLinks)
     expect(site.shell.footerLinks).toBe(footerLinks)
+    expect(site.shell.chromeGate).toBe(Providers)
   })
 
   it('passes silentSso through, including the false that means something', () => {

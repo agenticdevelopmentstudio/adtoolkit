@@ -303,6 +303,7 @@ function HomePlaceholder({ siteLabel, blurb }) {
 }
 
 // src/layout/AppShell.tsx
+import { Fragment as Fragment3 } from "react";
 import { SiteFooter } from "@agentic-toolkit/adh/footer";
 import { SiteTelemetryProvider as TelemetryProvider } from "@agentic-toolkit/adh/telemetry";
 import { FeatureFlagsProvider } from "@agentic-toolkit/adh/flags";
@@ -313,7 +314,8 @@ import { liveBuildIdentity } from "@agentic-toolkit/adh/live-build-identity";
 import { DEV_BUILD } from "@agentic-toolkit/adh-registry/deployment-env";
 import { jsx as jsx9 } from "react/jsx-runtime";
 var DEV_TOOLS_BUILD_ENABLED = DEV_BUILD;
-function AppShell({ header, children, footer }) {
+function AppShell({ header, children, footer, chromeGate }) {
+  const Chrome = chromeGate ?? Fragment3;
   return (
     // FeatureFlagsProvider wraps the WHOLE shell, not just the page: the header/landing are
     // consumers, and a site's own pages read the same one flag set rather than fetching it a
@@ -321,8 +323,8 @@ function AppShell({ header, children, footer }) {
     /* @__PURE__ */ jsx9(FeatureFlagsProvider, { children: /* @__PURE__ */ jsx9(HelpProvider, { children: /* @__PURE__ */ jsx9(TelemetryProvider, { children: /* @__PURE__ */ jsx9(SettingsOverlayProvider, { children: /* @__PURE__ */ jsx9(
       AdhAppShell2,
       {
-        header,
-        footer: /* @__PURE__ */ jsx9(SiteFooter, { links: footer?.links, live: liveBuildIdentity() }),
+        header: /* @__PURE__ */ jsx9(Chrome, { children: header }),
+        footer: /* @__PURE__ */ jsx9(Chrome, { children: /* @__PURE__ */ jsx9(SiteFooter, { links: footer?.links, live: liveBuildIdentity() }) }),
         devTools: DEV_TOOLS_BUILD_ENABLED,
         children
       }

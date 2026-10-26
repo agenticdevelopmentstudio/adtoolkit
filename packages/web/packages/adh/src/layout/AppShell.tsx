@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { Fragment, type ComponentType, type ReactNode } from 'react'
 // Package paths, never relative ones. Every specifier below reaches a module that holds
 // module-level state (a React context, or an SDK-init side effect that must run once), and
 // this package builds with tsup at `bundle: true, splitting: false` — a relative specifier
@@ -82,6 +82,11 @@ export type AppShellProps = {
   /** Extra footer links; the copyright is a fixed brand line owned by the shared
    *  footer (not per-site). */
   footer?: { links?: FooterLink[] }
+  /** Wraps the header and the footer — never the page — and decides whether they render.
+   *  A client component (it reads the route), so a site can drop the chrome on the routes
+   *  that must stand alone. Omitted, the chrome always renders. See MarketingRootHtml's
+   *  prop of the same name. */
+  chromeGate?: ComponentType<{ children: ReactNode }>
 }
 
 /**
@@ -93,7 +98,11 @@ export type AppShellProps = {
  * adh-specific composition root — which providers wrap the shell, and what goes in its footer
  * slot. Stays hook-free itself (server-renderable); the providers are client children.
  */
-export function AppShell({ header, children, footer }: AppShellProps) {
+export function AppShell({ header, children, footer, chromeGate }: AppShellProps) {
+  // Fragment, not an inline pass-through arrow: a fresh arrow is a new component TYPE every
+  // render and would remount the header and footer each time. Same reason as MarketingRootHtml's
+  // `providers` fallback.
+  const Chrome = chromeGate ?? Fragment
   return (
     // FeatureFlagsProvider wraps the WHOLE shell, not just the page: the header/landing are
     // consumers, and a site's own pages read the same one flag set rather than fetching it a
@@ -126,8 +135,12 @@ export function AppShell({ header, children, footer }: AppShellProps) {
               calls openSettings for a signed-out visitor. */}
           <SettingsOverlayProvider>
             <AdhAppShell
-              header={header}
-              footer={<SiteFooter links={footer?.links} live={liveBuildIdentity()} />}
+              header={<Chrome>{header}</Chrome>}
+              footer={
+                <Chrome>
+                  <SiteFooter links={footer?.links} live={liveBuildIdentity()} />
+                </Chrome>
+              }
               devTools={DEV_TOOLS_BUILD_ENABLED}
             >
               {children}
