@@ -148,6 +148,13 @@ describe('FlowHero', () => {
     expect(container.querySelector('.lp-hero-shot')).toBeNull()
   })
 
+  it('fills the window only when asked', () => {
+    const { container, rerender } = render(<FlowHero headline="A claim" sub="A sub" />)
+    expect(container.firstElementChild!.className).toBe('lp-hero-flow')
+    rerender(<FlowHero headline="A claim" sub="A sub" fill />)
+    expect(container.firstElementChild!.className).toBe('lp-hero-flow lp-hero-flow--fill')
+  })
+
   it('wraps children in the actions row, and omits the row without them', () => {
     const { container: bare } = render(<FlowHero headline="A claim" sub="A sub" />)
     expect(bare.querySelector('.lp-hero-actions')).toBeNull()

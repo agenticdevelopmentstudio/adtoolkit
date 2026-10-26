@@ -2463,6 +2463,7 @@ function SiteHeader({
   badges,
   leadingActions,
   navLinks,
+  detailsHref,
   trailingNavLinks = [],
   previewNotice,
   previewDetail,
@@ -2496,6 +2497,7 @@ function SiteHeader({
   const hostname = useClientHost4();
   const conceptSite = isConceptSite(siteId);
   const onLandingPage = usePathname6() === "/";
+  const landingDetailsHref = detailsHref ?? (conceptSite ? "/details" : void 0);
   const site = getSite3(siteId);
   const siteName = site ? siteHeaderTitle2(site) : siteId;
   const siteShortName = site?.label ?? siteId;
@@ -2538,7 +2540,7 @@ function SiteHeader({
         previewDetail,
         homeHref: siteHomePath(siteId),
         profileHref: user?.slug && hasProfileRoute(siteId) ? `/${encodeURIComponent(user.slug)}/profile` : void 0,
-        preAuthLinks: conceptSite && onLandingPage ? /* @__PURE__ */ jsx21("a", { href: "/details", className: "adh-header__nav-link adh-header__nav-link--details", children: "Details" }) : void 0,
+        preAuthLinks: landingDetailsHref !== void 0 && onLandingPage ? /* @__PURE__ */ jsx21("a", { href: landingDetailsHref, className: "adh-header__nav-link adh-header__nav-link--details", children: "Details" }) : void 0,
         accountActions: user != null ? /* @__PURE__ */ jsx21(NotificationBell, {}) : void 0,
         user,
         authLoading,

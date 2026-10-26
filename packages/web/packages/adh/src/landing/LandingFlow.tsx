@@ -98,7 +98,12 @@ function joined(items: ReactNode[]): ReactNode {
  * the reader's scroll position is the right default once nothing snaps — the reset existed
  * because a restored offset landed between two snap points.
  */
-function flow(content: LandingContent, lead: ReactNode, leadRow: NavLink | undefined): ReactElement {
+function flow(
+  content: LandingContent,
+  lead: ReactNode,
+  leadRow: NavLink | undefined,
+  heroFillsWindow: boolean,
+): ReactElement {
   const rows = leadRow === undefined ? indexRows(content) : [leadRow, ...indexRows(content)]
   const { actions, meta } = heroSlots(content.hero)
   return (
@@ -114,6 +119,7 @@ function flow(content: LandingContent, lead: ReactNode, leadRow: NavLink | undef
           headline={content.hero.headline}
           sub={content.hero.tagline}
           meta={meta.length === 0 ? undefined : joined(meta)}
+          fill={heroFillsWindow}
         >
           {actions.length === 0 ? undefined : actions}
         </FlowHero>
@@ -125,20 +131,26 @@ function flow(content: LandingContent, lead: ReactNode, leadRow: NavLink | undef
 
 export interface LandingFlowProps {
   content: LandingContent
+  /**
+   * The hero takes the whole window under the header and the bands start below the fold:
+   * the page in two parts, the callout and then everything else (`FlowHero`'s `fill`). The
+   * hub's `/` asks for it (Mike, 2026-10-25); a site that does not keeps the short hero.
+   */
+  heroFillsWindow?: boolean
 }
 
 /** A family site's `/` as a flow page. The same `LandingContent` `LandingDeck` mounts. */
-export function LandingFlow({ content }: LandingFlowProps): ReactElement {
-  return flow(content, null, undefined)
+export function LandingFlow({ content, heroFillsWindow = false }: LandingFlowProps): ReactElement {
+  return flow(content, null, undefined, heroFillsWindow)
 }
 
 /**
  * `/tour` as a flow page: the tour strip ahead of the hero, as `LandingTour` puts it, and
  * for the same reason — a tour stop has to announce itself on the screen the reader lands on.
  */
-export function LandingFlowTour({ content }: LandingFlowProps): ReactElement {
+export function LandingFlowTour({ content, heroFillsWindow = false }: LandingFlowProps): ReactElement {
   const { tour } = content
-  if (tour === undefined) return flow(content, null, undefined)
+  if (tour === undefined) return flow(content, null, undefined, heroFillsWindow)
   const lead = (
     <TourStrip
       eyebrow={tour.eyebrow}
@@ -149,5 +161,5 @@ export function LandingFlowTour({ content }: LandingFlowProps): ReactElement {
       next={tourStep(tour.next)}
     />
   )
-  return flow(content, lead, { href: `#${TOUR_SCREEN_ID}`, label: tour.eyebrow })
+  return flow(content, lead, { href: `#${TOUR_SCREEN_ID}`, label: tour.eyebrow }, heroFillsWindow)
 }

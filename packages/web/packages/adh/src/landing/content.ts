@@ -93,7 +93,7 @@ export interface LandingSection {
 export type LandingBlock =
   | { kind: 'Lede'; children: ReactNode }
   | { kind: 'Trust'; items: ReactNode[] }
-  | { kind: 'Cards'; items: LandingCard[]; pair?: true; trio?: true }
+  | { kind: 'Cards'; items: LandingCard[]; pair?: true; trio?: true; wide?: true }
   | { kind: 'Points'; entries: PointEntry[]; ordered?: true }
   | { kind: 'Code'; text: string }
   /** `src` is a screenshot id, not a URL. The deck resolves it against the hub's own
@@ -123,6 +123,9 @@ export interface LandingCard {
   /** Rendered in its own `<span>` outside the `<h3>`, so a card with one and a card
    *  without still produce the same heading text. */
   kicker?: ReactNode
+  /** An icon id, not a URL: the deck resolves it to the site's `/icons/<id>.svg`, the
+   *  way a `Shot`'s `src` is resolved to `/screenshots/<id>.png`. */
+  icon?: string
   title: ReactNode
   body: ReactNode[]
 }

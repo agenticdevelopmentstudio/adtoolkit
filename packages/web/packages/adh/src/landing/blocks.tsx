@@ -58,9 +58,14 @@ export function renderBlock(block: LandingBlock, key: number): ReactElement {
       return <Trust key={key} items={block.items} />
     case 'Cards':
       return (
-        <Cards key={key} pair={block.pair} trio={block.trio}>
+        <Cards key={key} pair={block.pair} trio={block.trio} wide={block.wide}>
           {block.items.map((card, i) => (
-            <Card key={i} kicker={card.kicker} title={card.title}>
+            <Card
+              key={i}
+              kicker={card.kicker}
+              icon={card.icon === undefined ? undefined : `/icons/${card.icon}.svg`}
+              title={card.title}
+            >
               {prose(card.body)}
             </Card>
           ))}

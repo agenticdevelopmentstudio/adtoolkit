@@ -86,6 +86,12 @@ export type SiteHeaderProps = Omit<
    *  (which keeps the page's own header component hook-free). */
   navLinks?: NavLink[] | ((signedIn: boolean) => NavLink[])
   trailingNavLinks?: NavLink[]
+  /** Where the landing page's "Details" link points, for a site whose details page is
+   *  not its own `/details`. The hub's is the help site's overview of it: its `/details`
+   *  brochure was folded into `/`. Given, the link renders on this site's landing page
+   *  exactly as a concept site's does, beside the account chrome; omitted, only a concept
+   *  site gets one, at `/details`. */
+  detailsHref?: string
   /** The words in the full-width strip above the bar, forwarded verbatim to
    *  {@link AdhHeader} (which defaults them to `DEFAULT_PREVIEW_NOTICE`). Every adh
    *  site takes the default today; the prop exists so the strip's copy is reachable
@@ -158,6 +164,7 @@ export function SiteHeader({
   badges,
   leadingActions,
   navLinks,
+  detailsHref,
   trailingNavLinks = [],
   previewNotice,
   previewDetail,
@@ -239,6 +246,7 @@ export function SiteHeader({
   // from `/` to an inner page re-renders nothing that reads it, and the Details link
   // would stay on screen for the rest of the session — the exact bug being fixed.
   const onLandingPage = usePathname() === '/'
+  const landingDetailsHref = detailsHref ?? (conceptSite ? '/details' : undefined)
   // The registry-derived brand name. `siteHeaderTitle` takes the SiteDef, not the id;
   // an unknown id can't happen through the typed `SiteId`, but `getSite` is
   // nominally partial, so fall back to the id rather than widening its return.
@@ -376,8 +384,8 @@ export function SiteHeader({
         // works pre-hydration and resolves the real route. The `/details` path and the
         // "Details" copy are adh vocabulary and stay on this side of the boundary.
         preAuthLinks={
-          conceptSite && onLandingPage ? (
-            <a href="/details" className="adh-header__nav-link adh-header__nav-link--details">
+          landingDetailsHref !== undefined && onLandingPage ? (
+            <a href={landingDetailsHref} className="adh-header__nav-link adh-header__nav-link--details">
               Details
             </a>
           ) : undefined

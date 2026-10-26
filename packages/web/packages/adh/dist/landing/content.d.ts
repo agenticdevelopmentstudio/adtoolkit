@@ -89,6 +89,7 @@ export type LandingBlock = {
     items: LandingCard[];
     pair?: true;
     trio?: true;
+    wide?: true;
 } | {
     kind: 'Points';
     entries: PointEntry[];
@@ -157,6 +158,9 @@ export interface LandingCard {
     /** Rendered in its own `<span>` outside the `<h3>`, so a card with one and a card
      *  without still produce the same heading text. */
     kicker?: ReactNode;
+    /** An icon id, not a URL: the deck resolves it to the site's `/icons/<id>.svg`, the
+     *  way a `Shot`'s `src` is resolved to `/screenshots/<id>.png`. */
+    icon?: string;
     title: ReactNode;
     body: ReactNode[];
 }

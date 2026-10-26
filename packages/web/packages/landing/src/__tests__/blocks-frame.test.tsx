@@ -54,6 +54,17 @@ describe('Cards', () => {
     expect(() => render(<Cards pair trio><Card title="A">a</Card></Cards>)).toThrow(/at most one/)
   })
 
+  it('carries the wide modifier only when asked', () => {
+    const { container, rerender } = render(<Cards><Card title="A">a</Card></Cards>)
+    expect(container.firstElementChild!.className).toBe('lp-cards')
+    rerender(<Cards wide><Card title="A">a</Card></Cards>)
+    expect(container.firstElementChild!.className).toContain('lp-cards--wide')
+  })
+
+  it('refuses wide beside another layout', () => {
+    expect(() => render(<Cards trio wide><Card title="A">a</Card></Cards>)).toThrow(/at most one/)
+  })
+
   it('puts a card title in an h3', () => {
     const { container } = render(<Cards><Card title="One SQLite file"><p>x</p></Card></Cards>)
     expect(container.querySelector('.lp-card h3')!.textContent).toBe('One SQLite file')
@@ -74,6 +85,23 @@ describe('Cards', () => {
   it('renders no kicker element when none is given', () => {
     const { container } = render(<Cards><Card title="Memory"><p>x</p></Card></Cards>)
     expect(container.querySelector('.lp-card__kicker')).toBeNull()
+  })
+
+  // The icon sits inside the h3 but adds no text to it: its alt is empty, so the
+  // heading still reads as the title alone, to a locator and to a screen reader.
+  it('draws an icon inside the heading without changing its text', () => {
+    const { container } = render(
+      <Cards><Card icon="/icons/hub.svg" title="Hub"><p>x</p></Card></Cards>
+    )
+    const img = container.querySelector('.lp-card h3 img.lp-card__icon')!
+    expect(img.getAttribute('src')).toBe('/icons/hub.svg')
+    expect(img.getAttribute('alt')).toBe('')
+    expect(container.querySelector('.lp-card h3')!.textContent).toBe('Hub')
+  })
+
+  it('renders no icon element when none is given', () => {
+    const { container } = render(<Cards><Card title="Memory"><p>x</p></Card></Cards>)
+    expect(container.querySelector('.lp-card__icon')).toBeNull()
   })
 })
 

@@ -29,6 +29,13 @@ export interface FlowHeroProps {
   meta?: ReactNode
   /** A shot below the composition, usually wrapped in `Bleed`. */
   shot?: ReactNode
+  /**
+   * The hero is a screen of its own: at least the window's height, less any header
+   * above it (`--lp-chrome-top`), with the composition centred in it, and the bands
+   * start below the fold. The page still scrolls as one document. Off by default,
+   * because a short hero is what lets the first band's seam show on arrival.
+   */
+  fill?: boolean
 }
 
 /**
@@ -40,9 +47,9 @@ export interface FlowHeroProps {
  * screen reader's outline. The deck's `Hero` makes the same call for the same
  * reason.
  */
-export function FlowHero({ id, mark, headline, sub, children, meta, shot }: FlowHeroProps): ReactElement {
+export function FlowHero({ id, mark, headline, sub, children, meta, shot, fill }: FlowHeroProps): ReactElement {
   return (
-    <div id={id} className="lp-hero-flow">
+    <div id={id} className={fill === true ? 'lp-hero-flow lp-hero-flow--fill' : 'lp-hero-flow'}>
       <Wrap>
         {mark}
         <h1>{headline}</h1>

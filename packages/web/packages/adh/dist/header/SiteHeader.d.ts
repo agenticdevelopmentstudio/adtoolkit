@@ -39,6 +39,12 @@ export type SiteHeaderProps = Omit<AdhHeaderAuthProps, 'user' | 'onLogin' | 'onL
      *  (which keeps the page's own header component hook-free). */
     navLinks?: NavLink[] | ((signedIn: boolean) => NavLink[]);
     trailingNavLinks?: NavLink[];
+    /** Where the landing page's "Details" link points, for a site whose details page is
+     *  not its own `/details`. The hub's is the help site's overview of it: its `/details`
+     *  brochure was folded into `/`. Given, the link renders on this site's landing page
+     *  exactly as a concept site's does, beside the account chrome; omitted, only a concept
+     *  site gets one, at `/details`. */
+    detailsHref?: string;
     /** The words in the full-width strip above the bar, forwarded verbatim to
      *  {@link AdhHeader} (which defaults them to `DEFAULT_PREVIEW_NOTICE`). Every adh
      *  site takes the default today; the prop exists so the strip's copy is reachable
@@ -103,5 +109,5 @@ export type SiteHeaderProps = Omit<AdhHeaderAuthProps, 'user' | 'onLogin' | 'onL
  * @adh-shared auth-shim wrapper that used to supply it into this component, so there is
  * one SiteHeader again — a site cannot get the registry half without the auth half.
  */
-export declare function SiteHeader({ siteId, pageTitle, center, badges, leadingActions, navLinks, trailingNavLinks, previewNotice, previewDetail, routes: _routes, personalSlug, hubOffersFeature, clientId, onAfterLogout, useAuthSource, ...authOverrides }: SiteHeaderProps): ReactElement;
+export declare function SiteHeader({ siteId, pageTitle, center, badges, leadingActions, navLinks, detailsHref, trailingNavLinks, previewNotice, previewDetail, routes: _routes, personalSlug, hubOffersFeature, clientId, onAfterLogout, useAuthSource, ...authOverrides }: SiteHeaderProps): ReactElement;
 //# sourceMappingURL=SiteHeader.d.ts.map

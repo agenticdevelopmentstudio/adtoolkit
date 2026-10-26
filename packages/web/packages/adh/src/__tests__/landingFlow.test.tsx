@@ -114,6 +114,13 @@ describe('LandingFlow', () => {
     }
     expect(() => render(<LandingFlow content={content} />)).toThrow(/'Lede' block has no slot/)
   })
+
+  it('keeps the short hero unless the site asks for one the height of the window', () => {
+    const { container, rerender } = render(<LandingFlow content={CONTENT} />)
+    expect(container.querySelector('.lp-hero-flow--fill')).toBeNull()
+    rerender(<LandingFlow content={CONTENT} heroFillsWindow />)
+    expect(container.querySelector('.lp-hero-flow--fill')).not.toBeNull()
+  })
 })
 
 describe('LandingFlowTour', () => {

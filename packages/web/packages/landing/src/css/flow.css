@@ -198,6 +198,22 @@
   overflow-x: clip;
 }
 
+/* `FlowHero fill`: a screen of its own, the way mikefullerton.com's and the
+ * studio site's heroes are. A MINIMUM, so a short window grows the hero rather
+ * than clipping it. `svh`, not `dvh`, so the hero does not resize while a phone's
+ * URL bar collapses under the reader's thumb; `vh` first for a browser with no
+ * `svh`. Less `--lp-chrome-top`, because a host that sets it has a header in flow
+ * above the page, and a hero a header's height too tall leaves the first band's
+ * seam just under the fold. `safe center` so a composition taller than the window
+ * starts at its top instead of being pushed above it. */
+.lp-hero-flow.lp-hero-flow--fill {
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  min-height: calc(100vh - var(--lp-chrome-top, 0px));
+  min-height: calc(100svh - var(--lp-chrome-top, 0px));
+}
+
 .lp-hero-flow h1 {
   margin: 0 auto;
   max-width: 22ch;

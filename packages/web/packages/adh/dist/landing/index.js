@@ -37,7 +37,16 @@ function renderBlock(block, key) {
     case "Trust":
       return /* @__PURE__ */ jsx(Trust, { items: block.items }, key);
     case "Cards":
-      return /* @__PURE__ */ jsx(Cards, { pair: block.pair, trio: block.trio, children: block.items.map((card, i) => /* @__PURE__ */ jsx(Card, { kicker: card.kicker, title: card.title, children: prose(card.body) }, i)) }, key);
+      return /* @__PURE__ */ jsx(Cards, { pair: block.pair, trio: block.trio, wide: block.wide, children: block.items.map((card, i) => /* @__PURE__ */ jsx(
+        Card,
+        {
+          kicker: card.kicker,
+          icon: card.icon === void 0 ? void 0 : `/icons/${card.icon}.svg`,
+          title: card.title,
+          children: prose(card.body)
+        },
+        i
+      )) }, key);
     case "Points":
       return /* @__PURE__ */ jsx(Points, { entries: block.entries, ordered: block.ordered }, key);
     case "Code":
@@ -190,7 +199,7 @@ function joined(items) {
     item
   ] }, i));
 }
-function flow(content, lead, leadRow) {
+function flow(content, lead, leadRow, heroFillsWindow) {
   const rows = leadRow === void 0 ? indexRows(content) : [leadRow, ...indexRows(content)];
   const { actions, meta } = heroSlots(content.hero);
   return /* @__PURE__ */ jsxs2(Fragment2, { children: [
@@ -205,6 +214,7 @@ function flow(content, lead, leadRow) {
           headline: content.hero.headline,
           sub: content.hero.tagline,
           meta: meta.length === 0 ? void 0 : joined(meta),
+          fill: heroFillsWindow,
           children: actions.length === 0 ? void 0 : actions
         }
       ),
@@ -212,12 +222,12 @@ function flow(content, lead, leadRow) {
     ] })
   ] });
 }
-function LandingFlow({ content }) {
-  return flow(content, null, void 0);
+function LandingFlow({ content, heroFillsWindow = false }) {
+  return flow(content, null, void 0, heroFillsWindow);
 }
-function LandingFlowTour({ content }) {
+function LandingFlowTour({ content, heroFillsWindow = false }) {
   const { tour } = content;
-  if (tour === void 0) return flow(content, null, void 0);
+  if (tour === void 0) return flow(content, null, void 0, heroFillsWindow);
   const lead = /* @__PURE__ */ jsx3(
     TourStrip2,
     {
@@ -229,7 +239,7 @@ function LandingFlowTour({ content }) {
       next: tourStep(tour.next)
     }
   );
-  return flow(content, lead, { href: `#${TOUR_SCREEN_ID}`, label: tour.eyebrow });
+  return flow(content, lead, { href: `#${TOUR_SCREEN_ID}`, label: tour.eyebrow }, heroFillsWindow);
 }
 
 // src/landing/fromData.ts

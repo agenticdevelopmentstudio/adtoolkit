@@ -310,6 +310,10 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+/* One card per row at every width: see `wide` in blocks/Cards.tsx. */
+.lp-cards.lp-cards--wide {
+  grid-template-columns: minmax(0, 1fr);
+}
 /* A card grid under a placeholder stands off it the same distance the
  * placeholder stands off whatever it follows. */
 .lp-shot + .lp-cards {
@@ -347,6 +351,15 @@
   letter-spacing: 0.04em;
   color: var(--lp-accent-bright, #d8d8d8);
   margin-bottom: 0.5rem;
+}
+/* In `em` of the heading, so the icon scales with the title it stands beside
+ * rather than holding a size of its own. */
+.lp-card h3 .lp-card__icon {
+  display: inline-block;
+  width: 1.6em;
+  height: 1.6em;
+  margin-right: 0.6em;
+  vertical-align: middle;
 }
 .lp-card p {
   color: var(--lp-ink-dim, #a0a0a0);

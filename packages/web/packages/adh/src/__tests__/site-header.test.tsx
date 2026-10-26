@@ -483,4 +483,18 @@ describe('the Details link', () => {
     render(<SiteHeader siteId="projects" />)
     expect(screen.queryByRole('link', { name: 'Details' })).toBeNull()
   })
+
+  // The hub is no concept site, and its details page is on another origin: the help
+  // site's overview of it. `detailsHref` gives it the same landing-page link anyway.
+  it('shows a given detailsHref on the landing page of a site that is not a concept site', () => {
+    pathname.current = '/'
+    render(<SiteHeader siteId="hub" detailsHref="https://help.example/hub" />)
+    expect(screen.getByRole('link', { name: 'Details' }).getAttribute('href')).toBe('https://help.example/hub')
+  })
+
+  it('keeps a given detailsHref off every page but the landing page', () => {
+    pathname.current = '/home'
+    render(<SiteHeader siteId="hub" detailsHref="https://help.example/hub" />)
+    expect(screen.queryByRole('link', { name: 'Details' })).toBeNull()
+  })
 })
