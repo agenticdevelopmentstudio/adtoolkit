@@ -7,7 +7,7 @@
 // generator's docstring for why this is one file per repo.
 //
 // `gen-site-routes.py --region toolkit --check` re-derives this map in that
-// repo's CI, so a page added, moved, or removed anywhere in its fleet fails there
+// repo, so a page added, moved, or removed anywhere in its fleet fails there
 // until the script is re-run.
 //
 // NOT dev-only tooling: research's `src/lib/sitemap-routes.ts` reads
