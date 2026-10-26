@@ -1,32 +1,36 @@
 /*
- * ProfileInfoButton — a circled "i" centered on the top-left corner of the
- * host's position:relative wrapper (the same wrapper that contains the chat
- * view), linking to the persona's profile. It overhangs that box by half its
- * size, so no ancestor within that distance may overflow-clip.
+ * ProfileInfoButton — a circled "i" sitting ON the chat frame's top border,
+ * just past the rounded top-left corner, in the host's position:relative
+ * wrapper (the same wrapper that contains the chat view), linking to the
+ * persona's profile. Its opaque face covers the border beneath it. It overhangs
+ * the top edge by half its size, so no ancestor within that distance may
+ * overflow-clip.
  *
  * Opt-in: import this file only where the button is rendered.
  *
  * Knobs:
- *   --pc-pi-size — circle diameter (default 20px).
+ *   --pc-pi-size  — circle diameter (default 22px).
+ *   --pc-pi-inset — circle center's distance from the frame's left edge
+ *                   (default 21px: clear of the rounded corner).
  * Colors come from the chat theme tokens, with dark-terminal fallbacks.
  */
 .pc-profile-info {
   position: absolute;
   top: 0;
-  left: 0;
+  left: var(--pc-pi-inset, 21px);
   transform: translate(-50%, -50%);
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--pc-pi-size, 20px);
-  height: var(--pc-pi-size, 20px);
+  width: var(--pc-pi-size, 22px);
+  height: var(--pc-pi-size, 22px);
   border-radius: 50%;
   border: 1px solid var(--pc-input-border, rgba(255, 255, 255, 0.35));
   background: var(--pc-surface, #050805);
   color: var(--pc-persona-text, #d0d0d0);
   font-family: var(--pc-font-mono, ui-monospace, monospace);
-  font-size: calc(var(--pc-pi-size, 20px) * 0.6);
+  font-size: calc(var(--pc-pi-size, 22px) * 0.6);
   line-height: 1;
   text-decoration: none;
   cursor: pointer;
