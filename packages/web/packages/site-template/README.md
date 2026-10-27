@@ -97,11 +97,11 @@ A site's own component and route CSS may not name `.lp-*` or `.st-*` classes, or
 ## Assemble, check, update
 
 ```
-python3 packages/web/packages/site-template/tools/assemble_site.py --site <site repo>            # write
-python3 packages/web/packages/site-template/tools/assemble_site.py --site <site repo> --check    # write nothing
+python3 tools/assemble_site.py --site <site repo>            # write
+python3 tools/assemble_site.py --site <site repo> --check    # write nothing
 ```
 
-Run from the toolkit checkout; the template used is whichever toolkit copy runs the script.
+Every command below runs from the toolkit's `packages/web/packages/site-template/` directory. The template used is whichever toolkit copy runs the script.
 
 | Exit | Meaning |
 | --- | --- |

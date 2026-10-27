@@ -8,6 +8,10 @@ one line per block element. Prints a unified diff and exits 1 when the pages dif
 allow file; exits 0 when they match. The allow file lists the diff lines a change may produce,
 exactly as the diff prints them (`-old line`, `+new line`); blank lines and lines starting with
 `#` are ignored.
+
+A `<br>` is not a block boundary, so `a<br>b` is the one line `a b`. `<title>`, `template`, svg
+`title` and `[hidden]` text are counted as visible. That is acceptable: parity compares like with
+like, so the same text in both files cancels out.
 """
 from __future__ import annotations
 
@@ -20,7 +24,7 @@ from pathlib import Path
 
 SKIPPED = {"script", "style", "noscript"}
 BLOCKS = {
-    "address", "article", "aside", "blockquote", "body", "br", "dd", "details", "div", "dl", "dt",
+    "address", "article", "aside", "blockquote", "body", "dd", "details", "div", "dl", "dt",
     "fieldset", "figcaption", "figure", "footer", "form", "h1", "h2", "h3", "h4", "h5", "h6", "header",
     "hr", "html", "li", "main", "nav", "ol", "p", "pre", "section", "summary", "table", "tbody", "td",
     "tfoot", "th", "thead", "tr", "ul",
@@ -45,10 +49,14 @@ class _Collector(HTMLParser):
             self._skip += 1
         elif tag in BLOCKS:
             self.flush()
+        elif tag == "br":
+            self._buf.append(" ")
 
     def handle_startendtag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         if tag in BLOCKS:
             self.flush()
+        elif tag == "br":
+            self._buf.append(" ")
 
     def handle_endtag(self, tag: str) -> None:
         if tag in SKIPPED:
@@ -76,8 +84,9 @@ def diff(before: list[str], after: list[str], before_name: str, after_name: str)
 
 
 def changed_lines(diff_lines: list[str]) -> list[str]:
-    """The `-`/`+` body lines of a diff, less the file headers."""
-    return [line for line in diff_lines if line[:1] in ("+", "-") and not line.startswith(("---", "+++"))]
+    """The `-`/`+` body lines of a diff. The two file headers are dropped by position, never by
+    prefix, so a content line that starts with `--` or `++` still counts."""
+    return [line for line in diff_lines[2:] if line[:1] in ("+", "-")]
 
 
 def read_allowed(path: Path) -> set[str]:

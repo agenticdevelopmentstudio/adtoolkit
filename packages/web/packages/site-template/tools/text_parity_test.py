@@ -51,6 +51,14 @@ class ParityTest(unittest.TestCase):
         self.assertIn("-One two.", diff)
         self.assertIn("+One three.", diff)
 
+    def test_br_does_not_split_a_line(self) -> None:
+        self.assertEqual(parity.visible_lines("<p>a<br>b</p>"), ["a b"])
+
+    def test_removed_line_starting_with_dashes_fails(self) -> None:
+        a = self.write("a.html", "<p>keep</p><p>-- old</p>")
+        b = self.write("b.html", "<p>keep</p>")
+        self.assertEqual(parity.main([str(a), str(b)]), 1)
+
     def test_allowed_line_passes(self) -> None:
         after = BEFORE.replace("One two.", "One three.")
         a, b = self.write("a.html", BEFORE), self.write("b.html", after)

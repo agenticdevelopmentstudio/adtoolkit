@@ -40,7 +40,9 @@ const job = JSON.parse(require('fs').readFileSync(process.argv[2], 'utf8'));
       let page = pages.get(key);
       if (!page) {
         page = await browser.newPage({ viewport: { width: shot.width, height: shot.height } });
-        await page.goto(job.base + shot.route, { waitUntil: 'networkidle' });
+        // 'load', not 'networkidle': next dev keeps its HMR connection open, so the network never idles.
+        await page.goto(job.base + shot.route, { waitUntil: 'load' });
+        await page.waitForTimeout(500);
         pages.set(key, page);
       }
       if (shot.state === 'scrolled') {
@@ -124,8 +126,15 @@ def main(argv: list[str] | None = None) -> int:
         script, job = Path(tmp) / "screens.cjs", Path(tmp) / "job.json"
         script.write_text(node_script())
         job.write_text(job_json(args.url, captures))
-        subprocess.run(install_argv(), check=True)
-        code = subprocess.run(node_argv(script, job), check=False).returncode
+        try:
+            subprocess.run(install_argv(), check=True)
+            code = subprocess.run(node_argv(script, job), check=False).returncode
+        except FileNotFoundError as error:
+            print(f"screens: cannot run {error.filename}: is it installed?", file=sys.stderr)
+            return 2
+        except subprocess.CalledProcessError as error:
+            print(f"screens: {' '.join(error.cmd)} exited {error.returncode}", file=sys.stderr)
+            return 2
     if code == 0:
         for capture in captures:
             print(capture.path)
