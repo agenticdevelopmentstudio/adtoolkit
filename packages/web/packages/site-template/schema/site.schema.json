@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agenticdevelopertoolkit.com/schemas/site-template/site.schema.json",
+  "title": "site.json",
+  "description": "A content site's placement config: what the site-template assembler reads from `site/site.json` to write the deployable Next app. Every object is closed, so a misspelt key is an error rather than a silent no-op. Paths are relative to `site/` unless a key says otherwise.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["output", "port"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Editor hint only; the assembler ignores it."
+    },
+    "output": {
+      "type": "string",
+      "description": "The app directory the assembler writes, relative to the site repo's root, e.g. `websites/main`. Its parent is the pnpm workspace root.",
+      "pattern": "^(?!/)(?!.*\\.\\.)[A-Za-z0-9._/-]+$"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "description": "The local dev server's port: `next dev -p <port>`, and the origin `frameSiteUrl` falls back to."
+    },
+    "theme": {
+      "type": "string",
+      "default": "fishlamp",
+      "description": "A key of the template's `themes.json`: the theme stylesheet and the fonts it needs."
+    },
+    "tokens": {
+      "type": "string",
+      "description": "The site's token sheet, e.g. `theme.css`. Only custom-property declarations inside `:root { }`; it is appended after the theme and the frame sheets."
+    },
+    "mark": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["src", "shape"],
+      "description": "The hero's mark. Absent: `/glyph.svg` (content-buildr's glyph) as a glyph.",
+      "properties": {
+        "src": { "type": "string", "description": "A public path, e.g. `/app-icon.png`." },
+        "shape": { "enum": ["glyph", "app-icon"] }
+      }
+    },
+    "themeColor": {
+      "type": "string",
+      "default": "#0b0a09",
+      "description": "The mobile browser chrome's colour; track the theme's ground."
+    },
+    "ogImage": {
+      "type": "string",
+      "description": "The Open Graph image's public path. Absent: the mark's `src`."
+    },
+    "jsonLd": {
+      "type": "object",
+      "description": "Structured data, rendered as one `application/ld+json` script in the root layout."
+    },
+    "sitemap": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^/" },
+      "description": "Paths beyond `/` the sitemap lists."
+    },
+    "slots": {
+      "type": "object",
+      "description": "Custom components by the place in the frame each fills. The value is a file under `site/components/` and its export, `file.tsx#Name`. A `band:<id>` key must name a section of `src/landing.json`.",
+      "propertyNames": { "pattern": "^(hero|afterHero|footer|band:[A-Za-z0-9_-]+)$" },
+      "additionalProperties": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9._/-]+\\.tsx?#[A-Za-z_$][A-Za-z0-9_$]*$"
+      }
+    },
+    "drawer": {
+      "type": "array",
+      "description": "Drawer rows after the section rows.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["href", "label"],
+        "properties": {
+          "href": { "type": "string" },
+          "label": { "type": "string" }
+        }
+      }
+    },
+    "dependencies": {
+      "type": "object",
+      "description": "Extra npm dependencies, name to version range. Naming a dependency the template already has is refused.",
+      "additionalProperties": { "type": "string" }
+    },
+    "toolkitPackages": {
+      "type": "array",
+      "description": "Extra toolkit packages, as directories under the toolkit's `packages/web/packages/` (e.g. `releases`, `features/bitbag`), linked into the app.",
+      "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*(/[a-z0-9][a-z0-9-]*)?$" }
+    },
+    "fonts": {
+      "type": "array",
+      "description": "Fonts beyond the theme's: one `next/font/local` family each, exposed as its CSS variable on `<html>`.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["variable", "files"],
+        "properties": {
+          "variable": { "type": "string", "pattern": "^--[a-z][a-z0-9-]*$" },
+          "files": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["path", "weight", "style"],
+              "properties": {
+                "path": { "type": "string", "pattern": "\\.woff2$" },
+                "weight": { "type": "string" },
+                "style": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

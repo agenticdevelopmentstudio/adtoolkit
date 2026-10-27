@@ -1,0 +1,39 @@
+{
+  "//": "The base of every content site's package.json. NOT copied as it stands: the assembler sets `name` and the dev port, rewrites each `link:` path (written here relative to the toolkit's packages/web/packages/) into one relative to the site's app dir, and adds the site's `dependencies` and `toolkitPackages`.",
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@9.15.9",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test 'src/**/*.test.ts'"
+  },
+  "dependencies": {
+    "@agenticdevelopertoolkit/landing": "link:landing",
+    "@agenticdevelopertoolkit/site-template": "link:site-template",
+    "@agenticdevelopertoolkit/themes": "link:themes",
+    "next": "^16.2.9",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@next/eslint-plugin-next": "^16.2.9",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "eslint": "^9.39.4",
+    "eslint-plugin-jsx-a11y": "^6.10.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.6.0",
+    "postcss": "^8.5.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0",
+    "typescript-eslint": "^8.60.1"
+  }
+}
