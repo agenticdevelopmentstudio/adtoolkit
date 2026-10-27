@@ -6,6 +6,7 @@ import { LandingFrame } from '../landing-frame'
 import { FrameFooter } from '../footer'
 import { SiteChrome } from '../chrome'
 import { FrameMark } from '../frame-mark'
+import { FrameBand } from '../frame-band'
 import * as barrel from '../index'
 import { frameMetadata, frameRobots, frameSiteUrl, frameSitemap, frameViewport } from '../frame-metadata'
 import type { FrameConfig, FrameCopy, SlotMap } from '../types'
@@ -301,6 +302,44 @@ describe('FrameMark', () => {
 
   it('ships from the server barrel', () => {
     expect(barrel.FrameMark).toBe(FrameMark)
+  })
+})
+
+describe('FrameBand', () => {
+  it('is a band with its Reveal inside, as every band of / is', () => {
+    const { container } = render(
+      <FrameBand id="install" tone="soft">
+        <p>Body</p>
+      </FrameBand>,
+    )
+    const band = container.querySelector('section.lp-band')!
+    expect(band.id).toBe('install')
+    expect(band.className).toContain('lp-band--soft')
+    expect(band.className).toContain('lp-band--seam')
+    // Inside, not around: a transformed wrapper outside the band breaks the seam's stacking.
+    const reveal = band.querySelector('.lp-reveal')!
+    expect(reveal.closest('.lp-band')).toBe(band)
+    expect(reveal.querySelector('p')!.textContent).toBe('Body')
+  })
+
+  it('passes a dropped seam through', () => {
+    const { container } = render(
+      <FrameBand id="x" tone="paper" seam={false}>
+        <p />
+      </FrameBand>,
+    )
+    expect(container.querySelector('.lp-band')!.className).not.toContain('lp-band--seam')
+  })
+
+  it('is what the frame draws each band with, and ships from the server barrel', () => {
+    const { container } = render(<LandingFrame page={two} slots={noSlots} mark={mark} />)
+    const ours = render(
+      <FrameBand id="one" tone="soft">
+        <span />
+      </FrameBand>,
+    ).container.querySelector('.lp-band')!
+    expect(container.querySelector('#one')!.className).toBe(ours.className)
+    expect(barrel.FrameBand).toBe(FrameBand)
   })
 })
 

@@ -4,6 +4,7 @@
 // onto the whole bundle and turns every band of a site's copy into a Client Component.
 // tools/check_template_directives.py asserts it on the build.
 export { LandingFrame } from './landing-frame'
+export { FrameBand } from './frame-band'
 export { FrameFooter } from './footer'
 export { FrameMark } from './frame-mark'
 export { Words } from './words'

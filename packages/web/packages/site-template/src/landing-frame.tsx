@@ -1,7 +1,6 @@
 import { Fragment } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import {
-  Band,
   DeckScript,
   Flow,
   FlowHero,
@@ -11,9 +10,7 @@ import {
   renderBlock,
 } from '@agenticdevelopertoolkit/landing'
 import type { BandTone, LandingPage, LandingSection } from '@agenticdevelopertoolkit/landing'
-// By package path and from `/client`: tsup leaves the landing kit external, so Reveal's
-// `'use client'` stays on its own module and cannot hoist over this server component.
-import { Reveal } from '@agenticdevelopertoolkit/landing/client'
+import { FrameBand } from './frame-band'
 import type { BandLook, SlotMap } from './types'
 
 /**
@@ -33,16 +30,12 @@ function renderBand(
   pendingLabel: ReactNode,
 ): ReactElement {
   return (
-    <Band key={section.id} id={section.id} tone={look.tone ?? TONES[index % TONES.length]} seam={look.seam}>
-      {/* Inside the band, not around it: a transformed wrapper breaks the seam's stacking
-          (the kit's `Band`). */}
-      <Reveal>
-        {/* A block that carries the section's heading gets no `Head`, because two eyebrows
-            read as two sections. A slot replaces the blocks only, so it keeps the Head. */}
-        {section.headingInBlock === true ? null : <Head eyebrow={section.eyebrow} title={section.title} />}
-        {Slot === undefined ? section.blocks.map((block, i) => renderBlock(block, i, pendingLabel)) : <Slot />}
-      </Reveal>
-    </Band>
+    <FrameBand key={section.id} id={section.id} tone={look.tone ?? TONES[index % TONES.length]} seam={look.seam}>
+      {/* A block that carries the section's heading gets no `Head`, because two eyebrows
+          read as two sections. A slot replaces the blocks only, so it keeps the Head. */}
+      {section.headingInBlock === true ? null : <Head eyebrow={section.eyebrow} title={section.title} />}
+      {Slot === undefined ? section.blocks.map((block, i) => renderBlock(block, i, pendingLabel)) : <Slot />}
+    </FrameBand>
   )
 }
 
