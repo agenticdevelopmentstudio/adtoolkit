@@ -14,8 +14,9 @@ From `@agenticdevelopertoolkit/site-template` (server-safe, no `'use client'`):
 | --- | --- |
 | `LandingFrame({ page, slots, mark })` | The hero and every band of a landing-kit `LandingPage`. Bands alternate `soft` / `dark`, each wrapped in `Reveal` and headed by `Head` unless the section sets `headingInBlock`. |
 | `FrameFooter({ copy, slot? })` | The site footer from `copy.footer`; the first line plain, the rest in `<small>`. A `slot` replaces the lines. Renders nothing when the copy has no footer. |
+| `FrameMark({ config, alt })` | The site's mark as `site.json` configures it (`mark.src`, in `st-mark st-mark--<shape>`). The skeleton's `/` passes it to `LandingFrame`; a route of the site's own with a hero uses it too, so a change to `mark` reaches every page. |
 | `Words({ text })` | A `CopyText`: a plain string, or `{ html }` rendered as markup. |
-| `frameMetadata`, `frameViewport`, `frameRobots`, `frameSitemap` | The Next metadata routes, from `FrameCopy` + `FrameConfig`. Robots allow crawling only when `DEPLOYMENT_ENV === 'production'`. |
+| `frameMetadata`, `frameViewport`, `frameRobots`, `frameSitemap` | The Next metadata routes, from `FrameCopy` + `FrameConfig`. Robots allow crawling only when `DEPLOYMENT_ENV === 'production'`. The twitter card is `summary` when `ogImage` is the mark's `src` (a square icon beside the text) and `summary_large_image` otherwise; `ogImageSize`, when set, gives the OG image its width and height. |
 | `frameSiteUrl(fallbackPort)` | `SITE_URL`, else the Vercel URL, else `http://localhost:<port>`. |
 | types `CopyText`, `FrameCopy`, `FrameConfig`, `SlotMap` | The shapes a site fills in. |
 
@@ -23,7 +24,7 @@ From `@agenticdevelopertoolkit/site-template/client` (`'use client'`):
 
 | Export | What it is |
 | --- | --- |
-| `SiteChrome({ copy, page, extra })` | The burger drawer: Home, one link per section, then `extra`; the foot carries the drawer hello, the contact email and the byline. |
+| `SiteChrome({ copy, page, extra })` | The burger drawer: a Home row labelled `copy.nav.home`, one link per section, then `extra`, then — when the copy has `nav.contact` — a row with that label mailing `copy.contact.email`. Every label is the site's copy; the frame words nothing. The foot carries the drawer hello, the contact email and the byline. |
 | `SiteBitbag()` | bitbag, client-only via `next/dynamic`, with his dock stylesheet. Mount once beside `<main>`. |
 
 ## Slots
@@ -50,8 +51,10 @@ Each theme names its stylesheet and the fonts it needs, which the assembler self
 - **`role` and `fallback`.** next/font hashes the family name, so a theme sheet that names its
   family (`--font-mono: 'Iosevka', …`) never finds the self-hosted face. A font's `role` names
   the theme custom property it fills, or a list of them. For each one the assembler writes
-  `<role>: var(<variable>), <fallback>;` into a `:root` rule in `app/theme.css`, after the theme
-  and kit sheets and before the site's tokens. `fallback` is the rest of the theme's own stack.
+  `<role>: var(<variable>), <fallback>;` into an `html:root` rule in `app/theme.css`, after the
+  theme and kit sheets and before the site's tokens. `html:root`, not `:root` (the assembler's
+  `RAISED_ROOT`): fishlamp.css declares its font roles on `html:root`, specificity (0,1,1), which
+  beats any plain `:root` (0,1,0) wherever it sits; at equal specificity, source order decides. `fallback` is the rest of the theme's own stack.
   fishlamp lists `--font-mono`, `--font-sans` and `--font-serif`, every property its sheet names
   `'Iosevka'` in. `--font-display` is left out because it follows `--font-serif`. A site's
   `fonts` in `site.json` take the same two keys.
@@ -89,7 +92,19 @@ export. The keys are:
 
 `tokens` names a sheet under `site/`. It may hold only custom-property declarations inside
 `:root { }` (it is appended after the theme and the frame sheets, so it overrides them). Any other
-rule, a nested rule, or a declaration that is not a `--property` is refused.
+rule, a nested rule, or a declaration that is not a `--property` is refused. The assembler writes
+each of the sheet's top-level `:root` selectors as `html:root` (`raise_roots`, skipping comments
+and strings), for the reason the font roles are: a theme's own `html:root` would otherwise beat
+the site's tokens.
+
+## The reset
+
+`app/theme.css` opens with `@import "tailwindcss/preflight.css" layer(base);` (`RESET_IMPORT`):
+tailwind's preflight alone, the document reset the landing kit's sheets were drawn against (every
+site before the template imported all of tailwind; without it `body` keeps the browser's 8px
+margin). Not the whole of `tailwindcss`: its theme variables and utility generation are unused
+here, and it would scan the site's sources for class names. In `@layer base`, it is outranked by
+every unlayered theme, kit, frame and token rule after it.
 
 A site's own component and route CSS may not name `.lp-*` or `.st-*` classes, or `html`, `body`
 (or `:root`, which is `html`), in a selector: those belong to the frame. Style your own classes.

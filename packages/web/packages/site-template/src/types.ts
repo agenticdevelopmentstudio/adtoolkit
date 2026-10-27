@@ -23,6 +23,12 @@ export interface FrameCopy {
   ogImageAlt: string
   people: { author: string; creator: string; publisher: string }
   contact: { email: string }
+  /**
+   * The drawer's own rows, in the site's words: the Home row's label, and — when the site words
+   * one — a last row that mails `contact.email`. Plain strings, since a drawer row is a link's
+   * text (the landing kit's `NavLink.label`).
+   */
+  nav: { home: string; contact?: string }
   /** The drawer's foot: a hello above the mail address, a byline below it. */
   drawer?: { hello: CopyText; byline: CopyText }
   /** The page footer's lines, in order. Absent: the page has no footer. */
@@ -37,6 +43,8 @@ export interface FrameConfig {
   mark: { src: string; shape: 'glyph' | 'app-icon' }
   themeColor: string
   ogImage: string
+  /** The OG image's pixel size, when the site states it: unfurlers lay the card out before it loads. */
+  ogImageSize?: { width: number; height: number }
   /** Drawer rows after the section rows — a route of the site's own, say. */
   drawerExtra: { href: string; label: string }[]
   jsonLd?: object

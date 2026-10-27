@@ -5,6 +5,8 @@ import type { LandingPage, LandingSection } from '@agenticdevelopertoolkit/landi
 import { LandingFrame } from '../landing-frame'
 import { FrameFooter } from '../footer'
 import { SiteChrome } from '../chrome'
+import { FrameMark } from '../frame-mark'
+import * as barrel from '../index'
 import { frameMetadata, frameRobots, frameSiteUrl, frameSitemap, frameViewport } from '../frame-metadata'
 import type { FrameConfig, FrameCopy, SlotMap } from '../types'
 
@@ -40,6 +42,7 @@ const copy: FrameCopy = {
   ogImageAlt: 'Kitchen',
   people: { author: 'Mike', creator: 'Mike', publisher: 'Studio' },
   contact: { email: 'hello@example.com' },
+  nav: { home: 'Home' },
   drawer: { hello: 'Say hello', byline: { html: 'by <b>Mike</b>' } },
   footer: { madeBy: 'Made by Mike', copyright: '© 2026', trademark: 'Mac is a trademark' },
 }
@@ -182,6 +185,54 @@ describe('SiteChrome', () => {
     expect(foot.textContent).toBe('Say hellohello@example.comby Mike')
     expect(foot.querySelector('b')!.textContent).toBe('Mike')
   })
+
+  it('takes the Home row\'s label from the copy, not the frame', () => {
+    const start: FrameCopy = { ...copy, nav: { home: 'Start' } }
+    const { container } = render(<SiteChrome copy={start} page={empty} extra={[]} />)
+    const links = Array.from(container.querySelectorAll('nav a:not([href^="mailto:"])'))
+    expect(links.map((a) => [a.getAttribute('href'), a.textContent])).toEqual([['/#top', 'Start']])
+  })
+
+  it('adds a contact row, mailing the copy\'s address, last, when the copy words one', () => {
+    const withContact: FrameCopy = { ...copy, nav: { home: 'Home', contact: 'Contact' } }
+    const { container } = render(
+      <SiteChrome copy={withContact} page={two} extra={[{ href: '/downloads', label: 'Downloads' }]} />,
+    )
+    const rows = Array.from(container.querySelectorAll('nav a')).filter((a) => a.textContent !== 'hello@example.com')
+    expect(rows.map((a) => [a.getAttribute('href'), a.textContent])).toEqual([
+      ['/#top', 'Home'],
+      ['/#one', 'One'],
+      ['/#two', 'Two'],
+      ['/downloads', 'Downloads'],
+      ['mailto:hello@example.com', 'Contact'],
+    ])
+  })
+
+  it('has no contact row when the copy words none', () => {
+    const { container } = render(<SiteChrome copy={copy} page={empty} extra={[]} />)
+    const mail = Array.from(container.querySelectorAll('a[href^="mailto:"]'))
+    expect(mail.map((a) => a.textContent)).toEqual(['hello@example.com'])
+  })
+})
+
+describe('FrameMark', () => {
+  it('renders the configured mark in the frame\'s classes', () => {
+    const { container } = render(<FrameMark config={config} alt="The Kitchen mark" />)
+    const img = container.querySelector('img')!
+    expect(img.className).toBe('st-mark st-mark--glyph')
+    expect(img.getAttribute('src')).toBe('/glyph.svg')
+    expect(img.getAttribute('alt')).toBe('The Kitchen mark')
+  })
+
+  it('follows the config\'s shape', () => {
+    const icon: FrameConfig = { ...config, mark: { src: '/app-icon.png', shape: 'app-icon' } }
+    const { container } = render(<FrameMark config={icon} alt="" />)
+    expect(container.querySelector('img')!.className).toBe('st-mark st-mark--app-icon')
+  })
+
+  it('ships from the server barrel', () => {
+    expect(barrel.FrameMark).toBe(FrameMark)
+  })
 })
 
 describe('FrameFooter', () => {
@@ -267,6 +318,20 @@ describe('frame metadata helpers', () => {
     expect(meta.metadataBase?.href).toBe('https://kitchen.example/')
     expect(meta.title).toBe('Kitchen — cook the thing')
     expect(frameMetadata(copy, config).title).toBe('Kitchen')
+  })
+
+  it('frameMetadata asks for the small card when the OG image is the mark', () => {
+    const icon: FrameConfig = { ...config, ogImage: config.mark.src }
+    expect(frameMetadata(copy, icon).twitter).toMatchObject({ card: 'summary' })
+    expect(frameMetadata(copy, config).twitter).toMatchObject({ card: 'summary_large_image' })
+  })
+
+  it('frameMetadata gives the OG image its size when the config has one', () => {
+    const sized: FrameConfig = { ...config, ogImageSize: { width: 512, height: 512 } }
+    expect(frameMetadata(copy, sized).openGraph?.images).toEqual([
+      { url: '/og.png', width: 512, height: 512, alt: 'Kitchen' },
+    ])
+    expect(frameMetadata(copy, config).openGraph?.images).toEqual([{ url: '/og.png', alt: 'Kitchen' }])
   })
 
   it('frameViewport carries the theme color', () => {

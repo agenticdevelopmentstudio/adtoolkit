@@ -48,7 +48,17 @@
     },
     "ogImage": {
       "type": "string",
-      "description": "The Open Graph image's public path. Absent: the mark's `src`."
+      "description": "The Open Graph image's public path. Absent: the mark's `src`. When it is the mark's `src`, the twitter card is `summary` (the image beside the text); otherwise `summary_large_image`."
+    },
+    "ogImageSize": {
+      "type": "object",
+      "description": "The Open Graph image's size in pixels, given to unfurlers so they can lay out the card before the image loads. Absent: no size is declared.",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 }
+      }
     },
     "jsonLd": {
       "type": "object",

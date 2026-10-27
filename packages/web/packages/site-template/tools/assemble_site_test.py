@@ -203,7 +203,15 @@ class AssembleTest(unittest.TestCase):
         # tailwind): without preflight, body keeps the browser's 8px margin.
         self.assert_ok(self.assemble())
         css = (self.app / "app/theme.css").read_text()
-        self.assertLess(css.index('@import "tailwindcss";'), css.index("themes/styles/fishlamp.css"))
+        reset = '@import "tailwindcss/preflight.css" layer(base);'
+        self.assertLess(css.index(reset), css.index("themes/styles/fishlamp.css"))
+
+    def test_the_reset_is_preflight_alone(self) -> None:
+        # The whole of tailwind would add its theme variables and utility generation, and set every
+        # site scanning its sources for class names; the frame wants only the document reset.
+        self.assert_ok(self.assemble())
+        css = (self.app / "app/theme.css").read_text()
+        self.assertNotIn('@import "tailwindcss";', css)
 
     def test_a_font_role_list_fills_each_property(self) -> None:
         fallback = "'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace"
@@ -347,6 +355,20 @@ class AssembleTest(unittest.TestCase):
             ".my-body .html-ish { color: red; }\n@keyframes spin { from { opacity: 0; } to { opacity: 1; } }\n",
         )
         self.assert_ok(self.assemble())
+
+    def test_the_og_image_size_reaches_the_config(self) -> None:
+        self.config["ogImageSize"] = {"width": 512, "height": 512}
+        self.assert_ok(self.assemble())
+        config = (self.app / "src/site/config.ts").read_text()
+        self.assertIn('ogImageSize: {\n    "width": 512,\n    "height": 512\n  },', config)
+
+    def test_no_og_image_size_leaves_it_out(self) -> None:
+        self.assert_ok(self.assemble())
+        self.assertNotIn("ogImageSize", (self.app / "src/site/config.ts").read_text())
+
+    def test_an_og_image_size_missing_a_side_is_refused(self) -> None:
+        self.config["ogImageSize"] = {"width": 512}
+        self.assert_refused(self.assemble(), "ogImageSize", "'height'")
 
     def test_unknown_key_is_refused(self) -> None:
         self.config["slot"] = {}

@@ -30,6 +30,15 @@ function origin(config: FrameConfig): string {
 }
 
 /**
+ * The unfurl card's size. The large card is a wide banner; a site whose OG image IS its mark (an
+ * app icon, a glyph — square and small) gets the small card, which shows it beside the text
+ * rather than cropping it to a banner.
+ */
+function twitterCard(config: FrameConfig): 'summary' | 'summary_large_image' {
+  return config.ogImage === config.mark.src ? 'summary' : 'summary_large_image'
+}
+
+/**
  * What every crawler and link unfurler reads. `metadataBase` is what makes the relative `url`
  * and image paths absolute, which Open Graph requires. Icons are not declared: `app/icon.*`
  * and its siblings are Next file conventions, and a list here would override them.
@@ -54,10 +63,10 @@ export function frameMetadata(copy: FrameCopy, config: FrameConfig): Metadata {
       description: copy.description,
       url: '/',
       locale: 'en_US',
-      images: [{ url: config.ogImage, alt: copy.ogImageAlt }],
+      images: [{ url: config.ogImage, ...config.ogImageSize, alt: copy.ogImageAlt }],
     },
     twitter: {
-      card: 'summary_large_image',
+      card: twitterCard(config),
       title,
       description: copy.description,
       images: [config.ogImage],

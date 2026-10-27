@@ -12,7 +12,9 @@ import { Words } from './words'
  * its one section list.
  *
  * The rows are Home, then one per section — the same `indexRows` the bands are built from, so
- * the drawer cannot list a section the page does not have — then the site's own extra rows.
+ * the drawer cannot list a section the page does not have — then the site's own extra rows,
+ * then a contact row mailing `copy.contact.email` when the copy words one. Every label is the
+ * site's copy (`copy.nav`); the frame words nothing.
  * Every in-page row is written `/#id` rather than `#id`, so it still lands on the section
  * from any other route of the site; on `/` itself the kit's drawer still glides there.
  */
@@ -25,12 +27,13 @@ export function SiteChrome({
   page: LandingPage
   extra: FrameConfig['drawerExtra']
 }): ReactElement {
+  const { email } = copy.contact
   const links: NavLink[] = [
-    { href: '/#top', label: 'Home' },
+    { href: '/#top', label: copy.nav.home },
     ...indexRows(page).map((row) => ({ href: `/${row.href}`, label: row.label })),
     ...extra,
+    ...(copy.nav.contact === undefined ? [] : [{ href: `mailto:${email}`, label: copy.nav.contact }]),
   ]
-  const { email } = copy.contact
   const footer = (
     <>
       {copy.drawer === undefined ? null : (

@@ -5,6 +5,7 @@
 // tools/check_template_directives.py asserts it on the build.
 export { LandingFrame } from './landing-frame'
 export { FrameFooter } from './footer'
+export { FrameMark } from './frame-mark'
 export { Words } from './words'
 export {
   frameMetadata,
