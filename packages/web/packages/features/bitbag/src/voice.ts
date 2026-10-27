@@ -255,8 +255,8 @@ export const INTRO = [
 
 /**
  * What bitbag says on one host: how he arrives, what his composer teases, and
- * how he answers. A site that briefs him on its own subject (the stenographer
- * site, say) hands its own; everything he says that is not listed here — the
+ * how he answers. A site that briefs him on its own subject (a product site,
+ * say) hands its own; everything he says that is not listed here — the
  * thinking and idle words, the summoning lines — stays his everywhere.
  */
 export interface BitbagVoice {

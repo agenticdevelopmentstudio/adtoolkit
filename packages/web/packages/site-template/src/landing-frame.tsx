@@ -19,8 +19,8 @@ import type { BandLook, SlotMap } from './types'
 /**
  * The tones the bands alternate through, first band first. `soft` first so the band under
  * the hero is a visible step off its wash; no `paper`, which the kit calls a punctuation mark
- * a page carries at most once — an editorial call generated content has no field to make.
- * The same order adh's `LandingFlow` runs.
+ * a page carries at most once — an editorial call, which a site opts into per band through
+ * `site.json` `bands`. The same order adh's `LandingFlow` runs.
  */
 const TONES: readonly BandTone[] = ['soft', 'dark']
 
