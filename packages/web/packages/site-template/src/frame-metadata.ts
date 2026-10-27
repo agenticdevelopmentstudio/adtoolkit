@@ -8,13 +8,16 @@ import type { FrameConfig, FrameCopy } from './types'
 // `siteUrl` of its own, a different function).
 
 /**
- * The site's public origin. `SITE_URL` when the deploy sets one; otherwise Vercel's production
- * hostname, which it sets on every deployment of a project, preview ones included; otherwise
- * the local dev server. An empty variable counts as unset.
+ * The site's public origin. `SITE_URL` when the deploy sets one; otherwise `configured`, the
+ * origin the site states in `site.json`'s `siteUrl`; otherwise Vercel's production hostname,
+ * which it sets on every deployment of a project, preview ones included, and which is a
+ * `*.vercel.app` name whenever the project's production domain is not the custom one; otherwise
+ * the local dev server. An empty value counts as unset.
  */
-export function frameSiteUrl(fallbackPort: number): string {
+export function frameSiteUrl(fallbackPort: number, configured?: string): string {
   const explicit = process.env.SITE_URL
   if (explicit !== undefined && explicit !== '') return explicit
+  if (configured !== undefined && configured !== '') return configured
   const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL
   if (vercel !== undefined && vercel !== '') return `https://${vercel}`
   return `http://localhost:${fallbackPort}`

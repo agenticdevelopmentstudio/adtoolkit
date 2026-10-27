@@ -22,6 +22,11 @@
       "maximum": 65535,
       "description": "The local dev server's port: `next dev -p <port>`, and the origin `frameSiteUrl` falls back to."
     },
+    "siteUrl": {
+      "type": "string",
+      "pattern": "^https?://[A-Za-z0-9.-]+(:[0-9]+)?/?$",
+      "description": "The site's public origin, e.g. `https://example.com`: the canonical, Open Graph, sitemap and robots URLs are built on it. `frameSiteUrl` takes it after the `SITE_URL` env var and before Vercel's production hostname, so a project whose Vercel production domain is not the custom one still names the right host. Absent: the env, then Vercel, then `http://localhost:<port>`."
+    },
     "theme": {
       "type": "string",
       "default": "fishlamp",

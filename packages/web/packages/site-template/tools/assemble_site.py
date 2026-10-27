@@ -748,12 +748,16 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
         if band not in ids:
             known = ", ".join(f"'{i}'" for i in ids) or "(none)"
             plan.problems.append(f"site/site.json: bands: '{band}' names no section; the sections are: {known}")
+    # A literal origin, when the site states one, is frameSiteUrl's second choice — after the
+    # deploy's SITE_URL and before Vercel's production hostname, which is a `*.vercel.app` name
+    # whenever the project's production domain is not the custom one.
+    site_url_args = ", ".join([str(config["port"]), *([ts(config["siteUrl"])] if "siteUrl" in config else [])])
     config_ts = (
         f"{HEADER}\n"
         "import { frameSiteUrl } from '@agenticdevelopertoolkit/site-template'\n"
         "import type { FrameConfig } from '@agenticdevelopertoolkit/site-template'\n\n"
         "export const config: FrameConfig = {\n"
-        f"  siteUrl: frameSiteUrl({config['port']}),\n"
+        f"  siteUrl: frameSiteUrl({site_url_args}),\n"
         + "".join(f"  {key}: {ts(value)},\n" for key, value in frame.items())
         + "}\n"
     )

@@ -389,6 +389,22 @@ class AssembleTest(unittest.TestCase):
         self.assertIn("  bitbag: BitbagSlot,", slots)
         self.assertIn("slots.bitbag", (self.app / "app/layout.tsx").read_text())
 
+    def test_a_site_url_reaches_the_config_as_frame_site_urls_second_choice(self) -> None:
+        self.config["siteUrl"] = "https://kitchen.example"
+        self.assert_ok(self.assemble())
+        config = (self.app / "src/site/config.ts").read_text()
+        self.assertIn('siteUrl: frameSiteUrl(5210, "https://kitchen.example"),', config)
+
+    def test_no_site_url_leaves_frame_site_url_on_the_port_alone(self) -> None:
+        self.assert_ok(self.assemble())
+        self.assertIn("siteUrl: frameSiteUrl(5210),", (self.app / "src/site/config.ts").read_text())
+
+    def test_a_site_url_that_is_not_an_origin_is_refused(self) -> None:
+        for bad in ["kitchen.example", "https://kitchen.example/page", "ftp://kitchen.example", ""]:
+            with self.subTest(bad=bad):
+                self.config["siteUrl"] = bad
+                self.assert_refused(self.assemble(), "siteUrl")
+
     def test_no_og_image_size_leaves_it_out(self) -> None:
         self.assert_ok(self.assemble())
         self.assertNotIn("ogImageSize", (self.app / "src/site/config.ts").read_text())

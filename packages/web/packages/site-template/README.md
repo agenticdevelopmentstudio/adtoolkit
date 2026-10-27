@@ -17,7 +17,7 @@ From `@agenticdevelopertoolkit/site-template` (server-safe, no `'use client'`):
 | `FrameMark({ config, alt })` | The site's mark as `site.json` configures it (`mark.src`, in `st-mark st-mark--<shape>`). The skeleton's `/` passes it to `LandingFrame`; a route of the site's own with a hero uses it too, so a change to `mark` reaches every page. |
 | `Words({ text })` | A `CopyText`: a plain string, or `{ html }` rendered as markup. |
 | `frameMetadata`, `frameViewport`, `frameRobots`, `frameSitemap` | The Next metadata routes, from `FrameCopy` + `FrameConfig`. Robots allow crawling only when `DEPLOYMENT_ENV === 'production'`. The twitter card is `summary` when `ogImage` is the mark's `src` (a square icon beside the text) and `summary_large_image` otherwise; `ogImageSize`, when set, gives the OG image its width and height. |
-| `frameSiteUrl(fallbackPort)` | `SITE_URL`, else the Vercel URL, else `http://localhost:<port>`. |
+| `frameSiteUrl(fallbackPort, configured?)` | `SITE_URL`, else `configured` (`site.json`'s `siteUrl`, which the assembler passes), else the Vercel production URL, else `http://localhost:<port>`. |
 | types `BandLook`, `CopyText`, `FrameCopy`, `FrameConfig`, `SlotMap` | The shapes a site fills in. |
 
 From `@agenticdevelopertoolkit/site-template/client` (`'use client'`):

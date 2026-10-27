@@ -357,6 +357,18 @@ describe('frame metadata helpers', () => {
     expect(frameSiteUrl(5210)).toBe('https://kitchen.example')
   })
 
+  it("frameSiteUrl takes SITE_URL, then site.json's siteUrl, then Vercel, then localhost", () => {
+    vi.stubEnv('SITE_URL', 'https://staging.example')
+    vi.stubEnv('VERCEL_PROJECT_PRODUCTION_URL', 'kitchen.vercel.app')
+    expect(frameSiteUrl(5210, 'https://kitchen.example')).toBe('https://staging.example')
+    vi.stubEnv('SITE_URL', '')
+    expect(frameSiteUrl(5210, 'https://kitchen.example')).toBe('https://kitchen.example')
+    expect(frameSiteUrl(5210, '')).toBe('https://kitchen.vercel.app')
+    vi.stubEnv('VERCEL_PROJECT_PRODUCTION_URL', undefined)
+    expect(frameSiteUrl(5210, 'https://kitchen.example')).toBe('https://kitchen.example')
+    expect(frameSiteUrl(5210, undefined)).toBe('http://localhost:5210')
+  })
+
   it('robots allows crawling only in production', () => {
     vi.stubEnv('DEPLOYMENT_ENV', 'staging')
     expect(frameRobots(config).rules).toEqual([{ userAgent: '*', disallow: '/' }])
