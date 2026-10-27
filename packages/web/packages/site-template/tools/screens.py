@@ -5,7 +5,7 @@ Run: python3 tools/screens.py --url http://localhost:3000 --out DIR [--route / -
 
 For each route: 1280x800 and 390x844, each at rest and scrolled down one window height, written
 as `<route-slug>-<w>x<h>-{rest,scrolled}.png`. Stdlib-only Python: the browser is driven by a small
-Node script, written to a temp dir and run with `npx --yes -p playwright@1.49.1 node ...`, so
+Node script, written to a temp dir and run with `npx --yes -p playwright@1.58.2 node ...`, so
 there is no Python Playwright dependency.
 """
 from __future__ import annotations
@@ -19,7 +19,7 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
-PLAYWRIGHT = "playwright@1.49.1"
+PLAYWRIGHT = "playwright@1.58.2"
 VIEWPORTS = [(1280, 800), (390, 844)]
 STATES = ["rest", "scrolled"]
 

@@ -46,10 +46,10 @@ class ArgvTest(unittest.TestCase):
     def test_argv_pins_playwright(self) -> None:
         self.assertEqual(
             screens.node_argv(Path("/t/s.cjs"), Path("/t/job.json")),
-            ["npx", "--yes", "-p", "playwright@1.49.1", "node", "/t/s.cjs", "/t/job.json"],
+            ["npx", "--yes", "-p", "playwright@1.58.2", "node", "/t/s.cjs", "/t/job.json"],
         )
         self.assertEqual(
-            screens.install_argv(), ["npx", "--yes", "-p", "playwright@1.49.1", "playwright", "install", "chromium"]
+            screens.install_argv(), ["npx", "--yes", "-p", "playwright@1.58.2", "playwright", "install", "chromium"]
         )
 
     def test_script_names_every_shot_and_takes_the_job_from_argv(self) -> None:

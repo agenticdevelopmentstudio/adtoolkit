@@ -131,7 +131,7 @@ python3 tools/text_parity.py before.html after.html [--allow allowed.txt]
 
 `screens.py` writes `<route-slug>-<w>x<h>-{rest,scrolled}.png` for 1280x800 and 390x844, at rest
 and scrolled one window. It writes a small Node script to a temp dir and runs it with
-`npx --yes -p playwright@1.49.1`; there is no Python Playwright dependency.
+`npx --yes -p playwright@1.58.2`; there is no Python Playwright dependency.
 
 `text_parity.py` compares the visible text of two pages (outside `script`, `style`, `noscript`),
 whitespace-normalised, one line per block element, and prints a unified diff. It exits 1 when
