@@ -249,11 +249,19 @@ def unescape(text: str) -> str:
     return _ESCAPE.sub(one, text)
 
 
+class CssError(Exception):
+    """CSS the assembler will not guess at."""
+
+
 def _skip_string(css: str, i: int) -> int:
-    """`css[i]` opens a string; return the index just past its close."""
+    """`css[i]` opens a string; return the index just past its close. A raw newline before the
+    close is a broken string, which a browser recovers from by dropping the declaration — a
+    recovery this scanner does not emulate, so it is refused instead."""
     quote = css[i]
     i += 1
     while i < len(css) and css[i] != quote:
+        if css[i] in "\n\r\f":
+            raise CssError("unterminated string (a raw newline before its closing quote)")
         i += 2 if css[i] == "\\" else 1
     return i + 1
 
@@ -309,7 +317,11 @@ def check_token_sheet(css: str, label: str) -> list[str]:
     """A token sheet is custom-property declarations inside `:root { }` and nothing else, which
     is what keeps a site from restyling the frame."""
     problems = []
-    for prelude, body in top_level(strip_comments(css)):
+    try:
+        items = top_level(strip_comments(css))
+    except CssError as error:
+        return [f"{label}: {error}"]
+    for prelude, body in items:
         if prelude != ":root" or body is None:
             problems.append(f"{label}: only custom properties inside ':root {{ }}' are allowed; found '{short(prelude)}'")
             continue
@@ -327,7 +339,9 @@ def check_token_sheet(css: str, label: str) -> list[str]:
 # `:root`, which is `html` — matched case-insensitively, as browsers do.
 _FRAME_CLASS = re.compile(r"\.(?:lp|st)-[\w-]*")
 _FRAME_ROOT = re.compile(r"(?<![\w.#:-])(?:html|body)(?![\w-])|:root(?![\w-])", re.I)
-_ATTRIBUTE = re.compile(r"\[\s*([\w-]+)\s*(?:([~|^$*]?=)\s*(\"[^\"]*\"|'[^']*'|[^\s\]]+))?\s*(?:[iIsS]\s*)?\]")
+# An attribute selector, with its optional namespace (`*|`, `|` or `svg|`); the lookahead keeps
+# `[class|=x]`'s `|=` an operator rather than a namespace bar.
+_ATTRIBUTE = re.compile(r"\[\s*(?:(?:\*|[\w-]+)?\|(?!=))?([\w-]+)\s*(?:([~|^$*]?=)\s*(\"[^\"]*\"|'[^']*'|[^\s\]]+))?\s*(?:[iIsS]\s*)?\]")
 _FRAME_PREFIXES = ("lp-", "st-")
 # At-rules whose block holds rules; every other block at-rule (@keyframes, @font-face, …) holds
 # no selector worth checking.
@@ -381,10 +395,11 @@ def frame_names(css: str) -> list[tuple[str, str]]:
 
 
 def check_site_css(css: str, label: str) -> list[str]:
-    return [
-        f"{label}: the selector '{short(selector)}' names '{name}', which belongs to the frame"
-        for selector, name in frame_names(strip_comments(css))
-    ]
+    try:
+        found = frame_names(strip_comments(css))
+    except CssError as error:
+        return [f"{label}: {error}"]
+    return [f"{label}: the selector '{short(selector)}' names '{name}', which belongs to the frame" for selector, name in found]
 
 
 # --- the plan: every path the assembler writes, and its bytes ----------------------------------
@@ -393,23 +408,25 @@ def check_site_css(css: str, label: str) -> list[str]:
 class AppPlan:
     def __init__(self) -> None:
         self.files: dict[str, bytes] = {}
-        # The manifest is written last, from the finished plan, but its path is claimed now.
-        self.owner: dict[str, str] = {MANIFEST: "the template's manifest"}
+        # Who claimed each path, keyed case-folded: on the Mac's case-insensitive filesystem
+        # `App/Page.tsx` and `app/page.tsx` are one file. The manifest is written last, from the
+        # finished plan, but its path is claimed now.
+        self.owner: dict[str, str] = {MANIFEST.casefold(): "the template's manifest"}
         self.problems: list[str] = []
 
     def add(self, target: str, data: bytes, owner: str, from_site: bool = False) -> None:
         """Claim `target` for `owner`. A site file may not land on content-buildr's paths, and
-        nothing may land on a path something else already claimed."""
+        nothing may land on a path something else already claimed, in any case."""
         if from_site and is_protected(target):
             self.problems.append(f"{owner} would land on {target}, which content-buildr owns")
             return
-        if target in self.owner:
-            other = self.owner[target]
+        other = self.owner.get(target.casefold())
+        if other is not None:
             who = f"{other} also lands there" if other.startswith("site/") else "the template writes"
             self.problems.append(f"{owner} would land on {target}, which {who}")
             return
         self.files[target] = data
-        self.owner[target] = owner
+        self.owner[target.casefold()] = owner
 
 
 def tree_files(root: Path) -> list[Path]:
@@ -507,11 +524,15 @@ def plan_fonts(plan: AppPlan, fonts: list[tuple[dict, Path, str]]) -> str:
                 plan.problems.append(f"{label}: font file {spec['path']} does not exist")
                 continue
             target = f"src/fonts/{source.name}"
-            if target in plan.files and plan.files[target] != source.read_bytes():
-                plan.problems.append(f"{label}: font file {source.name} clashes with another font file of that name")
-                continue
+            # Case-folded, like every claim: `X.woff2` and `x.woff2` are one file on the Mac.
+            same = next((k for k in plan.files if k.casefold() == target.casefold()), None)
+            if same is not None:
+                if plan.files[same] != source.read_bytes():
+                    plan.problems.append(f"{label}: font file {source.name} clashes with another font file of that name")
+                    continue
+                target = same
             plan.files[target] = source.read_bytes()
-            plan.owner.setdefault(target, label)
+            plan.owner.setdefault(target.casefold(), label)
             entries.append(
                 f"    {{ path: {json.dumps('../fonts/' + source.name)}, "
                 f"weight: {json.dumps(spec['weight'])}, style: {json.dumps(spec['style'])} }},\n"
@@ -601,8 +622,11 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
     # The schema's pattern says the same; this is the check the deletion logic relies on, so it
     # does not rest on a regex alone. The app is written, and pruned, only under websites/.
     output = config.get("output")
-    if not problems and (safe_rel(output) is None or str(output).split("/")[0] != "websites" or "/" not in str(output)):
+    parts = str(output).split("/")
+    if not problems and (safe_rel(output) is None or parts[0] != "websites" or len(parts) < 2):
         problems.append(f"site/site.json: output: {output!r} must be a path under websites/, e.g. 'websites/main'")
+    elif not problems and parts[1].casefold() == "external":
+        problems.append(f"site/site.json: output: {output!r} is under websites/external, which holds the site's submodules")
     if problems:
         raise Refused(problems)
 
@@ -718,9 +742,31 @@ def previous_files(app: Path) -> list[str]:
     kept = []
     for entry in files:
         rel = safe_rel(entry)
-        if rel is not None and not is_protected(rel) and inside(app, rel):
+        if rel is None or is_protected(rel) or not inside(app, rel) or through_symlink(app, rel):
+            continue
+        # The path the entry really names, in case the filesystem folds it onto another.
+        real = (app / rel).resolve().relative_to(app.resolve()).as_posix()
+        if not is_protected(real):
             kept.append(rel)
     return kept
+
+
+def through_symlink(app: Path, rel: str) -> bool:
+    """Whether any component of `app/rel`, the last included, is a symlink. The template writes
+    none, so an entry that reaches one is an alias for some other path, and is never followed."""
+    path = app
+    for part in rel.split("/"):
+        path = path / part
+        if path.is_symlink():
+            return True
+    return False
+
+
+def stale_files(app: Path, plan: AppPlan) -> list[str]:
+    """The manifest's entries this run no longer writes, compared case-folded: an entry that names
+    a file this run writes (the manifest included) in some other case is never stale."""
+    keep = {rel.casefold() for rel in wanted(plan)}
+    return sorted(rel for rel in set(previous_files(app)) if rel.casefold() not in keep)
 
 
 def wanted(plan: AppPlan) -> dict[str, bytes]:
@@ -735,7 +781,7 @@ def differences(app: Path, plan: AppPlan) -> list[str]:
             found.append(f"missing: {rel}")
         elif path.read_bytes() != data:
             found.append(f"changed: {rel}")
-    for rel in sorted(set(previous_files(app)) - set(plan.files)):
+    for rel in stale_files(app, plan):
         if (app / rel).exists():
             found.append(f"stale: {rel}")
     return found
@@ -743,7 +789,7 @@ def differences(app: Path, plan: AppPlan) -> list[str]:
 
 def write(app: Path, plan: AppPlan) -> tuple[int, int]:
     written = removed = 0
-    stale = sorted(set(previous_files(app)) - set(plan.files))
+    stale = stale_files(app, plan)
     for rel, data in sorted(wanted(plan).items()):
         path = app / rel
         if path.is_file() and path.read_bytes() == data:
@@ -753,12 +799,14 @@ def write(app: Path, plan: AppPlan) -> tuple[int, int]:
         written += 1
     for rel in stale:
         path = app / rel
+        if through_symlink(app, rel):
+            continue
         if path.is_file():
             path.unlink()
             removed += 1
-        # Prune the directories the deletion emptied, never the app itself.
+        # Prune the directories the deletion emptied, never the app itself, and never a symlink.
         parent = path.parent
-        while parent != app and parent.is_dir() and not any(parent.iterdir()):
+        while parent != app and not parent.is_symlink() and parent.is_dir() and not any(parent.iterdir()):
             parent.rmdir()
             parent = parent.parent
     return written, removed

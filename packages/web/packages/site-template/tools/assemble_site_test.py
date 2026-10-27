@@ -511,6 +511,101 @@ class AssembleTest(unittest.TestCase):
         ]
         self.assert_refused(self.assemble(), "fonts[0]", "outside site/")
 
+    # --- probe5: aliases, case, namespaces, broken strings, websites/external ------------------
+
+    def add_to_manifest(self, *entries: str) -> None:
+        manifest = json.loads((self.app / ".site-template.json").read_text())
+        manifest["files"] += list(entries)
+        (self.app / ".site-template.json").write_text(json.dumps(manifest))
+
+    def test_a_manifest_entry_through_a_symlinked_directory_in_the_app_is_ignored(self) -> None:
+        self.assert_ok(self.assemble())
+        kept = self.write(f"{OUTPUT}/src/content/x.json", "keep")
+        (self.app / "lnk").symlink_to("src/content")
+        self.add_to_manifest("lnk/x.json")
+        self.assert_ok(run(self.site))
+        self.assertTrue(kept.is_file())
+        self.assertTrue((self.app / "lnk").is_symlink())
+
+    def test_a_manifest_entry_naming_a_symlinked_file_is_ignored(self) -> None:
+        self.assert_ok(self.assemble())
+        glyph = self.write(f"{OUTPUT}/public/glyph.svg", "keep")
+        (self.app / "glyph-link").symlink_to("public/glyph.svg")
+        self.add_to_manifest("glyph-link")
+        result = run(self.site)
+        self.assert_ok(result)
+        self.assertIn("0 removed", result.stdout)
+        self.assertTrue((self.app / "glyph-link").is_symlink())
+        self.assertTrue(glyph.is_file())
+
+    def test_a_symlinked_src_is_never_deleted_through(self) -> None:
+        self.assert_ok(self.assemble())
+        self.write(f"{OUTPUT}/src/content/x.json", "keep")
+        real = self.site / "realsrc"
+        (self.app / "src").rename(real)
+        (self.app / "src").symlink_to(real)
+        self.add_to_manifest("src/content/x.json", "src/site/config.ts", "src/site/old.ts")
+        self.write("realsrc/site/old.ts", "keep")
+        self.assert_ok(run(self.site))
+        for rel in ["content/x.json", "site/old.ts"]:
+            self.assertTrue((real / rel).is_file(), rel)
+        self.assertTrue((self.app / "src").is_symlink())
+
+    def test_a_case_variant_of_a_written_file_is_never_stale(self) -> None:
+        self.assert_ok(self.assemble())
+        self.add_to_manifest("PACKAGE.JSON", "App/Layout.tsx", ".site-template.json", ".SITE-TEMPLATE.JSON")
+        check = run(self.site, "--check")
+        self.assertEqual(check.stdout.strip(), "changed: .site-template.json", check.stderr)
+        result = run(self.site)
+        self.assert_ok(result)
+        self.assertIn("0 removed", result.stdout)
+        for rel in ["package.json", "app/layout.tsx", ".site-template.json"]:
+            self.assertTrue((self.app / rel).is_file(), rel)
+        self.assert_ok(run(self.site, "--check"))
+
+    def test_a_site_file_at_the_manifest_path_in_another_case_is_a_collision(self) -> None:
+        self.write("site/app-root/.SITE-TEMPLATE.json", "{}\n")
+        self.assert_refused(self.assemble(), "site/app-root/.SITE-TEMPLATE.json", "the template writes")
+
+    def test_a_site_file_at_a_template_path_in_another_case_is_a_collision(self) -> None:
+        self.write("site/app-root/App/Layout.tsx", "export {}\n")
+        self.assert_refused(self.assemble(), "site/app-root/App/Layout.tsx", "the template writes")
+
+    def test_namespaced_class_attribute_selectors_are_refused(self) -> None:
+        cases = {
+            '[*|class^="lp-"] { color: red }': "lp-",
+            '[|class*="lp-band"] { color: red }': "lp-band",
+            "[svg|class*=lp-x] { color: red }": "lp-x",
+        }
+        for css, needle in cases.items():
+            with self.subTest(css=css):
+                self.write("site/components/x.css", css + "\n")
+                self.assert_refused(self.assemble(), "site/components/x.css", needle)
+
+    def test_a_dash_match_class_attribute_still_parses(self) -> None:
+        self.write("site/components/x.css", "[class|=lp] { color: red }\n")
+        self.assert_refused(self.assemble(), "site/components/x.css", "lp")
+
+    def test_a_raw_newline_in_a_string_is_refused(self) -> None:
+        css = 'a { content: "x\n}\n.lp-band { color: red }\nb { content: "y" }\n'
+        self.write("site/components/x.css", css)
+        self.assert_refused(self.assemble(), "site/components/x.css", "unterminated string")
+
+    def test_a_raw_newline_in_a_token_sheet_string_is_refused(self) -> None:
+        self.config["tokens"] = "theme.css"
+        self.write("site/theme.css", ":root { --a: 'x\n; }\n")
+        self.assert_refused(self.assemble(), "site/theme.css", "unterminated string")
+
+    def test_an_escaped_newline_in_a_string_is_accepted(self) -> None:
+        self.write("site/components/x.css", 'a { content: "x\\\ny" }\n')
+        self.assert_ok(self.assemble())
+
+    def test_output_under_websites_external_is_refused(self) -> None:
+        for output in ["websites/external", "websites/external/x", "websites/External/x"]:
+            with self.subTest(output=output):
+                self.config["output"] = output
+                self.assert_refused(self.assemble(), "output")
+
     def test_the_schema_checker_refuses_a_keyword_it_does_not_know(self) -> None:
         module = load_assembler()
         with self.assertRaises(module.SchemaError):

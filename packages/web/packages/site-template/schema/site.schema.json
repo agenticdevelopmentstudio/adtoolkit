@@ -13,8 +13,8 @@
     },
     "output": {
       "type": "string",
-      "description": "The app directory the assembler writes, relative to the site repo's root, e.g. `websites/main`: under `websites/`, at least two segments, none of them `.`, `..` or empty. Its parent is the pnpm workspace root.",
-      "pattern": "^websites(/[A-Za-z0-9_-][A-Za-z0-9._-]*)+$"
+      "description": "The app directory the assembler writes, relative to the site repo's root, e.g. `websites/main`: under `websites/`, at least two segments, none of them `.`, `..` or empty, and not under `websites/external`, which holds the site's submodules. Its parent is the pnpm workspace root.",
+      "pattern": "^websites(?!/[Ee][Xx][Tt][Ee][Rr][Nn][Aa][Ll](/|$))(/[A-Za-z0-9_-][A-Za-z0-9._-]*)+$"
     },
     "port": {
       "type": "integer",
