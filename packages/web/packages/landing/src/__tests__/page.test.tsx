@@ -106,10 +106,18 @@ describe('heroSlots', () => {
   })
 
   it('keeps each button’s declared variant when there is no status', () => {
-    const { container } = render(<>{heroSlots(hero([cta])).actions}</>)
+    const mixed = {
+      kind: 'Cta' as const,
+      buttons: [
+        { href: '/start', label: 'Start', variant: 'primary' as const },
+        { href: '/docs', label: 'Docs', variant: 'ghost' as const },
+      ],
+    }
+    const { container } = render(<>{heroSlots(hero([mixed])).actions}</>)
     const buttons = container.querySelectorAll('a.lp-btn')
+    expect(buttons).toHaveLength(2)
     expect(buttons[0]!.className).toContain('lp-btn--primary')
-    expect(buttons[1]!.className).toContain('lp-btn--primary')
+    expect(buttons[1]!.className).toContain('lp-btn--ghost')
   })
 
   it('renders a StatusPill as the status, and every action as ghost beside it', () => {

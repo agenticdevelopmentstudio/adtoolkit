@@ -115,6 +115,19 @@ describe('LandingFlow', () => {
     expect(() => render(<LandingFlow content={content} />)).toThrow(/'Lede' block has no slot/)
   })
 
+  it('refuses a hero status pill, which the kit can sort but the flow hero cannot draw', () => {
+    const content: LandingContent = {
+      ...CONTENT,
+      hero: {
+        ...CONTENT.hero,
+        blocks: [...CONTENT.hero.blocks, { kind: 'StatusPill', children: <>Shipping</> }],
+      },
+    }
+    expect(() => render(<LandingFlow content={content} />)).toThrow(
+      /'StatusPill' block has no slot in the flow hero/,
+    )
+  })
+
   it('keeps the short hero unless the site asks for one the height of the window', () => {
     const { container, rerender } = render(<LandingFlow content={CONTENT} />)
     expect(container.querySelector('.lp-hero-flow--fill')).toBeNull()
