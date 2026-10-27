@@ -22,7 +22,8 @@ It never writes or deletes `src/content/**`, `src/landing.json`, `src/landing.ts
 so a re-run deletes what it no longer produces and `--check` can name it.
 
 Exit 0: written, or (`--check`) up to date. Exit 1: `--check` found differences, one path per
-line on stdout. Exit 2: the inputs are invalid, one problem per line on stderr.
+line on stdout. Exit 2: the inputs are invalid, one problem per line on stderr. Exit 3: the
+template's own schema uses a keyword the checker does not implement (the template's bug).
 
 The toolkit is found from this file's own location, so the template a site is assembled from is
 whichever toolkit copy runs the script. Stdlib only. The file is `assemble_site.py` rather than
@@ -35,7 +36,7 @@ import json
 import os
 import re
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 PACKAGE = Path(__file__).resolve().parent.parent
 SKELETON = PACKAGE / "skeleton"
@@ -104,12 +105,33 @@ _TYPES = {
     "array": lambda v: isinstance(v, list),
     "string": lambda v: isinstance(v, str),
     "integer": lambda v: isinstance(v, int) and not isinstance(v, bool),
+    "number": lambda v: isinstance(v, (int, float)) and not isinstance(v, bool),
+    "boolean": lambda v: isinstance(v, bool),
 }
+
+# Every keyword `check_schema` enforces, plus the annotations it may ignore. Anything else in the
+# schema is a keyword it would silently skip, so it stops rather than pass what it never checked.
+_KEYWORDS = {
+    "type", "enum", "anyOf", "required", "properties", "propertyNames", "additionalProperties",
+    "items", "minItems", "pattern", "minimum", "maximum",
+    "default", "description", "title", "$schema", "$id",
+}  # fmt: skip
+
+
+class SchemaError(Exception):
+    """The schema uses something `check_schema` does not implement: the template's bug, not the site's."""
 
 
 def check_schema(value: object, schema: dict, where: str, problems: list[str]) -> None:
     """A hand-written checker for the subset of JSON Schema `site.schema.json` uses. A closed
-    object (`additionalProperties: false`) refuses every key the schema does not list."""
+    object (`additionalProperties: false`) refuses every key the schema does not list. A keyword
+    or type outside that subset raises `SchemaError`."""
+    unknown = set(schema) - _KEYWORDS
+    unknown |= {f"propertyNames.{k}" for k in set(schema.get("propertyNames", {})) - {"pattern"}}
+    if "type" in schema and schema["type"] not in _TYPES:
+        unknown.add(f"type {schema['type']!r}")
+    if unknown:
+        raise SchemaError(f"site.schema.json at {where or '(root)'}: unsupported {', '.join(sorted(unknown))}")
     label = f"site/site.json: {where}" if where else "site/site.json"
     if "anyOf" in schema:
         # Passes if any branch passes; otherwise report the branch that got furthest (fewest problems).
@@ -154,16 +176,77 @@ def check_schema(value: object, schema: dict, where: str, problems: list[str]) -
     elif isinstance(value, str):
         if "pattern" in schema and not re.search(schema["pattern"], value):
             problems.append(f"{label}: {value!r} does not match {schema['pattern']}")
-    elif isinstance(value, int):
+    elif isinstance(value, (int, float)) and not isinstance(value, bool):
         if value < schema.get("minimum", value) or value > schema.get("maximum", value):
             problems.append(f"{label}: {value} is out of range")
+
+
+# --- paths --------------------------------------------------------------------------------------
+
+
+def safe_rel(entry: object) -> str | None:
+    """`entry` as a plain relative POSIX path, or None: not a string, empty, absolute, or with an
+    empty, `.` or `..` segment (`./a`, `a//b`, `a/../b`), which no path the assembler writes has."""
+    if not isinstance(entry, str) or not entry or entry.startswith("/") or "\\" in entry:
+        return None
+    if any(part in ("", ".", "..") for part in entry.split("/")):
+        return None
+    return PurePosixPath(entry).as_posix()
+
+
+def is_protected(rel: str) -> bool:
+    """A content-buildr path. Case-folded, because the Mac's filesystem is case-insensitive and
+    `src/Landing.tsx` there is `src/landing.tsx`."""
+    folded = rel.casefold()
+    dirs = tuple(d.casefold() for d in PROTECTED_DIRS)
+    return folded.startswith(dirs) or folded + "/" in dirs or folded in {f.casefold() for f in PROTECTED_FILES}
+
+
+def inside(root: Path, rel: str) -> bool:
+    """Whether `root/rel`, symlinks resolved, is still under `root`."""
+    real = root.resolve()
+    return real in (root / rel).resolve().parents
 
 
 # --- CSS ----------------------------------------------------------------------------------------
 
 
 def strip_comments(css: str) -> str:
-    return re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    """`css` with every comment replaced by a space. String-aware: `"/*"` inside a string opens
+    nothing, so it cannot hide the rules up to a later `"*/"`."""
+    out: list[str] = []
+    i = 0
+    while i < len(css):
+        if css[i] == "\\":
+            out.append(css[i : i + 2])
+            i += 2
+        elif css[i] in "\"'":
+            end = _skip_string(css, i)
+            out.append(css[i:end])
+            i = end
+        elif css.startswith("/*", i):
+            close = css.find("*/", i + 2)
+            i = len(css) if close < 0 else close + 2
+            out.append(" ")
+        else:
+            out.append(css[i])
+            i += 1
+    return "".join(out)
+
+
+_ESCAPE = re.compile(r"\\(?:([0-9a-fA-F]{1,6})[ \t\n\r\f]?|(.))", re.S)
+
+
+def unescape(text: str) -> str:
+    """CSS escapes resolved: `.\\6c p-band` is `.lp-band`, `.l\\p-band` is too."""
+
+    def one(match: re.Match[str]) -> str:
+        if match.group(2) is not None:
+            return match.group(2)
+        code = int(match.group(1), 16)
+        return chr(code) if 0 < code <= 0x10FFFF and not 0xD800 <= code <= 0xDFFF else "�"
+
+    return _ESCAPE.sub(one, text)
 
 
 def _skip_string(css: str, i: int) -> int:
@@ -184,6 +267,9 @@ def top_level(css: str) -> list[tuple[str, str | None]]:
     parens = 0
     while i < len(css):
         ch = css[i]
+        if ch == "\\":
+            i += 2
+            continue
         if ch in "\"'":
             i = _skip_string(css, i)
             continue
@@ -197,6 +283,9 @@ def top_level(css: str) -> list[tuple[str, str | None]]:
         elif ch == "{" and parens == 0:
             depth, j = 1, i + 1
             while j < len(css) and depth:
+                if css[j] == "\\":
+                    j += 2
+                    continue
                 if css[j] in "\"'":
                     j = _skip_string(css, j)
                     continue
@@ -233,12 +322,43 @@ def check_token_sheet(css: str, label: str) -> list[str]:
     return problems
 
 
-# What a site's own CSS may not name in a selector: the landing kit's and the template's classes,
-# and the document roots the frame styles.
-_FRAME_NAME = re.compile(r"\.(?:lp|st)-[\w-]*|(?<![\w.#-])(?:html|body)(?![\w-])")
+# What a site's own CSS may not name in a selector: the landing kit's and the template's classes
+# (class names are case-sensitive), and the document roots the frame styles — `html`, `body` and
+# `:root`, which is `html` — matched case-insensitively, as browsers do.
+_FRAME_CLASS = re.compile(r"\.(?:lp|st)-[\w-]*")
+_FRAME_ROOT = re.compile(r"(?<![\w.#:-])(?:html|body)(?![\w-])|:root(?![\w-])", re.I)
+_ATTRIBUTE = re.compile(r"\[\s*([\w-]+)\s*(?:([~|^$*]?=)\s*(\"[^\"]*\"|'[^']*'|[^\s\]]+))?\s*(?:[iIsS]\s*)?\]")
+_FRAME_PREFIXES = ("lp-", "st-")
 # At-rules whose block holds rules; every other block at-rule (@keyframes, @font-face, …) holds
 # no selector worth checking.
 _GROUPING = {"media", "supports", "container", "layer", "scope", "starting-style", "document"}
+
+
+def class_attribute_names(selector: str) -> list[str]:
+    """The values of `[class…]` attribute selectors that can match a frame class:
+    `[class*="lp-band"]`, `[class^=st-]`, and a fragment of the prefix itself (`[class^="l"]`)."""
+    found = []
+    for name, op, raw in _ATTRIBUTE.findall(selector):
+        value = raw.strip("\"'").casefold()
+        if name.casefold() != "class" or not value:
+            continue
+        names_prefix = any(p in value for p in _FRAME_PREFIXES)
+        fragment = (op == "*=" and any(value in p for p in _FRAME_PREFIXES)) or (
+            op in ("^=", "|=") and any(p.startswith(value) for p in _FRAME_PREFIXES)
+        )
+        if names_prefix or fragment:
+            found.append(raw.strip("\"'"))
+    return found
+
+
+def selector_frame_names(selector: str) -> list[str]:
+    """Every frame name a selector (or an `@scope` prelude) names, escapes resolved."""
+    plain = unescape(selector)
+    names = class_attribute_names(plain)
+    bare = re.sub(r"\"[^\"]*\"|'[^']*'", "", _ATTRIBUTE.sub("", plain))
+    names += [m.group(0) for m in _FRAME_CLASS.finditer(bare)]
+    names += [m.group(0).casefold() for m in _FRAME_ROOT.finditer(bare)]
+    return names
 
 
 def frame_names(css: str) -> list[tuple[str, str]]:
@@ -249,11 +369,13 @@ def frame_names(css: str) -> list[tuple[str, str]]:
             continue
         if prelude.startswith("@"):
             at_rule = re.match(r"@([\w-]*)", prelude)
-            if at_rule is not None and at_rule.group(1) in _GROUPING:
+            keyword = at_rule.group(1).casefold() if at_rule is not None else ""
+            if keyword == "scope":
+                found += [(prelude, name) for name in selector_frame_names(prelude[len("@scope") :])]
+            if keyword in _GROUPING:
                 found += frame_names(body)
             continue
-        bare = re.sub(r"\[[^\]]*\]|\"[^\"]*\"|'[^']*'", "", prelude)
-        found += [(prelude, match.group(0)) for match in _FRAME_NAME.finditer(bare)]
+        found += [(prelude, name) for name in selector_frame_names(prelude)]
         found += frame_names(body)
     return found
 
@@ -271,13 +393,14 @@ def check_site_css(css: str, label: str) -> list[str]:
 class AppPlan:
     def __init__(self) -> None:
         self.files: dict[str, bytes] = {}
-        self.owner: dict[str, str] = {}
+        # The manifest is written last, from the finished plan, but its path is claimed now.
+        self.owner: dict[str, str] = {MANIFEST: "the template's manifest"}
         self.problems: list[str] = []
 
     def add(self, target: str, data: bytes, owner: str, from_site: bool = False) -> None:
         """Claim `target` for `owner`. A site file may not land on content-buildr's paths, and
         nothing may land on a path something else already claimed."""
-        if from_site and (target.startswith(PROTECTED_DIRS) or target in PROTECTED_FILES):
+        if from_site and is_protected(target):
             self.problems.append(f"{owner} would land on {target}, which content-buildr owns")
             return
         if target in self.owner:
@@ -376,6 +499,10 @@ def plan_fonts(plan: AppPlan, fonts: list[tuple[dict, Path, str]]) -> str:
         entries = []
         for spec in font["files"]:
             source = base / spec["path"]
+            if not inside(base, spec["path"]):
+                where = "site/" if label.startswith("site/") else "the toolkit's packages/web/"
+                plan.problems.append(f"{label}: font file {spec['path']} is outside {where}")
+                continue
             if not source.is_file():
                 plan.problems.append(f"{label}: font file {spec['path']} does not exist")
                 continue
@@ -471,6 +598,11 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
     schema = json.loads(SCHEMA.read_text())
     problems: list[str] = []
     check_schema(config, schema, "", problems)
+    # The schema's pattern says the same; this is the check the deletion logic relies on, so it
+    # does not rest on a regex alone. The app is written, and pruned, only under websites/.
+    output = config.get("output")
+    if not problems and (safe_rel(output) is None or str(output).split("/")[0] != "websites" or "/" not in str(output)):
+        problems.append(f"site/site.json: output: {output!r} must be a path under websites/, e.g. 'websites/main'")
     if problems:
         raise Refused(problems)
 
@@ -506,7 +638,9 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
     if "tokens" in config:
         tokens = site / "site" / config["tokens"]
         label = f"site/{config['tokens']}"
-        if not tokens.is_file():
+        if not inside(site / "site", config["tokens"]):
+            plan.problems.append(f"site/site.json: tokens: {config['tokens']} is outside site/")
+        elif not tokens.is_file():
             plan.problems.append(f"site/site.json: tokens: {label} does not exist")
         else:
             text = tokens.read_text()
@@ -551,6 +685,7 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
         for path in tree_files(root):
             rel = path.relative_to(root).as_posix()
             label = f"site/{folder}/{rel}"
+            # CSS under public/ and app-root/ is a static asset served as-is, not part of the page's styles.
             if path.suffix == ".css" and folder in ("components", "routes", "src"):
                 plan.problems += check_site_css(path.read_text(), label)
             plan.add(f"{target_root}/{rel}" if target_root else rel, path.read_bytes(), label, from_site=True)
@@ -570,20 +705,22 @@ def manifest_bytes(plan: AppPlan) -> bytes:
 
 
 def previous_files(app: Path) -> list[str]:
-    """What the last run wrote, less anything it could never have owned."""
+    """What the last run wrote, less anything it could never have owned. The manifest is on disk
+    and may have been edited, so every entry is distrusted: it must be a plain relative path, not
+    a content-buildr path in any spelling or case, and still inside the app once symlinks resolve.
+    This is the only list `write` deletes from."""
     try:
         files = json.loads((app / MANIFEST).read_text())["files"]
     except (FileNotFoundError, ValueError, KeyError, TypeError):
         return []
-    return [
-        f
-        for f in files
-        if isinstance(f, str)
-        and not f.startswith("/")
-        and ".." not in f.split("/")
-        and not f.startswith(PROTECTED_DIRS)
-        and f not in PROTECTED_FILES
-    ]
+    if not isinstance(files, list):
+        return []
+    kept = []
+    for entry in files:
+        rel = safe_rel(entry)
+        if rel is not None and not is_protected(rel) and inside(app, rel):
+            kept.append(rel)
+    return kept
 
 
 def wanted(plan: AppPlan) -> dict[str, bytes]:
@@ -639,6 +776,9 @@ def main(argv: list[str] | None = None) -> int:
         for problem in refused.problems:
             print(f"assemble: {problem}", file=sys.stderr)
         return 2
+    except SchemaError as error:
+        print(f"assemble: internal error: {error}", file=sys.stderr)
+        return 3
     if args.check:
         found = differences(app, plan)
         for line in found:

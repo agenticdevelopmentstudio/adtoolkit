@@ -394,6 +394,158 @@ class AssembleTest(unittest.TestCase):
             self.assertEqual((self.app / rel).read_text(), text, rel)
         self.assertEqual((self.app / "src/landing.json").read_text(), landing)
 
+    # --- review fixes -----------------------------------------------------------------------
+
+    def test_a_hostile_manifest_cannot_delete_protected_files(self) -> None:
+        self.assert_ok(self.assemble())
+        kept = ["src/content/x.json", "src/landing.tsx", "public/glyph.svg", "src/Landing.tsx"]
+        for rel in kept:
+            self.write(f"{OUTPUT}/{rel}", "keep")
+        outside = self.write("outside.txt", "keep")
+        manifest = json.loads((self.app / ".site-template.json").read_text())
+        manifest["files"] += [
+            "./src/content/x.json",
+            "src//landing.tsx",
+            "public/./glyph.svg",
+            "SRC/Content/x.json",
+            "src/Landing.tsx",
+            "/etc/hosts",
+            "../../outside.txt",
+            "",
+            ".",
+        ]
+        (self.app / ".site-template.json").write_text(json.dumps(manifest))
+        # The edited manifest is itself out of date; nothing it smuggled in is stale.
+        check = run(self.site, "--check")
+        self.assertEqual(check.stdout.strip(), "changed: .site-template.json", check.stderr)
+        self.assert_ok(run(self.site))
+        self.assert_ok(run(self.site, "--check"))
+        for rel in kept:
+            self.assertTrue((self.app / rel).is_file(), rel)
+        self.assertTrue(outside.is_file())
+
+    def test_a_manifest_entry_through_a_symlink_out_of_the_app_is_ignored(self) -> None:
+        self.assert_ok(self.assemble())
+        target = self.write("elsewhere/victim.txt", "keep")
+        (self.app / "linked").symlink_to(target.parent)
+        manifest = json.loads((self.app / ".site-template.json").read_text())
+        manifest["files"].append("linked/victim.txt")
+        (self.app / ".site-template.json").write_text(json.dumps(manifest))
+        self.assert_ok(run(self.site))
+        self.assertTrue(target.is_file())
+
+    def test_a_comment_opener_inside_a_string_hides_nothing(self) -> None:
+        sheet = ':root { --a: "/*"; } .lp-cards { gap: 0 } :root { --b: "*/"; }\n'
+        self.config["tokens"] = "theme.css"
+        self.write("site/theme.css", sheet)
+        self.assert_refused(self.assemble(), "site/theme.css", ".lp-cards")
+
+    def test_a_comment_opener_inside_a_string_hides_nothing_in_component_css(self) -> None:
+        css = 'a { content: "/*" } .lp-band { color: red } b { content: "*/" }\n'
+        self.write("site/components/x.css", css)
+        self.assert_refused(self.assemble(), "site/components/x.css", ".lp-band")
+
+    def test_real_comments_are_still_ignored(self) -> None:
+        self.write("site/components/x.css", "/* .lp-band body html */ .mine { color: red }\n")
+        self.assert_ok(self.assemble())
+
+    def test_selector_bypasses_are_refused(self) -> None:
+        cases = {
+            ".\\6c p-band { color: red }": ".lp-band",
+            ".\\6C p-band { color: red }": ".lp-band",
+            ".l\\p-band { color: red }": ".lp-band",
+            "HTML { color: red }": "html",
+            "Body > main { color: red }": "body",
+            ":root { color: red }": ":root",
+            ":ROOT .x { color: red }": ":root",
+            "@scope (.lp-band) { :scope { color: red } }": ".lp-band",
+            '[class*="lp-band"] { color: red }': "lp-band",
+            "[class^=st-] { color: red }": "st-",
+            "[CLASS~='lp-x' i] { color: red }": "lp-x",
+            ":root, .lp-x { color: red }": ".lp-x",
+            ":is(.lp-x) { color: red }": ".lp-x",
+            ".x { .lp-band & { color: red } }": ".lp-band",
+        }
+        for css, needle in cases.items():
+            with self.subTest(css=css):
+                self.write("site/components/x.css", css + "\n")
+                self.assert_refused(self.assemble(), "site/components/x.css", needle)
+
+    def test_selector_lookalikes_stay_accepted(self) -> None:
+        cases = [
+            ".my-body .html-ish .help-x { color: red }",
+            '[data-x="lp-band"] { color: red }',
+            '.x::after { content: ".lp-band body" }',
+            "@keyframes lp-spin { from { opacity: 0 } }",
+        ]
+        for css in cases:
+            with self.subTest(css=css):
+                self.write("site/components/x.css", css + "\n")
+                self.assert_ok(self.assemble())
+
+    def test_output_must_be_under_websites(self) -> None:
+        for output in [".", "site", "websites", "websites/./main", "websites/../main", "./websites/main", "/abs", "websites/"]:
+            with self.subTest(output=output):
+                self.config["output"] = output
+                self.assert_refused(self.assemble(), "output")
+
+    def test_output_accepts_a_deeper_websites_path(self) -> None:
+        self.config["output"] = "websites/apps/main"
+        self.write("site/site.json", json.dumps(self.config))
+        self.assert_ok(run(self.site))
+        self.assertTrue((self.site / "websites/apps/main/app/layout.tsx").is_file())
+
+    def test_a_site_file_at_the_manifest_path_is_a_collision(self) -> None:
+        self.write("site/app-root/.site-template.json", "{}\n")
+        self.assert_refused(self.assemble(), "site/app-root/.site-template.json", ".site-template.json")
+
+    def test_tokens_outside_site_is_refused(self) -> None:
+        self.write("theme.css", ":root { --a: 1px; }\n")
+        self.config["tokens"] = "../theme.css"
+        self.assert_refused(self.assemble(), "tokens", "outside site/")
+
+    def test_a_site_font_outside_site_is_refused(self) -> None:
+        self.write("x.woff2", "woff2")
+        self.config["fonts"] = [
+            {"variable": "--font-x", "files": [{"path": "../x.woff2", "weight": "400", "style": "normal"}]}
+        ]
+        self.assert_refused(self.assemble(), "fonts[0]", "outside site/")
+
+    def test_the_schema_checker_refuses_a_keyword_it_does_not_know(self) -> None:
+        module = load_assembler()
+        with self.assertRaises(module.SchemaError):
+            module.check_schema("x", {"type": "string", "maxLength": 3}, "x", [])
+        with self.assertRaises(module.SchemaError):
+            module.check_schema("x", {"type": "uuid"}, "x", [])
+        with self.assertRaises(module.SchemaError):
+            module.check_schema({"a": 1}, {"type": "object", "propertyNames": {"maxLength": 3}}, "", [])
+
+    def test_the_schema_checker_knows_number_and_boolean(self) -> None:
+        module = load_assembler()
+        problems: list[str] = []
+        module.check_schema(True, {"type": "boolean"}, "a", problems)
+        module.check_schema(1.5, {"type": "number", "minimum": 1}, "b", problems)
+        self.assertEqual(problems, [])
+        module.check_schema(1, {"type": "boolean"}, "c", problems)
+        module.check_schema(True, {"type": "number"}, "d", problems)
+        module.check_schema(0.5, {"type": "number", "minimum": 1}, "e", problems)
+        self.assertEqual(len(problems), 3, problems)
+
+    def test_the_real_schema_uses_only_known_keywords(self) -> None:
+        module = load_assembler()
+        schema = json.loads((ASSEMBLE.parent.parent / "schema" / "site.schema.json").read_text())
+        module.check_schema({"output": "websites/main", "port": 1}, schema, "", [])
+
+
+def load_assembler():  # type: ignore[no-untyped-def]
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("assemble_site", ASSEMBLE)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
 
 if __name__ == "__main__":
     unittest.main()
