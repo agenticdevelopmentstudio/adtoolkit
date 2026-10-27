@@ -7,6 +7,7 @@ import { FrameFooter } from '../footer'
 import { SiteChrome } from '../chrome'
 import { FrameMark } from '../frame-mark'
 import { FrameBand } from '../frame-band'
+import { frameShot } from '../frame-shot'
 import * as barrel from '../index'
 import { frameMetadata, frameRobots, frameSiteUrl, frameSitemap, frameViewport } from '../frame-metadata'
 import type { FrameConfig, FrameCopy, SlotMap } from '../types'
@@ -302,6 +303,38 @@ describe('FrameMark', () => {
 
   it('ships from the server barrel', () => {
     expect(barrel.FrameMark).toBe(FrameMark)
+  })
+})
+
+describe('frameShot', () => {
+  const placeholder = (node: ReactElement): string =>
+    render(node).container.querySelector('.lp-shot__placeholder')?.textContent ?? '(none)'
+
+  it("words a slot's pending shot with the site's word, given once", () => {
+    const SiteShot = frameShot('Screenshot pending')
+    expect(placeholder(<SiteShot title="App" caption="Soon" />)).toBe('Screenshot pendingSoon')
+  })
+
+  it("words it as the frame's own bands do when the site has no word", () => {
+    const SiteShot = frameShot(undefined)
+    const shot = { kind: 'Shot' as const, title: 'App', caption: 'Soon' }
+    const page: LandingPage = { hero, sections: [section('one', 'One', { blocks: [shot] })] }
+    expect(placeholder(<SiteShot title="App" caption="Soon" />)).toBe(
+      placeholder(<LandingFrame page={page} slots={noSlots} mark={mark} />),
+    )
+  })
+
+  it('lets one shot word itself, and draws media as given', () => {
+    const SiteShot = frameShot('Screenshot pending')
+    expect(placeholder(<SiteShot title="App" caption="Soon" pendingLabel="Later" />)).toBe('LaterSoon')
+    const { container } = render(<SiteShot title="App" caption="Soon" media={<img alt="The app" />} />)
+    expect(container.querySelector('.lp-shot img')!.getAttribute('alt')).toBe('The app')
+    expect(container.querySelector('.lp-shot__placeholder')).toBeNull()
+    expect(container.querySelector('.lp-shot__name')!.textContent).toBe('App')
+  })
+
+  it('ships from the server barrel', () => {
+    expect(barrel.frameShot).toBe(frameShot)
   })
 })
 

@@ -389,6 +389,12 @@ class AssembleTest(unittest.TestCase):
         self.assertIn("  bitbag: BitbagSlot,", slots)
         self.assertIn("slots.bitbag", (self.app / "app/layout.tsx").read_text())
 
+    def test_the_site_shot_is_worded_from_the_copy_once(self) -> None:
+        self.assert_ok(self.assemble())
+        shot = (self.app / "src/site/shot.tsx").read_text()
+        self.assertIn("import siteCopy from '../content/site/site.json'", shot)
+        self.assertIn("export const SiteShot = frameShot(copy.screenshotPending)", shot)
+
     def test_a_site_url_reaches_the_config_as_frame_site_urls_second_choice(self) -> None:
         self.config["siteUrl"] = "https://kitchen.example"
         self.assert_ok(self.assemble())

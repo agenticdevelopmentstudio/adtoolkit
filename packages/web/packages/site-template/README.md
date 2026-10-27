@@ -14,6 +14,7 @@ From `@agenticdevelopertoolkit/site-template` (server-safe, no `'use client'`):
 | --- | --- |
 | `LandingFrame({ page, slots, mark, looks?, pendingLabel? })` | The hero and every band of a landing-kit `LandingPage`. Bands alternate `soft` / `dark`, each wrapped in `Reveal` and headed by `Head` unless the section sets `headingInBlock`; `looks[sectionId]` (a `BandLook`, from `site.json`'s `bands`) gives one band its own tone or drops its seam, and a look naming no section throws. A hero `Shot` is drawn below the hero, bled right. `pendingLabel` (the copy's `screenshotPending`) words every shot not yet taken; absent, the landing kit's own word. |
 | `FrameBand({ id, tone?, seam?, children })` | One band as the frame draws it: the kit's `Band` with its contents in a `Reveal` (inside the band, so the seam's stacking holds). `LandingFrame` draws every band with it; a route of the site's own uses it so its bands enter the way `/`'s do. |
+| `frameShot(pendingLabel)` | The landing kit's `Shot` worded once for a site: a shot not yet taken says `pendingLabel` unless it passes its own. The assembler binds it to the copy's `screenshotPending` in the generated `src/site/shot.tsx` as `SiteShot`, so a custom band imports that from `@/site/shot` instead of passing the word to each shot. A factory, not a context, because the frame and slots are server components. |
 | `FrameFooter({ copy, slot? })` | The site footer from `copy.footer`; the first line plain, the rest in `<small>`. A `slot` replaces the lines. Renders nothing when the copy has no footer. |
 | `FrameMark({ config, alt })` | The site's mark as `site.json` configures it (`mark.src`, in `st-mark st-mark--<shape>`). The skeleton's `/` passes it to `LandingFrame`; a route of the site's own with a hero uses it too, so a change to `mark` reaches every page. |
 | `Words({ text })` | A `CopyText`: a plain string, or `{ html }` rendered as markup. |
@@ -93,6 +94,9 @@ export. The keys are:
 | `footer` | the footer lines |
 | `bitbag` | bitbag, in place of the frame's |
 | `band:<id>` | the blocks of the band for section `<id>`; the id must name a section of `src/landing.json` |
+
+A slot that draws a screenshot uses `SiteShot` from `@/site/shot` (generated), which already
+carries the site's word for a shot not yet taken.
 
 ## Band looks in `site.json`
 
