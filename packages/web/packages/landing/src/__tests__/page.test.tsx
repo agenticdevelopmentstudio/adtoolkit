@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react'
+import { render } from '@testing-library/react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { landingFromData } from '../fromData'
+import { heroSlots, joinMeta, landingFromData } from '../index'
+import type { LandingHero, LandingPage } from '../index'
 
 const html = (node: ReactNode) => renderToStaticMarkup(<>{node}</>)
 
@@ -37,6 +39,8 @@ const DATA = {
       ],
     },
   ],
+  // A field the page model does not name — adh's tour, say. It passes through untouched, so a
+  // host that widens `LandingPage` gets its own fields back by naming the wider type.
   tour: { position: { step: 2, total: 3 }, back: { site: 'hub', label: 'Hub' } },
 }
 
@@ -54,7 +58,7 @@ describe('landingFromData', () => {
   })
 
   it('passes a plain value through untouched', () => {
-    const out = landingFromData(DATA)
+    const out = landingFromData<LandingPage & { tour?: unknown }>(DATA)
     expect(out.hero.tagline).toBe('Plain words.')
     expect(out.sections[0]!.eyebrow).toBe('What it is')
     expect(out.sections[0]!.blocks[1]).toEqual({ kind: 'Code', text: 'a b\n  c {d}' })
@@ -78,5 +82,58 @@ describe('landingFromData', () => {
     expect(html((block as { children: ReactNode }).children)).toContain(
       '<a href="/details">details</a>',
     )
+  })
+})
+
+const cta = {
+  kind: 'Cta' as const,
+  buttons: [
+    { href: '/start', label: 'Start', variant: 'primary' as const },
+    { href: '/docs', label: 'Docs' },
+  ],
+}
+
+function hero(blocks: LandingHero['blocks']): LandingHero {
+  return { headline: 'H', tagline: 'T', blocks }
+}
+
+describe('heroSlots', () => {
+  it('sorts a Cta into actions and a Trust into meta, with no status', () => {
+    const slots = heroSlots(hero([cta, { kind: 'Trust', items: ['Free', 'Open'] }]))
+    expect(slots.actions).toHaveLength(2)
+    expect(slots.meta).toHaveLength(2)
+    expect(slots.status).toBeUndefined()
+  })
+
+  it('keeps each button’s declared variant when there is no status', () => {
+    const { container } = render(<>{heroSlots(hero([cta])).actions}</>)
+    const buttons = container.querySelectorAll('a.lp-btn')
+    expect(buttons[0]!.className).toContain('lp-btn--primary')
+    expect(buttons[1]!.className).toContain('lp-btn--primary')
+  })
+
+  it('renders a StatusPill as the status, and every action as ghost beside it', () => {
+    const slots = heroSlots(hero([cta, { kind: 'StatusPill', children: 'Shipping', free: true }]))
+    expect(slots.status).toBeDefined()
+    const pill = render(<>{slots.status}</>).container.querySelector('.lp-status')
+    expect(pill!.className).toContain('lp-status--free')
+    expect(pill!.textContent).toBe('Shipping')
+    const { container } = render(<>{slots.actions}</>)
+    const buttons = container.querySelectorAll('a.lp-btn')
+    expect(buttons).toHaveLength(2)
+    buttons.forEach((b) => expect(b.className).toContain('lp-btn--ghost'))
+  })
+
+  it('refuses a block the hero has no slot for', () => {
+    expect(() => heroSlots(hero([{ kind: 'Cards', items: [] }]))).toThrow(
+      /'Cards' block has no slot/,
+    )
+  })
+})
+
+describe('joinMeta', () => {
+  it('joins items with a middle dot', () => {
+    const { container } = render(<>{joinMeta(['a', 'b', 'c'])}</>)
+    expect(container.textContent).toBe('a · b · c')
   })
 })

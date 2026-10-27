@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import type { LandingContent } from './content';
+import type { LandingContent } from './tour';
 export interface LandingDeckProps {
     content: LandingContent;
 }

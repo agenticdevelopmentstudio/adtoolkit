@@ -1,5 +1,5 @@
 import { createElement, Fragment, type ComponentType, type ReactNode } from 'react'
-import type { LandingContent } from './content'
+import type { LandingPage } from './types'
 
 /**
  * One node of a rich text value, as content-buildr writes it into a site's `landing.json`.
@@ -15,12 +15,12 @@ export type InlineNode =
   | { t: 'a' | 'link'; href: string; c: InlineNode[] }
 
 export interface LandingDataOptions {
-  /** What a `link` node renders as — `next/link`'s `Link` in the family. Absent: `<a>`. */
+  /** What a `link` node renders as — `next/link`'s `Link`, say. Absent: `<a>`. */
   link?: ComponentType<{ href: string; children?: ReactNode }>
 }
 
 /**
- * A site's `landing.json`, as the `LandingContent` the deck mounts.
+ * A site's `landing.json`, as the `LandingPage` a layout mounts.
  *
  * The copy used to arrive as a generated `.tsx` of JSX fragments, which made a site's words a
  * module only a bundler could read. It is data now — the same tree whether it is imported from
@@ -30,14 +30,18 @@ export interface LandingDataOptions {
  * Only two shapes in the tree are not already the content's own: a rich text value, written
  * `{ "$inline": [nodes] }`, becomes a fragment; and any key starting with `$` is the
  * generator's own bookkeeping (the `$generated` banner) and is dropped. Every other value
- * passes through as it is, so the JSON's field names ARE `LandingContent`'s and there is no
- * second schema here to drift from the first.
+ * passes through as it is, so the JSON's field names ARE `LandingPage`'s and there is no
+ * second schema here to drift from the first. That is also what lets a host name a wider
+ * `T`: its own fields come back revived like the rest.
  *
  * Children are spread as arguments rather than passed as an array, which is what lets React
  * render a static list without asking for keys.
  */
-export function landingFromData(data: object, options: LandingDataOptions = {}): LandingContent {
-  return revive(data, options) as LandingContent
+export function landingFromData<T extends LandingPage = LandingPage>(
+  data: object,
+  options: LandingDataOptions = {},
+): T {
+  return revive(data, options) as T
 }
 
 function revive(value: unknown, options: LandingDataOptions): unknown {

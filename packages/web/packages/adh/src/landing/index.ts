@@ -11,16 +11,20 @@ export type { LandingDeckProps } from './LandingDeck'
 // `@agenticdevelopertoolkit/landing`'s `Flow` draws. A site picks one per route.
 export { LandingFlow, LandingFlowTour } from './LandingFlow'
 export type { LandingFlowProps } from './LandingFlow'
-export { landingFromData } from './fromData'
-export type { InlineNode, LandingDataOptions } from './fromData'
+// The page content model is the landing kit's (`@agenticdevelopertoolkit/landing`, src/page/);
+// it is re-exported here under the names adh's consumers already import, so none of them
+// changes. What stays adh's own is the tour, which needs the family's site registry.
+export {
+  landingFromData,
+} from '@agenticdevelopertoolkit/landing'
 export type {
-  LandingContent,
+  InlineNode,
+  LandingDataOptions,
   LandingHero,
   LandingSection,
   LandingBlock,
   LandingCard,
   LandingFaqEntry,
   LandingButton,
-  LandingTourStop,
-  LandingTourEdge,
-} from './content'
+} from '@agenticdevelopertoolkit/landing'
+export type { LandingContent, LandingTourStop, LandingTourEdge } from './tour'

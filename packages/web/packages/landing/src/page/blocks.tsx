@@ -1,42 +1,33 @@
 import type { ReactElement, ReactNode } from 'react'
-import { siteProdUrl } from '@agentic-toolkit/adh-registry'
-import {
-  Btn,
-  Card,
-  Cards,
-  Checklist,
-  Chips,
-  Closer,
-  Code,
-  Cta,
-  Faq,
-  Lede,
-  Points,
-  Roadmap,
-  Rule,
-  Shot,
-  Stats,
-  StatusPill,
-  Table,
-  Trust,
-  Versus,
-} from '@agenticdevelopertoolkit/landing'
-import type { NavLink, TourStep } from '@agenticdevelopertoolkit/landing'
-import type { LandingBlock, LandingContent, LandingTourEdge } from './content'
+import { Btn } from '../blocks/Btn'
+import { Card } from '../blocks/Card'
+import { Cards } from '../blocks/Cards'
+import { Checklist } from '../blocks/Checklist'
+import { Chips } from '../blocks/Chips'
+import { Closer } from '../blocks/Closer'
+import { Code } from '../blocks/Code'
+import { Cta } from '../blocks/Cta'
+import { Faq } from '../blocks/Faq'
+import { Lede } from '../blocks/Lede'
+import { Points } from '../blocks/Points'
+import { Roadmap } from '../blocks/Roadmap'
+import { Rule } from '../blocks/Rule'
+import { Shot } from '../blocks/Shot'
+import { Stats } from '../blocks/Stats'
+import { StatusPill } from '../blocks/StatusPill'
+import { Table } from '../blocks/Table'
+import { Trust } from '../blocks/Trust'
+import { Versus } from '../blocks/Versus'
+import type { NavLink } from '../chrome/types'
+import type { LandingBlock, LandingPage } from './types'
 
-// What the family's two page layouts — the snap deck (`LandingDeck`) and the continuous
-// flow (`LandingFlow`) — share: how a block renders, what the section index lists, and
-// where a tour edge points. One copy, because a block that renders one way in a deck and
-// another in a flow is the same content saying two different things.
-
-/**
- * The id `TourStrip` renders from a literal of its own (landing/src/blocks/TourStrip.tsx).
- * Named here because the tour's index row has to link to it, and because the generator
- * refuses a section that slugs to the same string — two `id="tour"` elements in one
- * document make `#tour` resolve to whichever comes first, and the deck's own scroll target
- * is the loser.
- */
-export const TOUR_SCREEN_ID = 'tour'
+// What every page layout — the snap deck and the continuous flow — shares: how a block
+// renders and what the section index lists. One copy, because a block that renders one way
+// in a deck and another in a flow is the same content saying two different things.
+//
+// Server components only: every block below is one, and this module sits behind the
+// server-safe barrel (tools/check-directives.py asserts dist/index.js stays free of
+// `'use client'`).
 
 /** A block BODY — a Card's, a Closer's, a Faq answer's — as `<p>` elements.
  *
@@ -81,12 +72,12 @@ export function renderBlock(block: LandingBlock, key: number): ReactElement {
           key={key}
           title={block.title}
           caption={block.caption}
-          // The package renders the placeholder only when `media` is ABSENT, so an
+          // The kit renders the placeholder only when `media` is ABSENT, so an
           // unconditional `<img>` is what made it unreachable. `pendingLabel` has no default
           // by design — it is visible copy, and the kit renders no word its host did not
-          // choose — so the family chooses it here, once, for all 31 decks. It says what
-          // content-buildr's placeholder image says, so a deck and a help page word a missing
-          // screenshot the same way.
+          // choose — so the page model chooses it here, once, for every page built from
+          // data. It says what content-buildr's placeholder image says, so a page and a help
+          // page word a missing screenshot the same way.
           pendingLabel="Screenshot coming soon"
           {...(block.src === undefined
             ? {}
@@ -156,25 +147,14 @@ export function renderBlock(block: LandingBlock, key: number): ReactElement {
   }
 }
 
-/** `(href, label)` for every screen the deck's own sections render.
+/** `(href, label)` for every screen the page's own sections render.
  *
  *  The hero is deliberately absent: it is the top of the page, which the browser's own Home
  *  key already reaches, and a first row meaning "go back to where you started" is the one
  *  row of a table of contents that carries no information. */
-export function indexRows(content: LandingContent): NavLink[] {
-  return content.sections.map((section) => ({
+export function indexRows(page: LandingPage): NavLink[] {
+  return page.sections.map((section) => ({
     href: `#${section.id}`,
     label: section.eyebrow,
   }))
-}
-
-/** A tour edge as the strip's own `TourStep`.
- *
- *  The href is resolved here rather than carried in the content: a tour edge crosses
- *  origins, and only the registry knows a site's production host. Spelling it with
- *  `siteProdUrl` keeps that one table the source of hosts instead of baking a hostname into
- *  thirty-eight generated files that no longer track it. */
-export function tourStep(edge: LandingTourEdge | undefined): TourStep | undefined {
-  if (edge === undefined) return undefined
-  return { href: siteProdUrl(edge.site, '/tour'), label: edge.label, note: edge.note }
 }

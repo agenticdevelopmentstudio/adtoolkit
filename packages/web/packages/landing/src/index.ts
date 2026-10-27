@@ -63,3 +63,26 @@ export { Bleed } from './flow/Bleed'
 export { FlowHero } from './flow/FlowHero'
 export type { FlowHeroProps } from './flow/FlowHero'
 export { SiteFooter } from './flow/SiteFooter'
+// ---- the page content model ----
+// A landing page as data — what content-buildr generates from a site's markdown — and the
+// functions both layouts above render it with. Server-safe, like everything in this barrel.
+export {
+  landingFromData,
+  prose,
+  renderBlock,
+  indexRows,
+  heroSlots,
+  joinMeta,
+} from './page'
+export type {
+  LandingPage,
+  LandingHero,
+  LandingSection,
+  LandingBlock,
+  LandingCard,
+  LandingFaqEntry,
+  LandingButton,
+  InlineNode,
+  LandingDataOptions,
+  HeroSlots,
+} from './page'

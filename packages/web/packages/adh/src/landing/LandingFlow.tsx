@@ -1,12 +1,23 @@
 import type { ReactElement, ReactNode } from 'react'
-import { Band, Btn, DeckScript, Flow, FlowHero, Head, TourStrip } from '@agenticdevelopertoolkit/landing'
-import type { BandTone, NavLink } from '@agenticdevelopertoolkit/landing'
+import {
+  Band,
+  DeckScript,
+  Flow,
+  FlowHero,
+  Head,
+  heroSlots,
+  indexRows,
+  joinMeta,
+  renderBlock,
+  TourStrip,
+} from '@agenticdevelopertoolkit/landing'
+import type { BandTone, LandingSection, NavLink } from '@agenticdevelopertoolkit/landing'
 // Both client components by PACKAGE PATH and from `/client`, for the reason LandingDeck.tsx
 // gives in full: a bundled client module hoists its `'use client'` over this whole module and
 // turns every band of a site's landing copy into a Client Component.
 import { NavChrome, Reveal } from '@agenticdevelopertoolkit/landing/client'
-import type { LandingBlock, LandingContent, LandingHero, LandingSection } from './content'
-import { indexRows, renderBlock, TOUR_SCREEN_ID, tourStep } from './blocks'
+import { TOUR_SCREEN_ID, tourStep } from './tour'
+import type { LandingContent } from './tour'
 
 /**
  * The tones a run of bands alternates through, first band first.
@@ -38,53 +49,6 @@ function renderBand(section: LandingSection, key: number): ReactElement {
 }
 
 /**
- * The hero's rows, sorted into the two slots `FlowHero` has.
- *
- * The deck's `Hero` takes arbitrary blocks under its tagline; `FlowHero` takes a row of bare
- * `Btn`s and one meta line, and nothing else. So a `Cta` gives up its buttons — NOT the `Cta`
- * itself, whose own gap would silently override the hero's (FlowHero's `children` doc) — and
- * a `Trust` strip becomes the meta line, its claims joined the way that line is written by
- * hand. Any other kind is refused rather than dropped: a hero row that vanishes from the page
- * is a content loss nobody would see in a diff.
- */
-function heroSlots(hero: LandingHero): { actions: ReactNode[]; meta: ReactNode[] } {
-  const actions: ReactNode[] = []
-  const meta: ReactNode[] = []
-  hero.blocks.forEach((block: LandingBlock) => {
-    switch (block.kind) {
-      case 'Cta':
-        block.buttons.forEach((button) =>
-          actions.push(
-            <Btn key={actions.length} href={button.href} variant={button.variant}>
-              {button.label}
-            </Btn>,
-          ),
-        )
-        return
-      case 'Trust':
-        meta.push(...block.items)
-        return
-      default:
-        throw new Error(
-          `LandingFlow: a '${block.kind}' block has no slot in the flow hero — ` +
-            `only 'Cta' and 'Trust' do. Move it into a section, or render this page as a LandingDeck.`,
-        )
-    }
-  })
-  return { actions, meta }
-}
-
-/** `a · b · c`, as one line of nodes. */
-function joined(items: ReactNode[]): ReactNode {
-  return items.map((item, i) => (
-    <span key={i}>
-      {i > 0 ? ' · ' : null}
-      {item}
-    </span>
-  ))
-}
-
-/**
  * The flow page itself — the deck's content as a continuous scroll of bands.
  *
  * Same content, same index, same block renderer as `deck()`; what changes is only the frame.
@@ -105,7 +69,17 @@ function flow(
   heroFillsWindow: boolean,
 ): ReactElement {
   const rows = leadRow === undefined ? indexRows(content) : [leadRow, ...indexRows(content)]
-  const { actions, meta } = heroSlots(content.hero)
+  // The landing kit's `heroSlots` sorts the hero's rows into FlowHero's slots and refuses
+  // any it has no slot for. A status pill it can sort, but FlowHero has nowhere to draw one,
+  // so it is refused here rather than dropped: a hero row that vanishes from the page is a
+  // content loss nobody would see in a diff.
+  const { actions, meta, status } = heroSlots(content.hero)
+  if (status !== undefined) {
+    throw new Error(
+      `LandingFlow: a 'StatusPill' block has no slot in the flow hero — ` +
+        `only 'Cta' and 'Trust' do. Move it into a section, or render this page as a LandingDeck.`,
+    )
+  }
   return (
     <>
       <DeckScript armSnapping={false} openAtTop={false} />
@@ -118,7 +92,7 @@ function flow(
           mark={<img src="/glyph.svg" alt="" />}
           headline={content.hero.headline}
           sub={content.hero.tagline}
-          meta={meta.length === 0 ? undefined : joined(meta)}
+          meta={meta.length === 0 ? undefined : joinMeta(meta)}
           fill={heroFillsWindow}
         >
           {actions.length === 0 ? undefined : actions}

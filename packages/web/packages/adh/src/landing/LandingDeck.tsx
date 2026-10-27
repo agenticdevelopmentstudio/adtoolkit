@@ -1,5 +1,15 @@
 import type { ReactElement, ReactNode } from 'react'
-import { Deck, DeckScript, Head, Hero, Screen, TourStrip, Wrap } from '@agenticdevelopertoolkit/landing'
+import {
+  Deck,
+  DeckScript,
+  Head,
+  Hero,
+  indexRows,
+  renderBlock,
+  Screen,
+  TourStrip,
+  Wrap,
+} from '@agenticdevelopertoolkit/landing'
 // The deck's index — burger, scrim and drawer — and the ONE client component on the page.
 // By PACKAGE PATH rather than a relative import, and from `/client` rather than the main
 // barrel, for the same reason `marketing/index.ts` imports MarketingSiteHeader that way:
@@ -9,9 +19,9 @@ import { Deck, DeckScript, Head, Hero, Screen, TourStrip, Wrap } from '@agenticd
 // Client Component. The specifier is external (see the `@agenticdevelopertoolkit/landing/*` line
 // in tsup.config.ts), so the boundary stays where the landing package put it.
 import { NavChrome } from '@agenticdevelopertoolkit/landing/client'
-import type { NavLink } from '@agenticdevelopertoolkit/landing'
-import type { LandingContent, LandingSection } from './content'
-import { indexRows, renderBlock, TOUR_SCREEN_ID, tourStep } from './blocks'
+import type { LandingSection, NavLink } from '@agenticdevelopertoolkit/landing'
+import { TOUR_SCREEN_ID, tourStep } from './tour'
+import type { LandingContent } from './tour'
 
 /** One screen. */
 function renderSection(section: LandingSection, key: number): ReactElement {
