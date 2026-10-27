@@ -1,0 +1,114 @@
+/* site-template/src/css/bridge.css
+ *
+ * Assigns the landing kit's `--lp-*` token contract from the theme's role variables
+ * (`--color-*`, `--font-*`), so a content site is themed by choosing a theme and nothing else.
+ * The mapping is adh's `adh-landing-bridge.css`, copied rather than imported: the template
+ * must not depend on adh. It lives here and not in `landing` because that package never
+ * assigns a `:root` — every token is read as `var(--lp-x, fallback)`.
+ *
+ * Every token is assigned, including the minted shades, because an unset one silently
+ * renders the kit's neutral grey on a border or hover state even once the palette is themed.
+ *
+ * Three tokens are NOT here, because `frame.css` owns them: `--lp-measure`, `--lp-bar-bg`
+ * and `--lp-dock-clear`. Assigning them in both sheets would leave the winner to import order.
+ */
+:root {
+  /* Palette. */
+  --lp-ground: var(--color-surface);
+  --lp-raise: var(--color-surface-container-high);
+  --lp-accent: var(--color-primary);
+  --lp-accent-bright: var(--color-primary-bright);
+  --lp-accent-dim: color-mix(in srgb, var(--color-primary) 14%, transparent);
+  --lp-ink: var(--color-on-surface);
+  --lp-ink-dim: var(--color-on-surface-variant);
+  --lp-hairline: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  --lp-card: color-mix(in srgb, var(--color-surface-container) 65%, transparent);
+  --lp-glow: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--color-primary) 13%, transparent),
+    transparent 65%
+  );
+
+  /* Flow tones. The soft band is a 4% lean toward the ink, not `surface-container-low`: a
+   * theme may set that role equal to the surface (fishlamp does), which would erase the
+   * step between bands. The paper band is the theme's inverse pair. */
+  --lp-tone-soft: color-mix(in srgb, var(--color-on-surface) 4%, var(--color-surface));
+  --lp-tone-paper: var(--color-inverse-surface);
+  --lp-paper-ink: var(--color-inverse-on-surface);
+  --lp-paper-dim: color-mix(
+    in srgb,
+    var(--color-inverse-on-surface) 69%,
+    var(--color-inverse-surface)
+  );
+
+  /* The hero's ground: a breath of the accent at the top settling into the page ground. */
+  --lp-hero-wash: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--color-primary) 7%, var(--color-surface)),
+    var(--color-surface) 62%
+  );
+
+  /* Minted shades, the kit's fallbacks re-sampled against the roles. */
+  --lp-burger-bg: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  --lp-scrim-bg: color-mix(in srgb, var(--color-surface) 55%, transparent);
+  --lp-drawer-shadow: color-mix(in srgb, var(--color-shadow) 55%, transparent);
+  --lp-nav-divider: color-mix(in srgb, var(--color-on-surface) 7%, transparent);
+  --lp-card-hover-border: color-mix(in srgb, var(--color-primary-bright) 40%, transparent);
+  --lp-card-hover-bg: color-mix(in srgb, var(--color-surface-container-high) 62%, transparent);
+  --lp-shot-hover-border: color-mix(in srgb, var(--color-primary-bright) 45%, transparent);
+  --lp-shot-hover-glow: color-mix(in srgb, var(--color-primary-bright) 50%, transparent);
+  --lp-shot-bar-shade: color-mix(in srgb, var(--color-surface) 60%, transparent);
+  --lp-shot-dot: color-mix(in srgb, var(--color-on-surface) 22%, transparent);
+  --lp-shot-hatch: color-mix(in srgb, var(--color-primary-bright) 5%, transparent);
+  --lp-versus-border: color-mix(in srgb, var(--color-on-surface) 9%, transparent);
+  --lp-versus-us-border: color-mix(in srgb, var(--color-primary-bright) 40%, transparent);
+  --lp-versus-us-glow: color-mix(in srgb, var(--color-primary-bright) 55%, transparent);
+  --lp-rule-bg: color-mix(in srgb, var(--color-surface) 65%, transparent);
+  --lp-chip-bg: color-mix(in srgb, var(--color-surface-container-high) 35%, transparent);
+  --lp-chip-open-border: color-mix(in srgb, var(--color-primary-bright) 50%, transparent);
+  --lp-chip-soon-border: color-mix(in srgb, var(--color-on-surface-variant) 28%, transparent);
+  --lp-status-free-border: color-mix(in srgb, var(--color-primary-bright) 50%, transparent);
+  --lp-btn-primary-ink: var(--color-on-primary);
+  --lp-faq-divider: color-mix(in srgb, var(--color-on-surface) 9%, transparent);
+  --lp-table-divider: color-mix(in srgb, var(--color-on-surface) 10%, transparent);
+
+  /* Type. `--lp-font-serif` is the tour's one non-mono line and `--lp-font-display` the flow
+   * layout's headline face; each takes the role of its own name so a theme that splits them
+   * is followed. */
+  --lp-font: var(--font-mono);
+  --lp-font-mono: var(--font-mono);
+  --lp-font-serif: var(--font-serif, ui-serif, Georgia, serif);
+  --lp-font-display: var(--font-display, var(--font-mono));
+
+  /* Geometry. The root size is 100%, not the kit's 87.5% type dial: the frame's rem values
+   * are drawn against the browser default, as adh's are. */
+  --lp-root-size: 100%;
+  --lp-radius: 14px;
+  --lp-gap: clamp(3.75rem, 8vw, 6.5rem);
+
+  /* The flow layout's dials, at the kit's own values and restated so the value a band is laid
+   * out on can be read off this sheet. `--lp-seam` is load-bearing twice (the clip-path and
+   * the margin that refills it); move it together or not at all. */
+  --lp-band-pad: clamp(4.5rem, 9vw, 8rem);
+  --lp-bleed: clamp(2.5rem, 10vw, 9rem);
+  --lp-seam: 4.5vw;
+  --lp-screen-pad-top: clamp(5.5rem, 14svh, 9rem);
+  --lp-hero-pad-top: 6.5rem;
+  --lp-hero-pad-bottom: var(--lp-dock-clear, 0px);
+  --lp-snap-stop: normal;
+
+  /* The bar and drawer. A content site has no header in flow above the page, so the chrome
+   * starts at the top edge; the burger sits in the corner, 1.5rem in from each side, and the
+   * drawer's first row clears it. */
+  --lp-chrome-top: 0px;
+  --lp-bar-pad-y: 1.5rem;
+  --lp-bar-pad-x: 1.5rem;
+  --lp-drawer-pad-top: 5.5rem;
+
+  /* Content strings: CSS `content`, so the quotes are part of the value. */
+  --lp-checklist-mark: "✓";
+  --lp-checklist-mark-soon: "○";
+  --lp-versus-bullet: "· ";
+  --lp-points-mark: "→";
+  --lp-points-ordinal-suffix: ".";
+}

@@ -1,0 +1,72 @@
+/* site-template/src/css/frame.css
+ *
+ * The content-site frame's layout, written once. A window-tall hero, one-column bands, and
+ * the clearance for bitbag's dock: the rules every content site used to hand-write.
+ *
+ * Load it AFTER `bridge.css`: it overrides the landing kit's own rules at equal specificity,
+ * so source order decides, and nothing here needs `!important`.
+ */
+
+:root {
+  /* One column of copy at 70rem; the landing kit's own default, restated because the frame's
+   * rhythm is drawn against it. */
+  --lp-measure: 70rem;
+
+  /* The bar floats over the page, so its fade lifts the burger off whatever scrolls under it:
+   * solid ground for the top three quarters, then clear. */
+  --lp-bar-bg: linear-gradient(var(--lp-ground) 75%, transparent);
+
+  /* Room for bitbag's resting dock at the foot of the last band and of the hero. At rest his
+   * face is 66px (`BitbagDock`'s 132px default size, halved; bitbag-dock.css) sitting
+   * 6px (`--bb-dock-parked-lift`) + 0.1rem above the bottom edge, so he occupies about
+   * 74px. 6rem (96px) leaves him a clear 22px of air under the last line, plus the device's
+   * bottom inset, which the dock also rides above. */
+  --lp-dock-clear: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* One column. The kit lays cards two and three across; a content site reads down the page. */
+.lp-cards,
+.lp-cards--pair,
+.lp-cards--trio {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* The kit caps a band's heading and lede at a reading width; here the column is the cap. */
+.lp-head,
+.lp-lede {
+  max-width: none;
+}
+
+/* The hero is a window tall (`svh`, so a phone's collapsing URL bar does not resize it) with
+ * its stack centred on both axes. Both selectors: the kit's `--fill` modifier is a class
+ * stronger and sets its own height, so the pair keeps this rule winning on the data hero and
+ * the custom-slot hero alike. */
+.lp-hero-flow,
+.lp-hero-flow.lp-hero-flow--fill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
+/* The hero's meta line (version, platform, licence) reads as a caption. A site whose meta is
+ * a sentence sets `--st-hero-meta-transform: none`. */
+.st-hero-meta {
+  text-transform: var(--st-hero-meta-transform, uppercase);
+}
+
+/* The mark when it is a glyph: the kit styles it; the template only names it. */
+.st-mark--glyph {
+  display: inline-block;
+}
+
+/* The mark when it is an app icon: the iOS squircle's corner radius, 22.37% of the side. */
+.st-mark--app-icon {
+  display: block;
+  width: min(176px, 40vw);
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 22.37%;
+}

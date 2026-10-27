@@ -10,7 +10,8 @@
     "**/*.css"
   ],
   "files": [
-    "dist"
+    "dist",
+    "themes.json"
   ],
   "exports": {
     ".": {
@@ -20,11 +21,15 @@
     "./client": {
       "types": "./dist/client-barrel.d.ts",
       "import": "./dist/client.js"
-    }
+    },
+    "./css/frame.css": "./dist/css/frame.css",
+    "./css/bridge.css": "./dist/css/bridge.css",
+    "./themes.json": "./themes.json"
   },
   "scripts": {
-    "build": "tsup && pnpm run build:types && pnpm run check:directives",
+    "build": "tsup && pnpm run build:types && pnpm run build:css && pnpm run check:directives",
     "build:types": "tsc --emitDeclarationOnly -p tsconfig.build.json",
+    "build:css": "node ../../copy-css.mjs",
     "check:directives": "python3 tools/check_template_directives.py",
     "dev": "tsup --watch",
     "clean": "rm -rf dist .turbo",
