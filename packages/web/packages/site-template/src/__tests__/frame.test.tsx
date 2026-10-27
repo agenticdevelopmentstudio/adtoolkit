@@ -5,7 +5,7 @@ import type { LandingPage, LandingSection } from '@agenticdevelopertoolkit/landi
 import { LandingFrame } from '../landing-frame'
 import { FrameFooter } from '../footer'
 import { SiteChrome } from '../chrome'
-import { frameRobots, frameSiteUrl } from '../frame-metadata'
+import { frameMetadata, frameRobots, frameSiteUrl, frameSitemap, frameViewport } from '../frame-metadata'
 import type { FrameConfig, FrameCopy, SlotMap } from '../types'
 
 const hero: LandingPage['hero'] = {
@@ -215,9 +215,17 @@ describe('frame metadata helpers', () => {
     vi.unstubAllEnvs()
   })
 
-  it('frameSiteUrl falls back to localhost on the given port with no env', () => {
+  it('frameSiteUrl falls back to localhost on the given port when the env is empty', () => {
     vi.stubEnv('SITE_URL', '')
     vi.stubEnv('VERCEL_PROJECT_PRODUCTION_URL', '')
+    expect(frameSiteUrl(5210)).toBe('http://localhost:5210')
+  })
+
+  it('frameSiteUrl falls back to localhost when the env is genuinely unset', () => {
+    vi.stubEnv('SITE_URL', undefined)
+    vi.stubEnv('VERCEL_PROJECT_PRODUCTION_URL', undefined)
+    expect('SITE_URL' in process.env).toBe(false)
+    expect('VERCEL_PROJECT_PRODUCTION_URL' in process.env).toBe(false)
     expect(frameSiteUrl(5210)).toBe('http://localhost:5210')
   })
 
@@ -236,5 +244,32 @@ describe('frame metadata helpers', () => {
     const robots = frameRobots(config)
     expect(robots.rules).toEqual([{ userAgent: '*', allow: '/' }])
     expect(robots.sitemap).toBe('https://kitchen.example/sitemap.xml')
+  })
+
+  const slashed: FrameConfig = { ...config, siteUrl: 'https://kitchen.example/', sitemap: ['/downloads'] }
+
+  it('robots builds single-slash URLs from a siteUrl ending in /', () => {
+    vi.stubEnv('DEPLOYMENT_ENV', 'production')
+    const robots = frameRobots(slashed)
+    expect(robots.sitemap).toBe('https://kitchen.example/sitemap.xml')
+    expect(robots.host).toBe('https://kitchen.example')
+  })
+
+  it('sitemap builds single-slash URLs from a siteUrl ending in /', () => {
+    expect(frameSitemap(slashed).map((entry) => entry.url)).toEqual([
+      'https://kitchen.example',
+      'https://kitchen.example/downloads',
+    ])
+  })
+
+  it('frameMetadata takes its base and title from the config and copy', () => {
+    const meta = frameMetadata({ ...copy, title: 'Kitchen — cook the thing' }, config)
+    expect(meta.metadataBase?.href).toBe('https://kitchen.example/')
+    expect(meta.title).toBe('Kitchen — cook the thing')
+    expect(frameMetadata(copy, config).title).toBe('Kitchen')
+  })
+
+  it('frameViewport carries the theme color', () => {
+    expect(frameViewport(config).themeColor).toBe('#0b0a09')
   })
 })

@@ -21,6 +21,15 @@ export function frameSiteUrl(fallbackPort: number): string {
 }
 
 /**
+ * `config.siteUrl` with any trailing slash removed, so a site that writes its origin as
+ * `https://x.example/` still gets `https://x.example/sitemap.xml` rather than `//sitemap.xml`.
+ * Every URL below is built by appending a `/`-led path to this.
+ */
+function origin(config: FrameConfig): string {
+  return config.siteUrl.replace(/\/+$/, '')
+}
+
+/**
  * What every crawler and link unfurler reads. `metadataBase` is what makes the relative `url`
  * and image paths absolute, which Open Graph requires. Icons are not declared: `app/icon.*`
  * and its siblings are Next file conventions, and a list here would override them.
@@ -75,8 +84,8 @@ export function frameRobots(config: FrameConfig): MetadataRoute.Robots {
   }
   return {
     rules: [{ userAgent: '*', allow: '/' }],
-    sitemap: `${config.siteUrl}/sitemap.xml`,
-    host: config.siteUrl,
+    sitemap: `${origin(config)}/sitemap.xml`,
+    host: origin(config),
   }
 }
 
@@ -86,10 +95,11 @@ export function frameRobots(config: FrameConfig): MetadataRoute.Robots {
  */
 export function frameSitemap(config: FrameConfig): MetadataRoute.Sitemap {
   const lastModified = new Date()
+  const base = origin(config)
   return [
-    { url: config.siteUrl, lastModified, changeFrequency: 'monthly', priority: 1 },
+    { url: base, lastModified, changeFrequency: 'monthly', priority: 1 },
     ...config.sitemap.map((path) => ({
-      url: `${config.siteUrl}${path}`,
+      url: `${base}${path}`,
       lastModified,
       changeFrequency: 'monthly' as const,
       priority: 0.8,

@@ -26,6 +26,7 @@ export function FrameFooter({
       </SiteFooter>
     )
   }
+  // Insertion order of the keys, which is why footer keys must not be integer-like (those sort first).
   const lines = Object.values(copy.footer ?? {})
   const [first, ...rest] = lines
   if (first === undefined) return null
