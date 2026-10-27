@@ -173,6 +173,38 @@ class AssembleTest(unittest.TestCase):
         fonts = (self.app / "src/site/fonts.ts").read_text()
         self.assertNotIn("-ext", fonts)
 
+    def test_roles_and_tokens_tie_the_themes_html_root(self) -> None:
+        # fishlamp declares its font roles on `html:root` (0,1,1); a `:root` (0,1,0) rule loses
+        # to it whatever its order, so the roles and the site's tokens are written at the same
+        # specificity, after the theme, and source order decides as the header says.
+        self.config.update(
+            {
+                "tokens": "theme.css",
+                "fonts": [
+                    {
+                        "variable": "--font-outfit",
+                        "role": "--font-display",
+                        "files": [{"path": "fonts/outfit-600.woff2", "weight": "600", "style": "normal"}],
+                    }
+                ],
+            }
+        )
+        sheet = "/* a :root { comment } */\n:root {\n  --a: ':root';\n}\n:root { --b: 2px; }\n"
+        self.write("site/theme.css", sheet)
+        self.write("site/fonts/outfit-600.woff2", "woff2")
+        self.assert_ok(self.assemble())
+        css = (self.app / "app/theme.css").read_text()
+        self.assertIn("html:root {\n  --font-mono: var(--font-iosevka)", css)
+        self.assertIn("/* a :root { comment } */\nhtml:root {\n  --a: ':root';\n}\nhtml:root { --b: 2px; }\n", css)
+        self.assertNotRegex(css, r"(?m)^:root")
+
+    def test_the_reset_comes_first(self) -> None:
+        # The kit draws on a host that resets the document (every pre-template site imported
+        # tailwind): without preflight, body keeps the browser's 8px margin.
+        self.assert_ok(self.assemble())
+        css = (self.app / "app/theme.css").read_text()
+        self.assertLess(css.index('@import "tailwindcss";'), css.index("themes/styles/fishlamp.css"))
+
     def test_a_font_role_list_fills_each_property(self) -> None:
         fallback = "'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace"
         self.config["fonts"] = [

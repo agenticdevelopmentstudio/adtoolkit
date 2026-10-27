@@ -62,6 +62,17 @@ describe('frame.css', () => {
     expect(body).toContain('border-radius: 22.37%')
   })
 
+  it('keeps the hero status pill its own height beside a button', () => {
+    // The actions row is a stretching flex row: the pill would grow to the button's height with
+    // its words pinned to the top.
+    expect(ruleBody(frame(), '.lp-hero-actions .lp-status')).toContain('align-self: center')
+  })
+
+  it('centres the app icon over the headline, with room under it', () => {
+    // A block <img> in the hero's text-align:center wrap sits flush left without auto margins.
+    expect(ruleBody(frame(), '.st-mark--app-icon')).toContain('margin: 0 auto 1.8rem')
+  })
+
   it('uses no !important', () => {
     expect(stripComments(frame())).not.toContain('!important')
     expect(stripComments(bridge())).not.toContain('!important')

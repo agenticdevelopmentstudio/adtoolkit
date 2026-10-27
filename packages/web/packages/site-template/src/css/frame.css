@@ -57,16 +57,26 @@
   text-transform: var(--st-hero-meta-transform, uppercase);
 }
 
+/* A status pill in the hero's actions (the frame puts it first in that row) keeps its own
+ * height: the row is a stretching flex row, which would grow the pill to the button beside it
+ * and leave its words pinned to the top. */
+.lp-hero-actions .lp-status {
+  align-self: center;
+}
+
 /* The mark when it is a glyph: the kit styles it; the template only names it. */
 .st-mark--glyph {
   display: inline-block;
 }
 
-/* The mark when it is an app icon: the iOS squircle's corner radius, 22.37% of the side. */
+/* The mark when it is an app icon: the iOS squircle's corner radius, 22.37% of the side. A
+ * block, so the auto margins centre it in the hero's text-align:center wrap; the bottom margin
+ * is its air above the headline. */
 .st-mark--app-icon {
   display: block;
   width: min(176px, 40vw);
   height: auto;
+  margin: 0 auto 1.8rem;
   aspect-ratio: 1;
   border-radius: 22.37%;
 }
