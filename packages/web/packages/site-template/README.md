@@ -49,10 +49,12 @@ Each theme names its stylesheet and the fonts it needs, which the assembler self
   base cut covers the glyphs the sites use.
 - **`role` and `fallback`.** next/font hashes the family name, so a theme sheet that names its
   family (`--font-mono: 'Iosevka', …`) never finds the self-hosted face. A font's `role` names
-  the theme custom property it fills. The assembler writes
-  `:root { <role>: var(<variable>), <fallback>; }` into `app/theme.css`, after the theme and
-  kit sheets and before the site's tokens. `fallback` is the rest of the theme's own stack. A
-  site's `fonts` in `site.json` take the same two keys.
+  the theme custom property it fills, or a list of them. For each one the assembler writes
+  `<role>: var(<variable>), <fallback>;` into a `:root` rule in `app/theme.css`, after the theme
+  and kit sheets and before the site's tokens. `fallback` is the rest of the theme's own stack.
+  fishlamp lists `--font-mono`, `--font-sans` and `--font-serif`, every property its sheet names
+  `'Iosevka'` in. `--font-display` is left out because it follows `--font-serif`. A site's
+  `fonts` in `site.json` take the same two keys.
 
 ## The two barrels
 

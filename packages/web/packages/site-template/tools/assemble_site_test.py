@@ -173,6 +173,49 @@ class AssembleTest(unittest.TestCase):
         fonts = (self.app / "src/site/fonts.ts").read_text()
         self.assertNotIn("-ext", fonts)
 
+    def test_a_font_role_list_fills_each_property(self) -> None:
+        fallback = "'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace"
+        self.config["fonts"] = [
+            {
+                "variable": "--font-outfit",
+                "role": ["--font-display", "--font-heading"],
+                "fallback": "sans-serif",
+                "files": [{"path": "fonts/outfit-600.woff2", "weight": "600", "style": "normal"}],
+            }
+        ]
+        self.write("site/fonts/outfit-600.woff2", "woff2")
+        self.assert_ok(self.assemble())
+        css = (self.app / "app/theme.css").read_text()
+        # fishlamp's own list: every property its sheet names 'Iosevka' in, display excepted.
+        for role in ("--font-mono", "--font-sans", "--font-serif"):
+            self.assertIn(f"{role}: var(--font-iosevka), {fallback};", css)
+        self.assertNotIn("--font-display: var(--font-iosevka)", css)
+        self.assertIn("--font-display: var(--font-outfit), sans-serif;", css)
+        self.assertIn("--font-heading: var(--font-outfit), sans-serif;", css)
+
+    def test_a_role_filled_twice_is_refused(self) -> None:
+        self.config["fonts"] = [
+            {
+                "variable": "--font-outfit",
+                "role": ["--font-display", "--font-sans"],
+                "files": [{"path": "fonts/outfit-600.woff2", "weight": "600", "style": "normal"}],
+            }
+        ]
+        self.write("site/fonts/outfit-600.woff2", "woff2")
+        self.assert_refused(self.assemble(), "'--font-sans'", "already filled")
+
+    def test_a_malformed_role_is_refused(self) -> None:
+        for role in ([], ["font-mono"], 3):
+            with self.subTest(role=role):
+                self.config["fonts"] = [
+                    {
+                        "variable": "--font-outfit",
+                        "role": role,
+                        "files": [{"path": "fonts/outfit-600.woff2", "weight": "600", "style": "normal"}],
+                    }
+                ]
+                self.assert_refused(self.assemble(), "fonts[0].role")
+
     def test_site_inputs_are_copied_and_linked(self) -> None:
         self.config.update(
             {

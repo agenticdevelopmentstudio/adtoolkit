@@ -101,9 +101,15 @@
         "properties": {
           "variable": { "type": "string", "pattern": "^--[a-z][a-z0-9-]*$" },
           "role": {
-            "type": "string",
-            "pattern": "^--[a-z][a-z0-9-]*$",
-            "description": "The theme custom property this font fills, e.g. `--font-display`: `app/theme.css` gets `:root { <role>: var(<variable>), <fallback>; }`. next/font hashes the family name, so this is how a theme's role reaches the self-hosted face."
+            "anyOf": [
+              { "type": "string", "pattern": "^--[a-z][a-z0-9-]*$" },
+              {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "pattern": "^--[a-z][a-z0-9-]*$" }
+              }
+            ],
+            "description": "The theme custom property (or properties) this font fills, e.g. `--font-display`: `app/theme.css` gets `:root { <role>: var(<variable>), <fallback>; }`, one declaration per role. next/font hashes the family name, so this is how a theme's role reaches the self-hosted face."
           },
           "fallback": {
             "type": "string",

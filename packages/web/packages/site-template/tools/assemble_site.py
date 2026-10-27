@@ -111,6 +111,17 @@ def check_schema(value: object, schema: dict, where: str, problems: list[str]) -
     """A hand-written checker for the subset of JSON Schema `site.schema.json` uses. A closed
     object (`additionalProperties: false`) refuses every key the schema does not list."""
     label = f"site/site.json: {where}" if where else "site/site.json"
+    if "anyOf" in schema:
+        # Passes if any branch passes; otherwise report the branch that got furthest (fewest problems).
+        attempts = []
+        for branch in schema["anyOf"]:
+            found: list[str] = []
+            check_schema(value, branch, where, found)
+            if not found:
+                return
+            attempts.append(found)
+        problems.extend(min(attempts, key=len))
+        return
     if "enum" in schema and value not in schema["enum"]:
         allowed = ", ".join(repr(v) for v in schema["enum"])
         problems.append(f"{label}: {value!r} is not one of {allowed}")
@@ -401,16 +412,16 @@ def plan_font_roles(fonts: list[tuple[dict, Path, str]], problems: list[str]) ->
     lines: list[str] = []
     seen: dict[str, str] = {}
     for font, _base, label in fonts:
-        role = font.get("role")
-        if role is None:
-            continue
-        if role in seen:
-            problems.append(f"{label}: the role '{role}' is already filled by {seen[role]}")
-            continue
-        seen[role] = label
+        roles = font.get("role", [])
         fallback = font.get("fallback")
         stack = f"var({font['variable']})" + (f", {fallback}" if fallback else "")
-        lines.append(f"  {role}: {stack};\n")
+        # One role or several: a family can fill every property a theme names it in.
+        for role in [roles] if isinstance(roles, str) else roles:
+            if role in seen:
+                problems.append(f"{label}: the role '{role}' is already filled by {seen[role]}")
+                continue
+            seen[role] = label
+            lines.append(f"  {role}: {stack};\n")
     if not lines:
         return ""
     return "\n/* The fonts' roles: each theme property, pointed at its self-hosted face. */\n:root {\n" + "".join(lines) + "}\n"

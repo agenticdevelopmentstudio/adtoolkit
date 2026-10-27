@@ -106,12 +106,14 @@ describe('themes.json', () => {
   it('gives each weight and style one face, and fills a theme role', () => {
     const themes = JSON.parse(read(join(pkg, 'themes.json'))) as Record<
       string,
-      { fonts: { role?: string; files: { weight: string; style: string }[] }[] }
+      { fonts: { role?: string | string[]; files: { weight: string; style: string }[] }[] }
     >
     for (const font of themes.fishlamp.fonts) {
       const faces = font.files.map((f) => `${f.weight}/${f.style}`)
       expect(new Set(faces).size).toBe(faces.length)
     }
-    expect(themes.fishlamp.fonts.map((font) => font.role)).toContain('--font-mono')
+    const roles = themes.fishlamp.fonts.flatMap((font) => font.role ?? [])
+    // Every property fishlamp.css names 'Iosevka' in; --font-display follows --font-serif.
+    expect(roles).toEqual(expect.arrayContaining(['--font-mono', '--font-sans', '--font-serif']))
   })
 })
