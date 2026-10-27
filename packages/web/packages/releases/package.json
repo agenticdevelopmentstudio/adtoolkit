@@ -1,7 +1,7 @@
 {
   "name": "@agenticdevelopertoolkit/releases",
   "version": "0.1.0",
-  "description": "Reads a macOS app's public releases repo (releases.json, release notes, Sparkle appcast.xml) and serves it from a site — a validated loader, a newest-first latest lookup and an appcast proxy handler. Knows no product: every call takes the repo's raw base URL.",
+  "description": "Reads a macOS app's public releases repo (releases.json, release notes, Sparkle appcast.xml) and serves it from a site — a validated loader, a newest-first latest lookup, an appcast proxy handler, a latest-installer redirect handler, and what a downloads page shows a release's facts and words with (fill, releaseDate, releaseSize, releaseSystem, releaseNotesUrl). Knows no product: every call takes the repo's raw base URL.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",

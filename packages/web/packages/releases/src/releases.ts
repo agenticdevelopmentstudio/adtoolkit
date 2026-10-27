@@ -161,10 +161,23 @@ export async function loadReleases(rawBase: string): Promise<ReleasesJson> {
   }
 }
 
+/** The release `latest` names, or `null` when there is none. */
+export function latestRelease(r: ReleasesJson): ReleaseEntry | null {
+  if (r.latest === null) return null;
+  return r.releases.find((release) => release.version === r.latest) ?? null;
+}
+
 /** The pkg or zip of the release `latest` names, or `null` when there is none. */
 export function latestAsset(r: ReleasesJson, kind: "pkg" | "zip"): ReleaseAsset | null {
-  if (r.latest === null) return null;
-  return r.releases.find((release) => release.version === r.latest)?.[kind] ?? null;
+  return latestRelease(r)?.[kind] ?? null;
+}
+
+/**
+ * The address of a release's notes file — what a downloads page links to. `notes` is
+ * an entry's own path, which `parseReleases` already held to `notes/<safe-name>.md`.
+ */
+export function releaseNotesUrl(rawBase: string, notes: string): string {
+  return `${trimBase(rawBase)}/${notes}`;
 }
 
 const SAFE_VERSION_RE = /^[0-9A-Za-z._-]+$/;
