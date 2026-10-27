@@ -38,6 +38,22 @@ From `@agenticdevelopertoolkit/site-template/client` (`'use client'`):
 
 If the page's hero data carries a `status`, the pill is rendered first in the hero's actions row.
 
+## Themes (`themes.json`)
+
+Each theme names its stylesheet and the fonts it needs, which the assembler self-hosts through
+`next/font/local`. Font file paths are relative to the toolkit's `packages/web/`.
+
+- **One face per weight and style.** Only the base cut of each face is listed, not the `-ext` one.
+  `next/font/local` cannot give a file its own `unicode-range`, so two files with the same
+  weight and style would become two identical faces, and the later one would win every glyph. The
+  base cut covers the glyphs the sites use.
+- **`role` and `fallback`.** next/font hashes the family name, so a theme sheet that names its
+  family (`--font-mono: 'Iosevka', …`) never finds the self-hosted face. A font's `role` names
+  the theme custom property it fills. The assembler writes
+  `:root { <role>: var(<variable>), <fallback>; }` into `app/theme.css`, after the theme and
+  kit sheets and before the site's tokens. `fallback` is the rest of the theme's own stack. A
+  site's `fonts` in `site.json` take the same two keys.
+
 ## The two barrels
 
 `src/index.ts` and `src/client-barrel.ts` are separate tsup builds so the server barrel can never

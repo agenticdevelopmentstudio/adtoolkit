@@ -4,13 +4,12 @@
     "fonts": [
       {
         "variable": "--font-iosevka",
+        "role": "--font-mono",
+        "fallback": "'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace",
         "files": [
           { "path": "packages/themes/src/fonts/iosevka-400.woff2", "weight": "400", "style": "normal" },
-          { "path": "packages/themes/src/fonts/iosevka-400-ext.woff2", "weight": "400", "style": "normal" },
           { "path": "packages/themes/src/fonts/iosevka-400-italic.woff2", "weight": "400", "style": "italic" },
-          { "path": "packages/themes/src/fonts/iosevka-400-italic-ext.woff2", "weight": "400", "style": "italic" },
-          { "path": "packages/themes/src/fonts/iosevka-700.woff2", "weight": "700", "style": "normal" },
-          { "path": "packages/themes/src/fonts/iosevka-700-ext.woff2", "weight": "700", "style": "normal" }
+          { "path": "packages/themes/src/fonts/iosevka-700.woff2", "weight": "700", "style": "normal" }
         ]
       }
     ]

@@ -100,6 +100,15 @@
         "required": ["variable", "files"],
         "properties": {
           "variable": { "type": "string", "pattern": "^--[a-z][a-z0-9-]*$" },
+          "role": {
+            "type": "string",
+            "pattern": "^--[a-z][a-z0-9-]*$",
+            "description": "The theme custom property this font fills, e.g. `--font-display`: `app/theme.css` gets `:root { <role>: var(<variable>), <fallback>; }`. next/font hashes the family name, so this is how a theme's role reaches the self-hosted face."
+          },
+          "fallback": {
+            "type": "string",
+            "description": "The font stack after the face in its `role`, e.g. `ui-sans-serif, sans-serif`. Only used with `role`."
+          },
           "files": {
             "type": "array",
             "minItems": 1,

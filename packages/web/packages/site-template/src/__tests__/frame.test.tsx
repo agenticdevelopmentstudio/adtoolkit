@@ -272,4 +272,10 @@ describe('frame metadata helpers', () => {
   it('frameViewport carries the theme color', () => {
     expect(frameViewport(config).themeColor).toBe('#0b0a09')
   })
+
+  it('frameViewport carries the iOS focus-zoom guard and the Android keyboard resize', () => {
+    const viewport = frameViewport(config)
+    expect(viewport.maximumScale).toBe(1)
+    expect(viewport.interactiveWidget).toBe('resizes-content')
+  })
 })

@@ -134,6 +134,45 @@ class AssembleTest(unittest.TestCase):
         template_pkg = json.loads((ASSEMBLE.parent.parent / "package.json").read_text())
         self.assertEqual(manifest["version"], template_pkg["version"])
 
+    def test_font_roles_point_the_theme_at_the_hosted_faces(self) -> None:
+        # next/font hashes the family name, so fishlamp's `--font-mono: 'Iosevka', …` never finds
+        # the self-hosted face; the role rule points it at the face's variable instead.
+        self.config.update(
+            {
+                "tokens": "theme.css",
+                "fonts": [
+                    {
+                        "variable": "--font-outfit",
+                        "role": "--font-display",
+                        "fallback": "ui-sans-serif, sans-serif",
+                        "files": [{"path": "fonts/outfit-600.woff2", "weight": "600", "style": "normal"}],
+                    },
+                    {
+                        "variable": "--font-plain",
+                        "files": [{"path": "fonts/plain-400.woff2", "weight": "400", "style": "normal"}],
+                    },
+                ],
+            }
+        )
+        self.write("site/theme.css", ":root {\n  --a: 1px;\n}\n")
+        self.write("site/fonts/outfit-600.woff2", "woff2")
+        self.write("site/fonts/plain-400.woff2", "woff2")
+        self.assert_ok(self.assemble())
+        css = (self.app / "app/theme.css").read_text()
+        mono = (
+            "--font-mono: var(--font-iosevka), 'Iosevka Fallback Menlo', "
+            "'Iosevka Fallback Courier', ui-monospace, monospace;"
+        )
+        display = "--font-display: var(--font-outfit), ui-sans-serif, sans-serif;"
+        self.assertIn(mono, css)
+        self.assertIn(display, css)
+        self.assertNotIn("--font-plain", css)
+        order = ["site-template/css/frame.css", mono, display, "/* site/theme.css */"]
+        positions = [css.index(needle) for needle in order]
+        self.assertEqual(positions, sorted(positions))
+        fonts = (self.app / "src/site/fonts.ts").read_text()
+        self.assertNotIn("-ext", fonts)
+
     def test_site_inputs_are_copied_and_linked(self) -> None:
         self.config.update(
             {

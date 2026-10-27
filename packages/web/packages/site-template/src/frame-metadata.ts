@@ -70,6 +70,12 @@ export function frameViewport(config: FrameConfig): Viewport {
     themeColor: config.themeColor,
     width: 'device-width',
     initialScale: 1,
+    // Stops iOS zooming on focus; the landing kit's DeckScript strips it back off every browser
+    // that isn't iOS, so pinch-zoom still works there.
+    maximumScale: 1,
+    // Android shrinks the layout viewport when its keyboard opens, so a bottom-anchored fixed
+    // element (the bitbag dock) lifts on its own. iOS ignores this.
+    interactiveWidget: 'resizes-content',
   }
 }
 
