@@ -48,11 +48,10 @@ const type = (label: string, value: string) =>
 const save = () => fireEvent.click(screen.getByRole("button", { name: "Save" }));
 
 describe("ConfigSetDialog", () => {
-  it("explains that paid services must use the provider's own API host", () => {
+  it("explains that any personas service, OpenAI-compatible hosts included, can run a set", () => {
     mount();
-    expect(
-      screen.getByText(/Paid services must use the provider's own API host\./),
-    ).toBeTruthy();
+    expect(screen.getByText(/OpenAI-compatible host such as Groq/)).toBeTruthy();
+    expect(screen.queryByText(/provider's own API host/)).toBeNull();
   });
 
   it("saves a local set: free-text model, no service, timeout in seconds sent as ms", async () => {

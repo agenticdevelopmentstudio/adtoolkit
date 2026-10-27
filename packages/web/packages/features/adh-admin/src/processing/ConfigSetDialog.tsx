@@ -147,7 +147,10 @@ export function ConfigSetDialog({
               disabled={save.busy}
             />
           </Field>
-          <Field label="Service" hint="Where the model runs. Paid services must use the provider's own API host.">
+          <Field
+            label="Service"
+            hint="Where the model runs: one of your personas services (OpenAI, Anthropic, Gemini, or an OpenAI-compatible host such as Groq, Cerebras, Fireworks or Together), or the node's own Ollama."
+          >
             <Select
               aria-label="Service"
               value={form.serviceId}
