@@ -2,9 +2,17 @@
 // skeleton in the toolkit and re-assemble.
 import { fileURLToPath } from 'node:url'
 import type { NextConfig } from 'next'
+import { frameNext } from '@agenticdevelopertoolkit/site-template/next'
+import { nextSite } from './src/site/next'
 
 /** The pnpm workspace root: the app's parent (`websites/`), where the site's lockfile lives. */
 const WORKSPACE_ROOT = fileURLToPath(new URL('..', import.meta.url))
+
+/**
+ * `site.json`'s `rewrites` and `publicEnv`, resolved now, as the config loads, so a variable the
+ * build needs and cannot find fails `next build` by name rather than a request at runtime.
+ */
+const site = frameNext(nextSite, process.env)
 
 /**
  * Two cross-cutting concerns, carried over from the fleet's `with<Site>Config` wrappers.
@@ -38,6 +46,8 @@ function frameConfig(config: NextConfig): NextConfig {
 export default frameConfig({
   // Hide the floating Next.js dev-tools indicator in `next dev`.
   devIndicators: false,
+  env: site.env,
+  ...(site.rewrites.length === 0 ? {} : { rewrites: async () => site.rewrites }),
   // No transpilePackages: every toolkit package builds a dist with its `'use client'`
   // directives preserved, precisely so a Next consumer does not need it.
 })

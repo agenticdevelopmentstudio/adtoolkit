@@ -22,6 +22,11 @@
       "types": "./dist/client-barrel.d.ts",
       "import": "./dist/client.js"
     },
+    "./next": {
+      "types": "./dist/frame-next.d.ts",
+      "import": "./dist/next.js",
+      "default": "./dist/next.js"
+    },
     "./css/frame.css": "./dist/css/frame.css",
     "./css/bridge.css": "./dist/css/bridge.css",
     "./themes.json": "./themes.json"

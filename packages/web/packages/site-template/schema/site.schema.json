@@ -118,6 +118,61 @@
       "description": "Extra toolkit packages, as directories under the toolkit's `packages/web/packages/` (e.g. `releases`, `features/bitbag`), linked into the app.",
       "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*(/[a-z0-9][a-z0-9-]*)?$" }
     },
+    "analytics": {
+      "type": "boolean",
+      "default": false,
+      "description": "Mount Vercel Web Analytics and Speed Insights in the root layout, on production deploys only (`DEPLOYMENT_ENV=production`). The assembler adds `@vercel/analytics` and `@vercel/speed-insights` to the app's dependencies."
+    },
+    "rewrites": {
+      "type": "array",
+      "description": "Next rewrites, e.g. a same-origin `/api/:path*` proxied to a backend. A `destination` may name environment variables as `${NAME}` or `${NAME:-default}`, substituted when `next.config.ts` loads: the environment's value if set and non-empty, else the `envDefaults` entry, else the inline default; with none, the build fails naming the variable.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "destination"],
+        "properties": {
+          "source": { "type": "string", "pattern": "^/" },
+          "destination": {
+            "type": "string",
+            "pattern": "^(?:[^$]|\\$(?!\\{)|\\$\\{[A-Z_][A-Z0-9_]*(?::-[^}]*)?\\})*$"
+          }
+        }
+      }
+    },
+    "publicEnv": {
+      "type": "array",
+      "description": "Variables passed through to Next's `env`, so client code reads them inlined at build. Each resolves as a `rewrites` reference does (environment, then `envDefaults`); one with no value anywhere is left out.",
+      "items": { "type": "string", "pattern": "^[A-Z_][A-Z0-9_]*$" }
+    },
+    "envDefaults": {
+      "type": "object",
+      "description": "Fallbacks for variables the environment leaves unset or empty, by name: a string (which may itself use `${…}`), or `{ by, values, local? }` — the value `values[<by>]` names, with `local` for a build off Vercel whose `by` names none (on Vercel that fails the build).",
+      "propertyNames": { "pattern": "^[A-Z_][A-Z0-9_]*$" },
+      "additionalProperties": {
+        "anyOf": [
+          { "type": "string", "pattern": "^(?:[^$]|\\$(?!\\{)|\\$\\{[A-Z_][A-Z0-9_]*(?::-[^}]*)?\\})*$" },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["by", "values"],
+            "properties": {
+              "by": { "type": "string", "pattern": "^[A-Z_][A-Z0-9_]*$" },
+              "values": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string",
+                  "pattern": "^(?:[^$]|\\$(?!\\{)|\\$\\{[A-Z_][A-Z0-9_]*(?::-[^}]*)?\\})*$"
+                }
+              },
+              "local": {
+                "type": "string",
+                "pattern": "^(?:[^$]|\\$(?!\\{)|\\$\\{[A-Z_][A-Z0-9_]*(?::-[^}]*)?\\})*$"
+              }
+            }
+          }
+        ]
+      }
+    },
     "fonts": {
       "type": "array",
       "description": "Fonts beyond the theme's: one `next/font/local` family each, exposed as its CSS variable on `<html>`.",
@@ -150,7 +205,11 @@
               "additionalProperties": false,
               "required": ["path", "weight", "style"],
               "properties": {
-                "path": { "type": "string", "pattern": "\\.woff2$" },
+                "path": {
+                  "type": "string",
+                  "pattern": "\\.(woff2|woff|ttf|otf)$",
+                  "description": "A font file under `site/`: woff2, woff, ttf or otf — the formats `next/font/local` serves."
+                },
                 "weight": { "type": "string" },
                 "style": { "type": "string" }
               }

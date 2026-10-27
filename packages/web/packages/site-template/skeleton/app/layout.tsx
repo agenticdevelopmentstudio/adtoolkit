@@ -2,14 +2,12 @@
 // skeleton in the toolkit and re-assemble.
 import type { Metadata, Viewport } from 'next'
 import type { ReactElement, ReactNode } from 'react'
-import { FrameFooter, frameMetadata, frameViewport } from '@agenticdevelopertoolkit/site-template'
+import { frameMetadata, frameViewport } from '@agenticdevelopertoolkit/site-template'
 import type { FrameCopy } from '@agenticdevelopertoolkit/site-template'
-import { SiteBitbag, SiteChrome } from '@agenticdevelopertoolkit/site-template/client'
-import landing from '../src/landing'
 import siteCopy from '../src/content/site/site.json'
+import { SiteAnalytics } from '../src/site/analytics'
 import { config } from '../src/site/config'
 import { fontVariables } from '../src/site/fonts'
-import { slots } from '../src/site/slots'
 import './theme.css'
 
 // The site's copy, typed: a heading renamed in the markdown is a typecheck failure here
@@ -21,9 +19,10 @@ export const metadata: Metadata = frameMetadata(copy, config)
 export const viewport: Viewport = frameViewport(config)
 
 /**
- * Every route's frame: the bar and drawer above, the footer and bitbag below. They are the
- * page's siblings rather than its children — `<main>` is the bands' flow parent, and the kit's
- * last-band dock clearance holds only while its last child is a band.
+ * Every route's document: the fonts, the theme, the metadata, the site's structured data and its
+ * analytics — and nothing visible. The frame's bar, drawer, footer and bitbag are the `(frame)`
+ * group's layout, so a site's `app-routes` (an app behind sign-in, an auth callback) render
+ * bare, with their own layouts, at the same URLs they would have had inside it.
  */
 export default function RootLayout({ children }: { children: ReactNode }): ReactElement {
   return (
@@ -39,10 +38,8 @@ export default function RootLayout({ children }: { children: ReactNode }): React
             dangerouslySetInnerHTML={{ __html: JSON.stringify(config.jsonLd).replace(/</g, '\\u003c') }}
           />
         )}
-        <SiteChrome copy={copy} page={landing} extra={config.drawerExtra} />
         {children}
-        <FrameFooter copy={copy} slot={slots.footer} />
-        {slots.bitbag === undefined ? <SiteBitbag /> : <slots.bitbag />}
+        <SiteAnalytics />
       </body>
     </html>
   )

@@ -73,7 +73,8 @@ class Capture:
 
 def route_slug(route: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9]+", "-", route).strip("-")
-    return slug or "home"
+    # `index`, not `home`: a site with a `/home` route would overwrite `/`'s shots with its own.
+    return slug or "index"
 
 
 def shot_name(route: str, width: int, height: int, state: str) -> str:

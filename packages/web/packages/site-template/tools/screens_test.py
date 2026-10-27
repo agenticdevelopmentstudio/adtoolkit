@@ -17,8 +17,12 @@ import screens  # noqa: E402
 
 
 class SlugTest(unittest.TestCase):
-    def test_root_is_home(self) -> None:
-        self.assertEqual(screens.route_slug("/"), "home")
+    def test_root_is_index(self) -> None:
+        self.assertEqual(screens.route_slug("/"), "index")
+
+    def test_root_and_home_never_share_a_slug(self) -> None:
+        # A site with a `/home` route would otherwise overwrite `/`'s shots with its own.
+        self.assertNotEqual(screens.route_slug("/"), screens.route_slug("/home"))
 
     def test_nested_route(self) -> None:
         self.assertEqual(screens.route_slug("/docs/getting started/"), "docs-getting-started")
@@ -26,7 +30,7 @@ class SlugTest(unittest.TestCase):
 
 class FilenameTest(unittest.TestCase):
     def test_shot_name(self) -> None:
-        self.assertEqual(screens.shot_name("/", 1280, 800, "rest"), "home-1280x800-rest.png")
+        self.assertEqual(screens.shot_name("/", 1280, 800, "rest"), "index-1280x800-rest.png")
         self.assertEqual(screens.shot_name("/about", 390, 844, "scrolled"), "about-390x844-scrolled.png")
 
     def test_a_route_yields_four_shots(self) -> None:
@@ -34,10 +38,10 @@ class FilenameTest(unittest.TestCase):
         self.assertEqual(
             names,
             [
-                "home-1280x800-rest.png",
-                "home-1280x800-scrolled.png",
-                "home-390x844-rest.png",
-                "home-390x844-scrolled.png",
+                "index-1280x800-rest.png",
+                "index-1280x800-scrolled.png",
+                "index-390x844-rest.png",
+                "index-390x844-scrolled.png",
             ],
         )
 

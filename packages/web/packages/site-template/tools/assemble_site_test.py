@@ -74,7 +74,8 @@ class AssembleTest(unittest.TestCase):
         self.assert_ok(self.assemble())
         for rel in [
             "app/layout.tsx",
-            "app/page.tsx",
+            "app/(frame)/layout.tsx",
+            "app/(frame)/page.tsx",
             "app/robots.ts",
             "app/sitemap.ts",
             "app/not-found.tsx",
@@ -87,11 +88,14 @@ class AssembleTest(unittest.TestCase):
             "src/site/config.ts",
             "src/site/slots.tsx",
             "src/site/fonts.ts",
+            "src/site/next.ts",
+            "src/site/analytics.tsx",
             "src/fonts/iosevka-400.woff2",
             ".site-template.json",
         ]:
             self.assertTrue((self.app / rel).is_file(), rel)
         self.assertFalse((self.app / "next-env.d.ts").exists())
+        self.assertFalse((self.app / "app/page.tsx").exists())
         self.assert_ok(run(self.site, "--check"))
 
     def test_rerun_is_idempotent(self) -> None:
@@ -278,7 +282,7 @@ class AssembleTest(unittest.TestCase):
         for rel in [
             "src/components/hero.tsx",
             "src/components/parts/features.tsx",
-            "app/downloads/page.tsx",
+            "app/(frame)/downloads/page.tsx",
             "src/releases/config.ts",
             "public/app-icon.png",
             "vercel.json",
@@ -303,10 +307,10 @@ class AssembleTest(unittest.TestCase):
 
     def test_check_names_an_edited_file(self) -> None:
         self.assert_ok(self.assemble())
-        (self.app / "app/page.tsx").write_text("// edited by hand\n")
+        (self.app / "app/(frame)/page.tsx").write_text("// edited by hand\n")
         result = run(self.site, "--check")
         self.assertEqual(result.returncode, 1, result.stderr)
-        self.assertIn("app/page.tsx", result.stdout)
+        self.assertIn("app/(frame)/page.tsx", result.stdout)
         self.assertNotIn("app/layout.tsx", result.stdout)
 
     def test_check_before_any_assemble_lists_missing_files(self) -> None:
@@ -325,7 +329,11 @@ class AssembleTest(unittest.TestCase):
 
     def test_route_collision_with_the_template_is_refused(self) -> None:
         self.write("site/routes/layout.tsx", "export default function L() { return null }\n")
-        self.assert_refused(self.assemble(), "site/routes/layout.tsx", "app/layout.tsx")
+        self.assert_refused(self.assemble(), "site/routes/layout.tsx", "app/(frame)/layout.tsx")
+
+    def test_app_route_collision_with_the_root_layout_is_refused(self) -> None:
+        self.write("site/app-routes/layout.tsx", "export default function L() { return null }\n")
+        self.assert_refused(self.assemble(), "site/app-routes/layout.tsx", "app/layout.tsx")
 
     def test_site_src_collision_with_a_generated_file_is_refused(self) -> None:
         self.write("site/src/site/config.ts", "export const x = 1\n")
@@ -387,7 +395,7 @@ class AssembleTest(unittest.TestCase):
         slots = (self.app / "src/site/slots.tsx").read_text()
         self.assertIn("import { SiteVoice as BitbagSlot } from '../components/bitbag'", slots)
         self.assertIn("  bitbag: BitbagSlot,", slots)
-        self.assertIn("slots.bitbag", (self.app / "app/layout.tsx").read_text())
+        self.assertIn("slots.bitbag", (self.app / "app/(frame)/layout.tsx").read_text())
 
     def test_the_site_shot_is_worded_from_the_copy_once(self) -> None:
         self.assert_ok(self.assemble())
@@ -733,6 +741,181 @@ class AssembleTest(unittest.TestCase):
         module = load_assembler()
         schema = json.loads((ASSEMBLE.parent.parent / "schema" / "site.schema.json").read_text())
         module.check_schema({"output": "websites/main", "port": 1}, schema, "", [])
+
+    # --- route groups: the frame's routes and the bare app routes -----------------------------
+
+    def test_the_frame_is_a_route_group_and_the_root_is_bare(self) -> None:
+        self.assert_ok(self.assemble())
+        root = (self.app / "app/layout.tsx").read_text()
+        frame = (self.app / "app/(frame)/layout.tsx").read_text()
+        for name in ("SiteChrome", "FrameFooter", "SiteBitbag"):
+            self.assertNotIn(name, root, name)
+            self.assertIn(name, frame, name)
+        self.assertIn("import './theme.css'", root)
+        self.assertIn("fontVariables", root)
+        self.assertIn("export const metadata", root)
+        self.assertIn("<SiteAnalytics />", root)
+        self.assertIn("LandingFrame", (self.app / "app/(frame)/page.tsx").read_text())
+        # Everything a group's file imports from src/ is one level deeper than the root's.
+        for rel in ("app/(frame)/layout.tsx", "app/(frame)/page.tsx"):
+            text = (self.app / rel).read_text()
+            self.assertNotIn("from '../src/", text, rel)
+            self.assertIn("from '../../src/", text, rel)
+        # The 404 and the metadata routes stay at the root, outside the frame.
+        for rel in ("app/not-found.tsx", "app/robots.ts", "app/sitemap.ts"):
+            self.assertTrue((self.app / rel).is_file(), rel)
+
+    def test_routes_land_inside_the_frame_and_app_routes_outside_it(self) -> None:
+        self.write("site/routes/downloads/page.tsx", "export default function P() { return null }\n")
+        self.write("site/app-routes/home/layout.tsx", "export default function L() { return null }\n")
+        self.write("site/app-routes/home/page.tsx", "export default function P() { return null }\n")
+        self.write("site/app-routes/auth/callback/page.tsx", "export default function P() { return null }\n")
+        self.write("site/app-routes/icon.png", "png")
+        self.assert_ok(self.assemble())
+        for rel in (
+            "app/(frame)/downloads/page.tsx",
+            "app/home/layout.tsx",
+            "app/home/page.tsx",
+            "app/auth/callback/page.tsx",
+            "app/icon.png",
+        ):
+            self.assertTrue((self.app / rel).is_file(), rel)
+        self.assert_ok(run(self.site, "--check"))
+
+    def test_one_url_in_both_trees_is_refused(self) -> None:
+        self.write("site/routes/home/page.tsx", "export default function P() { return null }\n")
+        self.write("site/app-routes/home/page.tsx", "export default function P() { return null }\n")
+        self.assert_refused(self.assemble(), "'/home'", "site/routes/home/page.tsx", "site/app-routes/home/page.tsx")
+
+    def test_an_app_route_at_the_frames_root_url_is_refused(self) -> None:
+        self.write("site/app-routes/page.tsx", "export default function P() { return null }\n")
+        self.assert_refused(self.assemble(), "'/'", "site/app-routes/page.tsx", "skeleton/app/(frame)/page.tsx")
+
+    def test_a_page_and_a_route_handler_at_one_url_are_refused(self) -> None:
+        self.write("site/routes/feed/page.tsx", "export default function P() { return null }\n")
+        self.write("site/app-routes/feed/route.ts", "export function GET() { return new Response() }\n")
+        self.assert_refused(self.assemble(), "'/feed'")
+
+    def test_a_route_group_of_the_sites_own_maps_to_its_url(self) -> None:
+        self.write("site/routes/(docs)/guide/page.tsx", "export default function P() { return null }\n")
+        self.write("site/app-routes/guide/page.tsx", "export default function P() { return null }\n")
+        self.assert_refused(self.assemble(), "'/guide'")
+
+    def test_app_route_css_naming_the_frame_is_refused(self) -> None:
+        self.write("site/app-routes/home/home.css", "html:has(.x) { font-size: 100%; }\n")
+        self.assert_refused(self.assemble(), "site/app-routes/home/home.css", "html")
+
+    # --- rewrites and public env ---------------------------------------------------------------
+
+    def test_no_rewrites_or_public_env_writes_an_empty_next_site(self) -> None:
+        self.assert_ok(self.assemble())
+        text = (self.app / "src/site/next.ts").read_text()
+        self.assertIn("import type { FrameNextSite } from '@agenticdevelopertoolkit/site-template/next'", text)
+        self.assertIn("export const nextSite: FrameNextSite = {", text)
+        self.assertIn("rewrites: [],", text)
+        self.assertIn("publicEnv: [],", text)
+        self.assertIn("envDefaults: {},", text)
+        config = (self.app / "next.config.ts").read_text()
+        self.assertIn("import { frameNext } from '@agenticdevelopertoolkit/site-template/next'", config)
+        self.assertIn("import { nextSite } from './src/site/next'", config)
+
+    def test_rewrites_public_env_and_defaults_reach_the_next_site(self) -> None:
+        self.config.update(
+            {
+                "rewrites": [{"source": "/api/:path*", "destination": "${API_BACKEND_URL}/:path*"}],
+                "publicEnv": ["NEXT_PUBLIC_AUTH_API_URL"],
+                "envDefaults": {
+                    "API_BACKEND_URL": {
+                        "by": "DEPLOYMENT_ENV",
+                        "values": {"production": "https://api.example"},
+                        "local": "https://staging.api.example",
+                    },
+                    "NEXT_PUBLIC_AUTH_API_URL": "${API_BACKEND_URL}",
+                },
+            }
+        )
+        self.assert_ok(self.assemble())
+        text = (self.app / "src/site/next.ts").read_text()
+        self.assertIn('"destination": "${API_BACKEND_URL}/:path*"', text)
+        self.assertIn('"NEXT_PUBLIC_AUTH_API_URL"', text)
+        self.assertIn('"by": "DEPLOYMENT_ENV"', text)
+        self.assertIn('"local": "https://staging.api.example"', text)
+
+    def test_a_malformed_substitution_is_refused(self) -> None:
+        for destination in ("${api}/x", "${API/x", "${}/x", "${API:default}/x"):
+            with self.subTest(destination=destination):
+                self.config["rewrites"] = [{"source": "/a", "destination": destination}]
+                self.assert_refused(self.assemble(), "rewrites[0].destination")
+
+    def test_a_malformed_env_default_is_refused(self) -> None:
+        self.config["envDefaults"] = {"X": "${bad}"}
+        self.assert_refused(self.assemble(), "envDefaults.X")
+
+    def test_a_public_env_name_that_is_not_an_env_name_is_refused(self) -> None:
+        self.config["publicEnv"] = ["next-public-x"]
+        self.assert_refused(self.assemble(), "publicEnv[0]")
+
+    def test_a_rewrite_needs_a_source_and_a_destination(self) -> None:
+        self.config["rewrites"] = [{"source": "/a"}]
+        self.assert_refused(self.assemble(), "rewrites[0]", "'destination'")
+
+    # --- analytics ----------------------------------------------------------------------------
+
+    def test_no_analytics_renders_nothing_and_adds_no_dependency(self) -> None:
+        self.assert_ok(self.assemble())
+        text = (self.app / "src/site/analytics.tsx").read_text()
+        self.assertIn("export function SiteAnalytics(): ReactElement | null", text)
+        self.assertNotIn("@vercel/", text)
+        deps = json.loads((self.app / "package.json").read_text())["dependencies"]
+        self.assertNotIn("@vercel/analytics", deps)
+        self.assertNotIn("@vercel/speed-insights", deps)
+
+    def test_analytics_mounts_vercels_two_in_production(self) -> None:
+        self.config["analytics"] = True
+        self.assert_ok(self.assemble())
+        text = (self.app / "src/site/analytics.tsx").read_text()
+        self.assertIn("import { Analytics } from '@vercel/analytics/next'", text)
+        self.assertIn("import { SpeedInsights } from '@vercel/speed-insights/next'", text)
+        self.assertIn("process.env.DEPLOYMENT_ENV === 'production'", text)
+        deps = json.loads((self.app / "package.json").read_text())["dependencies"]
+        self.assertEqual(deps["@vercel/analytics"], "^2.0.1")
+        self.assertEqual(deps["@vercel/speed-insights"], "^2.0.0")
+
+    def test_analytics_dependencies_are_the_templates_to_pin(self) -> None:
+        self.config.update({"analytics": True, "dependencies": {"@vercel/analytics": "^1.0.0"}})
+        self.assert_refused(self.assemble(), "'@vercel/analytics'")
+
+    def test_analytics_must_be_a_boolean(self) -> None:
+        self.config["analytics"] = "yes"
+        self.assert_refused(self.assemble(), "analytics")
+
+    # --- font formats -------------------------------------------------------------------------
+
+    def test_a_ttf_otf_and_woff_font_are_accepted_and_copied(self) -> None:
+        self.config["fonts"] = [
+            {
+                "variable": "--font-grotesk",
+                "files": [
+                    {"path": "fonts/Grotesk-Variable.ttf", "weight": "300 700", "style": "normal"},
+                    {"path": "fonts/grotesk-italic.otf", "weight": "400", "style": "italic"},
+                    {"path": "fonts/grotesk-old.woff", "weight": "400", "style": "normal"},
+                ],
+            }
+        ]
+        for name in ("Grotesk-Variable.ttf", "grotesk-italic.otf", "grotesk-old.woff"):
+            self.write(f"site/fonts/{name}", name)
+        self.assert_ok(self.assemble())
+        fonts = (self.app / "src/site/fonts.ts").read_text()
+        for name in ("Grotesk-Variable.ttf", "grotesk-italic.otf", "grotesk-old.woff"):
+            self.assertTrue((self.app / "src/fonts" / name).is_file(), name)
+            self.assertIn(f'"../fonts/{name}"', fonts)
+
+    def test_a_font_in_another_format_is_refused(self) -> None:
+        self.config["fonts"] = [
+            {"variable": "--font-x", "files": [{"path": "fonts/x.eot", "weight": "400", "style": "normal"}]}
+        ]
+        self.write("site/fonts/x.eot", "eot")
+        self.assert_refused(self.assemble(), "fonts[0].files[0].path")
 
 
 def load_assembler():  # type: ignore[no-untyped-def]

@@ -3,10 +3,10 @@
 import type { ReactElement } from 'react'
 import { FrameMark, LandingFrame } from '@agenticdevelopertoolkit/site-template'
 import type { FrameCopy } from '@agenticdevelopertoolkit/site-template'
-import landing from '../src/landing'
-import siteCopy from '../src/content/site/site.json'
-import { config } from '../src/site/config'
-import { slots } from '../src/site/slots'
+import landing from '../../src/landing'
+import siteCopy from '../../src/content/site/site.json'
+import { config } from '../../src/site/config'
+import { slots } from '../../src/site/slots'
 
 // Typed for the reason the layout gives.
 const copy: FrameCopy = siteCopy

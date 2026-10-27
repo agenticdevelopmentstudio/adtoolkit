@@ -24,7 +24,7 @@ const shared = {
   ],
 }
 
-// Two independent builds, for the reason landing's tsup.config.ts gives in full: one chunk
+// Independent builds, for the reason landing's tsup.config.ts gives in full: one chunk
 // graph would carry SiteChrome's `'use client'` onto dist/index.js and turn LandingFrame —
 // every band of a site's copy — into a Client Component. tools/check_template_directives.py
 // asserts the outcome.
@@ -42,6 +42,14 @@ export default defineConfig([
     ...shared,
     // clean:false so it adds to, rather than wipes, the build above.
     entry: { client: 'src/client-barrel.ts' },
+    clean: false,
+  },
+  {
+    ...shared,
+    // `./next`: what the skeleton's next.config.ts imports. Node runs it when Next loads the
+    // config, so it is built for node and shares no chunk with the page entries above.
+    entry: { next: 'src/frame-next.ts' },
+    platform: 'node' as const,
     clean: false,
   },
 ])

@@ -10,12 +10,16 @@ writes that app:
 
     skeleton/**            -> <output>/**   (verbatim; skeleton/package.json is the base below)
     site/components/**     -> src/components/**
-    site/routes/**         -> app/**
+    site/routes/**         -> app/(frame)/**   (inside the frame: its bar, drawer, footer, bitbag)
+    site/app-routes/**     -> app/**           (bare: each brings its own layout and providers)
     site/src/**            -> src/**
     site/public/**         -> public/**
     site/app-root/**       -> the app root
-    generated              -> src/site/{config.ts,slots.tsx,fonts.ts,shot.tsx}, src/fonts/*.woff2,
-                              app/theme.css, package.json, .site-template.json
+    generated              -> src/site/{config.ts,slots.tsx,fonts.ts,shot.tsx,next.ts,analytics.tsx},
+                              src/fonts/*, app/theme.css, package.json, .site-template.json
+
+`(frame)` is a route group, so both trees serve the same URLs they would at `app/`; two files
+that would serve one URL, in either tree or the skeleton, are refused.
 
 It never writes or deletes `src/content/**`, `src/landing.json`, `src/landing.tsx` or
 `public/glyph.svg`, which content-buildr owns. `.site-template.json` lists every path it wrote,
@@ -71,11 +75,21 @@ FRAME_SHEETS = [
 # Where each site folder lands in the app.
 SITE_TREES = [
     ("components", "src/components"),
-    ("routes", "app"),
+    ("routes", "app/(frame)"),
+    ("app-routes", "app"),
     ("src", "src"),
     ("public", "public"),
     ("app-root", ""),
 ]
+# The folders whose CSS is part of a page's styles, and so is checked for frame names. CSS under
+# public/ and app-root/ is a static asset served as-is.
+STYLED_TREES = ("components", "routes", "app-routes", "src")
+
+# The files that make a URL in the App Router: a page and a route handler cannot share one.
+ROUTE_FILE = re.compile(r"^(page|route)\.(tsx|ts|jsx|js|mdx)$")
+
+# `analytics: true` mounts these in the root layout; the template pins their ranges.
+ANALYTICS_DEPS = {"@vercel/analytics": "^2.0.1", "@vercel/speed-insights": "^2.0.0"}
 
 # content-buildr's outputs: never written, never deleted.
 PROTECTED_DIRS = ("src/content/",)
@@ -98,6 +112,34 @@ SHOT_TS = (
     "const copy: FrameCopy = siteCopy\n\n"
     "/** The landing kit's `Shot`, worded with the copy's `screenshotPending` unless one shot says otherwise. */\n"
     "export const SiteShot = frameShot(copy.screenshotPending)\n"
+)
+
+# `src/site/analytics.tsx`, which the root layout always renders: nothing, or Vercel's two.
+ANALYTICS_OFF = (
+    f"{HEADER}\n"
+    "import type { ReactElement } from 'react'\n\n"
+    "/** No analytics: site.json does not set `analytics`. */\n"
+    "export function SiteAnalytics(): ReactElement | null {\n"
+    "  return null\n"
+    "}\n"
+)
+ANALYTICS_ON = (
+    f"{HEADER}\n"
+    "import type { ReactElement } from 'react'\n"
+    "import { Analytics } from '@vercel/analytics/next'\n"
+    "import { SpeedInsights } from '@vercel/speed-insights/next'\n\n"
+    "/**\n"
+    " * Vercel Web Analytics and Speed Insights, on production deploys only. `DEPLOYMENT_ENV`, not\n"
+    " * Vercel's own label: every tier's project makes `VERCEL_ENV=production` deployments.\n"
+    " */\n"
+    "export function SiteAnalytics(): ReactElement | null {\n"
+    "  return process.env.DEPLOYMENT_ENV === 'production' ? (\n"
+    "    <>\n"
+    "      <Analytics />\n"
+    "      <SpeedInsights />\n"
+    "    </>\n"
+    "  ) : null\n"
+    "}\n"
 )
 
 
@@ -521,7 +563,7 @@ def font_identifier(variable: str) -> str:
 
 def plan_fonts(plan: AppPlan, fonts: list[tuple[dict, Path, str]]) -> str:
     """`src/site/fonts.ts`: one static `localFont` call per family — `next/font/local` must be
-    called with literals at module scope — with every woff2 copied into `src/fonts/`."""
+    called with literals at module scope — with every font file copied into `src/fonts/`."""
     calls: list[str] = []
     names: list[str] = []
     seen: dict[str, str] = {}
@@ -636,7 +678,8 @@ def raise_roots(css: str) -> str:
 
 def plan_package(base: dict, config: dict, site: Path, app: Path, web: Path, problems: list[str]) -> bytes:
     """`package.json`: the skeleton's base with its `link:` paths rewritten for this app, the dev
-    port, and the site's extra npm dependencies and toolkit packages."""
+    port, the analytics packages when `analytics` is set, and the site's extra npm dependencies
+    and toolkit packages."""
 
     def link(package_dir: str) -> str:
         return "link:" + Path(os.path.relpath(site / SITE_TOOLKIT / package_dir, app)).as_posix()
@@ -647,6 +690,8 @@ def plan_package(base: dict, config: dict, site: Path, app: Path, web: Path, pro
         name: link(spec[len("link:") :]) if spec.startswith("link:") else spec
         for name, spec in pkg["dependencies"].items()
     }
+    if config.get("analytics", False):
+        deps.update(ANALYTICS_DEPS)
     template_deps = set(deps) | set(pkg.get("devDependencies", {}))
     for name, spec in config.get("dependencies", {}).items():
         if name in template_deps:
@@ -665,6 +710,36 @@ def plan_package(base: dict, config: dict, site: Path, app: Path, web: Path, pro
         deps[name] = link(package_dir)
     pkg["dependencies"] = dict(sorted(deps.items()))
     return (json.dumps(pkg, indent=2) + "\n").encode()
+
+
+def route_url(rel: str) -> str | None:
+    """The URL an `app/**` page or route handler serves, or None for any other file. Route groups
+    (`(frame)`) and parallel-route slots (`@x`) add no segment; a private folder (`_x`) is no route."""
+    parts = rel.split("/")
+    if parts[0] != "app" or not ROUTE_FILE.match(parts[-1]):
+        return None
+    segments = parts[1:-1]
+    if any(segment.startswith("_") for segment in segments):
+        return None
+    kept = [s for s in segments if not (s.startswith("(") and s.endswith(")")) and not s.startswith("@")]
+    return "/" + "/".join(kept)
+
+
+def url_collisions(plan: AppPlan) -> list[str]:
+    """Two files that serve one URL — the frame's `/` and a site's `app-routes/page.tsx`, or one
+    route in both `routes` and `app-routes`. Each is a distinct path, so `AppPlan.add` lets it
+    through; `next build` would refuse it, later and less plainly."""
+    by_url: dict[str, list[str]] = {}
+    for rel in sorted(plan.files):
+        url = route_url(rel)
+        if url is not None:
+            by_url.setdefault(url.casefold(), []).append(rel)
+    problems = []
+    for rels in by_url.values():
+        if len(rels) > 1:
+            owners = " and ".join(plan.owner[rel.casefold()] for rel in rels)
+            problems.append(f"{owners} would both serve '{route_url(rels[0])}'")
+    return problems
 
 
 def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
@@ -777,6 +852,21 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
     # The site's word for a screenshot not yet taken, bound once from its copy — the word the
     # skeleton's `/` hands LandingFrame — so a custom band's shots say what the frame's do.
     plan.add("src/site/shot.tsx", SHOT_TS.encode(), "generated")
+    # What next.config.ts resolves against the build's environment (the `./next` export's
+    # frameNext); the schema has already checked every `${…}` is well formed.
+    next_ts = (
+        f"{HEADER}\n"
+        "import type { FrameNextSite } from '@agenticdevelopertoolkit/site-template/next'\n\n"
+        "/** site.json's rewrites, public env and env defaults, which next.config.ts resolves at build. */\n"
+        "export const nextSite: FrameNextSite = {\n"
+        f"  rewrites: {ts(config.get('rewrites', []))},\n"
+        f"  publicEnv: {ts(config.get('publicEnv', []))},\n"
+        f"  envDefaults: {ts(config.get('envDefaults', {}))},\n"
+        "}\n"
+    )
+    plan.add("src/site/next.ts", next_ts.encode(), "generated")
+    analytics = ANALYTICS_ON if config.get("analytics", defaults["analytics"]) else ANALYTICS_OFF
+    plan.add("src/site/analytics.tsx", analytics.encode(), "generated")
 
     base = json.loads((SKELETON / "package.json").read_text())
     plan.add("package.json", plan_package(base, config, site, app, web, plan.problems), "generated")
@@ -787,10 +877,10 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
         for path in tree_files(root):
             rel = path.relative_to(root).as_posix()
             label = f"site/{folder}/{rel}"
-            # CSS under public/ and app-root/ is a static asset served as-is, not part of the page's styles.
-            if path.suffix == ".css" and folder in ("components", "routes", "src"):
+            if path.suffix == ".css" and folder in STYLED_TREES:
                 plan.problems += check_site_css(path.read_text(), label)
             plan.add(f"{target_root}/{rel}" if target_root else rel, path.read_bytes(), label, from_site=True)
+    plan.problems += url_collisions(plan)
 
     if plan.problems:
         raise Refused(plan.problems)

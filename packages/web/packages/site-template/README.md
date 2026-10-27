@@ -29,6 +29,13 @@ From `@agenticdevelopertoolkit/site-template/client` (`'use client'`):
 | `SiteChrome({ copy, page, extra })` | The burger drawer: a Home row labelled `copy.nav.home`, one link per section, then `extra`, then — when the copy has `nav.contact` — a row with that label mailing `copy.contact.email`. Every label is the site's copy; the frame words nothing. The foot carries the drawer hello, the contact email and the byline. When the copy has `nav.action` (`{ label, href }`, a paragraph that is only a link), it is a ghost button at the bar's right end on a wide viewport. |
 | `SiteBitbag(props?)` | bitbag, client-only via `next/dynamic`, with his dock stylesheet; his `BitbagStandalone` props pass through (`voice`, `rest`, `theme`). Mount once beside `<main>`. |
 
+From `@agenticdevelopertoolkit/site-template/next` (node, for `next.config.ts` only; never a page):
+
+| Export | What it is |
+| --- | --- |
+| `frameNext(site, env)` | `site.json`'s `rewrites` and `publicEnv` resolved against `env` (`process.env`): `{ env, rewrites }`, which the skeleton's `next.config.ts` merges into its config. Throws, naming the variable and where it was used, when a `${NAME}` has no value. See "Rewrites and public env" below. |
+| types `FrameNextSite`, `FrameRewrite`, `FrameEnvDefault`, `FrameNextResult` | The generated `src/site/next.ts`'s shape, and the result. |
+
 ## Slots
 
 `SlotMap` lets a site replace a piece of the frame without owning it:
@@ -63,7 +70,7 @@ Each theme names its stylesheet and the fonts it needs, which the assembler self
   beats any plain `:root` (0,1,0) wherever it sits; at equal specificity, source order decides. `fallback` is the rest of the theme's own stack.
   fishlamp lists `--font-mono`, `--font-sans` and `--font-serif`, every property its sheet names
   `'Iosevka'` in. `--font-display` is left out because it follows `--font-serif`. A site's
-  `fonts` in `site.json` take the same two keys.
+  `fonts` in `site.json` take the same two keys. A font file is woff2, woff, ttf or otf.
 
 ## A site's layout
 
@@ -74,13 +81,61 @@ site/
   site.json        placement config (schema/site.schema.json): output, port, theme, tokens, mark, slots, ...
   theme.css        the token sheet (named by `tokens` in site.json)
   components/      custom slot components      -> src/components/
-  routes/          extra Next routes           -> app/
+  routes/          routes inside the frame     -> app/(frame)/
+  app-routes/      routes outside the frame    -> app/
   src/             code those need             -> src/
   public/          static assets               -> public/
   app-root/        files for the app root
 ```
 
 `site.json` is closed: a misspelt key is an error. `schema/site.schema.json` lists every key.
+
+### The frame is a route group
+
+The skeleton's root `app/layout.tsx` is the document alone: `<html>` and `<body>`, the fonts,
+`theme.css`, the metadata and viewport, the site's JSON-LD and its analytics. The frame — the
+bar and drawer, the footer, bitbag — is `app/(frame)/layout.tsx`, which wraps the skeleton's `/`
+(`app/(frame)/page.tsx`) and every route under `site/routes/`. `site/app-routes/` lands at `app/`,
+outside the group: a route there renders bare and brings its own `layout.tsx` and providers — an
+app behind sign-in, an auth callback. `(frame)` is a route group, so neither tree changes a URL.
+
+The 404 (`app/not-found.tsx`), `robots`, `sitemap` and a site's metadata files (an `icon.png`
+belongs in `app-routes/`, so it stays at the root) are outside the frame. Two files that would
+serve one URL — the same route in both trees, a page and a route handler, an `app-routes/page.tsx`
+against the frame's `/` — are refused, naming both. So is a site file on any path the skeleton
+writes (`app-routes/layout.tsx` is the root layout's path).
+
+## Rewrites and public env in `site.json`
+
+```json
+"rewrites": [{ "source": "/api/:path*", "destination": "${API_BACKEND_URL}/:path*" }],
+"publicEnv": ["NEXT_PUBLIC_AUTH_API_URL"],
+"envDefaults": {
+  "API_BACKEND_URL": {
+    "by": "DEPLOYMENT_ENV",
+    "values": { "production": "https://api.example.com", "staging": "https://staging.api.example.com" },
+    "local": "https://staging.api.example.com"
+  },
+  "NEXT_PUBLIC_AUTH_API_URL": "${API_BACKEND_URL}"
+}
+```
+
+The assembler writes them to `src/site/next.ts`; `next.config.ts` resolves them with `frameNext`
+as it loads, so a missing value fails `next build` rather than a request. A `${NAME}` (or
+`${NAME:-default}`) is the environment's value when it is set and non-empty, else the
+`envDefaults` entry, else the inline default; with none, the build fails naming it. An
+`envDefaults` entry is a string (which may use `${…}` itself) or `{ by, values, local? }`: the
+value `values` names for the variable `by`, and `local` when `by` names none — off Vercel only,
+so a misspelt tier on Vercel fails the build instead of quietly getting `local`'s backend.
+`publicEnv` names go to Next's `env` (inlined into client code); one with no value anywhere is
+left out. A malformed `${…}` is refused at assembly.
+
+## Analytics
+
+`"analytics": true` writes `src/site/analytics.tsx` mounting `@vercel/analytics` and
+`@vercel/speed-insights` (added to the app's dependencies at the template's pinned ranges) when
+`DEPLOYMENT_ENV` is `production`; the root layout renders it on every route. Absent or false, the
+file renders nothing and neither package is added.
 
 ## Slots in `site.json`
 
@@ -162,7 +217,7 @@ python3 tools/text_parity.py before.html after.html [--allow allowed.txt]
 ```
 
 `screens.py` writes `<route-slug>-<w>x<h>-{rest,scrolled}.png` for 1280x800 and 390x844, at rest
-and scrolled one window. It writes a small Node script to a temp dir and runs it with
+and scrolled one window. `/`'s slug is `index`, so a site's `/home` never overwrites it. It writes a small Node script to a temp dir and runs it with
 `npx --yes -p playwright@1.58.2`; there is no Python Playwright dependency.
 
 `text_parity.py` compares the visible text of two pages (outside `script`, `style`, `noscript`),
@@ -170,12 +225,13 @@ whitespace-normalised, one line per block element, and prints a unified diff. It
 they differ outside the allow file, whose lines are diff lines (`-old` / `+new`; `#` comments).
 The words on every page must not change; every visual difference goes in the site's commit message.
 
-## The two barrels
+## The barrels
 
 `src/index.ts` and `src/client-barrel.ts` are separate tsup builds so the server barrel can never
 inherit `'use client'` from a shared chunk. `tools/check_template_directives.py` asserts this on
 every build (`dist/index.js` has no directive, `dist/client.js` has it); its tests are
-`tools/check_template_directives_test.py`, run by `pnpm lint`.
+`tools/check_template_directives_test.py`, run by `pnpm lint`. `src/frame-next.ts` is a third,
+built for node as `dist/next.js`: only `next.config.ts` imports it.
 
 ## Scripts
 
