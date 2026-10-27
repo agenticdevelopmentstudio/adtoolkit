@@ -820,6 +820,21 @@
       "holds": "@agenticdevelopertoolkit/landing. Snap-scrolling long-form landing page kit — Deck, Screen, NavChrome and a block vocabulary, themed by CSS custom properties."
     },
     {
+      "name": "web-site-template",
+      "paths": [
+        "packages/web/packages/site-template/"
+      ],
+      "depends_on": [
+        "web-landing",
+        "web-themes",
+        "web-chrome",
+        "web-features",
+        "web-toolchain"
+      ],
+      "shared": true,
+      "holds": "@agenticdevelopertoolkit/site-template. The content-site frame every content site renders — a window-tall hero, the scrolling bands, the burger drawer and bitbag — built on the landing kit. A site supplies its copy and its custom slots, and nothing of the frame."
+    },
+    {
       "name": "web-popover",
       "paths": [
         "packages/web/packages/popover/"

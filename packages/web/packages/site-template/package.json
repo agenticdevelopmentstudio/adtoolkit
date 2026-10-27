@@ -1,0 +1,64 @@
+{
+  "name": "@agenticdevelopertoolkit/site-template",
+  "version": "0.1.0",
+  "description": "The content-site frame: a window-tall hero, the scrolling bands, the burger drawer and bitbag, built on the landing kit. A site supplies its copy and its custom slots.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./client": {
+      "types": "./dist/client-barrel.d.ts",
+      "import": "./dist/client.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup && pnpm run build:types && pnpm run check:directives",
+    "build:types": "tsc --emitDeclarationOnly -p tsconfig.build.json",
+    "check:directives": "python3 tools/check_template_directives.py",
+    "dev": "tsup --watch",
+    "clean": "rm -rf dist .turbo",
+    "lint": "tsc --noEmit && python3 tools/check_template_directives_test.py",
+    "test": "vitest run"
+  },
+  "//dependencies": "bitbag declares avatar, chat, themes, viewport and gsap as PEERS, so the package that depends on bitbag is the one that must supply them — that is this one, since a site depends on the template and never names bitbag itself.",
+  "dependencies": {
+    "@agentic-toolkit/bitbag": "workspace:*",
+    "@agenticdevelopertoolkit/avatar": "workspace:*",
+    "@agenticdevelopertoolkit/chat": "workspace:*",
+    "@agenticdevelopertoolkit/chrome": "workspace:*",
+    "@agenticdevelopertoolkit/landing": "workspace:*",
+    "@agenticdevelopertoolkit/themes": "workspace:*",
+    "@agenticdevelopertoolkit/viewport": "workspace:*",
+    "gsap": "^3.13.0"
+  },
+  "peerDependencies": {
+    "next": "^16.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "19.2.16",
+    "@types/react-dom": "19.2.3",
+    "esbuild-plugin-preserve-directives": "^0.0.11",
+    "jsdom": "^29.0.2",
+    "next": "^16.2.9",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.11"
+  }
+}
