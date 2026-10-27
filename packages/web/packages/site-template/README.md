@@ -56,6 +56,88 @@ Each theme names its stylesheet and the fonts it needs, which the assembler self
   `'Iosevka'` in. `--font-display` is left out because it follows `--font-serif`. A site's
   `fonts` in `site.json` take the same two keys.
 
+## A site's layout
+
+A site repo holds `site/` and the app the assembler writes from it, and nothing of the frame.
+
+```
+site/
+  site.json        placement config (schema/site.schema.json): output, port, theme, tokens, mark, slots, ...
+  theme.css        the token sheet (named by `tokens` in site.json)
+  components/      custom slot components      -> src/components/
+  routes/          extra Next routes           -> app/
+  src/             code those need             -> src/
+  public/          static assets               -> public/
+  app-root/        files for the app root
+```
+
+`site.json` is closed: a misspelt key is an error. `schema/site.schema.json` lists every key.
+
+## Slots in `site.json`
+
+`slots` maps a place in the frame to `"file.tsx#Name"`, a file under `site/components/` and its
+export. The keys are:
+
+| Key | Fills |
+| --- | --- |
+| `hero` | the hero, in place of the data hero |
+| `afterHero` | between the hero and the first band |
+| `footer` | the footer lines |
+| `band:<id>` | the blocks of the band for section `<id>`; the id must name a section of `src/landing.json` |
+
+## The token sheet
+
+`tokens` names a sheet under `site/`. It may hold only custom-property declarations inside
+`:root { }` (it is appended after the theme and the frame sheets, so it overrides them). Any other
+rule, a nested rule, or a declaration that is not a `--property` is refused.
+
+A site's own component and route CSS may not name `.lp-*` or `.st-*` classes, or `html`, `body`
+(or `:root`, which is `html`), in a selector: those belong to the frame. Style your own classes.
+
+## Assemble, check, update
+
+```
+python3 packages/web/packages/site-template/tools/assemble_site.py --site <site repo>            # write
+python3 packages/web/packages/site-template/tools/assemble_site.py --site <site repo> --check    # write nothing
+```
+
+Run from the toolkit checkout; the template used is whichever toolkit copy runs the script.
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | written, or (`--check`) up to date |
+| 1 | `--check` found drift; one stale path per line on stdout |
+| 2 | invalid input; one problem per line on stderr, each prefixed `assemble: ` |
+| 3 | the template's own schema uses a keyword the checker does not implement (the template's bug) |
+
+To update a site to a newer template, bump the toolkit, run the assembler, and commit what it
+changed. `--check` in CI proves nobody hand-edited the output.
+
+The assembler never writes or deletes `src/content/**`, `src/landing.json`, `src/landing.tsx` or
+`public/glyph.svg`: content-buildr owns them. Never hand-edit them, or any generated file.
+
+## A layout bug is fixed here
+
+If a page looks wrong because of the frame (spacing, the hero, the drawer, the bitbag dock), fix
+it in this package and bump the toolkit. Never patch it in a site: a site has no frame CSS to
+patch, and the assembler refuses the selectors that would try.
+
+## Proving a change
+
+```
+python3 tools/screens.py --url http://localhost:3000 --out /tmp/after [--route /about ...]
+python3 tools/text_parity.py before.html after.html [--allow allowed.txt]
+```
+
+`screens.py` writes `<route-slug>-<w>x<h>-{rest,scrolled}.png` for 1280x800 and 390x844, at rest
+and scrolled one window. It writes a small Node script to a temp dir and runs it with
+`npx --yes -p playwright@1.49.1`; there is no Python Playwright dependency.
+
+`text_parity.py` compares the visible text of two pages (outside `script`, `style`, `noscript`),
+whitespace-normalised, one line per block element, and prints a unified diff. It exits 1 when
+they differ outside the allow file, whose lines are diff lines (`-old` / `+new`; `#` comments).
+The words on every page must not change; every visual difference goes in the site's commit message.
+
 ## The two barrels
 
 `src/index.ts` and `src/client-barrel.ts` are separate tsup builds so the server barrel can never
