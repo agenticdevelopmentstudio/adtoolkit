@@ -16,7 +16,8 @@ export { Bitbag, EXPRESSIONS } from './avatar'
 export type { BitbagExpression, BitbagHandle } from './avatar'
 export { BitbagBackend } from './backend'
 export type { BitbagBackendOptions } from './backend'
-export { DEFAULT_THEME, TERMINAL_THEME } from './voice'
+export { DEFAULT_THEME, DEFAULT_VOICE, TERMINAL_THEME } from './voice'
+export type { BitbagVoice } from './voice'
 // The theme vocabulary of the `theme` prop above, re-exported from its owner.
 // A consumer that stores a user's dock theme has to validate it against the SAME
 // allowlist bitbag types the prop with — and `@agenticdevelopertoolkit/themes`

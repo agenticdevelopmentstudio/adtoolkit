@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useImperativeHandle, useRef, type ReactElement, type Ref } from "react";
+import {
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useSyncExternalStore,
+  type ReactElement,
+  type Ref,
+} from "react";
 import gsap from "gsap";
 import {
   useAvatarEngine,
@@ -9,7 +16,7 @@ import {
   type MoodMap,
   type Tuning,
 } from "@agenticdevelopertoolkit/avatar";
-import { POSES, type BitbagExpression } from "./expressions";
+import { EXPRESSIONS, POSES, type BitbagExpression } from "./expressions";
 import {
   BROW_LEFT,
   BROW_OPACITY,
@@ -128,6 +135,60 @@ const PER_EXPRESSION_EFFECTS: Partial<Record<BitbagExpression, ExpressionEffect>
   sad: sadDroop,
 };
 
+// ── Reduced motion ──
+//
+// Everything above animates through gsap, which a host's CSS kill-switch
+// (`animation: none` under `prefers-reduced-motion`) cannot touch: gsap writes
+// transforms straight onto the elements on its own ticker, so no CSS rule
+// reaches it. Left alone bitbag breathes, blinks, sways and tracks the cursor
+// forever — automatic, indefinite motion running alongside the page's content,
+// which is what WCAG 2.2.2 is about.
+//
+// The engine has no reduced-motion switch, so this stills him through its
+// ordinary configuration instead of patching it. Four levers, and it takes all
+// four — each loop has a different owner:
+//
+//   • Pinning `expression` to a non-idle pose makes the engine's `curious`
+//     false, which is the only gate on the always-on breath loop and the idle
+//     fidget (their amplitudes are hardcoded, not tunable). `inquisitive` is
+//     the pin: awake, eyes open, and `bob`/`wiggle` both 0, so `applyPose`
+//     starts no loops of its own.
+//   • Zeroed gaze/tilt/lean amplitudes leave the cursor-follow timers running
+//     but multiplying out to no displacement.
+//   • Suppressing the blink on every expression, rather than the laugh alone.
+//   • Dropping the per-expression effects above, whose sag and stir are the
+//     remaining `repeat: -1` timelines.
+//
+// What survives is the one-shot pose tween on mount — well under the 5 seconds
+// 2.2.2 draws its line at. The cost is that bitbag holds one face and stops
+// reacting, which is the trade a reader asking for reduced motion is making.
+const REDUCED_TUNING: Partial<Tuning> = { ...TUNING, gazeMax: 0, tiltMax: 0, leanMax: 0 };
+const REDUCED_EXPRESSION: BitbagExpression = "inquisitive";
+const NO_EXPRESSION_EFFECTS: Partial<Record<BitbagExpression, ExpressionEffect>> = {};
+const NO_POKE = (): void => {};
+
+const MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+
+const subscribeToMotionPreference = (onChange: () => void): (() => void) => {
+  const mq = window.matchMedia(MOTION_QUERY);
+  mq.addEventListener("change", onChange);
+  return () => mq.removeEventListener("change", onChange);
+};
+
+/**
+ * Whether the reader has asked for reduced motion, tracked live so toggling the
+ * OS setting stills or wakes him without a reload. The server snapshot is
+ * `false`, but nothing turns on it: hosts mount him client-only (he runs gsap
+ * timelines, which don't survive hydration).
+ */
+function usePrefersReducedMotion(): boolean {
+  return useSyncExternalStore(
+    subscribeToMotionPreference,
+    () => window.matchMedia(MOTION_QUERY).matches,
+    () => false,
+  );
+}
+
 export interface BitbagProps {
   /** Deliberate mood from a driver (chat today, persona later). */
   expression?: BitbagExpression;
@@ -217,19 +278,30 @@ export function Bitbag({
     speech: speechRef,
   };
 
-  const { effective, speech, poke } = useAvatarEngine<BitbagExpression>({
-    expression,
-    gaze,
+  // Still, silent and unreactive when the reader has asked for reduced motion —
+  // see REDUCED_TUNING above for why it takes all of these together. `mute`
+  // rides along because a speech bubble popping in and drifting out is motion
+  // too, and `gaze` is dropped for the same reason the amplitudes are zeroed.
+  const still = usePrefersReducedMotion();
+
+  const { effective, speech, poke: enginePoke } = useAvatarEngine<BitbagExpression>({
+    expression: still ? REDUCED_EXPRESSION : expression,
+    gaze: still ? null : gaze,
     onSpeak,
-    mute,
+    mute: mute || still,
     poses: POSES,
     rig,
     moods: MOODS,
-    tuning: TUNING,
+    tuning: still ? REDUCED_TUNING : TUNING,
     poke: pokeReaction,
-    perExpressionEffects: PER_EXPRESSION_EFFECTS,
-    blinkSuppressed: BLINK_SUPPRESSED,
+    perExpressionEffects: still ? NO_EXPRESSION_EFFECTS : PER_EXPRESSION_EFFECTS,
+    blinkSuppressed: still ? EXPRESSIONS : BLINK_SUPPRESSED,
   });
+  // The poke goes with the rest of his motion when `still` — from a click and
+  // from his host alike: the giggle it triggers is a `repeat: -1` shimmy, and a
+  // looping animation is no more welcome for having been asked for.
+  const poke = still ? NO_POKE : enginePoke;
+  const clickable = pokeOnClick && !still;
 
   useImperativeHandle(handleRef, () => ({ poke }), [poke]);
 
@@ -250,9 +322,9 @@ export function Bitbag({
       viewBox="-15 -72 350 195"
       aria-label="bitbag"
       className="block h-auto w-full"
-      onClick={pokeOnClick ? poke : undefined}
+      onClick={clickable ? poke : undefined}
       style={{
-        cursor: pokeOnClick ? "pointer" : undefined,
+        cursor: clickable ? "pointer" : undefined,
         pointerEvents: "auto",
         // Don't clip the glyph to the viewBox: the emotional `scale`/`rotation`
         // (and the silly spin) push his extremities past the box, and the default

@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ChatResponse } from '@agenticdevelopertoolkit/chat'
 import { BitbagBackend } from '../backend'
-import { FALLBACKS, INTRO } from '../voice'
+import { FALLBACKS, INTRO, type BitbagVoice } from '../voice'
 
 describe('BitbagBackend', () => {
   it('drains the scripted intro in order, whatever is asked', async () => {
@@ -16,6 +16,21 @@ describe('BitbagBackend', () => {
     await b.sendMessage('x', [])
     await b.sendMessage('x', [])
     expect(await b.sendMessage('what is the matrix rain?', [])).toMatch(/decorative/)
+  })
+
+  it("speaks a host's voice: its intro, then its seeded rules, then its fallbacks", async () => {
+    const voice: BitbagVoice = {
+      welcome: 'w',
+      greeting: 'g',
+      placeholders: ['p'],
+      intro: ['first'],
+      seeded: [{ match: /\bprice\b/i, reply: 'free' }],
+      fallbacks: ['shrug'],
+    }
+    const b = new BitbagBackend({ thinkMinMs: 0, thinkJitterMs: 0, voice })
+    expect(await b.sendMessage('anything', [])).toBe('first')
+    expect(await b.sendMessage("what's the price?", [])).toBe('free')
+    expect(await b.sendMessage('the matrix rain?', [])).toBe('shrug')
   })
 
   it('streams tokens and terminates with done', async () => {

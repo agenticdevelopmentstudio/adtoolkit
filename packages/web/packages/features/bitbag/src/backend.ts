@@ -6,7 +6,7 @@ import {
   type ChatResponse,
   type ChatStreamEvent,
 } from '@agenticdevelopertoolkit/chat'
-import { FALLBACKS, INTRO, SEEDED } from './voice'
+import { DEFAULT_VOICE, type BitbagVoice } from './voice'
 
 const delay = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms))
 
@@ -19,6 +19,8 @@ export interface BitbagBackendOptions {
   tokenMinMs?: number
   /** Random extra delay between streamed tokens. Default 55ms. */
   tokenJitterMs?: number
+  /** What he says — a host's briefing. Default: his own voice. */
+  voice?: BitbagVoice
 }
 
 /**
@@ -28,11 +30,16 @@ export interface BitbagBackendOptions {
  * old-school-terminal omits it). Keep the content prefix-free.
  */
 export class BitbagBackend implements ChatBackend {
-  readonly #opts: Required<BitbagBackendOptions>
-  #intro: string[] = [...INTRO]
-  readonly #bag = new ShuffleBag(FALLBACKS)
+  readonly #opts: Required<Omit<BitbagBackendOptions, 'voice'>>
+  readonly #seeded: BitbagVoice['seeded']
+  readonly #intro: string[]
+  readonly #bag: ShuffleBag<string>
 
   constructor(opts: BitbagBackendOptions = {}) {
+    const voice = opts.voice ?? DEFAULT_VOICE
+    this.#seeded = voice.seeded
+    this.#intro = [...voice.intro]
+    this.#bag = new ShuffleBag(voice.fallbacks)
     this.#opts = {
       thinkMinMs: opts.thinkMinMs ?? 2000,
       thinkJitterMs: opts.thinkJitterMs ?? 3000,
@@ -45,7 +52,7 @@ export class BitbagBackend implements ChatBackend {
   #reply(text: string): string {
     const intro = this.#intro.shift()
     if (intro !== undefined) return intro
-    for (const { match, reply } of SEEDED) {
+    for (const { match, reply } of this.#seeded) {
       if (match.test(text)) return reply
     }
     return this.#bag.next()

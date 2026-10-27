@@ -26,7 +26,7 @@ export const STANDALONE_CLASS = 'bb-dock--standalone'
  * once; neither mounting states it. Horizontally he rests at the centre, which is
  * the dock's own fallback and where the footer puts him too when its bar has room.
  *
- * Everything else is `BitbagDock`'s, passed straight through: theme, backend, size,
+ * Everything else is `BitbagDock`'s, passed straight through: theme, backend, voice, size,
  * rest, and a `className` of the host's own alongside this one. Mount it client-only
  * from the host's side (`next/dynamic` with `ssr: false` on a Next.js site): the
  * chat stamps dates and ids at render time and the avatar runs gsap timelines,

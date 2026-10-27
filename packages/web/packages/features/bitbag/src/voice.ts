@@ -254,6 +254,37 @@ export const INTRO = [
 ] as const;
 
 /**
+ * What bitbag says on one host: how he arrives, what his composer teases, and
+ * how he answers. A site that briefs him on its own subject (the stenographer
+ * site, say) hands its own; everything he says that is not listed here — the
+ * thinking and idle words, the summoning lines — stays his everywhere.
+ */
+export interface BitbagVoice {
+  /** The first line he types on connecting. */
+  welcome: string;
+  /** The line after a beat, before the composer opens. */
+  greeting: string;
+  /** The rotating composer placeholders, re-rolled on every send. */
+  placeholders: readonly string[];
+  /** His first replies, in order, whatever is asked. */
+  intro: readonly string[];
+  /** Pattern replies, the first match wins. */
+  seeded: ReadonlyArray<{ match: RegExp; reply: string }>;
+  /** Everything else, from a shuffle bag; must not be empty. */
+  fallbacks: readonly string[];
+}
+
+/** His own voice — what he says where no host briefs him. */
+export const DEFAULT_VOICE: BitbagVoice = {
+  welcome: WELCOME,
+  greeting: GREETING,
+  placeholders: PLACEHOLDERS,
+  intro: INTRO,
+  seeded: SEEDED,
+  fallbacks: FALLBACKS,
+};
+
+/**
  * bitbag's skin is the lamp: ember on ink, the look drawn and measured on
  * fishlamp.com, which is the source of truth for how he looks. This is what
  * SHIPS, everywhere he mounts — the stage at bitbag.ai and the dock in the adh

@@ -23,17 +23,16 @@ import type { BitbagExpression } from './avatar'
 import {
   CONNECTED,
   CONNECTING,
+  DEFAULT_VOICE,
   DISABLED_PLACEHOLDER,
-  GREETING,
   IDLE_WORDS,
   NEGOTIATION,
-  PLACEHOLDERS,
   SUMMON_SEQUENCE,
   TERMINAL_THEME,
   THINKING_GLYPH,
   THINKING_GLYPH_DONE,
   THINKING_WORDS,
-  WELCOME,
+  type BitbagVoice,
 } from './voice'
 
 const PERSONA = { name: 'bitbag' }
@@ -132,6 +131,12 @@ export interface BitbagChatProps {
    * `css/chat/components/profile-info.css` from `@agentic-toolkit/persona`.
    */
   profileUrl?: string
+  /**
+   * What he says on this host — his welcome, greeting, composer teases and the
+   * default backend's replies. Default: his own voice. A supplied `backend` keeps
+   * its own replies; the voice still sets how he arrives.
+   */
+  voice?: BitbagVoice
 }
 
 export function BitbagChat({
@@ -149,11 +154,12 @@ export function BitbagChat({
   sendButton,
   summoned = false,
   profileUrl,
+  voice = DEFAULT_VOICE,
 }: BitbagChatProps) {
   const isDock = variant === 'dock'
   // Default to the built-in scripted mock so existing consumers are byte-for-byte
   // behavior-identical; a supplied backend takes over verbatim.
-  const backend = useMemo(() => backendProp ?? new BitbagBackend(), [backendProp])
+  const backend = useMemo(() => backendProp ?? new BitbagBackend({ voice }), [backendProp, voice])
   const wrapperRef = useRef<HTMLDivElement>(null)
   // No welcome message — the connect ritual types it in instead.
   const session = useChatSession({ backend, persona: PERSONA })
@@ -164,8 +170,8 @@ export function BitbagChat({
   // composer open — and the summoning lines are never shown.
   const { inputDisabled, connected, engagedByUser, statusLine } = useConnectRitual({
     say: session.say,
-    welcome: WELCOME,
-    greeting: GREETING,
+    welcome: voice.welcome,
+    greeting: voice.greeting,
     waitLines: isDock ? undefined : SUMMON_SEQUENCE,
     stallLines: isDock ? undefined : NEGOTIATION,
     connectingLine: CONNECTING,
@@ -228,7 +234,7 @@ export function BitbagChat({
   useInputFocusReclaim(wrapperRef, reached && !inputDisabled)
 
   const sentCount = session.messages.reduce((n, m) => n + (m.isPersona ? 0 : 1), 0)
-  const placeholder = useRotatingPhrase(PLACEHOLDERS, sentCount)
+  const placeholder = useRotatingPhrase(voice.placeholders, sentCount)
   const { echo, idleIndex } = useTransientEcho(utterance)
   const idleWord = useRotatingPhrase(IDLE_WORDS, idleIndex)
 

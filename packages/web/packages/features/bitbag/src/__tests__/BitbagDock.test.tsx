@@ -66,6 +66,22 @@ describe('BitbagDock', () => {
     expect((container.querySelector('.bb-dock__avatar') as HTMLElement).style.width).toBe('132px')
   })
 
+  it("hands a host's voice to his chat, and none when the host names none", () => {
+    const voice = {
+      welcome: 'w',
+      greeting: 'g',
+      placeholders: ['p'],
+      intro: ['i'],
+      seeded: [],
+      fallbacks: ['f'],
+    }
+    const { unmount } = render(<BitbagDock voice={voice} />)
+    expect(chat.props.voice).toBe(voice)
+    unmount()
+    render(<BitbagDock />)
+    expect(chat.props.voice).toBeUndefined()
+  })
+
   it('holds the page still only while his always-shown chat is engaged', () => {
     render(<BitbagDock rest="entry" />)
     expect(pageLock.active).toBe(false)

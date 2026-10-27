@@ -23,7 +23,7 @@ import { useKeyboardInset, usePageScrollLock } from '@agenticdevelopertoolkit/vi
 import { BitbagChat } from './BitbagChat'
 import { BitbagInfo } from './BitbagInfo'
 import { Bitbag, type BitbagExpression, type BitbagHandle } from './avatar'
-import { DEFAULT_THEME } from './voice'
+import { DEFAULT_THEME, type BitbagVoice } from './voice'
 
 /** How big he is on his chat's corner, as a share of his full `size`: the corner is
  *  where the send button was, and at full size he would stand over half the
@@ -81,6 +81,8 @@ export interface BitbagDockProps {
    *   the page rather than behind a tap.
    */
   rest?: 'entry' | 'avatar'
+  /** What he says on this host (see `BitbagVoice`). Default: his own voice. */
+  voice?: BitbagVoice
 }
 
 /**
@@ -113,6 +115,7 @@ export function BitbagDock({
   size = 132,
   className,
   rest = 'avatar',
+  voice,
 }: BitbagDockProps) {
   // The wiring between his chat and his face: the chat reports how the
   // conversation is going and the avatar reacts. His expression follows the
@@ -389,6 +392,7 @@ export function BitbagDock({
           variant="dock"
           theme={theme}
           backend={backend}
+          voice={voice}
           anchorRef={bitbagRef}
           onExpressionHint={onHint}
           onGazeHint={onGaze}

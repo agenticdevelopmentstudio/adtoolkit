@@ -93,6 +93,28 @@ describe('BitbagDock with his real chat', () => {
     vi.useRealTimers()
   })
 
+  // The welcome and greeting are the voice's, not the package's, when a host brings one:
+  // a site that briefs him on its own product has him open with its own lines.
+  it("opens with a host voice's welcome and greeting, and its placeholder once he is ready", async () => {
+    const voice = {
+      welcome: 'briefed on the widget.',
+      greeting: 'ask about the widget.',
+      placeholders: ['type about the widget.'],
+      intro: ['widget intro'],
+      seeded: [],
+      fallbacks: ['widget shrug'],
+    }
+    render(<BitbagDock rest="entry" voice={voice} />)
+    for (let ms = 0; composer().disabled && ms < 20000; ms += 250) {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(250)
+      })
+    }
+    expect(chatBox().textContent).toContain('briefed on the widget.')
+    expect(chatBox().textContent).toContain('ask about the widget.')
+    expect(composer().placeholder).toBe('type about the widget.')
+  })
+
   // Opened straight away, his composer is still disabled for the greeting, and the
   // caret the dock puts in it at opening bounces off. It used to stay out for good:
   // the chat only counted itself reached for once the caret got in, and only turned
