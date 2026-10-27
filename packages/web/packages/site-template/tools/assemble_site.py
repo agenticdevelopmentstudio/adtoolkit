@@ -469,7 +469,7 @@ def plan_slots(site: Path, slots: dict[str, str], ids: list[str]) -> tuple[str, 
     places: list[str] = []
     bands: list[str] = []
     components = (site / "site" / "components").resolve()
-    order = ["hero", "afterHero", "footer"] + [key for key in slots if key.startswith("band:")]
+    order = ["hero", "afterHero", "footer", "bitbag"] + [key for key in slots if key.startswith("band:")]
     for n, key in enumerate(key for key in order if key in slots):
         file, name = slots[key].split("#")
         source = (components / file).resolve()
@@ -740,7 +740,14 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
         "drawerExtra": config.get("drawer", []),
         **({"jsonLd": config["jsonLd"]} if "jsonLd" in config else {}),
         "sitemap": config.get("sitemap", []),
+        **({"bands": config["bands"]} if "bands" in config else {}),
     }
+    # Refused here as the frame refuses it at render, but before a build: a look whose section
+    # was renamed would otherwise wait for `next build` to say so.
+    for band in config.get("bands", {}):
+        if band not in ids:
+            known = ", ".join(f"'{i}'" for i in ids) or "(none)"
+            plan.problems.append(f"site/site.json: bands: '{band}' names no section; the sections are: {known}")
     config_ts = (
         f"{HEADER}\n"
         "import { frameSiteUrl } from '@agenticdevelopertoolkit/site-template'\n"

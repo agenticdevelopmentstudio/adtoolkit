@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactElement } from 'react'
-import { indexRows } from '@agenticdevelopertoolkit/landing'
+import { Btn, indexRows } from '@agenticdevelopertoolkit/landing'
 import type { LandingPage, NavLink } from '@agenticdevelopertoolkit/landing'
 import { NavChrome } from '@agenticdevelopertoolkit/landing/client'
 import type { FrameConfig, FrameCopy } from './types'
@@ -17,6 +17,7 @@ import { Words } from './words'
  * site's copy (`copy.nav`); the frame words nothing.
  * Every in-page row is written `/#id` rather than `#id`, so it still lands on the section
  * from any other route of the site; on `/` itself the kit's drawer still glides there.
+ * The copy's `nav.action`, when it words one, is a ghost button in the bar beside the burger.
  */
 export function SiteChrome({
   copy,
@@ -51,5 +52,19 @@ export function SiteChrome({
       )}
     </>
   )
-  return <NavChrome brand={<Words text={copy.brand} />} links={links} footer={footer} />
+  const { action } = copy.nav
+  return (
+    <NavChrome
+      brand={<Words text={copy.brand} />}
+      links={links}
+      footer={footer}
+      action={
+        action === undefined ? undefined : (
+          <Btn href={action.href} variant="ghost">
+            {action.label}
+          </Btn>
+        )
+      }
+    />
+  )
 }

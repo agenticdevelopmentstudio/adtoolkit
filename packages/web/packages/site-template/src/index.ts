@@ -14,4 +14,4 @@ export {
   frameSitemap,
   frameSiteUrl,
 } from './frame-metadata'
-export type { CopyText, FrameCopy, FrameConfig, SlotMap } from './types'
+export type { BandLook, CopyText, FrameCopy, FrameConfig, SlotMap } from './types'

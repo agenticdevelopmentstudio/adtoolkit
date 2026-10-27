@@ -132,6 +132,31 @@ describe('heroSlots', () => {
     buttons.forEach((b) => expect(b.className).toContain('lp-btn--ghost'))
   })
 
+  it('renders a Shot as the shot, bled to the right, and leaves the actions alone', () => {
+    const slots = heroSlots(hero([cta, { kind: 'Shot', title: 'App', caption: 'The main window' }]))
+    expect(slots.actions).toHaveLength(2)
+    const { container } = render(<>{slots.shot}</>)
+    const shot = container.querySelector('.lp-bleed.lp-bleed--right > .lp-shot')
+    expect(shot).not.toBeNull()
+    expect(shot!.querySelector('.lp-shot__name')!.textContent).toBe('App')
+    expect(shot!.querySelector('.lp-shot__placeholder b')!.textContent).toBe('The main window')
+  })
+
+  it('words a pending hero Shot as its host asks', () => {
+    const slots = heroSlots(hero([{ kind: 'Shot', title: 'App', caption: 'Soon' }]), 'Screenshot pending')
+    const { container } = render(<>{slots.shot}</>)
+    expect(container.querySelector('.lp-shot__placeholder')!.textContent).toBe('Screenshot pendingSoon')
+  })
+
+  it('has no shot when the hero has none', () => {
+    expect(heroSlots(hero([cta])).shot).toBeUndefined()
+  })
+
+  it('refuses a second hero Shot rather than dropping either', () => {
+    const shot = { kind: 'Shot' as const, title: 'App', caption: 'One' }
+    expect(() => heroSlots(hero([shot, { ...shot, caption: 'Two' }]))).toThrow(/one 'Shot'/)
+  })
+
   it('refuses a block the hero has no slot for', () => {
     expect(() => heroSlots(hero([{ kind: 'Cards', items: [] }]))).toThrow(
       /'Cards' block has no slot/,

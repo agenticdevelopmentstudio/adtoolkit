@@ -99,6 +99,61 @@ describe('LandingFrame', () => {
     }
   })
 
+  it('draws a hero Shot below the composition, in the hero frame', () => {
+    const page: LandingPage = {
+      hero: { ...hero, blocks: [...hero.blocks, { kind: 'Shot', title: 'App', caption: 'The main window' }] },
+      sections: [],
+    }
+    const { container } = render(<LandingFrame page={page} slots={noSlots} mark={mark} />)
+    const shot = container.querySelector('#top .lp-hero-shot .lp-shot')
+    expect(shot).not.toBeNull()
+    expect(shot!.textContent).toContain('The main window')
+  })
+
+  it('words every pending shot, hero and band alike, with the copy\'s label when it gives one', () => {
+    const shot = { kind: 'Shot' as const, title: 'App', caption: 'Soon' }
+    const page: LandingPage = {
+      hero: { ...hero, blocks: [...hero.blocks, shot] },
+      sections: [section('one', 'One', { blocks: [shot] })],
+    }
+    const labels = (node: ReactElement): string[] =>
+      Array.from(render(node).container.querySelectorAll('.lp-shot__placeholder')).map((p) => p.textContent ?? '')
+    expect(labels(<LandingFrame page={page} slots={noSlots} mark={mark} pendingLabel="Screenshot pending" />)).toEqual([
+      'Screenshot pendingSoon',
+      'Screenshot pendingSoon',
+    ])
+    expect(labels(<LandingFrame page={page} slots={noSlots} mark={mark} />)).toEqual([
+      'Screenshot coming soonSoon',
+      'Screenshot coming soonSoon',
+    ])
+  })
+
+  it('gives a band the look the site configures, and the rest their alternation', () => {
+    const three: LandingPage = { hero, sections: [...two.sections, section('three', 'Three')] }
+    const { container } = render(
+      <LandingFrame
+        page={three}
+        slots={noSlots}
+        mark={mark}
+        looks={{ two: { tone: 'paper' }, three: { seam: false } }}
+      />,
+    )
+    const [one, second, third] = Array.from(container.querySelectorAll('.lp-band'))
+    expect(one!.className).toContain('lp-band--soft')
+    expect(one!.className).toContain('lp-band--seam')
+    expect(second!.className).toContain('lp-band--paper')
+    expect(second!.className).toContain('lp-band--seam')
+    // A seam alone keeps the alternation's tone.
+    expect(third!.className).toContain('lp-band--soft')
+    expect(third!.className).not.toContain('lp-band--seam')
+  })
+
+  it('refuses a band look that names no section', () => {
+    expect(() =>
+      render(<LandingFrame page={two} slots={noSlots} mark={mark} looks={{ nope: { tone: 'paper' } }} />),
+    ).toThrow(/looks names no section 'nope'/)
+  })
+
   it('omits the Head of a section whose block carries its heading', () => {
     const page: LandingPage = {
       hero,
@@ -206,6 +261,20 @@ describe('SiteChrome', () => {
       ['/downloads', 'Downloads'],
       ['mailto:hello@example.com', 'Contact'],
     ])
+  })
+
+  it('puts the copy\'s action in the bar as a ghost button', () => {
+    const acting: FrameCopy = { ...copy, nav: { home: 'Home', action: { label: 'It’s free', href: '/#price' } } }
+    const { container } = render(<SiteChrome copy={acting} page={empty} extra={[]} />)
+    const action = container.querySelector('a.lp-btn.lp-btn--ghost')
+    expect(action).not.toBeNull()
+    expect(action!.getAttribute('href')).toBe('/#price')
+    expect(action!.textContent).toBe('It’s free')
+  })
+
+  it('has no action when the copy words none', () => {
+    const { container } = render(<SiteChrome copy={copy} page={empty} extra={[]} />)
+    expect(container.querySelector('a.lp-btn')).toBeNull()
   })
 
   it('has no contact row when the copy words none', () => {

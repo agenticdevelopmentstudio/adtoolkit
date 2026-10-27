@@ -40,8 +40,14 @@ export function prose(paragraphs: ReactNode[]): ReactElement[] {
   return paragraphs.map((text, i) => <p key={i}>{text}</p>)
 }
 
-/** One block, in the position its section puts it. */
-export function renderBlock(block: LandingBlock, key: number): ReactElement {
+/** What a page built from data calls a screenshot that has not been taken, unless its host
+ *  words it otherwise. It says what content-buildr's placeholder image says, so a page and a
+ *  help page word a missing screenshot the same way. */
+const PENDING_SHOT = 'Screenshot coming soon'
+
+/** One block, in the position its section puts it. `pendingLabel` is the status line of a
+ *  `Shot` with no image yet — the host's word for it, when the host has one. */
+export function renderBlock(block: LandingBlock, key: number, pendingLabel: ReactNode = PENDING_SHOT): ReactElement {
   switch (block.kind) {
     case 'Lede':
       return <Lede key={key}>{block.children}</Lede>
@@ -73,12 +79,11 @@ export function renderBlock(block: LandingBlock, key: number): ReactElement {
           title={block.title}
           caption={block.caption}
           // The kit renders the placeholder only when `media` is ABSENT, so an
-          // unconditional `<img>` is what made it unreachable. `pendingLabel` has no default
-          // by design — it is visible copy, and the kit renders no word its host did not
-          // choose — so the page model chooses it here, once, for every page built from
-          // data. It says what content-buildr's placeholder image says, so a page and a help
-          // page word a missing screenshot the same way.
-          pendingLabel="Screenshot coming soon"
+          // unconditional `<img>` is what made it unreachable. `Shot`'s `pendingLabel` has
+          // no default by design — it is visible copy, and the kit renders no word its host
+          // did not choose — so the page model chooses it here, once, for every page built
+          // from data (`PENDING_SHOT`), and a host with its own word passes that instead.
+          pendingLabel={pendingLabel}
           {...(block.src === undefined
             ? {}
             : { media: <img src={`/screenshots/${block.src}.png`} alt={block.caption} /> })}
@@ -134,7 +139,7 @@ export function renderBlock(block: LandingBlock, key: number): ReactElement {
     case 'Roadmap':
       return (
         <Roadmap key={key} eyebrow={block.eyebrow}>
-          {block.children.map((child, i) => renderBlock(child, i))}
+          {block.children.map((child, i) => renderBlock(child, i, pendingLabel))}
         </Roadmap>
       )
     default: {

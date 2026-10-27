@@ -17,6 +17,13 @@ export interface NavChromeProps {
   links: NavLink[]
   /** Rendered in the drawer's foot — a mailto, a byline, whatever. */
   footer?: ReactNode
+  /**
+   * One call to action pinned to the bar's right end, on a wide viewport only — the
+   * fixed-bar counterpart of `SiteHeader`'s `action`, hidden below its breakpoint for the
+   * reason `.lp-bar-action` in chrome.css gives. Something a drawer row also reaches, so the
+   * narrow viewport loses nothing.
+   */
+  action?: ReactNode
   /** Accessible name for the open button. Default "Open menu". */
   openLabel?: string
   /** Accessible name for the close button. Default "Close menu". */

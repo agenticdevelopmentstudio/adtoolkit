@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import type { BandTone } from '@agenticdevelopertoolkit/landing'
 
 /**
  * One piece of a site's copy. A plain string is text; `{ html }` is words that carry emphasis
@@ -26,9 +27,12 @@ export interface FrameCopy {
   /**
    * The drawer's own rows, in the site's words: the Home row's label, and — when the site words
    * one — a last row that mails `contact.email`. Plain strings, since a drawer row is a link's
-   * text (the landing kit's `NavLink.label`).
+   * text (the landing kit's `NavLink.label`). `action`, when worded, is the one button the bar
+   * carries beside the burger: a paragraph that is only a link, so `{ label, href }`.
    */
-  nav: { home: string; contact?: string }
+  nav: { home: string; contact?: string; action?: { label: string; href: string } }
+  /** What the page calls a screenshot not yet taken. Absent: the landing kit's own word. */
+  screenshotPending?: string
   /** The drawer's foot: a hello above the mail address, a byline below it. */
   drawer?: { hello: CopyText; byline: CopyText }
   /** The page footer's lines, in order. Absent: the page has no footer. */
@@ -50,6 +54,18 @@ export interface FrameConfig {
   jsonLd?: object
   /** Paths, beyond `/`, the sitemap lists. */
   sitemap: string[]
+  /** The bands that step out of the alternation, by section id. */
+  bands?: Record<string, BandLook>
+}
+
+/**
+ * How one band departs from the frame's soft/dark alternation: its own tone — `paper`, the
+ * kit's once-a-page punctuation, being the usual reason — or no seam, for a band whose
+ * neighbour above is its own tone. What it leaves out keeps the alternation's.
+ */
+export interface BandLook {
+  tone?: BandTone
+  seam?: boolean
 }
 
 /**
@@ -61,6 +77,13 @@ export interface SlotMap {
   hero?: ComponentType
   afterHero?: ComponentType
   footer?: ComponentType
+  /**
+   * bitbag, mounted in the frame's place for him — for a site whose bitbag speaks in its own
+   * voice. A component rather than props because a voice carries RegExps, which cannot cross
+   * from the server layout into his client-only mount: the site's own `'use client'` module
+   * renders `SiteBitbag` with them. Absent: `SiteBitbag` as he comes.
+   */
+  bitbag?: ComponentType
   /** By section id. A key that names no section is refused rather than ignored. */
   bands: Record<string, ComponentType>
 }

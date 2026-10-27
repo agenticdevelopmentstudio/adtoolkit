@@ -12,20 +12,20 @@ From `@agenticdevelopertoolkit/site-template` (server-safe, no `'use client'`):
 
 | Export | What it is |
 | --- | --- |
-| `LandingFrame({ page, slots, mark })` | The hero and every band of a landing-kit `LandingPage`. Bands alternate `soft` / `dark`, each wrapped in `Reveal` and headed by `Head` unless the section sets `headingInBlock`. |
+| `LandingFrame({ page, slots, mark, looks?, pendingLabel? })` | The hero and every band of a landing-kit `LandingPage`. Bands alternate `soft` / `dark`, each wrapped in `Reveal` and headed by `Head` unless the section sets `headingInBlock`; `looks[sectionId]` (a `BandLook`, from `site.json`'s `bands`) gives one band its own tone or drops its seam, and a look naming no section throws. A hero `Shot` is drawn below the hero, bled right. `pendingLabel` (the copy's `screenshotPending`) words every shot not yet taken; absent, the landing kit's own word. |
 | `FrameFooter({ copy, slot? })` | The site footer from `copy.footer`; the first line plain, the rest in `<small>`. A `slot` replaces the lines. Renders nothing when the copy has no footer. |
 | `FrameMark({ config, alt })` | The site's mark as `site.json` configures it (`mark.src`, in `st-mark st-mark--<shape>`). The skeleton's `/` passes it to `LandingFrame`; a route of the site's own with a hero uses it too, so a change to `mark` reaches every page. |
 | `Words({ text })` | A `CopyText`: a plain string, or `{ html }` rendered as markup. |
 | `frameMetadata`, `frameViewport`, `frameRobots`, `frameSitemap` | The Next metadata routes, from `FrameCopy` + `FrameConfig`. Robots allow crawling only when `DEPLOYMENT_ENV === 'production'`. The twitter card is `summary` when `ogImage` is the mark's `src` (a square icon beside the text) and `summary_large_image` otherwise; `ogImageSize`, when set, gives the OG image its width and height. |
 | `frameSiteUrl(fallbackPort)` | `SITE_URL`, else the Vercel URL, else `http://localhost:<port>`. |
-| types `CopyText`, `FrameCopy`, `FrameConfig`, `SlotMap` | The shapes a site fills in. |
+| types `BandLook`, `CopyText`, `FrameCopy`, `FrameConfig`, `SlotMap` | The shapes a site fills in. |
 
 From `@agenticdevelopertoolkit/site-template/client` (`'use client'`):
 
 | Export | What it is |
 | --- | --- |
-| `SiteChrome({ copy, page, extra })` | The burger drawer: a Home row labelled `copy.nav.home`, one link per section, then `extra`, then — when the copy has `nav.contact` — a row with that label mailing `copy.contact.email`. Every label is the site's copy; the frame words nothing. The foot carries the drawer hello, the contact email and the byline. |
-| `SiteBitbag()` | bitbag, client-only via `next/dynamic`, with his dock stylesheet. Mount once beside `<main>`. |
+| `SiteChrome({ copy, page, extra })` | The burger drawer: a Home row labelled `copy.nav.home`, one link per section, then `extra`, then — when the copy has `nav.contact` — a row with that label mailing `copy.contact.email`. Every label is the site's copy; the frame words nothing. The foot carries the drawer hello, the contact email and the byline. When the copy has `nav.action` (`{ label, href }`, a paragraph that is only a link), it is a ghost button at the bar's right end on a wide viewport. |
+| `SiteBitbag(props?)` | bitbag, client-only via `next/dynamic`, with his dock stylesheet; his `BitbagStandalone` props pass through (`voice`, `rest`, `theme`). Mount once beside `<main>`. |
 
 ## Slots
 
@@ -36,8 +36,12 @@ From `@agenticdevelopertoolkit/site-template/client` (`'use client'`):
 - `bands[sectionId]` replaces that band's blocks; the band, its tone, `Reveal` and `Head` stay. A key
   that names no section throws, naming the page's sections.
 - `footer` replaces the footer lines.
+- `bitbag` replaces the frame's `<SiteBitbag />`. A site whose bitbag speaks in its own voice
+  needs it: a voice holds RegExps, which cannot pass from the server layout into his client-only
+  mount, so the site's own `'use client'` component renders `SiteBitbag` with them.
 
 If the page's hero data carries a `status`, the pill is rendered first in the hero's actions row.
+A hero `Shot` (`{shot: id}` in the hero's markdown) is the hero's one screenshot, below it.
 
 ## Themes (`themes.json`)
 
@@ -86,7 +90,15 @@ export. The keys are:
 | `hero` | the hero, in place of the data hero |
 | `afterHero` | between the hero and the first band |
 | `footer` | the footer lines |
+| `bitbag` | bitbag, in place of the frame's |
 | `band:<id>` | the blocks of the band for section `<id>`; the id must name a section of `src/landing.json` |
+
+## Band looks in `site.json`
+
+`bands` maps a section id to how that band steps out of the soft/dark alternation:
+`{ "tone": "paper" }` for the page's one light band, `{ "seam": false }` for a band whose
+neighbour above is its own tone. What a look leaves out keeps the alternation's. An id that
+names no section of `src/landing.json` is refused, as a `band:<id>` slot's is.
 
 ## The token sheet
 

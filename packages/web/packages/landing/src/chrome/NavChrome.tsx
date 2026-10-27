@@ -44,6 +44,7 @@ export function NavChrome({
   brand,
   links,
   footer,
+  action,
   openLabel = 'Open menu',
   closeLabel = 'Close menu',
   navLabel = 'Site',
@@ -190,6 +191,7 @@ export function NavChrome({
           <span />
         </button>
         {brand !== undefined && <div className="lp-brand">{brand}</div>}
+        {action !== undefined && <div className="lp-bar-action">{action}</div>}
       </div>
 
       {/* A scrim, not a control: it dismisses on click for a pointer user, and

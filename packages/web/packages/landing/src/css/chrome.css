@@ -139,6 +139,25 @@
   font-weight: 500;
 }
 
+/* The host's call to action, at the bar's right end — and only where there is room
+ * for it. Below the breakpoint the bar is the chip and a wordmark centred on the
+ * viewport (`.lp-brand` above), whose max-width reserves the chip's column on both
+ * sides; a button in the right-hand reserve would sit within a few px of a wordmark
+ * that size at 390px. The drawer is the navigation there, and the action names a
+ * place one of its rows reaches. The same breakpoint, and the same trade, as
+ * `.lp-site-action` in flow.css. `pointer-events` comes back on because the bar
+ * leaves them off so it never eats a tap meant for the page under its gradient. */
+.lp-bar-action {
+  display: none;
+}
+@media (min-width: 62rem) {
+  .lp-bar-action {
+    display: block;
+    margin-left: auto;
+    pointer-events: auto;
+  }
+}
+
 /* ---- drawer ---- */
 .lp-drawer {
   position: fixed;

@@ -362,6 +362,33 @@ class AssembleTest(unittest.TestCase):
         config = (self.app / "src/site/config.ts").read_text()
         self.assertIn('ogImageSize: {\n    "width": 512,\n    "height": 512\n  },', config)
 
+    def test_band_looks_reach_the_config(self) -> None:
+        self.config["bands"] = {"features": {"tone": "paper", "seam": False}}
+        self.assert_ok(self.assemble())
+        config = (self.app / "src/site/config.ts").read_text()
+        self.assertIn('bands: {\n    "features": {\n      "tone": "paper",\n      "seam": false\n    }\n  },', config)
+
+    def test_no_band_looks_leaves_them_out(self) -> None:
+        self.assert_ok(self.assemble())
+        self.assertNotIn("bands", (self.app / "src/site/config.ts").read_text())
+
+    def test_a_band_look_naming_no_section_is_refused(self) -> None:
+        self.config["bands"] = {"feautres": {"tone": "paper"}}
+        self.assert_refused(self.assemble(), "bands", "'feautres'", "'features'")
+
+    def test_a_band_look_with_an_unknown_tone_is_refused(self) -> None:
+        self.config["bands"] = {"features": {"tone": "neon"}}
+        self.assert_refused(self.assemble(), "bands.features.tone")
+
+    def test_a_bitbag_slot_is_placed(self) -> None:
+        self.config["slots"] = {"bitbag": "bitbag.tsx#SiteVoice"}
+        self.write("site/components/bitbag.tsx", "export function SiteVoice() { return null }\n")
+        self.assert_ok(self.assemble())
+        slots = (self.app / "src/site/slots.tsx").read_text()
+        self.assertIn("import { SiteVoice as BitbagSlot } from '../components/bitbag'", slots)
+        self.assertIn("  bitbag: BitbagSlot,", slots)
+        self.assertIn("slots.bitbag", (self.app / "app/layout.tsx").read_text())
+
     def test_no_og_image_size_leaves_it_out(self) -> None:
         self.assert_ok(self.assemble())
         self.assertNotIn("ogImageSize", (self.app / "src/site/config.ts").read_text())

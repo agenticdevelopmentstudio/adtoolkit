@@ -118,6 +118,21 @@ describe('NavChrome', () => {
     expect(container.querySelector('.lp-bar')!.tagName).toBe('DIV')
   })
 
+  // The action sits in the bar itself, so a drawer row — not the action — is what a
+  // narrow viewport, where chrome.css hides it, navigates by.
+  it('pins a host action in the bar, outside the drawer', () => {
+    const { container } = render(<NavChrome brand="M" links={LINKS} action={<a href="#price">Free</a>} />)
+    const action = container.querySelector('.lp-bar > .lp-bar-action')
+    expect(action).not.toBeNull()
+    expect(action!.textContent).toBe('Free')
+    expect(container.querySelector('.lp-drawer .lp-bar-action')).toBeNull()
+  })
+
+  it('draws no action element when the host gives none', () => {
+    const { container } = render(<NavChrome brand="M" links={LINKS} />)
+    expect(container.querySelector('.lp-bar-action')).toBeNull()
+  })
+
   // A host with its own site header has no second wordmark to draw here, and an
   // empty .lp-brand would still sit centred in the bar.
   it('draws no brand element when the host gives no brand', () => {

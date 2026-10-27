@@ -42,7 +42,7 @@ export default function RootLayout({ children }: { children: ReactNode }): React
         <SiteChrome copy={copy} page={landing} extra={config.drawerExtra} />
         {children}
         <FrameFooter copy={copy} slot={slots.footer} />
-        <SiteBitbag />
+        {slots.bitbag === undefined ? <SiteBitbag /> : <slots.bitbag />}
       </body>
     </html>
   )
