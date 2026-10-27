@@ -761,9 +761,14 @@ class AssembleTest(unittest.TestCase):
             text = (self.app / rel).read_text()
             self.assertNotIn("from '../src/", text, rel)
             self.assertIn("from '../../src/", text, rel)
-        # The 404 and the metadata routes stay at the root, outside the frame.
+        # The 404 and the metadata routes stay at the root, outside the group.
         for rel in ("app/not-found.tsx", "app/robots.ts", "app/sitemap.ts"):
             self.assertTrue((self.app / rel).is_file(), rel)
+        # Next renders a root not-found inside the root layout only, so the 404 wraps itself in the
+        # frame: a templated site's 404 had the bar and footer before the frame became a group.
+        not_found = (self.app / "app/not-found.tsx").read_text()
+        self.assertIn("import FrameLayout from './(frame)/layout'", not_found)
+        self.assertIn("<FrameLayout>", not_found)
 
     def test_routes_land_inside_the_frame_and_app_routes_outside_it(self) -> None:
         self.write("site/routes/downloads/page.tsx", "export default function P() { return null }\n")

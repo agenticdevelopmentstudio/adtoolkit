@@ -99,8 +99,10 @@ bar and drawer, the footer, bitbag — is `app/(frame)/layout.tsx`, which wraps 
 outside the group: a route there renders bare and brings its own `layout.tsx` and providers — an
 app behind sign-in, an auth callback. `(frame)` is a route group, so neither tree changes a URL.
 
-The 404 (`app/not-found.tsx`), `robots`, `sitemap` and a site's metadata files (an `icon.png`
-belongs in `app-routes/`, so it stays at the root) are outside the frame. Two files that would
+`robots`, `sitemap` and a site's metadata files (an `icon.png` belongs in `app-routes/`, so it
+stays at the root) are outside the frame. The 404 (`app/not-found.tsx`) stays at the root too —
+Next renders a root `not-found` inside the root layout alone — and wraps itself in the frame's
+layout, so a missing page keeps the bar and footer. Two files that would
 serve one URL — the same route in both trees, a page and a route handler, an `app-routes/page.tsx`
 against the frame's `/` — are refused, naming both. So is a site file on any path the skeleton
 writes (`app-routes/layout.tsx` is the root layout's path).
