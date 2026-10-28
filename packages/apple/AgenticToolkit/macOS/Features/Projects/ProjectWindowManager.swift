@@ -338,7 +338,8 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
             repo: repo,
             database: database,
             languageServices: languageServices,
-            gitClient: gitClient
+            gitClient: gitClient,
+            arrangementSourceID: UUID(uuidString: UserSettings.lastActiveProjectWindow.currentValue)
         )
         languageServices?.start()
         let projectController = ProjectController(
@@ -540,7 +541,9 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
     }
 
     /// Re-reads worktrees when the window comes back to the front, so a
-    /// worktree added or removed in a terminal shows up without a relaunch.
+    /// worktree added or removed in a terminal shows up without a relaunch —
+    /// and records the window as the one the next new project is arranged
+    /// like (`UserSettings.lastActiveProjectWindow`).
     private func observeBecameKey(of controller: ComposableTabsWindowController, repoID: UUID) {
         guard let window = controller.window else { return }
         keyObservers[repoID] = NotificationCenter.default.addObserver(
@@ -549,6 +552,9 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
             queue: nil
         ) { [weak self] _ in
             MainActor.assumeIsolated {
+                if UserSettings.lastActiveProjectWindow.currentValue != repoID.uuidString {
+                    UserSettings.lastActiveProjectWindow.value = repoID.uuidString
+                }
                 guard let projectController = self?.projectControllers[repoID] else { return }
                 Task { await projectController.refreshCheckouts() }
             }

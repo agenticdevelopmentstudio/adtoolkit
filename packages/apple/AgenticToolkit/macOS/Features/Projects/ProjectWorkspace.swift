@@ -40,6 +40,32 @@ public final class ProjectWorkspace {
     /// (`dependency-injection`).
     public let gitClient: GitClient
 
+    /// The project whose window a first-time open copies its arrangement
+    /// from — in practice the project window the user last worked in. `nil`
+    /// (or this project's own id) leaves a first open on the layout's
+    /// blueprint and the top edge.
+    ///
+    /// Injected rather than read from a setting here, so the workspace stays
+    /// a function of what it is handed (`dependency-injection`).
+    public let arrangementSourceID: UUID?
+
+    /// What this project's first tabs are built from when it has none of its
+    /// own: the source project's arrangement, divider positions and enabled
+    /// edges. Read once, so the window's first install and the checkout
+    /// reconcile that follows it build the same thing — two reads could
+    /// straddle the source window being re-arranged and disagree.
+    private lazy var firstOpenSeed: (arrangement: LayoutNode?, enabledEdges: [Edge]) = {
+        guard let sourceID = arrangementSourceID, sourceID != repo.id,
+              let loaded = try? database.loadTabs(repoID: sourceID), !loaded.tabs.isEmpty else {
+            return (nil, [.top])
+        }
+        let arrangement = ProjectTabReconciler.arrangement(of: loaded.tabs, activeTabID: loaded.activeTabID)
+        // The source's tree is repaired against this project's spec exactly as
+        // a stored tree of its own would be (see `initialTabs()`).
+        let edges: [Edge] = loaded.enabledEdges.isEmpty ? [.top] : loaded.enabledEdges
+        return (arrangement.map { layout.spec.reconcile($0) }, edges)
+    }()
+
     /// A `[URL: Object]` whose entries live exactly as long as something else
     /// holds them.
     ///
@@ -88,13 +114,15 @@ public final class ProjectWorkspace {
         database: ProjectDatabase,
         layout: ComposableTabsLayout? = nil,
         languageServices: ProjectLanguageServices? = nil,
-        gitClient: GitClient = .shared
+        gitClient: GitClient = .shared,
+        arrangementSourceID: UUID? = nil
     ) {
         self.repo = repo
         self.database = database
         self.layout = layout ?? ComposableTabsLayout.current ?? ComposableTabsLayout.placeholderOnly()
         self.languageServices = languageServices
         self.gitClient = gitClient
+        self.arrangementSourceID = arrangementSourceID
     }
 
     public var id: UUID { repo.id }
@@ -151,12 +179,30 @@ public final class ProjectWorkspace {
         return StoredTabs(tabs: loaded.tabs, activeTabID: loaded.activeTabID, enabledEdges: loaded.enabledEdges)
     }
 
+    /// The edges a project with no stored tabs turns on: the arrangement
+    /// source's, or the top edge alone.
+    public var firstOpenEnabledEdges: [Edge] { firstOpenSeed.enabledEdges }
+
+    /// A fresh tree for a project with no tab of its own to copy: the
+    /// arrangement source's, in ids nobody is using, or the layout's
+    /// blueprint. A factory, for the reason `ProjectTabReconciler.makeRecords`
+    /// gives — every member needs its own node ids.
+    public func firstOpenBlueprint() -> LayoutNode {
+        firstOpenSeed.arrangement?.inFreshIDs() ?? layout.blueprint()
+    }
+
     /// The tabs the window controller should display: the stored set, or one
-    /// default tab for a project being opened for the first time.
+    /// default tab for a project being opened for the first time — arranged
+    /// like the window the user last worked in (`firstOpenSeed`), so a new
+    /// project window does not throw away the tab sides and panes they chose.
     public func initialTabs() -> (tabs: [TabRecord], activeTabID: UUID, enabledEdges: [Edge]) {
         guard let stored = storedTabs() else {
-            let tab = TabRecord(title: "Tab 1", root: layout.blueprint())
-            return ([tab], tab.id, [.top])
+            let edges = firstOpenEnabledEdges
+            let groupID = UUID()
+            let tabs = edges.map { edge in
+                TabRecord(groupID: groupID, edge: edge, title: "Tab 1", root: firstOpenBlueprint())
+            }
+            return (tabs, tabs[0].id, edges)
         }
         // A stored tree can outlive the spec that made it, so it is repaired on
         // the way in rather than allowed to contradict the rules the split menu

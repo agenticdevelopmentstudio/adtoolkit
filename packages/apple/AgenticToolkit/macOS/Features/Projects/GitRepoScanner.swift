@@ -75,6 +75,28 @@ public struct GitRepoScanner: Sendable {
         fnmatch(pattern, name, FNM_CASEFOLD) == 0
     }
 
+    /// Whether the walk would refuse to reach `path`: it lies inside a folder
+    /// directly under one of the roots whose name a skip pattern matches.
+    ///
+    /// The question the project list asks of a row the registry already
+    /// holds. A row under a newly skipped folder is kept by the reconciler —
+    /// it is still a repository, and deleting it would take its layout with
+    /// it — so the list has to be able to leave it out on the same rule the
+    /// walk applies, rather than a second copy of that rule (`dry`).
+    public func skips(path: String) -> Bool {
+        let components = URL(fileURLWithPath: path).standardizedFileURL.pathComponents
+        for root in roots {
+            let rootComponents = root.standardizedFileURL.pathComponents
+            guard components.count > rootComponents.count,
+                  Array(components.prefix(rootComponents.count)) == rootComponents else { continue }
+            let folder = components[rootComponents.count]
+            if rootSkipPatterns.contains(where: { Self.name(folder, matches: $0) }) {
+                return true
+            }
+        }
+        return false
+    }
+
     /// Reported as the walk goes, so the progress window has something truthful
     /// to say. Called from whatever thread `scan` runs on.
     public struct Progress: Sendable {

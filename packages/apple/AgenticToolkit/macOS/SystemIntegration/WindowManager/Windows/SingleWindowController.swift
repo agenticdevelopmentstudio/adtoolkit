@@ -121,6 +121,14 @@ open class SingleWindowController: NSWindowController, NSWindowDelegate {
     /// geometry has to read it later than this.
     open func configureWindow(_ window: NSWindow) {}
 
+    /// Called during `loadWindow()` when there was no saved frame to restore,
+    /// after the spec's default position has been applied and before the
+    /// delegate is wired — so a frame set here is never saved as though the
+    /// user had put the window there. Override to place a never-seen window
+    /// somewhere better than the default: beside its siblings, say, rather
+    /// than exactly on top of one.
+    open func placeWindowWithoutSavedFrame(_ window: NSWindow) {}
+
     // MARK: - NSWindowController lazy-load hook
 
     open override func loadWindow() {
@@ -172,7 +180,9 @@ open class SingleWindowController: NSWindowController, NSWindowDelegate {
         // spec → geometric center fallback. A post-call `window.center()`
         // here would override that with AppKit's upper-center (y ≈ 1/3
         // from top), which is what it does despite the misleading name.
-        WindowManager.shared.frames.restoreFrame(for: newWindow, id: windowID)
+        if !WindowManager.shared.frames.restoreFrame(for: newWindow, id: windowID) {
+            placeWindowWithoutSavedFrame(newWindow)
+        }
         // Wire the delegate last — setting `contentViewController` above
         // resizes the window to the view's size and posts
         // `NSWindowDidResizeNotification`. If the delegate were attached

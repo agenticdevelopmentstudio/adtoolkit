@@ -154,7 +154,7 @@ public final class ProjectBrowserViewController: NSViewController {
     private func applyFilter() {
         query = searchField.stringValue.trimmingCharacters(in: .whitespaces)
         let previous = selectedRepo?.id
-        let all = coordinator.repos
+        let all = coordinator.listedRepos
         let matching = all.filter { ProjectFilter.matches($0, query: query) }
         roots = ProjectTree.build(from: matching)
         outline.reloadData()
@@ -170,15 +170,20 @@ public final class ProjectBrowserViewController: NSViewController {
                 : "No projects match “\(searchField.stringValue)”."
         }
 
-        // Keep whatever was selected if it survived the filter, otherwise take
-        // the first project so Return always has an answer. A folder is never
-        // the automatic choice: it is not something the dialog can open.
+        // Keep whatever was selected if it survived the filter. Otherwise the
+        // first match is selected only once the user has typed something to
+        // match: with an empty filter "the first project" is just whichever
+        // folder sorts first, and a dialog that opens with an arbitrary
+        // project already chosen invites Return to open the wrong one
+        // (`principle-of-least-astonishment`). A folder is never the automatic
+        // choice: it is not something the dialog can open.
         let projects = roots.flatMap { $0.repositoriesInDisplayOrder }
         if let previous, let node = projects.first(where: { $0.repo?.id == previous }) {
             select(node)
-        } else if let first = projects.first {
+        } else if !query.isEmpty, let first = projects.first {
             select(first)
         } else {
+            outline.deselectAll(nil)
             onSelectionChange?(nil)
         }
     }

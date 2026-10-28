@@ -29,4 +29,15 @@ extension UserSettings {
     /// keys going somewhere the user did not put them — is the wrong default.
     static public var activePaneFollowsMouse =
         UserSetting<Bool>("active_pane_follows_mouse", default: false)
+
+    /// The `git_repo.id` of the project window that was key most recently, as
+    /// a UUID string; empty before any has been.
+    ///
+    /// A project opened for the first time is laid out like that window — its
+    /// tab edges, panes and dividers — and placed at its size, so arranging
+    /// one window is arranging the next. An id rather than a copy of the
+    /// layout: the layout already lives in that project's rows, and a second
+    /// copy here would be a second answer to "how is it arranged" (`dry`).
+    static public var lastActiveProjectWindow =
+        UserSetting<String>("last_active_project_window", default: "")
 }

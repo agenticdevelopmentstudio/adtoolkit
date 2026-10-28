@@ -312,6 +312,36 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         }
     }
 
+    /// A project opened for the first time has no frame of its own, and the
+    /// spec's default — the same rect at the centre of the main screen for
+    /// every project — lands it squarely on top of whatever project window is
+    /// already there. It takes the shape of the window the user is working
+    /// in instead: the front project window's size, cascaded down and right
+    /// from it so both stay in view (`cascadeTopLeft(from:)` keeps it on
+    /// screen). With no project window open, it goes where the last one the
+    /// user worked in was saved.
+    public override func placeWindowWithoutSavedFrame(_ window: NSWindow) {
+        let sibling = NSApp.orderedWindows.first { other in
+            other !== window && other.isVisible && other.windowController is ComposableTabsWindowController
+        }
+        if let sibling {
+            var frame = window.frame
+            frame.size = sibling.frame.size
+            window.setFrame(frame, display: false)
+            // The first call puts this window's top left on the sibling's and
+            // answers the next cascade step; the second moves it there.
+            let next = window.cascadeTopLeft(from: NSPoint(x: sibling.frame.minX, y: sibling.frame.maxY))
+            window.cascadeTopLeft(from: next)
+            return
+        }
+        guard let lastID = UUID(uuidString: UserSettings.lastActiveProjectWindow.currentValue),
+              lastID != project.id,
+              let spec = windowSpec,
+              let frame = WindowManager.shared.frames.savedFrame(for: Self.windowID(for: lastID), spec: spec)
+        else { return }
+        window.setFrame(frame, display: false)
+    }
+
     /// A unified toolbar, matching the Notes window, and the help drawer. The
     /// window title stays visible here where it does not in Notes: the title is
     /// the project's name, which is the one thing the toolbar does not say.
@@ -326,6 +356,11 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         super.configureWindow(window)
         window.toolbar = toolbarDelegate.makeToolbar(identifier: "project.toolbar")
         window.toolbarStyle = .unified
+        // A project window is its own tab host. Left `.automatic`, AppKit
+        // merges a newly opened project into the front project window as a
+        // native window tab whenever the system's "Prefer tabs" setting says
+        // so — opening one project rearranges the window of another.
+        window.tabbingMode = .disallowed
 
         // The window, not `self.window`: this runs *during* `loadWindow()`, so
         // the controller's own property is not pointing at it yet.

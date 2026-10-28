@@ -42,6 +42,7 @@ public final class ProjectsCoordinator: AppFeature {
     private let injectedScanner: GitRepoScanner?
     private weak var opener: ProjectOpening?
     private var progressWindow: ProjectScanProgressWindow?
+    private var skipPatternsObserver: UserSettingObserver<[String]>?
 
     /// The ids this feature's actions answer to. Named once here rather than
     /// spelled at each of the register/contribute pairs: they are the contract
@@ -77,6 +78,14 @@ public final class ProjectsCoordinator: AppFeature {
         super.init()
 
         self.repos = (try? database.allRepos()) ?? []
+
+        // A new skip pattern has to empty the list of what it skips now, not
+        // after the next scan — and a scan would not do it anyway, since it
+        // keeps rows that are still repositories. Re-announcing the list is
+        // enough: `listedRepos` reads the setting afresh.
+        skipPatternsObserver = UserSettingObserver(UserSettings.projectScanSkipPatterns) { [weak self] _ in
+            self?.reload()
+        }
 
         registry.register(AppCommand(
             id: CommandID.openProject,
@@ -155,6 +164,26 @@ public final class ProjectsCoordinator: AppFeature {
         repos.first { $0.id == id }
     }
 
+    /// The projects to offer the user: every registered one except those the
+    /// skip list now excludes.
+    ///
+    /// Hidden rather than deleted. A row under a folder the user has just
+    /// skipped is still a repository, and the reconciler keeps it so that its
+    /// layout and settings survive; taking the pattern back out brings it
+    /// straight back. `repos` stays the whole registry, because restoring a
+    /// window or renaming a project is about the row, not about the list.
+    public var listedRepos: [GitRepo] {
+        let scanner = currentScanner
+        return repos.filter { !scanner.skips(path: $0.path) }
+    }
+
+    /// The scanner a scan would use right now — the injected one, or one built
+    /// from the current setting so an edited skip list takes effect at once.
+    private var currentScanner: GitRepoScanner {
+        injectedScanner
+            ?? GitRepoScanner(rootSkipPatterns: UserSettings.projectScanSkipPatterns.currentValue)
+    }
+
     /// Renames a project. The name is the user's; a scan never overwrites it.
     public func rename(repoID: UUID, to name: String) {
         guard var repo = repo(id: repoID) else { return }
@@ -205,8 +234,7 @@ public final class ProjectsCoordinator: AppFeature {
             progressWindow = window
         }
 
-        let scanner = injectedScanner
-            ?? GitRepoScanner(rootSkipPatterns: UserSettings.projectScanSkipPatterns.currentValue)
+        let scanner = currentScanner
         Task.detached(priority: .utility) {
             let found = scanner.scan()
             await MainActor.run { self.finishScan(found: found) }

@@ -168,6 +168,22 @@ public final class WindowFrameManager {
         return false
     }
 
+    /// Where `restoreFrame` would put the window saved under `id`, on the
+    /// screens attached now — or `nil` when nothing is saved for it. Reads
+    /// only: nothing is applied, saved, or counted as seeing the screen set.
+    ///
+    /// For placing a *different* window where that one was, which is why the
+    /// spec is the caller's: the window saved under `id` may not be open, and
+    /// then nothing has registered its spec.
+    public func savedFrame(for id: String, spec: WindowSpec) -> NSRect? {
+        guard spec.persistsFrame, let saved = cachedState(for: id) else { return nil }
+        let screens = screenProvider.screens
+        guard !screens.isEmpty else { return nil }
+        return bestPlacement(
+            from: saved.placements, setID: screenManager.currentSetID, spec: spec, among: screens
+        )?.frame
+    }
+
     // MARK: - Frame Saving
 
     /// Saves the window's current frame as the placement for the current
