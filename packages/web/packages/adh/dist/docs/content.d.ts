@@ -1,6 +1,6 @@
 /**
- * Doc content lookup by base-relative slug. The content lives once in `help/content/*.md`
- * (PRE-RENDERED to HTML in `content.generated.ts` by `tools/gen-help-content.py`) and is consumed
+ * Doc content lookup by base-relative slug. The content lives once, in `help/content/mcp/*.md`
+ * here and adhcontent's `content/adtoolkit/help/*.md` (PRE-RENDERED to HTML in `content.generated.ts` by `tools/gen-help-content.py`) and is consumed
  * by BOTH the Help modal and the docs sites — one source, one derived HTML representation. The
  * generator keys by file path with `/`→`-`; this maps a nav slug to that key (`''`→`index`,
  * `mcp/overview`→`mcp-overview`).

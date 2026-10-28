@@ -1,6 +1,11 @@
 import { Fragment, type ReactNode } from 'react'
 import { describe, expect, it } from 'vitest'
-import { MarketingRootHtml, MarketingSiteHeader, type MarketingRootHtmlProps } from '../marketing'
+import {
+  MarketingRootHtml,
+  MarketingShell,
+  MarketingSiteHeader,
+  type MarketingRootHtmlProps,
+} from '../marketing'
 import { AuthProvider } from '@agentic-toolkit/adh/auth'
 import { HelpContentProvider } from '@agenticdevelopertoolkit/ui/components/help-content'
 
@@ -51,14 +56,19 @@ function descend(node: any, expected: any[]): any[] {
 function openDocument(props: Partial<MarketingRootHtmlProps> = {}) {
   const html: any = MarketingRootHtml({ siteId: 'hub', children: 'CHILDREN', ...props })
   const [head, body] = html.props.children
+  // <body> holds the shell and nothing else; the shell is a plain function too, so calling
+  // it with the props the document gave it opens the provider chain below.
+  const shellElement = body.props.children
+  expect(shellElement.type).toBe(MarketingShell)
+  const chain = { props: { children: MarketingShell(shellElement.props) } }
   // The providers slot defaults to `Fragment` — a site that owns no context of its
   // own still gets a node here, so the chain's depth never varies.
-  const [help, auth, providers] = descend(body, [
+  const [help, auth, providers] = descend(chain, [
     HelpContentProvider,
     AuthProvider,
     props.providers ?? Fragment,
   ])
-  return { html, head, body, help, auth, providers, shell: providers.props.children as any }
+  return { html, head, body, shellElement, help, auth, providers, shell: providers.props.children as any }
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -142,5 +152,35 @@ describe('@agentic-toolkit/adh/marketing', () => {
     expect(openDocument().shell.props.chromeGate).toBeUndefined()
     const Gate = ({ children }: { children: ReactNode }) => <>{children}</>
     expect(openDocument({ chromeGate: Gate }).shell.props.chromeGate).toBe(Gate)
+  })
+
+  it('renders the body half on its own, for a layout below a document it does not own', () => {
+    // A templated site's root layout is the site template's: it writes <html> and <body>, so a
+    // family route group under it mounts the shell, not the document. The same chain, with no
+    // <html> around it.
+    const tree: any = MarketingShell({ siteId: 'hub', children: 'CHILDREN' })
+    expect(tree.type).toBe(HelpContentProvider)
+    const [, auth, providers] = descend({ props: { children: tree } }, [
+      HelpContentProvider,
+      AuthProvider,
+      Fragment,
+    ])
+    expect(auth.props.clientId).toBe('adh')
+    expect(auth.props.silentSso).toBe(true)
+    expect(providers.props.children.props.children).toBe('CHILDREN')
+  })
+
+  it('gives the document body exactly the shell, every seam passed through', () => {
+    const Gate = ({ children }: { children: ReactNode }) => <>{children}</>
+    const footerLinks = [{ label: 'GitHub', href: 'https://github.com/x' }]
+    const { body, shellElement } = openDocument({ footerLinks, chromeGate: Gate, silentSso: false })
+    expect(body.props.children).toBe(shellElement)
+    expect(shellElement.props).toMatchObject({
+      siteId: 'hub',
+      footerLinks,
+      chromeGate: Gate,
+      silentSso: false,
+      children: 'CHILDREN',
+    })
   })
 })

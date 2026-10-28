@@ -92,7 +92,9 @@ var FLEET_MENU_GROUPS = [
       { site: "toolkit" },
       { site: "tools" },
       { site: "testing" },
-      { site: "shipr" }
+      { site: "shipr" },
+      { site: "kitchen" },
+      { site: "stenographer" }
     ]
   }),
   topic({

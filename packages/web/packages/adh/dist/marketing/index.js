@@ -205,17 +205,19 @@ function MarketingLanding({ siteId, focusId }) {
 import { MarketingSiteHeader as MarketingSiteHeader2 } from "@agentic-toolkit/adh/marketing/MarketingSiteHeader";
 
 // src/marketing/MarketingRootHtml.tsx
-import { Fragment as Fragment3 } from "react";
 import { AdhThemeStyle } from "@agentic-toolkit/adh/server";
-import { AppShell } from "@agentic-toolkit/adh/layout";
 import { getLocale, htmlLang, localeDir } from "@agentic-toolkit/adh/concepts";
+
+// src/marketing/MarketingShell.tsx
+import { Fragment as Fragment3 } from "react";
+import { AppShell } from "@agentic-toolkit/adh/layout";
 import { AuthProvider } from "@agentic-toolkit/adh/auth";
 import { MarketingSiteHeader } from "@agentic-toolkit/adh/marketing/MarketingSiteHeader";
 import {
   HelpContentProvider
 } from "@agenticdevelopertoolkit/ui/components/help-content";
-import { jsx as jsx4, jsxs as jsxs4 } from "react/jsx-runtime";
-function MarketingRootHtml({
+import { jsx as jsx4 } from "react/jsx-runtime";
+function MarketingShell({
   siteId,
   navLinks,
   trailingNavLinks,
@@ -227,30 +229,36 @@ function MarketingRootHtml({
   chromeGate,
   children
 }) {
-  const loc = getLocale();
   const SiteProviders = providers ?? Fragment3;
+  return /* @__PURE__ */ jsx4(HelpContentProvider, { help: help ?? {}, children: /* @__PURE__ */ jsx4(AuthProvider, { clientId: "adh", storageKey: "auth_tokens", silentSso, children: /* @__PURE__ */ jsx4(SiteProviders, { children: /* @__PURE__ */ jsx4(
+    AppShell,
+    {
+      header: header ?? /* @__PURE__ */ jsx4(
+        MarketingSiteHeader,
+        {
+          siteId,
+          navLinks,
+          trailingNavLinks
+        }
+      ),
+      footer: { links: footerLinks ?? [] },
+      chromeGate,
+      children
+    }
+  ) }) }) });
+}
+
+// src/marketing/MarketingRootHtml.tsx
+import { jsx as jsx5, jsxs as jsxs4 } from "react/jsx-runtime";
+function MarketingRootHtml(props) {
+  const loc = getLocale();
   return (
     // suppressHydrationWarning: AdhThemeStyle's appearance pre-paint script sets class/data-*
     // on <html> before hydration (the user's colour mode), so the client tree legitimately
     // differs from the server's here. Same contract next-themes has.
     /* @__PURE__ */ jsxs4("html", { lang: htmlLang(loc), dir: localeDir(loc), suppressHydrationWarning: true, children: [
-      /* @__PURE__ */ jsx4("head", { children: /* @__PURE__ */ jsx4(AdhThemeStyle, {}) }),
-      /* @__PURE__ */ jsx4("body", { children: /* @__PURE__ */ jsx4(HelpContentProvider, { help: help ?? {}, children: /* @__PURE__ */ jsx4(AuthProvider, { clientId: "adh", storageKey: "auth_tokens", silentSso, children: /* @__PURE__ */ jsx4(SiteProviders, { children: /* @__PURE__ */ jsx4(
-        AppShell,
-        {
-          header: header ?? /* @__PURE__ */ jsx4(
-            MarketingSiteHeader,
-            {
-              siteId,
-              navLinks,
-              trailingNavLinks
-            }
-          ),
-          footer: { links: footerLinks ?? [] },
-          chromeGate,
-          children
-        }
-      ) }) }) }) })
+      /* @__PURE__ */ jsx5("head", { children: /* @__PURE__ */ jsx5(AdhThemeStyle, {}) }),
+      /* @__PURE__ */ jsx5("body", { children: /* @__PURE__ */ jsx5(MarketingShell, { ...props }) })
     ] })
   );
 }
@@ -258,6 +266,7 @@ export {
   BRAND_PROMISE,
   MarketingLanding,
   MarketingRootHtml,
+  MarketingShell,
   MarketingSiteHeader2 as MarketingSiteHeader,
   PILLAR_COPY,
   STAGE_LABEL,

@@ -7,4 +7,6 @@ export { MarketingSiteHeader } from '@agentic-toolkit/adh/marketing/MarketingSit
 export type { MarketingSiteHeaderProps } from '@agentic-toolkit/adh/marketing/MarketingSiteHeader';
 export { MarketingRootHtml } from './MarketingRootHtml';
 export type { MarketingRootHtmlProps } from './MarketingRootHtml';
+export { MarketingShell } from './MarketingShell';
+export type { MarketingShellProps } from './MarketingShell';
 //# sourceMappingURL=index.d.ts.map

@@ -163,6 +163,15 @@
   --lp-hero-pad-bottom: var(--lp-dock-clear, 0px);
   --lp-snap-stop: normal;
 
+  /* The band head's two gaps and the pulse rule's breath, at the package's own
+   * values: added to the package for the site template (9ebde1b88), and
+   * restated here for the same reason as the dials above — every token landing
+   * reads is assigned in this one place. */
+  --lp-head-gap: 2.6rem;
+  --lp-eyebrow-gap: 1.2rem;
+  --lp-pulse-rule-period: 6s;
+  --lp-pulse-rule-floor: 0.35;
+
   /* ---- the deck index's chrome, under a header that is already there ----
    * `NavChrome`'s own host is a site whose ONLY header is that bar: it floats
    * over the page in the top-left corner, and the package's defaults draw it

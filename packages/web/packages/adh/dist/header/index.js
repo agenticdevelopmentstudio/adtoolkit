@@ -1265,6 +1265,7 @@ import {
   ClipboardList,
   Code,
   Contact,
+  CookingPot,
   CreditCard,
   Database,
   Fingerprint,
@@ -1283,6 +1284,7 @@ import {
   Hexagon,
   History,
   House,
+  Keyboard,
   KeyRound,
   LayoutDashboard,
   LayoutGrid,
@@ -1421,6 +1423,11 @@ var ICONS = {
   // the build console
   shipr: Rocket,
   // walks a commit from main to production
+  // --- the macOS native tools' sites (registry `nativeApp`), for their Build rows. ---
+  kitchen: CookingPot,
+  // the menu bar app; ChefHat is cookbook's
+  stenographer: Keyboard,
+  // records every Claude Code session
   status: Activity,
   // system status / pulse
   support: LifeBuoy,
@@ -1843,7 +1850,9 @@ var FLEET_MENU_GROUPS = [
       { site: "toolkit" },
       { site: "tools" },
       { site: "testing" },
-      { site: "shipr" }
+      { site: "shipr" },
+      { site: "kitchen" },
+      { site: "stenographer" }
     ]
   }),
   topic({

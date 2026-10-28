@@ -14,3 +14,6 @@ export type { MarketingSiteHeaderProps } from '@agentic-toolkit/adh/marketing/Ma
 // no module-level state, so inlining it forks nothing and hoists nothing.
 export { MarketingRootHtml } from './MarketingRootHtml'
 export type { MarketingRootHtmlProps } from './MarketingRootHtml'
+// The body half on its own, for a family route group under a document the site template owns.
+export { MarketingShell } from './MarketingShell'
+export type { MarketingShellProps } from './MarketingShell'
