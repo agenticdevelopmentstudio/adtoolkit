@@ -199,8 +199,37 @@ describe('themes.json', () => {
 describe('themes.json mikefullerton', () => {
   type Theme = { css: string; fonts: { variable: string; role?: string[]; files: { path: string }[] }[] }
   const themes = (): Record<string, Theme> => JSON.parse(read(join(pkg, 'themes.json'))) as Record<string, Theme>
+  const stylesDir = resolve(pkg, '../themes/src/styles')
   const sheetPath = (theme: Theme): string =>
-    join(resolve(pkg, '../themes/src/styles'), theme.css.replace('@agenticdevelopertoolkit/themes/styles/', ''))
+    join(stylesDir, theme.css.replace('@agenticdevelopertoolkit/themes/styles/', ''))
+  const mikefullerton = (): string => sheetPath(themes().mikefullerton)
+  const fishlamp = (): string => sheetPath(themes().fishlamp)
+
+  /** The sheet with each relative `@import "./x.css";` replaced by that file, recursively: what a
+   *  bundler hands the page. */
+  function withImports(path: string): string {
+    return read(path).replace(/@import\s+['"](\.\/[^'"]+)['"]\s*;/g, (_, rel: string) =>
+      withImports(join(dirname(path), rel)),
+    )
+  }
+
+  /** Every custom property declared in a rule listing exactly `html:root`, later rules winning:
+   *  the sheet's dark palette as the cascade resolves it. */
+  function rootTokens(css: string): Map<string, string> {
+    const tokens = new Map<string, string>()
+    for (const m of stripComments(css).matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const sels = m[1].split(',').map((s) => s.replace(/\s+/g, ' ').trim())
+      if (!sels.includes('html:root')) continue
+      for (const d of m[2].matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)) tokens.set(d[1], d[2].replace(/\s+/g, ' ').trim())
+    }
+    return tokens
+  }
+
+  // The two roles that are the site's own; every other role is fishlamp's.
+  const SITE = new Map([
+    ['--color-text-dim', '#6d5f52'],
+    ['--color-outline-strong', 'rgba(232, 163, 61, 0.42)'],
+  ])
 
   it("points at the landing palette sheet, not the manifest's mikefullerton.css", () => {
     const theme = themes().mikefullerton
@@ -216,8 +245,7 @@ describe('themes.json mikefullerton', () => {
   })
 
   it('declares every role the bridge and the frame read', () => {
-    const sheet = read(sheetPath(themes().mikefullerton))
-    const declared = new Set([...stripComments(sheet).matchAll(/(--[a-z0-9-]+)\s*:/g)].map((m) => m[1]))
+    const declared = new Set(rootTokens(withImports(mikefullerton())).keys())
     const wanted = new Set<string>()
     for (const css of [bridge(), frame()]) {
       for (const m of stripComments(css).matchAll(/var\((--(?:color|font)-[a-z0-9-]+)/g)) wanted.add(m[1])
@@ -225,27 +253,34 @@ describe('themes.json mikefullerton', () => {
     expect([...wanted].filter((role) => !declared.has(role))).toEqual([])
   })
 
-  it("is one token rule, dark under both modes: no body rule to reach a site's other routes", () => {
-    const sheet = stripComments(read(sheetPath(themes().mikefullerton)))
-    const selectors = [...sheet.matchAll(/([^{}]+)\{/g)].map((m) => m[1].replace(/\s+/g, ' ').trim())
-    expect(selectors).toEqual(['html:root, html:root[data-color-mode]:not(.dark)'])
+  it("is token rules only, dark under every mode: no body rule to reach a site's other routes", () => {
+    const sheet = stripComments(withImports(mikefullerton()))
+    const selectors = [...sheet.matchAll(/([^{}]+)\{/g)].flatMap((m) => m[1].split(',').map((s) => s.trim()))
+    expect(selectors.length).toBeGreaterThan(0)
+    expect(selectors.filter((s) => !s.startsWith('html:root'))).toEqual([])
+    expect(selectors).toContain('html:root[data-color-mode]:not(.dark)')
   })
 
-  it("carries the site's palette as roles", () => {
-    const root = ruleBody(read(sheetPath(themes().mikefullerton)), 'html:root')
-    for (const decl of [
-      '--color-surface: #0b0a09',
-      '--color-surface-container-high: #17130f',
-      '--color-surface-container-highest: #1f1a14',
-      '--color-on-surface: #f0e4d0',
-      '--color-on-surface-variant: #a8968a',
-      '--color-text-dim: #6d5f52',
-      '--color-primary: #e8a33d',
-      '--color-primary-bright: #f5c877',
-      '--color-outline: rgba(232, 163, 61, 0.18)',
-      '--color-outline-strong: rgba(232, 163, 61, 0.42)',
-    ]) {
-      expect(root).toContain(decl)
-    }
+  it("copies no fishlamp literal: it declares only the site's own roles", () => {
+    // fishlamp.com's palette is the studio's; this site is signed by it. A role restated here
+    // with fishlamp's value is a fork that keeps the old literal when fishlamp's is tuned.
+    const theirs = rootTokens(withImports(fishlamp()))
+    const own = stripComments(read(mikefullerton()))
+    const duplicated = [...own.matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/g)]
+      .map((d) => [d[1], d[2].replace(/\s+/g, ' ').trim()] as const)
+      .filter(([role, value]) => theirs.get(role) === value)
+      .map(([role, value]) => `${role}: ${value}`)
+    expect(duplicated).toEqual([])
+  })
+
+  it("resolves every role to fishlamp's value, except the site's two", () => {
+    const theirs = rootTokens(withImports(fishlamp()))
+    const ours = rootTokens(withImports(mikefullerton()))
+    for (const [role, value] of SITE) expect(ours.get(role), role).toBe(value)
+    const differ = [...ours]
+      .filter(([role]) => !SITE.has(role))
+      .filter(([role, value]) => theirs.get(role) !== value)
+      .map(([role, value]) => `${role}: ${value} (fishlamp: ${theirs.get(role)})`)
+    expect(differ).toEqual([])
   })
 })

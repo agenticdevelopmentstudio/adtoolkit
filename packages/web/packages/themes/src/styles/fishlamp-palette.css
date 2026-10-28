@@ -1,0 +1,139 @@
+/* Fishlamp palette — fishlamp.com's colour and font ROLES, and nothing else: no `body` rule,
+ * no glow, no chat skin, no hub tokens. fishlamp.css imports it and adds those; a page that
+ * wants fishlamp's palette without painting anything (site-template's `mikefullerton` theme,
+ * mikefullerton-landing.css) imports it alone and overrides only the roles that are its own.
+ * One copy of the literals, so tuning an ember here moves every sheet that is fishlamp's.
+ *
+ * The selector list, every literal and the reasoning beside each are fishlamp.css's: see that
+ * file's header for why there are five selectors (dark-always against the appearance system)
+ * and its source of truth (fishlamp's own globals.css). Kept DARK ONLY, as there. */
+
+html:root,
+html:root[data-color-mode]:not(.dark),
+html:root[data-color-mode]:not(.dark)[data-contrast='high'],
+html:root[data-color-mode]:not(.dark)[data-contrast='extra-high'],
+html:root[data-color-mode]:not(.dark):not([data-contrast='high']):not([data-contrast='extra-high']) {
+  color-scheme: dark;
+
+  /* M3 surfaces + text + outline — the ink/parchment/hairline family */
+  --color-surface: #0b0a09; /* ink */
+  --color-surface-dim: #060605; /* DERIVED — one step under ink */
+  --color-surface-bright: #2a231a; /* DERIVED — one step over ink-raise */
+  --color-surface-container-lowest: #050403; /* fishlamp's scrim ground, rgba(5,4,3) */
+  /* The ramp sits ONE STEP LOWER than the obvious ink → ink-soft → ink-raise reading,
+   * and the step is the whole point. `--color-surface-container` is not a "slightly
+   * raised" role in this family — it is what paints the LARGE grounds: tailwind.css:31
+   * maps `bg-apt-surface` to it (the hub's sidebar and main pane) and shadcn's `--card`
+   * (:78) reads it too. Putting ink-soft there made those grounds a warm brown panel
+   * covering most of the viewport, while fishlamp.com's page is uniform ink #0b0a09 with
+   * nothing but the glow over it — the reference has no large mid-tone area at all.
+   *
+   * Charcoal's step is the same MAGNITUDE (#0c0c0f → #14141a) and reads as "the same
+   * near-black, slightly lifted" because both values are cool. Warm #17130f against warm
+   * #0b0a09 reads as a different COLOUR, not a different elevation, so the identical
+   * delta that is invisible on charcoal is the thing you see first here.
+   *
+   * So: the two roles that paint big areas land on ink — EQUAL to `--color-surface`, not
+   * merely near it — and ink-soft/ink-raise move up to the genuinely-raised roles
+   * (popover, input, secondary, muted, accent — all `-high` at tailwind.css:35,80-92).
+   *
+   * Equal rather than a hair above because a sliver of difference is the worst of the
+   * three options: it reads as a seam between adjacent shell regions instead of as either
+   * one ground or two elevations. Nothing loses an edge from it — `Card` is
+   * `bg-apt-bg` + `border-apt-border` (ui/src/components/card.tsx:12), so it is separated
+   * by the gold hairline, which is exactly how fishlamp.com separates regions. The
+   * elevation the ramp still offers starts at `-high`. */
+  --color-surface-container-low: #0b0a09; /* ink — a large-ground role, see above */
+  --color-surface-container: #0b0a09; /* ink — the shell ground; EQUAL to surface on purpose */
+  --color-surface-container-high: #17130f; /* ink-soft */
+  --color-surface-container-highest: #1f1a14; /* ink-raise */
+  --color-on-surface: #f0e4d0; /* parchment */
+  --color-on-surface-variant: #a8968a; /* parchment-dim */
+  --color-text-dim: #7a6a5c; /* DERIVED — parchment-dim dropped toward the ground */
+  --color-outline: rgba(232, 163, 61, 0.18); /* hairline */
+  --color-outline-variant: rgba(232, 163, 61, 0.1); /* DERIVED — hairline, subtler */
+  --color-outline-strong: rgba(232, 163, 61, 0.45); /* fishlamp's card-hover border */
+  --color-inverse-surface: #f0e4d0;
+  --color-inverse-on-surface: #17130f;
+  --color-scrim: #050403;
+  --color-shadow: #000000;
+
+  /* M3 primary / secondary / tertiary — ember, parchment-dim, and the cool note */
+  --color-primary: #e8a33d; /* ember */
+  --color-on-primary: #0b0a09; /* ink */
+  --color-primary-container: #4a3416; /* DERIVED — ember sunk into the ground */
+  --color-on-primary-container: #f5c877; /* ember-bright */
+  --color-primary-bright: #f5c877; /* ember-bright */
+  --color-inverse-primary: #8f5c17; /* the logo mark's --fl-line-deep */
+  --color-primary-dim: rgba(232, 163, 61, 0.14); /* ember-dim */
+  --color-secondary: #a8968a; /* parchment-dim */
+  --color-on-secondary: #0b0a09;
+  --color-secondary-container: #2a231a;
+  --color-on-secondary-container: #f0e4d0;
+  /* fishlamp's page palette is entirely warm. Its ONE deliberately cool value is
+     bitbag's "sad" body colour (expressions.ts:56-65, commented there as the note
+     that is meant to sit outside the ember family) — so the cool M3 roles take it
+     rather than importing a blue from nowhere. */
+  --color-tertiary: #8797b3;
+  --color-on-tertiary: #0b0a09;
+  --color-tertiary-container: #2b323f; /* DERIVED */
+  --color-on-tertiary-container: #d3dae6; /* DERIVED */
+
+  /* M3 status. error/warning come from the mascot mood palette, the only place
+     fishlamp defines them; success has NO fishlamp source and is derived. */
+  --color-error: #d9573b; /* bitbag "mad" — burnt ember-red */
+  --color-on-error: #0b0a09;
+  --color-error-container: #3d1d14; /* DERIVED */
+  --color-on-error-container: #f5c9bd; /* DERIVED */
+  --color-success: #8faa6b; /* DERIVED — olive, warm enough to sit beside ember */
+  --color-on-success: #0b0a09;
+  --color-success-container: #2a3320; /* DERIVED */
+  --color-on-success-container: #d9e6c6; /* DERIVED */
+  --color-warning: #ffd98a; /* bitbag "surprised" */
+  --color-on-warning: #0b0a09;
+  --color-warning-container: #3d2f14; /* DERIVED */
+  --color-on-warning-container: #f7e6c2; /* DERIVED */
+  --color-info: #8797b3; /* the cool note again, matching tertiary */
+  --color-on-info: #0b0a09;
+  --color-info-container: #2b323f;
+  --color-on-info-container: #d3dae6;
+
+  /* M3 extras + apt literals */
+  --color-surface-tint: var(--color-primary);
+  --color-link: var(--color-primary);
+  --color-link-hover: var(--color-primary-bright);
+  /* The highlighted state is ember-BRIGHT, not ember. fishlamp.com splits its two
+     golds by state and never mixes them: ember #e8a33d is what a thing is at REST
+     (`section h2`, `.card-link`, `.member .site`, `.card .status`) and ember-bright
+     #f5c877 is what it BECOMES when highlighted (`::selection`, `.drawer a.nav:hover`,
+     `.prose em`, `.hero h1 b`). The decisive evidence is one element in both states —
+     `.member span.face` is ember at globals.css:869 and ember-bright at :873 on hover —
+     which makes bright the reference's highlight colour by construction rather than by
+     preference. --color-primary stays ember so everything at rest still matches. */
+  --color-highlight: var(--color-primary-bright);
+  --focus-ring-color: var(--color-primary);
+
+  /* COMPAT aliases (legacy names → M3 roles). The two elevation aliases are pinned one
+     ramp step HIGHER than the base pins them, which keeps their MEANING rather than their
+     role name: the base's `raised` is `container` because there `container` is the raised
+     step, but this theme's ramp puts `container` on the large grounds (see the block
+     above), so a legacy consumer asking for "the raised surface" has to be handed
+     ink-soft or it gets something indistinguishable from the page. `hover` stays one step
+     above `raised`, exactly as the base orders them. */
+  --color-surface-raised: var(--color-surface-container-high);
+  --color-surface-hover: var(--color-surface-container-highest);
+  --color-border: var(--color-outline);
+  --color-border-subtle: var(--color-outline-variant);
+  --color-border-strong: var(--color-outline-strong);
+  --color-text-primary: var(--color-on-surface);
+  --color-text-secondary: var(--color-on-surface-variant);
+  --color-accent: var(--color-primary);
+  --color-accent-bright: var(--color-primary-bright);
+  --color-accent-dim: var(--color-primary-dim);
+
+  /* fonts (mode-invariant) — the adh base already self-hosts this exact face */
+  --font-sans: 'Iosevka', 'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace;
+  --font-serif: 'Iosevka', 'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace;
+  --font-mono: 'Iosevka', 'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace;
+  --font-display: var(--font-serif);
+}

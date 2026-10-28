@@ -5,6 +5,8 @@
 // 4.5:1 (normal text) or 3:1 (large text + non-text UI). Exits non-zero on any
 // failure so CI fails fast. Run: node scripts/contrast-check.mjs [--report]
 import { readdir, readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
+import { inlineImports } from './inline-imports.mjs'
 
 const REPORT_ONLY = process.argv.includes('--report')
 // adh-family themes share one dark `:root` color layer (check both anyway). Full-palette
@@ -144,15 +146,25 @@ function ratio(fgColor, bgColor) {
   return (hi + 0.05) / (lo + 0.05)
 }
 
-/** Body of the first rule listing `selector` (token blocks have no nested braces). A
- *  selector cannot contain a brace, so the next `{` still opens the rule even when the
- *  matched entry is followed by more selectors in the list. */
+/** Bodies of EVERY rule listing `selector`, in source order and joined, so a later rule's
+ *  declaration wins in parseVars as it does in the cascade (token blocks have no nested
+ *  braces). Every rule, not the first: a sheet that imports a shared palette and then
+ *  overrides a role lists the same selector twice, and reading only the first would gate the
+ *  palette's value instead of the one the page gets. A selector cannot contain a brace, so the
+ *  next `{` still opens the rule even when the matched entry is followed by more selectors. */
 function blockBody(css, selector) {
-  const at = selectorAt(css, selector)
-  if (at < 0) return null
-  const open = css.indexOf('{', at)
-  const close = css.indexOf('}', open)
-  return close < 0 ? null : css.slice(open + 1, close)
+  const bodies = []
+  let from = 0
+  for (;;) {
+    const at = selectorAt(css.slice(from), selector)
+    if (at < 0) break
+    const open = css.indexOf('{', from + at)
+    const close = css.indexOf('}', open)
+    if (close < 0) break
+    bodies.push(css.slice(open + 1, close))
+    from = close + 1
+  }
+  return bodies.length ? bodies.join('\n') : null
 }
 
 // Build the list of (label, varMap) targets to gate. adh-family: one dark map from the
@@ -167,7 +179,9 @@ for (const theme of ADH_THEMES) {
   targets.push({ label: theme, map: parseVars(css) })
 }
 for (const theme of FULL_PALETTE_THEMES) {
-  const css = await readFile(new URL(`${theme}.css`, STYLES_DIR), 'utf8')
+  // Through its imports: a sheet that imports fishlamp-palette.css is gated on the palette
+  // the page actually gets, its own overrides layered on top.
+  const css = await inlineImports(fileURLToPath(new URL(`${theme}.css`, STYLES_DIR)))
   const darkBody = blockBody(css, 'html:root')
   const lightBody = blockBody(css, 'html:root[data-color-mode]:not(.dark)')
   if (darkBody == null || lightBody == null) {

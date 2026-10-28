@@ -5,110 +5,35 @@
  * DM Mono, Instrument Serif), still offered by the theme manifest, and it describes the page
  * kept at mikefullerton.com/old. This one describes the page at `/`, which took fishlamp.com's
  * warm ink and ember down to the literals: FishLamp Design is the studio that site is signed
- * by, and two near-identical palettes would read as one of them being slightly wrong. The two
- * values that are the site's own, not fishlamp's, are marked SITE.
+ * by, and two near-identical palettes would read as one of them being slightly wrong.
  *
- * TOKENS ONLY: no `body` rule, no glow, no chat skin. fishlamp.css paints a fixed lamp glow on
- * `body`; this site's first screen has no such pool behind it (its hero carries its own), and
- * a `body` rule would also reach the site's `/old` route, which keeps its own look. Bitbag's
- * chat brings its own skin.
+ * So it IMPORTS fishlamp's roles (fishlamp-palette.css, the same sheet fishlamp.css imports)
+ * and declares only the two that are the site's own. A role restated here with fishlamp's
+ * value would be a fork that keeps the old literal when fishlamp's is tuned;
+ * site-template's css.test.ts refuses one.
  *
- * DARK ONLY: one palette under both the dark and the light selector, so a light request finds
- * the same ink (and scripts/contrast-check.mjs gates it in both modes, as it does every
- * full-palette sheet here). Only those two selectors, not fishlamp.css's five: a template site
- * loads neither the appearance system nor accessibility.css, so there is no contrast state to
- * out-specify. Not registered in the theme manifest for the same reason — it is a page
- * palette, not a theme the hub's picker offers.
+ * TOKENS ONLY: no `body` rule, no glow, no chat skin — which is why it imports the palette
+ * and not fishlamp.css. fishlamp.css paints a fixed lamp glow on `body`; this site's first
+ * screen has no such pool behind it (its hero carries its own), and a `body` rule would also
+ * reach the site's `/old` route, which keeps its own look. Bitbag's chat brings its own skin.
  *
- * The roles the site has no value for (tertiary, the status family, the containers) are
- * fishlamp.css's derivations, unchanged: same palette, same answers.
+ * DARK ONLY, as fishlamp is: one palette under both the dark and the light selector, so a
+ * light request finds the same ink (scripts/contrast-check.mjs gates it in both modes, as it
+ * does every full-palette sheet here). The override below uses the palette's own five
+ * selectors, so it ties each of them and wins on source order in every state. Not registered
+ * in the theme manifest — it is a page palette, not a theme the hub's picker offers.
  *
- * Fonts: Iosevka in every role, which the template self-hosts (themes.json names the site
- * cut and points these properties at it). The site's one serif, the wordmark's, is the
- * site's own font, not a role here. */
+ * Fonts: Iosevka in every role, from the palette; the template self-hosts it (themes.json
+ * names the site cut and points these properties at it). The site's one serif, the
+ * wordmark's, is the site's own font, not a role here. */
+
+@import './fishlamp-palette.css';
 
 html:root,
-html:root[data-color-mode]:not(.dark) {
-  color-scheme: dark;
-
-  /* Surfaces: ink, ink-soft, ink-raise. The two large-ground roles are ink, EQUAL to the
-     surface, as in fishlamp.css (see its ramp note): the page is one ink, and elevation
-     starts at `-high`. */
-  --color-surface: #0b0a09; /* ink */
-  --color-surface-dim: #060605;
-  --color-surface-bright: #2a231a;
-  --color-surface-container-lowest: #050403;
-  --color-surface-container-low: #0b0a09;
-  --color-surface-container: #0b0a09;
-  --color-surface-container-high: #17130f; /* ink-soft */
-  --color-surface-container-highest: #1f1a14; /* ink-raise */
-  --color-on-surface: #f0e4d0; /* parchment */
-  --color-on-surface-variant: #a8968a; /* parchment-dim */
+html:root[data-color-mode]:not(.dark),
+html:root[data-color-mode]:not(.dark)[data-contrast='high'],
+html:root[data-color-mode]:not(.dark)[data-contrast='extra-high'],
+html:root[data-color-mode]:not(.dark):not([data-contrast='high']):not([data-contrast='extra-high']) {
   --color-text-dim: #6d5f52; /* SITE — dark enough to separate two words, not be a third */
-  --color-outline: rgba(232, 163, 61, 0.18); /* hairline */
-  --color-outline-variant: rgba(232, 163, 61, 0.1);
   --color-outline-strong: rgba(232, 163, 61, 0.42); /* SITE — the hover edge */
-  --color-inverse-surface: #f0e4d0;
-  --color-inverse-on-surface: #17130f;
-  --color-scrim: #050403;
-  --color-shadow: #000000;
-
-  /* Ember: at rest, highlighted, and as a tint. */
-  --color-primary: #e8a33d;
-  --color-on-primary: #0b0a09;
-  --color-primary-container: #4a3416;
-  --color-on-primary-container: #f5c877;
-  --color-primary-bright: #f5c877;
-  --color-inverse-primary: #8f5c17;
-  --color-primary-dim: rgba(232, 163, 61, 0.14);
-  --color-secondary: #a8968a;
-  --color-on-secondary: #0b0a09;
-  --color-secondary-container: #2a231a;
-  --color-on-secondary-container: #f0e4d0;
-  --color-tertiary: #8797b3;
-  --color-on-tertiary: #0b0a09;
-  --color-tertiary-container: #2b323f;
-  --color-on-tertiary-container: #d3dae6;
-
-  /* Status. */
-  --color-error: #d9573b;
-  --color-on-error: #0b0a09;
-  --color-error-container: #3d1d14;
-  --color-on-error-container: #f5c9bd;
-  --color-success: #8faa6b;
-  --color-on-success: #0b0a09;
-  --color-success-container: #2a3320;
-  --color-on-success-container: #d9e6c6;
-  --color-warning: #ffd98a;
-  --color-on-warning: #0b0a09;
-  --color-warning-container: #3d2f14;
-  --color-on-warning-container: #f7e6c2;
-  --color-info: #8797b3;
-  --color-on-info: #0b0a09;
-  --color-info-container: #2b323f;
-  --color-on-info-container: #d3dae6;
-
-  --color-surface-tint: var(--color-primary);
-
-  --color-link: var(--color-primary);
-  --color-link-hover: var(--color-primary-bright);
-  --color-highlight: var(--color-primary-bright);
-  --focus-ring-color: var(--color-primary);
-
-  /* COMPAT aliases (legacy names → roles), at fishlamp.css's elevation. */
-  --color-surface-raised: var(--color-surface-container-high);
-  --color-surface-hover: var(--color-surface-container-highest);
-  --color-border: var(--color-outline);
-  --color-border-subtle: var(--color-outline-variant);
-  --color-border-strong: var(--color-outline-strong);
-  --color-text-primary: var(--color-on-surface);
-  --color-text-secondary: var(--color-on-surface-variant);
-  --color-accent: var(--color-primary);
-  --color-accent-bright: var(--color-primary-bright);
-  --color-accent-dim: var(--color-primary-dim);
-
-  --font-sans: 'Iosevka', 'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace;
-  --font-serif: 'Iosevka', 'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace;
-  --font-mono: 'Iosevka', 'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace;
-  --font-display: var(--font-serif);
 }
