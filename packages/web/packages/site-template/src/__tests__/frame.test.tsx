@@ -20,7 +20,7 @@ import {
   frameViewport,
 } from '../frame-metadata'
 import { frameNotFoundMetadata } from '../not-found'
-import type { FrameConfig, FrameCopy, SlotMap } from '../types'
+import type { FrameConfig, FrameCopy, SiteFamily, SlotMap } from '../types'
 
 const hero: LandingPage['hero'] = {
   headline: 'Cook the thing',
@@ -158,6 +158,67 @@ describe('LandingFrame', () => {
     // A seam alone keeps the alternation's tone.
     expect(third!.className).toContain('lp-band--soft')
     expect(third!.className).not.toContain('lp-band--seam')
+  })
+
+  describe('the family band', () => {
+    const family: SiteFamily = {
+      self: 'kitchen',
+      copy: {
+        eyebrow: 'The family',
+        title: 'Part of the family',
+        members: {
+          hub: { name: 'The Hub', url: 'https://hub.example', blurb: 'The hub.' },
+          kitchen: { name: 'The Kitchen', url: 'https://kitchen.example', blurb: 'The kitchen.' },
+          team: { name: 'The Team', url: 'https://team.example/start', blurb: 'The team.' },
+        },
+      },
+    }
+
+    it('closes the page with a linked card for every member but this site, in the copy\'s order', () => {
+      const { container } = render(<LandingFrame page={two} slots={noSlots} mark={mark} family={family} />)
+      const bands = Array.from(container.querySelectorAll('.lp-band'))
+      expect(bands.map((b) => b.id)).toEqual(['one', 'two', 'family'])
+      const band = bands[2]!
+      expect(band.querySelector('.lp-head h2')!.textContent).toBe('Part of the family')
+      expect(band.querySelector('.lp-head')!.textContent).toContain('The family')
+      const links = Array.from(band.querySelectorAll<HTMLAnchorElement>('a.st-family__link'))
+      expect(links.map((a) => a.getAttribute('href'))).toEqual(['https://hub.example', 'https://team.example/start'])
+      expect(links.map((a) => a.querySelector('h3')!.textContent)).toEqual(['The Hub', 'The Team'])
+      expect(links.map((a) => a.querySelector('.lp-card__kicker')!.textContent)).toEqual(['hub.example', 'team.example'])
+      expect(links[1]!.querySelector('.lp-card p')!.textContent).toBe('The team.')
+      expect(band.textContent).not.toContain('The Kitchen')
+    })
+
+    it('takes the next tone in the alternation', () => {
+      const one: LandingPage = { hero, sections: [section('one', 'One')] }
+      const tone = (page: LandingPage): string => {
+        const bands = render(<LandingFrame page={page} slots={noSlots} mark={mark} family={family} />).container
+          .querySelectorAll('.lp-band')
+        const last = bands[bands.length - 1]!
+        expect(last.id).toBe('family')
+        return last.className
+      }
+      expect(tone(one)).toContain('lp-band--dark')
+      expect(tone(two)).toContain('lp-band--soft')
+    })
+
+    it('is absent when the site is not in the family', () => {
+      const { container } = render(<LandingFrame page={two} slots={noSlots} mark={mark} />)
+      expect(container.querySelector('#family')).toBeNull()
+    })
+
+    it('refuses a self that names no member', () => {
+      expect(() =>
+        render(<LandingFrame page={two} slots={noSlots} mark={mark} family={{ ...family, self: 'kitchn' }} />),
+      ).toThrow(/family 'kitchn' names no member.*'hub', 'kitchen', 'team'/)
+    })
+
+    it('refuses a section whose id is the band\'s', () => {
+      const page: LandingPage = { hero, sections: [section('family', 'Family')] }
+      expect(() => render(<LandingFrame page={page} slots={noSlots} mark={mark} family={family} />)).toThrow(
+        /section 'family' collides with the family band/,
+      )
+    })
   })
 
   it('refuses a band look that names no section', () => {

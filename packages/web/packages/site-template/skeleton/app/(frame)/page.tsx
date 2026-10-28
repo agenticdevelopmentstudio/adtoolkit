@@ -7,6 +7,7 @@ import type { FrameCopy } from '@agenticdevelopertoolkit/site-template'
 import landing from '../../src/landing'
 import siteCopy from '../../src/content/site/site.json'
 import { config } from '../../src/site/config'
+import { family } from '../../src/site/family'
 import { slots } from '../../src/site/slots'
 
 // Typed for the reason the layout gives.
@@ -25,6 +26,7 @@ export default function Home(): ReactElement {
       mark={<FrameMark config={config} alt={copy.markAlt} />}
       looks={config.bands}
       pendingLabel={copy.screenshotPending}
+      family={family}
     />
   )
 }

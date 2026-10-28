@@ -119,6 +119,7 @@ class AssembleTest(unittest.TestCase):
             "src/site/fonts.ts",
             "src/site/next.ts",
             "src/site/analytics.tsx",
+            "src/site/family.ts",
             "src/fonts/iosevka-site-400.woff2",
             ".site-template.json",
         ]:
@@ -1289,6 +1290,27 @@ class AssembleTest(unittest.TestCase):
             with self.subTest(rule=rule):
                 self.config["headers"] = [rule]
                 self.assert_refused(self.assemble(), where)
+
+    # --- family -------------------------------------------------------------------------------
+
+    def test_no_family_is_no_band_and_no_family_copy(self) -> None:
+        self.assert_ok(self.assemble())
+        text = (self.app / "src/site/family.ts").read_text()
+        self.assertIn("export const family: SiteFamily | undefined = undefined", text)
+        self.assertNotIn("family.json", text)
+
+    def test_family_names_this_site_in_the_shared_copy(self) -> None:
+        self.config["family"] = "kitchen"
+        self.assert_ok(self.assemble())
+        text = (self.app / "src/site/family.ts").read_text()
+        self.assertIn("import words from '../content/family/family.json'", text)
+        self.assertIn('= { copy: words, self: "kitchen" }', text)
+
+    def test_family_must_be_an_id(self) -> None:
+        for bad in ("Kitchen", "", "kitchen/main", True):
+            with self.subTest(family=bad):
+                self.config["family"] = bad
+                self.assert_refused(self.assemble(), "family")
 
     # --- analytics ----------------------------------------------------------------------------
 

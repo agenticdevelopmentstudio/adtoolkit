@@ -19,7 +19,16 @@ export {
   frameSitemap,
   frameSiteUrl,
 } from './frame-metadata'
-export type { BandLook, CopyText, FrameCopy, FrameConfig, SlotMap } from './types'
+export type {
+  BandLook,
+  CopyText,
+  FamilyCopy,
+  FamilyMember,
+  FrameCopy,
+  FrameConfig,
+  SiteFamily,
+  SlotMap,
+} from './types'
 // A site briefs bitbag through its `bitbag` slot, and a site depends on the template and never
 // names bitbag itself (package.json's `//dependencies`), so the brief's type is passed on here.
 export type { BitbagVoice } from '@agentic-toolkit/bitbag'

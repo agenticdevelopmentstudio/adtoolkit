@@ -89,6 +89,33 @@ export interface BandLook {
   seam?: boolean
 }
 
+/** One member of the Agentic Developer Hub family, as the shared `family` copy words it. */
+export interface FamilyMember {
+  name: string
+  url: string
+  blurb: string
+}
+
+/**
+ * The shared `family` copy: the band's eyebrow and title, and every member by its id. One file
+ * in adhcontent words it for every site, so a member described once reads the same everywhere.
+ */
+export interface FamilyCopy {
+  eyebrow: string
+  title: string
+  members: Record<string, FamilyMember>
+}
+
+/**
+ * The family band a site closes `/` with: the shared copy, and `self`, the id of the member that
+ * IS this site, which the band leaves out. Generated as `src/site/family.ts` from site.json's
+ * `family`.
+ */
+export interface SiteFamily {
+  copy: FamilyCopy
+  self: string
+}
+
 /**
  * A site's custom components, by the place in the frame each one fills. A slot replaces the
  * CONTENTS of its place and never the frame around it: a hero slot still sits in the

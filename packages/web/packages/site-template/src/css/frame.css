@@ -46,6 +46,32 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* The family band's cards are short and many, so they are the one grid that goes two across once
+ * there is room — at `--pair`'s breakpoint, for `--pair`'s reason (landing's blocks.css). Each card
+ * is a link, wrapping the card whole: it keeps the card's own colours, and the card stretches to
+ * its row's height so a row reads as one. */
+@media (min-width: 48rem) {
+  .lp-cards.st-family {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.st-family__link {
+  display: flex;
+  color: inherit;
+  text-decoration: none;
+}
+
+.st-family__link > .lp-card {
+  flex: 1;
+}
+
+.st-family__link:focus-visible {
+  outline: 2px solid var(--lp-accent);
+  outline-offset: 3px;
+  border-radius: var(--lp-radius, 14px);
+}
+
 /* The kit caps a band's heading and lede at a reading width; here the column is the cap. */
 .lp-head,
 .lp-lede {

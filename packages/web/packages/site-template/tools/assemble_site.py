@@ -123,6 +123,26 @@ SHOT_TS = (
     "export const SiteShot = frameShot(copy.screenshotPending)\n"
 )
 
+# `src/site/family.ts`, which the skeleton's `/` hands LandingFrame: no family, or the shared
+# family copy with this site named as the member its band leaves out.
+FAMILY_OFF = (
+    f"{HEADER}\n"
+    "import type { SiteFamily } from '@agenticdevelopertoolkit/site-template'\n\n"
+    "/** No family band: site.json does not set `family`. */\n"
+    "export const family: SiteFamily | undefined = undefined\n"
+)
+
+
+def family_ts(self_id: str) -> str:
+    return (
+        f"{HEADER}\n"
+        "import type { SiteFamily } from '@agenticdevelopertoolkit/site-template'\n"
+        "import words from '../content/family/family.json'\n\n"
+        "/** The family band: every member of the shared family copy but this site. */\n"
+        f"export const family: SiteFamily | undefined = {{ copy: words, self: {ts(self_id)} }}\n"
+    )
+
+
 # `src/site/analytics.tsx`, which the root layout always renders: nothing, or Vercel's two.
 ANALYTICS_OFF = (
     f"{HEADER}\n"
@@ -1040,6 +1060,8 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
     # The site's word for a screenshot not yet taken, bound once from its copy — the word the
     # skeleton's `/` hands LandingFrame — so a custom band's shots say what the frame's do.
     plan.add("src/site/shot.tsx", SHOT_TS.encode(), "generated")
+    family = family_ts(config["family"]) if "family" in config else FAMILY_OFF
+    plan.add("src/site/family.ts", family.encode(), "generated")
     # What next.config.ts resolves against the build's environment (the `./next` export's
     # frameNext); the schema has already checked every `${…}` is well formed.
     analytics = ANALYTICS_ON if config.get("analytics", defaults["analytics"]) else ANALYTICS_OFF

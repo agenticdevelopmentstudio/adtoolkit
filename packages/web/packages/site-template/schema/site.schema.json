@@ -128,6 +128,11 @@
       "description": "Extra toolkit packages, as directories under the toolkit's `packages/web/packages/` (e.g. `releases`, `features/bitbag`), linked into the app.",
       "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*(/[a-z0-9][a-z0-9-]*)?$" }
     },
+    "family": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "This site's id among the Agentic Developer Hub family's members. Set, `/` ends with the family band: a card for every other member, from the site's `family` copy (`src/content/family/family.json`, from adhcontent's shared `content/family/`). The id must name a member there, which the frame checks at build. Absent: no family band."
+    },
     "analytics": {
       "type": "boolean",
       "default": false,
