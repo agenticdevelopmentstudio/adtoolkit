@@ -681,7 +681,7 @@ def plan_fonts(plan: AppPlan, fonts: list[tuple[dict, Path, str]]) -> str:
 
 
 def plan_font_roles(fonts: list[tuple[dict, Path, str]], problems: list[str]) -> str:
-    """The `html:root` rule that points each font's theme `role` at its self-hosted face. next/font
+    """The `RAISED_ROOT` rule that points each font's theme `role` at its self-hosted face. next/font
     hashes the family name, so a theme sheet that names the family (`'Iosevka'`) never finds it;
     the face is reachable only through its variable. Written after the theme and frame sheets so
     it wins over the theme's own value, and before the site's tokens so a site can still override.
@@ -715,14 +715,28 @@ def plan_font_roles(fonts: list[tuple[dict, Path, str]], problems: list[str]) ->
     )
 
 
-# A theme declares its dark default on `html:root` (0,1,1), which outranks a plain `:root`
-# (0,1,0) wherever it stands. The font roles and the site's tokens are written at the theme's
-# own specificity, after it, so source order decides — the order theme.css's header promises.
-RAISED_ROOT = "html:root"
+# A theme declares its palette, font roles included, on one rule of five selectors: the dark
+# default `html:root` (0,1,1) and the four states color-mode-light.css can put a document in, up
+# to (0,5,1). A plain `:root` (0,1,0) loses to the first wherever it stands; a lone `html:root`
+# loses to the rest as soon as anything sets `data-color-mode` on <html> — a family shell's
+# colour-mode provider does, on every route it draws, and then the theme's `'Iosevka'`, a family
+# next/font renamed, wins and every face falls back. So the font roles and the site's tokens are
+# written on the palette's whole list, after it: they tie it in every state, and source order
+# decides, as theme.css's header promises. Every template theme (themes.json) uses this list;
+# assemble_site_test pins that it covers each one's palette rule.
+RAISED_ROOT = ",\n".join(
+    [
+        "html:root",
+        "html:root[data-color-mode]:not(.dark)",
+        "html:root[data-color-mode]:not(.dark)[data-contrast='high']",
+        "html:root[data-color-mode]:not(.dark)[data-contrast='extra-high']",
+        "html:root[data-color-mode]:not(.dark):not([data-contrast='high']):not([data-contrast='extra-high'])",
+    ]
+)
 
 
 def raise_roots(css: str) -> str:
-    """A token sheet with each top-level `:root` prelude written as `html:root`. Comments and
+    """A token sheet with each top-level `:root` prelude written as `RAISED_ROOT`. Comments and
     strings are copied as they are; `check_token_sheet` has already refused anything at the top
     level but `:root { }` blocks, so every `:root` outside a block is a prelude."""
     out: list[str] = []

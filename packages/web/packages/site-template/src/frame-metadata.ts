@@ -45,6 +45,12 @@ function twitterCard(config: FrameConfig): 'summary' | 'summary_large_image' {
  * What every crawler and link unfurler reads. `metadataBase` is what makes the relative `url`
  * and image paths absolute, which Open Graph requires. Icons are not declared: `app/icon.*`
  * and its siblings are Next file conventions, and a list here would override them.
+ *
+ * This is the ROOT layout's metadata, so it is every route's: the frame's `/`, the not-found
+ * page, and every page a site adds under `app-routes/`. It therefore says nothing about which
+ * URL a page is — no canonical and no Open Graph `url`. A custom route that inherited
+ * `canonical: '/'` would be telling a crawler it is a copy of the home page, and drop out of the
+ * index. `/` names itself with `frameHomeMetadata`, from the frame's own page.
  */
 export function frameMetadata(copy: FrameCopy, config: FrameConfig): Metadata {
   const title = copy.title ?? copy.name
@@ -58,15 +64,11 @@ export function frameMetadata(copy: FrameCopy, config: FrameConfig): Metadata {
     authors: [{ name: copy.people.author, ...(config.authorUrl === undefined ? {} : { url: config.authorUrl }) }],
     creator: copy.people.creator,
     publisher: copy.people.publisher,
-    // One page, one canonical: staging and testing serve the same markup on their own hosts,
-    // and this points a crawler that finds one of them back at production.
-    alternates: { canonical: '/' },
     openGraph: {
       type: 'website',
       siteName: copy.name,
       title,
       description: copy.description,
-      url: '/',
       locale: 'en_US',
       images: [
         {
@@ -83,6 +85,22 @@ export function frameMetadata(copy: FrameCopy, config: FrameConfig): Metadata {
       description: copy.description,
       images: [config.ogImage],
     },
+  }
+}
+
+/**
+ * What `/` says about its own URL, exported as the frame page's `metadata`: the canonical and
+ * the Open Graph `url`, which the root layout's `frameMetadata` leaves out so no other route
+ * inherits them. One page, one canonical: staging and testing serve the same markup on their own
+ * hosts, and this points a crawler that finds one of them back at production.
+ *
+ * Next merges a page's metadata over its layouts' one top-level key at a time, so a page's
+ * `openGraph` replaces the layout's whole; this one is therefore the root's full card plus `url`.
+ */
+export function frameHomeMetadata(copy: FrameCopy, config: FrameConfig): Metadata {
+  return {
+    alternates: { canonical: '/' },
+    openGraph: { ...frameMetadata(copy, config).openGraph, url: '/' },
   }
 }
 

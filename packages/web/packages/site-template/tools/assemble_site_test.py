@@ -10,6 +10,7 @@ Run: python3 tools/assemble_site_test.py
 from __future__ import annotations
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -17,7 +18,28 @@ import unittest
 from pathlib import Path
 
 ASSEMBLE = Path(__file__).resolve().parent / "assemble_site.py"
+sys.path.insert(0, str(ASSEMBLE.parent))
+from assemble_site import RAISED_ROOT  # noqa: E402  (the prelude the roles and tokens are written on)
 OUTPUT = "websites/main"
+
+
+def rules(css: str) -> list[tuple[str, str]]:
+    """Each innermost `prelude { body }` in a sheet, comments removed, in order."""
+    return re.findall(r"([^{}]+)\{([^{}]*)\}", re.sub(r"/\*.*?\*/", "", css, flags=re.S))
+
+
+def with_imports(path: Path) -> str:
+    """A sheet with each relative `@import "./x.css";` replaced by that file, recursively."""
+    return re.sub(
+        r"""@import\s+['"](\./[^'"]+)['"]\s*;""",
+        lambda m: with_imports(path.parent / m.group(1)),
+        path.read_text(),
+    )
+
+
+def selectors(prelude: str) -> set[str]:
+    """A prelude's selectors, whitespace-normalised and with one quote style."""
+    return {" ".join(s.split()).replace('"', "'") for s in prelude.split(",") if s.strip()}
 
 
 def run(site: Path, *extra: str) -> subprocess.CompletedProcess[str]:
@@ -207,7 +229,7 @@ class AssembleTest(unittest.TestCase):
         self.write("site/fonts/body-400-italic.woff2", "woff2")
         self.assert_ok(self.assemble())
         css = (self.app / "app/theme.css").read_text()
-        roles = css.split("html:root {\n", 1)
+        roles = css.split(f"{RAISED_ROOT} {{\n", 1)
         self.assertIn("  --font-body: 'site-font-body';\n", css)
         self.assertGreater(css.index("  --font-body: 'site-font-body';"), css.index("site-template/css/frame.css"))
         self.assertEqual(len(roles), 2)
@@ -328,9 +350,39 @@ class AssembleTest(unittest.TestCase):
         self.write("site/fonts/outfit-600.woff2", "woff2")
         self.assert_ok(self.assemble())
         css = (self.app / "app/theme.css").read_text()
-        self.assertIn("html:root {\n  --font-iosevka: 'site-font-iosevka';\n  --font-mono: var(--font-iosevka)", css)
-        self.assertIn("/* a :root { comment } */\nhtml:root {\n  --a: ':root';\n}\nhtml:root { --b: 2px; }\n", css)
+        self.assertIn(f"{RAISED_ROOT} {{\n  --font-iosevka: 'site-font-iosevka';\n  --font-mono: var(--font-iosevka)", css)
+        self.assertIn(
+            f"/* a :root {{ comment }} */\n{RAISED_ROOT} {{\n  --a: ':root';\n}}\n{RAISED_ROOT} {{ --b: 2px; }}\n", css
+        )
         self.assertNotRegex(css, r"(?m)^:root")
+
+    def test_roles_and_tokens_tie_every_selector_of_the_themes_palette(self) -> None:
+        # Every template theme declares its palette, font roles included, on five selectors: the
+        # dark `html:root` (0,1,1) and four `[data-color-mode]` states up to (0,5,1). A family
+        # shell's colour-mode provider puts `data-color-mode` on <html>, and from then on a role
+        # rule written on `html:root` alone loses to the theme's own `'Iosevka'` — the face
+        # next/font renamed — so every face on the page falls back. The roles and the site's
+        # tokens are written on the palette's whole list, so they tie it in every state.
+        themes = json.loads((ASSEMBLE.parent.parent / "themes.json").read_text())
+        styles = ASSEMBLE.parent.parent.parent / "themes/src/styles"
+        self.config["tokens"] = "theme.css"
+        self.write("site/theme.css", ":root {\n  --a: 1px;\n}\n")
+        for name, theme in themes.items():
+            with self.subTest(theme=name):
+                self.config["theme"] = name
+                sheet = with_imports(styles / theme["css"].rsplit("/", 1)[1])
+                palette = next(
+                    selectors(prelude)
+                    for prelude, body in rules(sheet)
+                    if "--font-mono" in body and prelude.lstrip().startswith("html:root")
+                )
+                self.assert_ok(self.assemble())
+                css = (self.app / "app/theme.css").read_text()
+                roles = css.split("/* The fonts' roles", 1)[1].split("*/", 1)[1]
+                tokens = css.split("/* site/theme.css */", 1)[1]
+                for label, part in (("font roles", roles), ("site tokens", tokens)):
+                    written = selectors(rules(part)[0][0])
+                    self.assertTrue(palette <= written, f"{label}: {sorted(palette - written)} missing")
 
     def test_the_reset_comes_first(self) -> None:
         # The kit draws on a host that resets the document (every pre-template site imported

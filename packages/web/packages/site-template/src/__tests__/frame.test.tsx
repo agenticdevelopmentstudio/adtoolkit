@@ -12,6 +12,7 @@ import { FrameZoomGuard } from '../frame-zoom'
 import { FrameNotFound } from '../not-found'
 import * as barrel from '../index'
 import {
+  frameHomeMetadata,
   frameMetadata,
   frameRobots,
   frameSiteUrl,
@@ -660,6 +661,24 @@ describe('frame metadata helpers', () => {
     const linked: FrameConfig = { ...config, authorUrl: 'https://author.example' }
     expect(frameMetadata(copy, linked).authors).toEqual([{ name: copy.people.author, url: 'https://author.example' }])
     expect(frameMetadata(copy, config).authors).toEqual([{ name: copy.people.author }])
+  })
+
+  // The root layout's metadata is every route's, a site's own app-routes included, so it must
+  // not say which URL a page is: a `/tour` that inherited `canonical: '/'` would tell a crawler
+  // it is a copy of the home page and drop out of the index. Only the frame's page names `/`.
+  it('frameMetadata names no canonical URL and no Open Graph URL, so a custom route inherits neither', () => {
+    const meta = frameMetadata(copy, config)
+    expect('alternates' in meta).toBe(false)
+    expect(meta.openGraph).not.toHaveProperty('url')
+    expect(meta.openGraph).toMatchObject({ siteName: 'Kitchen', type: 'website' })
+  })
+
+  it('frameHomeMetadata gives `/` its canonical and Open Graph URL, over the whole root card', () => {
+    const home = frameHomeMetadata(copy, config)
+    expect(home.alternates).toEqual({ canonical: '/' })
+    // A page's `openGraph` replaces the layout's whole, so the page's must be the full card.
+    expect(home.openGraph).toEqual({ ...frameMetadata(copy, config).openGraph, url: '/' })
+    expect(Object.keys(home).sort()).toEqual(['alternates', 'openGraph'])
   })
 
   it('frameViewport carries the theme color', () => {

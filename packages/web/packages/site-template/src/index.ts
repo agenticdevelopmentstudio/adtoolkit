@@ -12,6 +12,7 @@ export { Words } from './words'
 export { FrameZoomGuard } from './frame-zoom'
 export { FrameNotFound, frameNotFoundMetadata } from './not-found'
 export {
+  frameHomeMetadata,
   frameMetadata,
   frameViewport,
   frameRobots,

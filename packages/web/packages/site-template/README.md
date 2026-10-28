@@ -19,7 +19,8 @@ From `@agenticdevelopertoolkit/site-template` (server-safe, no `'use client'`):
 | `FrameMark({ config, alt })` | The site's mark as `site.json` configures it (`mark.src`, in `st-mark st-mark--<shape>`). The skeleton's `/` passes it to `LandingFrame`; a route of the site's own with a hero uses it too, so a change to `mark` reaches every page. |
 | `Words({ text })` | A `CopyText`: a plain string, or `{ html }` rendered as markup. |
 | `FrameZoomGuard()` | Pinch-zoom back off iOS on every route. `frameViewport` ships `maximum-scale=1` (the only way to stop iOS zooming into a focused field), which also kills pinch-zoom everywhere else; this strips it back off outside iOS. The skeleton's root layout renders it first in `<body>`, so a site's own routes and the 404 keep pinch-zoom as `/` does. |
-| `frameMetadata`, `frameViewport`, `frameRobots`, `frameSitemap` | The Next metadata routes, from `FrameCopy` + `FrameConfig`. Copy `keywords` (site.md's `# keywords` list), when worded, become the metadata's keywords. Robots allow crawling only when `DEPLOYMENT_ENV === 'production'`. The twitter card is `summary` when `ogImage` is the mark's `src` (a square icon beside the text) and `summary_large_image` otherwise; `ogImageSize`, when set, gives the OG image its width and height, and `ogImageType` its `og:image:type`. `authorUrl`, when set, is the author's `url`, which Next also writes as `<link rel="author">`. |
+| `frameMetadata`, `frameViewport`, `frameRobots`, `frameSitemap` | The Next metadata routes, from `FrameCopy` + `FrameConfig`. Copy `keywords` (site.md's `# keywords` list), when worded, become the metadata's keywords. Robots allow crawling only when `DEPLOYMENT_ENV === 'production'`. The twitter card is `summary` when `ogImage` is the mark's `src` (a square icon beside the text) and `summary_large_image` otherwise; `ogImageSize`, when set, gives the OG image its width and height, and `ogImageType` its `og:image:type`. `authorUrl`, when set, is the author's `url`, which Next also writes as `<link rel="author">`. `frameMetadata` is the root layout's, so every route inherits it; it therefore carries no canonical and no Open Graph `url`. |
+| `frameHomeMetadata(copy, config)` | `/`'s own metadata: the canonical (`/`) and the Open Graph card with its `url`, which only the home page carries, so a site's custom routes never claim to be copies of `/`. The skeleton's `app/(frame)/page.tsx` exports it. |
 | `frameNotFoundMetadata(copy)` | The 404's metadata: `copy.notFound.title` when the copy words a 404, otherwise the title Next's built-in 404 gives its tab (`404: This page could not be found.`), so a site that had no 404 of its own keeps the same tab text. A plain title either way. It also undoes what the 404 would inherit from the root layout: `noindex, nofollow`, no canonical, and no Open Graph or twitter card, so a dead link neither names the home page canonical nor unfurls as it. The skeleton's `app/not-found.tsx` exports it. |
 | `FrameNotFound({ copy })` | The 404's screen in the window-tall hero frame. With `copy.notFound` (`title`, `code`, `heading`, `body`, `back`) it shows the code as a caption, the heading, the body and a plain link back to `/`; without it, Next's own `404` / `This page could not be found.`. The skeleton's `app/not-found.tsx` renders it inside the frame. |
 | `frameSiteUrl(fallbackPort, configured?)` | `SITE_URL`, else `configured` (`site.json`'s `siteUrl`, which the assembler passes), else the Vercel production URL, else `http://localhost:<port>`. |
@@ -73,10 +74,14 @@ Each theme names its stylesheet and the fonts it needs, which the assembler self
 - **`role` and `fallback`.** next/font hashes the family name, so a theme sheet that names its
   family (`--font-mono: 'Iosevka', …`) never finds the self-hosted face. A font's `role` names
   the theme custom property it fills, or a list of them. For each one the assembler writes
-  `<role>: var(<variable>), <fallback>;` into an `html:root` rule in `app/theme.css`, after the
-  theme and kit sheets and before the site's tokens. `html:root`, not `:root` (the assembler's
-  `RAISED_ROOT`): fishlamp.css declares its font roles on `html:root`, specificity (0,1,1), which
-  beats any plain `:root` (0,1,0) wherever it sits; at equal specificity, source order decides. `fallback` is the rest of the theme's own stack.
+  `<role>: var(<variable>), <fallback>;` into one rule in `app/theme.css`, after the theme and
+  kit sheets and before the site's tokens. Its prelude is the assembler's `RAISED_ROOT`, the
+  five selectors every template theme declares its palette on: `html:root` (0,1,1) and the four
+  `html:root[data-color-mode]…` states, up to (0,5,1). A plain `:root` (0,1,0) loses to the
+  first wherever it sits, and a lone `html:root` loses to the rest once anything sets
+  `data-color-mode` on `<html>` (a family shell's colour-mode provider does, on every route it
+  draws). On the same list, source order decides in every state. `fallback` is the rest of the
+  theme's own stack.
   fishlamp lists `--font-mono`, `--font-sans` and `--font-serif`, every property its sheet names
   `'Iosevka'` in. `--font-display` is left out because it follows `--font-serif`. A site's
   `fonts` in `site.json` take the same two keys. A font file is woff2, woff, ttf or otf.
@@ -224,9 +229,9 @@ names no section of `src/landing.json` is refused, as a `band:<id>` slot's is.
 `tokens` names a sheet under `site/`. It may hold only custom-property declarations inside
 `:root { }` (it is appended after the theme and the frame sheets, so it overrides them). Any other
 rule, a nested rule, or a declaration that is not a `--property` is refused. The assembler writes
-each of the sheet's top-level `:root` selectors as `html:root` (`raise_roots`, skipping comments
-and strings), for the reason the font roles are: a theme's own `html:root` would otherwise beat
-the site's tokens.
+each of the sheet's top-level `:root` selectors as `RAISED_ROOT` (`raise_roots`, skipping
+comments and strings), for the reason the font roles are: the theme's own palette rule would
+otherwise beat the site's tokens.
 
 Besides the kit's `--lp-*` tokens, the frame reads three of its own: `--st-hero-meta-transform`
 (the hero meta's `text-transform`, default `uppercase`), `--st-hero-extra` (added to the hero's
