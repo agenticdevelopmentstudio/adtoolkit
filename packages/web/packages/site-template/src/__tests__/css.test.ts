@@ -43,11 +43,20 @@ describe('frame.css', () => {
 
   it('makes the hero a window tall with a centred stack', () => {
     const body = ruleBody(frame(), '.lp-hero-flow')
-    expect(body).toContain('min-height: 100svh')
+    expect(body).toContain('min-height: calc(100svh')
     expect(body).toContain('display: flex')
     expect(body).toContain('flex-direction: column')
     expect(body).toContain('align-items: center')
     expect(body).toContain('justify-content: center')
+  })
+
+  it('lets a site make the hero a cut taller, so the first band starts below the window', () => {
+    // The first seamed band pulls itself up by `--lp-seam`; a site whose first screen shows
+    // nothing of the next band sets `--st-hero-extra: var(--lp-seam)`. The default keeps the
+    // hero exactly a window tall.
+    const body = ruleBody(frame(), '.lp-hero-flow')
+    expect(body).toContain('min-height: calc(100svh + var(--st-hero-extra, 0px))')
+    expect(body).toContain('min-height: calc(100vh + var(--st-hero-extra, 0px))')
   })
 
   it('uppercases the hero meta through an overridable variable', () => {

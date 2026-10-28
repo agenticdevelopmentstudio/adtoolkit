@@ -78,13 +78,6 @@ export function frameMetadata(copy: FrameCopy, config: FrameConfig): Metadata {
   }
 }
 
-/**
- * The 404's own title: the words Next's built-in 404 page gives its tab, so a site that had no
- * 404 of its own titles one the same as before. A plain title, not a template, so it replaces
- * the site's title rather than joining it — as Next's does.
- */
-export const frameNotFoundMetadata: Metadata = { title: '404: This page could not be found.' }
-
 export function frameViewport(config: FrameConfig): Viewport {
   return {
     themeColor: config.themeColor,

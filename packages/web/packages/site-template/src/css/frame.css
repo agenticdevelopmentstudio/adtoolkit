@@ -40,15 +40,20 @@
 /* The hero is a window tall (`svh`, so a phone's collapsing URL bar does not resize it) with
  * its stack centred on both axes. Both selectors: the kit's `--fill` modifier is a class
  * stronger and sets its own height, so the pair keeps this rule winning on the data hero and
- * the custom-slot hero alike. */
+ * the custom-slot hero alike.
+ *
+ * The first band below is seamed, so it pulls itself up by `--lp-seam` and its cut shows at the
+ * foot of the first screen. A site whose first screen shows nothing of the next band sets
+ * `--st-hero-extra: var(--lp-seam)`: the hero grows by the cut, which the kit's `--fill` padding
+ * already adds back at the bottom, so the stack keeps a window's height to lay out in. */
 .lp-hero-flow,
 .lp-hero-flow.lp-hero-flow--fill {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 100vh;
-  min-height: 100svh;
+  min-height: calc(100vh + var(--st-hero-extra, 0px));
+  min-height: calc(100svh + var(--st-hero-extra, 0px));
 }
 
 /* The hero's meta line (version, platform, licence) reads as a caption. A site whose meta is
@@ -93,4 +98,27 @@
   margin: 0 auto 1.8rem;
   aspect-ratio: 1;
   border-radius: 22.37%;
+}
+
+/* A worded 404 (FrameNotFound): the status code as a caption over the heading, and the way back
+ * to `/` as an underlined accent link rather than a button. */
+.st-404-code {
+  margin: 0 0 0.9rem;
+  color: var(--lp-accent);
+  font-family: var(--lp-font-mono, ui-monospace, "SF Mono", monospace);
+  font-size: 0.85rem;
+  letter-spacing: 0.22em;
+}
+
+.st-404-back {
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid var(--lp-hairline);
+  color: var(--lp-accent);
+  text-decoration: none;
+}
+
+.st-404-back:hover,
+.st-404-back:focus-visible {
+  border-color: var(--lp-accent);
+  color: var(--lp-accent-bright);
 }

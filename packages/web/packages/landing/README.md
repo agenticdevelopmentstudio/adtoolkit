@@ -201,7 +201,7 @@ deliberately-monospaced role — the small technical label on `StatusPill`
 body face can still ask for that one label in mono. It is not a Stenographer
 literal, which is why it sits in this table rather than the minted one below.
 
-Twelve tokens are new to the package — the dials that let a second site differ
+The tokens below are new to the package — the dials that let a second site differ
 from the first. The five chrome ones below (`--lp-chrome-top` through
 `--lp-drawer-pad-top`) came in together, from the first host that already had a
 site header of its own and wanted only the burger and drawer under it:
@@ -213,6 +213,7 @@ site header of its own and wanted only the burger and drawer under it:
 | `--lp-hero-pad-top` | `6.5rem` | Hero head padding; a centred screen's glow offset is derived from it. |
 | `--lp-hero-pad-bottom` | `var(--lp-dock-clear, 0px)` | Hero foot padding; reserves whatever fixed chrome the site docks at the bottom. |
 | `--lp-root-size` | `87.5%` | The root type dial. |
+| `--lp-head-gap` / `--lp-eyebrow-gap` | `2.6rem` / `1.2rem` | The air under a section head (`.lp-head`) and under its eyebrow. A host whose bands sit tighter (fishlamp: `1.6rem` / `0`) sets these instead of restating the kit's rules. |
 | `--lp-chrome-top` | `0` | Where `NavChrome` starts — the bar, the scrim and the drawer together. A host with a fixed site header of its own sets this to that header's height, so the chrome opens *below* it instead of over it. One token for all three, so a scrim can never start on a different line from the drawer it dims. |
 | `--lp-bar-bg` | `linear-gradient(var(--lp-ground) 40%, transparent)` | The bar's own backdrop, which is what lifts a floating burger off the page under it. A host that set `--lp-chrome-top` already has a real header doing that job and sets this to `none`. |
 | `--lp-bar-pad-y` / `--lp-bar-pad-x` | `1.1rem` / `1.25rem` | The corner the burger is inset into. A host aligns these with its own header's container padding so the two line up in the same column. The drawer's ✕ reads the same pair, so it stays on top of the ☰ it replaces — its `y` fallback is `1.15rem`, the reference site's optical nudge, which a host that sets the pair trades for exact concentricity. |

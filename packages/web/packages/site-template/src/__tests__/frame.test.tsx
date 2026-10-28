@@ -9,15 +9,16 @@ import { FrameMark } from '../frame-mark'
 import { FrameBand } from '../frame-band'
 import { frameShot } from '../frame-shot'
 import { FrameZoomGuard } from '../frame-zoom'
+import { FrameNotFound } from '../not-found'
 import * as barrel from '../index'
 import {
   frameMetadata,
-  frameNotFoundMetadata,
   frameRobots,
   frameSiteUrl,
   frameSitemap,
   frameViewport,
 } from '../frame-metadata'
+import { frameNotFoundMetadata } from '../not-found'
 import type { FrameConfig, FrameCopy, SlotMap } from '../types'
 
 const hero: LandingPage['hero'] = {
@@ -499,6 +500,52 @@ describe('FrameFooter', () => {
   })
 })
 
+const worded404: FrameCopy = {
+  ...copy,
+  notFound: {
+    title: 'Not found — Kitchen',
+    code: '404',
+    heading: 'There is nothing here.',
+    body: { html: 'It is <b>gone</b>.' },
+    back: 'Back to Kitchen',
+  },
+}
+
+describe('FrameNotFound', () => {
+  it('says what Next\'s own 404 page says when the copy words no 404', () => {
+    const { container } = render(<FrameNotFound copy={copy} />)
+    const hero = container.querySelector('#top.lp-hero-flow.lp-hero-flow--fill')
+    expect(hero?.querySelector('h1')?.textContent).toBe('404')
+    expect(hero?.querySelector('.lp-hero-sub')?.textContent).toBe('This page could not be found.')
+    expect(container.querySelector('.st-404-code')).toBeNull()
+    expect(container.querySelector('a')).toBeNull()
+  })
+
+  it('says the copy\'s words when it words a 404: the code, the heading, the body and a way home', () => {
+    const { container } = render(<FrameNotFound copy={worded404} />)
+    const hero = container.querySelector('#top.lp-hero-flow.lp-hero-flow--fill')
+    expect(hero?.querySelector('.st-404-code')?.textContent).toBe('404')
+    expect(hero?.querySelector('h1')?.textContent).toBe('There is nothing here.')
+    expect(hero?.querySelector('.lp-hero-sub')?.innerHTML).toContain('It is <b>gone</b>.')
+    const back = hero?.querySelector('a.st-404-back')
+    expect(back?.getAttribute('href')).toBe('/')
+    expect(back?.textContent).toBe('Back to Kitchen')
+  })
+
+  it('titles the 404 as Next\'s own 404 page does when the copy words none', () => {
+    expect(frameNotFoundMetadata(copy).title).toBe('404: This page could not be found.')
+  })
+
+  it('titles the 404 with the copy\'s title when it words one', () => {
+    expect(frameNotFoundMetadata(worded404).title).toBe('Not found — Kitchen')
+  })
+
+  it('ships from the server barrel', () => {
+    expect(barrel.FrameNotFound).toBe(FrameNotFound)
+    expect(barrel.frameNotFoundMetadata).toBe(frameNotFoundMetadata)
+  })
+})
+
 describe('frame metadata helpers', () => {
   afterEach(() => {
     vi.unstubAllEnvs()
@@ -590,10 +637,6 @@ describe('frame metadata helpers', () => {
     expect('keywords' in frameMetadata(copy, config)).toBe(false)
   })
 
-  it('titles the 404 as Next\'s own 404 page does', () => {
-    expect(frameNotFoundMetadata.title).toBe('404: This page could not be found.')
-    expect(barrel.frameNotFoundMetadata).toBe(frameNotFoundMetadata)
-  })
 
   it('frameViewport carries the theme color', () => {
     expect(frameViewport(config).themeColor).toBe('#0b0a09')

@@ -34,11 +34,20 @@ export interface FrameNextSite {
   envDefaults: Readonly<Record<string, FrameEnvDefault>>
 }
 
+/**
+ * A header rule as Next takes it: the same shape as `FrameHeader`, but with a mutable list, since
+ * Next's `Header` type will not accept a readonly one.
+ */
+export interface FrameNextHeader {
+  source: string
+  headers: { key: string; value: string }[]
+}
+
 /** The resolved pieces `next.config.ts` merges into its config. */
 export interface FrameNextResult {
   env: Record<string, string>
   rewrites: FrameRewrite[]
-  headers: FrameHeader[]
+  headers: FrameNextHeader[]
 }
 
 type Env = Readonly<Record<string, string | undefined>>
@@ -120,5 +129,10 @@ export function frameNext(site: FrameNextSite, env: Env): FrameNextResult {
       )
     }
   })
-  return { env: publicEnv, rewrites, headers: [...(site.headers ?? [])] }
+  // Copied rule by rule: the site's lists are readonly and Next's are not.
+  const headers = (site.headers ?? []).map((rule) => ({
+    source: rule.source,
+    headers: rule.headers.map((header) => ({ key: header.key, value: header.value })),
+  }))
+  return { env: publicEnv, rewrites, headers }
 }

@@ -197,7 +197,7 @@
  * this section, so a reader who jumped here can see they arrived. */
 .lp-head {
   max-width: 48rem;
-  margin-bottom: 2.6rem;
+  margin-bottom: var(--lp-head-gap, 2.6rem);
 }
 /* The section label. It is the only thing on screen that says which of many
  * screens you are on, so it has to survive a fast scroll — at 0.7rem, dim and
@@ -218,7 +218,7 @@
   letter-spacing: 0.28em;
   text-transform: uppercase;
   color: var(--lp-accent-bright, #d8d8d8);
-  margin-bottom: 1.2rem;
+  margin-bottom: var(--lp-eyebrow-gap, 1.2rem);
 }
 .lp-eyebrow::before {
   content: "";

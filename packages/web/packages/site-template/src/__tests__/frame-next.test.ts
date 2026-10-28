@@ -37,6 +37,17 @@ describe('frameNext', () => {
     expect(frameNext(older, {}).headers).toEqual([])
   })
 
+  it("hands Next its own mutable header lists, not the site's readonly ones", () => {
+    // `next.config.ts` passes the result straight to Next, whose `Header` type takes a mutable
+    // `headers` array; the site's readonly lists are copied, rule by rule, so a rule's list can
+    // be returned as Next's type and no edit to it reaches the site's config.
+    const rule = { source: '/(.*)', headers: [{ key: 'X-Frame-Options', value: 'SAMEORIGIN' }] }
+    const out = frameNext({ ...none, headers: [rule] }, {}).headers
+    expect(out[0]).not.toBe(rule)
+    expect(out[0].headers).not.toBe(rule.headers)
+    expect(out[0].headers[0]).not.toBe(rule.headers[0])
+  })
+
   it('substitutes a variable from the environment into a destination', () => {
     const site: FrameNextSite = { ...none, rewrites: [{ source: '/api/:path*', destination: '${BACKEND}/:path*' }] }
     expect(frameNext(site, { BACKEND: 'https://b.example' }).rewrites).toEqual([

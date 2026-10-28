@@ -925,10 +925,12 @@ class AssembleTest(unittest.TestCase):
         layout = (self.app / "app/layout.tsx").read_text()
         self.assertRegex(layout, r"<body>\s*(\{/\*[^*]*\*/\}\s*)?<FrameZoomGuard />")
 
-    def test_the_404_is_titled_as_nexts_own(self) -> None:
+    def test_the_404_is_worded_by_the_sites_copy(self) -> None:
         self.assert_ok(self.assemble())
         text = (self.app / "app/not-found.tsx").read_text()
-        self.assertIn("export const metadata: Metadata = frameNotFoundMetadata", text)
+        self.assertIn("export const metadata: Metadata = frameNotFoundMetadata(copy)", text)
+        self.assertIn("<FrameNotFound copy={copy} />", text)
+        self.assertIn("from '../src/content/site/site.json'", text)
 
     def test_the_404s_doc_comment_documents_the_component(self) -> None:
         # The comment describes the page, so it sits on NotFound, not on the metadata line.

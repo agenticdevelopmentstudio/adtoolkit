@@ -20,7 +20,8 @@ From `@agenticdevelopertoolkit/site-template` (server-safe, no `'use client'`):
 | `Words({ text })` | A `CopyText`: a plain string, or `{ html }` rendered as markup. |
 | `FrameZoomGuard()` | Pinch-zoom back off iOS on every route. `frameViewport` ships `maximum-scale=1` (the only way to stop iOS zooming into a focused field), which also kills pinch-zoom everywhere else; this strips it back off outside iOS. The skeleton's root layout renders it first in `<body>`, so a site's own routes and the 404 keep pinch-zoom as `/` does. |
 | `frameMetadata`, `frameViewport`, `frameRobots`, `frameSitemap` | The Next metadata routes, from `FrameCopy` + `FrameConfig`. Copy `keywords` (site.md's `# keywords` list), when worded, become the metadata's keywords. Robots allow crawling only when `DEPLOYMENT_ENV === 'production'`. The twitter card is `summary` when `ogImage` is the mark's `src` (a square icon beside the text) and `summary_large_image` otherwise; `ogImageSize`, when set, gives the OG image its width and height. |
-| `frameNotFoundMetadata` | The 404's metadata: the title Next's built-in 404 gives its tab (`404: This page could not be found.`), as a plain title, so a site that had no 404 of its own keeps the same tab text. The skeleton's `app/not-found.tsx` exports it. |
+| `frameNotFoundMetadata(copy)` | The 404's metadata: `copy.notFound.title` when the copy words a 404, otherwise the title Next's built-in 404 gives its tab (`404: This page could not be found.`), so a site that had no 404 of its own keeps the same tab text. A plain title either way. The skeleton's `app/not-found.tsx` exports it. |
+| `FrameNotFound({ copy })` | The 404's screen in the window-tall hero frame. With `copy.notFound` (`title`, `code`, `heading`, `body`, `back`) it shows the code as a caption, the heading, the body and a plain link back to `/`; without it, Next's own `404` / `This page could not be found.`. The skeleton's `app/not-found.tsx` renders it inside the frame. |
 | `frameSiteUrl(fallbackPort, configured?)` | `SITE_URL`, else `configured` (`site.json`'s `siteUrl`, which the assembler passes), else the Vercel production URL, else `http://localhost:<port>`. |
 | types `BandLook`, `CopyText`, `FrameCopy`, `FrameConfig`, `SlotMap` | The shapes a site fills in. |
 
@@ -205,6 +206,11 @@ rule, a nested rule, or a declaration that is not a `--property` is refused. The
 each of the sheet's top-level `:root` selectors as `html:root` (`raise_roots`, skipping comments
 and strings), for the reason the font roles are: a theme's own `html:root` would otherwise beat
 the site's tokens.
+
+Besides the kit's `--lp-*` tokens, the frame reads two of its own: `--st-hero-meta-transform`
+(the hero meta's `text-transform`, default `uppercase`) and `--st-hero-extra` (added to the hero's
+window height, default `0px`; `var(--lp-seam)` grows the hero by the first band's cut, so the
+first screen shows nothing of that band).
 
 ## The reset
 

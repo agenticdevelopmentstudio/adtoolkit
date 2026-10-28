@@ -97,6 +97,10 @@
   --lp-hero-pad-bottom: var(--lp-dock-clear, 0px);
   --lp-snap-stop: normal;
 
+  /* A band head's breath: under the whole head, and between its eyebrow and its title. */
+  --lp-head-gap: 2.6rem;
+  --lp-eyebrow-gap: 1.2rem;
+
   /* The hero rule's breath (the kit's `PulseRule`), at the kit's own values. */
   --lp-pulse-rule-period: 6s;
   --lp-pulse-rule-floor: 0.35;

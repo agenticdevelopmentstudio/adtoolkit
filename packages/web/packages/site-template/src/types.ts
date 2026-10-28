@@ -45,6 +45,12 @@ export interface FrameCopy {
   drawer?: { hello: CopyText; byline?: CopyText }
   /** The page footer's lines, in order. Absent: the page has no footer. */
   footer?: Record<string, CopyText>
+  /**
+   * The 404's words, when the site has its own: the tab's whole title, the status code shown as
+   * a caption above the heading, the heading, the body, and the label of the link back to `/`.
+   * Absent: the 404 says what Next's built-in one does.
+   */
+  notFound?: { title: string; code: string; heading: string; body: CopyText; back: string }
 }
 
 /**
