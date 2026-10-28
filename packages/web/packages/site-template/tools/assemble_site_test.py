@@ -35,6 +35,8 @@ class AssembleTest(unittest.TestCase):
         self.app = self.site / OUTPUT
         self.config: dict = {"output": OUTPUT, "port": 5210}
         self.sections: list[str] = ["features"]
+        # The sections content-buildr marks `slot: true` (`## Label {slot}`).
+        self.slotted: set[str] = set()
 
     def tearDown(self) -> None:
         self._tmp.cleanup()
@@ -49,7 +51,12 @@ class AssembleTest(unittest.TestCase):
 
     def setup_site(self) -> None:
         self.write("site/site.json", json.dumps(self.config, indent=2))
-        landing = {"hero": {}, "sections": [{"id": s, "blocks": []} for s in self.sections]}
+        landing = {
+            "hero": {},
+            "sections": [
+                {"id": s, **({"slot": True} if s in self.slotted else {}), "blocks": []} for s in self.sections
+            ],
+        }
         self.write(f"{OUTPUT}/src/landing.json", json.dumps(landing))
 
     def assemble(self, *extra: str) -> subprocess.CompletedProcess[str]:
@@ -326,6 +333,20 @@ class AssembleTest(unittest.TestCase):
         self.write("site/components/f.tsx", "export function F() { return null }\n")
         self.assert_refused(self.assemble(), "'feautres'", "'features'")
         self.assertFalse((self.app / "app").exists())
+
+    def test_a_slot_section_no_band_slot_fills_is_refused(self) -> None:
+        self.sections = ["features", "about"]
+        self.slotted = {"about"}
+        self.assert_refused(self.assemble(), "'about'", "{slot}", "band:about")
+        self.assertFalse((self.app / "app").exists())
+
+    def test_a_slot_section_with_its_band_slot_assembles(self) -> None:
+        self.sections = ["features", "about"]
+        self.slotted = {"about"}
+        self.config["slots"] = {"band:about": "about.tsx#About"}
+        self.write("site/components/about.tsx", "export function About() { return null }\n")
+        self.assert_ok(self.assemble())
+        self.assertIn('"about": BandSlot', (self.app / "src/site/slots.tsx").read_text())
 
     def test_route_collision_with_the_template_is_refused(self) -> None:
         self.write("site/routes/layout.tsx", "export default function L() { return null }\n")

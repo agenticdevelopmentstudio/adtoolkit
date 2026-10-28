@@ -209,6 +209,28 @@ describe('LandingFrame', () => {
     ).toThrow(/no section 'nope'/)
   })
 
+  it('refuses a {slot} section that no band slot fills', () => {
+    const page: LandingPage = {
+      hero,
+      sections: [section('one', 'One'), section('two', 'Two', { slot: true, blocks: [] })],
+    }
+    expect(() => render(<LandingFrame page={page} slots={noSlots} mark={mark} />)).toThrow(
+      /section 'two' is a \{slot\} band and slots\.bands has no 'two'/,
+    )
+  })
+
+  it('fills a {slot} section from its band slot', () => {
+    function Custom(): ReactElement {
+      return <p className="custom">custom body</p>
+    }
+    const page: LandingPage = {
+      hero,
+      sections: [section('two', 'Two', { slot: true, blocks: [], title: undefined })],
+    }
+    const { container } = render(<LandingFrame page={page} slots={{ bands: { two: Custom } }} mark={mark} />)
+    expect(container.querySelector('#two .custom')).not.toBeNull()
+  })
+
   it('keeps the #top hero frame around a hero slot', () => {
     function Hero(): ReactElement {
       return <div className="my-hero">mine</div>

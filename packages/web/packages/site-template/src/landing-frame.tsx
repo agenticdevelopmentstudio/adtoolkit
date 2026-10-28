@@ -122,6 +122,15 @@ export function LandingFrame({
       }
     }
   }
+  // A `{slot}` section has no blocks of its own, so without its slot it would be a band
+  // holding only its eyebrow — the empty screen content-buildr refuses to write.
+  for (const section of page.sections) {
+    if (section.slot === true && slots.bands[section.id] === undefined) {
+      throw new Error(
+        `LandingFrame: section '${section.id}' is a {slot} band and slots.bands has no '${section.id}'.`,
+      )
+    }
+  }
   const HeroSlot = slots.hero
   const AfterHero = slots.afterHero
   return (

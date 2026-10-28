@@ -503,22 +503,33 @@ def ts(value: object) -> str:
     return json.dumps(value, indent=2, ensure_ascii=False).replace("\n", "\n  ")
 
 
-def section_ids(app: Path) -> tuple[list[str], list[str]]:
-    """The landing page's section ids, from content-buildr's `src/landing.json`. No file yet (a
-    site whose page has only a hero, or one never generated) is no sections."""
+def section_ids(app: Path) -> tuple[list[str], list[str], list[str]]:
+    """The landing page's section ids, and the ids of those content-buildr marks `slot: true`
+    (`## Label {slot}`, a band whose body the site renders), from `src/landing.json`. No file
+    yet (a site whose page has only a hero, or one never generated) is no sections."""
     path = app / "src" / "landing.json"
     if not path.is_file():
-        return [], []
+        return [], [], []
     try:
-        data = json.loads(path.read_text())
-        return [section["id"] for section in data.get("sections", [])], []
+        sections = json.loads(path.read_text()).get("sections", [])
+        ids = [section["id"] for section in sections]
+        return ids, [section["id"] for section in sections if section.get("slot") is True], []
     except (ValueError, KeyError, TypeError, AttributeError) as error:
-        return [], [f"{path}: cannot read the section ids ({error})"]
+        return [], [], [f"{path}: cannot read the section ids ({error})"]
 
 
-def plan_slots(site: Path, slots: dict[str, str], ids: list[str]) -> tuple[str, list[str]]:
-    """`src/site/slots.tsx`: one import per slot component, and the `SlotMap` that places it."""
-    problems: list[str] = []
+def plan_slots(site: Path, slots: dict[str, str], ids: list[str], slotted: list[str]) -> tuple[str, list[str]]:
+    """`src/site/slots.tsx`: one import per slot component, and the `SlotMap` that places it.
+
+    A `{slot}` section has no blocks of its own, so one no `band:<id>` fills would be a band
+    holding only its eyebrow: refused here, where the slots are known, as content-buildr
+    refuses an empty section where they are not."""
+    problems: list[str] = [
+        f"site/site.json: slots: section '{band}' is a {{slot}} band in the landing markdown, "
+        f"but no 'band:{band}' slot fills it"
+        for band in slotted
+        if f"band:{band}" not in slots
+    ]
     imports: list[str] = []
     places: list[str] = []
     bands: list[str] = []
@@ -812,9 +823,9 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
 
     plan.add("src/site/fonts.ts", plan_fonts(plan, fonts).encode(), "generated")
 
-    ids, landing_problems = section_ids(app)
+    ids, slotted, landing_problems = section_ids(app)
     plan.problems += landing_problems
-    slots_text, slot_problems = plan_slots(site, config.get("slots", {}), ids)
+    slots_text, slot_problems = plan_slots(site, config.get("slots", {}), ids, slotted)
     plan.problems += slot_problems
     plan.add("src/site/slots.tsx", slots_text.encode(), "generated")
 

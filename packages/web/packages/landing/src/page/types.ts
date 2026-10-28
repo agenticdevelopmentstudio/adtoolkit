@@ -65,6 +65,12 @@ export interface LandingSection {
    * twice.
    */
   headingInBlock?: true
+  /**
+   * True when the SITE renders this section's body (`## Label {slot}` in the markdown,
+   * site-template's `band:<id>` slot), so `blocks` is empty by design rather than by omission.
+   * A layout with no slot to put there must refuse the section, not draw an empty screen.
+   */
+  slot?: true
   blocks: LandingBlock[]
 }
 
