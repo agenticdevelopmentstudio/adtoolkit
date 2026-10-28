@@ -592,6 +592,13 @@ def font_identifier(variable: str) -> str:
     return head + "".join(part[:1].upper() + part[1:] for part in rest)
 
 
+def split_family(font: dict) -> str | None:
+    """The family name a font's two `localFont` calls share, or None when it is one call. A
+    family splits when some faces preload and some do not (next/font preloads per call)."""
+    preloads = {spec.get("preload", True) for spec in font["files"]}
+    return f"site-{font['variable'].lstrip('-')}" if preloads == {True, False} else None
+
+
 def font_call(name: str, entries: list[str], variable: str, family: str | None, lazy: bool) -> str:
     """One `localFont` call. `family` names the @font-face family outright, so two calls — the
     preloaded faces and the rest — make one family; next/font hashes each call's apart otherwise.
@@ -656,7 +663,8 @@ def plan_fonts(plan: AppPlan, fonts: list[tuple[dict, Path, str]]) -> str:
                     "(its call carries the family's variable)"
                 )
             continue
-        family = f"site-{variable.lstrip('-')}"
+        family = split_family(font)
+        assert family is not None
         calls.append(font_call(name, entries, variable, family, lazy=False))
         # Its class goes on <html> too: the variable is unused, but the call's @font-face rules
         # then ride in on the same import as the eager call's.
@@ -676,10 +684,17 @@ def plan_font_roles(fonts: list[tuple[dict, Path, str]], problems: list[str]) ->
     """The `html:root` rule that points each font's theme `role` at its self-hosted face. next/font
     hashes the family name, so a theme sheet that names the family (`'Iosevka'`) never finds it;
     the face is reachable only through its variable. Written after the theme and frame sheets so
-    it wins over the theme's own value, and before the site's tokens so a site can still override."""
+    it wins over the theme's own value, and before the site's tokens so a site can still override.
+
+    A split family's variable is set here too. `declarations` renames each call's @font-face
+    family, but next/font's class still sets the variable to the name it would have generated, a
+    family no rule declares; this rule (0,1,1) outranks that class (0,1,0)."""
     lines: list[str] = []
     seen: dict[str, str] = {}
     for font, _base, label in fonts:
+        family = split_family(font)
+        if family is not None:
+            lines.append(f"  {font['variable']}: '{family}';\n")
         roles = font.get("role", [])
         fallback = font.get("fallback")
         stack = f"var({font['variable']})" + (f", {fallback}" if fallback else "")

@@ -189,6 +189,34 @@ class AssembleTest(unittest.TestCase):
         # Its class still goes on <html>, so the lazy call's @font-face rules are in the page.
         self.assertIn("fontBodyLazy.variable", fonts.split("export const fontVariables", 1)[1])
 
+    def test_a_split_familys_variable_names_the_declared_family(self) -> None:
+        # `declarations` renames each call's @font-face family, but next/font still sets the
+        # call's variable to the name it would have generated — a family no rule declares, so
+        # every face falls back. The roles rule (html:root, 0,1,1) outranks next/font's class
+        # (0,1,0) and points the variable at the family the two calls share.
+        self.config["fonts"] = [
+            {
+                "variable": "--font-body",
+                "files": [
+                    {"path": "fonts/body-400.woff2", "weight": "400", "style": "normal"},
+                    {"path": "fonts/body-400-italic.woff2", "weight": "400", "style": "italic", "preload": False},
+                ],
+            }
+        ]
+        self.write("site/fonts/body-400.woff2", "woff2")
+        self.write("site/fonts/body-400-italic.woff2", "woff2")
+        self.assert_ok(self.assemble())
+        css = (self.app / "app/theme.css").read_text()
+        roles = css.split("html:root {\n", 1)
+        self.assertIn("  --font-body: 'site-font-body';\n", css)
+        self.assertGreater(css.index("  --font-body: 'site-font-body';"), css.index("site-template/css/frame.css"))
+        self.assertEqual(len(roles), 2)
+
+    def test_fishlamps_iosevka_variable_names_the_site_cut_family(self) -> None:
+        self.assert_ok(self.assemble())
+        css = (self.app / "app/theme.css").read_text()
+        self.assertIn("  --font-iosevka: 'site-font-iosevka';\n", css)
+
     def test_a_family_that_preloads_every_face_stays_one_call(self) -> None:
         self.config["fonts"] = [
             {"variable": "--font-body", "files": [{"path": "fonts/body-400.woff2", "weight": "400", "style": "normal"}]}
@@ -198,6 +226,7 @@ class AssembleTest(unittest.TestCase):
         fonts = (self.app / "src/site/fonts.ts").read_text()
         self.assertNotIn("fontBodyLazy", fonts)
         self.assertNotIn("site-font-body", fonts)
+        self.assertNotIn("site-font-body", (self.app / "app/theme.css").read_text())
 
     def test_a_family_with_no_preloaded_face_is_refused(self) -> None:
         # Its variable is the eager call's; with nothing eager there is no call to carry it.
@@ -270,7 +299,7 @@ class AssembleTest(unittest.TestCase):
         self.write("site/fonts/outfit-600.woff2", "woff2")
         self.assert_ok(self.assemble())
         css = (self.app / "app/theme.css").read_text()
-        self.assertIn("html:root {\n  --font-mono: var(--font-iosevka)", css)
+        self.assertIn("html:root {\n  --font-iosevka: 'site-font-iosevka';\n  --font-mono: var(--font-iosevka)", css)
         self.assertIn("/* a :root { comment } */\nhtml:root {\n  --a: ':root';\n}\nhtml:root { --b: 2px; }\n", css)
         self.assertNotRegex(css, r"(?m)^:root")
 
