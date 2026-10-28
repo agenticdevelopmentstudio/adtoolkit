@@ -38,7 +38,7 @@
     "check:directives": "python3 tools/check_template_directives.py",
     "dev": "tsup --watch",
     "clean": "rm -rf dist .turbo",
-    "lint": "tsc --noEmit && python3 tools/check_template_directives_test.py && python3 tools/assemble_site_test.py && python3 tools/screens_test.py && python3 tools/text_parity_test.py",
+    "lint": "tsc --noEmit && python3 tools/check_template_directives_test.py && python3 tools/assemble_site_test.py && python3 tools/screens_test.py && python3 tools/text_parity_test.py && python3 tools/build-site_test.py",
     "test": "vitest run"
   },
   "//dependencies": "bitbag declares avatar, chat, themes, viewport and gsap as PEERS, so the package that depends on bitbag is the one that must supply them — that is this one, since a site depends on the template and never names bitbag itself.",

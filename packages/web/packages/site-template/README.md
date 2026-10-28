@@ -268,6 +268,20 @@ changed. `--check` in CI proves nobody hand-edited the output.
 The assembler never writes or deletes `src/content/**`, `src/landing.json`, `src/landing.tsx` or
 `public/glyph.svg`: content-buildr owns them. Never hand-edit them, or any generated file.
 
+## Build on Vercel
+
+Every templated site runs ONE build entry, `tools/build-site.py`, from its own submodule. Its
+`site/app-root/vercel.json` (Root Directory = the site's output) reads:
+
+```
+"buildCommand": "python3 ../external/agenticdevelopertoolkit/packages/web/packages/site-template/tools/build-site.py"
+```
+
+It installs and builds the toolkit packages the site's `package.json` `link:`s (each with its
+workspace dependencies, and refusing a filter pnpm would match to nothing), then runs the site's
+`next build`. `--toolkits-only` stops after the dists, for a dev server; `--site DIR` names the
+site when it is not the working directory. A site keeps no copy of it.
+
 ## A layout bug is fixed here
 
 If a page looks wrong because of the frame (spacing, the hero, the drawer, the bitbag dock), fix
