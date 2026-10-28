@@ -827,6 +827,28 @@ class AssembleTest(unittest.TestCase):
                     self.assert_refused(self.assemble(), rel, "Cards", name.split("=")[0])
                     (self.site / rel).unlink()
 
+    def test_a_column_flag_after_a_gt_inside_an_attribute_is_still_refused(self) -> None:
+        # The opening tag is read whole, so a `>` in an arrow function, a comparison or a string
+        # earlier in the attribute list does not end it and hide the flag behind it.
+        cases = {
+            "arrow then pair": "<Cards onClick={() => go()} pair>",
+            "comparison then trio": "<Cards render={(n) => (n > 1 ? a : b)}\n  trio\n>",
+            "string then pair": '<Cards label="a > b" pair>',
+            "template then pair": "<Cards label={`a > ${b}`} pair={true}>",
+        }
+        for name, jsx in cases.items():
+            with self.subTest(name=name):
+                rel = "site/components/bands.tsx"
+                self.write(rel, f"export const B = () => ({jsx}</Cards>)\n")
+                self.assert_refused(self.assemble(), rel, "Cards", name.split()[-1])
+                (self.site / rel).unlink()
+
+    def test_a_flag_word_inside_an_attribute_value_is_not_a_flag(self) -> None:
+        # Only the tag's own attribute names count: `pair` as an expression or in a string is a value.
+        self.write("site/components/a.tsx", "<Cards render={() => pair} label=\"trio > x\"></Cards>\n")
+        self.write("site/components/b.tsx", "<Cards items={[pair, trio]} />\n")
+        self.assert_ok(self.assemble())
+
     def test_cards_without_a_column_flag_or_outside_the_frame_assemble(self) -> None:
         self.write("site/components/ok.tsx", '<Cards className="x"><Card title="pair" /></Cards>\n')
         self.write("site/components/words.tsx", "const pair = 2; const trio = 3; // <Cards> takes no pair\n")

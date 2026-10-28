@@ -88,9 +88,10 @@ STYLED_TREES = ("components", "routes", "app-routes", "src")
 # frame's one-column card grid makes the kit's `pair` and `trio` flags inert.
 FRAMED_TREES = ("components", "routes")
 SCRIPT_SUFFIXES = (".tsx", ".jsx", ".ts", ".js")
-# A `<Cards …>` opening tag, attributes and all (multi-line included), and a bare `pair`/`trio`
-# attribute in it: `pair`, `pair={true}`, never `pairs` or `data-pair`.
-CARDS_TAG = re.compile(r"<Cards\b([^>]*)>")
+# Where a `<Cards …>` opening tag starts (its attributes are read by `cards_attribute_names`),
+# and a bare `pair`/`trio` attribute in what that leaves: `pair`, `pair={true}`, never `pairs`
+# or `data-pair`.
+CARDS_OPEN = re.compile(r"<Cards\b")
 COLUMN_FLAG = re.compile(r"(?<![\w.$-])(pair|trio)(?![\w-])(?=\s*(?:=|/|$|\s))")
 
 # The files that make a URL in the App Router: a page and a route handler cannot share one.
@@ -469,9 +470,45 @@ def check_framed_cards(code: str, label: str) -> list[str]:
     return [
         f"{label}: <Cards {flag}> is inert inside the frame, which lays every card grid in one "
         f"column; drop `{flag}`"
-        for attributes in CARDS_TAG.findall(code)
+        for attributes in cards_attribute_names(code)
         for flag in COLUMN_FLAG.findall(attributes)
     ]
+
+
+def cards_attribute_names(code: str) -> list[str]:
+    """Each `<Cards …>` opening tag's attribute list with every value blanked: `{…}` expressions
+    (nested braces, strings and template literals inside them) and quoted strings become spaces.
+    The tag ends at the first `>` outside all of those, so an arrow function, a comparison or a
+    string holding `>` cannot end it early and hide a flag after it, and a flag word inside a
+    value is not read as an attribute."""
+    tags = []
+    for start in CARDS_OPEN.finditer(code):
+        # `stack` holds the open contexts: a quote character for a string, `{` for an expression
+        # (a template literal's `${` opens one too). Only text with nothing open is kept.
+        i, kept, stack = start.end(), [], []
+        while i < len(code):
+            ch, top = code[i], stack[-1] if stack else None
+            if top in ('"', "'", "`"):
+                if ch == "\\":
+                    kept.append("  ")
+                    i += 2
+                    continue
+                if top == "`" and code.startswith("${", i):
+                    stack.append("{")
+                    kept.append(" ")
+                    i += 1
+                elif ch == top:
+                    stack.pop()
+            elif ch in "\"'`{":
+                stack.append(ch)
+            elif ch == "}" and top == "{":
+                stack.pop()
+            elif ch == ">" and top is None:
+                break
+            kept.append(ch if not stack and ch not in "\"'`}" else " ")
+            i += 1
+        tags.append("".join(kept))
+    return tags
 
 
 def check_site_css(css: str, label: str) -> list[str]:
