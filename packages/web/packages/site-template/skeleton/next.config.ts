@@ -9,8 +9,9 @@ import { nextSite, transpilePackages } from './src/site/next'
 const WORKSPACE_ROOT = fileURLToPath(new URL('..', import.meta.url))
 
 /**
- * `site.json`'s `rewrites` and `publicEnv`, resolved now, as the config loads, so a variable the
- * build needs and cannot find fails `next build` by name rather than a request at runtime.
+ * `site.json`'s `rewrites`, `headers` and `publicEnv`, resolved now, as the config loads, so a
+ * variable the build needs and cannot find fails `next build` by name rather than a request at
+ * runtime.
  */
 const site = frameNext(nextSite, process.env)
 
@@ -48,6 +49,7 @@ export default frameConfig({
   devIndicators: false,
   env: site.env,
   ...(site.rewrites.length === 0 ? {} : { rewrites: async () => site.rewrites }),
+  ...(site.headers.length === 0 ? {} : { headers: async () => site.headers }),
   // The suite serves `next dev` at `https://<id>.<name>.dev.local` behind Caddy, and a walk may
   // reach it at 127.0.0.1; Next refuses its dev assets (HMR, the RSC fetches) to any origin not
   // listed, which leaves the page hydrating against nothing.

@@ -1,5 +1,5 @@
-// The build-time half of `site.json`: its `rewrites`, `publicEnv` and `envDefaults`, resolved
-// against the environment `next build` runs in. Published as `@agenticdevelopertoolkit/site-template/next`
+// The build-time half of `site.json`: its `rewrites`, `headers`, `publicEnv` and `envDefaults`,
+// resolved against the environment `next build` runs in. Published as `@agenticdevelopertoolkit/site-template/next`
 // and imported by the skeleton's `next.config.ts` — never by a page, so nothing here reaches a
 // bundle. The assembler has already checked every `${…}` is well formed; what it cannot know is
 // the environment, so an unset variable with no default fails the build here, by name.
@@ -16,11 +16,19 @@ export interface FrameRewrite {
  * build off Vercel whose selector names no value. On Vercel a selector naming no value fails the
  * build, so a misspelt tier is never quietly served `local`'s backend.
  */
+/** One `site.json` header rule: Next's `{ source, headers }`, passed through as written. */
+export interface FrameHeader {
+  source: string
+  headers: readonly { key: string; value: string }[]
+}
+
 export type FrameEnvDefault = string | { by: string; values: Readonly<Record<string, string>>; local?: string }
 
 /** What the assembler writes to `src/site/next.ts` from `site.json`. */
 export interface FrameNextSite {
   rewrites: readonly FrameRewrite[]
+  /** Literal response headers; absent from a `next.ts` assembled before the key existed. */
+  headers?: readonly FrameHeader[]
   /** `NAME`, which must resolve, or `${NAME:-}`, which is left out when it does not. */
   publicEnv: readonly string[]
   envDefaults: Readonly<Record<string, FrameEnvDefault>>
@@ -30,6 +38,7 @@ export interface FrameNextSite {
 export interface FrameNextResult {
   env: Record<string, string>
   rewrites: FrameRewrite[]
+  headers: FrameHeader[]
 }
 
 type Env = Readonly<Record<string, string | undefined>>
@@ -111,5 +120,5 @@ export function frameNext(site: FrameNextSite, env: Env): FrameNextResult {
       )
     }
   })
-  return { env: publicEnv, rewrites }
+  return { env: publicEnv, rewrites, headers: [...(site.headers ?? [])] }
 }

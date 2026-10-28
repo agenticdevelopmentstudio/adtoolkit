@@ -19,7 +19,22 @@ const tiers: FrameNextSite = {
 
 describe('frameNext', () => {
   it('adds nothing for a site that declares nothing', () => {
-    expect(frameNext(none, {})).toEqual({ env: {}, rewrites: [] })
+    expect(frameNext(none, {})).toEqual({ env: {}, rewrites: [], headers: [] })
+  })
+
+  it('passes headers through literally, and treats a site that omits them as having none', () => {
+    const headers = [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+          { key: 'X-Literal', value: '${NOT_A_REFERENCE}' },
+        ],
+      },
+    ]
+    expect(frameNext({ ...none, headers }, {}).headers).toEqual(headers)
+    const { headers: _omitted, ...older } = { ...none, headers }
+    expect(frameNext(older, {}).headers).toEqual([])
   })
 
   it('substitutes a variable from the environment into a destination', () => {

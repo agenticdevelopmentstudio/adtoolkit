@@ -930,6 +930,13 @@ class AssembleTest(unittest.TestCase):
         text = (self.app / "app/not-found.tsx").read_text()
         self.assertIn("export const metadata: Metadata = frameNotFoundMetadata", text)
 
+    def test_the_404s_doc_comment_documents_the_component(self) -> None:
+        # The comment describes the page, so it sits on NotFound, not on the metadata line.
+        self.assert_ok(self.assemble())
+        text = (self.app / "app/not-found.tsx").read_text()
+        self.assertRegex(text, r"\*/\nexport default function NotFound\(")
+        self.assertNotRegex(text, r"\*/\nexport const metadata")
+
     def test_one_url_in_both_trees_is_refused(self) -> None:
         self.write("site/routes/home/page.tsx", "export default function P() { return null }\n")
         self.write("site/app-routes/home/page.tsx", "export default function P() { return null }\n")
@@ -1074,6 +1081,43 @@ class AssembleTest(unittest.TestCase):
     def test_a_rewrite_needs_a_source_and_a_destination(self) -> None:
         self.config["rewrites"] = [{"source": "/a"}]
         self.assert_refused(self.assemble(), "rewrites[0]", "'destination'")
+
+    # --- response headers ---------------------------------------------------------------------
+
+    def test_no_headers_writes_an_empty_list_and_the_config_adds_none(self) -> None:
+        self.assert_ok(self.assemble())
+        self.assertIn("headers: [],", (self.app / "src/site/next.ts").read_text())
+        config = (self.app / "next.config.ts").read_text()
+        self.assertIn("...(site.headers.length === 0 ? {} : { headers: async () => site.headers }),", config)
+
+    def test_headers_reach_the_next_site(self) -> None:
+        self.config["headers"] = [
+            {
+                "source": "/(.*)",
+                "headers": [
+                    {"key": "X-Frame-Options", "value": "SAMEORIGIN"},
+                    {"key": "Content-Security-Policy", "value": "frame-ancestors 'self'"},
+                ],
+            }
+        ]
+        self.assert_ok(self.assemble())
+        text = (self.app / "src/site/next.ts").read_text()
+        self.assertIn('"source": "/(.*)"', text)
+        self.assertIn('"key": "X-Frame-Options"', text)
+        self.assertIn('"value": "frame-ancestors \'self\'"', text)
+
+    def test_a_header_needs_a_key_and_a_value(self) -> None:
+        self.config["headers"] = [{"source": "/(.*)", "headers": [{"key": "X-A"}]}]
+        self.assert_refused(self.assemble(), "headers[0].headers[0]", "'value'")
+
+    def test_a_header_rule_needs_a_rooted_source_and_at_least_one_header(self) -> None:
+        for rule, where in (
+            ({"source": "(.*)", "headers": [{"key": "X-A", "value": "a"}]}, "headers[0].source"),
+            ({"source": "/(.*)", "headers": []}, "headers[0].headers"),
+        ):
+            with self.subTest(rule=rule):
+                self.config["headers"] = [rule]
+                self.assert_refused(self.assemble(), where)
 
     # --- analytics ----------------------------------------------------------------------------
 

@@ -35,7 +35,7 @@ From `@agenticdevelopertoolkit/site-template/next` (node, for `next.config.ts` o
 
 | Export | What it is |
 | --- | --- |
-| `frameNext(site, env)` | `site.json`'s `rewrites` and `publicEnv` resolved against `env` (`process.env`): `{ env, rewrites }`, which the skeleton's `next.config.ts` merges into its config. Throws, naming the variable and where it was used, when a `${NAME}` has no value. See "Rewrites and public env" below. |
+| `frameNext(site, env)` | `site.json`'s `rewrites` and `publicEnv` resolved against `env` (`process.env`), and its `headers` as written: `{ env, rewrites, headers }`, which the skeleton's `next.config.ts` merges into its config. Throws, naming the variable and where it was used, when a `${NAME}` has no value. See "Rewrites and public env" below. |
 | types `FrameNextSite`, `FrameRewrite`, `FrameEnvDefault`, `FrameNextResult` | The generated `src/site/next.ts`'s shape, and the result. |
 
 ## Slots
@@ -147,6 +147,25 @@ The skeleton's `next.config.ts` also sets `allowedDevOrigins` (`*.dev.local`, `d
 `transpilePackages`: every toolkit package the app reaches — its own `link:` dependencies and,
 transitively, every toolkit package those depend on (the template's own, the landing kit's
 textlens) — which the assembler lists in `src/site/next.ts`.
+
+## Response headers in `site.json`
+
+```json
+"headers": [
+  {
+    "source": "/(.*)",
+    "headers": [
+      { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+      { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" }
+    ]
+  }
+]
+```
+
+Next's own `headers` shape: each rule's `source` is a Next path pattern (`/(.*)` is every route)
+and its `headers` at least one `{ key, value }`. Values are literal — nothing is substituted — and
+the skeleton's `next.config.ts` hands them to Next only when there is at least one rule. A key
+that is not an HTTP header name is refused at assembly.
 
 ## Analytics
 

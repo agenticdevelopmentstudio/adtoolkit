@@ -979,9 +979,10 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
     next_ts = (
         f"{HEADER}\n"
         "import type { FrameNextSite } from '@agenticdevelopertoolkit/site-template/next'\n\n"
-        "/** site.json's rewrites, public env and env defaults, which next.config.ts resolves at build. */\n"
+        "/** site.json's rewrites, headers, public env and env defaults, which next.config.ts resolves at build. */\n"
         "export const nextSite: FrameNextSite = {\n"
         f"  rewrites: {ts(config.get('rewrites', []))},\n"
+        f"  headers: {ts(config.get('headers', []))},\n"
         f"  publicEnv: {ts(config.get('publicEnv', []))},\n"
         f"  envDefaults: {ts(config.get('envDefaults', {}))},\n"
         "}\n\n"

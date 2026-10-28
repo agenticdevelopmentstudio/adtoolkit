@@ -139,6 +139,31 @@
         }
       }
     },
+    "headers": {
+      "type": "array",
+      "description": "Next response headers: each rule's `source` is a Next path pattern, e.g. `/(.*)` for every route, and its `headers` the `{ key, value }` pairs sent with it — e.g. a site's security headers. Values are literal; nothing is substituted.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "headers"],
+        "properties": {
+          "source": { "type": "string", "pattern": "^/" },
+          "headers": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["key", "value"],
+              "properties": {
+                "key": { "type": "string", "pattern": "^[!#$%&'*+.^_`|~0-9A-Za-z-]+$" },
+                "value": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
     "publicEnv": {
       "type": "array",
       "description": "Variables passed through to Next's `env`, so client code reads them inlined at build. Each resolves as a `rewrites` reference does (environment, then `envDefaults`). A bare `NAME` with no value anywhere fails the build, naming it; `${NAME:-}` is the optional form, left out when it has no value.",
