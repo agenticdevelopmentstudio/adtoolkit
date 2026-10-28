@@ -228,6 +228,19 @@ class AssembleTest(unittest.TestCase):
         self.assertIn('"../fonts/iosevka-site-700.woff2"', fonts)
         self.assert_ok(run(self.site, "--check"))
 
+    def test_the_charcoal_theme_is_the_family_palette_on_the_site_cut(self) -> None:
+        self.config["theme"] = "charcoal"
+        self.assert_ok(self.assemble())
+        css = (self.app / "app/theme.css").read_text()
+        self.assertIn('@import "@agenticdevelopertoolkit/themes/styles/charcoal.css";', css)
+        self.assertNotIn("themes/styles/fishlamp.css", css)
+        self.assertLess(css.index("charcoal.css"), css.index("landing/css/base.css"))
+        self.assertIn("--font-mono: var(--font-iosevka), 'Iosevka Fallback Menlo'", css)
+        fonts = (self.app / "src/site/fonts.ts").read_text()
+        self.assertIn('"../fonts/iosevka-site-400.woff2"', fonts)
+        self.assertIn('"../fonts/iosevka-site-700.woff2"', fonts)
+        self.assert_ok(run(self.site, "--check"))
+
     def test_fishlamps_iosevka_variable_names_the_site_cut_family(self) -> None:
         self.assert_ok(self.assemble())
         css = (self.app / "app/theme.css").read_text()

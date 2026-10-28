@@ -284,3 +284,48 @@ describe('themes.json mikefullerton', () => {
     expect(differ).toEqual([])
   })
 })
+
+describe('themes.json charcoal', () => {
+  type Theme = { css: string; fonts: { variable: string; role?: string[]; files: { path: string }[] }[] }
+  const themes = (): Record<string, Theme> => JSON.parse(read(join(pkg, 'themes.json'))) as Record<string, Theme>
+  const stylesDir = resolve(pkg, '../themes/src/styles')
+  const sheet = (): string =>
+    read(join(stylesDir, themes().charcoal.css.replace('@agenticdevelopertoolkit/themes/styles/', '')))
+
+  it("points at the family's own charcoal palette and real Iosevka files", () => {
+    const theme = themes().charcoal
+    expect(theme.css).toBe('@agenticdevelopertoolkit/themes/styles/charcoal.css')
+    const web = resolve(pkg, '../..')
+    for (const font of theme.fonts) {
+      for (const f of font.files) expect(existsSync(join(web, f.path)), f.path).toBe(true)
+    }
+    // Every property charcoal.css names 'Iosevka' in; --font-display follows --font-serif.
+    expect(theme.fonts.flatMap((font) => font.role ?? [])).toEqual(
+      expect.arrayContaining(['--font-mono', '--font-sans', '--font-serif']),
+    )
+  })
+
+  it('declares every role the bridge and the frame read, on html:root', () => {
+    const declared = new Set<string>()
+    for (const m of stripComments(sheet()).matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const sels = m[1].split(',').map((s) => s.replace(/\s+/g, ' ').trim())
+      if (!sels.includes('html:root')) continue
+      for (const d of m[2].matchAll(/(--[a-z0-9-]+)\s*:/g)) declared.add(d[1])
+    }
+    const wanted = new Set<string>()
+    for (const css of [bridge(), frame()]) {
+      for (const m of stripComments(css).matchAll(/var\((--(?:color|font)-[a-z0-9-]+)/g)) wanted.add(m[1])
+    }
+    expect(wanted.size).toBeGreaterThan(0)
+    expect([...wanted].filter((role) => !declared.has(role))).toEqual([])
+  })
+
+  it("is token rules only: no body rule to reach a site's other routes", () => {
+    // An at-rule's prelude (charcoal's `@media (prefers-contrast: more)`) is not a selector.
+    const selectors = [...stripComments(sheet()).replace(/@media[^{]*\{/g, '').matchAll(/([^{}]+)\{/g)]
+      .flatMap((m) => m[1].split(',').map((s) => s.trim()))
+      .filter((s) => s !== '')
+    expect(selectors.length).toBeGreaterThan(0)
+    expect(selectors.filter((s) => !s.startsWith('html:root'))).toEqual([])
+  })
+})

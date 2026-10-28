@@ -4,12 +4,29 @@
     "fonts": [
       {
         "variable": "--font-iosevka",
-        "role": ["--font-mono", "--font-sans", "--font-serif"],
+        "role": [
+          "--font-mono",
+          "--font-sans",
+          "--font-serif"
+        ],
         "fallback": "'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace",
         "files": [
-          { "path": "packages/themes/src/fonts/iosevka-site-400.woff2", "weight": "400", "style": "normal" },
-          { "path": "packages/themes/src/fonts/iosevka-site-700.woff2", "weight": "700", "style": "normal" },
-          { "path": "packages/themes/src/fonts/iosevka-site-400-italic.woff2", "weight": "400", "style": "italic", "preload": false }
+          {
+            "path": "packages/themes/src/fonts/iosevka-site-400.woff2",
+            "weight": "400",
+            "style": "normal"
+          },
+          {
+            "path": "packages/themes/src/fonts/iosevka-site-700.woff2",
+            "weight": "700",
+            "style": "normal"
+          },
+          {
+            "path": "packages/themes/src/fonts/iosevka-site-400-italic.woff2",
+            "weight": "400",
+            "style": "italic",
+            "preload": false
+          }
         ]
       }
     ]
@@ -19,12 +36,61 @@
     "fonts": [
       {
         "variable": "--font-iosevka",
-        "role": ["--font-mono", "--font-sans", "--font-serif"],
+        "role": [
+          "--font-mono",
+          "--font-sans",
+          "--font-serif"
+        ],
         "fallback": "'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace",
         "files": [
-          { "path": "packages/themes/src/fonts/iosevka-site-400.woff2", "weight": "400", "style": "normal" },
-          { "path": "packages/themes/src/fonts/iosevka-site-700.woff2", "weight": "700", "style": "normal" },
-          { "path": "packages/themes/src/fonts/iosevka-site-400-italic.woff2", "weight": "400", "style": "italic", "preload": false }
+          {
+            "path": "packages/themes/src/fonts/iosevka-site-400.woff2",
+            "weight": "400",
+            "style": "normal"
+          },
+          {
+            "path": "packages/themes/src/fonts/iosevka-site-700.woff2",
+            "weight": "700",
+            "style": "normal"
+          },
+          {
+            "path": "packages/themes/src/fonts/iosevka-site-400-italic.woff2",
+            "weight": "400",
+            "style": "italic",
+            "preload": false
+          }
+        ]
+      }
+    ]
+  },
+  "charcoal": {
+    "css": "@agenticdevelopertoolkit/themes/styles/charcoal.css",
+    "fonts": [
+      {
+        "variable": "--font-iosevka",
+        "role": [
+          "--font-mono",
+          "--font-sans",
+          "--font-serif"
+        ],
+        "fallback": "'Iosevka Fallback Menlo', 'Iosevka Fallback Courier', ui-monospace, monospace",
+        "files": [
+          {
+            "path": "packages/themes/src/fonts/iosevka-site-400.woff2",
+            "weight": "400",
+            "style": "normal"
+          },
+          {
+            "path": "packages/themes/src/fonts/iosevka-site-700.woff2",
+            "weight": "700",
+            "style": "normal"
+          },
+          {
+            "path": "packages/themes/src/fonts/iosevka-site-400-italic.woff2",
+            "weight": "400",
+            "style": "italic",
+            "preload": false
+          }
         ]
       }
     ]
