@@ -105,6 +105,10 @@
         }
       }
     },
+    "heroShot": {
+      "enum": ["bleed", "thumbnail"],
+      "description": "How the hero draws its {shot}: \"bleed\" (the default) runs it full width under the hero; \"thumbnail\" draws it small, as a link that opens the full capture in a new tab. A thumbnail needs exactly one {shot} in the hero, naming a capture."
+    },
     "drawer": {
       "type": "array",
       "description": "Drawer rows after the section rows. Where a row goes is config; what it says is copy: `nav` names its label under the copy's `nav.extra` (site.md's `# nav`, `## extra`).",

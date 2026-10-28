@@ -26,6 +26,7 @@ export default function Home(): ReactElement {
       mark={<FrameMark config={config} alt={copy.markAlt} />}
       looks={config.bands}
       pendingLabel={copy.screenshotPending}
+      heroShot={config.heroShot}
       family={family}
     />
   )

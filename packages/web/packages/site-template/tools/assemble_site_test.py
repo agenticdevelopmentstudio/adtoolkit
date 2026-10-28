@@ -585,6 +585,19 @@ class AssembleTest(unittest.TestCase):
         self.config["bands"] = {"features": {"tone": "neon"}}
         self.assert_refused(self.assemble(), "bands.features.tone")
 
+    def test_a_hero_shot_look_reaches_the_config(self) -> None:
+        self.config["heroShot"] = "thumbnail"
+        self.assert_ok(self.assemble())
+        self.assertIn('heroShot: "thumbnail",', (self.app / "src/site/config.ts").read_text())
+
+    def test_no_hero_shot_look_leaves_it_out(self) -> None:
+        self.assert_ok(self.assemble())
+        self.assertNotIn("heroShot", (self.app / "src/site/config.ts").read_text())
+
+    def test_an_unknown_hero_shot_look_is_refused(self) -> None:
+        self.config["heroShot"] = "huge"
+        self.assert_refused(self.assemble(), "heroShot")
+
     def test_a_bitbag_slot_is_placed(self) -> None:
         self.config["slots"] = {"bitbag": "bitbag.tsx#SiteVoice"}
         self.write("site/components/bitbag.tsx", "export function SiteVoice() { return null }\n")

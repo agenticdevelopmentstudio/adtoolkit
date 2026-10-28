@@ -1036,6 +1036,7 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
         **({"jsonLd": config["jsonLd"]} if "jsonLd" in config else {}),
         "sitemap": config.get("sitemap", []),
         **({"bands": config["bands"]} if "bands" in config else {}),
+        **({"heroShot": config["heroShot"]} if "heroShot" in config else {}),
     }
     # Refused here as the frame refuses it at render, but before a build: a look whose section
     # was renamed would otherwise wait for `next build` to say so.

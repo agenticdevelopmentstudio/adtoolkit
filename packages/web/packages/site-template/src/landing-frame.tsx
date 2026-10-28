@@ -12,7 +12,8 @@ import {
 import type { BandTone, LandingPage, LandingSection } from '@agenticdevelopertoolkit/landing'
 import { FAMILY_ID, FamilyBand } from './family-band'
 import { FrameBand } from './frame-band'
-import type { BandLook, SiteFamily, SlotMap } from './types'
+import { HeroThumb } from './hero-thumb'
+import type { BandLook, HeroShotLook, SiteFamily, SlotMap } from './types'
 
 /**
  * The tones the bands alternate through, first band first. `soft` first so the band under
@@ -55,9 +56,32 @@ function renderBand(
   )
 }
 
+/**
+ * The hero's `Shot` as a thumbnail, and the hero's other rows for `heroSlots` to sort. Refused
+ * when the hero has no `Shot`, or one with no capture yet: a thumbnail of a placeholder opens
+ * nothing, and a site that asked for one and drew none would have nothing in the build to say so.
+ */
+function thumbnailShot(page: LandingPage): { hero: LandingPage['hero']; shot: ReactElement } {
+  const shots = page.hero.blocks.filter((block) => block.kind === 'Shot')
+  const [only] = shots
+  if (shots.length !== 1 || only === undefined) {
+    throw new Error(`LandingFrame: heroShot 'thumbnail' needs exactly one {shot} in the hero; it has ${shots.length}.`)
+  }
+  if (only.src === undefined) {
+    throw new Error(`LandingFrame: heroShot 'thumbnail' needs the hero's {shot} to name a capture; it has none yet.`)
+  }
+  return {
+    hero: { ...page.hero, blocks: page.hero.blocks.filter((block) => block.kind !== 'Shot') },
+    shot: <HeroThumb src={only.src} caption={only.caption} />,
+  }
+}
+
 /** The hero from the page's own data: `heroSlots` sorts its rows into FlowHero's slots. */
-function dataHero(page: LandingPage, mark: ReactNode, pendingLabel: ReactNode): ReactElement {
-  const { actions, meta, status, shot } = heroSlots(page.hero, pendingLabel)
+function dataHero(page: LandingPage, mark: ReactNode, pendingLabel: ReactNode, look: HeroShotLook): ReactElement {
+  const thumb = look === 'thumbnail' ? thumbnailShot(page) : undefined
+  const slotted = heroSlots(thumb?.hero ?? page.hero, pendingLabel)
+  const { actions, meta, status } = slotted
+  const shot = thumb?.shot ?? slotted.shot
   // FlowHero has no status slot, and a StatusPill is a `<p>`, which neither the sub nor the
   // meta line (both `<p>`s) can legally hold. The actions row is a `<div>`, and it is where
   // the pill belongs anyway: `heroSlots` turns every button ghost beside it, which only reads
@@ -85,7 +109,9 @@ function dataHero(page: LandingPage, mark: ReactNode, pendingLabel: ReactNode): 
  * replaces the hero's contents inside the same `#top` frame, `afterHero` sits between the
  * hero and the first band, and `bands[id]` replaces one band's blocks. `looks[id]` takes one
  * band out of the soft/dark alternation, and `pendingLabel` is the site's word for a
- * screenshot not yet taken, on every pending shot (the kit's own word when absent). `family`,
+ * screenshot not yet taken, on every pending shot (the kit's own word when absent). `heroShot`
+ * `'thumbnail'` draws the hero's `Shot` small, linking to the full capture (hero-thumb.tsx),
+ * where the default bleeds it full width under the hero. `family`,
  * when the site is one of the Agentic Developer Hub's, adds the family band after the last
  * section, taking the next tone in the alternation (family-band.tsx). The bar, the drawer,
  * the footer and bitbag are the frame's siblings, not its children — `<main>` is the flow
@@ -101,6 +127,7 @@ export function LandingFrame({
   mark,
   looks = {},
   pendingLabel,
+  heroShot = 'bleed',
   family,
 }: {
   page: LandingPage
@@ -108,6 +135,7 @@ export function LandingFrame({
   mark: ReactNode
   looks?: Record<string, BandLook>
   pendingLabel?: ReactNode
+  heroShot?: HeroShotLook
   family?: SiteFamily
 }): ReactElement {
   // Refused, not ignored: a slot or a look whose section was renamed in the markdown would
@@ -149,7 +177,7 @@ export function LandingFrame({
       <DeckScript armSnapping={false} openAtTop={false} restoreZoomOffIos={false} />
       <Flow>
         {HeroSlot === undefined ? (
-          dataHero(page, mark, pendingLabel)
+          dataHero(page, mark, pendingLabel, heroShot)
         ) : (
           // FlowHero's own frame, so a custom hero is exactly as tall, and as reachable by
           // `/#top`, as the data one. A `<div>` for FlowHero's reason: the bands are the

@@ -7,6 +7,9 @@ import type { BandTone } from '@agenticdevelopertoolkit/landing'
  */
 export type CopyText = string | { html: string }
 
+/** How the hero draws its `Shot`: the kit's full-width shot bled off the page, or a small one. */
+export type HeroShotLook = 'bleed' | 'thumbnail'
+
 /**
  * Everything a site SAYS that is not the landing page's body: its name and description for
  * the metadata, the wordmark in the bar, the drawer's foot and the page footer. It is the
@@ -77,6 +80,8 @@ export interface FrameConfig {
   sitemap: string[]
   /** The bands that step out of the alternation, by section id. */
   bands?: Record<string, BandLook>
+  /** How the hero draws its `Shot` (hero-thumb.tsx); the frame bleeds it when absent. */
+  heroShot?: HeroShotLook
 }
 
 /**

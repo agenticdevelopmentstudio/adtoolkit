@@ -122,6 +122,47 @@ describe('LandingFrame', () => {
     expect(shot!.textContent).toContain('The main window')
   })
 
+  describe('heroShot thumbnail', () => {
+    const shot = { kind: 'Shot' as const, src: 'ide', title: 'App', caption: 'The Kitchen, one project open' }
+    const withShot: LandingPage = { hero: { ...hero, blocks: [...hero.blocks, shot] }, sections: [] }
+
+    it('draws the hero Shot small, as a link to the full capture in a new tab', () => {
+      const { container } = render(<LandingFrame page={withShot} slots={noSlots} mark={mark} heroShot="thumbnail" />)
+      const link = container.querySelector<HTMLAnchorElement>('#top .lp-hero-shot a.st-hero-thumb')
+      expect(link).not.toBeNull()
+      expect(link!.getAttribute('href')).toBe('/screenshots/ide.png')
+      expect(link!.getAttribute('target')).toBe('_blank')
+      expect(link!.getAttribute('rel')).toBe('noopener')
+      const img = link!.querySelector('img')
+      expect(img!.getAttribute('src')).toBe('/screenshots/ide.png')
+      expect(img!.getAttribute('alt')).toBe('The Kitchen, one project open')
+      // The window-framed, bled shot is not drawn as well.
+      expect(container.querySelector('.lp-shot')).toBeNull()
+      // The hero's other rows are still sorted into their slots.
+      expect(container.querySelector('#top .lp-hero-actions a')!.getAttribute('href')).toBe('/downloads')
+    })
+
+    it('bleeds the hero Shot when the site does not ask for a thumbnail', () => {
+      const { container } = render(<LandingFrame page={withShot} slots={noSlots} mark={mark} />)
+      expect(container.querySelector('.st-hero-thumb')).toBeNull()
+      expect(container.querySelector('#top .lp-hero-shot .lp-shot img')).not.toBeNull()
+    })
+
+    it('refuses a thumbnail with no hero Shot, or one with no capture yet', () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {})
+      expect(() => render(<LandingFrame page={empty} slots={noSlots} mark={mark} heroShot="thumbnail" />)).toThrow(
+        /needs exactly one \{shot\} in the hero; it has 0/,
+      )
+      const pending: LandingPage = {
+        hero: { ...hero, blocks: [...hero.blocks, { kind: 'Shot', title: 'App', caption: 'Soon' }] },
+        sections: [],
+      }
+      expect(() => render(<LandingFrame page={pending} slots={noSlots} mark={mark} heroShot="thumbnail" />)).toThrow(
+        /to name a capture/,
+      )
+    })
+  })
+
   it('words every pending shot, hero and band alike, with the copy\'s label when it gives one', () => {
     const shot = { kind: 'Shot' as const, title: 'App', caption: 'Soon' }
     const page: LandingPage = {
