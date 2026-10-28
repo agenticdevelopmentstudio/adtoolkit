@@ -37,6 +37,11 @@ public struct SessionDaemonConfiguration: Sendable {
     /// states its own: one that must not double LLM spend over sessions another
     /// daemon already summarizes passes false. There is deliberately no default.
     public var summariesDefaultEnabled: Bool
+    /// Whether this daemon owns the Claude Code hook registration. False for a
+    /// passive copy running beside the installed one (a development instance):
+    /// it never installs, removes or rewrites hooks in `settings.json`, and
+    /// tracking and status-line writes are refused.
+    public var managesHooks: Bool
 
     public init(
         label: String,
@@ -55,7 +60,8 @@ public struct SessionDaemonConfiguration: Sendable {
         retentionCheckInterval: TimeInterval = 86400,
         claudeJSONPath: String? = nil,
         pluginSearchPaths: [URL] = [],
-        summariesDefaultEnabled: Bool
+        summariesDefaultEnabled: Bool,
+        managesHooks: Bool = true
     ) {
         self.label = label
         self.subsystem = subsystem ?? label
@@ -74,6 +80,7 @@ public struct SessionDaemonConfiguration: Sendable {
         self.claudeJSONPath = claudeJSONPath
         self.pluginSearchPaths = pluginSearchPaths
         self.summariesDefaultEnabled = summariesDefaultEnabled
+        self.managesHooks = managesHooks
     }
 
     /// A configuration rooted under `root` (a fresh temporary directory by

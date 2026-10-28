@@ -243,7 +243,8 @@ public final class SessionDaemonRuntime: @unchecked Sendable {
         )
         let preferences = PreferencesService(
             database: database, secretStore: secretStore, hookInstaller: installer,
-            summariesDefaultEnabled: configuration.summariesDefaultEnabled
+            summariesDefaultEnabled: configuration.summariesDefaultEnabled,
+            managesHooks: configuration.managesHooks
         )
         lock.withLock {
             opened = Opened(
@@ -261,6 +262,7 @@ public final class SessionDaemonRuntime: @unchecked Sendable {
     public func startIngress() async {
         let opened = requireOpened("startIngress")
         let installer = hookInstaller
+        let managesHooks = configuration.managesHooks
         await withTaskGroup(of: Void.self) { group in
             group.addTask {
                 do { try opened.pipeline.startAcceptingCaptures() } catch {
@@ -269,6 +271,8 @@ public final class SessionDaemonRuntime: @unchecked Sendable {
                     )
                 }
             }
+            // A passive daemon leaves `settings.json` to the copy that owns it.
+            guard managesHooks else { return }
             group.addTask {
                 Self.applyHookState(installer: installer, disabled: opened.hookDisabled)
             }

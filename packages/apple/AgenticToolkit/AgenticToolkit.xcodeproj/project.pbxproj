@@ -1957,6 +1957,7 @@
 		BBDF09263BE19953E911BC20 /* Launchctl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AD64ABF2407050E373235C /* Launchctl.swift */; };
 		BBF1ABBE1F39BA0551DA0504 /* ClaudeAuthTerminal.swift in Sources */ = {isa = PBXBuildFile; fileRef = 072694801B73CC3BF689A08F /* ClaudeAuthTerminal.swift */; };
 		BC0AEA23E4EE1CF9167EF049 /* PaneCapabilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = 274BFC7290E8324BACDE5E7D /* PaneCapabilities.swift */; };
+		BC118028ED883C32ADCF1E34 /* StenographerInstance.swift in Sources */ = {isa = PBXBuildFile; fileRef = 69294117DC7AE7B486102D9E /* StenographerInstance.swift */; };
 		BC6F6A09032FDAF46564E2ED /* ContextEventSummary.swift in Sources */ = {isa = PBXBuildFile; fileRef = C321B01DF0A0321E3323D38A /* ContextEventSummary.swift */; };
 		BC750A7A7563BE95309CD693 /* HTDVCellContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C929501A3AD95332E464035 /* HTDVCellContent.swift */; };
 		BCBAA39D9159531B87CD94EB /* MacPermissionGateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0669FFF08E38545D41332FD4 /* MacPermissionGateTests.swift */; };
@@ -5615,6 +5616,7 @@
 		68FBBAE65B74F2D17FD794E5 /* StartupQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartupQueue.swift; sourceTree = "<group>"; };
 		690A3F776886927C6C0E93A0 /* NSColor+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSColor+Hex.swift"; sourceTree = "<group>"; };
 		69252BAE3CC77677D9905039 /* WebviewSchemeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebviewSchemeHandlerTests.swift; sourceTree = "<group>"; };
+		69294117DC7AE7B486102D9E /* StenographerInstance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerInstance.swift; sourceTree = "<group>"; };
 		693DAA1E20FBD24634CBB240 /* LLMPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LLMPickerView.swift; sourceTree = "<group>"; };
 		6950109609A0756344AC4863 /* WallClockBudgetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WallClockBudgetTests.swift; sourceTree = "<group>"; };
 		6955FB0BB19459F31EC1BB25 /* ProjectTree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectTree.swift; sourceTree = "<group>"; };
@@ -7858,6 +7860,7 @@
 				1BBFDCC0E1AD1D282FAB80EA /* StenographerDaemonService.swift */,
 				4DEB99C473EEB4D6582BA5FD /* StenographerHTTPClient.swift */,
 				BBE539C216B001170F681243 /* StenographerIdentifiers.swift */,
+				69294117DC7AE7B486102D9E /* StenographerInstance.swift */,
 				D562274C3DFB0E67240B87C0 /* StenographerPreferenceDTOs.swift */,
 				B6C739860B639553B9531860 /* StenographerWire.swift */,
 				A9AC7A01F5277BCCC27EF0A7 /* SummarizeReplyDTO.swift */,
@@ -15563,6 +15566,7 @@
 				78F1B66AD8B3D734682FF3CD /* StenographerDaemonService.swift in Sources */,
 				917D8FF9F479BBE5ABBFCC1E /* StenographerHTTPClient.swift in Sources */,
 				0AB970D1EC72459DB5D7B63F /* StenographerIdentifiers.swift in Sources */,
+				BC118028ED883C32ADCF1E34 /* StenographerInstance.swift in Sources */,
 				73B198E7CBB7ED52F6983CFC /* StenographerPreferenceDTOs.swift in Sources */,
 				C314481BBCB3ECA16E787FCE /* StenographerWire.swift in Sources */,
 				5A423EDBDBC36FFC6215E4DD /* StorableSetting.swift in Sources */,

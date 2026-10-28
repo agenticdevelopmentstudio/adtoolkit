@@ -14,14 +14,26 @@ import AIPluginKit
 /// `DaemonDatabase`, the daemon Keychain (`SecretStoring`), and `ClaudeHookInstaller`.
 public final class PreferencesService: @unchecked Sendable {
 
-    public enum PreferencesError: Error {
+    public enum PreferencesError: Error, LocalizedError {
         case hookInstallFailed(String)
+        /// This daemon leaves hooks and `settings.json` to another copy
+        /// (``SessionDaemonConfiguration/managesHooks`` is false).
+        case passiveInstance
+
+        /// Carried across XPC by `setStatusLineDisplay`; HTTP maps the same case to a 409.
+        public var errorDescription: String? {
+            switch self {
+            case .passiveInstance: "this daemon instance does not manage hooks"
+            case .hookInstallFailed: nil
+            }
+        }
     }
 
     private let database: DaemonDatabase
     private let secretStore: any SecretStoring
     private let hookInstaller: ClaudeHookInstaller
     private let summarizer: DaemonSessionSummarizer
+    private let managesHooks: Bool
 
     /// Serializes the whole provider-config reconcile. HTTP `POST /preferences/ai`
     /// and XPC `setAIPreferences` call `applyAIProviderSync` from independent
@@ -37,8 +49,10 @@ public final class PreferencesService: @unchecked Sendable {
         database: DaemonDatabase,
         secretStore: any SecretStoring,
         hookInstaller: ClaudeHookInstaller,
-        summariesDefaultEnabled: Bool
+        summariesDefaultEnabled: Bool,
+        managesHooks: Bool = true
     ) {
+        self.managesHooks = managesHooks
         self.database = database
         self.secretStore = secretStore
         self.hookInstaller = hookInstaller
@@ -215,6 +229,7 @@ public final class PreferencesService: @unchecked Sendable {
     /// resulting state. Throws ``PreferencesError/hookInstallFailed`` when enabling
     /// fails (the caller maps it to a 500).
     public func setTracking(enabled: Bool) throws -> TrackingPreferenceResponse {
+        guard managesHooks else { throw PreferencesError.passiveInstance }
         let outcome: String
         if enabled {
             switch hookInstaller.installHooks() {
@@ -244,6 +259,7 @@ public final class PreferencesService: @unchecked Sendable {
 
     /// Switches the status-line display on or off (off keeps the capture feed).
     public func setStatusLineDisplay(_ enabled: Bool) throws {
+        guard managesHooks else { throw PreferencesError.passiveInstance }
         try hookInstaller.setStatusLineDisplay(enabled)
     }
 

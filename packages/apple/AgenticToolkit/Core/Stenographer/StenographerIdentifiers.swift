@@ -4,8 +4,14 @@ import Foundation
 /// keychain services and on-disk directories are spelled. The `legacy*` values
 /// are the pre-1.0.173 names: read, matched and migrated —
 /// never written.
+///
+/// The non-legacy values follow this process's `StenographerInstance`: the
+/// default instance's are the literals Stenographer has always used, a named
+/// development instance's carry its name and port.
 public enum StenographerIdentifiers {
-    public static let label = "com.agenticdevelopmentstudio.stenographer"
+    /// This process's launchd label and Mach service: the base label for the
+    /// default instance, `<base>.<name>` for a named one (`StenographerInstance`).
+    public static let label = StenographerInstance.current.label
     public static let legacyLabel = "com.agentic-cookbook.stenographer"
     public static let legacyMenubarLabel = "com.agentic-cookbook.stenographer.menubar"
     public static let subsystem = label
@@ -14,7 +20,7 @@ public enum StenographerIdentifiers {
     public static let daemonKeychainService = "\(label).daemon"
     public static let legacyDaemonKeychainService = "com.agentic-cookbook.stenographer.daemon"
     /// The daemon's localhost HTTP port, and the base URL clients reach it at.
-    public static let httpPort = 22847
+    public static let httpPort = StenographerInstance.current.httpPort
     public static let httpBaseURL = "http://127.0.0.1:\(httpPort)"
     /// The account router's loopback port: where `ANTHROPIC_BASE_URL` points
     /// when routing is used. Beside `httpPort`, never the same listener.
@@ -31,18 +37,23 @@ public struct StenographerPaths: Sendable {
     public static let launchdStderrLogName = "stderr.log"
 
     private let home: URL
+    public let instance: StenographerInstance
     private let exists: @Sendable (URL) -> Bool
 
     public init(home: URL = FileManager.default.homeDirectoryForCurrentUser,
+                instance: StenographerInstance = .current,
                 exists: @escaping @Sendable (URL) -> Bool = { FileManager.default.fileExists(atPath: $0.path) }) {
         self.home = home
+        self.instance = instance
         self.exists = exists
     }
 
     private var library: URL { home.appendingPathComponent("Library", isDirectory: true) }
 
     public var currentSupportDirectory: URL {
-        library.appendingPathComponent("Application Support/\(StenographerIdentifiers.label)", isDirectory: true)
+        if let root = instance.dataRoot { return root }
+        return library.appendingPathComponent("Application Support/\(StenographerInstance.baseLabel)",
+                                              isDirectory: true)
     }
     public var legacySupportDirectory: URL {
         library.appendingPathComponent("Application Support/\(StenographerIdentifiers.legacyLabel)", isDirectory: true)
@@ -53,7 +64,8 @@ public struct StenographerPaths: Sendable {
     /// after that — a single path resolved at launch would point at a folder
     /// that has since moved. A missing directory is skipped by discovery.
     public var pluginDirectories: [URL] {
-        [currentSupportDirectory, legacySupportDirectory]
+        if let root = instance.dataRoot { return [root.appendingPathComponent("Plugins", isDirectory: true)] }
+        return [currentSupportDirectory, legacySupportDirectory]
             .map { $0.appendingPathComponent("Plugins", isDirectory: true) }
     }
 
@@ -61,6 +73,7 @@ public struct StenographerPaths: Sendable {
     /// it exists (the daemon has not migrated yet — an empty new directory must
     /// not hide the user's real data); else the new one.
     public var supportDirectory: URL {
+        if instance.dataRoot != nil { return currentSupportDirectory }
         let current = currentSupportDirectory
         if exists(current.appendingPathComponent(Self.databaseFileName)) { return current }
         if exists(legacySupportDirectory) { return legacySupportDirectory }
@@ -87,18 +100,38 @@ public struct StenographerPaths: Sendable {
     }
 
     public var currentLogsDirectory: URL {
-        library.appendingPathComponent("Logs/\(StenographerIdentifiers.label)", isDirectory: true)
+        if let root = instance.dataRoot { return root.appendingPathComponent("Logs", isDirectory: true) }
+        return library.appendingPathComponent("Logs/\(StenographerInstance.baseLabel)", isDirectory: true)
     }
     public var legacyLogsDirectory: URL {
         library.appendingPathComponent("Logs/\(StenographerIdentifiers.legacyLabel)", isDirectory: true)
     }
     public var logsDirectory: URL {
+        if instance.dataRoot != nil { return currentLogsDirectory }
         if exists(currentLogsDirectory) { return currentLogsDirectory }
         if exists(legacyLogsDirectory) { return legacyLogsDirectory }
         return currentLogsDirectory
     }
 
-    public var launchAgentPlist: URL { agent(StenographerIdentifiers.label) }
+    public var launchAgentPlist: URL {
+        if let root = instance.dataRoot {
+            return root.appendingPathComponent("launchd/\(instance.label).plist")
+        }
+        return agent(StenographerInstance.baseLabel)
+    }
+
+    /// The Unix socket hooks deliver to. A named instance's is inside its data
+    /// root, where no installed hook ever writes.
+    public var socketPath: URL {
+        if let root = instance.dataRoot { return root.appendingPathComponent(StenographerInstance.socketFileName) }
+        return home.appendingPathComponent(".claude/\(StenographerInstance.socketFileName)")
+    }
+
+    /// The directory hook drop files land in when the socket is down.
+    public var dropDirectory: URL {
+        if let root = instance.dataRoot { return root.appendingPathComponent("events-drop", isDirectory: true) }
+        return home.appendingPathComponent(".claude/stenographer-events", isDirectory: true)
+    }
     public var legacyLaunchAgentPlist: URL { agent(StenographerIdentifiers.legacyLabel) }
     public var legacyMenubarLaunchAgentPlist: URL { agent(StenographerIdentifiers.legacyMenubarLabel) }
 

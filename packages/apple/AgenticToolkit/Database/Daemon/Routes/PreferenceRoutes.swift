@@ -71,6 +71,8 @@ enum PreferenceRoutes {
             return .json(try preferences.setTracking(enabled: decoded.enabled))
         } catch PreferencesService.PreferencesError.hookInstallFailed(let message) {
             return .error("Hook install failed: \(message)", status: 500)
+        } catch PreferencesService.PreferencesError.passiveInstance {
+            return .error("this daemon instance does not manage hooks", status: 409)
         } catch {
             return .error("Tracking update failed: \(error.localizedDescription)", status: 500)
         }
