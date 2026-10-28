@@ -32,7 +32,28 @@ describe('frame.css', () => {
   })
 
   it('lays every card grid out as one column', () => {
-    for (const s of ['.lp-cards', '.lp-cards--pair', '.lp-cards--trio']) {
+    for (const s of ['.lp-cards', '.lp-cards.lp-cards--pair', '.lp-cards.lp-cards--trio']) {
+      expect(ruleBody(frame(), s)).toContain('grid-template-columns: minmax(0, 1fr)')
+    }
+  })
+
+  it('keeps cards one column against every kit grid rule, at every width', () => {
+    // frame.css is imported after the kit's blocks.css, so a frame rule wins when its selector
+    // is at least as specific as the kit's. The kit's `--pair`/`--trio` grids are two classes
+    // (`.lp-cards.lp-cards--pair`, widened inside a media query), so a one-class frame rule
+    // loses to them at 48rem and wider. Every kit selector that sets the card grid's columns
+    // to more than one column needs a frame one-column rule of the same selector.
+    const kit = read(join(landingCss, 'blocks.css'))
+    const kitSelectors = new Set<string>()
+    for (const m of stripComments(kit).matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const cols = /grid-template-columns:\s*([^;]+)/.exec(m[2])
+      if (cols === null || cols[1].trim() === 'minmax(0, 1fr)') continue
+      for (const s of m[1].split(',').map((x) => x.replace(/\s+/g, ' ').trim())) {
+        if (/^\.lp-cards(\.lp-cards--\w+)?$/.test(s)) kitSelectors.add(s)
+      }
+    }
+    expect([...kitSelectors]).toContain('.lp-cards.lp-cards--pair')
+    for (const s of kitSelectors) {
       expect(ruleBody(frame(), s)).toContain('grid-template-columns: minmax(0, 1fr)')
     }
   })

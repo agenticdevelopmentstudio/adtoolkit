@@ -36,10 +36,13 @@
   letter-spacing: var(--st-body-tracking, normal);
 }
 
-/* One column. The kit lays cards two and three across; a content site reads down the page. */
+/* One column. The kit lays cards two and three across; a content site reads down the page.
+ * The kit widens its grids with two-class selectors inside media queries
+ * (`.lp-cards.lp-cards--pair` at 48rem, `--trio` at 56rem), so the same two classes here:
+ * equal specificity, and this sheet is imported after the kit's, so it wins at every width. */
 .lp-cards,
-.lp-cards--pair,
-.lp-cards--trio {
+.lp-cards.lp-cards--pair,
+.lp-cards.lp-cards--trio {
   grid-template-columns: minmax(0, 1fr);
 }
 
