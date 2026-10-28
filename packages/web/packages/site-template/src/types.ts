@@ -33,8 +33,8 @@ export interface FrameCopy {
   nav: { home: string; contact?: string; action?: { label: string; href: string } }
   /** What the page calls a screenshot not yet taken. Absent: the landing kit's own word. */
   screenshotPending?: string
-  /** The drawer's foot: a hello above the mail address, a byline below it. */
-  drawer?: { hello: CopyText; byline: CopyText }
+  /** The drawer's foot: a hello above the mail address and, when worded, a byline below it. */
+  drawer?: { hello: CopyText; byline?: CopyText }
   /** The page footer's lines, in order. Absent: the page has no footer. */
   footer?: Record<string, CopyText>
 }

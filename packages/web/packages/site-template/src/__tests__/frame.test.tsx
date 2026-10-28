@@ -165,6 +165,25 @@ describe('LandingFrame', () => {
     expect(container.querySelector('#one .lp-head')).toBeNull()
   })
 
+  it('heads a section with no title by its eyebrow, read once, as a visually hidden h2', () => {
+    const page: LandingPage = { hero, sections: [section('one', 'One', { title: undefined })] }
+    const { container } = render(<LandingFrame page={page} slots={noSlots} mark={mark} />)
+    const head = container.querySelector('#one .lp-head')!
+    const shown = head.querySelector('.lp-eyebrow > span[aria-hidden="true"]')
+    expect(shown!.textContent).toBe('One')
+    const h2 = head.querySelector('h2')!
+    expect(h2.className).toBe('st-sr-only')
+    expect(h2.textContent).toBe('One')
+  })
+
+  it('keeps a titled section\'s eyebrow plain and its title the visible h2', () => {
+    const { container } = render(<LandingFrame page={two} slots={noSlots} mark={mark} />)
+    const head = container.querySelector('#one .lp-head')!
+    expect(head.querySelector('[aria-hidden]')).toBeNull()
+    expect(head.querySelector('.st-sr-only')).toBeNull()
+    expect(head.querySelector('h2')!.textContent).toBe('One title')
+  })
+
   it('lets a band slot replace only that band’s blocks, keeping its Head', () => {
     function Custom(): ReactElement {
       return <p className="custom">custom body</p>
@@ -241,6 +260,14 @@ describe('SiteChrome', () => {
     const foot = mail!.parentElement!
     expect(foot.textContent).toBe('Say hellohello@example.comby Mike')
     expect(foot.querySelector('b')!.textContent).toBe('Mike')
+  })
+
+  it('ends the drawer foot at the mail address when the copy words no byline', () => {
+    const hello: FrameCopy = { ...copy, drawer: { hello: 'Say hello:' } }
+    const { container } = render(<SiteChrome copy={hello} page={empty} extra={[]} />)
+    const foot = container.querySelector('a[href="mailto:hello@example.com"]')!.parentElement!
+    expect(foot.textContent).toBe('Say hello:hello@example.com')
+    expect(foot.lastElementChild!.tagName).toBe('A')
   })
 
   it('takes the Home row\'s label from the copy, not the frame', () => {

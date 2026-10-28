@@ -73,6 +73,17 @@ describe('frame.css', () => {
     expect(ruleBody(frame(), '.st-mark--app-icon')).toContain('margin: 0 auto 1.8rem')
   })
 
+  it('hides .st-sr-only from sight but not from a screen reader', () => {
+    const body = ruleBody(frame(), '.st-sr-only')
+    expect(body).toContain('position: absolute')
+    expect(body).toContain('width: 1px')
+    expect(body).toContain('height: 1px')
+    expect(body).toContain('overflow: hidden')
+    expect(body).toContain('clip-path: inset(50%)')
+    expect(body).toContain('white-space: nowrap')
+    expect(body).not.toContain('display: none')
+  })
+
   it('uses no !important', () => {
     expect(stripComments(frame())).not.toContain('!important')
     expect(stripComments(bridge())).not.toContain('!important')

@@ -44,7 +44,7 @@ export function SiteChrome({
         </>
       )}
       <a href={`mailto:${email}`}>{email}</a>
-      {copy.drawer === undefined ? null : (
+      {copy.drawer?.byline === undefined ? null : (
         <>
           <br />
           <Words text={copy.drawer.byline} />

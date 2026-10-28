@@ -21,6 +21,21 @@ import type { BandLook, SlotMap } from './types'
  */
 const TONES: readonly BandTone[] = ['soft', 'dark']
 
+/**
+ * A band's `Head`. A section with a title shows its eyebrow and its title, the title the
+ * band's `<h2>`. A section with none shows the eyebrow alone, and the eyebrow is then the
+ * band's heading too: shown once, hidden from a screen reader, and spoken once by an `<h2>`
+ * hidden from sight, so the band is still a heading a reader can jump to.
+ */
+function bandHead(section: LandingSection): ReactElement {
+  if (section.title !== undefined) return <Head eyebrow={section.eyebrow} title={section.title} />
+  return (
+    <Head eyebrow={<span aria-hidden="true">{section.eyebrow}</span>}>
+      <h2 className="st-sr-only">{section.eyebrow}</h2>
+    </Head>
+  )
+}
+
 /** One band: the section's `Head`, then its blocks — or the site's slot in their place. */
 function renderBand(
   section: LandingSection,
@@ -33,7 +48,7 @@ function renderBand(
     <FrameBand key={section.id} id={section.id} tone={look.tone ?? TONES[index % TONES.length]} seam={look.seam}>
       {/* A block that carries the section's heading gets no `Head`, because two eyebrows
           read as two sections. A slot replaces the blocks only, so it keeps the Head. */}
-      {section.headingInBlock === true ? null : <Head eyebrow={section.eyebrow} title={section.title} />}
+      {section.headingInBlock === true ? null : bandHead(section)}
       {Slot === undefined ? section.blocks.map((block, i) => renderBlock(block, i, pendingLabel)) : <Slot />}
     </FrameBand>
   )
