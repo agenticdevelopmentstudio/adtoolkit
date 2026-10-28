@@ -69,6 +69,20 @@ describe('frame.css', () => {
     expect(stripComments(frame())).not.toMatch(/\.lp-screen[^{]*\{[^}]*scroll-margin/)
   })
 
+  it('lets a site set the body weight and leading, defaulting to the kit body rule', () => {
+    // The kit's body rule (landing base.css) sets line-height 1.7 and no weight; a site whose
+    // copy is set lighter or tighter sets `--st-body-weight` / `--st-body-leading` in its
+    // theme. Same `:where()` selector as the kit's, so it keeps body's (0,0,1) and wins on
+    // source order alone. (Its selector list holds a comma, so ruleBody cannot find it.)
+    const m = stripComments(frame()).match(
+      /:where\(html:has\(\.lp-deck, \.lp-flow\)\) body\s*\{([^}]*)\}/,
+    )
+    expect(m, 'no :where(html:has(.lp-deck, .lp-flow)) body rule').not.toBeNull()
+    const body = m![1].replace(/\s+/g, ' ')
+    expect(body).toContain('font-weight: var(--st-body-weight, 400)')
+    expect(body).toContain('line-height: var(--st-body-leading, 1.7)')
+  })
+
   it('uppercases the hero meta through an overridable variable', () => {
     expect(ruleBody(frame(), '.st-hero-meta')).toContain(
       'text-transform: var(--st-hero-meta-transform, uppercase)',
