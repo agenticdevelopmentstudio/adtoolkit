@@ -63,6 +63,10 @@ export interface FrameConfig {
   ogImage: string
   /** The OG image's pixel size, when the site states it: unfurlers lay the card out before it loads. */
   ogImageSize?: { width: number; height: number }
+  /** The OG image's media type (`image/jpeg`), when the site states it: `og:image:type`. */
+  ogImageType?: string
+  /** The author's own page, when the site names one: the author's `url`, and `<link rel="author">`. */
+  authorUrl?: string
   /**
    * Drawer rows after the section rows — a route of the site's own, say. Where each goes is
    * config; what it says is copy: `nav` names its label under the copy's `nav.extra`.

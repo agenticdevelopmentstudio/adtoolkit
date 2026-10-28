@@ -940,6 +940,8 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
         "themeColor": config.get("themeColor", defaults["themeColor"]),
         "ogImage": config.get("ogImage", mark["src"]),
         **({"ogImageSize": config["ogImageSize"]} if "ogImageSize" in config else {}),
+        **({"ogImageType": config["ogImageType"]} if "ogImageType" in config else {}),
+        **({"authorUrl": config["authorUrl"]} if "authorUrl" in config else {}),
         "drawerExtra": config.get("drawer", []),
         **({"jsonLd": config["jsonLd"]} if "jsonLd" in config else {}),
         "sitemap": config.get("sitemap", []),

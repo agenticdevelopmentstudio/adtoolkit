@@ -113,6 +113,44 @@ describe('frameNext', () => {
     })
   })
 
+  it('drops a trailing slash from a value joined to a path, so the join has one slash', () => {
+    const site: FrameNextSite = {
+      ...none,
+      rewrites: [{ source: '/api/:path*', destination: '${BACKEND}/auth/:path*' }],
+    }
+    expect(frameNext(site, { BACKEND: 'https://b.example/' }).rewrites[0]?.destination).toBe(
+      'https://b.example/auth/:path*',
+    )
+    expect(frameNext(site, { BACKEND: 'https://b.example//' }).rewrites[0]?.destination).toBe(
+      'https://b.example/auth/:path*',
+    )
+  })
+
+  it('keeps a value whole where no path follows it', () => {
+    const site: FrameNextSite = { ...none, publicEnv: ['NEXT_PUBLIC_A'], envDefaults: { NEXT_PUBLIC_A: '${B}' } }
+    expect(frameNext(site, { B: 'https://b.example/' }).env.NEXT_PUBLIC_A).toBe('https://b.example/')
+  })
+
+  it('chooses `local` by a second variable: the deploy tier on Vercel, the build mode off it', () => {
+    const twoAxis: FrameNextSite = {
+      rewrites: [{ source: '/api/:path*', destination: '${API_BACKEND_URL}/:path*' }],
+      publicEnv: [],
+      envDefaults: {
+        API_BACKEND_URL: {
+          by: 'DEPLOYMENT_ENV',
+          values: { production: 'https://api.example' },
+          local: { by: 'NODE_ENV', values: { production: 'https://api.example' }, local: 'http://localhost:3000' },
+        },
+      },
+    }
+    const dest = (env: Record<string, string>): string | undefined => frameNext(twoAxis, env).rewrites[0]?.destination
+    expect(dest({ VERCEL: '1', DEPLOYMENT_ENV: 'production' })).toBe('https://api.example/:path*')
+    expect(dest({ NODE_ENV: 'production' })).toBe('https://api.example/:path*')
+    expect(dest({ NODE_ENV: 'development' })).toBe('http://localhost:3000/:path*')
+    expect(dest({})).toBe('http://localhost:3000/:path*')
+    expect(() => dest({ VERCEL: '1', DEPLOYMENT_ENV: 'qa' })).toThrow(/DEPLOYMENT_ENV.*'qa'/s)
+  })
+
   it('refuses an envDefaults cycle rather than recursing', () => {
     const site: FrameNextSite = { ...none, publicEnv: ['A'], envDefaults: { A: '${B}', B: '${A}' } }
     expect(() => frameNext(site, {})).toThrow(/cycle.*A.*B/s)

@@ -56,6 +56,15 @@
   min-height: calc(100svh + var(--st-hero-extra, 0px));
 }
 
+/* A band the drawer jumps to (`/#about`) lands with its top edge under the fixed bar, not under
+ * the burger: the bar is the 32px chip (chrome.css) with `--lp-bar-pad-y` above and below it, so
+ * that is the default clearance. A site whose bar is another height sets `--st-band-clear`.
+ * On `.lp-band` only: a scroll margin on `.lp-screen` would shrink its snap area too (landing's
+ * base.css says why), and the bands do not snap. */
+.lp-band {
+  scroll-margin-top: var(--st-band-clear, calc(32px + 2 * var(--lp-bar-pad-y, 1.1rem)));
+}
+
 /* The hero's meta line (version, platform, licence) reads as a caption. A site whose meta is
  * a sentence sets `--st-hero-meta-transform: none`. */
 .st-hero-meta {

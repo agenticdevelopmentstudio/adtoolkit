@@ -59,6 +59,16 @@ describe('frame.css', () => {
     expect(body).toContain('min-height: calc(100vh + var(--st-hero-extra, 0px))')
   })
 
+  it('lands a band jumped to from the drawer below the fixed bar, through an overridable token', () => {
+    // The bar is the 32px burger chip plus its `--lp-bar-pad-y` above and below; a site whose bar
+    // is another height sets `--st-band-clear`. On `.lp-band`, never `.lp-screen`, whose snap
+    // area a scroll margin would shrink (landing's base.css).
+    expect(ruleBody(frame(), '.lp-band')).toContain(
+      'scroll-margin-top: var(--st-band-clear, calc(32px + 2 * var(--lp-bar-pad-y, 1.1rem)))',
+    )
+    expect(stripComments(frame())).not.toMatch(/\.lp-screen[^{]*\{[^}]*scroll-margin/)
+  })
+
   it('uppercases the hero meta through an overridable variable', () => {
     expect(ruleBody(frame(), '.st-hero-meta')).toContain(
       'text-transform: var(--st-hero-meta-transform, uppercase)',

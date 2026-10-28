@@ -538,6 +538,48 @@ class AssembleTest(unittest.TestCase):
         self.assert_ok(self.assemble())
         self.assertNotIn("ogImageSize", (self.app / "src/site/config.ts").read_text())
 
+    def test_the_og_image_type_and_author_url_reach_the_config(self) -> None:
+        self.config["ogImageType"] = "image/jpeg"
+        self.config["authorUrl"] = "https://author.example"
+        self.assert_ok(self.assemble())
+        config = (self.app / "src/site/config.ts").read_text()
+        self.assertIn('ogImageType: "image/jpeg",', config)
+        self.assertIn('authorUrl: "https://author.example",', config)
+
+    def test_no_og_image_type_or_author_url_leaves_them_out(self) -> None:
+        self.assert_ok(self.assemble())
+        config = (self.app / "src/site/config.ts").read_text()
+        self.assertNotIn("ogImageType", config)
+        self.assertNotIn("authorUrl", config)
+
+    def test_an_og_image_type_that_is_not_an_image_type_is_refused(self) -> None:
+        for bad in ["jpeg", "text/html", "image/"]:
+            with self.subTest(bad=bad):
+                self.config["ogImageType"] = bad
+                self.assert_refused(self.assemble(), "ogImageType")
+
+    def test_an_author_url_that_is_not_http_is_refused(self) -> None:
+        for bad in ["author.example", "ftp://author.example", ""]:
+            with self.subTest(bad=bad):
+                self.config["authorUrl"] = bad
+                self.assert_refused(self.assemble(), "authorUrl")
+
+    def test_an_env_default_may_choose_local_by_a_second_variable(self) -> None:
+        self.config["envDefaults"] = {
+            "API": {
+                "by": "DEPLOYMENT_ENV",
+                "values": {"production": "https://api.example"},
+                "local": {"by": "NODE_ENV", "values": {"production": "https://api.example"}, "local": "http://localhost:3000"},
+            }
+        }
+        self.assert_ok(self.assemble())
+        self.assertIn('"by": "NODE_ENV"', (self.app / "src/site/next.ts").read_text())
+
+    def test_a_second_variable_nests_no_further(self) -> None:
+        inner = {"by": "C", "values": {}, "local": "x"}
+        self.config["envDefaults"] = {"API": {"by": "A", "values": {}, "local": {"by": "B", "values": {}, "local": inner}}}
+        self.assert_refused(self.assemble(), "envDefaults.API")
+
     def test_an_og_image_size_missing_a_side_is_refused(self) -> None:
         self.config["ogImageSize"] = {"width": 512}
         self.assert_refused(self.assemble(), "ogImageSize", "'height'")

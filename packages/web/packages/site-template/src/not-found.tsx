@@ -16,9 +16,20 @@ const NEXT_404 = {
  * not gets the words Next's built-in 404 page gives its tab, so it reads the same as before.
  * Either way a plain title, not a template, so it replaces the site's title rather than joining
  * it, as Next's does.
+ *
+ * The rest undoes what the 404 would otherwise inherit from the root layout: it is neither
+ * indexed nor followed (Next alone says only `noindex`), it declares no canonical — the root's is
+ * the home page, which a dead link is not — and it carries no Open Graph or twitter card, so a
+ * shared dead link does not unfurl as the home page.
  */
 export function frameNotFoundMetadata(copy: FrameCopy): Metadata {
-  return { title: copy.notFound?.title ?? NEXT_404.title }
+  return {
+    title: copy.notFound?.title ?? NEXT_404.title,
+    robots: { index: false, follow: false },
+    alternates: { canonical: null },
+    openGraph: null,
+    twitter: null,
+  }
 }
 
 /**

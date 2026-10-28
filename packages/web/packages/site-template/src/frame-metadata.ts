@@ -54,7 +54,8 @@ export function frameMetadata(copy: FrameCopy, config: FrameConfig): Metadata {
     ...(copy.keywords === undefined ? {} : { keywords: copy.keywords }),
     metadataBase: new URL(config.siteUrl),
     applicationName: copy.name,
-    authors: [{ name: copy.people.author }],
+    // With a url, Next also writes `<link rel="author">` to the author's page.
+    authors: [{ name: copy.people.author, ...(config.authorUrl === undefined ? {} : { url: config.authorUrl }) }],
     creator: copy.people.creator,
     publisher: copy.people.publisher,
     // One page, one canonical: staging and testing serve the same markup on their own hosts,
@@ -67,7 +68,14 @@ export function frameMetadata(copy: FrameCopy, config: FrameConfig): Metadata {
       description: copy.description,
       url: '/',
       locale: 'en_US',
-      images: [{ url: config.ogImage, ...config.ogImageSize, alt: copy.ogImageAlt }],
+      images: [
+        {
+          url: config.ogImage,
+          ...(config.ogImageType === undefined ? {} : { type: config.ogImageType }),
+          ...config.ogImageSize,
+          alt: copy.ogImageAlt,
+        },
+      ],
     },
     twitter: {
       card: twitterCard(config),

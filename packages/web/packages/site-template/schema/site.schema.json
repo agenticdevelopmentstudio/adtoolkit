@@ -65,6 +65,16 @@
         "height": { "type": "integer", "minimum": 1 }
       }
     },
+    "ogImageType": {
+      "type": "string",
+      "pattern": "^image/[a-z0-9.+-]+$",
+      "description": "The Open Graph image's media type, e.g. `image/jpeg`, written as `og:image:type`. Absent: no type is declared."
+    },
+    "authorUrl": {
+      "type": "string",
+      "pattern": "^https?://[^\\s/]+(/\\S*)?$",
+      "description": "The author's own page. Given, the metadata's author carries it as `url` and the head links it as `<link rel=\"author\">`. Absent: the author is a name only."
+    },
     "jsonLd": {
       "type": "object",
       "description": "Structured data, rendered as one `application/ld+json` script in the root layout."
@@ -171,7 +181,7 @@
     },
     "envDefaults": {
       "type": "object",
-      "description": "Fallbacks for variables the environment leaves unset or empty, by name: a string (which may itself use `${…}`), or `{ by, values, local? }` — the value `values[<by>]` names, with `local` for a build off Vercel whose `by` names none (on Vercel that fails the build).",
+      "description": "Fallbacks for variables the environment leaves unset or empty, by name: a string (which may itself use `${…}`), or `{ by, values, local? }` — the value `values[<by>]` names, with `local` for a build off Vercel whose `by` names none (on Vercel that fails the build). `local` may itself be a `{ by, values, local? }` choice, one level deep, whose own `local` is a string: a backend picked by tier on Vercel and by build mode (`NODE_ENV`) off it.",
       "propertyNames": { "pattern": "^[A-Z_][A-Z0-9_]*$" },
       "additionalProperties": {
         "anyOf": [
@@ -190,8 +200,28 @@
                 }
               },
               "local": {
-                "type": "string",
-                "pattern": "^(?:[^$]|\\$(?!\\{)|\\$\\{[A-Z_][A-Z0-9_]*(?::-[^}]*)?\\})*$"
+                "anyOf": [
+                  { "type": "string", "pattern": "^(?:[^$]|\\$(?!\\{)|\\$\\{[A-Z_][A-Z0-9_]*(?::-[^}]*)?\\})*$" },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["by", "values"],
+                    "properties": {
+                      "by": { "type": "string", "pattern": "^[A-Z_][A-Z0-9_]*$" },
+                      "values": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string",
+                          "pattern": "^(?:[^$]|\\$(?!\\{)|\\$\\{[A-Z_][A-Z0-9_]*(?::-[^}]*)?\\})*$"
+                        }
+                      },
+                      "local": {
+                        "type": "string",
+                        "pattern": "^(?:[^$]|\\$(?!\\{)|\\$\\{[A-Z_][A-Z0-9_]*(?::-[^}]*)?\\})*$"
+                      }
+                    }
+                  }
+                ]
               }
             }
           }

@@ -10,19 +10,31 @@ export interface FrameRewrite {
   destination: string
 }
 
-/**
- * A variable's fallback when the environment leaves it unset or empty: a string (itself
- * substituted), or a value chosen by another variable — `values[env[by]]` — with `local` for a
- * build off Vercel whose selector names no value. On Vercel a selector naming no value fails the
- * build, so a misspelt tier is never quietly served `local`'s backend.
- */
 /** One `site.json` header rule: Next's `{ source, headers }`, passed through as written. */
 export interface FrameHeader {
   source: string
   headers: readonly { key: string; value: string }[]
 }
 
-export type FrameEnvDefault = string | { by: string; values: Readonly<Record<string, string>>; local?: string }
+/**
+ * A value chosen by a variable: `values[env[by]]`, with `local` for a build off Vercel whose
+ * selector names no value. On Vercel a selector naming no value fails the build, so a misspelt
+ * tier is never quietly served `local`'s backend.
+ */
+export interface FrameEnvChoice<Local> {
+  by: string
+  values: Readonly<Record<string, string>>
+  local?: Local
+}
+
+/**
+ * A variable's fallback when the environment leaves it unset or empty: a string (itself
+ * substituted), or a value chosen by another variable (`FrameEnvChoice`). That choice's `local`
+ * may itself be chosen by a second variable, one level deep: a site whose deploys pick a backend
+ * by tier (`DEPLOYMENT_ENV`) and whose local builds pick one by build mode (`NODE_ENV`) says both
+ * in one entry, rather than through a variable that exists only to be switched on.
+ */
+export type FrameEnvDefault = string | FrameEnvChoice<string | FrameEnvChoice<string>>
 
 /** What the assembler writes to `src/site/next.ts` from `site.json`. */
 export interface FrameNextSite {
@@ -88,10 +100,18 @@ export function frameNext(site: FrameNextSite, env: Env): FrameNextResult {
   function fromDefault(name: string, fallback: FrameEnvDefault): string | undefined {
     const where = `envDefaults.${name}`
     if (typeof fallback === 'string') return substitute(fallback, where)
+    return choose(fallback, where)
+  }
+
+  function choose(fallback: FrameEnvChoice<string | FrameEnvChoice<string>>, where: string): string {
     const selector = lookup(fallback.by)
     const chosen = selector === undefined ? undefined : fallback.values[selector]
     if (chosen !== undefined) return substitute(chosen, where)
-    if (fallback.local !== undefined && !env.VERCEL) return substitute(fallback.local, where)
+    if (fallback.local !== undefined && !env.VERCEL) {
+      return typeof fallback.local === 'string'
+        ? substitute(fallback.local, where)
+        : choose(fallback.local, `${where}.local`)
+    }
     const known = Object.keys(fallback.values).join(', ')
     const found = selector === undefined ? 'is unset' : `is '${selector}'`
     throw new Error(
@@ -100,11 +120,15 @@ export function frameNext(site: FrameNextSite, env: Env): FrameNextResult {
     )
   }
 
+  // A value joined to a path (`${API}/auth`) loses its trailing slashes, so `API=https://x/`
+  // gives `https://x/auth`, not `https://x//auth`. A value with no path after it is left whole.
   function substitute(text: string, where: string): string {
-    return text.replace(REFERENCE, (_whole, name: string, inline: string | undefined) => {
+    return text.replace(REFERENCE, (whole, name: string, inline: string | undefined, at: number) => {
+      const joined = text.charAt(at + whole.length) === '/'
+      const trim = (value: string): string => (joined ? value.replace(/\/+$/, '') : value)
       const value = lookup(name)
-      if (value !== undefined) return value
-      if (inline !== undefined) return inline
+      if (value !== undefined) return trim(value)
+      if (inline !== undefined) return trim(inline)
       throw new Error(
         `site.json: \${${name}} in ${where} is unset, with no envDefaults entry and no inline default (\${${name}:-…})`,
       )

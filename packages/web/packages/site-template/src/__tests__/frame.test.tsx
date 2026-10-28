@@ -540,6 +540,18 @@ describe('FrameNotFound', () => {
     expect(frameNotFoundMetadata(worded404).title).toBe('Not found — Kitchen')
   })
 
+  it('keeps the 404 out of the index and unlinked from the home page, worded or not', () => {
+    // Without these the 404 inherits the root layout's canonical (`/`) and its Open Graph and
+    // twitter cards, so a dead link would declare the home page canonical and unfurl as it.
+    for (const c of [copy, worded404]) {
+      const meta = frameNotFoundMetadata(c)
+      expect(meta.robots).toEqual({ index: false, follow: false })
+      expect(meta.alternates).toEqual({ canonical: null })
+      expect(meta.openGraph).toBeNull()
+      expect(meta.twitter).toBeNull()
+    }
+  })
+
   it('ships from the server barrel', () => {
     expect(barrel.FrameNotFound).toBe(FrameNotFound)
     expect(barrel.frameNotFoundMetadata).toBe(frameNotFoundMetadata)
@@ -637,6 +649,18 @@ describe('frame metadata helpers', () => {
     expect('keywords' in frameMetadata(copy, config)).toBe(false)
   })
 
+  it('frameMetadata gives the OG image its media type when the config has one', () => {
+    const typed: FrameConfig = { ...config, ogImageType: 'image/jpeg' }
+    expect(frameMetadata(copy, typed).openGraph?.images).toEqual([
+      { url: '/og.png', type: 'image/jpeg', alt: 'Kitchen' },
+    ])
+  })
+
+  it("frameMetadata links the author's page when the config names one, and links none when it does not", () => {
+    const linked: FrameConfig = { ...config, authorUrl: 'https://author.example' }
+    expect(frameMetadata(copy, linked).authors).toEqual([{ name: copy.people.author, url: 'https://author.example' }])
+    expect(frameMetadata(copy, config).authors).toEqual([{ name: copy.people.author }])
+  })
 
   it('frameViewport carries the theme color', () => {
     expect(frameViewport(config).themeColor).toBe('#0b0a09')
