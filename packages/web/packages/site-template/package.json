@@ -11,6 +11,7 @@
   ],
   "files": [
     "dist",
+    "postcss",
     "themes.json"
   ],
   "exports": {
@@ -29,6 +30,7 @@
     },
     "./css/frame.css": "./dist/css/frame.css",
     "./css/bridge.css": "./dist/css/bridge.css",
+    "./postcss-confine": "./postcss/confine.cjs",
     "./themes.json": "./themes.json"
   },
   "scripts": {
@@ -65,6 +67,7 @@
     "esbuild-plugin-preserve-directives": "^0.0.11",
     "jsdom": "^29.0.2",
     "next": "^16.2.9",
+    "postcss": "^8.5.26",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "tsup": "^8.3.5",
