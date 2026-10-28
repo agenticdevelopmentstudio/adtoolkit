@@ -74,7 +74,7 @@ public final class GeneralSettingsPanelViewController: ComposableSettings.Settin
         }
         group.addSettingSubview(ComposableSettings.PopupMenuChoiceView<ReopenOnLaunchPolicy>(
             viewModel: ComposableSettings.ChoiceViewModel<ReopenOnLaunchPolicy>(
-                title: "Restore windows on launch:",
+                title: "Reopen recent documents on launch:",
                 setting: UserSettings.reopenOnLaunchPolicy,
                 choices: policyChoices
             )

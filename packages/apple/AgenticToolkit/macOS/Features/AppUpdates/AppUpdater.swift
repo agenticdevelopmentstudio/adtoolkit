@@ -53,18 +53,4 @@ final class AppUpdaterPolicy: NSObject, SPUUpdaterDelegate {
     func updaterShouldPromptForPermissionToCheck(forUpdates updater: SPUUpdater) -> Bool {
         checksInBackground
     }
-
-    /// The quit that installs this update is the person's own: the launch
-    /// after it follows the reopen-on-launch policy. Returns false so Sparkle
-    /// still schedules the install itself.
-    func updater(_ updater: SPUUpdater, willInstallUpdateOnQuit item: SUAppcastItem,
-                 immediateInstallationBlock immediateInstallHandler: @escaping () -> Void) -> Bool {
-        MainActor.assumeIsolated { WindowManager.shared.noteUpdateWillInstallOnQuit() }
-        return false
-    }
-
-    /// Sparkle is quitting the app to relaunch it: its windows come back.
-    func updaterWillRelaunchApplication(_ updater: SPUUpdater) {
-        MainActor.assumeIsolated { WindowManager.shared.noteUpdateWillRelaunch() }
-    }
 }

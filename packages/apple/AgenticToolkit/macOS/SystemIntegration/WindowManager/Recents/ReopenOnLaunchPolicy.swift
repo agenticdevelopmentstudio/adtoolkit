@@ -1,7 +1,9 @@
 import Foundation
 
-/// Whether the app should reopen previously-open windows at launch. Modeled
-/// on Xcode's "Restore open projects and workspaces" preference.
+/// Whether the app should reopen previously-open *documents* at launch.
+/// Modeled on Xcode's "Restore open projects and workspaces" preference.
+/// The app's own windows are not governed by it: those always come back as
+/// the user left them (`WindowManager.restoreOnLaunch()`).
 public enum ReopenOnLaunchPolicy: String, Codable, Sendable, CaseIterable, Equatable {
     /// Follow macOS's system-wide "Close windows when quitting an
     /// application" preference (i.e. `NSQuitAlwaysKeepsWindows`).
@@ -20,20 +22,8 @@ public enum ReopenOnLaunchPolicy: String, Codable, Sendable, CaseIterable, Equat
     }
 
     public func shouldReopen(systemDefault: Bool) -> Bool {
-        shouldReopen(systemDefault: systemDefault, followingUpdate: false)
-    }
-
-    /// Whether to reopen, knowing whether this launch follows an update.
-    ///
-    /// **An update relaunch reopens unless the reader said `never`.** The
-    /// system's "Close windows when quitting an application" is about a quit
-    /// the person chose; an update quits the app for them and relaunches it,
-    /// and the windows they left open have to come back as they were. The
-    /// macOS default for that preference is to close windows, so following it
-    /// here left every stock Mac with an empty screen after each update.
-    public func shouldReopen(systemDefault: Bool, followingUpdate: Bool) -> Bool {
         switch self {
-        case .useSystem: return systemDefault || followingUpdate
+        case .useSystem: return systemDefault
         case .always: return true
         case .never: return false
         }

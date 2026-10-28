@@ -59,15 +59,35 @@ public final class ScreenManager {
     private var lastPersistedTouch: Date?
     private static let touchPersistInterval: TimeInterval = 60
 
+    /// How long after a detected geometry change window saves are held off.
+    /// A display reconfiguration (wake, re-dock, a monitor renegotiating its
+    /// mode) arrives as a burst: transient resolutions and AppKit's own window
+    /// shuffling land within a second or two, and every one of them fires
+    /// `windowDidMove` → `saveFrame`. Saving those would overwrite the place
+    /// the user put the window with wherever the reconfiguration left it.
+    public static let defaultSettleInterval: TimeInterval = 3
+    public let settleInterval: TimeInterval
+    /// End of the current settle window; nil when the screens are steady.
+    private var settleDeadline: Date?
+
+    /// Display UUIDs seen for each localized name, across every known set and
+    /// the live screens. A display sometimes comes up without a UUID (the
+    /// CoreGraphics lookup fails mid-reconfiguration), and its identity would
+    /// fall back to its name — a *different* set id, so every placement saved
+    /// for the arrangement would be missed. A name that has only ever had one
+    /// UUID is that display, so the UUID is filled back in.
+    private var uuidsByName: [String: Set<String>] = [:]
+
     public convenience init(
         screenProvider: ScreenProvider = RealScreenProvider(),
         storage: ScreenSetStorage = SettingsStoreScreenSetStorage(settings: UserSettings.shared),
         maxSetAge: TimeInterval = 180 * 24 * 60 * 60,
-        now: @escaping () -> Date = { Date() }
+        now: @escaping () -> Date = { Date() },
+        settleInterval: TimeInterval = ScreenManager.defaultSettleInterval
     ) {
         self.init(
             screenProvider: screenProvider, storage: storage, maxSetAge: maxSetAge, now: now,
-            displaySystem: CoreGraphicsDisplaySystem()
+            settleInterval: settleInterval, displaySystem: CoreGraphicsDisplaySystem()
         )
     }
 
@@ -79,20 +99,28 @@ public final class ScreenManager {
         storage: ScreenSetStorage = SettingsStoreScreenSetStorage(settings: UserSettings.shared),
         maxSetAge: TimeInterval = 180 * 24 * 60 * 60,
         now: @escaping () -> Date = { Date() },
+        settleInterval: TimeInterval = ScreenManager.defaultSettleInterval,
         displaySystem: DisplaySystem
     ) {
         self.screenProvider = screenProvider
         self.storage = storage
         self.maxSetAge = maxSetAge
         self.now = now
+        self.settleInterval = settleInterval
         self.displayMonitor = DisplayMonitor(system: displaySystem, debounce: .zero)
 
-        let snapshots = screenProvider.screens.map(ScreenSnapshot.init)
+        // Known sets first: they teach `uuidsByName`, which canonicalizes the
+        // live snapshots the current set id is derived from.
+        self.knownSets = Self.pruned(storage.loadSets(), olderThan: maxSetAge, now: now())
+        self.knownSetIDs = Set(knownSets.map(\.id))
+        self.currentSnapshots = []
+        self.lastNotifiedSnapshots = []
+        self.currentSetID = ""
+        for set in knownSets { learnUUIDs(from: set.screens) }
+        let snapshots = liveSnapshots()
         self.currentSnapshots = snapshots
         self.lastNotifiedSnapshots = snapshots
         self.currentSetID = ScreenSet.identity(of: snapshots)
-        self.knownSets = Self.pruned(storage.loadSets(), olderThan: maxSetAge, now: now())
-        self.knownSetIDs = Set(knownSets.map(\.id))
         upsertCurrentSet(persist: true)
         startObservingScreenChanges()
     }
@@ -100,6 +128,61 @@ public final class ScreenManager {
     /// The persisted record for the screens attached right now.
     public var currentSet: ScreenSet? {
         knownSets.first { $0.id == currentSetID }
+    }
+
+    /// True for `settleInterval` after a screen geometry change. Window saves
+    /// are skipped while it holds (see `defaultSettleInterval`).
+    public var isSettling: Bool {
+        guard let settleDeadline else { return false }
+        return now() < settleDeadline
+    }
+
+    private func beginSettling() {
+        settleDeadline = now().addingTimeInterval(settleInterval)
+    }
+
+    // MARK: - Canonical identity
+
+    /// `fingerprint` with its display UUID filled in when it has none and its
+    /// name has only ever belonged to one UUID. Applied to every fingerprint
+    /// that is stored or matched, so a display that briefly lost its UUID is
+    /// still the same display — same set id, exact placement match.
+    public func canonical(_ fingerprint: ScreenFingerprint) -> ScreenFingerprint {
+        guard fingerprint.displayUUID == nil,
+              let name = fingerprint.localizedName,
+              let uuids = uuidsByName[name], uuids.count == 1,
+              let uuid = uuids.first
+        else { return fingerprint }
+        return ScreenFingerprint(
+            displayUUID: uuid,
+            localizedName: name,
+            resolutionWidth: fingerprint.resolutionWidth,
+            resolutionHeight: fingerprint.resolutionHeight,
+            isMain: fingerprint.isMain
+        )
+    }
+
+    private func learnUUIDs(from snapshots: [ScreenSnapshot]) {
+        for snapshot in snapshots {
+            guard let uuid = snapshot.displayUUID, let name = snapshot.localizedName else { continue }
+            uuidsByName[name, default: []].insert(uuid)
+        }
+    }
+
+    /// The live screens as snapshots, UUIDs learned and then canonicalized.
+    private func liveSnapshots() -> [ScreenSnapshot] {
+        let raw = screenProvider.screens.map(ScreenSnapshot.init)
+        learnUUIDs(from: raw)
+        return raw.map { snapshot in
+            let fingerprint = canonical(snapshot.fingerprint)
+            guard fingerprint != snapshot.fingerprint else { return snapshot }
+            return ScreenSnapshot(
+                fingerprint: fingerprint,
+                frame: snapshot.frame,
+                visibleFrame: snapshot.visibleFrame,
+                backingScaleFactor: snapshot.backingScaleFactor
+            )
+        }
     }
 
     // MARK: - Observers
@@ -135,7 +218,7 @@ public final class ScreenManager {
     /// updates the current set, persists, and notifies observers. Internal
     /// (not private) so tests can drive it without posting notifications.
     func processScreenChange() {
-        let snapshots = screenProvider.screens.map(ScreenSnapshot.init)
+        let snapshots = liveSnapshots()
         // Diff against the last snapshots we *notified* on, not the live ones:
         // `touchCurrentSet()` may have already refreshed `currentSnapshots`
         // ahead of this notification, and diffing against those would report
@@ -145,6 +228,7 @@ public final class ScreenManager {
         currentSetID = ScreenSet.identity(of: snapshots)
         lastNotifiedSnapshots = snapshots
         guard let change else { return }
+        beginSettling()
         upsertCurrentSet(persist: true)
         let description = String(describing: change)
         logger.info("ScreenManager: \(description, privacy: .public) → set '\(self.currentSetID, privacy: .public)'")
@@ -216,7 +300,10 @@ public final class ScreenManager {
            zip(live, currentSnapshots).allSatisfy({ $0.frame == $1.frame }) {
             return
         }
-        let snapshots = live.map(ScreenSnapshot.init)
+        // The screens moved under us: a reconfiguration is in flight, and the
+        // save that called us is AppKit's doing, not the user's.
+        beginSettling()
+        let snapshots = liveSnapshots()
         currentSnapshots = snapshots
         currentSetID = ScreenSet.identity(of: snapshots)
     }

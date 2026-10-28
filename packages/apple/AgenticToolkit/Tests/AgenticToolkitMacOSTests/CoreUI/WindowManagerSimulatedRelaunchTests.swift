@@ -37,10 +37,11 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
     private func makeFrames(
         screens: [MockScreen],
         storage: MockStorage,
-        setStorage: MockScreenSetStorage
+        setStorage: MockScreenSetStorage,
+        now: @escaping () -> Date = { Date() }
     ) -> (WindowFrameManager, MockScreenProvider, ScreenManager) {
         let provider = MockScreenProvider(screens: screens)
-        let screenManager = ScreenManager(screenProvider: provider, storage: setStorage)
+        let screenManager = ScreenManager(screenProvider: provider, storage: setStorage, now: now)
         let frames = WindowFrameManager(
             screenProvider: provider, storage: storage, screenManager: screenManager
         )
@@ -151,7 +152,7 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
 
     // MARK: - Screen set changes
 
-    func testUnknownScreenSetFallsBackToMainScreenAndSavesPlacement() {
+    func testUnknownScreenSetFallsBackToMainScreenWithoutSaving() {
         let storage = MockStorage()
         let setStorage = MockScreenSetStorage()
 
@@ -164,7 +165,7 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
         let externalSetID = screens1.currentSetID
 
         // Relaunch undocked: unknown set → relative (0.5, 0.5) on the main
-        // screen, saved immediately under the new set.
+        // screen. Nothing is saved: the placement is still the user's.
         let (frames2, _, screens2) = makeFrames(screens: [Self.builtin()], storage: storage, setStorage: setStorage)
         let window2 = makeWindow()
         XCTAssertTrue(frames2.restoreFrame(for: window2, id: "test"))
@@ -172,7 +173,8 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
 
         let saved = storage.loadState(for: "test")!
         XCTAssertNotNil(saved.placements[externalSetID], "the docked location's placement is preserved")
-        XCTAssertNotNil(saved.placements[screens2.currentSetID], "the new location's placement is established")
+        XCTAssertNil(saved.placements[screens2.currentSetID], "a restore never invents a placement")
+        XCTAssertEqual(saved.placements.count, 1)
     }
 
     func testEachScreenSetRemembersItsOwnPlacement() {
@@ -209,17 +211,17 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
     }
 
     /// After a resolution change on the same screen set, restore places the
-    /// window by relative position (finding the match is non-exact) AND
-    /// re-saves, so the placement's fingerprint tracks the new resolution and
-    /// the next restore hits the exact fast path.
-    func testNonExactRestoreReSavesPlacementWithNewResolution() {
+    /// window by relative position and leaves the saved placement exactly as
+    /// the user left it — so going back to the old resolution restores the
+    /// literal frame again instead of a re-derived, eroded one.
+    func testNonExactRestoreLeavesThePlacementUntouched() {
         let storage = MockStorage()
         let setStorage = MockScreenSetStorage()
 
         let (frames1, _, _) = makeFrames(screens: [Self.builtin()], storage: storage, setStorage: setStorage)
         let window1 = makeWindow(frame: NSRect(x: 300, y: 500, width: 600, height: 300))
         frames1.saveFrame(for: window1, id: "test")
-        let firstSavedAt = storage.loadState(for: "test")!.placements.values.first!.savedAt
+        let original = storage.loadState(for: "test")!.placements.values.first!
 
         // Same UUID (same set id) at a higher resolution → non-exact match.
         let (frames2, _, _) = makeFrames(screens: [Self.builtin(width: 2560, height: 1440)],
@@ -228,11 +230,14 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
         let window2 = makeWindow()
         XCTAssertTrue(frames2.restoreFrame(for: window2, id: "test"))
 
-        let updated = storage.loadState(for: "test")!.placements.values.first!
-        XCTAssertEqual(updated.screenFingerprint.resolutionWidth, 2560,
-            "re-save must record the new resolution so next restore is exact")
-        XCTAssertEqual(updated.screenFingerprint.resolutionHeight, 1440)
-        XCTAssertGreaterThanOrEqual(updated.savedAt, firstSavedAt)
+        XCTAssertEqual(storage.loadState(for: "test")!.placements.values.first!, original,
+            "restoring must not rewrite the user's placement")
+
+        // Back at the original resolution: the exact frame, not a round trip.
+        let (frames3, _, _) = makeFrames(screens: [Self.builtin()], storage: storage, setStorage: setStorage)
+        let window3 = makeWindow()
+        XCTAssertTrue(frames3.restoreFrame(for: window3, id: "test"))
+        XCTAssertEqual(window3.frame, NSRect(x: 300, y: 500, width: 600, height: 300))
     }
 
     /// Re-docking at a KNOWN screen set whose screen came back at a different
@@ -299,8 +304,8 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
         XCTAssertNotEqual(window.frame.origin.x, staleAbsoluteX, accuracy: 1)
     }
 
-    /// A display change AppKit acts on *before* it notifies us must not file the
-    /// resulting move under the outgoing arrangement's key.
+    /// A display change AppKit acts on *before* it notifies us must not be
+    /// saved at all: the move is AppKit's, not the user's.
     ///
     /// When a display drops out, AppKit pulls the windows that were on it back
     /// onto a surviving screen — and that `windowDidMove` reaches `saveFrame`
@@ -335,8 +340,8 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
         let soloSetID = ScreenSet.identity(of: [ScreenSnapshot(Self.builtin())])
         XCTAssertEqual(saved.placements[dockedSetID]?.screenFingerprint.displayUUID, "EXTERNAL",
             "the docked arrangement must still remember the external display")
-        XCTAssertEqual(saved.placements[soloSetID]?.screenFingerprint.displayUUID, "BUILTIN",
-            "the undocked move belongs to the undocked arrangement")
+        XCTAssertNil(saved.placements[soloSetID],
+            "AppKit's move during the reconfiguration is not the user's placement")
 
         // Re-dock and relaunch: the window comes back where the user left it.
         let (frames2, _, _) = makeFrames(
@@ -346,6 +351,112 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
         XCTAssertTrue(frames2.restoreFrame(for: window2, id: "test"))
         XCTAssertEqual(window2.frame, dockedFrame,
             "re-docking must restore onto the external display, not the built-in")
+    }
+
+    // MARK: - Only the user's moves are saved
+
+    /// A restore's own `setFrame` fires the delegate's `saveFrame`; that call
+    /// must not write anything.
+    func testSaveFiredByRestoreIsIgnored() {
+        let storage = MockStorage()
+        let setStorage = MockScreenSetStorage()
+        let (frames1, _, _) = makeFrames(screens: [Self.builtin()], storage: storage, setStorage: setStorage)
+        frames1.saveFrame(for: makeWindow(frame: NSRect(x: 1320, y: 600, width: 600, height: 480)), id: "test")
+        let original = storage.loadState(for: "test")!
+
+        // Different resolution → relative restore. The window's delegate
+        // would call saveFrame from inside the setFrame; simulate that.
+        let (frames2, _, _) = makeFrames(screens: [Self.builtin(width: 2560, height: 1440)],
+            storage: storage, setStorage: setStorage
+        )
+        let window = makeWindow()
+        let observer = NotificationCenter.default.addObserver(
+            forName: NSWindow.didMoveNotification, object: window, queue: nil
+        ) { _ in MainActor.assumeIsolated { frames2.saveFrame(for: window, id: "test") } }
+        defer { NotificationCenter.default.removeObserver(observer) }
+        XCTAssertTrue(frames2.restoreFrame(for: window, id: "test"))
+
+        XCTAssertEqual(storage.loadState(for: "test")!.placements, original.placements)
+    }
+
+    /// For a few seconds after a screen change, moves are the machine's.
+    func testSavesAreSuppressedWhileScreensSettle() {
+        let storage = MockStorage()
+        let setStorage = MockScreenSetStorage()
+        var clock = Date(timeIntervalSinceReferenceDate: 800_000_000)
+        let (frames, provider, screenManager) = makeFrames(
+            screens: [Self.builtin()], storage: storage, setStorage: setStorage, now: { clock }
+        )
+        let window = makeWindow(frame: NSRect(x: 300, y: 400, width: 600, height: 300))
+        frames.saveFrame(for: window, id: "test")
+
+        provider.screens = [Self.builtin(width: 2560, height: 1440)]
+        provider.mainScreen = provider.screens[0]
+        screenManager.processScreenChange()
+        XCTAssertTrue(screenManager.isSettling)
+
+        window.setFrame(NSRect(x: 5, y: 5, width: 600, height: 300), display: false)
+        frames.saveFrame(for: window, id: "test")
+        XCTAssertEqual(storage.loadState(for: "test")!.placements.values.first!.topLeftX, 300,
+            "a move while the screens settle is not saved")
+
+        clock = clock.addingTimeInterval(ScreenManager.defaultSettleInterval + 0.1)
+        XCTAssertFalse(screenManager.isSettling)
+        frames.saveFrame(for: window, id: "test")
+        XCTAssertEqual(storage.loadState(for: "test")!.placements.values.first!.topLeftX, 5,
+            "once settled, the user's move is saved")
+    }
+
+    // MARK: - Display identity
+
+    /// A display that comes up without its UUID (seen on some docks and
+    /// monitors) is still the same display: same set id, exact restore.
+    func testDisplayThatLostItsUUIDStillRestoresExactly() {
+        let storage = MockStorage()
+        let setStorage = MockScreenSetStorage()
+        let withUUID = MockScreen(frame: NSRect(x: 0, y: 0, width: 2560, height: 1440),
+                                  uuid: "ODYSSEY", name: "Odyssey G9", isMain: true)
+        let withoutUUID = MockScreen(frame: NSRect(x: 0, y: 0, width: 2560, height: 1440),
+                                     uuid: nil, name: "Odyssey G9", isMain: true)
+        let placed = NSRect(x: 700, y: 300, width: 600, height: 480)
+
+        let (frames1, _, screens1) = makeFrames(screens: [withUUID], storage: storage, setStorage: setStorage)
+        frames1.saveFrame(for: makeWindow(frame: placed), id: "test")
+
+        let (frames2, _, screens2) = makeFrames(screens: [withoutUUID], storage: storage, setStorage: setStorage)
+        XCTAssertEqual(screens2.currentSetID, screens1.currentSetID, "a missing UUID must not change the set")
+        let window = makeWindow()
+        XCTAssertTrue(frames2.restoreFrame(for: window, id: "test"))
+        XCTAssertEqual(window.frame, placed)
+
+        // A move saved while the UUID is missing is filed under the real one.
+        frames2.saveFrame(for: window, id: "test")
+        let placements = storage.loadState(for: "test")!.placements
+        XCTAssertEqual(placements.count, 1)
+        XCTAssertEqual(placements.values.first!.screenFingerprint.displayUUID, "ODYSSEY")
+    }
+
+    // MARK: - Ranking across screen sets
+
+    /// In an arrangement with no placement of its own, the window goes back
+    /// to the display it was last on, at the exact spot.
+    func testUnknownSetRestoresOntoTheDisplayTheWindowWasOn() {
+        let storage = MockStorage()
+        let setStorage = MockScreenSetStorage()
+        let onExternal = NSRect(x: 2200, y: 300, width: 600, height: 480)
+
+        let (frames1, _, _) = makeFrames(screens: [Self.external(main: true)],
+            storage: storage, setStorage: setStorage
+        )
+        frames1.saveFrame(for: makeWindow(frame: onExternal), id: "test")
+
+        // Now the external display is beside the built-in: a new set.
+        let (frames2, _, _) = makeFrames(screens: [Self.builtin(), Self.external()],
+            storage: storage, setStorage: setStorage
+        )
+        let window = makeWindow()
+        XCTAssertTrue(frames2.restoreFrame(for: window, id: "test"))
+        XCTAssertEqual(window.frame, onExternal)
     }
 
     // MARK: - Oversize clamp
@@ -464,9 +575,6 @@ final class WindowManagerSimulatedRelaunchTests: XCTestCase {
             storage: storage,
             screenManager: ScreenManager(screenProvider: provider, storage: MockScreenSetStorage())
         )
-        UserSettings.shared.set(ReopenOnLaunchPolicy.always, for: UserSettings.reopenOnLaunchPolicy)
-        defer { UserSettings.shared.remove(UserSettings.reopenOnLaunchPolicy) }
-
         var built: Set<String> = []
         windowManager.register(id: "alpha") { built.insert("alpha") }
         windowManager.register(id: "beta") { built.insert("beta") }
