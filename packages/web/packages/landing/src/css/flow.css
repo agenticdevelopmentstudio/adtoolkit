@@ -575,3 +575,44 @@
     transform: none;
   }
 }
+
+/* ---- hero nav ----
+ * The page's table of contents as one centred line under a hero's name (HeroNav.tsx). The lens
+ * sweeps the links' colour from `--lp-ink-dim` to `--lp-accent-bright`; hover lands where the
+ * sweep does. */
+.lp-hero-nav {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-family: var(--lp-font-mono, ui-monospace, "SF Mono", monospace);
+  font-size: 0.8rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.lp-hero-nav__sep {
+  color: color-mix(in srgb, var(--lp-ink-dim, #a0a0a0) 60%, transparent);
+  padding: 0 0.75rem;
+  user-select: none;
+}
+
+.lp-hero-nav__link {
+  display: inline-block;
+  position: relative;
+  padding: 8px 0;
+  color: var(--lp-ink-dim, #a0a0a0);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.lp-hero-nav__link:hover,
+.lp-hero-nav__link:focus-visible {
+  color: var(--lp-accent-bright, #d8d8d8);
+}
+
+.lp-hero-nav__link:focus-visible {
+  outline: 2px solid var(--lp-accent, #9a9a9a);
+  outline-offset: 3px;
+}

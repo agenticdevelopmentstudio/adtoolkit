@@ -18,6 +18,8 @@ export interface FrameCopy {
   description: string
   /** The browser tab's title, when it is not the name. */
   title?: string
+  /** The metadata's keywords, when the site words any. */
+  keywords?: string[]
   /** The wordmark in the bar. */
   brand: CopyText
   markAlt: string
@@ -28,9 +30,15 @@ export interface FrameCopy {
    * The drawer's own rows, in the site's words: the Home row's label, and — when the site words
    * one — a last row that mails `contact.email`. Plain strings, since a drawer row is a link's
    * text (the landing kit's `NavLink.label`). `action`, when worded, is the one button the bar
-   * carries beside the burger: a paragraph that is only a link, so `{ label, href }`.
+   * carries beside the burger: a paragraph that is only a link, so `{ label, href }`. `extra`
+   * words the config's `drawerExtra` rows, each by the name its row gives as `nav`.
    */
-  nav: { home: string; contact?: string; action?: { label: string; href: string } }
+  nav: {
+    home: string
+    contact?: string
+    action?: { label: string; href: string }
+    extra?: Record<string, string>
+  }
   /** What the page calls a screenshot not yet taken. Absent: the landing kit's own word. */
   screenshotPending?: string
   /** The drawer's foot: a hello above the mail address and, when worded, a byline below it. */
@@ -49,8 +57,11 @@ export interface FrameConfig {
   ogImage: string
   /** The OG image's pixel size, when the site states it: unfurlers lay the card out before it loads. */
   ogImageSize?: { width: number; height: number }
-  /** Drawer rows after the section rows — a route of the site's own, say. */
-  drawerExtra: { href: string; label: string }[]
+  /**
+   * Drawer rows after the section rows — a route of the site's own, say. Where each goes is
+   * config; what it says is copy: `nav` names its label under the copy's `nav.extra`.
+   */
+  drawerExtra: { href: string; nav: string }[]
   jsonLd?: object
   /** Paths, beyond `/`, the sitemap lists. */
   sitemap: string[]

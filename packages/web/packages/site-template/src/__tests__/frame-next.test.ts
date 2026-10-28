@@ -68,9 +68,23 @@ describe('frameNext', () => {
     expect(() => frameNext(tiers, { VERCEL: '1' })).toThrow(/API_BACKEND_URL/)
   })
 
-  it('passes a public variable through from the environment, and leaves an unset one out', () => {
-    const site: FrameNextSite = { ...none, publicEnv: ['NEXT_PUBLIC_A', 'NEXT_PUBLIC_B'] }
+  it('passes a public variable through from the environment', () => {
+    const site: FrameNextSite = { ...none, publicEnv: ['NEXT_PUBLIC_A'] }
     expect(frameNext(site, { NEXT_PUBLIC_A: 'a' }).env).toEqual({ NEXT_PUBLIC_A: 'a' })
+  })
+
+  it('fails loudly, naming the variable, when a public variable resolves to nothing', () => {
+    const site: FrameNextSite = { ...none, publicEnv: ['NEXT_PUBLIC_A', 'NEXT_PUBLIC_B'] }
+    expect(() => frameNext(site, { NEXT_PUBLIC_A: 'a' })).toThrow(/NEXT_PUBLIC_B.*publicEnv\[1\]/s)
+  })
+
+  it('leaves out an optional public variable, written `${NAME:-}`, when it resolves to nothing', () => {
+    const site: FrameNextSite = { ...none, publicEnv: ['NEXT_PUBLIC_A', '${NEXT_PUBLIC_B:-}'] }
+    expect(frameNext(site, { NEXT_PUBLIC_A: 'a' }).env).toEqual({ NEXT_PUBLIC_A: 'a' })
+    expect(frameNext(site, { NEXT_PUBLIC_A: 'a', NEXT_PUBLIC_B: 'b' }).env).toEqual({
+      NEXT_PUBLIC_A: 'a',
+      NEXT_PUBLIC_B: 'b',
+    })
   })
 
   it('refuses an envDefaults cycle rather than recursing', () => {

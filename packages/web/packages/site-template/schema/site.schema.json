@@ -97,14 +97,14 @@
     },
     "drawer": {
       "type": "array",
-      "description": "Drawer rows after the section rows.",
+      "description": "Drawer rows after the section rows. Where a row goes is config; what it says is copy: `nav` names its label under the copy's `nav.extra` (site.md's `# nav`, `## extra`).",
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["href", "label"],
+        "required": ["href", "nav"],
         "properties": {
           "href": { "type": "string" },
-          "label": { "type": "string" }
+          "nav": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9]*$" }
         }
       }
     },
@@ -141,8 +141,8 @@
     },
     "publicEnv": {
       "type": "array",
-      "description": "Variables passed through to Next's `env`, so client code reads them inlined at build. Each resolves as a `rewrites` reference does (environment, then `envDefaults`); one with no value anywhere is left out.",
-      "items": { "type": "string", "pattern": "^[A-Z_][A-Z0-9_]*$" }
+      "description": "Variables passed through to Next's `env`, so client code reads them inlined at build. Each resolves as a `rewrites` reference does (environment, then `envDefaults`). A bare `NAME` with no value anywhere fails the build, naming it; `${NAME:-}` is the optional form, left out when it has no value.",
+      "items": { "type": "string", "pattern": "^([A-Z_][A-Z0-9_]*|\\$\\{[A-Z_][A-Z0-9_]*:-\\})$" }
     },
     "envDefaults": {
       "type": "object",
@@ -211,7 +211,11 @@
                   "description": "A font file under `site/`: woff2, woff, ttf or otf — the formats `next/font/local` serves."
                 },
                 "weight": { "type": "string" },
-                "style": { "type": "string" }
+                "style": { "type": "string" },
+                "preload": {
+                  "type": "boolean",
+                  "description": "false: the face is not preloaded — the browser fetches it when a page paints in it. For a face the first screen does not set (an italic only the copy's emphasis reaches). It stays in the family. At least one face of a family must preload."
+                }
               }
             }
           }

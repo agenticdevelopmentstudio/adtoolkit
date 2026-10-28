@@ -8,8 +8,16 @@ import { SiteChrome } from '../chrome'
 import { FrameMark } from '../frame-mark'
 import { FrameBand } from '../frame-band'
 import { frameShot } from '../frame-shot'
+import { FrameZoomGuard } from '../frame-zoom'
 import * as barrel from '../index'
-import { frameMetadata, frameRobots, frameSiteUrl, frameSitemap, frameViewport } from '../frame-metadata'
+import {
+  frameMetadata,
+  frameNotFoundMetadata,
+  frameRobots,
+  frameSiteUrl,
+  frameSitemap,
+  frameViewport,
+} from '../frame-metadata'
 import type { FrameConfig, FrameCopy, SlotMap } from '../types'
 
 const hero: LandingPage['hero'] = {
@@ -44,7 +52,7 @@ const copy: FrameCopy = {
   ogImageAlt: 'Kitchen',
   people: { author: 'Mike', creator: 'Mike', publisher: 'Studio' },
   contact: { email: 'hello@example.com' },
-  nav: { home: 'Home' },
+  nav: { home: 'Home', extra: { downloads: 'Downloads' } },
   drawer: { hello: 'Say hello', byline: { html: 'by <b>Mike</b>' } },
   footer: { madeBy: 'Made by Mike', copyright: '© 2026', trademark: 'Mac is a trademark' },
 }
@@ -269,10 +277,26 @@ describe('SiteChrome', () => {
 
   it('lists Home, each section and the extra links, in that order', () => {
     const { container } = render(
-      <SiteChrome copy={copy} page={two} extra={[{ href: '/downloads', label: 'Downloads' }]} />,
+      <SiteChrome copy={copy} page={two} extra={[{ href: '/downloads', nav: 'downloads' }]} />,
     )
     const links = Array.from(container.querySelectorAll('nav a:not([href^="mailto:"])'))
     expect(links.map((a) => a.getAttribute('href'))).toEqual(['/#top', '/#one', '/#two', '/downloads'])
+  })
+
+  it('words an extra row from the copy\'s nav.extra, not the config', () => {
+    const login: FrameCopy = { ...copy, nav: { home: 'Home', extra: { login: 'Sign in' } } }
+    const { container } = render(<SiteChrome copy={login} page={empty} extra={[{ href: '/home', nav: 'login' }]} />)
+    const links = Array.from(container.querySelectorAll('nav a:not([href^="mailto:"])'))
+    expect(links.map((a) => [a.getAttribute('href'), a.textContent])).toEqual([
+      ['/#top', 'Home'],
+      ['/home', 'Sign in'],
+    ])
+  })
+
+  it('refuses an extra row whose label the copy does not word', () => {
+    expect(() =>
+      render(<SiteChrome copy={copy} page={empty} extra={[{ href: '/home', nav: 'login' }]} />),
+    ).toThrow(/'login'.*nav\.extra/s)
   })
 
   it('puts the hello, the mail address and the byline in the drawer foot', () => {
@@ -300,9 +324,9 @@ describe('SiteChrome', () => {
   })
 
   it('adds a contact row, mailing the copy\'s address, last, when the copy words one', () => {
-    const withContact: FrameCopy = { ...copy, nav: { home: 'Home', contact: 'Contact' } }
+    const withContact: FrameCopy = { ...copy, nav: { home: 'Home', contact: 'Contact', extra: { downloads: 'Downloads' } } }
     const { container } = render(
-      <SiteChrome copy={withContact} page={two} extra={[{ href: '/downloads', label: 'Downloads' }]} />,
+      <SiteChrome copy={withContact} page={two} extra={[{ href: '/downloads', nav: 'downloads' }]} />,
     )
     const rows = Array.from(container.querySelectorAll('nav a')).filter((a) => a.textContent !== 'hello@example.com')
     expect(rows.map((a) => [a.getAttribute('href'), a.textContent])).toEqual([
@@ -332,6 +356,30 @@ describe('SiteChrome', () => {
     const { container } = render(<SiteChrome copy={copy} page={empty} extra={[]} />)
     const mail = Array.from(container.querySelectorAll('a[href^="mailto:"]'))
     expect(mail.map((a) => a.textContent)).toEqual(['hello@example.com'])
+  })
+})
+
+describe('FrameZoomGuard', () => {
+  function script(element: ReactElement): string {
+    const { container } = render(element)
+    return Array.from(container.querySelectorAll('script'))
+      .map((s) => s.innerHTML)
+      .join('\n')
+  }
+
+  it('strips maximum-scale off iOS and does nothing else', () => {
+    const body = script(<FrameZoomGuard />)
+    expect(body).toContain('maximum-scale')
+    expect(body).not.toContain('data-smooth')
+    expect(body).not.toContain('data-snap')
+  })
+
+  it('ships from the server barrel', () => {
+    expect(barrel.FrameZoomGuard).toBe(FrameZoomGuard)
+  })
+
+  it('is the only zoom restore: LandingFrame leaves it to the root layout', () => {
+    expect(script(<LandingFrame page={empty} slots={noSlots} mark={mark} />)).not.toContain('maximum-scale')
   })
 })
 
@@ -534,6 +582,17 @@ describe('frame metadata helpers', () => {
       { url: '/og.png', width: 512, height: 512, alt: 'Kitchen' },
     ])
     expect(frameMetadata(copy, config).openGraph?.images).toEqual([{ url: '/og.png', alt: 'Kitchen' }])
+  })
+
+  it('frameMetadata carries the copy\'s keywords when it words them, and none when it does not', () => {
+    const worded: FrameCopy = { ...copy, keywords: ['kitchen', 'recipes'] }
+    expect(frameMetadata(worded, config).keywords).toEqual(['kitchen', 'recipes'])
+    expect('keywords' in frameMetadata(copy, config)).toBe(false)
+  })
+
+  it('titles the 404 as Next\'s own 404 page does', () => {
+    expect(frameNotFoundMetadata.title).toBe('404: This page could not be found.')
+    expect(barrel.frameNotFoundMetadata).toBe(frameNotFoundMetadata)
   })
 
   it('frameViewport carries the theme color', () => {

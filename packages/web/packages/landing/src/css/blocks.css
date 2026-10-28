@@ -1106,3 +1106,37 @@
 .lp-tour__arrow {
   color: var(--lp-accent, #9a9a9a);
 }
+
+/* ---- pulse rule ----
+ * A hairline that breathes, under a hero's name (PulseRule.tsx). Two custom properties rather
+ * than two variants: a host wanting a slower or shallower rule sets `--lp-pulse-rule-period`
+ * (6s) or `--lp-pulse-rule-floor` (0.35). Placement is the host's class; this is the look. */
+.lp-pulse-rule {
+  height: 1px;
+  border: 0;
+  /* Fading to nothing at BOTH ends: a rule that starts solid and trails off has a left edge, and
+     this one is drawn under centred type. */
+  background: linear-gradient(90deg, transparent, var(--lp-accent, #9a9a9a) 50%, transparent);
+  animation: lp-pulse-rule-breathe var(--lp-pulse-rule-period, 6s) ease-in-out infinite;
+}
+
+/* Opacity and not a colour ramp: opacity is compositor-only, so the rule can breathe for as long
+   as the page is open without asking for a paint. */
+@keyframes lp-pulse-rule-breathe {
+  0%,
+  100% {
+    opacity: var(--lp-pulse-rule-floor, 0.35);
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* At rest, and at full strength rather than at the floor: a reader who has asked for less motion
+   has not asked for a fainter page. */
+@media (prefers-reduced-motion: reduce) {
+  .lp-pulse-rule {
+    animation: none;
+    opacity: 1;
+  }
+}

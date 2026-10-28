@@ -43,17 +43,22 @@ font that silently re-subsets itself mid-build is a worse problem than a stale o
 
     python3 scripts/subset-fonts.py && pnpm build:tokens
 
+`--cut site` writes only the content sites' `iosevka-site-*` faces (see SITE_UNICODES),
+leaving the theme's faces and metrics.json as they are; `--cut theme` the reverse.
+
 Requires `fonttools` and `brotli`; the script provisions its own venv under
 `.venv-fonts/` so it needs nothing installed globally.
 """
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import subprocess
 import sys
 import urllib.request
 from pathlib import Path
+from typing import NamedTuple
 
 IOSEVKA_VERSION = "5.2.5"
 CDN = f"https://cdn.jsdelivr.net/npm/@fontsource/iosevka@{IOSEVKA_VERSION}/files"
@@ -174,6 +179,96 @@ SUBSETS = (
 # only through `ss01`-`ss20`/`cv##`) is what takes the face from 43 KB to 119 KB, and
 # nothing in the family selects any of them.
 LAYOUT_FEATURES = "calt,liga,ccmp,locl,kern,mark,mkmk"
+
+# ---------------------------------------------------------------------------
+# The site cut
+# ---------------------------------------------------------------------------
+#
+# The CORE/EXT pair above answers the hub's question — a site whose pages carry text its
+# users wrote. A CONTENT site (the fishlamp theme's: ads, Kitchen, Stenographer, through
+# the site-template) answers a narrower one: every word it sets is in its own repo, so the
+# census is the whole corpus and there is no user text for an EXT to catch. Those sites
+# get a third cut, ONE file a face, as narrow as the content-site subsetter that came
+# before it (the ads site's `subset-fonts.py`, whose faces were 57 KB): Latin and
+# Latin-extended for names, the punctuation, and the mark blocks the frame and the landing
+# kit draw from. Dingbats is the one block that script did not carry: the landing kit's
+# checklist draws ✓ as a CSS `content:` default, which no census of a site's copy sees.
+#
+# Its own files (`iosevka-site-*`), so the adh theme's faces, metrics.json and adh.css are
+# untouched by it, and nothing in the hub serves it.
+SITE_UNICODES = ",".join(
+    [
+        "U+0000-00FF",  # Basic Latin + Latin-1 Supplement
+        "U+0100-024F",  # Latin Extended-A and -B — accented names
+        "U+0259",  # ə
+        "U+1E00-1EFF",  # Latin Extended Additional
+        "U+2000-206F",  # General Punctuation — the em dash, …, ’ ”
+        "U+2074",  # ⁴
+        "U+20AC",  # €
+        "U+2122",  # ™
+        "U+2212",  # −
+        "U+2215",  # ∕
+        "U+FEFF",  # BOM
+        "U+FFFD",  # replacement character
+        "U+2190-21FF",  # arrows — the points' → mark
+        "U+2208",  # ∈
+        "U+2299",  # ⊙
+        "U+2500-257F",  # box drawing
+        "U+25A0-25FF",  # geometric shapes — ○ ● ▸
+        "U+2600-26FF",  # misc symbols
+        "U+2700-27BF",  # dingbats — the checklist's ✓
+    ]
+)
+
+# The content-site subsetter's features: the theme's, plus `clig`, which it kept.
+SITE_FEATURES = "calt,liga,clig,kern,ccmp,locl,mark,mkmk"
+
+
+class SiteFace(NamedTuple):
+    upstream: str
+    file: str
+    weight: str
+    style: str
+    # Whether a site preloads it. Regular and bold set the landing's first screen; italic
+    # sets only an `<em>` in a site's copy, so it is fetched when a page paints one.
+    preload: bool
+
+
+SITE_FACES = (
+    SiteFace("iosevka-latin-400-normal", "iosevka-site-400.woff2", "400", "normal", True),
+    SiteFace("iosevka-latin-700-normal", "iosevka-site-700.woff2", "700", "normal", True),
+    SiteFace("iosevka-latin-400-italic", "iosevka-site-400-italic.woff2", "400", "italic", False),
+)
+
+
+def unicode_ranges(spec: str) -> list[tuple[int, int]]:
+    """`U+0041,U+2190-21FF` -> [(0x41, 0x41), (0x2190, 0x21FF)]."""
+    ranges = []
+    for part in spec.split(","):
+        lo, _, hi = part.strip().removeprefix("U+").partition("-")
+        ranges.append((int(lo, 16), int(hi or lo, 16)))
+    return ranges
+
+
+def subset_args(python: Path, source: Path, target: Path, unicodes: str, features: str) -> list[str]:
+    """The fontTools.subset command that cuts `source` down to `unicodes` as woff2."""
+    return [
+        str(python),
+        "-m",
+        "fontTools.subset",
+        str(source),
+        f"--output-file={target}",
+        "--flavor=woff2",
+        f"--unicodes={unicodes}",
+        f"--layout-features={features}",
+        # The name table is what `local()` in the metric-matched fallback
+        # would match against, and what shows up in devtools; keep it legible.
+        "--name-IDs=1,2,3,4,6",
+        # Preserve the OS/2 + hhea metrics the fallback overrides in
+        # `build-tokens.mjs` are computed from — a subsetter that recalculated
+        # them would silently invalidate those numbers.
+        "--no-prune-unicode-ranges",
+    ]
 
 # ---------------------------------------------------------------------------
 # The metric-matched fallback
@@ -353,38 +448,30 @@ json.dump({
     }
 
 
-def main() -> int:
-    python = venv_python()
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-    work = PKG / ".fonts-src"
-    work.mkdir(exist_ok=True)
+def cut_site(python: Path, work: Path) -> None:
+    """The content sites' cut: one file a face, see SITE_UNICODES."""
+    for face in SITE_FACES:
+        source = work / f"{face.upstream}.woff2"
+        if not source.exists():
+            fetch(face.upstream, source)
+        target = OUT_DIR / face.file
+        theme = OUT_DIR / f"{FACES[face.upstream]}.woff2"
+        before = theme.stat().st_size if theme.exists() else 0
+        subprocess.run(subset_args(python, source, target, SITE_UNICODES, SITE_FEATURES), check=True)
+        print(f"subset-fonts: {face.file}  {target.stat().st_size:,} bytes (the theme's {theme.name}: {before:,})")
+    preloaded = sum((OUT_DIR / face.file).stat().st_size for face in SITE_FACES if face.preload)
+    print(f"subset-fonts: site cut written ({preloaded:,} bytes preloaded)")
 
+
+def cut_theme(python: Path, work: Path) -> None:
+    """The adh theme's CORE + EXT cuts and metrics.json, see SUBSETS."""
     for upstream, served in FACES.items():
         source = work / f"{upstream}.woff2"
         if not source.exists():
             fetch(upstream, source)
         for suffix, unicodes, _preload in SUBSETS:
             target = OUT_DIR / f"{served}{suffix}.woff2"
-            subprocess.run(
-                [
-                    str(python),
-                    "-m",
-                    "fontTools.subset",
-                    str(source),
-                    f"--output-file={target}",
-                    "--flavor=woff2",
-                    f"--unicodes={unicodes}",
-                    f"--layout-features={LAYOUT_FEATURES}",
-                    # The name table is what `local()` in the metric-matched fallback
-                    # would match against, and what shows up in devtools; keep it legible.
-                    "--name-IDs=1,2,3,4,6",
-                    # Preserve the OS/2 + hhea metrics the fallback overrides in
-                    # `build-tokens.mjs` are computed from — a subsetter that recalculated
-                    # them would silently invalidate those numbers.
-                    "--no-prune-unicode-ranges",
-                ],
-                check=True,
-            )
+            subprocess.run(subset_args(python, source, target, unicodes, LAYOUT_FEATURES), check=True)
             before = source.stat().st_size
             after = target.stat().st_size
             print(
@@ -407,6 +494,25 @@ def main() -> int:
         f"({preloaded:,} bytes preloaded)  "
         f"(run `pnpm build:tokens` to fold them into adh.css)"
     )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Regenerate the self-hosted Iosevka faces in src/fonts/.")
+    parser.add_argument(
+        "--cut",
+        choices=("all", "theme", "site"),
+        default="all",
+        help="which cuts to write: the adh theme's CORE/EXT + metrics.json, the content sites' cut, or both",
+    )
+    args = parser.parse_args()
+    python = venv_python()
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    work = PKG / ".fonts-src"
+    work.mkdir(exist_ok=True)
+    if args.cut in ("all", "theme"):
+        cut_theme(python, work)
+    if args.cut in ("all", "site"):
+        cut_site(python, work)
     return 0
 
 

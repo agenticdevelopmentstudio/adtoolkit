@@ -814,10 +814,11 @@
         "packages/web/packages/landing/"
       ],
       "depends_on": [
-        "web-toolchain"
+        "web-toolchain",
+        "web-textlens"
       ],
       "shared": true,
-      "holds": "@agenticdevelopertoolkit/landing. Snap-scrolling long-form landing page kit — Deck, Screen, NavChrome and a block vocabulary, themed by CSS custom properties."
+      "holds": "@agenticdevelopertoolkit/landing. Snap-scrolling long-form landing page kit — Deck, Screen, NavChrome and a block vocabulary, themed by CSS custom properties. HeroNav's sweep is web-textlens's lens."
     },
     {
       "name": "web-site-template",

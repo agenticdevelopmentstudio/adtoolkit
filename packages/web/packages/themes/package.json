@@ -71,7 +71,7 @@
     "build:css": "node ../../copy-css.mjs",
     "dev": "pnpm run build:tokens && pnpm run build:data && tsup --watch",
     "clean": "rm -rf dist .turbo src/theme-data.ts",
-    "lint": "pnpm run build:data && tsc --noEmit",
+    "lint": "pnpm run build:data && tsc --noEmit && python3 scripts/subset-fonts_test.py",
     "test": "vitest run",
     "postinstall": "node scripts/build-theme-data.mjs"
   },

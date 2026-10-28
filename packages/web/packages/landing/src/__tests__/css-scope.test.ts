@@ -143,9 +143,17 @@ const subjectOf = (part: string) => withoutArgs(inlineTransparent(part))
  */
 const isDocumentRoot = (part: string) => /^(?:\*|(?:html|body|:root)\b)/.test(subjectOf(part))
 
-/** Every selector list in a sheet, with comments and at-rule preludes dropped. */
-function selectors(sheet: string): string[] {
-  const css = readFileSync(join(CSS_DIR, sheet), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
+/**
+ * A `@keyframes` block's steps — `0%`, `50%`, `from`, `to` — are not selectors:
+ * they select no element, so there is nothing for `.lp-` to scope. The block is
+ * dropped whole, prelude and steps together. Its NAME is still the package's to
+ * keep distinct (`lp-…`), which `keyframes are named for the package` asserts.
+ */
+const KEYFRAMES = /@keyframes\s+[^{\s]+\s*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}/g
+
+/** Every selector list in a CSS text, with comments, keyframe steps and at-rule preludes dropped. */
+function selectorsIn(source: string): string[] {
+  const css = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(KEYFRAMES, '')
   const out: string[] = []
   for (const [, , list] of css.matchAll(/(^|[}\n])\s*([^{}@][^{}]*?)\s*\{/g)) {
     for (const one of topLevel(list)) {
@@ -159,6 +167,26 @@ function selectors(sheet: string): string[] {
   }
   return out
 }
+
+/** Every selector list in one of the package's sheets. */
+const selectors = (sheet: string): string[] => selectorsIn(readFileSync(join(CSS_DIR, sheet), 'utf8'))
+
+describe('the selector parser', () => {
+  it('drops keyframe steps but still checks the rules on either side of the block', () => {
+    const found = selectorsIn(
+      '.lp-a { color: red; }\n@keyframes lp-x {\n  0%,\n  100% { opacity: 0; }\n  50% { opacity: 1; }\n}\ndiv { color: blue; }',
+    )
+    expect(found).toEqual(['.lp-a', 'div'])
+  })
+})
+
+describe('keyframes are named for the package', () => {
+  it.each(SHEETS)('%s names every @keyframes lp-…', (sheet) => {
+    const css = readFileSync(join(CSS_DIR, sheet), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')
+    const names = [...css.matchAll(/@keyframes\s+([^{\s]+)/g)].map((m) => m[1])
+    expect(names.filter((n) => !n.startsWith('lp-'))).toEqual([])
+  })
+})
 
 describe('the package never styles anything it did not put on the page', () => {
   it.each(SHEETS)('%s names .lp- in every selector', (sheet) => {

@@ -51,6 +51,7 @@ export function frameMetadata(copy: FrameCopy, config: FrameConfig): Metadata {
   return {
     title,
     description: copy.description,
+    ...(copy.keywords === undefined ? {} : { keywords: copy.keywords }),
     metadataBase: new URL(config.siteUrl),
     applicationName: copy.name,
     authors: [{ name: copy.people.author }],
@@ -77,13 +78,20 @@ export function frameMetadata(copy: FrameCopy, config: FrameConfig): Metadata {
   }
 }
 
+/**
+ * The 404's own title: the words Next's built-in 404 page gives its tab, so a site that had no
+ * 404 of its own titles one the same as before. A plain title, not a template, so it replaces
+ * the site's title rather than joining it — as Next's does.
+ */
+export const frameNotFoundMetadata: Metadata = { title: '404: This page could not be found.' }
+
 export function frameViewport(config: FrameConfig): Viewport {
   return {
     themeColor: config.themeColor,
     width: 'device-width',
     initialScale: 1,
-    // Stops iOS zooming on focus; the landing kit's DeckScript strips it back off every browser
-    // that isn't iOS, so pinch-zoom still works there.
+    // Stops iOS zooming on focus; FrameZoomGuard, which the root layout renders on every route,
+    // strips it back off every browser that isn't iOS, so pinch-zoom still works there.
     maximumScale: 1,
     // Android shrinks the layout viewport when its keyboard opens, so a bottom-anchored fixed
     // element (the bitbag dock) lifts on its own. iOS ignores this.

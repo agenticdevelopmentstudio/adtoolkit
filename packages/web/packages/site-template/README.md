@@ -18,7 +18,9 @@ From `@agenticdevelopertoolkit/site-template` (server-safe, no `'use client'`):
 | `FrameFooter({ copy, slot? })` | The site footer from `copy.footer`; the first line plain, the rest in `<small>`. A `slot` replaces the lines. Renders nothing when the copy has no footer. |
 | `FrameMark({ config, alt })` | The site's mark as `site.json` configures it (`mark.src`, in `st-mark st-mark--<shape>`). The skeleton's `/` passes it to `LandingFrame`; a route of the site's own with a hero uses it too, so a change to `mark` reaches every page. |
 | `Words({ text })` | A `CopyText`: a plain string, or `{ html }` rendered as markup. |
-| `frameMetadata`, `frameViewport`, `frameRobots`, `frameSitemap` | The Next metadata routes, from `FrameCopy` + `FrameConfig`. Robots allow crawling only when `DEPLOYMENT_ENV === 'production'`. The twitter card is `summary` when `ogImage` is the mark's `src` (a square icon beside the text) and `summary_large_image` otherwise; `ogImageSize`, when set, gives the OG image its width and height. |
+| `FrameZoomGuard()` | Pinch-zoom back off iOS on every route. `frameViewport` ships `maximum-scale=1` (the only way to stop iOS zooming into a focused field), which also kills pinch-zoom everywhere else; this strips it back off outside iOS. The skeleton's root layout renders it first in `<body>`, so a site's own routes and the 404 keep pinch-zoom as `/` does. |
+| `frameMetadata`, `frameViewport`, `frameRobots`, `frameSitemap` | The Next metadata routes, from `FrameCopy` + `FrameConfig`. Copy `keywords` (site.md's `# keywords` list), when worded, become the metadata's keywords. Robots allow crawling only when `DEPLOYMENT_ENV === 'production'`. The twitter card is `summary` when `ogImage` is the mark's `src` (a square icon beside the text) and `summary_large_image` otherwise; `ogImageSize`, when set, gives the OG image its width and height. |
+| `frameNotFoundMetadata` | The 404's metadata: the title Next's built-in 404 gives its tab (`404: This page could not be found.`), as a plain title, so a site that had no 404 of its own keeps the same tab text. The skeleton's `app/not-found.tsx` exports it. |
 | `frameSiteUrl(fallbackPort, configured?)` | `SITE_URL`, else `configured` (`site.json`'s `siteUrl`, which the assembler passes), else the Vercel production URL, else `http://localhost:<port>`. |
 | types `BandLook`, `CopyText`, `FrameCopy`, `FrameConfig`, `SlotMap` | The shapes a site fills in. |
 
@@ -26,7 +28,7 @@ From `@agenticdevelopertoolkit/site-template/client` (`'use client'`):
 
 | Export | What it is |
 | --- | --- |
-| `SiteChrome({ copy, page, extra })` | The burger drawer: a Home row labelled `copy.nav.home`, one link per section, then `extra`, then — when the copy has `nav.contact` — a row with that label mailing `copy.contact.email`. Every label is the site's copy; the frame words nothing. The foot carries the drawer hello, the contact email and, when the copy words one, the byline. When the copy has `nav.action` (`{ label, href }`, a paragraph that is only a link), it is a ghost button at the bar's right end on a wide viewport. |
+| `SiteChrome({ copy, page, extra })` | The burger drawer: a Home row labelled `copy.nav.home`, one link per section, then `extra` (`site.json`'s `drawer` rows, `{ href, nav }`, each labelled by the copy's `nav.extra[nav]` — site.md's `# nav` / `## extra` list; a `nav` the copy does not word throws), then — when the copy has `nav.contact` — a row with that label mailing `copy.contact.email`. Every label is the site's copy; the frame words nothing. The foot carries the drawer hello, the contact email and, when the copy words one, the byline. When the copy has `nav.action` (`{ label, href }`, a paragraph that is only a link), it is a ghost button at the bar's right end on a wide viewport. |
 | `SiteBitbag(props?)` | bitbag, client-only via `next/dynamic`, with his dock stylesheet; his `BitbagStandalone` props pass through (`voice`, `rest`, `theme`). Mount once beside `<main>`. |
 
 From `@agenticdevelopertoolkit/site-template/next` (node, for `next.config.ts` only; never a page):
@@ -71,6 +73,12 @@ Each theme names its stylesheet and the fonts it needs, which the assembler self
   fishlamp lists `--font-mono`, `--font-sans` and `--font-serif`, every property its sheet names
   `'Iosevka'` in. `--font-display` is left out because it follows `--font-serif`. A site's
   `fonts` in `site.json` take the same two keys. A font file is woff2, woff, ttf or otf.
+- **`preload`.** A file is preloaded unless it says `"preload": false`. A family with an
+  unpreloaded face is written as two `localFont` calls declaring one family name (the second
+  with `preload: false`), so the face still serves the same family and is fetched only when a
+  page sets it. A family must preload at least one face. fishlamp serves the toolkit's site cut
+  of Iosevka (`iosevka-site-*.woff2`, from the themes package's `scripts/subset-fonts.py --cut
+  site`): Regular and Bold preload, the italic does not.
 
 ## A site's layout
 
@@ -129,8 +137,16 @@ as it loads, so a missing value fails `next build` rather than a request. A `${N
 `envDefaults` entry is a string (which may use `${…}` itself) or `{ by, values, local? }`: the
 value `values` names for the variable `by`, and `local` when `by` names none — off Vercel only,
 so a misspelt tier on Vercel fails the build instead of quietly getting `local`'s backend.
-`publicEnv` names go to Next's `env` (inlined into client code); one with no value anywhere is
-left out. A malformed `${…}` is refused at assembly.
+`publicEnv` names go to Next's `env` (inlined into client code). One with no value anywhere fails
+the build, naming it — a client bundle inlining `undefined` is the failure it would otherwise be —
+unless the site writes it `${NAME:-}`, which says the variable is optional; that one is left out.
+A malformed `${…}` is refused at assembly.
+
+The skeleton's `next.config.ts` also sets `allowedDevOrigins` (`*.dev.local`, `dev.local`,
+`127.0.0.1`, the hosts the suite serves `next dev` behind; no effect on a production build) and
+`transpilePackages`: every toolkit package the app reaches — its own `link:` dependencies and,
+transitively, every toolkit package those depend on (the template's own, the landing kit's
+textlens) — which the assembler lists in `src/site/next.ts`.
 
 ## Analytics
 

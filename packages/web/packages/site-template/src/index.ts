@@ -9,8 +9,10 @@ export { frameShot } from './frame-shot'
 export { FrameFooter } from './footer'
 export { FrameMark } from './frame-mark'
 export { Words } from './words'
+export { FrameZoomGuard } from './frame-zoom'
 export {
   frameMetadata,
+  frameNotFoundMetadata,
   frameViewport,
   frameRobots,
   frameSitemap,

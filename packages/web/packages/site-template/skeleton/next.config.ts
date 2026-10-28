@@ -3,7 +3,7 @@
 import { fileURLToPath } from 'node:url'
 import type { NextConfig } from 'next'
 import { frameNext } from '@agenticdevelopertoolkit/site-template/next'
-import { nextSite } from './src/site/next'
+import { nextSite, transpilePackages } from './src/site/next'
 
 /** The pnpm workspace root: the app's parent (`websites/`), where the site's lockfile lives. */
 const WORKSPACE_ROOT = fileURLToPath(new URL('..', import.meta.url))
@@ -48,6 +48,13 @@ export default frameConfig({
   devIndicators: false,
   env: site.env,
   ...(site.rewrites.length === 0 ? {} : { rewrites: async () => site.rewrites }),
-  // No transpilePackages: every toolkit package builds a dist with its `'use client'`
-  // directives preserved, precisely so a Next consumer does not need it.
+  // The suite serves `next dev` at `https://<id>.<name>.dev.local` behind Caddy, and a walk may
+  // reach it at 127.0.0.1; Next refuses its dev assets (HMR, the RSC fetches) to any origin not
+  // listed, which leaves the page hydrating against nothing.
+  allowedDevOrigins: ['*.dev.local', 'dev.local', '127.0.0.1'],
+  // Every toolkit package the app reaches, as the assembler lists them in `src/site/next.ts`.
+  // Each ships a dist that keeps its `'use client'` directives, but a site's linked package may
+  // serve source under a `development` condition, which Next must compile; a dist compiled
+  // again costs the build little.
+  transpilePackages: [...transpilePackages],
 })

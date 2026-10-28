@@ -97,7 +97,7 @@ class AssembleTest(unittest.TestCase):
             "src/site/fonts.ts",
             "src/site/next.ts",
             "src/site/analytics.tsx",
-            "src/fonts/iosevka-400.woff2",
+            "src/fonts/iosevka-site-400.woff2",
             ".site-template.json",
         ]:
             self.assertTrue((self.app / rel).is_file(), rel)
@@ -125,9 +125,8 @@ class AssembleTest(unittest.TestCase):
         self.assertIn("frameSiteUrl(5210)", config)
         self.assertIn('"/glyph.svg"', config)
         fonts = (self.app / "src/site/fonts.ts").read_text()
-        self.assertEqual(fonts.count("localFont({"), 1)
         self.assertIn('"--font-iosevka"', fonts)
-        self.assertIn('"../fonts/iosevka-700.woff2"', fonts)
+        self.assertIn('"../fonts/iosevka-site-700.woff2"', fonts)
         css = (self.app / "app/theme.css").read_text()
         order = [
             "themes/styles/fishlamp.css",
@@ -144,6 +143,72 @@ class AssembleTest(unittest.TestCase):
         self.assertEqual(manifest["files"], sorted(manifest["files"]))
         template_pkg = json.loads((ASSEMBLE.parent.parent / "package.json").read_text())
         self.assertEqual(manifest["version"], template_pkg["version"])
+
+    def test_fishlamp_serves_the_site_cut_and_preloads_regular_and_bold_only(self) -> None:
+        # The landing's first screen sets Iosevka regular and bold; italic sets only an <em>
+        # in a site's copy, so it is fetched when one paints rather than on every page.
+        self.assert_ok(self.assemble())
+        fonts = (self.app / "src/site/fonts.ts").read_text()
+        eager, lazy = fonts.split("const fontIosevkaLazy = ", 1)
+        self.assertIn('"../fonts/iosevka-site-400.woff2"', eager)
+        self.assertIn('"../fonts/iosevka-site-700.woff2"', eager)
+        self.assertNotIn("italic", eager)
+        self.assertNotIn("preload", eager)
+        self.assertIn('"../fonts/iosevka-site-400-italic.woff2"', lazy)
+        self.assertIn("preload: false", lazy)
+        for theme_face in ("iosevka-400.woff2", "iosevka-700.woff2", "iosevka-400-italic.woff2"):
+            self.assertFalse((self.app / "src/fonts" / theme_face).exists(), theme_face)
+
+    def test_a_face_that_does_not_preload_joins_its_family_unpreloaded(self) -> None:
+        # next/font preloads per call, not per file, so the lazy faces are a second call. Both
+        # name ONE family — next/font hashes each call's family apart otherwise, and an italic
+        # in another family is never picked for an <em> in this one.
+        self.config["fonts"] = [
+            {
+                "variable": "--font-body",
+                "files": [
+                    {"path": "fonts/body-400.woff2", "weight": "400", "style": "normal"},
+                    {"path": "fonts/body-400-italic.woff2", "weight": "400", "style": "italic", "preload": False},
+                ],
+            }
+        ]
+        self.write("site/fonts/body-400.woff2", "woff2")
+        self.write("site/fonts/body-400-italic.woff2", "woff2")
+        self.assert_ok(self.assemble())
+        fonts = (self.app / "src/site/fonts.ts").read_text()
+        eager, lazy = fonts.split("const fontBodyLazy = ", 1)
+        family = "declarations: [{ prop: 'font-family', value: \"'site-font-body'\" }],"
+        self.assertIn(family, eager.split("const fontBody = ", 1)[1])
+        self.assertIn(family, lazy)
+        self.assertIn('"../fonts/body-400.woff2"', eager)
+        self.assertNotIn("body-400-italic", eager)
+        self.assertIn('"../fonts/body-400-italic.woff2"', lazy)
+        self.assertIn("preload: false", lazy)
+        self.assertIn("adjustFontFallback: false", lazy)
+        self.assertIn('variable: "--font-body-lazy"', lazy)
+        # Its class still goes on <html>, so the lazy call's @font-face rules are in the page.
+        self.assertIn("fontBodyLazy.variable", fonts.split("export const fontVariables", 1)[1])
+
+    def test_a_family_that_preloads_every_face_stays_one_call(self) -> None:
+        self.config["fonts"] = [
+            {"variable": "--font-body", "files": [{"path": "fonts/body-400.woff2", "weight": "400", "style": "normal"}]}
+        ]
+        self.write("site/fonts/body-400.woff2", "woff2")
+        self.assert_ok(self.assemble())
+        fonts = (self.app / "src/site/fonts.ts").read_text()
+        self.assertNotIn("fontBodyLazy", fonts)
+        self.assertNotIn("site-font-body", fonts)
+
+    def test_a_family_with_no_preloaded_face_is_refused(self) -> None:
+        # Its variable is the eager call's; with nothing eager there is no call to carry it.
+        self.config["fonts"] = [
+            {
+                "variable": "--font-body",
+                "files": [{"path": "fonts/body-400.woff2", "weight": "400", "style": "normal", "preload": False}],
+            }
+        ]
+        self.write("site/fonts/body-400.woff2", "woff2")
+        self.assert_refused(self.assemble(), "fonts[0]", "preload")
 
     def test_font_roles_point_the_theme_at_the_hosted_faces(self) -> None:
         # next/font hashes the family name, so fishlamp's `--font-mono: 'Iosevka', …` never finds
@@ -272,7 +337,7 @@ class AssembleTest(unittest.TestCase):
             {
                 "tokens": "theme.css",
                 "slots": {"hero": "hero.tsx#Hero", "band:features": "parts/features.tsx#Features"},
-                "drawer": [{"href": "/downloads", "label": "Downloads"}],
+                "drawer": [{"href": "/downloads", "nav": "downloads"}],
                 "dependencies": {"zod": "^3.0.0"},
                 "toolkitPackages": ["releases"],
                 "mark": {"src": "/app-icon.png", "shape": "app-icon"},
@@ -447,6 +512,22 @@ class AssembleTest(unittest.TestCase):
     def test_an_og_image_size_missing_a_side_is_refused(self) -> None:
         self.config["ogImageSize"] = {"width": 512}
         self.assert_refused(self.assemble(), "ogImageSize", "'height'")
+
+    def test_drawer_rows_name_their_label_in_the_copy(self) -> None:
+        self.config["drawer"] = [{"href": "/home", "nav": "login"}]
+        self.write(f"{OUTPUT}/src/content/site/site.json", json.dumps({"nav": {"home": "Home", "extra": {"login": "Login"}}}))
+        self.assert_ok(self.assemble())
+        self.assertIn('"nav": "login"', (self.app / "src/site/config.ts").read_text())
+
+    def test_a_drawer_row_the_copy_does_not_word_is_refused(self) -> None:
+        self.config["drawer"] = [{"href": "/home", "nav": "login"}]
+        self.write(f"{OUTPUT}/src/content/site/site.json", json.dumps({"nav": {"home": "Home"}}))
+        self.assert_refused(self.assemble(), "drawer[0]", "'login'", "nav.extra")
+
+    def test_a_drawer_row_with_a_label_is_refused(self) -> None:
+        # The label is copy, worded in site.md's `# nav`; site.json says only where the row goes.
+        self.config["drawer"] = [{"href": "/home", "label": "Login"}]
+        self.assert_refused(self.assemble(), "drawer[0]")
 
     def test_unknown_key_is_refused(self) -> None:
         self.config["slot"] = {}
@@ -808,6 +889,18 @@ class AssembleTest(unittest.TestCase):
             self.assertTrue((self.app / rel).is_file(), rel)
         self.assert_ok(run(self.site, "--check"))
 
+    def test_the_root_layout_restores_zoom_on_every_route(self) -> None:
+        # The viewport's maximum-scale=1 reaches every route, so its off-iOS strip must too: the
+        # root layout renders it first in <body>, ahead of any route's own markup.
+        self.assert_ok(self.assemble())
+        layout = (self.app / "app/layout.tsx").read_text()
+        self.assertRegex(layout, r"<body>\s*(\{/\*[^*]*\*/\}\s*)?<FrameZoomGuard />")
+
+    def test_the_404_is_titled_as_nexts_own(self) -> None:
+        self.assert_ok(self.assemble())
+        text = (self.app / "app/not-found.tsx").read_text()
+        self.assertIn("export const metadata: Metadata = frameNotFoundMetadata", text)
+
     def test_one_url_in_both_trees_is_refused(self) -> None:
         self.write("site/routes/home/page.tsx", "export default function P() { return null }\n")
         self.write("site/app-routes/home/page.tsx", "export default function P() { return null }\n")
@@ -827,6 +920,24 @@ class AssembleTest(unittest.TestCase):
         self.write("site/app-routes/guide/page.tsx", "export default function P() { return null }\n")
         self.assert_refused(self.assemble(), "'/guide'")
 
+    def test_dynamic_segments_with_different_names_collide(self) -> None:
+        # `[slug]` and `[id]` are one URL pattern to Next, which refuses two names for one segment.
+        self.write("site/routes/blog/[slug]/page.tsx", "export default function P() { return null }\n")
+        self.write("site/app-routes/blog/[id]/page.tsx", "export default function P() { return null }\n")
+        self.assert_refused(
+            self.assemble(), "site/routes/blog/[slug]/page.tsx", "site/app-routes/blog/[id]/page.tsx"
+        )
+
+    def test_catch_all_segments_with_different_names_collide(self) -> None:
+        self.write("site/routes/docs/[...path]/page.tsx", "export default function P() { return null }\n")
+        self.write("site/app-routes/docs/[...rest]/page.tsx", "export default function P() { return null }\n")
+        self.assert_refused(self.assemble(), "site/routes/docs/[...path]/page.tsx")
+
+    def test_a_dynamic_segment_beside_a_static_one_does_not_collide(self) -> None:
+        self.write("site/routes/blog/[slug]/page.tsx", "export default function P() { return null }\n")
+        self.write("site/app-routes/blog/new/page.tsx", "export default function P() { return null }\n")
+        self.assert_ok(self.assemble())
+
     def test_app_route_css_naming_the_frame_is_refused(self) -> None:
         self.write("site/app-routes/home/home.css", "html:has(.x) { font-size: 100%; }\n")
         self.assert_refused(self.assemble(), "site/app-routes/home/home.css", "html")
@@ -843,7 +954,7 @@ class AssembleTest(unittest.TestCase):
         self.assertIn("envDefaults: {},", text)
         config = (self.app / "next.config.ts").read_text()
         self.assertIn("import { frameNext } from '@agenticdevelopertoolkit/site-template/next'", config)
-        self.assertIn("import { nextSite } from './src/site/next'", config)
+        self.assertIn("import { nextSite, transpilePackages } from './src/site/next'", config)
 
     def test_rewrites_public_env_and_defaults_reach_the_next_site(self) -> None:
         self.config.update(
@@ -867,6 +978,43 @@ class AssembleTest(unittest.TestCase):
         self.assertIn('"by": "DEPLOYMENT_ENV"', text)
         self.assertIn('"local": "https://staging.api.example"', text)
 
+    def test_transpile_packages_follow_toolkit_dependencies_transitively(self) -> None:
+        # The landing kit's HeroNav imports textlens: an app reaches it through landing's dist
+        # without naming it, so it is compiled like every other toolkit package it reaches.
+        self.assert_ok(self.assemble())
+        block = (self.app / "src/site/next.ts").read_text().split("export const transpilePackages", 1)[1]
+        self.assertIn('"@agenticdevelopertoolkit/textlens"', block)
+        package = json.loads((self.app / "package.json").read_text())
+        self.assertNotIn("@agenticdevelopertoolkit/textlens", package["dependencies"])
+
+    def test_transpile_packages_list_every_toolkit_package(self) -> None:
+        # The template's link deps, the toolkit packages the template itself depends on, and the
+        # site's own toolkitPackages; never an npm package.
+        self.config.update({"toolkitPackages": ["releases"], "dependencies": {"zod": "^3.0.0"}})
+        self.assert_ok(self.assemble())
+        text = (self.app / "src/site/next.ts").read_text()
+        self.assertIn("export const transpilePackages: readonly string[] = [", text)
+        block = text.split("export const transpilePackages", 1)[1]
+        for name in (
+            "@agenticdevelopertoolkit/landing",
+            "@agenticdevelopertoolkit/site-template",
+            "@agenticdevelopertoolkit/themes",
+            "@agenticdevelopertoolkit/chrome",
+            "@agentic-toolkit/bitbag",
+            "@agenticdevelopertoolkit/releases",
+        ):
+            self.assertIn(f'"{name}"', block)
+        for name in ("zod", "next", "react", "gsap"):
+            self.assertNotIn(f'"{name}"', block)
+        config = (self.app / "next.config.ts").read_text()
+        self.assertIn("import { nextSite, transpilePackages } from './src/site/next'", config)
+        self.assertIn("transpilePackages: [...transpilePackages],", config)
+
+    def test_the_suite_hosts_are_allowed_dev_origins(self) -> None:
+        self.assert_ok(self.assemble())
+        config = (self.app / "next.config.ts").read_text()
+        self.assertIn("allowedDevOrigins: ['*.dev.local', 'dev.local', '127.0.0.1'],", config)
+
     def test_a_malformed_substitution_is_refused(self) -> None:
         for destination in ("${api}/x", "${API/x", "${}/x", "${API:default}/x"):
             with self.subTest(destination=destination):
@@ -880,6 +1028,19 @@ class AssembleTest(unittest.TestCase):
     def test_a_public_env_name_that_is_not_an_env_name_is_refused(self) -> None:
         self.config["publicEnv"] = ["next-public-x"]
         self.assert_refused(self.assemble(), "publicEnv[0]")
+
+    def test_an_optional_public_env_entry_is_accepted(self) -> None:
+        self.config["publicEnv"] = ["NEXT_PUBLIC_A", "${NEXT_PUBLIC_B:-}"]
+        self.assert_ok(self.assemble())
+        self.assertIn('"${NEXT_PUBLIC_B:-}"', (self.app / "src/site/next.ts").read_text())
+
+    def test_a_public_env_entry_with_a_default_is_refused(self) -> None:
+        # The optional form is `${NAME:-}` alone: a value belongs in envDefaults, where every
+        # other reference to the variable sees it too.
+        for entry in ("${NEXT_PUBLIC_B:-x}", "${NEXT_PUBLIC_B}", "${next_public_b:-}"):
+            with self.subTest(entry=entry):
+                self.config["publicEnv"] = [entry]
+                self.assert_refused(self.assemble(), "publicEnv[0]")
 
     def test_a_rewrite_needs_a_source_and_a_destination(self) -> None:
         self.config["rewrites"] = [{"source": "/a"}]

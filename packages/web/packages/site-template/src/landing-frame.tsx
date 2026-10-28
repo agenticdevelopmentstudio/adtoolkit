@@ -135,7 +135,8 @@ export function LandingFrame({
   const AfterHero = slots.afterHero
   return (
     <>
-      <DeckScript armSnapping={false} openAtTop={false} />
+      {/* The zoom restore is the root layout's FrameZoomGuard, which every route renders. */}
+      <DeckScript armSnapping={false} openAtTop={false} restoreZoomOffIos={false} />
       <Flow>
         {HeroSlot === undefined ? (
           dataHero(page, mark, pendingLabel)

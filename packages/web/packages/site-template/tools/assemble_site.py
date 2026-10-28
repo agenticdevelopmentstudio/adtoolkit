@@ -518,6 +518,26 @@ def section_ids(app: Path) -> tuple[list[str], list[str], list[str]]:
         return [], [], [f"{path}: cannot read the section ids ({error})"]
 
 
+def drawer_problems(app: Path, drawer: list[dict]) -> list[str]:
+    """A drawer row whose label the copy does not word, refused before a build as SiteChrome
+    refuses it at render. The copy is content-buildr's `src/content/site/site.json`; with none
+    yet there is nothing to check against, and the render still refuses."""
+    path = app / "src" / "content" / "site" / "site.json"
+    if not drawer or not path.is_file():
+        return []
+    try:
+        worded = json.loads(path.read_text()).get("nav", {}).get("extra", {})
+    except (ValueError, AttributeError) as error:
+        return [f"{path}: cannot read the copy's nav ({error})"]
+    known = ", ".join(f"'{key}'" for key in worded) or "(none)"
+    return [
+        f"site/site.json: drawer[{i}]: nav '{row['nav']}' is not worded in the copy's nav.extra "
+        f"(site.md's `# nav`, `## extra`); it words: {known}"
+        for i, row in enumerate(drawer)
+        if row["nav"] not in worded
+    ]
+
+
 def plan_slots(site: Path, slots: dict[str, str], ids: list[str], slotted: list[str]) -> tuple[str, list[str]]:
     """`src/site/slots.tsx`: one import per slot component, and the `SlotMap` that places it.
 
@@ -572,9 +592,24 @@ def font_identifier(variable: str) -> str:
     return head + "".join(part[:1].upper() + part[1:] for part in rest)
 
 
+def font_call(name: str, entries: list[str], variable: str, family: str | None, lazy: bool) -> str:
+    """One `localFont` call. `family` names the @font-face family outright, so two calls — the
+    preloaded faces and the rest — make one family; next/font hashes each call's apart otherwise.
+    The lazy call adds no fallback face of its own: the eager call's is the family's."""
+    options = [f"  variable: {json.dumps(variable)},\n", "  display: 'swap',\n"]
+    if family is not None:
+        quoted = json.dumps("'" + family + "'")
+        options.append(f"  declarations: [{{ prop: 'font-family', value: {quoted} }}],\n")
+    if lazy:
+        options += ["  preload: false,\n", "  adjustFontFallback: false,\n"]
+    return f"const {name} = localFont({{\n  src: [\n{''.join(entries)}  ],\n{''.join(options)}}})\n"
+
+
 def plan_fonts(plan: AppPlan, fonts: list[tuple[dict, Path, str]]) -> str:
     """`src/site/fonts.ts`: one static `localFont` call per family — `next/font/local` must be
-    called with literals at module scope — with every font file copied into `src/fonts/`."""
+    called with literals at module scope — with every font file copied into `src/fonts/`.
+    next/font preloads per call, not per file, so a family with a face marked `preload: false`
+    is two calls naming one family: the preloaded faces, then the rest."""
     calls: list[str] = []
     names: list[str] = []
     seen: dict[str, str] = {}
@@ -585,7 +620,8 @@ def plan_fonts(plan: AppPlan, fonts: list[tuple[dict, Path, str]]) -> str:
             plan.problems.append(f"{label}: the font variable '{variable}' is already declared by {seen[name]}")
             continue
         seen[name] = label
-        entries = []
+        entries: list[str] = []
+        lazy_entries: list[str] = []
         for spec in font["files"]:
             source = base / spec["path"]
             if not inside(base, spec["path"]):
@@ -605,15 +641,27 @@ def plan_fonts(plan: AppPlan, fonts: list[tuple[dict, Path, str]]) -> str:
                 target = same
             plan.files[target] = source.read_bytes()
             plan.owner.setdefault(target.casefold(), label)
-            entries.append(
+            (entries if spec.get("preload", True) else lazy_entries).append(
                 f"    {{ path: {json.dumps('../fonts/' + source.name)}, "
                 f"weight: {json.dumps(spec['weight'])}, style: {json.dumps(spec['style'])} }},\n"
             )
-        calls.append(
-            f"const {name} = localFont({{\n  src: [\n{''.join(entries)}  ],\n"
-            f"  variable: {json.dumps(variable)},\n  display: 'swap',\n}})\n"
-        )
-        names.append(f"{name}.variable")
+        if not lazy_entries:
+            calls.append(font_call(name, entries, variable, None, lazy=False))
+            names.append(f"{name}.variable")
+            continue
+        if not entries:
+            if not any(spec.get("preload", True) for spec in font["files"]):
+                plan.problems.append(
+                    f"{label}: every face of '{variable}' is preload: false; at least one must preload "
+                    "(its call carries the family's variable)"
+                )
+            continue
+        family = f"site-{variable.lstrip('-')}"
+        calls.append(font_call(name, entries, variable, family, lazy=False))
+        # Its class goes on <html> too: the variable is unused, but the call's @font-face rules
+        # then ride in on the same import as the eager call's.
+        calls.append(font_call(f"{name}Lazy", lazy_entries, f"{variable}-lazy", family, lazy=True))
+        names += [f"{name}.variable", f"{name}Lazy.variable"]
     if not calls:
         return f"{HEADER}\n\n/** No fonts: neither the theme nor the site names one. */\nexport const fontVariables: string = ''\n"
     return (
@@ -723,6 +771,35 @@ def plan_package(base: dict, config: dict, site: Path, app: Path, web: Path, pro
     return (json.dumps(pkg, indent=2) + "\n").encode()
 
 
+def workspace_manifests(web: Path) -> dict[str, dict]:
+    """Every toolkit package's manifest under `web/packages`, by package name."""
+    manifests = {}
+    for manifest in sorted((web / "packages").glob("*/package.json")):
+        data = json.loads(manifest.read_text())
+        manifests[data["name"]] = data
+    return manifests
+
+
+def toolkit_packages(package_json: bytes, web: Path) -> list[str]:
+    """The toolkit packages an app reaches: its own `link:` dependencies — the template's, the
+    site's `toolkitPackages` — and, transitively, every toolkit package one of those depends on
+    (`workspace:`), which the app reaches only through that package's dist — the template's own,
+    the landing kit's textlens. Sorted, so the generated file is stable."""
+    app_deps = json.loads(package_json)["dependencies"]
+    manifests = workspace_manifests(web)
+    names: set[str] = set()
+    pending = [name for name, spec in app_deps.items() if spec.startswith("link:")]
+    pending.append(json.loads((PACKAGE / "package.json").read_text())["name"])
+    while pending:
+        name = pending.pop()
+        if name in names:
+            continue
+        names.add(name)
+        deps = manifests.get(name, {}).get("dependencies", {})
+        pending.extend(dep for dep, spec in deps.items() if spec.startswith("workspace:"))
+    return sorted(names)
+
+
 def route_url(rel: str) -> str | None:
     """The URL an `app/**` page or route handler serves, or None for any other file. Route groups
     (`(frame)`) and parallel-route slots (`@x`) add no segment; a private folder (`_x`) is no route."""
@@ -736,6 +813,17 @@ def route_url(rel: str) -> str | None:
     return "/" + "/".join(kept)
 
 
+DYNAMIC_SEGMENT = re.compile(r"^(\[\[\.\.\.|\[\.\.\.|\[)[^\]]*(\]\]|\])$")
+
+
+def url_pattern(url: str) -> str:
+    """`url` as Next matches it: a dynamic segment's name is the page's to choose and no part of
+    the match, so `[slug]` and `[id]` are one segment, as are `[...path]` and `[...rest]`.
+    Case-folded, since the file systems the sites build on are."""
+    segments = [DYNAMIC_SEGMENT.sub(r"\1\2", segment) for segment in url.split("/")]
+    return "/".join(segments).casefold()
+
+
 def url_collisions(plan: AppPlan) -> list[str]:
     """Two files that serve one URL — the frame's `/` and a site's `app-routes/page.tsx`, or one
     route in both `routes` and `app-routes`. Each is a distinct path, so `AppPlan.add` lets it
@@ -744,7 +832,7 @@ def url_collisions(plan: AppPlan) -> list[str]:
     for rel in sorted(plan.files):
         url = route_url(rel)
         if url is not None:
-            by_url.setdefault(url.casefold(), []).append(rel)
+            by_url.setdefault(url_pattern(url), []).append(rel)
     problems = []
     for rels in by_url.values():
         if len(rels) > 1:
@@ -829,6 +917,8 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
     plan.problems += slot_problems
     plan.add("src/site/slots.tsx", slots_text.encode(), "generated")
 
+    plan.problems += drawer_problems(app, config.get("drawer", []))
+
     mark = config.get("mark", DEFAULT_MARK)
     frame = {
         "mark": mark,
@@ -865,6 +955,12 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
     plan.add("src/site/shot.tsx", SHOT_TS.encode(), "generated")
     # What next.config.ts resolves against the build's environment (the `./next` export's
     # frameNext); the schema has already checked every `${…}` is well formed.
+    analytics = ANALYTICS_ON if config.get("analytics", defaults["analytics"]) else ANALYTICS_OFF
+    plan.add("src/site/analytics.tsx", analytics.encode(), "generated")
+
+    base = json.loads((SKELETON / "package.json").read_text())
+    package_json = plan_package(base, config, site, app, web, plan.problems)
+    plan.add("package.json", package_json, "generated")
     next_ts = (
         f"{HEADER}\n"
         "import type { FrameNextSite } from '@agenticdevelopertoolkit/site-template/next'\n\n"
@@ -873,14 +969,11 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
         f"  rewrites: {ts(config.get('rewrites', []))},\n"
         f"  publicEnv: {ts(config.get('publicEnv', []))},\n"
         f"  envDefaults: {ts(config.get('envDefaults', {}))},\n"
-        "}\n"
+        "}\n\n"
+        "/** Every toolkit package the app reaches, which next.config.ts hands Next to compile. */\n"
+        f"export const transpilePackages: readonly string[] = {ts(toolkit_packages(package_json, web))}\n"
     )
     plan.add("src/site/next.ts", next_ts.encode(), "generated")
-    analytics = ANALYTICS_ON if config.get("analytics", defaults["analytics"]) else ANALYTICS_OFF
-    plan.add("src/site/analytics.tsx", analytics.encode(), "generated")
-
-    base = json.loads((SKELETON / "package.json").read_text())
-    plan.add("package.json", plan_package(base, config, site, app, web, plan.problems), "generated")
 
     # The site's own files, after everything the template writes, so a collision names both.
     for folder, target_root in SITE_TREES:

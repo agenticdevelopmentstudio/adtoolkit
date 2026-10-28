@@ -3189,6 +3189,9 @@ importers:
 
   packages/landing:
     dependencies:
+      '@agenticdevelopertoolkit/textlens':
+        specifier: workspace:*
+        version: link:../textlens
       react:
         specifier: ^19.0.0
         version: 19.2.8

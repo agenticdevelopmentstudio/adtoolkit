@@ -149,6 +149,8 @@ under **Install**.
 | `Btn` | blocks | A link styled as a button; `variant="primary"` (default) or `"ghost"`; `size="lg"` for the page's one real action, and `detail` for a smaller second line under the label (a file size, a format). |
 | `StatusPill` | blocks | The hero's status line; `free` switches to the accented "free" treatment (`--lp-status-free-border`). |
 | `Hero` | blocks | The one centred `Screen` on the page: glow, mark, headline, tagline, children (`Cta`/`Trust`/`StatusPill`, in the host's own order). |
+| `PulseRule` | blocks | A hairline `<hr>` in `--lp-accent` that slowly breathes, for under a hero's name; at rest, full strength, under reduced motion. `className` is appended (placement is the host's). `--lp-pulse-rule-period` (6s) and `--lp-pulse-rule-floor` (0.35) slow it or deepen it. |
+| `HeroNav` | flow · **client** | A page's table of contents as one centred line of plain anchors (`rows`, e.g. `indexRows(page)`; `label` names the `<nav>`), separated by drawn bars and swept once by `@agenticdevelopertoolkit/textlens` from `--lp-ink-dim` to `--lp-accent-bright`. Set in `--lp-font-mono`. |
 
 None of these render an `<img>` or a `next/link` — the package depends on
 nothing outside `packages/web/packages/*`. Anything image-shaped is a

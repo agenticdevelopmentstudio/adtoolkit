@@ -21,6 +21,7 @@ export type FrameEnvDefault = string | { by: string; values: Readonly<Record<str
 /** What the assembler writes to `src/site/next.ts` from `site.json`. */
 export interface FrameNextSite {
   rewrites: readonly FrameRewrite[]
+  /** `NAME`, which must resolve, or `${NAME:-}`, which is left out when it does not. */
   publicEnv: readonly string[]
   envDefaults: Readonly<Record<string, FrameEnvDefault>>
 }
@@ -36,11 +37,16 @@ type Env = Readonly<Record<string, string | undefined>>
 // The assembler validates the same grammar: `${NAME}` or `${NAME:-default}`.
 const REFERENCE = /\$\{([A-Z_][A-Z0-9_]*)(?::-([^}]*))?\}/g
 
+// A `publicEnv` entry the site may go without: `${NAME:-}`, the empty-default reference.
+const OPTIONAL = /^\$\{([A-Z_][A-Z0-9_]*):-\}$/
+
 /**
  * Resolve a site's rewrites and public env against `env` (`process.env` in `next.config.ts`).
  * A variable is the environment's value when it is set and non-empty, else its `envDefaults`
  * entry, else the reference's inline `:-default`; with none of them, it throws, naming the
- * variable and where it was used. A `publicEnv` name with no value anywhere is left out.
+ * variable and where it was used. A `publicEnv` name with no value anywhere throws the same
+ * way — a client bundle inlining `undefined` is the failure it would otherwise be — unless the
+ * site wrote it `${NAME:-}`, which is how it says the variable is optional; that one is left out.
  */
 export function frameNext(site: FrameNextSite, env: Env): FrameNextResult {
   const resolving: string[] = []
@@ -92,9 +98,18 @@ export function frameNext(site: FrameNextSite, env: Env): FrameNextResult {
     destination: substitute(rewrite.destination, `rewrites[${i}].destination`),
   }))
   const publicEnv: Record<string, string> = {}
-  for (const name of site.publicEnv) {
+  site.publicEnv.forEach((entry, i) => {
+    const optional = OPTIONAL.exec(entry)
+    const name = optional?.[1] ?? entry
     const value = lookup(name)
-    if (value !== undefined) publicEnv[name] = value
-  }
+    if (value !== undefined) {
+      publicEnv[name] = value
+    } else if (optional === null) {
+      throw new Error(
+        `site.json: ${name} in publicEnv[${i}] is unset, with no envDefaults entry; ` +
+          `write it \${${name}:-} if the site can go without it`,
+      )
+    }
+  })
   return { env: publicEnv, rewrites }
 }

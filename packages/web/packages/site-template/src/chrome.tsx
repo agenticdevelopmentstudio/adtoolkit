@@ -14,7 +14,7 @@ import { Words } from './words'
  * The rows are Home, then one per section — the same `indexRows` the bands are built from, so
  * the drawer cannot list a section the page does not have — then the site's own extra rows,
  * then a contact row mailing `copy.contact.email` when the copy words one. Every label is the
- * site's copy (`copy.nav`); the frame words nothing.
+ * site's copy (`copy.nav`, an extra row's under `copy.nav.extra`); the frame words nothing.
  * Every in-page row is written `/#id` rather than `#id`, so it still lands on the section
  * from any other route of the site; on `/` itself the kit's drawer still glides there.
  * The copy's `nav.action`, when it words one, is a ghost button in the bar beside the burger.
@@ -29,10 +29,23 @@ export function SiteChrome({
   extra: FrameConfig['drawerExtra']
 }): ReactElement {
   const { email } = copy.contact
+  const worded = copy.nav.extra ?? {}
+  // Refused, not skipped: a row whose label was renamed in the markdown would otherwise leave
+  // the drawer with nothing in the build to say so.
+  const extraRows: NavLink[] = extra.map((row) => {
+    const label = worded[row.nav]
+    if (label === undefined) {
+      throw new Error(
+        `SiteChrome: the drawer row to '${row.href}' names '${row.nav}', which the copy's nav.extra does not word. ` +
+          `It words: ${Object.keys(worded).map((key) => `'${key}'`).join(', ') || '(none)'}.`,
+      )
+    }
+    return { href: row.href, label }
+  })
   const links: NavLink[] = [
     { href: '/#top', label: copy.nav.home },
     ...indexRows(page).map((row) => ({ href: `/${row.href}`, label: row.label })),
-    ...extra,
+    ...extraRows,
     ...(copy.nav.contact === undefined ? [] : [{ href: `mailto:${email}`, label: copy.nav.contact }]),
   ]
   const footer = (
