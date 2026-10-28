@@ -26,6 +26,7 @@ vi.mock("./useConfigSetServices", () => ({
 }));
 
 import { ConfigSetDialog } from "./ConfigSetDialog";
+import { LOCAL_SERVICE as LOCAL } from "./config-set-form";
 
 afterEach(cleanup);
 beforeEach(() => {
@@ -189,6 +190,61 @@ describe("ConfigSetDialog", () => {
       serviceId: "svc-openai",
       model: "gpt-b",
     });
+  });
+
+  it("offers an output mode only for an OpenAI-compatible service", () => {
+    mount();
+    expect(screen.queryByLabelText("Output mode")).toBeNull();
+    type("Service", "svc-claude");
+    expect(screen.queryByLabelText("Output mode")).toBeNull();
+    type("Service", "svc-openai");
+    expect((screen.getByLabelText("Output mode") as HTMLSelectElement).value).toBe("");
+  });
+
+  it("sends a chosen output mode, and none while it is automatic", async () => {
+    mount();
+    type("Name", "Groq");
+    type("Service", "svc-openai");
+    type("Model", "gpt-a");
+    save();
+    await waitFor(() => expect(authedJson).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(authedJson.mock.calls[0]![1].body).params).not.toHaveProperty("outputMode");
+
+    cleanup();
+    authedJson.mockClear();
+    mount();
+    type("Name", "Groq json");
+    type("Service", "svc-openai");
+    type("Model", "gpt-a");
+    type("Output mode", "json");
+    save();
+    await waitFor(() => expect(authedJson).toHaveBeenCalledTimes(1));
+    expect(JSON.parse(authedJson.mock.calls[0]![1].body).params.outputMode).toBe("json");
+  });
+
+  it("clears the output mode when the service changes", () => {
+    mount();
+    type("Service", "svc-openai");
+    type("Output mode", "schema");
+    type("Service", LOCAL);
+    type("Service", "svc-openai");
+    expect((screen.getByLabelText("Output mode") as HTMLSelectElement).value).toBe("");
+  });
+
+  it("shows an existing set's output mode", () => {
+    mount({
+      id: "cs-2",
+      name: "Groq",
+      description: null,
+      service: { id: "svc-openai", name: "My OpenAI" },
+      provider: "openai",
+      model: "gpt-a",
+      params: { outputMode: "json" },
+      isDefault: false,
+      createdAt: "2026-10-01T00:00:00Z",
+      updatedAt: "2026-10-01T00:00:00Z",
+    } as ConfigSet);
+    expect((screen.getByLabelText("Output mode") as HTMLSelectElement).value).toBe("json");
   });
 
   it("shows the server's message when the save is refused", async () => {

@@ -4950,7 +4950,7 @@ export interface paths {
         put?: never;
         /**
          * Create an LLM config set (admin)
-         * @description A set names a personas service plus a model, or no service = the node local LLM. A service whose kind no node can run, a paid service (openai, anthropic, gemini) whose base URL host is not that provider's own API host, or a model the service does not offer, is 400; a duplicate name is 409.
+         * @description A set names a personas service plus a model, or no service = the node local LLM. A paid service may sit on any host its kind speaks — an OpenAI-compatible service (Groq, Cerebras, Fireworks, Together, …) is kind openai with its own base URL. A service whose kind no node can run, or a model the service does not offer, is 400; a duplicate name is 409.
          */
         post: {
             parameters: {
@@ -74813,6 +74813,8 @@ export interface components {
             temperature?: number;
             maxOutputTokens?: number;
             timeoutMs?: number;
+            /** @enum {string} */
+            outputMode?: "schema" | "json";
         };
         AiProcessingWebhookEndpoint: {
             /** Format: uuid */

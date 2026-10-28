@@ -25,6 +25,7 @@ import {
   stateFromConfigSet,
   withService,
   type ConfigSetFormState,
+  type OutputModeChoice,
 } from "./config-set-form";
 import { useConfigSetServices } from "./useConfigSetServices";
 
@@ -94,6 +95,11 @@ export function ConfigSetDialog({
   // Free text for the local LLM, and for a service that lists no models (the backend accepts any
   // model then); a select only when the service has a known list to choose from.
   const modelIsSelect = activeService !== null && options.length > 0;
+  // Only an OpenAI-compatible service has a choice to make; every other kind always uses its own
+  // schema constraint, and the local LLM takes a schema natively.
+  const speaksOpenAI =
+    activeService?.providerKind === "openai" ||
+    (foreignService !== null && form.serviceId === foreignService.id && configSet?.provider === "openai");
 
   const dirty = useMemo(() => JSON.stringify(form) !== JSON.stringify(initial), [form, initial]);
   useEffect(() => onDirtyChange(open && dirty), [open, dirty, onDirtyChange]);
@@ -196,6 +202,22 @@ export function ConfigSetDialog({
               />
             )}
           </Field>
+          {speaksOpenAI && (
+            <Field
+              label="Output mode"
+              hint="How the node asks for JSON. Automatic follows the model's catalog entry; pick JSON mode for a model that rejects a response schema."
+            >
+              <Select
+                aria-label="Output mode"
+                value={form.outputMode}
+                onChange={(e) => patch({ outputMode: e.target.value as OutputModeChoice })}
+              >
+                <option value="">Automatic</option>
+                <option value="schema">Structured output (JSON schema)</option>
+                <option value="json">JSON mode (schema in the prompt)</option>
+              </Select>
+            </Field>
+          )}
           <FieldGroup title="Parameters">
             <div className="flex flex-col gap-3 sm:flex-row">
               <Field
