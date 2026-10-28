@@ -24,6 +24,16 @@
   --lp-dock-clear: calc(6rem + env(safe-area-inset-bottom, 0px));
 }
 
+/* The body's weight and leading, overridable. The kit's body rule (landing base.css) sets
+ * line-height 1.7 and leaves the weight at the browser's 400; a site whose copy is set lighter
+ * or tighter sets `--st-body-weight` / `--st-body-leading` in its theme. The selector is the
+ * kit's own, so specificity stays body's (0,0,1) and source order (this file loads after the
+ * kit's) decides. The defaults are the kit's values, so a site that sets neither is unchanged. */
+:where(html:has(.lp-deck, .lp-flow)) body {
+  font-weight: var(--st-body-weight, 400);
+  line-height: var(--st-body-leading, 1.7);
+}
+
 /* One column. The kit lays cards two and three across; a content site reads down the page. */
 .lp-cards,
 .lp-cards--pair,
