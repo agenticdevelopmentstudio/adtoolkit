@@ -212,6 +212,22 @@ class AssembleTest(unittest.TestCase):
         self.assertGreater(css.index("  --font-body: 'site-font-body';"), css.index("site-template/css/frame.css"))
         self.assertEqual(len(roles), 2)
 
+    def test_the_mikefullerton_theme_is_its_landing_sheet_on_the_site_cut(self) -> None:
+        # Not themes/styles/mikefullerton.css: that is the previous site's palette, which the
+        # manifest still offers. The template theme is the palette of the page at `/`.
+        self.config["theme"] = "mikefullerton"
+        self.assert_ok(self.assemble())
+        css = (self.app / "app/theme.css").read_text()
+        self.assertIn('@import "@agenticdevelopertoolkit/themes/styles/mikefullerton-landing.css";', css)
+        self.assertNotIn("themes/styles/fishlamp.css", css)
+        self.assertNotIn("themes/styles/mikefullerton.css", css)
+        self.assertLess(css.index("mikefullerton-landing.css"), css.index("landing/css/base.css"))
+        self.assertIn("--font-mono: var(--font-iosevka), 'Iosevka Fallback Menlo'", css)
+        fonts = (self.app / "src/site/fonts.ts").read_text()
+        self.assertIn('"../fonts/iosevka-site-400.woff2"', fonts)
+        self.assertIn('"../fonts/iosevka-site-700.woff2"', fonts)
+        self.assert_ok(run(self.site, "--check"))
+
     def test_fishlamps_iosevka_variable_names_the_site_cut_family(self) -> None:
         self.assert_ok(self.assemble())
         css = (self.app / "app/theme.css").read_text()

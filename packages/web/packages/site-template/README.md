@@ -60,6 +60,11 @@ A hero `Shot` (`{shot: id}` in the hero's markdown) is the hero's one screenshot
 Each theme names its stylesheet and the fonts it needs, which the assembler self-hosts through
 `next/font/local`. Font file paths are relative to the toolkit's `packages/web/`.
 
+| Theme | Sheet | For |
+|---|---|---|
+| `fishlamp` (the default) | `themes/styles/fishlamp.css` | fishlamp.com's palette, with its lamp glow on `body` |
+| `mikefullerton` | `themes/styles/mikefullerton-landing.css` | mikefullerton.com's `/`: fishlamp's ink and ember with the site's own dim text and hover edge, as roles only — no `body` rule, so a site's other routes keep their own look. Not the manifest's `mikefullerton.css`, which is the previous site's palette |
+
 - **One face per weight and style.** Only the base cut of each face is listed, not the `-ext` one.
   `next/font/local` cannot give a file its own `unicode-range`, so two files with the same
   weight and style would become two identical faces, and the later one would win every glyph. The

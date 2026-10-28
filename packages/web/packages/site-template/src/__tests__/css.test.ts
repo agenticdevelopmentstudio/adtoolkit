@@ -158,3 +158,57 @@ describe('themes.json', () => {
     expect(roles).toEqual(expect.arrayContaining(['--font-mono', '--font-sans', '--font-serif']))
   })
 })
+
+describe('themes.json mikefullerton', () => {
+  type Theme = { css: string; fonts: { variable: string; role?: string[]; files: { path: string }[] }[] }
+  const themes = (): Record<string, Theme> => JSON.parse(read(join(pkg, 'themes.json'))) as Record<string, Theme>
+  const sheetPath = (theme: Theme): string =>
+    join(resolve(pkg, '../themes/src/styles'), theme.css.replace('@agenticdevelopertoolkit/themes/styles/', ''))
+
+  it("points at the landing palette sheet, not the manifest's mikefullerton.css", () => {
+    const theme = themes().mikefullerton
+    expect(theme.css).toBe('@agenticdevelopertoolkit/themes/styles/mikefullerton-landing.css')
+    expect(existsSync(sheetPath(theme))).toBe(true)
+    const web = resolve(pkg, '../..')
+    for (const font of theme.fonts) {
+      for (const f of font.files) expect(existsSync(join(web, f.path)), f.path).toBe(true)
+    }
+    expect(theme.fonts.flatMap((font) => font.role ?? [])).toEqual(
+      expect.arrayContaining(['--font-mono', '--font-sans', '--font-serif']),
+    )
+  })
+
+  it('declares every role the bridge and the frame read', () => {
+    const sheet = read(sheetPath(themes().mikefullerton))
+    const declared = new Set([...stripComments(sheet).matchAll(/(--[a-z0-9-]+)\s*:/g)].map((m) => m[1]))
+    const wanted = new Set<string>()
+    for (const css of [bridge(), frame()]) {
+      for (const m of stripComments(css).matchAll(/var\((--(?:color|font)-[a-z0-9-]+)/g)) wanted.add(m[1])
+    }
+    expect([...wanted].filter((role) => !declared.has(role))).toEqual([])
+  })
+
+  it("is one token rule, dark under both modes: no body rule to reach a site's other routes", () => {
+    const sheet = stripComments(read(sheetPath(themes().mikefullerton)))
+    const selectors = [...sheet.matchAll(/([^{}]+)\{/g)].map((m) => m[1].replace(/\s+/g, ' ').trim())
+    expect(selectors).toEqual(['html:root, html:root[data-color-mode]:not(.dark)'])
+  })
+
+  it("carries the site's palette as roles", () => {
+    const root = ruleBody(read(sheetPath(themes().mikefullerton)), 'html:root')
+    for (const decl of [
+      '--color-surface: #0b0a09',
+      '--color-surface-container-high: #17130f',
+      '--color-surface-container-highest: #1f1a14',
+      '--color-on-surface: #f0e4d0',
+      '--color-on-surface-variant: #a8968a',
+      '--color-text-dim: #6d5f52',
+      '--color-primary: #e8a33d',
+      '--color-primary-bright: #f5c877',
+      '--color-outline: rgba(232, 163, 61, 0.18)',
+      '--color-outline-strong: rgba(232, 163, 61, 0.42)',
+    ]) {
+      expect(root).toContain(decl)
+    }
+  })
+})
