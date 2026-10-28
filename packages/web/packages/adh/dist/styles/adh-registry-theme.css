@@ -20,8 +20,9 @@
  * 1. The selectors match the package's own, and this import must come AFTER
  *    theirs. Both stylesheets declare their tokens ON the block root (`.rp`,
  *    `.rf-field`, `.rf-def`) rather than reading them as var(--x, fallback) — so
- *    unlike adh-landing-bridge.css, which assigns landing's contract at :root
- *    precisely because landing never assigns one, this cannot be hoisted to
+ *    unlike adh-landing-bridge.css, which assigns landing's contract on the root
+ *    element (`:root:has(.adh-family)`) precisely because landing never assigns
+ *    one, this cannot be hoisted to
  *    :root. A custom property declared directly on an element always beats one
  *    inherited from an ancestor, whatever the specificity, so a :root block here
  *    would lose to `.rp` silently and completely. Same selectors, equal

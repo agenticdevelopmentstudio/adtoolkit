@@ -66,6 +66,22 @@ describe('HeroNav', () => {
     for (const sel of ['.lp-hero-nav {', '.lp-hero-nav__sep {', '.lp-hero-nav__link {']) expect(css).toContain(sel)
   })
 
+  it('drops its separators at phone width, where the row wraps', () => {
+    // At phone width the row wraps, and a bar drawn between two links lands at the end of one
+    // line or the start of the next — a dangling `|` with nothing on one side of it. Below
+    // 640px the bars come out and a column gap spaces the links instead, as mikefullerton's
+    // contact row does.
+    const sheet = new CSSStyleSheet()
+    sheet.replaceSync(readFileSync(join(CSS_DIR, 'flow.css'), 'utf8'))
+    const phone = Array.from(sheet.cssRules).filter(
+      (rule): rule is CSSMediaRule => rule instanceof CSSMediaRule && rule.media.mediaText === '(max-width: 640px)',
+    )
+    const rules = phone.flatMap((media) => Array.from(media.cssRules) as CSSStyleRule[])
+    const rule = (selector: string) => rules.find((r) => r.selectorText === selector)?.style
+    expect(rule('.lp-hero-nav__sep')?.getPropertyValue('display')).toBe('none')
+    expect(rule('.lp-hero-nav')?.getPropertyValue('column-gap')).toBe('1.2rem')
+  })
+
   it('is set in the kit mono', () => {
     const css = readFileSync(join(CSS_DIR, 'flow.css'), 'utf8')
     const rule = css.slice(css.indexOf('.lp-hero-nav {'), css.indexOf('}', css.indexOf('.lp-hero-nav {')))

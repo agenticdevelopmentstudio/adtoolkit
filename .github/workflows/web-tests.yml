@@ -117,6 +117,18 @@ jobs:
       - run: pnpm build
         working-directory: packages/web
 
+      # adh is the one package that COMMITS its dist (see packages/adh/.gitignore: it has
+      # consumers that check the submodule out and never build). Nothing compared that
+      # committed copy with its src, so a src change landed with the old dist and the next
+      # person to build anything that links adh found the toolkit dirty, rebuilt it, and
+      # committed someone else's change under their own. The build above has just rewritten
+      # every tracked dist file from src, so any difference now is a stale commit. The build
+      # is deterministic (relative source-map paths, no timestamps), so a clean tree is the
+      # pass. The fix is to rebuild adh and commit what changed; NEW dist files are force-added
+      # one by one, per that .gitignore.
+      - name: adh's committed dist matches its src
+        run: git diff --exit-code --stat -- packages/web/packages/adh/dist
+
       # The boundary checks (self-test first) and every package's `tsc`. ATK's CI
       # skipped this because per-package tsc resolves sibling DIST types that a
       # fresh checkout had not built; the `pnpm build` step above is what makes

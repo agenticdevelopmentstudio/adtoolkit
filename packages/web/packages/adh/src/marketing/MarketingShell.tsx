@@ -1,4 +1,9 @@
-import { Fragment, type ComponentType, type ReactElement, type ReactNode } from 'react'
+import {
+  Fragment,
+  type ComponentType,
+  type ReactElement,
+  type ReactNode,
+} from "react";
 // Package paths, never relative ones, for every cross-directory specifier below — even
 // though `layout`, `concepts` and `marketing/MarketingSiteHeader` are now siblings in THIS
 // package. Each is its own tsup entry with a matching `external`, because each holds
@@ -8,40 +13,40 @@ import { Fragment, type ComponentType, type ReactElement, type ReactNode } from 
 // this whole server entry. A relative specifier would inline a private copy and silently fork
 // that state. Both halves of the remedy are required — see the note atop layout/AppShell.tsx
 // and <adh-tools>/sites/scripts/verify-bundle-boundaries.py.
-import { AppShell } from '@agentic-toolkit/adh/layout'
-import type { SiteId } from '@agentic-toolkit/adh-registry'
-import { AuthProvider } from '@agentic-toolkit/adh/auth'
-import { MarketingSiteHeader } from '@agentic-toolkit/adh/marketing/MarketingSiteHeader'
+import { AppShell } from "@agentic-toolkit/adh/layout";
+import type { SiteId } from "@agentic-toolkit/adh-registry";
+import { AuthProvider } from "@agentic-toolkit/adh/auth";
+import { MarketingSiteHeader } from "@agentic-toolkit/adh/marketing/MarketingSiteHeader";
 // The generic header type, from the merged header barrel — the same one SiteHeader comes
 // from. It used to ride in on the retired @adh-shared auth shim, which re-exported it from
 // the SiteHeader that Task 6.2 folded into the app tier's own header barrel; both barrels
 // are this one now.
-import type { NavLink } from '@agentic-toolkit/adh/header'
-import type { FooterLink } from '@agentic-toolkit/adh/footer'
+import type { NavLink } from "@agentic-toolkit/adh/header";
+import type { FooterLink } from "@agentic-toolkit/adh/footer";
 import {
   HelpContentProvider,
   type SiteHelp,
-} from '@agenticdevelopertoolkit/ui/components/help-content'
+} from "@agenticdevelopertoolkit/ui/components/help-content";
 
 /** The serializable half of a link: what a server layout can hand across the
  *  boundary. NavLink's `icon`/function form and FooterLink's `onSelect` cannot
  *  cross it, and a site that needs either is not describing chrome any more.
  *  Derived from FooterLink so it narrows when that type does. */
-type PlainLink = Pick<Extract<FooterLink, { href: string }>, 'label' | 'href'>
+type PlainLink = Pick<Extract<FooterLink, { href: string }>, "label" | "href">;
 
 export type MarketingShellProps = {
   /** Optional site-owned header nav items — the serializable subset of NavLink (this is
    *  a server component, so the function form and icon fields can't cross the boundary;
    *  matchPaths keeps active-link highlighting available to sites). */
-  navLinks?: Pick<NavLink, 'label' | 'href' | 'matchPaths'>[]
+  navLinks?: Pick<NavLink, "label" | "href" | "matchPaths">[];
   /** Optional site-owned header items rendered OUTSIDE the collapsing nav, at the bar's
    *  trailing edge — an off-site destination (`toolkit`'s GitHub) rather than a route. */
-  trailingNavLinks?: PlainLink[]
+  trailingNavLinks?: PlainLink[];
   /** Optional site-owned footer links, added to the shared legal/sites row. The
    *  copyright is the brand's, not the site's, and stays owned by SiteFooter. */
-  footerLinks?: PlainLink[]
+  footerLinks?: PlainLink[];
   /** The marketing site this document chrome is for — drives the header brand. */
-  siteId: SiteId
+  siteId: SiteId;
   /**
    * Whether the AuthProvider runs the cross-site cold-load silent-SSO probe (default `true`,
    * the feature-site behaviour) — on EVERY route, the landing page included.
@@ -59,7 +64,7 @@ export type MarketingShellProps = {
    * Set it only for a surface that must not navigate on load for a reason the preflight does not
    * cover, and say what that reason is. See adh/docs/platform/cross-site-auth.md.
    */
-  silentSso?: boolean
+  silentSso?: boolean;
   /**
    * The site's own header, in place of the shared `<MarketingSiteHeader siteId/>`.
    *
@@ -76,7 +81,7 @@ export type MarketingShellProps = {
    * component knowing anything about it. `navLinks`/`trailingNavLinks` are the shared header's
    * props and are ignored when a site supplies its own.
    */
-  header?: ReactNode
+  header?: ReactNode;
   /**
    * The site's own context providers, mounted between the shared `AuthProvider` and `AppShell`.
    *
@@ -91,13 +96,13 @@ export type MarketingShellProps = {
    * as a sibling of `children`; providers emit no DOM, so the result is the same markup a
    * hand-rolled `<body>` produced.
    */
-  providers?: ComponentType<{ children: ReactNode }>
+  providers?: ComponentType<{ children: ReactNode }>;
   /** The site's help copy, published to the whole document.
    *
    *  A provider rather than a header prop: the `header` slot below lets a site
    *  replace the shared header entirely (four do), and a prop would reach the
    *  shared header and miss them. */
-  help?: SiteHelp
+  help?: SiteHelp;
   /**
    * Whether the header and footer render on the current route — a client component that
    * wraps each of them and returns its children or nothing.
@@ -112,9 +117,25 @@ export type MarketingShellProps = {
    * It wraps the chrome and never the page, so it cannot change what a route renders, only
    * whether the shared frame is around it. Omitted, the chrome always renders.
    */
-  chromeGate?: ComponentType<{ children: ReactNode }>
-  children: ReactNode
-}
+  chromeGate?: ComponentType<{ children: ReactNode }>;
+  children: ReactNode;
+};
+
+/**
+ * The class on the shell's root element, and the scope of the family's stylesheets.
+ *
+ * `adh-family.css` and the landing bridge write every rule under it (`:root:has(.adh-family)`,
+ * `.adh-family …`), so they style a document only while a shell is mounted in it. That matters
+ * on a templated site: its family route group imports `family.css`, Next keeps that stylesheet
+ * in the document after a client-side navigation to the template's own `/`, and unscoped, the
+ * family's `html`, `body` and `:root { --lp-* }` rules went on styling the template's landing.
+ */
+export const FAMILY_ROOT_CLASS = "adh-family";
+
+/** `display: contents`: the root is a selector hook, never a box between <body> and the
+ *  chrome. Inline rather than in a sheet, because a site that mounts the shell without
+ *  `family.css` must not get a block wrapper either. */
+const FAMILY_ROOT_STYLE = { display: "contents" } as const;
 
 /**
  * The body half of the ADH marketing family's document: help, auth, the site's own providers
@@ -143,28 +164,34 @@ export function MarketingShell({
   // Fragment, not `providers ?? (({children}) => <>{children}</>)`: a fresh arrow on every
   // render is a new component TYPE, which remounts the whole tree below it each time. Fragment
   // is a stable identity and renders no DOM.
-  const SiteProviders = providers ?? Fragment
+  const SiteProviders = providers ?? Fragment;
   return (
-    <HelpContentProvider help={help ?? {}}>
-      <AuthProvider clientId="adh" storageKey="auth_tokens" silentSso={silentSso}>
-        <SiteProviders>
-          <AppShell
-            header={
-              header ?? (
-                <MarketingSiteHeader
-                  siteId={siteId}
-                  navLinks={navLinks}
-                  trailingNavLinks={trailingNavLinks}
-                />
-              )
-            }
-            footer={{ links: footerLinks ?? [] }}
-            chromeGate={chromeGate}
-          >
-            {children}
-          </AppShell>
-        </SiteProviders>
-      </AuthProvider>
-    </HelpContentProvider>
-  )
+    <div className={FAMILY_ROOT_CLASS} style={FAMILY_ROOT_STYLE}>
+      <HelpContentProvider help={help ?? {}}>
+        <AuthProvider
+          clientId="adh"
+          storageKey="auth_tokens"
+          silentSso={silentSso}
+        >
+          <SiteProviders>
+            <AppShell
+              header={
+                header ?? (
+                  <MarketingSiteHeader
+                    siteId={siteId}
+                    navLinks={navLinks}
+                    trailingNavLinks={trailingNavLinks}
+                  />
+                )
+              }
+              footer={{ links: footerLinks ?? [] }}
+              chromeGate={chromeGate}
+            >
+              {children}
+            </AppShell>
+          </SiteProviders>
+        </AuthProvider>
+      </HelpContentProvider>
+    </div>
+  );
 }

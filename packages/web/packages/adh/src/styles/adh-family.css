@@ -51,19 +51,28 @@
 @import "@agenticdevelopertoolkit/landing/css/flow.css";
 @import "./adh-landing-bridge.css";
 
-/* Reserve the scrollbar's width whether or not the page scrolls, so navigating between
+/* EVERY RULE BELOW IS SCOPED TO THE SHELL — `.adh-family` is the class MarketingShell puts
+ * on its root element, and the landing bridge is written the same way. A templated site
+ * imports this sheet from its family route group, and Next keeps a layout's stylesheet in the
+ * document after a client-side navigation away from it: unscoped, these rules went on styling
+ * the template's own `/`. Under the class they apply only while a shell is mounted, which on
+ * a family site's own document is always. The document-level rules use `:has()` to reach the
+ * element above the shell; the rest are its descendants. familyScope.test.ts refuses a rule
+ * here that does not name the class.
+ *
+ * Reserve the scrollbar's width whether or not the page scrolls, so navigating between
  * a short route and a long one does not shift the whole layout sideways. */
-html {
+html:has(.adh-family) {
   scrollbar-gutter: stable;
 }
 
-body {
+body:has(.adh-family) {
   /* The theme declares these two already — the generated theme CSS <AdhThemeStyle/>
      renders into <head> carries `:where(body) { background-color; color }` — but at
      ZERO specificity, so the deck's own `:where(html:has(.lp-deck)) body` (0,0,1) beats
      it on `/` and `/tour` and paints from the `--lp-*` contract instead. Restating the
-     family's ground here at (0,0,1), after that import, is what keeps one site one
-     colour across its landing and its app routes. Same tokens the theme uses, and no
+     family's ground here at (0,1,1) — the scope's class plus the element — is what
+     keeps one site one colour across its landing and its app routes. Same tokens the theme uses, and no
      literal fallback: the theme style is server-rendered into every document in this
      family (MarketingRootHtml), so there is no paint without it to fall back to. */
   background: var(--color-surface);
@@ -79,8 +88,8 @@ body {
      screens. `clip` is the one value that pairs with `visible` and leaves the other axis
      alone, so the containment survives and the scroller does not move. Landing's own
      base.css says the same thing for the same reason, but writes it
-     `:where(html:has(.lp-deck)) body` — same (0,0,1) as a bare `body`, so this rule wins
-     only by coming later, which it does. Said outside the deck's gate on purpose: the
+     `:where(html:has(.lp-deck)) body` at (0,0,1), under this rule's (0,1,1), so this
+     rule wins on specificity whatever the order. Said outside the deck's gate on purpose: the
      workspace, /privacy, /terms and /details want the horizontal guard too. */
   overflow-x: clip;
 }
@@ -96,14 +105,14 @@ body {
  * The family's headlines mark their accent word with `*em*` in the markdown — the deck's
  * heading grammar — while `flow.css` styles only `<b>`. Without the second rule the hub's
  * "Agentic Developer *Hub*" set in italic body ink instead of the accent. */
-.lp-hero-flow img {
+.adh-family .lp-hero-flow img {
   display: block;
   width: min(112px, 26vw);
   height: auto;
   margin: 0 auto 1.8rem;
 }
 
-.lp-hero-flow h1 em {
+.adh-family .lp-hero-flow h1 em {
   color: var(--lp-accent, #d8d8d8);
   font-style: normal;
 }
@@ -118,16 +127,18 @@ body {
  * read as a column that ran out rather than a paragraph that ended. Scoped to `.lp-band`
  * so the deck keeps its measure, and one class deeper than each cap, so it wins on
  * specificity rather than import order. */
-.lp-band .lp-head,
-.lp-band .lp-lede,
-.lp-band .lp-points,
-.lp-band .lp-faq,
-.lp-band .lp-faq details p,
-.lp-band .lp-closer p {
+.adh-family .lp-band .lp-head,
+.adh-family .lp-band .lp-lede,
+.adh-family .lp-band .lp-points,
+.adh-family .lp-band .lp-faq,
+.adh-family .lp-band .lp-faq details p,
+.adh-family .lp-band .lp-closer p {
   max-width: none;
 }
 
-::selection {
+/* `:root:has()` rather than `.adh-family ::selection`: a dialog or popover the chrome portals
+ * to <body> is outside the shell's element and still the family's. */
+:root:has(.adh-family) ::selection {
   background: var(--color-accent-dim);
   color: var(--color-accent);
 }
@@ -137,8 +148,8 @@ body {
  * edge-to-edge against the window. Overriding max-width directly, rather than the
  * theme-set variable, keeps this robust regardless of where the injected theme <style>
  * lands in the cascade. The adh rule's 1.5rem side gutter is retained. */
-.adh-header__container,
-.adh-footer__container {
+.adh-family .adh-header__container,
+.adh-family .adh-footer__container {
   max-width: none;
 }
 

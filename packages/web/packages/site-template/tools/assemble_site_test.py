@@ -810,6 +810,30 @@ class AssembleTest(unittest.TestCase):
         self.write("site/components/x.css", css)
         self.assert_refused(self.assemble(), "site/components/x.css", ".lp-band")
 
+    def test_a_framed_cards_grid_asking_for_pair_or_trio_is_refused(self) -> None:
+        # The frame lays every card grid in one column, `--pair` and `--trio` included, so the
+        # flag is inert inside it. Two sites passed it anyway and read a two-up grid that never
+        # rendered; refused, so a third does not.
+        cases = {
+            "pair": '<Cards pair className="x">',
+            "trio": "<Cards\n  trio\n>",
+            "pair={true}": "<Cards pair={true}>",
+        }
+        for name, jsx in cases.items():
+            for folder in ("components", "routes"):
+                with self.subTest(name=name, folder=folder):
+                    rel = f"site/{folder}/bands.tsx"
+                    self.write(rel, f"export const B = () => ({jsx}</Cards>)\n")
+                    self.assert_refused(self.assemble(), rel, "Cards", name.split("=")[0])
+                    (self.site / rel).unlink()
+
+    def test_cards_without_a_column_flag_or_outside_the_frame_assemble(self) -> None:
+        self.write("site/components/ok.tsx", '<Cards className="x"><Card title="pair" /></Cards>\n')
+        self.write("site/components/words.tsx", "const pair = 2; const trio = 3; // <Cards> takes no pair\n")
+        # `app-routes` are bare: no frame, so the kit's grids lay out as the kit draws them.
+        self.write("site/app-routes/old/page.tsx", "export default () => <Cards pair></Cards>\n")
+        self.assert_ok(self.assemble())
+
     def test_real_comments_are_still_ignored(self) -> None:
         self.write("site/components/x.css", "/* .lp-band body html */ .mine { color: red }\n")
         self.assert_ok(self.assemble())

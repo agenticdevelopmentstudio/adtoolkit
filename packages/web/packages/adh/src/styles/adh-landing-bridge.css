@@ -11,8 +11,15 @@
  * on a border or hover state even once the base palette is themed — a
  * half-finished-looking site rather than a visible bug. Each is landing's own
  * fallback re-expressed against the role it was sampled from.
+ *
+ * `:root:has(.adh-family)`, not `:root`: the contract is assigned only while a family shell
+ * (MarketingShell, whose root carries the class) is in the document. A templated site's
+ * `/` is the site template's landing, which assigns its own `--lp-*` from its own theme;
+ * this sheet stays loaded after a client-side navigation there from a family route, and
+ * unscoped it re-pointed every token that page reads. Still the root element, so the
+ * tokens read on <html> itself (`--lp-root-size`) keep resolving.
  */
-:root {
+:root:has(.adh-family) {
   /* Palette — same derivations as devteam's globals.css :root. */
   --lp-ground: var(--color-surface);
   --lp-raise: var(--color-surface-container-high);

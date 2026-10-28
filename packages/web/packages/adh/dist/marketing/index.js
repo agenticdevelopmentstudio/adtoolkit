@@ -209,7 +209,9 @@ import { AdhThemeStyle } from "@agentic-toolkit/adh/server";
 import { getLocale, htmlLang, localeDir } from "@agentic-toolkit/adh/concepts";
 
 // src/marketing/MarketingShell.tsx
-import { Fragment as Fragment3 } from "react";
+import {
+  Fragment as Fragment3
+} from "react";
 import { AppShell } from "@agentic-toolkit/adh/layout";
 import { AuthProvider } from "@agentic-toolkit/adh/auth";
 import { MarketingSiteHeader } from "@agentic-toolkit/adh/marketing/MarketingSiteHeader";
@@ -217,6 +219,8 @@ import {
   HelpContentProvider
 } from "@agenticdevelopertoolkit/ui/components/help-content";
 import { jsx as jsx4 } from "react/jsx-runtime";
+var FAMILY_ROOT_CLASS = "adh-family";
+var FAMILY_ROOT_STYLE = { display: "contents" };
 function MarketingShell({
   siteId,
   navLinks,
@@ -230,22 +234,30 @@ function MarketingShell({
   children
 }) {
   const SiteProviders = providers ?? Fragment3;
-  return /* @__PURE__ */ jsx4(HelpContentProvider, { help: help ?? {}, children: /* @__PURE__ */ jsx4(AuthProvider, { clientId: "adh", storageKey: "auth_tokens", silentSso, children: /* @__PURE__ */ jsx4(SiteProviders, { children: /* @__PURE__ */ jsx4(
-    AppShell,
+  return /* @__PURE__ */ jsx4("div", { className: FAMILY_ROOT_CLASS, style: FAMILY_ROOT_STYLE, children: /* @__PURE__ */ jsx4(HelpContentProvider, { help: help ?? {}, children: /* @__PURE__ */ jsx4(
+    AuthProvider,
     {
-      header: header ?? /* @__PURE__ */ jsx4(
-        MarketingSiteHeader,
+      clientId: "adh",
+      storageKey: "auth_tokens",
+      silentSso,
+      children: /* @__PURE__ */ jsx4(SiteProviders, { children: /* @__PURE__ */ jsx4(
+        AppShell,
         {
-          siteId,
-          navLinks,
-          trailingNavLinks
+          header: header ?? /* @__PURE__ */ jsx4(
+            MarketingSiteHeader,
+            {
+              siteId,
+              navLinks,
+              trailingNavLinks
+            }
+          ),
+          footer: { links: footerLinks ?? [] },
+          chromeGate,
+          children
         }
-      ),
-      footer: { links: footerLinks ?? [] },
-      chromeGate,
-      children
+      ) })
     }
-  ) }) }) });
+  ) }) });
 }
 
 // src/marketing/MarketingRootHtml.tsx

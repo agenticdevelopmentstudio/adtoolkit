@@ -84,6 +84,14 @@ SITE_TREES = [
 # The folders whose CSS is part of a page's styles, and so is checked for frame names. CSS under
 # public/ and app-root/ is a static asset served as-is.
 STYLED_TREES = ("components", "routes", "app-routes", "src")
+# The folders whose code renders inside the frame (slot components and framed routes), where the
+# frame's one-column card grid makes the kit's `pair` and `trio` flags inert.
+FRAMED_TREES = ("components", "routes")
+SCRIPT_SUFFIXES = (".tsx", ".jsx", ".ts", ".js")
+# A `<Cards …>` opening tag, attributes and all (multi-line included), and a bare `pair`/`trio`
+# attribute in it: `pair`, `pair={true}`, never `pairs` or `data-pair`.
+CARDS_TAG = re.compile(r"<Cards\b([^>]*)>")
+COLUMN_FLAG = re.compile(r"(?<![\w.$-])(pair|trio)(?![\w-])(?=\s*(?:=|/|$|\s))")
 
 # The files that make a URL in the App Router: a page and a route handler cannot share one.
 ROUTE_FILE = re.compile(r"^(page|route)\.(tsx|ts|jsx|js|mdx)$")
@@ -453,6 +461,17 @@ def frame_names(css: str) -> list[tuple[str, str]]:
         found += [(prelude, name) for name in selector_frame_names(prelude)]
         found += frame_names(body)
     return found
+
+
+def check_framed_cards(code: str, label: str) -> list[str]:
+    """A `<Cards pair>` or `<Cards trio>` inside the frame, refused: the frame sets every card
+    grid in one column (frame.css), so the flag asks for a layout that never renders."""
+    return [
+        f"{label}: <Cards {flag}> is inert inside the frame, which lays every card grid in one "
+        f"column; drop `{flag}`"
+        for attributes in CARDS_TAG.findall(code)
+        for flag in COLUMN_FLAG.findall(attributes)
+    ]
 
 
 def check_site_css(css: str, label: str) -> list[str]:
@@ -1015,6 +1034,8 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
             label = f"site/{folder}/{rel}"
             if path.suffix == ".css" and folder in STYLED_TREES:
                 plan.problems += check_site_css(path.read_text(), label)
+            if path.suffix in SCRIPT_SUFFIXES and folder in FRAMED_TREES:
+                plan.problems += check_framed_cards(path.read_text(), label)
             plan.add(f"{target_root}/{rel}" if target_root else rel, path.read_bytes(), label, from_site=True)
     plan.problems += url_collisions(plan)
 

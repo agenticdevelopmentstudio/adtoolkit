@@ -616,3 +616,16 @@
   outline: 2px solid var(--lp-accent, #9a9a9a);
   outline-offset: 3px;
 }
+
+/* At phone width the row wraps, and a bar between two links would land at the end of one line
+ * or the start of the next with nothing on its far side. The bars come out and a column gap
+ * spaces the links instead. */
+@media (max-width: 640px) {
+  .lp-hero-nav {
+    column-gap: 1.2rem;
+  }
+
+  .lp-hero-nav__sep {
+    display: none;
+  }
+}
