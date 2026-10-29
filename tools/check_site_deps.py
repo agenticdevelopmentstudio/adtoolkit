@@ -2,8 +2,8 @@
 """Every site under `websites/` must declare, and be able to resolve, what it imports.
 
 The demo site is the only consumer of these packages that ships inside this repo,
-and CI does not build it. `web-tests.yml` installs and builds `packages/web` and
-runs its suites; `websites/` is in the workflow's path filter but nothing in the
+and CI does not build it. `deployment/run-ci` installs and builds `packages/web` and
+runs its suites; `websites/` is scanned by the guards but nothing in the
 job ever enters it. So the one place a reader looks to see the library actually
 used is also the one place no automated check has ever looked.
 

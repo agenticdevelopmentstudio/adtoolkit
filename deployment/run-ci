@@ -1,0 +1,179 @@
+#!/usr/bin/env python3
+"""Local CI for the toolkit. Run from the repo root: deployment/run-ci [--from STEP].
+
+This replaces .github/workflows/web-tests.yml. None of our projects use GitHub Actions;
+CI is a script you run. ADT is consumed as a submodule by more than one host repo, so
+its suites run AT THE SOURCE, not only inside a consumer's CI at whatever pinned SHA that
+consumer happens to hold. Steps run in order and stop at the first failure.
+"""
+import argparse
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from run_ci_lib import dist_drift, reached_patterns  # noqa: E402
+
+PY = "python3"
+ADH_DIST = "packages/web/packages/adh/dist"
+
+
+class StepFailed(Exception):
+    pass
+
+
+def sh(cmd: list[str], cwd: str = ".") -> None:
+    """Run one command; on failure print it and raise."""
+    r = subprocess.run(cmd, cwd=ROOT / cwd)
+    if r.returncode != 0:
+        print(f"FAILED: {' '.join(cmd)}  (cwd: {cwd}, exit {r.returncode})", file=sys.stderr)
+        raise StepFailed
+
+
+# Pure-Python, no toolchain: these run before install so a regression fails in
+# seconds rather than after the whole workspace builds. Self-test first, for each
+# guard: a guard whose failing case has rotted passes vacuously. The drift check's
+# own test (deployment/run_ci_test.py) leads for the same reason.
+# The guards' roots: check_no_private_scope.py scans packages/web/packages, recipes,
+# docs, websites plus README.md, AGENTS.md and .claude/CLAUDE.md; check_doc_links.py
+# scans the whole repo; check_recipe_scope.py scans recipes and docs; check_site_deps.py
+# scans websites, which nothing else here enters (install/build/test all run inside
+# packages/web). There is no path filter any more: every run runs everything.
+def repo_guards() -> None:
+    for cmd in [
+        ["deployment/run_ci_test.py"],
+        ["packages/web/tools/check_license_fields_test.py"],
+        ["packages/web/tools/check_license_fields.py"],
+        ["tools/check_recipe_scope_test.py"],
+        ["tools/check_recipe_scope.py"],
+        ["tools/check_recipe_scope.py", "--root", "docs"],
+        ["tools/check_doc_links_test.py"],
+        ["tools/check_doc_links.py"],
+        ["tools/check_doc_subpaths_test.py"],
+        ["tools/check_doc_subpaths.py"],
+        ["tools/check_site_deps_test.py"],
+        ["tools/check_site_deps.py"],
+        ["tools/rewrite_toolkit_scope_test.py"],
+        ["tools/classify_recipes_test.py"],
+        ["packages/web/tools/copy_css_orphan_test.py"],
+    ]:
+        sh([PY, *cmd])
+
+
+# adh's persona-chat keeps a COPY of chat's contract types rather than a dep (the
+# layering in packages/web/packages/adh keeps the persona toolkit out of adh's shipped
+# graph), so nothing but this check notices the two drifting. Run from packages/web
+# because the verifier resolves both files from there.
+def chat_contract() -> None:
+    sh([PY, "tools/verify_chat_types_copy_test.py"], "packages/web")
+    sh([PY, "tools/verify_chat_types_copy.py"], "packages/web")
+
+
+# Eight packages arrived here from a PRIVATE repo, each carrying the prose its old home
+# wrote about it. The per-package arrival checks scan src/, which is where the imports
+# are, and imports are not where this leaks. It leaks in a README, a CHANGELOG, a
+# comment in a config file: the files nobody greps because they do not compile.
+def no_private_scope() -> None:
+    sh([PY, "tools/check_no_private_scope_test.py"])
+    sh([PY, "tools/check_no_private_scope.py"])
+
+
+def install() -> None:
+    sh(["pnpm", "install", "--frozen-lockfile"], "packages/web")
+
+
+# A fresh checkout has neither `themes`' generated src/theme-data.ts (gitignored,
+# produced by its own `build:data`) nor any package's `dist/`. Most packages resolve
+# straight from `src/` for an in-repo/workspace consumer with no build step, but
+# `model` (package.json's `main`/`exports` point only at `./dist/...`, no source
+# fallback) does not, and `controls` depends on it. Both gaps are invisible in a dev
+# checkout, where a prior `pnpm build` or `./install.sh` leaves stale artifacts on disk
+# indefinitely. This step is what makes CI exercise a clean build instead of trusting
+# whatever the last local build left behind.
+def build() -> None:
+    sh(["pnpm", "build"], "packages/web")
+
+
+# adh is the one package that COMMITS its dist (see packages/adh/.gitignore: it has
+# consumers that check the submodule out and never build). Nothing compared that
+# committed copy with its src, so a src change landed with the old dist and the next
+# person to build anything that links adh found the toolkit dirty, rebuilt it, and
+# committed someone else's change under their own. The build above has just rewritten
+# every tracked dist file from src, so any difference now is a stale commit. The build
+# is deterministic (relative source-map paths, no timestamps), so a clean tree is the
+# pass. NEW dist files count too: the .gitignore ignores dist/, so a new file never
+# shows in `git status`, and dist_drift lists untracked files WITHOUT --exclude-standard.
+# But that .gitignore also leaves ~70 internal .d.ts/.d.ts.map byproducts untracked on
+# purpose, so an ignored file fails only if adh's `exports` map reaches it (the same
+# direction adh-tools' verify_dist_completeness.py checks); a visible untracked file always fails.
+def adh_dist_drift() -> None:
+    reached = reached_patterns(ROOT / "packages/web/packages/adh", ADH_DIST)
+    problems = dist_drift(ROOT, ADH_DIST, reached)
+    if problems:
+        print("\n".join(problems), file=sys.stderr)
+        print(
+            f"FAILED: adh's committed dist does not match its src ({ADH_DIST}).\n"
+            "Rebuild adh and commit what changed. Force-add NEW dist files one by one\n"
+            "(`git add -f <path>`), per packages/web/packages/adh/.gitignore; never `git add -f dist`.",
+            file=sys.stderr,
+        )
+        raise StepFailed
+
+
+# The boundary checks (self-test first) and every package's `tsc`. Per-package tsc
+# resolves sibling DIST types that a fresh checkout has not built; the build step
+# above is what makes it runnable.
+def lint() -> None:
+    sh(["pnpm", "lint"], "packages/web")
+
+
+# One command, both halves, because neither alone covers the workspace. The root
+# `vitest run` is configured with `dir: './packages'`, so it DISCOVERS every package's
+# tests including the ones that declare no test script of their own, `chat` among them.
+# `pnpm -r --if-present run test` covers the opposite gap: a package that declares a
+# test script runs under ITS OWN config, which is the config its consumers build
+# against and which can differ from the root's. That only holds because every such
+# package carries a vitest.config.ts: vitest walks up to the root config but keeps cwd
+# as its root, so the root's `dir: './packages'` would resolve to <package>/packages
+# and silently match nothing. A package that declares `test` without its own config
+# runs zero tests and exits 0. The root `test` script chains the two, and it is the
+# command CONTRIBUTING.md tells contributors to run.
+def test() -> None:
+    sh(["pnpm", "test"], "packages/web")
+
+
+STEPS = [
+    ("repo-guards", repo_guards),
+    ("chat-contract", chat_contract),
+    ("no-private-scope", no_private_scope),
+    ("install", install),
+    ("build", build),
+    ("adh-dist-drift", adh_dist_drift),
+    ("lint", lint),
+    ("test", test),
+]
+
+
+def main() -> int:
+    names = [n for n, _ in STEPS]
+    ap = argparse.ArgumentParser(description="Run the toolkit's CI locally.")
+    ap.add_argument("--from", dest="start", choices=names, help="resume at this step")
+    args = ap.parse_args()
+    first = names.index(args.start) if args.start else 0
+    for name, fn in STEPS[first:]:
+        print(f"==> {name}: start", flush=True)
+        t0 = time.monotonic()
+        try:
+            fn()
+        except StepFailed:
+            print(f"==> {name}: FAILED after {time.monotonic() - t0:.1f}s", flush=True)
+            return 1
+        print(f"==> {name}: ok in {time.monotonic() - t0:.1f}s", flush=True)
+    print("CI passed")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

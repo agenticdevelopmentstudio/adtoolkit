@@ -11,7 +11,7 @@ import { siteIdForDir, type SiteId } from '../registry'
 // either file's public surface to reach across the boundary between them.
 //
 // Absent means one thing only: the toolkit checked out standalone, which is what its own
-// web-tests.yml does. adh's ci.yml and adhmarketing's both run this suite from inside a
+// deployment/run-ci does. adh's ci.yml and adhmarketing's both run this suite from inside a
 // checkout that HAS site folders, so the filesystem cases run in the repositories whose
 // folders they are about.
 //

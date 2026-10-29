@@ -18,7 +18,7 @@
     // The third is the fixture bundled beside the source, and it is LAST so it
     // can only ever be the fallback: wherever a real character is reachable, it
     // wins. Without it, a checkout of this repo alone — which is what
-    // `web-tests.yml` does, since whatsnow-toolkit is a parent of this repo and
+    // `deployment/run-ci` does, since whatsnow-toolkit is a parent of this repo and
     // never a submodule of it — fails `pnpm lint` with TS2307 on all six
     // imports, even though the suite itself runs green there via the upward
     // search. See `character-dir.ts` for why the fallback exists at all.

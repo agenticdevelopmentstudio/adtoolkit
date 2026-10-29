@@ -538,7 +538,7 @@ describe('MAIN_SITE_IDS / MARKETING_SITE_IDS (the site-app roster)', () => {
   // package's public surface to reach across the boundary between them.
   //
   // Absent means one thing only: the toolkit checked out standalone, which is what its
-  // own web-tests.yml does. adh's ci.yml runs this suite from inside the adh checkout
+  // own deployment/run-ci does. adh's ci.yml runs this suite from inside the adh checkout
   // ("Toolkit unit tests"), where the families are present and both assertions run — so
   // the guard still fires in the repository whose folders it is about.
   //

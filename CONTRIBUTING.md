@@ -21,6 +21,7 @@ emits its own types with `tsc --emitDeclarationOnly`.
 ## Before you open a pull request
 
 - `pnpm test` passes.
+- `deployment/run-ci` (from the repo root) is the whole CI: the repo guards, build, lint and tests. There is no hosted CI.
 - `python3 packages/web/tools/check_license_fields.py` passes.
 - New packages declare `"license": "Apache-2.0"`.
 - Components stay presentational. This toolkit does not fetch, authenticate, or

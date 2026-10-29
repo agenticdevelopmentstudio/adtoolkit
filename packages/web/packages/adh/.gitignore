@@ -16,6 +16,8 @@
 # verify_dist_completeness.py, run from adh's CI: it walks the exports map, fails on any
 # reached-but-untracked file, and names the on-disk path to `git add -f`.
 #
+# CI (deployment/run-ci) fails on any dist file that is new on disk and untracked, ignored or not.
+#
 # So: after rebuilding, run that guard and force-add EXACTLY what it names, one path
 # at a time. Never `git add -f dist` — the `-f` defeats the rule above wholesale, and
 # it sweeps in precisely the internal byproducts the rule exists to keep out. That is

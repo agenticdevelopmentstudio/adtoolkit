@@ -145,7 +145,7 @@ function workspaceRoot(): string {
  * This repository is a submodule with more than one host, and it is CI'd twice: adh's
  * `ci.yml` runs these very suites from `frontend/src/external/agentictoolkit/packages/web`
  * (the "Toolkit unit tests" step), where frontend/src is right there; the toolkit's own
- * `web-tests.yml` checks this repo out ALONE, where it does not exist at any depth. So a
+ * `deployment/run-ci` checks this repo out ALONE, where it does not exist at any depth. So a
  * walk-up that throws when the marker is missing — which is what this was — turns the
  * toolkit's own gate red on a file it cannot possibly satisfy, and takes the whole suite
  * down with it, since both scans below evaluate it in a describe body.

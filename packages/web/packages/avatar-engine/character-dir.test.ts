@@ -43,7 +43,7 @@ describe("the bundled character fixture", () => {
 });
 
 describe("findCharacterDir", () => {
-  // The regression this whole fixture exists for. `web-tests.yml` checks this
+  // The regression this whole fixture exists for. `deployment/run-ci` checks this
   // repo out ALONE — whatsnow-toolkit is a parent of it, never a submodule — so
   // the upward search reaches `/` and finds nothing. It used to throw there,
   // which meant the workspace's own CI could not collect a single one of these

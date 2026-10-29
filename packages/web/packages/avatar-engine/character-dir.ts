@@ -40,7 +40,7 @@ export const BUNDLED_CHARACTER_DIR = resolve(HERE, "src/__fixtures__/olylo");
  *     exists, so the parity run inside whatsnow-toolkit is unaffected by the
  *     bundled copy.
  *  3. The bundled fixture. This used to THROW instead, which made the suite
- *     unrunnable in this repo's own CI: `web-tests.yml` checks out
+ *     unrunnable in this repo's own CI: `deployment/run-ci` checks out
  *     agenticdevelopertoolkit alone, and whatsnow-toolkit is a *parent* of it,
  *     never a submodule, so there is no ancestor to find and not one test was
  *     ever collected. A library whose tests only run inside one particular

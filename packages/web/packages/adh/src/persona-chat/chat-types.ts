@@ -13,7 +13,7 @@
 //
 // If the source file changes shape, this copy must follow. It is duplication with a
 // named source, not an independent definition — and `packages/web/tools/
-// verify_chat_types_copy.py` (run in web-tests CI) fails the build when the two
+// verify_chat_types_copy.py` (run by deployment/run-ci) fails the build when the two
 // disagree. Nothing else would notice: a stale copy still compiles, and a consumer's
 // real backend just satisfies a shape this repo believes is current.
 

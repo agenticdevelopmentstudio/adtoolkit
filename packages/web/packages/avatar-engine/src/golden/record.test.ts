@@ -85,7 +85,7 @@ describe("recordScenario", () => {
 //
 // `skipIf`, because the character this suite loads is not always the one the
 // goldens were recorded against. A checkout of THIS repo alone -- which is what
-// `web-tests.yml` does -- has no `characters/olylo` in any ancestor and falls
+// `deployment/run-ci` does -- has no `characters/olylo` in any ancestor and falls
 // back to the copy bundled in `src/__fixtures__/olylo`, which deliberately does
 // not vendor 93MB of recorded frames. Skipping the comparison there leaves the
 // six recorder tests above running, which excluding the whole file did not.
