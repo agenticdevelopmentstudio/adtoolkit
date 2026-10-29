@@ -5,9 +5,9 @@ branch, not built or tested (one build and test pass is planned for the end of
 the move). This is the toolkit's side of extracting the session-capture parts of
 Stenographer's `stenographerd` so a second daemon (the Kitchen's `adkd`) can
 link them. Placement and rationale for the whole effort: Stenographer's
-`docs/designs/2026-10-16-shared-session-daemon-core.md` (its "As built" section
+`designs/2026-10-16-shared-session-daemon-core.md` under its `docs/` (its "As built" section
 lists the departures from the design); the Kitchen's daemon: its
-`docs/designs/2026-10-16-adkd-daemon.md`. The sections down to "Consumers" were
+`designs/2026-10-16-adkd-daemon.md` under its `docs/`. The sections down to "Consumers" were
 written as the plan; "As built" at the end corrects them where the code differs.
 
 ## What the toolkit gains

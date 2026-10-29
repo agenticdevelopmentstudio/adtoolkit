@@ -104,7 +104,7 @@ Required keys are marked **req**.
 | `source.branch` | string | `main` | The app repo's release branch. |
 | `source.tag_prefix` | string | `release/` | The source tag is `<prefix><version>`. |
 | `site.routes` | object | `{"downloads": "/downloads", "latest": "/downloads/latest", "appcast": "/appcast.xml"}` | If set, must have exactly those three keys. |
-| `notes_dir` | path | `docs/release-notes` | Release notes live at `<notes_dir>/<version>.md`; preflight requires them. |
+| `notes_dir` | path | `release-notes/` in the app repo's `docs/` | Release notes live at `<notes_dir>/<version>.md`; preflight requires them. |
 | `cask.token` | string | **req** | The Homebrew cask token; the cask lands at `Casks/<token>.rb`. |
 | `cask.template` | path | **req** | A `string.Template` file (see below). |
 | `pkg.must_close` | list of bundle ids | `[]` | Extra ids the pkg's installer must quit; `app.bundle_id` is always added. |

@@ -175,7 +175,7 @@ Each step below is its own commit on this branch.
    - `abstractr check` must be clean.
 6. **The neutrality boundary** (per D1): retune or retire
    `check_no_private_scope.py`, and ATK's `check_boundaries.py`, which bans
-   portable packages from importing `@agentic-toolkit/adh*`.
+   portable packages from importing the product-specific `adh*` packages.
 7. **Package scope** (per D2): keep `@agentic-toolkit/*`, or run ATK's own
    `rewrite_toolkit_scope.py` to rename it everywhere.
 8. **Spec systems** (per D4): fold `cookbook/` into `recipes/` with

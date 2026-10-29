@@ -124,8 +124,13 @@ def markdown_files(pkg_dir: Path) -> "list[Path]":
 
 
 def line_texts(line: str) -> "list[str]":
-    return [m.group(2) for m in QUOTED_RE.finditer(line)] + \
-           [m.group(1) for m in BACKTICK_RE.finditer(line)]
+    """Every quoted or backticked piece of the line, split into whitespace-separated
+    tokens and stripped of filesystem paths: an npm specifier is ONE token and never
+    starts with `.` or `/`, so `python3 ../external/<repo>/packages/web/packages/x/y.py`
+    is a command naming a checkout on disk, not a package reference with a wrong scope."""
+    pieces = [m.group(2) for m in QUOTED_RE.finditer(line)] + \
+             [m.group(1) for m in BACKTICK_RE.finditer(line)]
+    return [tok for piece in pieces for tok in piece.split() if not tok.startswith((".", "/"))]
 
 
 def candidate_for(text: str, basename: str) -> "tuple[str, str] | None":

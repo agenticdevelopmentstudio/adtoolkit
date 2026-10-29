@@ -143,7 +143,7 @@ Defaults, so a key may be left out:
 | `releases.branch` | `main` |
 | `source.branch` / `source.tag_prefix` | `main` / `release/` |
 | `site.routes` | `{"downloads": "/downloads", "latest": "/downloads/latest", "appcast": "/appcast.xml"}` |
-| `notes_dir` | `docs/release-notes` |
+| `notes_dir` | `release-notes/` in the app repo's `docs/` |
 | `pkg.must_close` | `[app.bundle_id]` is always added; this lists *extra* ids |
 | `pkg.scripts` | none (payload-only pkg) |
 | `install.apps_dir` | `/Applications` |

@@ -51,7 +51,7 @@ public struct MacPermissionGate: ContextPermissionGate {
     /// correction: the answer has to be observed by the process that will do
     /// the reading, at the moment it reads. See
     /// `ContextCollector.requestPermission` for the consent check that guards
-    /// this, and `docs/planning/STATUS.md` ("Verification status") for what
+    /// this, and Olylo's planning `STATUS.md` ("Verification status") for what
     /// each permission was observed to do from the daemon on real hardware.
     @discardableResult
     public func request(_ permission: ContextPermission) async -> ContextPermissionState {

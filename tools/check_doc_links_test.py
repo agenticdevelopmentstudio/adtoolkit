@@ -199,4 +199,20 @@ with tempfile.TemporaryDirectory() as tmp:
     check("a live citation of a missing archived doc fails", bad.returncode, 1)
     check("names the archived target", "docs/archive/plans/moved.md" in bad.stderr, True)
 
-print("check_doc_links_test: 15 passed")
+    # (16) A glob or placeholder INSIDE the filename segment names no single file
+    #      either. The path pattern stops at `*` and `<`, so `pre_*_test.py` reaches
+    #      the check as the half-name `packages/x/pre_`, which is not a coordinate.
+    #      A bold-wrapped citation (`**path**`) is still a real one.
+    root = Path(tmp) / "filename-patterns"
+    (root / "recipes").mkdir(parents=True)
+    (root / "packages").mkdir()
+    (root / "recipes" / "guide.md").write_text(
+        "tests are `packages/x/pre_*_test.py`\n"
+        "named `packages/x/pre_<area>_test.py`\n"
+        "and `packages/x/file.*`\n"
+    )
+    check("filename glob and placeholder are skipped", run(root).returncode, 0)
+    (root / "recipes" / "guide.md").write_text("see **packages/x/gone.ts** here\n")
+    check("a bold-wrapped dangling citation still fails", run(root).returncode, 1)
+
+print("check_doc_links_test: 16 passed")

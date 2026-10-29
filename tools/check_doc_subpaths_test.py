@@ -76,6 +76,21 @@ def test_wrong_scope_is_caught() -> None:
         assert "wrong scope" in result.stderr, result.stderr
 
 
+def test_filesystem_path_in_a_command_is_not_a_specifier() -> None:
+    """A build command naming a submodule checkout on disk contains the package's
+    basename as a path segment, and the toolkit's own name before it. That is a
+    path, not a mis-scoped specifier."""
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        _make_package(
+            root, "widget", "@agenticdevelopertoolkit/widget",
+            {".": "./dist/index.js"},
+            '"buildCommand": "python3 ../external/agenticdevelopertoolkit/packages/web/packages/widget/tools/b.py"\n',
+        )
+        result = run(root)
+        assert result.returncode == 0, result.stderr
+
+
 def test_wildcard_export_resolves() -> None:
     """`ui` exports `./components/*`. The subpath match must be a GLOB, not a
     set-membership test, or every wildcarded package fails on everything."""

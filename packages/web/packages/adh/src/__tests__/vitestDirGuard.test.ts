@@ -26,14 +26,17 @@ const ROOT = fileURLToPath(new URL("../../../..", import.meta.url)); // src/__te
 
 let checkDirTarget: (argv: string[], cwd: string, packagesDir?: string) => void;
 let packagesWithOwnConfig: (packagesDir?: string) => string[];
+let packagesWithOwnRunner: (packagesDir?: string) => string[];
 
 beforeAll(async () => {
   const loaded = (await import(new URL("../../../../vitest.config.ts", import.meta.url).href)) as {
     checkDirTarget: typeof checkDirTarget;
     packagesWithOwnConfig: typeof packagesWithOwnConfig;
+    packagesWithOwnRunner: typeof packagesWithOwnRunner;
   };
   checkDirTarget = loaded.checkDirTarget;
   packagesWithOwnConfig = loaded.packagesWithOwnConfig;
+  packagesWithOwnRunner = loaded.packagesWithOwnRunner;
 });
 
 const FIXTURE_ROOT = join(ROOT, "__vitestDirGuardFixture__");
@@ -110,5 +113,29 @@ describe("workspace-root vitest.config.ts's --dir guard", () => {
   it("stays out of the way when there is no --dir flag at all", () => {
     makeFixture();
     expect(() => checkDirTarget(["node", "vitest.mjs", "run"], FIXTURE_ROOT, FIXTURE_ROOT)).not.toThrow();
+  });
+});
+
+describe("workspace-root vitest.config.ts's other-runner lane", () => {
+  // `releases` tests with `node --test`; vitest's glob would find its files and report
+  // "No test suite found" for each. A live check, so dropping the exclusion is caught.
+  it("finds releases among the real packages that test with another runner", () => {
+    expect(packagesWithOwnRunner()).toContain("releases");
+  });
+
+  it("names a package whose test script is not vitest, and not one that uses it", () => {
+    mkdirSync(join(FIXTURE_ROOT, "node-test"), { recursive: true });
+    mkdirSync(join(FIXTURE_ROOT, "vitest-too"), { recursive: true });
+    mkdirSync(join(FIXTURE_ROOT, "no-script"), { recursive: true });
+    writeFileSync(
+      join(FIXTURE_ROOT, "node-test", "package.json"),
+      JSON.stringify({ name: "a", scripts: { test: "node --test src/*.test.ts" } }),
+    );
+    writeFileSync(
+      join(FIXTURE_ROOT, "vitest-too", "package.json"),
+      JSON.stringify({ name: "b", scripts: { test: "python3 x.py && vitest run" } }),
+    );
+    writeFileSync(join(FIXTURE_ROOT, "no-script", "package.json"), JSON.stringify({ name: "c" }));
+    expect(packagesWithOwnRunner(FIXTURE_ROOT)).toEqual(["node-test"]);
   });
 });

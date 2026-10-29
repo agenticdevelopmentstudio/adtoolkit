@@ -1164,6 +1164,8 @@ export const SITE_LANDING_SEGMENTS = new Set<string>([
   'claim',
   // toolkit — the component demo.
   'demo',
+  // devteam — the archived page kept at `/old`.
+  'old',
   // billing — where a purchase made before signing in is attached to an account
   // (`app/claim/`). Signed-out by design, so it is a landing page, not a workspace.
   'claim',

@@ -98,6 +98,12 @@ def normalize_source_path(raw: str, rest: str, top_level: set[str]) -> str | Non
     """
     if rest.startswith("/*"):
         return None
+    # A glob or placeholder inside the FILENAME (`pre_*_test.py`, `pre_<area>_test.py`)
+    # stops the pattern mid-name, leaving a half-name that is no coordinate. `**` is not
+    # one: that is a bold-wrapper closing a real citation.
+    if rest.startswith("<") or (rest.startswith("*") and not rest.startswith("**")
+                                and (raw[-1] in "._-" or rest[1:2].isalnum() or rest[1:2] == "_")):
+        return None
     cited = raw.rstrip(_TRAILING)
     parts = cited.split("/")
     if len(parts) < 2 or parts[0] not in top_level:

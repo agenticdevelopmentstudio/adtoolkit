@@ -28,7 +28,7 @@ def test_minimal_config_resolves_every_default(tmp_path):
     assert cfg.derived_data == tmp_path / "home/Library/Developer/Xcode/DerivedData/adkitchen-release"
     assert cfg.site_routes == {"downloads": "/downloads", "latest": "/downloads/latest",
                                "appcast": "/appcast.xml"}
-    assert cfg.notes_path("1.2.0") == repo / "docs/release-notes/1.2.0.md"
+    assert cfg.notes_path("1.2.0") == repo / "docs" / "release-notes" / "1.2.0.md"
     assert cfg.pkg_must_close == (cfg.bundle_id,)
     assert cfg.apps_dir == Path("/Applications")
     assert cfg.toolkit == repo / "external/agenticdevelopertoolkit"

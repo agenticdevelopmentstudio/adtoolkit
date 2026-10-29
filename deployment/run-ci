@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Local CI for the toolkit. Run from the repo root: deployment/run-ci [--from STEP].
+"""Local CI for the toolkit. Run from the repo root: deployment/run-ci [--from STEP] [--skip STEP ...].
 
 This replaces .github/workflows/web-tests.yml. None of our projects use GitHub Actions;
 CI is a script you run. ADT is consumed as a submodule by more than one host repo, so
@@ -14,7 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from run_ci_lib import dist_drift, reached_patterns  # noqa: E402
+from run_ci_lib import dist_drift, reached_patterns, steps_to_run  # noqa: E402
 
 PY = "python3"
 ADH_DIST = "packages/web/packages/adh/dist"
@@ -44,8 +44,6 @@ def sh(cmd: list[str], cwd: str = ".") -> None:
 def repo_guards() -> None:
     for cmd in [
         ["deployment/run_ci_test.py"],
-        ["packages/web/tools/check_license_fields_test.py"],
-        ["packages/web/tools/check_license_fields.py"],
         ["tools/check_recipe_scope_test.py"],
         ["tools/check_recipe_scope.py"],
         ["tools/check_recipe_scope.py", "--root", "docs"],
@@ -60,6 +58,14 @@ def repo_guards() -> None:
         ["packages/web/tools/copy_css_orphan_test.py"],
     ]:
         sh([PY, *cmd])
+
+
+# Every package manifest must declare the licence its repo is published under. Its own
+# step, so a run can say `--skip license-fields` and show every other step green while
+# the licensing decision is open; the step is never reported as passed when skipped.
+def license_fields() -> None:
+    sh([PY, "packages/web/tools/check_license_fields_test.py"])
+    sh([PY, "packages/web/tools/check_license_fields.py"])
 
 
 # adh's persona-chat keeps a COPY of chat's contract types rather than a dep (the
@@ -146,6 +152,7 @@ def test() -> None:
 
 STEPS = [
     ("repo-guards", repo_guards),
+    ("license-fields", license_fields),
     ("chat-contract", chat_contract),
     ("no-private-scope", no_private_scope),
     ("install", install),
@@ -160,17 +167,22 @@ def main() -> int:
     names = [n for n, _ in STEPS]
     ap = argparse.ArgumentParser(description="Run the toolkit's CI locally.")
     ap.add_argument("--from", dest="start", choices=names, help="resume at this step")
+    ap.add_argument("--skip", action="append", default=[], choices=names, metavar="STEP",
+                    help="do not run this step (repeatable); each skip is printed, never counted as a pass")
     args = ap.parse_args()
-    first = names.index(args.start) if args.start else 0
-    for name, fn in STEPS[first:]:
+    by_name = dict(STEPS)
+    for name in steps_to_run(names, args.start, args.skip):
         print(f"==> {name}: start", flush=True)
         t0 = time.monotonic()
         try:
-            fn()
+            by_name[name]()
         except StepFailed:
             print(f"==> {name}: FAILED after {time.monotonic() - t0:.1f}s", flush=True)
             return 1
         print(f"==> {name}: ok in {time.monotonic() - t0:.1f}s", flush=True)
+    if args.skip:
+        print(f"CI passed, SKIPPING: {', '.join(args.skip)}")
+        return 0
     print("CI passed")
     return 0
 

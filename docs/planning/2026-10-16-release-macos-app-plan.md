@@ -83,7 +83,7 @@ tools/apple/macos_app_release/sparkle.py           Task 3
 tools/apple/macos_app_release/site.py              Task 3
 tools/apple/macos_app_release/cask.py              Task 3
 tools/apple/macos_app_release/layout.py            Task 3
-tools/apple/macos_app_release/build.py             Task 4
+tools/apple/macos_app_release/build_pipeline.py             Task 4
 tools/apple/macos_app_release/publish.py           Task 5
 tools/apple/macos_app_release/verify.py            Task 6
 tools/apple/macos_app_release/processes.py         Task 7
@@ -228,7 +228,7 @@ def test_minimal_config_resolves_every_default(tmp_path):
     assert cfg.derived_data == tmp_path / "home/Library/Developer/Xcode/DerivedData/adkitchen-release"
     assert cfg.site_routes == {"downloads": "/downloads", "latest": "/downloads/latest",
                                "appcast": "/appcast.xml"}
-    assert cfg.notes_path("1.2.0") == repo / "docs/release-notes/1.2.0.md"
+    assert cfg.notes_path("1.2.0") == repo / "docs" / "release-notes" / "1.2.0.md"
     assert cfg.pkg_must_close == (cfg.bundle_id,)
     assert cfg.apps_dir == Path("/Applications")
     assert cfg.toolkit == repo / "external/agenticdevelopertoolkit"
@@ -572,7 +572,7 @@ def test_bundle_info_problems_names_each(tmp_path):
 ### Task 4: Build pipeline
 
 **Files:**
-- Create: `tools/apple/macos_app_release/build.py`
+- Create: `tools/apple/macos_app_release/build_pipeline.py`
 - Test: `tools/apple/macos_app_release_build_test.py`
 
 **Interfaces:**

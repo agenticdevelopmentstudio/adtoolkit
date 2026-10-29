@@ -173,7 +173,7 @@ The plan and its status are in
   - olyloapp: `test_pin_is_current`.
   - adh-tools: `adh_config_test`, `verify_rdid_parity_test`,
     `verify_seed_sites_test`, `verify_site_identity_test`.
-  - adh: `check_ui.py` and `review.py` can't find `tools/repo_paths.py`.
+  - adh: `check_ui.py` and `review.py` can't find `repo_paths.py` (in adh's `tools/`).
   - hubapp: the signed iOS build fails because the
     `EmbedTransitiveFrameworks` step assumes the macOS bundle layout.
   - The ATK failures: `OAuthCallback`, `hostCascade`,
