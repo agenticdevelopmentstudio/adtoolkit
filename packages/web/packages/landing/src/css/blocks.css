@@ -264,6 +264,11 @@
 .lp-wrap > .lp-lede {
   margin-top: 1.8rem;
 }
+/* A versus straight after prose has nothing of its own above it, so the panels
+ * would butt against the text. The same gap a lede takes after a block. */
+.lp-wrap > .lp-lede + .lp-versus {
+  margin-top: 1.8rem;
+}
 
 /* ---- cards ----
  * `auto-fit` with a `minmax` floor rather than a fixed column count: the number
@@ -479,6 +484,14 @@
 .lp-table-scroll {
   overflow-x: auto;
   border-radius: var(--lp-radius, 14px);
+}
+/* A table placed straight in a flow, outside any band, has no `.lp-wrap` to give
+ * it a side gutter and would run edge to edge and clip. This is `.lp-wrap`'s own
+ * width; inside a band the wrap already does it, so the child selector keeps the
+ * gutter from being taken twice. The wider table scrolls inside this box. */
+.lp-flow > .lp-table-scroll {
+  width: min(100% - 2.5rem, var(--lp-measure, 70rem));
+  margin-inline: auto;
 }
 .lp-table {
   width: 100%;
