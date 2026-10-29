@@ -142,6 +142,10 @@ class AssembleTest(unittest.TestCase):
         self.assertFalse(ignored(".vercel/project.json"))
         self.assertTrue(ignored(".vercel/output/config.json"))
         self.assertTrue(ignored(".next/BUILD_ID"))
+        # A site's Playwright run writes its output beside the app; none of it is source.
+        self.assertTrue(ignored("test-results/.last-run.json"))
+        self.assertTrue(ignored("playwright-report/index.html"))
+        self.assertTrue(ignored("playwright/.cache/x"))
 
     def test_rerun_is_idempotent(self) -> None:
         self.assert_ok(self.assemble())

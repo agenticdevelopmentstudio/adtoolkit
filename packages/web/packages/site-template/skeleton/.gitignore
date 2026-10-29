@@ -3,3 +3,8 @@ next-env.d.ts
 .vercel/*
 !.vercel/project.json
 *.tsbuildinfo
+
+# Playwright output (a site's e2e suite runs from the app directory)
+/test-results/
+/playwright-report/
+/playwright/.cache/
