@@ -12,6 +12,7 @@ export {
   APPEARANCE_STORAGE_KEY,
   APPEARANCE_PREPAINT_SCRIPT,
   applyAppearance,
+  clearAppearance,
   normalizeAppearance,
   readStoredAppearance,
   type AppearancePrefs,

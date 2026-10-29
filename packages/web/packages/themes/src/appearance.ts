@@ -143,6 +143,21 @@ export function applyAppearance(
   }
 }
 
+/**
+ * Take the preferences off a document element again: the `dark` class, `data-color-mode`, and
+ * every attribute applyAppearance (or the pre-paint script) may have set, from the SAME lists.
+ * For a site that mounts the preferences on only some of its routes — a client navigation
+ * keeps the same <html>, so without this they would follow the reader onto a page that never
+ * asked for them.
+ */
+export function clearAppearance(el: HTMLElement): void {
+  el.classList.remove("dark")
+  delete el.dataset.colorMode
+  for (const key of [...Object.keys(ENUM_PREF_DEFAULTS), ...BOOL_PREFS]) {
+    setOrRemove(el, key, null)
+  }
+}
+
 function setOrRemove(el: HTMLElement, dataKey: string, value: string | null): void {
   if (value === null) delete el.dataset[dataKey]
   else el.dataset[dataKey] = value
