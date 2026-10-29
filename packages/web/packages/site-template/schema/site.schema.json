@@ -132,6 +132,12 @@
       "description": "Extra npm dependencies, name to version range. Naming a dependency the template already has is refused.",
       "additionalProperties": { "type": "string" }
     },
+    "scripts": {
+      "type": "object",
+      "description": "package.json scripts beyond the template's, or in place of its checks (`test`, `lint`, `typecheck`): e.g. `{ \"test\": \"vitest run\" }`. `dev`, `build` and `start` stay the template's.",
+      "propertyNames": { "pattern": "^[a-z][a-z0-9:_-]*$" },
+      "additionalProperties": { "type": "string", "pattern": "\\S" }
+    },
     "toolkitPackages": {
       "type": "array",
       "description": "Extra toolkit packages, as directories under the toolkit's `packages/web/packages/` (e.g. `releases`, `features/bitbag`), linked into the app.",

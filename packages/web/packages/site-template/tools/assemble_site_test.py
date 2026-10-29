@@ -727,6 +727,21 @@ class AssembleTest(unittest.TestCase):
         self.config["dependencies"] = {"next": "^15.0.0"}
         self.assert_refused(self.assemble(), "'next'")
 
+    def test_scripts_add_to_and_replace_the_templates(self) -> None:
+        self.config["scripts"] = {"test": "vitest run", "test:e2e": "playwright test"}
+        self.assert_ok(self.assemble())
+        scripts = json.loads((self.app / "package.json").read_text())["scripts"]
+        self.assertEqual(scripts["test"], "vitest run")
+        self.assertEqual(scripts["test:e2e"], "playwright test")
+        self.assertEqual(scripts["typecheck"], "tsc --noEmit")
+        self.assertEqual(scripts["dev"], "next dev -p 5210")
+
+    def test_scripts_may_not_replace_dev_build_or_start(self) -> None:
+        for name in ("dev", "build", "start"):
+            with self.subTest(name=name):
+                self.config["scripts"] = {name: "echo"}
+                self.assert_refused(self.assemble(), "scripts", f"'{name}'")
+
     def test_unknown_toolkit_package_is_refused(self) -> None:
         self.config["toolkitPackages"] = ["no-such-package"]
         self.assert_refused(self.assemble(), "'no-such-package'")

@@ -231,6 +231,13 @@ Each is left out of `src/site/next.ts` when the site leaves it out of `site.json
 building into `.next-e2e` beside a dev server already serving the checkout. The skeleton's
 `tsconfig.json` leaves every `.next-*` out of the typecheck.
 
+## Scripts in `site.json`
+
+`scripts` adds package.json scripts to the template's, or replaces its checks — `test`, `lint`,
+`typecheck` — for a site whose tests are not the template's `node --test` (`{ "test": "vitest run",
+"test:e2e": "playwright test" }`). `dev`, `build` and `start` are refused: the suite, Vercel and
+`next start` run every site through them the same way.
+
 ## Analytics
 
 `"analytics": true` writes `src/site/analytics.tsx` mounting `@vercel/analytics` and

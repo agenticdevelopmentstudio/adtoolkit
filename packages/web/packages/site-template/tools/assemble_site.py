@@ -101,6 +101,9 @@ ROUTE_FILE = re.compile(r"^(page|route)\.(tsx|ts|jsx|js|mdx)$")
 # sets none keeps the next.ts it was assembled with before the key existed.
 NEXT_OPTIONAL = ("redirects", "themeFonts", "buildIdentity", "staleTimes")
 
+# The package.json scripts a site's `scripts` may not replace.
+FIXED_SCRIPTS = ("dev", "build", "start")
+
 # `analytics: true` mounts these in the root layout; the template pins their ranges.
 ANALYTICS_DEPS = {"@vercel/analytics": "^2.0.1", "@vercel/speed-insights": "^2.0.0"}
 
@@ -846,14 +849,20 @@ def raise_roots(css: str) -> str:
 
 def plan_package(base: dict, config: dict, site: Path, app: Path, web: Path, problems: list[str]) -> bytes:
     """`package.json`: the skeleton's base with its `link:` paths rewritten for this app, the dev
-    port, the analytics packages when `analytics` is set, and the site's extra npm dependencies
-    and toolkit packages."""
+    port, the site's own scripts, the analytics packages when `analytics` is set, and the site's
+    extra npm dependencies and toolkit packages."""
 
     def link(package_dir: str) -> str:
         return "link:" + Path(os.path.relpath(site / SITE_TOOLKIT / package_dir, app)).as_posix()
 
     pkg = {"name": Path(config["output"]).name, **{k: v for k, v in base.items() if k != "//"}}
-    pkg["scripts"] = {**pkg["scripts"], "dev": f"next dev -p {config['port']}"}
+    # A site may add scripts and replace the checks (`test`, `lint`, `typecheck`); `dev`, `build`
+    # and `start` are how the suite, Vercel and `next start` run every site, so they stay the
+    # template's.
+    scripts = config.get("scripts", {})
+    for name in sorted(set(scripts) & set(FIXED_SCRIPTS)):
+        problems.append(f"site/site.json: scripts: '{name}' is the template's, which every site runs the same way")
+    pkg["scripts"] = {**pkg["scripts"], **scripts, "dev": f"next dev -p {config['port']}"}
     deps = {
         name: link(spec[len("link:") :]) if spec.startswith("link:") else spec
         for name, spec in pkg["dependencies"].items()
