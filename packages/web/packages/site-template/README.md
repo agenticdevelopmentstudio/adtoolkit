@@ -252,6 +252,25 @@ The template's scripts include `build:next` (`next build`), which every site rep
 `deployment/build` gate runs. A site whose build needs a step first replaces it, e.g.
 `{ "build:next": "npm run fetch-openapi && next build" }`.
 
+## Next is pinned
+
+The generated package.json asks for `next` `16.2.9` exactly, not `^16.2.9`. Every 16.3.x
+release tried (16.3.3, 16.3.8) panics when Turbopack prints a source code frame for a CSS
+warning and the frame's line holds a box-drawing comment rule, which this fleet writes
+everywhere:
+
+```
+thread 'tokio-rt-worker' panicked at crates/next-code-frame/src/highlight.rs:1021:45:
+end byte index 93 is not a char boundary; it is inside '─' (bytes 91..94 of string)
+```
+
+The panic is fatal: `next build` exits with no diagnostic, and `next dev` dies mid e2e run. A
+range let any lockfile generated fresh float onto it. Reproduced 2026-10-28 by importing the
+markdown package's stylesheet as it was before toolkit `d813c3347` (an `@source` warning framed
+over `/* ── … */`) into a templated site: 16.3.3 and 16.3.8 panic; 16.2.9 and 16.4.3 build.
+Move the pin forward only to a release that builds that repro clean — a plain `next build`
+shows it in seconds.
+
 ## ESLint entries in `site.json`
 
 `eslint` lists the site's own flat-config entries — `files`, `ignores` and `rules`, plain JSON —

@@ -802,6 +802,13 @@ class AssembleTest(unittest.TestCase):
         self.assertEqual(scripts["build:next"], "npm run fetch-openapi && next build")
         self.assertEqual(scripts["build"], "next build")
 
+    def test_next_is_pinned_exactly(self) -> None:
+        # 16.3.x panics printing a code frame over a box-drawing comment rule (README, "Next is
+        # pinned"); a range would let any fresh lockfile float onto it.
+        self.assert_ok(self.assemble())
+        deps = json.loads((self.app / "package.json").read_text())["dependencies"]
+        self.assertEqual(deps["next"], "16.2.9")
+
     # --- eslint ------------------------------------------------------------------------------
 
     def test_without_eslint_entries_the_config_is_the_skeletons(self) -> None:

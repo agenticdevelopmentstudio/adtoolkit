@@ -1,5 +1,5 @@
 {
-  "//": "The base of every content site's package.json. NOT copied as it stands: the assembler sets `name` and the dev port, rewrites each `link:` path (written here relative to the toolkit's packages/web/packages/) into one relative to the site's app dir, and adds the site's `dependencies` and `toolkitPackages`.",
+  "//": "The base of every content site's package.json. NOT copied as it stands: the assembler sets `name` and the dev port, rewrites each `link:` path (written here relative to the toolkit's packages/web/packages/) into one relative to the site's app dir, and adds the site's `dependencies` and `toolkitPackages`. `next` is exact, not a range: 16.3.x panics printing a code frame over a box-drawing comment (README, \"Next is pinned\").",
   "version": "0.1.0",
   "type": "module",
   "packageManager": "pnpm@9.15.9",
@@ -17,7 +17,7 @@
     "@agenticdevelopertoolkit/landing": "link:landing",
     "@agenticdevelopertoolkit/site-template": "link:site-template",
     "@agenticdevelopertoolkit/themes": "link:themes",
-    "next": "^16.2.9",
+    "next": "16.2.9",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
