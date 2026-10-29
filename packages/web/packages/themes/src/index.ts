@@ -26,5 +26,6 @@ export {
   useAppearancePreferences,
   adoptAppearance,
   resetAppearance,
+  mountAppearanceScope,
   type UseAppearancePreferences,
 } from './appearance-store'

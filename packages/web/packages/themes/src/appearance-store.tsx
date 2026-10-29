@@ -5,6 +5,7 @@ import { useCallback, useMemo, useSyncExternalStore } from "react"
 import {
   APPEARANCE_DEFAULTS,
   applyAppearance,
+  clearAppearance,
   clearStoredAppearance,
   readStoredAppearance,
   writeStoredAppearance,
@@ -29,6 +30,19 @@ import {
 let current: AppearancePrefs | null = null
 const listeners = new Set<() => void>()
 
+// A site that wears the prefs on only some of its routes (the hub keeps them in a route group;
+// `/` is the site template's frame, which wears none) mounts a scope on those routes. Once any
+// scope has mounted, the store paints <html> only while one is mounted: the OS listener below
+// lives for the app's lifetime and adopt/reset can resolve after the reader has left, and either
+// one painting then would carry the prefs onto a page that never asked for them. A site that
+// never mounts a scope is unscoped and keeps painting, as every site did before scopes existed.
+let scoped = false
+let scopesMounted = 0
+
+function paints(): boolean {
+  return !scoped || scopesMounted > 0
+}
+
 // ONE shared listener for the whole app (not one per subscriber): re-resolve
 // `auto` color mode when the OS scheme flips. Reduced-motion / contrast are
 // handled in CSS @media queries, so only the resolved `.dark` class needs JS.
@@ -49,7 +63,7 @@ const systemDarkMq =
 // addListener, and a hard call would throw here for the same module-scope reason.
 if (typeof systemDarkMq?.addEventListener === "function") {
   systemDarkMq.addEventListener("change", () => {
-    if (current?.colorMode === "auto") {
+    if (current?.colorMode === "auto" && paints()) {
       applyAppearance(document.documentElement, current, systemDarkMq.matches)
     }
   })
@@ -80,10 +94,32 @@ function commit(next: AppearancePrefs, cache: boolean): void {
   current = next
   if (cache) writeStoredAppearance(next)
   else clearStoredAppearance()
-  if (typeof document !== "undefined") {
+  if (typeof document !== "undefined" && paints()) {
     applyAppearance(document.documentElement, next, systemDarkMq?.matches ?? false)
   }
   emit()
+}
+
+/**
+ * Wear the prefs on <html> until the returned release is called. The first mount paints what the
+ * store holds now (a commit made while no scope was mounted was cached, not painted), and the
+ * last release takes the prefs back off. Mounts nest: two scopes paint until both release, and
+ * calling one release twice counts once. Call it from a layout effect, so the paint lands before
+ * the browser does.
+ */
+export function mountAppearanceScope(): () => void {
+  scoped = true
+  scopesMounted += 1
+  if (scopesMounted === 1) {
+    applyAppearance(document.documentElement, getSnapshot(), systemDarkMq?.matches ?? false)
+  }
+  let released = false
+  return () => {
+    if (released) return
+    released = true
+    scopesMounted -= 1
+    if (scopesMounted === 0) clearAppearance(document.documentElement)
+  }
 }
 
 function setPrefs(patch: Partial<AppearancePrefs>): void {
