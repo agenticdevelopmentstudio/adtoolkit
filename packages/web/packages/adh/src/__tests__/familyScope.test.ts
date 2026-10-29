@@ -51,6 +51,19 @@ describe("the family sheets are scoped to the family shell", () => {
     },
   );
 
+  it("gives <html> and <body> a ground colour, never the background shorthand", () => {
+    // The shorthand resets every background longhand, so it wiped the background IMAGE a site
+    // puts on its own body (fishlamp's glow) on every family route. The family's ground is a
+    // colour; a site's image under it is the site's.
+    const shorthands = FAMILY_SHEETS.flatMap((sheet) =>
+      styleRules(sheet)
+        .filter((rule) => rule.selectors.some((s) => /(^|[\s>+~(,])(html|body)\b/.test(s)))
+        .filter((rule) => rule.properties.includes("background"))
+        .map((rule) => rule.selectors.join(", ")),
+    );
+    expect(shorthands).toEqual([]);
+  });
+
   it("lets the other adh sheets reach the document only through adh-owned hooks", () => {
     // The sheets adh-family.css imports are also a site's own `styles.css` (fishlamp mounts the
     // header without the shell), so they cannot all be put under the shell's class. What they

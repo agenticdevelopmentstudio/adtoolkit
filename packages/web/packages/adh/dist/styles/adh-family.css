@@ -74,8 +74,10 @@ body:has(.adh-family) {
      family's ground here at (0,1,1) — the scope's class plus the element — is what
      keeps one site one colour across its landing and its app routes. Same tokens the theme uses, and no
      literal fallback: the theme style is server-rendered into every document in this
-     family (MarketingRootHtml), so there is no paint without it to fall back to. */
-  background: var(--color-surface);
+     family (MarketingRootHtml), so there is no paint without it to fall back to.
+     `background-color`, not the shorthand: the shorthand resets the image too, and wiped
+     the background a site puts on its own body (fishlamp's glow) on every family route. */
+  background-color: var(--color-surface);
   color: var(--color-text-primary);
   /* `clip`, never `hidden`. The deck scrolls the DOCUMENT — that is what makes Safari
      collapse its toolbar, and what `scroll-snap-type` on <html> needs to find its snap
