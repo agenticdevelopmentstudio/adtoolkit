@@ -11,4 +11,5 @@ export { MarketingShell } from './MarketingShell';
 export type { MarketingShellProps } from './MarketingShell';
 export { MarketingFrameHeader, FRAME_HEADER_CLASS } from './MarketingFrameHeader';
 export type { MarketingFrameHeaderProps } from './MarketingFrameHeader';
+export { LandingFooter, LANDING_FOOTER_CLASS } from './LandingFooter';
 //# sourceMappingURL=index.d.ts.map

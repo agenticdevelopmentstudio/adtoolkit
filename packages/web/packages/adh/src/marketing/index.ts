@@ -20,3 +20,5 @@ export type { MarketingShellProps } from './MarketingShell'
 // The shell's header alone, for the site template's `header` slot on a templated site's `/`.
 export { MarketingFrameHeader, FRAME_HEADER_CLASS } from './MarketingFrameHeader'
 export type { MarketingFrameHeaderProps } from './MarketingFrameHeader'
+// The landing page's footer, for the site template's `footer` slot on a templated site's `/`.
+export { LandingFooter, LANDING_FOOTER_CLASS } from './LandingFooter'

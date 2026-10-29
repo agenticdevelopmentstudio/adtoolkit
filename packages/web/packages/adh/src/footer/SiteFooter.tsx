@@ -7,9 +7,10 @@ import {
   type FooterLink,
   type FooterMenuItem,
 } from '@agentic-toolkit/adh/footer'
-import { AboutModal, ABOUT_DIALOG_ID, BRAND_HREF, BRAND_LABEL } from './AboutModal'
+import { AboutModal, ABOUT_DIALOG_ID } from './AboutModal'
+import { BRAND_HREF, BRAND_LABEL, SITES_OVERVIEW_POPOVER_ID, buildVersionLabel } from './identity'
 import { FooterChat } from './FooterChat'
-import { SitesPopover, SITES_OVERVIEW_POPOVER_ID } from './SitesOverview'
+import { SitesPopover } from './SitesOverview'
 import { openLegalModal, TermsModal, PrivacyModal, TERMS_DIALOG_ID, PRIVACY_DIALOG_ID } from './LegalModals'
 import { REST_SLOT_HOST_CLASS } from './useFooterRestOffset'
 
@@ -113,41 +114,6 @@ const legalLinks = (menuId: string): FooterLink[] => [
     className: `adh-footer__legal ${REST_SLOT_HOST_CLASS}`,
   },
 ]
-
-/** The footer's build identity: `v1.0.155 · a73e79b7`, or null when neither field exists.
- *
- *  Two fields doing two jobs. The semver is hand-bumped and scoped to ONE site's
- *  directory, so it answers "did my change ship?"; the SHA is stamped on every
- *  build from any cause — including a submodule bump that touched no file under
- *  the site — so it answers "which build is this?". Each covers the other's blind
- *  spot: a version alone only moves when someone remembers, and a bare SHA means
- *  nothing unless you happen to be holding the commit you deployed.
- *
- *  Both are read as literal `process.env.NEXT_PUBLIC_*` expressions so Next's
- *  build-time substitution reaches them (the same mechanism TelemetryProvider
- *  already round-trips for NEXT_PUBLIC_ADH_RELEASE). Exported for the contract test.
- *
- *  The title carries the FULL sha rather than a build timestamp: a timestamp would
- *  make every build's bundle differ from identical source, and this repo has already
- *  paid for non-reproducible artifacts once.
- *
- *  `live` overrides either field, and exists for exactly one mode. Under `next build`
- *  the literals below ARE the build, so nothing overrides them and this argument is
- *  never passed. Under `next dev` they freeze at dev-server boot and then keep
- *  reporting the commit the session started on for as long as it runs — which is how
- *  a bumped `VERSION` could show nothing on screen. AppShell (a Server Component)
- *  resolves the real pair per render and passes it down; see `liveBuildIdentity`.
- *  A field it could not read with confidence arrives `undefined` and the baked
- *  literal shows through, so this can only ever correct a value, never blank one.
- *
- *  @param live the running server's own identity, in development only. */
-export function buildVersionLabel(live?: { version?: string; sha?: string }) {
-  const version = live?.version ?? process.env.NEXT_PUBLIC_ADH_SITE_VERSION ?? ''
-  const sha = live?.sha ?? process.env.NEXT_PUBLIC_ADH_RELEASE ?? ''
-  const label = [version && `v${version}`, sha && sha.slice(0, 8)].filter(Boolean).join(' · ')
-  if (!label) return null
-  return <span title={sha || undefined}>{label}</span>
-}
 
 /** adh's footer: the toolkit's identity-free primitive ({@link ToolkitFooter}, published as
  *  `AdhFooter` from this same barrel) plus everything that IS adh — the studio's copyright

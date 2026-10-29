@@ -1189,7 +1189,7 @@ import {
   useClientHost as useClientHost4
 } from "@agentic-toolkit/adh/header";
 import { useAnonymousHeaderAuth } from "@agentic-toolkit/adh/header-auth";
-import { getSite as getSite3, siteHeaderTitle as siteHeaderTitle2, siteHomePath, siteProdUrl as siteProdUrl2, siteUrl as siteUrl2 } from "@agentic-toolkit/adh-registry";
+import { getSite as getSite3, siteHeaderTitle as siteHeaderTitle2, siteHomePath, siteProdUrl, siteUrl as siteUrl2 } from "@agentic-toolkit/adh-registry";
 import { isConceptSite } from "@agentic-toolkit/adh/concepts/participating";
 import { useSettingsOverlay } from "@agentic-toolkit/adh/settings";
 
@@ -1209,9 +1209,8 @@ import { useMemo as useMemo3 } from "react";
 import { usePathname as usePathname3 } from "next/navigation";
 import { CircleHelp as CircleHelp2 } from "lucide-react";
 
-// src/footer/SitesOverview.tsx
-import { FOOTER_SITES, groupSitesByCategory, siteProdUrl } from "@agentic-toolkit/adh-registry";
-import { jsx as jsx12, jsxs as jsxs8 } from "react/jsx-runtime";
+// src/footer/identity.tsx
+import { jsx as jsx12 } from "react/jsx-runtime";
 var SITES_OVERVIEW_POPOVER_ID = "adh-sites-overview";
 
 // src/header/SiteMenu.tsx
@@ -1954,9 +1953,9 @@ var ADMIN_MENU_GROUPS = [
 
 // src/header/StudioWordmark.tsx
 import "react";
-import { jsx as jsx14, jsxs as jsxs9 } from "react/jsx-runtime";
+import { jsx as jsx14, jsxs as jsxs8 } from "react/jsx-runtime";
 function StudioWordmark() {
-  return /* @__PURE__ */ jsxs9(
+  return /* @__PURE__ */ jsxs8(
     "a",
     {
       className: "adh-nav-popover__wordmark",
@@ -2192,7 +2191,7 @@ import {
 } from "@agentic-toolkit/adh/header";
 import { useHubPreferences as useHubPreferences2 } from "@agentic-toolkit/adh/header/hub-preferences";
 import { useHelp as useHelp2 } from "@agentic-toolkit/adh/help";
-import { Fragment as Fragment6, jsx as jsx18, jsxs as jsxs10 } from "react/jsx-runtime";
+import { Fragment as Fragment6, jsx as jsx18, jsxs as jsxs9 } from "react/jsx-runtime";
 var WORKSPACES_SECTION = 0;
 var HELP_SECTION2 = 1;
 var SECTION_LABELS = { [WORKSPACES_SECTION]: "Workspaces" };
@@ -2279,9 +2278,9 @@ function WorkspaceMenu({
       openShortcut: { keys: siteMenuShortcut, label: "Workspace menu" },
       onChoose: navigate,
       triggerLabel: `${triggerText} \u2014 switch workspace`,
-      triggerContent: /* @__PURE__ */ jsxs10(Fragment6, { children: [
+      triggerContent: /* @__PURE__ */ jsxs9(Fragment6, { children: [
         /* @__PURE__ */ jsx18(HubMark3, { className: "adh-nav-popover__mark" }),
-        /* @__PURE__ */ jsxs10("span", { className: "adh-workspace-trigger__name", children: [
+        /* @__PURE__ */ jsxs9("span", { className: "adh-workspace-trigger__name", children: [
           /* @__PURE__ */ jsx18("span", { className: "adh-workspace-trigger__label", children: label }),
           suffixed ? /* @__PURE__ */ jsx18("span", { className: "adh-workspace-trigger__suffix", children: "Workspace" }) : null,
           /* @__PURE__ */ jsx18(ChevronDown4, { className: "adh-nav-popover__chevron", "aria-hidden": true })
@@ -2334,7 +2333,7 @@ function PrefetchSiblingSites() {
 }
 
 // src/header/SiteMenuSwitcher.tsx
-import { jsx as jsx19, jsxs as jsxs11 } from "react/jsx-runtime";
+import { jsx as jsx19, jsxs as jsxs10 } from "react/jsx-runtime";
 function SiteMenuSwitcher(props) {
   const pathname = usePathname5() ?? "/";
   const onWorkspaceRoute = isWorkspaceMenuRoute(props.currentSiteId, pathname);
@@ -2355,7 +2354,7 @@ function SiteMenuSwitcher(props) {
       }
     );
   }
-  return /* @__PURE__ */ jsxs11(Fragment7, { children: [
+  return /* @__PURE__ */ jsxs10(Fragment7, { children: [
     /* @__PURE__ */ jsx19(PrefetchSiblingSites, {}),
     onWorkspaceRoute ? /* @__PURE__ */ jsx19(WorkspaceSiteMenu, { ...props }) : /* @__PURE__ */ jsx19(MarketingSiteMenu, { ...props })
   ] });
@@ -2461,7 +2460,7 @@ function useDebugOptions(userIsAdmin) {
 
 // src/header/SiteHeader.tsx
 import { SITE_TITLE_HELP_ID } from "@agentic-toolkit/adh-ui/help-ids";
-import { Fragment as Fragment8, jsx as jsx21, jsxs as jsxs12 } from "react/jsx-runtime";
+import { Fragment as Fragment8, jsx as jsx21, jsxs as jsxs11 } from "react/jsx-runtime";
 var NotificationBell = dynamic2(
   () => import("@agentic-toolkit/messaging/components/notification-bell").then((m) => m.NotificationBell)
 );
@@ -2510,13 +2509,13 @@ function SiteHeader({
   const site = getSite3(siteId);
   const siteName = site ? siteHeaderTitle2(site) : siteId;
   const siteShortName = site?.label ?? siteId;
-  const resolveHubHref = (path) => hostname ? siteUrl2("hub", path, hostname) : siteProdUrl2("hub", path);
-  const selfReturn = hostname ? siteUrl2(siteId, siteHomePath(siteId), hostname) : siteProdUrl2(siteId, siteHomePath(siteId));
+  const resolveHubHref = (path) => hostname ? siteUrl2("hub", path, hostname) : siteProdUrl("hub", path);
+  const selfReturn = hostname ? siteUrl2(siteId, siteHomePath(siteId), hostname) : siteProdUrl(siteId, siteHomePath(siteId));
   const hubAuthHref = (path) => `${resolveHubHref(path)}?return_to=${encodeURIComponent(selfReturn)}`;
   const resolvedLoginHref = loginHref ?? (onLogin ? void 0 : hubAuthHref("/login"));
   const resolvedSignupHref = signupHref ?? (onSignup ? void 0 : hubAuthHref("/signup"));
   const switcherSettingsHref = resolvedOnSettings ? void 0 : settingsHref ?? resolveHubHref("/settings");
-  return /* @__PURE__ */ jsxs12(Fragment8, { children: [
+  return /* @__PURE__ */ jsxs11(Fragment8, { children: [
     /* @__PURE__ */ jsx21(
       AdhHeader2,
       {

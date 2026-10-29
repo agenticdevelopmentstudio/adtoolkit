@@ -139,67 +139,77 @@ function AdhModalPopover({ id, title, children, bodyClassName }) {
   );
 }
 
-// src/footer/AboutModal.tsx
-import { jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
-var ABOUT_DIALOG_ID = "adh-about-dialog";
+// src/footer/identity.tsx
+import { jsx as jsx3 } from "react/jsx-runtime";
 var BRAND_LABEL = "Agentic Development Studio";
 var BRAND_HREF = "https://agenticdevelopmentstudio.com/";
+var SITES_OVERVIEW_POPOVER_ID = "adh-sites-overview";
+function buildVersionLabel(live) {
+  const version = live?.version ?? process.env.NEXT_PUBLIC_ADH_SITE_VERSION ?? "";
+  const sha = live?.sha ?? process.env.NEXT_PUBLIC_ADH_RELEASE ?? "";
+  const label = [version && `v${version}`, sha && sha.slice(0, 8)].filter(Boolean).join(" \xB7 ");
+  if (!label) return null;
+  return /* @__PURE__ */ jsx3("span", { title: sha || void 0, children: label });
+}
+
+// src/footer/AboutModal.tsx
+import { jsx as jsx4, jsxs as jsxs3 } from "react/jsx-runtime";
+var ABOUT_DIALOG_ID = "adh-about-dialog";
 function hostOf(href) {
   return new URL(href).host;
 }
 function Entry({ name, href, children }) {
   return /* @__PURE__ */ jsxs3("section", { className: "adh-about__entry", children: [
-    /* @__PURE__ */ jsx3("h3", { className: "adh-about__name", children: name }),
-    /* @__PURE__ */ jsx3("p", { className: "adh-about__blurb", children }),
-    /* @__PURE__ */ jsx3("a", { className: "adh-about__link", href, children: hostOf(href) })
+    /* @__PURE__ */ jsx4("h3", { className: "adh-about__name", children: name }),
+    /* @__PURE__ */ jsx4("p", { className: "adh-about__blurb", children }),
+    /* @__PURE__ */ jsx4("a", { className: "adh-about__link", href, children: hostOf(href) })
   ] });
 }
 function AboutModal({ version }) {
   const fishlamp = getSite("fishlamp");
   return /* @__PURE__ */ jsxs3(AdhModalPopover, { id: ABOUT_DIALOG_ID, title: "About", bodyClassName: "adh-modal__body--about", children: [
-    /* @__PURE__ */ jsx3(Entry, { name: BRAND_LABEL, href: BRAND_HREF, children: "The company behind the Agentic Developer family of sites, and the name on their copyright." }),
+    /* @__PURE__ */ jsx4(Entry, { name: BRAND_LABEL, href: BRAND_HREF, children: "The company behind the Agentic Developer family of sites, and the name on their copyright." }),
     fishlamp && /* @__PURE__ */ jsxs3(Entry, { name: fishlamp.label, href: siteProdUrl("fishlamp", "/"), children: [
       fishlamp.description,
       "."
     ] }),
     /* @__PURE__ */ jsxs3("dl", { className: "adh-about__build", children: [
-      /* @__PURE__ */ jsx3("dt", { children: "Site version" }),
-      /* @__PURE__ */ jsx3("dd", { children: version ?? "Not recorded in this build" })
+      /* @__PURE__ */ jsx4("dt", { children: "Site version" }),
+      /* @__PURE__ */ jsx4("dd", { children: version ?? "Not recorded in this build" })
     ] })
   ] });
 }
 
 // src/footer/FooterChat.tsx
 import dynamic from "next/dynamic";
-import { jsx as jsx4 } from "react/jsx-runtime";
+import { jsx as jsx5 } from "react/jsx-runtime";
 var FooterChatInner = dynamic(() => import("@agentic-toolkit/adh/footer/FooterChatInner"), {
   ssr: false
 });
 function FooterChat() {
-  return /* @__PURE__ */ jsx4(FooterChatInner, {});
+  return /* @__PURE__ */ jsx5(FooterChatInner, {});
 }
 
 // src/footer/SitesOverview.tsx
 import { FOOTER_SITES, groupSitesByCategory, siteProdUrl as siteProdUrl2 } from "@agentic-toolkit/adh-registry";
-import { jsx as jsx5, jsxs as jsxs4 } from "react/jsx-runtime";
-var SITES_OVERVIEW_POPOVER_ID = "adh-sites-overview";
+import { jsx as jsx6, jsxs as jsxs4 } from "react/jsx-runtime";
 function SitesPopover() {
   const groups = groupSitesByCategory(FOOTER_SITES);
-  return /* @__PURE__ */ jsx5(AdhModalPopover, { id: SITES_OVERVIEW_POPOVER_ID, title: "The Agentic Developer family", children: groups.map((group) => /* @__PURE__ */ jsxs4(
+  return /* @__PURE__ */ jsx6(AdhModalPopover, { id: SITES_OVERVIEW_POPOVER_ID, title: "The Agentic Developer family", children: groups.map((group) => /* @__PURE__ */ jsxs4(
     "nav",
     {
       className: "adh-sites-popover__group",
       "aria-label": group.label,
       children: [
-        /* @__PURE__ */ jsx5("h3", { className: "adh-sites-popover__group-title", children: group.label }),
-        /* @__PURE__ */ jsx5("ul", { className: "adh-sites-popover__list", children: group.sites.map((site) => /* @__PURE__ */ jsx5("li", { children: /* @__PURE__ */ jsxs4(
+        /* @__PURE__ */ jsx6("h3", { className: "adh-sites-popover__group-title", children: group.label }),
+        /* @__PURE__ */ jsx6("ul", { className: "adh-sites-popover__list", children: group.sites.map((site) => /* @__PURE__ */ jsx6("li", { children: /* @__PURE__ */ jsxs4(
           "a",
           {
             className: "adh-sites-popover__item",
             href: siteProdUrl2(site.id, "/"),
             children: [
-              /* @__PURE__ */ jsx5("span", { className: "adh-sites-popover__name", children: site.label }),
-              site.description && /* @__PURE__ */ jsx5("span", { className: "adh-sites-popover__blurb", children: site.description })
+              /* @__PURE__ */ jsx6("span", { className: "adh-sites-popover__name", children: site.label }),
+              site.description && /* @__PURE__ */ jsx6("span", { className: "adh-sites-popover__blurb", children: site.description })
             ]
           }
         ) }, site.id)) })
@@ -213,7 +223,7 @@ function SitesPopover() {
 import { useEffect, useState } from "react";
 import { isModifiedClick } from "@agenticdevelopertoolkit/ui/lib/navigation-guard";
 import { LEGAL_EFFECTIVE_DATE, TermsBody, PrivacyBody } from "@agentic-toolkit/adh/legal";
-import { jsx as jsx6, jsxs as jsxs5 } from "react/jsx-runtime";
+import { jsx as jsx7, jsxs as jsxs5 } from "react/jsx-runtime";
 var TERMS_DIALOG_ID = "adh-terms-dialog";
 var PRIVACY_DIALOG_ID = "adh-privacy-dialog";
 function useOpenedOnce(id) {
@@ -241,11 +251,11 @@ function LegalDoc({ children }) {
 }
 function TermsModal() {
   const opened = useOpenedOnce(TERMS_DIALOG_ID);
-  return /* @__PURE__ */ jsx6(AdhModalPopover, { id: TERMS_DIALOG_ID, title: "Terms of Service", bodyClassName: "adh-modal__body--legal", children: opened && /* @__PURE__ */ jsx6(LegalDoc, { children: /* @__PURE__ */ jsx6(TermsBody, {}) }) });
+  return /* @__PURE__ */ jsx7(AdhModalPopover, { id: TERMS_DIALOG_ID, title: "Terms of Service", bodyClassName: "adh-modal__body--legal", children: opened && /* @__PURE__ */ jsx7(LegalDoc, { children: /* @__PURE__ */ jsx7(TermsBody, {}) }) });
 }
 function PrivacyModal() {
   const opened = useOpenedOnce(PRIVACY_DIALOG_ID);
-  return /* @__PURE__ */ jsx6(AdhModalPopover, { id: PRIVACY_DIALOG_ID, title: "Privacy Policy", bodyClassName: "adh-modal__body--legal", children: opened && /* @__PURE__ */ jsx6(LegalDoc, { children: /* @__PURE__ */ jsx6(PrivacyBody, {}) }) });
+  return /* @__PURE__ */ jsx7(AdhModalPopover, { id: PRIVACY_DIALOG_ID, title: "Privacy Policy", bodyClassName: "adh-modal__body--legal", children: opened && /* @__PURE__ */ jsx7(LegalDoc, { children: /* @__PURE__ */ jsx7(PrivacyBody, {}) }) });
 }
 function openLegalModal(dialogId) {
   return (e) => {
@@ -270,7 +280,7 @@ var RESIZE_SOURCES = [
 ].join(", ");
 
 // src/footer/SiteFooter.tsx
-import { Fragment, jsx as jsx7, jsxs as jsxs6 } from "react/jsx-runtime";
+import { Fragment, jsx as jsx8, jsxs as jsxs6 } from "react/jsx-runtime";
 var COPYRIGHT_PREFIX = "\xA9 2026 ";
 var COPYRIGHT_MENU_ID = "adh-footer-copyright-menu";
 var LEGAL_MENU_ID = "adh-footer-legal-menu";
@@ -304,13 +314,6 @@ var legalLinks = (menuId) => [
     className: `adh-footer__legal ${REST_SLOT_HOST_CLASS}`
   }
 ];
-function buildVersionLabel(live) {
-  const version = live?.version ?? process.env.NEXT_PUBLIC_ADH_SITE_VERSION ?? "";
-  const sha = live?.sha ?? process.env.NEXT_PUBLIC_ADH_RELEASE ?? "";
-  const label = [version && `v${version}`, sha && sha.slice(0, 8)].filter(Boolean).join(" \xB7 ");
-  if (!label) return null;
-  return /* @__PURE__ */ jsx7("span", { title: sha || void 0, children: label });
-}
 function SiteFooter({ links = [], chat = true, live, specimen = false }) {
   const withChat = chat && !specimen;
   const version = buildVersionLabel(live);
@@ -318,41 +321,41 @@ function SiteFooter({ links = [], chat = true, live, specimen = false }) {
   const copyrightMenuId = specimen ? `${COPYRIGHT_MENU_ID}-${instance}` : COPYRIGHT_MENU_ID;
   const legalMenuId = specimen ? `${LEGAL_MENU_ID}-${instance}` : LEGAL_MENU_ID;
   return /* @__PURE__ */ jsxs6(Fragment, { children: [
-    /* @__PURE__ */ jsx7(
+    /* @__PURE__ */ jsx8(
       ToolkitFooter,
       {
         className: withChat ? "adh-footer--with-chat" : void 0,
         links: [...links, ...legalLinks(legalMenuId)],
         copyright: /* @__PURE__ */ jsxs6(Fragment, { children: [
-          /* @__PURE__ */ jsx7(
+          /* @__PURE__ */ jsx8(
             FooterMenu2,
             {
               id: copyrightMenuId,
               triggerClassName: "adh-footer__copyright-trigger",
               label: /* @__PURE__ */ jsxs6(Fragment, { children: [
                 COPYRIGHT_PREFIX,
-                /* @__PURE__ */ jsx7("span", { className: "adh-footer__brand-link", children: BRAND_LABEL })
+                /* @__PURE__ */ jsx8("span", { className: "adh-footer__brand-link", children: BRAND_LABEL })
               ] }),
               items: COPYRIGHT_MENU
             }
           ),
           /* @__PURE__ */ jsxs6("span", { className: "adh-footer__copyright-fallback", children: [
             COPYRIGHT_PREFIX,
-            /* @__PURE__ */ jsx7("a", { className: "adh-footer__brand-link", href: BRAND_HREF, children: BRAND_LABEL }),
+            /* @__PURE__ */ jsx8("a", { className: "adh-footer__brand-link", href: BRAND_HREF, children: BRAND_LABEL }),
             version && /* @__PURE__ */ jsxs6("span", { className: "adh-footer__copyright-version", children: [
               " \xB7 ",
               version
             ] })
           ] })
         ] }),
-        trailing: withChat ? /* @__PURE__ */ jsx7(FooterChat, {}) : null
+        trailing: withChat ? /* @__PURE__ */ jsx8(FooterChat, {}) : null
       }
     ),
     !specimen && /* @__PURE__ */ jsxs6(Fragment, { children: [
-      /* @__PURE__ */ jsx7(AboutModal, { version }),
-      /* @__PURE__ */ jsx7(SitesPopover, {}),
-      /* @__PURE__ */ jsx7(TermsModal, {}),
-      /* @__PURE__ */ jsx7(PrivacyModal, {})
+      /* @__PURE__ */ jsx8(AboutModal, { version }),
+      /* @__PURE__ */ jsx8(SitesPopover, {}),
+      /* @__PURE__ */ jsx8(TermsModal, {}),
+      /* @__PURE__ */ jsx8(PrivacyModal, {})
     ] })
   ] });
 }
@@ -428,6 +431,7 @@ export {
   FooterMenu,
   SITES_OVERVIEW_POPOVER_ID,
   SiteFooter,
+  SitesPopover,
   createSeededBackend,
   useChatTheme
 };

@@ -3,21 +3,10 @@
 import type { ReactNode } from 'react'
 import { getSite, siteProdUrl } from '@agentic-toolkit/adh-registry'
 import { AdhModalPopover } from './AdhModalPopover'
+import { BRAND_HREF, BRAND_LABEL } from './identity'
 
 /** DOM id of the footer's About dialog, opened from the copyright menu. */
 export const ABOUT_DIALOG_ID = 'adh-about-dialog'
-
-// The company the copyright belongs to — Agentic Development Studio, which is also
-// the wordmark closing the site menu (see StudioWordmark). NOT FishLamp Design, which
-// the copyright used to name and which is still a family site with its own row.
-//
-// A literal href rather than `siteProdUrl(...)`: the studio deliberately has no
-// registry entry (a `registry.test.ts` case pins that agenticdevelopmentstudio.com is
-// not a registry host, because an entry would re-add the origin to the OAuth
-// return-origin allowlist and to the generated route map). Same reason the menu's
-// studio row is an absolute `{ href }`.
-export const BRAND_LABEL = 'Agentic Development Studio'
-export const BRAND_HREF = 'https://agenticdevelopmentstudio.com/'
 
 /** The address as a reader would type it — the link's visible text. */
 function hostOf(href: string): string {

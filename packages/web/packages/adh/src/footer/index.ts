@@ -9,7 +9,10 @@ export type { AdhFooterProps, FooterLink, FooterMenuItem } from './AdhFooter'
 // happened to share a name.
 export { SiteFooter } from './SiteFooter'
 export type { SiteFooterProps } from './SiteFooter'
-export { SITES_OVERVIEW_POPOVER_ID } from './SitesOverview'
+export { SITES_OVERVIEW_POPOVER_ID } from './identity'
+// The panel itself, for a footer that is not SiteFooter: the landing page's LandingFooter
+// (marketing/) renders it beside its own trigger.
+export { SitesPopover } from './SitesOverview'
 // The seeded-backend primitives are exported because the Help sites reuse them
 // (see sites/help/src/components/helpMockBackend.ts); the footer itself no longer
 // does — bitbag speaks his own scripted voice through BitbagDock.

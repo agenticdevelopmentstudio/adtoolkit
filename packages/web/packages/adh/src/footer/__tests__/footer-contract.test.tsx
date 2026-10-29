@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AdhFooter, FooterMenu } from '../AdhFooter'
-import { buildVersionLabel } from '../SiteFooter'
+import { buildVersionLabel } from '../identity'
 
 // Stub next/link so the (otherwise DOM-invisible) `prefetch` prop can be observed —
 // the real component destructures `prefetch` before spreading the rest onto the

@@ -23,7 +23,7 @@ vi.mock('../FooterChat', () => ({
 
 import { SiteFooter } from '../SiteFooter'
 import { ABOUT_DIALOG_ID } from '../AboutModal'
-import { SITES_OVERVIEW_POPOVER_ID } from '../SitesOverview'
+import { SITES_OVERVIEW_POPOVER_ID } from '../identity'
 import { PRIVACY_DIALOG_ID, TERMS_DIALOG_ID } from '../LegalModals'
 
 /** The dialogs the footer's entries open, one per page. */

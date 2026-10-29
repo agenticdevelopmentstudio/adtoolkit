@@ -508,6 +508,92 @@ a.adh-footer__brand-link:focus-visible {
   color: var(--color-text-dim);
 }
 
+/* ---- the landing page's footer (marketing/LandingFooter) ----
+   Sits inside the frame's `.lp-site-foot`, so it reads the landing kit's `--lp-*` tokens,
+   falling back to adh's own. Its links are set plainer than the frame's underlined credit
+   line: a directory of forty names is read as a list, not as prose. */
+.adh-landing-footer {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--lp-ink-dim, var(--color-text-dim));
+}
+
+.adh-landing-footer__directory {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  gap: 1.75rem 1.5rem;
+  padding-bottom: 2rem;
+}
+
+.adh-landing-footer__heading {
+  margin: 0 0 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--lp-ink, var(--color-text-primary));
+}
+
+.adh-landing-footer__list,
+.adh-landing-footer__legal {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adh-landing-footer__item + .adh-landing-footer__item {
+  margin-top: 0.35rem;
+}
+
+.adh-landing-footer .adh-landing-footer__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--lp-ink-dim, var(--color-text-dim));
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.adh-landing-footer span.adh-landing-footer__link {
+  cursor: default;
+}
+
+.adh-landing-footer a.adh-landing-footer__link:hover,
+.adh-landing-footer button.adh-landing-footer__link:hover {
+  color: var(--lp-ink, var(--color-text-primary));
+  text-decoration: underline;
+}
+
+.adh-landing-footer__fine-print {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--lp-hairline, var(--color-border));
+}
+
+.adh-landing-footer__copyright {
+  margin: 0;
+}
+
+.adh-landing-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+
+.adh-landing-footer__legal .adh-landing-footer__item + .adh-landing-footer__item::before {
+  content: "|";
+  margin: 0 0.6rem;
+  color: var(--lp-hairline, var(--color-border));
+}
+
+.adh-landing-footer__version {
+  font-family: var(--lp-font-mono, var(--font-mono));
+  font-size: 0.72rem;
+}
+
 /* Hide everything popover-related in browsers without the Popover API (iOS before 17,
    Firefox before 125) so no panel dumps inline and no dead trigger is shown, and put
    the plain form of what each footer menu holds in its place. The <a href>s are still

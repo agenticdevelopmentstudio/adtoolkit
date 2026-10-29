@@ -1,9 +1,3 @@
-/** The DOM id of the single shared sites-overview popover. The footer renders
- *  the panel once; every trigger (the "Sites" entry in the footer's copyright
- *  menu, the header site-switcher's "?" icon and its "help" command) opens it by this id, so
- *  there's exactly one instance — and therefore one crawlable copy of the SEO
- *  interlink set. */
-export declare const SITES_OVERVIEW_POPOVER_ID = "adh-sites-overview";
 /**
  * The footer "sites overview" — a modal dialog (AdhModalPopover) that lists every
  * family site (grouped, with descriptions). It is BOTH the human overview panel

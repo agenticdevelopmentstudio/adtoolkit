@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { CircleHelp } from 'lucide-react'
 // Sibling module, not the '@agentic-toolkit/adh/footer' subpath: a self-referencing package
 // specifier would make tsup inline the whole footer entry into this header entry.
-import { SITES_OVERVIEW_POPOVER_ID } from '../footer/SitesOverview'
+import { SITES_OVERVIEW_POPOVER_ID } from '../footer/identity'
 import { getSite, siteHeaderTitle, type SiteId } from '@agentic-toolkit/adh-registry'
 import {
   HubMark,
