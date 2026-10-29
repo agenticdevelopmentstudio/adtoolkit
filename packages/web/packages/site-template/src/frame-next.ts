@@ -213,11 +213,18 @@ export function frameBuildIdentity(site: FrameNextSite, appDir: string): Record<
  * within: pinned one level too shallow, every `link:` into `websites/external` lies outside it and
  * `next` itself cannot be resolved. Fails by name when there is none, rather than letting Next
  * pick a root on its own.
+ *
+ * The walk is bounded by the site repo. It stops after the directory named `websites` or after
+ * the repo root (the directory that holds `.git`, a directory in a clone and a file in a
+ * worktree or submodule), whichever comes first. Unbounded, a site missing its own workspace
+ * file would quietly adopt a stray `pnpm-workspace.yaml` in some enclosing checkout or in the
+ * home directory, and compile against the wrong tree.
  */
 export function frameWorkspaceRoot(appDir: string): string {
   const app = path.resolve(appDir)
   for (let dir = path.dirname(app); ; dir = path.dirname(dir)) {
     if (existsSync(path.join(dir, 'pnpm-workspace.yaml'))) return dir
+    if (path.basename(dir) === 'websites' || existsSync(path.join(dir, '.git'))) break
     if (path.dirname(dir) === dir) break
   }
   throw new Error(`no pnpm-workspace.yaml above ${app}: the site's websites/ workspace root is missing`)

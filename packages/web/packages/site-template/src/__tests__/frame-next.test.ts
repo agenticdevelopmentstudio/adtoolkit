@@ -253,4 +253,29 @@ describe('frameWorkspaceRoot', () => {
     mkdirSync(app, { recursive: true })
     expect(() => frameWorkspaceRoot(app)).toThrow(/pnpm-workspace\.yaml/)
   })
+
+  it('stops at the websites/ directory, never adopting a workspace file above it', () => {
+    const root = websites()
+    const app = path.join(root, 'sites', 'teams')
+    mkdirSync(app, { recursive: true })
+    writeFileSync(path.join(path.dirname(root), 'pnpm-workspace.yaml'), "packages:\n  - '*'\n")
+    expect(() => frameWorkspaceRoot(app)).toThrow(/pnpm-workspace\.yaml/)
+  })
+
+  it("stops at the repo root (.git, a directory or a worktree's file), never above it", () => {
+    for (const gitIsFile of [false, true]) {
+      const outer = realpathSync(mkdtempSync(path.join(tmpdir(), 'frame-workspace-')))
+      dirs.push(outer)
+      const repo = path.join(outer, 'repo')
+      const app = path.join(repo, 'web', 'main')
+      mkdirSync(app, { recursive: true })
+      if (gitIsFile) writeFileSync(path.join(repo, '.git'), 'gitdir: elsewhere\n')
+      else mkdirSync(path.join(repo, '.git'))
+      writeFileSync(path.join(outer, 'pnpm-workspace.yaml'), "packages:\n  - '*'\n")
+      expect(() => frameWorkspaceRoot(app)).toThrow(/pnpm-workspace\.yaml/)
+      // A workspace file at the repo root itself is still found.
+      writeFileSync(path.join(repo, 'pnpm-workspace.yaml'), "packages:\n  - 'web/main'\n")
+      expect(frameWorkspaceRoot(app)).toBe(repo)
+    }
+  })
 })
