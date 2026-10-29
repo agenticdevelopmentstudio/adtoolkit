@@ -8,7 +8,8 @@ A site repo holds only `site/` — `site.json`, custom components and routes, th
 its public assets and a token sheet — and the app `site.json`'s `output` names. This script
 writes that app:
 
-    skeleton/**            -> <output>/**   (verbatim; skeleton/package.json is the base below)
+    skeleton/**            -> <output>/**   (verbatim; skeleton/package.json and
+                                             eslint.config.mjs are the bases below)
     site/components/**     -> src/components/**
     site/routes/**         -> app/(frame)/**   (inside the frame: its bar, drawer, footer, bitbag)
     site/app-routes/**     -> app/**           (bare: each brings its own layout and providers)
@@ -16,7 +17,8 @@ writes that app:
     site/public/**         -> public/**
     site/app-root/**       -> the app root
     generated              -> src/site/{config.ts,slots.tsx,fonts.ts,shot.tsx,next.ts,analytics.tsx},
-                              src/fonts/*, app/theme.css, package.json, .site-template.json
+                              src/fonts/*, app/theme.css, package.json, eslint.config.mjs,
+                              .site-template.json
 
 `(frame)` is a route group, so both trees serve the same URLs they would at `app/`; two files
 that would serve one URL, in either tree or the skeleton, are refused.
@@ -100,6 +102,12 @@ ROUTE_FILE = re.compile(r"^(page|route)\.(tsx|ts|jsx|js|mdx)$")
 # The `site.json` keys `src/site/next.ts` carries only when the site sets them, so a site that
 # sets none keeps the next.ts it was assembled with before the key existed.
 NEXT_OPTIONAL = ("redirects", "themeFonts", "buildIdentity", "staleTimes")
+
+# The skeleton's ESLint config, which the site's `eslint` entries are appended to. Any other
+# `eslint.config.*` at the app root is refused: ESLint 9 loads `.js` (then `.mjs`, `.cjs`, the
+# TypeScript names) first, so one would silently stand in for the template's.
+ESLINT_CONFIG = "eslint.config.mjs"
+SITE_ESLINT_CONFIG = re.compile(r"^eslint\.config\.(js|mjs|cjs|ts|mts|cts)$")
 
 # The package.json scripts a site's `scripts` may not replace.
 FIXED_SCRIPTS = ("dev", "build", "start")
@@ -920,6 +928,16 @@ def plan_package(base: dict, config: dict, site: Path, app: Path, web: Path, pro
     return (json.dumps(pkg, indent=2) + "\n").encode()
 
 
+def plan_eslint(skeleton: str, entries: list[dict]) -> str:
+    """`eslint.config.mjs`: the skeleton's config, then the site's `eslint` entries, last in the
+    array so they outrank the template's. With none it is the skeleton's, byte for byte."""
+    if not entries:
+        return skeleton
+    end = skeleton.rindex("];")
+    site_entries = "".join(f"  {ts(entry)},\n" for entry in entries)
+    return f"{skeleton[:end]}  // site/site.json `eslint`: the site's own entries.\n{site_entries}{skeleton[end:]}"
+
+
 def workspace_manifests(web: Path) -> dict[str, dict]:
     """Every toolkit package's manifest under `web/packages`, by package name."""
     manifests = {}
@@ -1016,11 +1034,14 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
     app = site / config["output"]
     plan = AppPlan()
 
-    # The skeleton, verbatim. Its package.json is the base of the generated one.
+    # The skeleton, verbatim. Its package.json is the base of the generated one, and its eslint
+    # config the head of the generated one.
     for path in tree_files(SKELETON):
         rel = path.relative_to(SKELETON).as_posix()
-        if rel != "package.json":
+        if rel not in ("package.json", ESLINT_CONFIG):
             plan.add(rel, path.read_bytes(), f"skeleton/{rel}")
+    eslint = (SKELETON / ESLINT_CONFIG).read_text()
+    plan.add(ESLINT_CONFIG, plan_eslint(eslint, config.get("eslint", [])).encode(), "generated")
 
     # The theme's stylesheet, the kit's and the frame's, then the site's token sheet.
     themes = json.loads(THEMES.read_text())
@@ -1138,6 +1159,12 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
         for path in tree_files(root):
             rel = path.relative_to(root).as_posix()
             label = f"site/{folder}/{rel}"
+            if not target_root and SITE_ESLINT_CONFIG.match(rel):
+                plan.problems.append(
+                    f"{label}: ESLint would load it in place of the template's {ESLINT_CONFIG}; "
+                    "put the site's entries in site/site.json `eslint`"
+                )
+                continue
             if path.suffix == ".css" and folder in STYLED_TREES:
                 plan.problems += check_site_css(path.read_text(), label)
             if path.suffix in SCRIPT_SUFFIXES and folder in FRAMED_TREES:

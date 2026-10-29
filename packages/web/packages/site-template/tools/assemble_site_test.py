@@ -756,6 +756,71 @@ class AssembleTest(unittest.TestCase):
                 self.config["scripts"] = {name: "echo"}
                 self.assert_refused(self.assemble(), "scripts", f"'{name}'")
 
+    def test_build_next_is_the_templates_and_a_site_may_replace_it(self) -> None:
+        # Every satellite's deployment/build runs `pnpm build:next`, so every app has it.
+        self.assert_ok(self.assemble())
+        scripts = json.loads((self.app / "package.json").read_text())["scripts"]
+        self.assertEqual(scripts["build:next"], "next build")
+        self.config["scripts"] = {"build:next": "npm run fetch-openapi && next build"}
+        self.assert_ok(self.assemble())
+        scripts = json.loads((self.app / "package.json").read_text())["scripts"]
+        self.assertEqual(scripts["build:next"], "npm run fetch-openapi && next build")
+        self.assertEqual(scripts["build"], "next build")
+
+    # --- eslint ------------------------------------------------------------------------------
+
+    def test_without_eslint_entries_the_config_is_the_skeletons(self) -> None:
+        self.assert_ok(self.assemble())
+        skeleton = ASSEMBLE.parent.parent / "skeleton" / "eslint.config.mjs"
+        self.assertEqual((self.app / "eslint.config.mjs").read_text(), skeleton.read_text())
+
+    def test_eslint_entries_follow_the_templates(self) -> None:
+        entry = {"files": ["**/*.{ts,tsx}"], "rules": {"react-hooks/set-state-in-effect": "warn"}}
+        self.config["eslint"] = [entry, {"rules": {"no-console": ["error", {"allow": ["warn"]}]}}]
+        self.assert_ok(self.assemble())
+        text = (self.app / "eslint.config.mjs").read_text()
+        skeleton = (ASSEMBLE.parent.parent / "skeleton" / "eslint.config.mjs").read_text()
+        # The template's entries are untouched and come first, so a site entry outranks them.
+        head = skeleton[: skeleton.rindex("];")]
+        self.assertTrue(text.startswith(head), text)
+        tail = text[len(head) :]
+        self.assertIn("site/site.json", tail)
+        self.assertLess(tail.index("set-state-in-effect"), tail.index("no-console"))
+        self.assertTrue(tail.rstrip().endswith("];"), tail)
+        # The written file is a module node can parse, and its entries are the site.json values.
+        check = subprocess.run(["node", "--check", str(self.app / "eslint.config.mjs")], capture_output=True)
+        self.assertEqual(check.returncode, 0, check.stderr)
+        body = tail[tail.index("\n  {") : tail.rstrip().rindex("];")]
+        self.assertEqual(json.loads("[" + body.rstrip().rstrip(",") + "]"), self.config["eslint"])
+        self.assert_ok(run(self.site, "--check"))
+
+    def test_eslint_entry_change_is_drift(self) -> None:
+        self.config["eslint"] = [{"rules": {"no-console": "warn"}}]
+        self.assert_ok(self.assemble())
+        self.config["eslint"] = [{"rules": {"no-console": "off"}}]
+        self.setup_site()
+        result = run(self.site, "--check")
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("eslint.config.mjs", result.stdout)
+
+    def test_eslint_entry_with_an_unknown_key_is_refused(self) -> None:
+        # Plain JSON entries only: a plugin or a parser is a module, which site.json cannot hold.
+        self.config["eslint"] = [{"plugins": {"x": "y"}}]
+        self.assert_refused(self.assemble(), "eslint[0]", "'plugins'")
+
+    def test_eslint_rule_severity_is_checked(self) -> None:
+        self.config["eslint"] = [{"rules": {"no-console": "loud"}}]
+        self.assert_refused(self.assemble(), "eslint[0].rules.no-console")
+
+    def test_site_eslint_config_file_is_refused(self) -> None:
+        # ESLint loads eslint.config.js ahead of the generated .mjs, so a site file of that name
+        # would silently replace the template's config; the site's entries go in site.json.
+        for name in ("eslint.config.js", "eslint.config.ts", "eslint.config.cjs"):
+            with self.subTest(name=name):
+                self.write(f"site/app-root/{name}", "export default []\n")
+                self.assert_refused(self.assemble(), f"site/app-root/{name}", "site.json")
+                (self.site / "site" / "app-root" / name).unlink()
+
     def test_unknown_toolkit_package_is_refused(self) -> None:
         self.config["toolkitPackages"] = ["no-such-package"]
         self.assert_refused(self.assemble(), "'no-such-package'")

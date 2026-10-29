@@ -238,6 +238,28 @@ building into `.next-e2e` beside a dev server already serving the checkout. The 
 "test:e2e": "playwright test" }`). `dev`, `build` and `start` are refused: the suite, Vercel and
 `next start` run every site through them the same way.
 
+The template's scripts include `build:next` (`next build`), which every site repo's
+`deployment/build` gate runs. A site whose build needs a step first replaces it, e.g.
+`{ "build:next": "npm run fetch-openapi && next build" }`.
+
+## ESLint entries in `site.json`
+
+`eslint` lists the site's own flat-config entries — `files`, `ignores` and `rules`, plain JSON —
+and the generated `eslint.config.mjs` puts them after the template's, so they outrank it:
+
+```json
+"eslint": [
+  { "files": ["**/*.{ts,tsx}"], "rules": { "react-hooks/set-state-in-effect": "warn" } }
+]
+```
+
+With no `eslint` the config is the skeleton's, byte for byte. It is a `site.json` key, not a site
+config file, because the app is linted two ways — `pnpm lint`, and workspace tools that run
+`eslint .` and never read the package script — and both load the one generated config. An
+`eslint.config.*` under `site/app-root/` is refused: ESLint 9 loads `eslint.config.js` ahead of
+`.mjs`, so it would silently stand in for the template's. A plugin or a parser is a module, which
+JSON cannot hold; one every site needs belongs in the skeleton's config.
+
 ## Analytics
 
 `"analytics": true` writes `src/site/analytics.tsx` mounting `@vercel/analytics` and

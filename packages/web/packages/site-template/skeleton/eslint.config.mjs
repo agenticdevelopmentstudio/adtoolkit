@@ -1,5 +1,6 @@
 // ESLint flat config for a content site, written by @agenticdevelopertoolkit/site-template's
-// assembler — do not edit. Change the skeleton in the toolkit and re-assemble.
+// assembler — do not edit. Change the skeleton in the toolkit and re-assemble; a site's own
+// entries go in site/site.json `eslint`, which the assembler appends at the end of the array.
 //
 // Uses @next/eslint-plugin-next directly rather than the eslint-config-next bundle: the bundle
 // hard-`require`s next's babel parser, which a pnpm-workspace layout can't always satisfy. The
