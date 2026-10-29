@@ -61,6 +61,14 @@ extension ComposableSettings {
                 }
                 return terms
             }
+            // A section's tabs are panels in their own right, each built or not
+            // on its own; the container's view is only the tab bar.
+            if let container = panel as? any SettingsPanelContainer {
+                for child in container.containedPanels {
+                    terms.append(contentsOf: harvest(from: child))
+                }
+                return terms
+            }
             guard panel.isViewLoaded else { return terms }
             terms.append(contentsOf: labels(in: panel.view))
             return terms

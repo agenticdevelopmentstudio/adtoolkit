@@ -101,7 +101,7 @@ public final class ProjectBrowserViewController: NSViewController {
         scrollView.autohidesScrollers = true
         scrollView.translatesAutoresizingMaskIntoConstraints = false
 
-        emptyLabel.stringValue = "No projects yet — run File ▸ Scan for Projects."
+        emptyLabel.stringValue = Self.noProjectsMessage
         emptyLabel.alignment = .center
         emptyLabel.translatesAutoresizingMaskIntoConstraints = false
         emptyLabel.isHidden = true
@@ -166,7 +166,7 @@ public final class ProjectBrowserViewController: NSViewController {
         emptyLabel.isHidden = !matching.isEmpty
         if matching.isEmpty {
             emptyLabel.stringValue = all.isEmpty
-                ? "No projects yet — run File ▸ Scan for Projects."
+                ? Self.noProjectsMessage
                 : "No projects match “\(searchField.stringValue)”."
         }
 
@@ -186,6 +186,14 @@ public final class ProjectBrowserViewController: NSViewController {
             outline.deselectAll(nil)
             onSelectionChange?(nil)
         }
+    }
+
+    /// What an empty registry says. With no project directories the scan
+    /// walks nothing, so the fix is in Settings, not in another scan.
+    private static var noProjectsMessage: String {
+        UserSettings.projectDirectories.currentValue.isEmpty
+            ? "No project directories — add one in Settings ▸ Workspace ▸ Projects."
+            : "No projects yet — run File ▸ Scan for Projects."
     }
 
     private func select(_ node: ProjectTreeNode) {

@@ -1,26 +1,32 @@
 import Foundation
 
-/// Walks a directory tree looking for git working trees.
+/// Walks the user's project directories looking for git working trees.
 ///
-/// The rules are the ones `proj projects` settled on, for the same reasons:
+/// What it walks and what it leaves out is the user's, from the Projects
+/// settings, injected here as plain values so the walk runs off the main actor
+/// and is testable without a settings store (`dependency-injection`):
 ///
-/// - **Hidden directories are never descended into.** One rule covers `.git`,
-///   `.venv`, `.build`, `.claude/worktrees` and every other dot-directory that
-///   holds checkouts nobody means by "my projects".
-/// - **Folders matching a skip pattern are skipped directly under a scan root**
-///   — `Library`, the media libraries, and the cloud-sync folders. None is
-///   hidden, and each is either someone else's vendored checkouts or a
-///   synced mirror big enough to dominate the walk. The list is the user's:
-///   `rootSkipPatterns` is injected, and the app feeds it from a setting.
+/// - **`roots`** are the directories the user named as holding projects. There
+///   is no default: with none, nothing is scanned and nothing is listed.
+/// - **`skippedDirectories`** are directories the walk never enters, wherever
+///   in the tree they are. Matched by path, not by name.
+/// - **`skipsHiddenDirectories`** keeps the walk out of every dot-directory —
+///   `.venv`, `.build`, `.claude/worktrees` — that holds checkouts nobody means
+///   by "my projects". `.git` itself is never walked either way.
+/// - **`skipsSubmodules`** leaves out the submodules of the repositories found.
+///   Off, each repository's `.gitmodules` is read and every submodule checked
+///   out on disk is reported as a project of its own.
+///
+/// And always:
+///
 /// - **A directory holding a working `.git` directory is a repository, and is
-///   not descended into.** That is also what excludes submodules: they live
-///   inside a repository. "Working" is checked, not assumed: a `.git` holding
+///   not descended into.** "Working" is checked, not assumed: a `.git` holding
 ///   nothing but a `hooks/` folder is what a tool that installs hooks into a
 ///   plain folder leaves behind, and calling that a repository both invents a
 ///   project and hides the real repositories underneath it.
-/// - **A directory whose `.git` is a *file* is skipped entirely** — that is an
-///   absorbed submodule or a linked worktree, neither of which is a project in
-///   its own right.
+/// - **A directory whose `.git` is a *file* is skipped by the walk** — that is
+///   a submodule or a linked worktree. A submodule is reported, when asked
+///   for, through the repository that owns it; a linked worktree never.
 ///
 /// Nothing here touches the main actor and nothing here is `git`: the remote is
 /// read out of `.git/config` directly, because 200-odd `git config` subprocesses
@@ -35,66 +41,51 @@ public struct GitRepoScanner: Sendable {
         "Pods", "Carthage"
     ]
 
-    /// The starting skip list, offered to the user rather than imposed on them.
-    ///
-    /// Dropbox appears twice because it names its folder two ways: `Dropbox`
-    /// for a personal account, `<Company> Dropbox` for a team one. A glob is
-    /// the only way to cover the second, and the first is not a glob.
-    public static let defaultRootSkipPatterns: [String] = [
-        "Library",
-        "Music",
-        "Pictures",
-        "Movies",
-        "Dropbox",
-        "* Dropbox",
-        "Google Drive"
-    ]
-
     public let roots: [URL]
+    public let skippedDirectories: [URL]
+    public let skipsHiddenDirectories: Bool
+    public let skipsSubmodules: Bool
 
-    /// Matched — as `fnmatch` globs, case-insensitively — against the name of
-    /// every folder found *directly* under a scan root. Further down, `Music`
-    /// is just a folder someone named that, and may well be inside a project.
-    public let rootSkipPatterns: [String]
-
-    /// Defaults to the user's home directory, which is what the app scans.
     public init(
-        roots: [URL]? = nil,
-        rootSkipPatterns: [String] = GitRepoScanner.defaultRootSkipPatterns
+        roots: [URL],
+        skippedDirectories: [URL] = [],
+        skipsHiddenDirectories: Bool = true,
+        skipsSubmodules: Bool = true
     ) {
-        self.roots = roots ?? [FileManager.default.homeDirectoryForCurrentUser]
-        self.rootSkipPatterns = rootSkipPatterns
+        self.roots = roots.map(\.standardizedFileURL)
+        self.skippedDirectories = skippedDirectories.map(\.standardizedFileURL)
+        self.skipsHiddenDirectories = skipsHiddenDirectories
+        self.skipsSubmodules = skipsSubmodules
     }
 
-    /// One folder name against one pattern, the way the scanner matches it.
-    ///
-    /// Public because the settings panel says out loud which of the user's
-    /// folders a pattern currently excludes, and a second implementation of
-    /// this would be a second answer to the same question (`dry`).
-    public static func name(_ name: String, matches pattern: String) -> Bool {
-        fnmatch(pattern, name, FNM_CASEFOLD) == 0
-    }
-
-    /// Whether the walk would refuse to reach `path`: it lies inside a folder
-    /// directly under one of the roots whose name a skip pattern matches.
+    /// Whether the walk would not report `path`: it lies outside every root,
+    /// under a skipped directory, under a hidden or pruned directory, or is a
+    /// submodule or linked worktree — each only as far as the settings ask.
     ///
     /// The question the project list asks of a row the registry already
-    /// holds. A row under a newly skipped folder is kept by the reconciler —
-    /// it is still a repository, and deleting it would take its layout with
-    /// it — so the list has to be able to leave it out on the same rule the
-    /// walk applies, rather than a second copy of that rule (`dry`).
+    /// holds. A row the settings now leave out is kept by the reconciler — it
+    /// is still a repository, and deleting it would take its layout with it —
+    /// so the list has to be able to leave it out on the same rules the walk
+    /// applies, rather than a second copy of them (`dry`).
     public func skips(path: String) -> Bool {
-        let components = URL(fileURLWithPath: path).standardizedFileURL.pathComponents
-        for root in roots {
-            let rootComponents = root.standardizedFileURL.pathComponents
-            guard components.count > rootComponents.count,
-                  Array(components.prefix(rootComponents.count)) == rootComponents else { continue }
-            let folder = components[rootComponents.count]
-            if rootSkipPatterns.contains(where: { Self.name(folder, matches: $0) }) {
-                return true
-            }
+        let url = URL(fileURLWithPath: path).standardizedFileURL
+        let components = url.pathComponents
+        guard let root = roots.first(where: { Self.components(components, areWithin: $0) }) else {
+            return true
         }
-        return false
+        if skippedDirectories.contains(where: { Self.components(components, areWithin: $0) }) {
+            return true
+        }
+        let below = components.dropFirst(root.pathComponents.count)
+        if skipsHiddenDirectories, below.contains(where: { $0.hasPrefix(".") }) { return true }
+        if below.dropLast().contains(where: { Self.prunedDirectoryNames.contains($0) }) { return true }
+        // A `.git` file is a submodule or a linked worktree: the walk reports
+        // a submodule only when asked to, and a linked worktree never.
+        let dotGit = url.appendingPathComponent(".git")
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: dotGit.path, isDirectory: &isDirectory),
+              !isDirectory.boolValue else { return false }
+        return skipsSubmodules || !Self.isSubmoduleGitFile(dotGit)
     }
 
     /// Reported as the walk goes, so the progress window has something truthful
@@ -122,21 +113,21 @@ public struct GitRepoScanner: Sendable {
         var visited = 0
 
         for root in roots {
-            var stack: [(url: URL, depth: Int)] = [(root, 0)]
+            var stack: [URL] = [root]
 
-            while let entry = stack.popLast() {
-                if isCancelled() { return found.sorted { $0.path < $1.path } }
+            while let directory = stack.popLast() {
+                if isCancelled() { return Self.unique(found) }
                 visited += 1
                 onProgress?(Progress(
                     directoriesVisited: visited,
                     reposFound: found.count,
-                    currentPath: entry.url.path
+                    currentPath: directory.path
                 ))
 
                 let children: [URL]
                 do {
                     children = try fileManager.contentsOfDirectory(
-                        at: entry.url,
+                        at: directory,
                         includingPropertiesForKeys: keys,
                         options: []
                     )
@@ -153,9 +144,12 @@ public struct GitRepoScanner: Sendable {
                     }
                     if Self.isGitDirectory(dotGit) {
                         found.append(ScannedGitRepo(
-                            path: entry.url.path,
+                            path: directory.path,
                             remote: Self.originRemote(inGitDirectory: dotGit)
                         ))
+                        if !skipsSubmodules {
+                            found.append(contentsOf: submodules(of: directory))
+                        }
                         // A repository owns everything below it.
                         continue
                     }
@@ -164,26 +158,90 @@ public struct GitRepoScanner: Sendable {
                     // repositories are usually the folders directly underneath.
                 }
 
-                for child in children where shouldDescend(into: child, atDepth: entry.depth + 1) {
-                    stack.append((child, entry.depth + 1))
+                for child in children where shouldDescend(into: child) {
+                    stack.append(child)
                 }
             }
         }
 
-        return found.sorted { $0.path < $1.path }
+        return Self.unique(found)
     }
 
-    /// The skip patterns apply only at depth 1: `~/Music` is a media library,
-    /// whereas a `Music` folder eight levels down is just a folder someone
-    /// named that — quite possibly a project's asset directory.
-    private func shouldDescend(into url: URL, atDepth depth: Int) -> Bool {
+    /// Sorted by path, each path once: two roots that overlap — `~/Development`
+    /// and `~/Development/ios` — would otherwise report the inner one twice.
+    private static func unique(_ found: [ScannedGitRepo]) -> [ScannedGitRepo] {
+        var seen = Set<String>()
+        return found.sorted { $0.path < $1.path }.filter { seen.insert($0.path).inserted }
+    }
+
+    private func shouldDescend(into url: URL) -> Bool {
         let name = url.lastPathComponent
-        guard !name.hasPrefix("."), !Self.prunedDirectoryNames.contains(name) else { return false }
-        if depth == 1, rootSkipPatterns.contains(where: { Self.name(name, matches: $0) }) {
-            return false
-        }
+        guard name != ".git", !Self.prunedDirectoryNames.contains(name) else { return false }
+        if skipsHiddenDirectories, name.hasPrefix(".") { return false }
+        let path = url.standardizedFileURL.path
+        if skippedDirectories.contains(where: { $0.path == path }) { return false }
         guard !isSymbolicLink(url) else { return false }
         return isDirectory(url)
+    }
+
+    /// The checked-out submodules of the repository at `repository`, and
+    /// theirs in turn, read from `.gitmodules` — the walk never enters a
+    /// repository, so this is the only way it learns of them. One that is not
+    /// checked out has no `.git` and is not a project yet; one the settings
+    /// would otherwise leave out (under a skipped directory, say) stays out.
+    private func submodules(of repository: URL) -> [ScannedGitRepo] {
+        let modules = repository.appendingPathComponent(".gitmodules")
+        guard let text = try? String(contentsOf: modules, encoding: .utf8) else { return [] }
+        var found: [ScannedGitRepo] = []
+        for rawLine in text.split(separator: "\n") {
+            let line = rawLine.trimmingCharacters(in: .whitespaces)
+            guard let equals = line.firstIndex(of: "="),
+                  line[line.startIndex..<equals].trimmingCharacters(in: .whitespaces) == "path"
+            else { continue }
+            let relative = line[line.index(after: equals)...].trimmingCharacters(in: .whitespaces)
+            guard !relative.isEmpty else { continue }
+            let submodule = repository.appendingPathComponent(relative).standardizedFileURL
+            guard !skips(path: submodule.path),
+                  let gitDirectory = Self.gitDirectory(forCheckout: submodule) else { continue }
+            found.append(ScannedGitRepo(
+                path: submodule.path,
+                remote: Self.originRemote(inGitDirectory: gitDirectory)
+            ))
+            found.append(contentsOf: submodules(of: submodule))
+        }
+        return found
+    }
+
+    /// The git directory of the checkout at `checkout`: its `.git` directory,
+    /// or the one its `.git` file points at.
+    private static func gitDirectory(forCheckout checkout: URL) -> URL? {
+        let dotGit = checkout.appendingPathComponent(".git")
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: dotGit.path, isDirectory: &isDirectory) else { return nil }
+        if isDirectory.boolValue { return isGitDirectory(dotGit) ? dotGit : nil }
+        guard let target = gitFileTarget(dotGit) else { return nil }
+        let resolved = URL(fileURLWithPath: target, relativeTo: checkout).standardizedFileURL
+        return isGitDirectory(resolved) ? resolved : nil
+    }
+
+    /// What a `.git` file's `gitdir:` line says, as written.
+    private static func gitFileTarget(_ dotGit: URL) -> String? {
+        guard let text = try? String(contentsOf: dotGit, encoding: .utf8),
+              let line = text.split(separator: "\n").first(where: { $0.hasPrefix("gitdir:") })
+        else { return nil }
+        return line.dropFirst("gitdir:".count).trimmingCharacters(in: .whitespaces)
+    }
+
+    /// A submodule's `.git` file points into its superproject's
+    /// `.git/modules/`; a linked worktree's points into `.git/worktrees/`.
+    private static func isSubmoduleGitFile(_ dotGit: URL) -> Bool {
+        gitFileTarget(dotGit)?.contains("/modules/") ?? false
+    }
+
+    /// Whether `components` name `directory` itself or something inside it.
+    private static func components(_ components: [String], areWithin directory: URL) -> Bool {
+        let prefix = directory.pathComponents
+        return components.count >= prefix.count && Array(components.prefix(prefix.count)) == prefix
     }
 
     private func isDirectory(_ url: URL) -> Bool {

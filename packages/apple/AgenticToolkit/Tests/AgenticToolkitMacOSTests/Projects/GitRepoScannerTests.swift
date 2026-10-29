@@ -79,69 +79,70 @@ final class GitRepoScannerTests: XCTestCase {
         XCTAssertEqual(paths(GitRepoScanner(roots: [root]).scan()), [path("dev/alpha")])
     }
 
-    /// `~/Library` holds other tools' vendored checkouts; `~/Music`,
-    /// `~/Pictures` and `~/Movies` are media libraries big enough to dominate
-    /// the walk; the cloud-sync folders are mirrors of a machine elsewhere.
-    func testTheDefaultSkipPatternsKeepTheHomeFoldersOutOfTheWalk() throws {
-        for skipped in ["Library", "Music", "Pictures", "Movies", "Dropbox", "Google Drive"] {
-            try makeRepo("\(skipped)/somebody-elses-checkout")
-        }
+    /// Off, a dot-directory is just another directory.
+    func testHiddenDirectoriesAreScannedWhenTheOptionIsOff() throws {
+        try makeRepo(".hidden/feature")
         try makeRepo("dev/alpha")
+
+        let scanner = GitRepoScanner(roots: [root], skippedDirectories: [], skipsHiddenDirectories: false)
+
+        XCTAssertEqual(paths(scanner.scan()), [path(".hidden/feature"), path("dev/alpha")])
+    }
+
+    /// A skipped directory is never looked inside, however deep the
+    /// repositories under it are.
+    func testASkippedDirectoryIsNeverLookedInside() throws {
+        try makeRepo("dev/alpha")
+        try makeRepo("dev/archive/old")
+        try makeRepo("dev/archive/deeper/older")
+
+        let scanner = GitRepoScanner(roots: [root], skippedDirectories: [dir("dev/archive")])
+
+        XCTAssertEqual(paths(scanner.scan()), [path("dev/alpha")])
+    }
+
+    /// A skip names a directory, not a name: a folder elsewhere that happens
+    /// to share its last component is still scanned.
+    func testASkipIsAPathNotAName() throws {
+        try makeRepo("dev/archive/old")
+        try makeRepo("work/archive/kept")
+
+        let scanner = GitRepoScanner(roots: [root], skippedDirectories: [dir("dev/archive")])
+
+        XCTAssertEqual(paths(scanner.scan()), [path("work/archive/kept")])
+    }
+
+    /// No roots, no scan: nothing is found until the user adds a directory.
+    func testNoRootsFindsNothing() throws {
+        try makeRepo("dev/alpha")
+
+        XCTAssertTrue(GitRepoScanner(roots: [], skippedDirectories: []).scan().isEmpty)
+    }
+
+    func testSubmodulesAreLeftOutByDefault() throws {
+        try makeRepoWithSubmodule()
 
         XCTAssertEqual(paths(GitRepoScanner(roots: [root]).scan()), [path("dev/alpha")])
     }
 
-    /// A team Dropbox is named after the company, so the default that covers
-    /// it has to be a glob.
-    func testAPatternWithAWildcardMatchesATeamFolder() throws {
-        try makeRepo("Acme Dropbox/shared/checkout")
-        try makeRepo("dev/alpha")
+    /// Off, each checked-out submodule is a project of its own.
+    func testSubmodulesAreListedWhenTheOptionIsOff() throws {
+        try makeRepoWithSubmodule()
 
-        XCTAssertEqual(paths(GitRepoScanner(roots: [root]).scan()), [path("dev/alpha")])
+        let scanner = GitRepoScanner(roots: [root], skippedDirectories: [], skipsSubmodules: false)
+
+        XCTAssertEqual(paths(scanner.scan()), [path("dev/alpha"), path("dev/alpha/external/toolkit")])
     }
 
-    /// Case is not something anyone should have to get right in a settings
-    /// field, and the filesystem is case-insensitive anyway.
-    func testPatternsMatchWithoutRegardToCase() throws {
-        try makeRepo("google drive/checkout")
+    /// `skips(path:)` is how the coordinator drops listed projects the
+    /// settings now leave out, without waiting for a scan.
+    func testSkipsPathAgreesWithTheScan() throws {
+        let scanner = GitRepoScanner(roots: [dir("dev")], skippedDirectories: [dir("dev/archive")])
 
-        XCTAssertTrue(GitRepoScanner(roots: [root]).scan().isEmpty)
-    }
-
-    /// The list is the user's: whatever they put in the settings panel is
-    /// what the scan honours, and nothing else is skipped by name.
-    func testTheSkipListIsWhateverTheCallerPassesIn() throws {
-        try makeRepo("Music/somebody-elses-checkout")
-        try makeRepo("Archive/beta")
-        try makeRepo("dev/alpha")
-
-        let scanner = GitRepoScanner(roots: [root], rootSkipPatterns: ["Arch*"])
-
-        XCTAssertEqual(paths(scanner.scan()),
-                       [path("Music/somebody-elses-checkout"), path("dev/alpha")])
-    }
-
-    /// An empty list is a legitimate answer — someone who wants everything
-    /// scanned should be able to say so.
-    func testAnEmptySkipListSkipsNothing() throws {
-        try makeRepo("Library/somebody-elses-checkout")
-
-        let scanner = GitRepoScanner(roots: [root], rootSkipPatterns: [])
-
-        XCTAssertEqual(paths(scanner.scan()), [path("Library/somebody-elses-checkout")])
-    }
-
-    /// Only *directly* under a root: further down, `Library` or `Pictures` is
-    /// just a folder someone named that — quite possibly inside a project.
-    func testThoseSameNamesFurtherDownAreStillScanned() throws {
-        try makeRepo("dev/Library/gamma")
-        try makeRepo("dev/Pictures/delta")
-        try makeRepo("dev/Acme Dropbox/epsilon")
-
-        XCTAssertEqual(paths(GitRepoScanner(roots: [root]).scan()),
-                       [path("dev/Acme Dropbox/epsilon"),
-                        path("dev/Library/gamma"),
-                        path("dev/Pictures/delta")])
+        XCTAssertFalse(scanner.skips(path: path("dev/alpha")))
+        XCTAssertTrue(scanner.skips(path: path("dev/archive/old")))
+        XCTAssertTrue(scanner.skips(path: path("dev/.hidden/beta")))
+        XCTAssertTrue(scanner.skips(path: path("work/gamma")), "outside every root")
     }
 
     func testBuildAndDependencyDirectoriesArePruned() throws {
@@ -287,6 +288,28 @@ final class GitRepoScannerTests: XCTestCase {
         try "ref: refs/heads/main\n".write(to: gitDirectory.appendingPathComponent("HEAD"),
                                            atomically: true, encoding: .utf8)
         return gitDirectory
+    }
+
+    private func dir(_ relativePath: String) -> URL {
+        root.appendingPathComponent(relativePath, isDirectory: true)
+    }
+
+    /// `dev/alpha` with `external/toolkit` checked out as an absorbed
+    /// submodule: a `.git` file pointing into the parent's `.git/modules`.
+    private func makeRepoWithSubmodule() throws {
+        let parentGit = try makeRepo("dev/alpha")
+        try "[submodule \"external/toolkit\"]\n\tpath = external/toolkit\n\turl = git@example.com:x/toolkit.git\n"
+            .write(to: dir("dev/alpha").appendingPathComponent(".gitmodules"), atomically: true, encoding: .utf8)
+        let module = parentGit.appendingPathComponent("modules/external/toolkit", isDirectory: true)
+        try FileManager.default.createDirectory(at: module, withIntermediateDirectories: true)
+        try "[core]\n\tbare = false\n"
+            .write(to: module.appendingPathComponent("config"), atomically: true, encoding: .utf8)
+        try "ref: refs/heads/main\n"
+            .write(to: module.appendingPathComponent("HEAD"), atomically: true, encoding: .utf8)
+        let checkout = dir("dev/alpha/external/toolkit")
+        try FileManager.default.createDirectory(at: checkout, withIntermediateDirectories: true)
+        try "gitdir: \(module.path)\n"
+            .write(to: checkout.appendingPathComponent(".git"), atomically: true, encoding: .utf8)
     }
 
     private func path(_ relativePath: String) -> String {

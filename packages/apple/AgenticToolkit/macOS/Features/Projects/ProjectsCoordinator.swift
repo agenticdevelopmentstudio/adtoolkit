@@ -36,13 +36,34 @@ public final class ProjectsCoordinator: AppFeature {
     /// after the progress panel has gone.
     public private(set) var lastScanSummary: ProjectScanSummary?
 
+    /// The projects to offer the user: every registered one except those the
+    /// scan settings now leave out.
+    ///
+    /// Hidden rather than deleted. A row under a directory the user has just
+    /// skipped is still a repository, and the reconciler keeps it so that its
+    /// layout and settings survive; taking the directory back out brings it
+    /// straight back. `repos` stays the whole registry, because restoring a
+    /// window or renaming a project is about the row, not about the list.
+    /// Recomputed in `reload()`, which every change to either input goes
+    /// through, rather than on every read: a filter field reads it per
+    /// keystroke, and each `skips` call touches the disk.
+    public private(set) var listedRepos: [GitRepo] = []
+
+    /// Shows the project picker, handed in by the host — the command palette's
+    /// picker mode in the app. The registry does not know what a palette is
+    /// (`dependency-injection`).
+    public var presentChooser: (() -> Void)?
+
     /// Set only by a test or a host that wants a particular walk. Left `nil`,
-    /// each scan builds its own scanner from the current setting, so editing
-    /// the skip list takes effect on the next scan rather than the next launch.
+    /// each scan builds its own scanner from the current settings, so editing
+    /// them takes effect at once rather than on the next launch.
     private let injectedScanner: GitRepoScanner?
     private weak var opener: ProjectOpening?
     private var progressWindow: ProjectScanProgressWindow?
-    private var skipPatternsObserver: UserSettingObserver<[String]>?
+    private var settingObservers: [AnyObject] = []
+    /// A settings change that landed while a scan was running. The running
+    /// scan walked the old settings, so it is followed by one more.
+    private var rescanPending = false
 
     /// The ids this feature's actions answer to. Named once here rather than
     /// spelled at each of the register/contribute pairs: they are the contract
@@ -78,18 +99,23 @@ public final class ProjectsCoordinator: AppFeature {
         super.init()
 
         self.repos = (try? database.allRepos()) ?? []
+        self.listedRepos = Self.listed(repos, by: currentScanner)
 
-        // A new skip pattern has to empty the list of what it skips now, not
-        // after the next scan — and a scan would not do it anyway, since it
-        // keeps rows that are still repositories. Re-announcing the list is
-        // enough: `listedRepos` reads the setting afresh.
-        skipPatternsObserver = UserSettingObserver(UserSettings.projectScanSkipPatterns) { [weak self] _ in
-            self?.reload()
-        }
+        // A settings change updates the registry at once: the list drops what
+        // the new settings leave out straight away (a scan would not — it keeps
+        // rows that are still repositories), and a quiet scan picks up what
+        // they newly cover.
+        let changed: () -> Void = { [weak self] in self?.scanSettingsDidChange() }
+        settingObservers = [
+            UserSettingObserver(UserSettings.projectDirectories) { _ in changed() },
+            UserSettingObserver(UserSettings.projectSkippedDirectories) { _ in changed() },
+            UserSettingObserver(UserSettings.projectScanSkipsHiddenDirectories) { _ in changed() },
+            UserSettingObserver(UserSettings.projectScanSkipsSubmodules) { _ in changed() }
+        ]
 
         registry.register(AppCommand(
             id: CommandID.openProject,
-            title: "Open Project…",
+            title: "Choose Project…",
             category: "Projects",
             run: { [weak self] in self?.showProjectChooser() }
         ))
@@ -164,24 +190,23 @@ public final class ProjectsCoordinator: AppFeature {
         repos.first { $0.id == id }
     }
 
-    /// The projects to offer the user: every registered one except those the
-    /// skip list now excludes.
-    ///
-    /// Hidden rather than deleted. A row under a folder the user has just
-    /// skipped is still a repository, and the reconciler keeps it so that its
-    /// layout and settings survive; taking the pattern back out brings it
-    /// straight back. `repos` stays the whole registry, because restoring a
-    /// window or renaming a project is about the row, not about the list.
-    public var listedRepos: [GitRepo] {
-        let scanner = currentScanner
-        return repos.filter { !scanner.skips(path: $0.path) }
+    private static func listed(_ repos: [GitRepo], by scanner: GitRepoScanner) -> [GitRepo] {
+        repos.filter { !scanner.skips(path: $0.path) }
     }
 
     /// The scanner a scan would use right now — the injected one, or one built
-    /// from the current setting so an edited skip list takes effect at once.
+    /// from the current settings so an edit takes effect at once.
     private var currentScanner: GitRepoScanner {
-        injectedScanner
-            ?? GitRepoScanner(rootSkipPatterns: UserSettings.projectScanSkipPatterns.currentValue)
+        injectedScanner ?? UserSettings.projectScanner()
+    }
+
+    private func scanSettingsDidChange() {
+        reload()
+        if isScanning {
+            rescanPending = true
+        } else {
+            scan(showingProgress: false)
+        }
     }
 
     /// Renames a project. The name is the user's; a scan never overwrites it.
@@ -208,14 +233,32 @@ public final class ProjectsCoordinator: AppFeature {
         opener?.openProject(repo)
     }
 
+    /// Shows the picker the host handed in. A host that wired none has a
+    /// menu item that does nothing, which is a wiring mistake worth a log line
+    /// rather than silence (`fail-fast`).
     public func showProjectChooser() {
-        ProjectChooserWindow.choose(from: self) { [weak self] repo in
+        guard let presentChooser else {
+            Self.logger.error("Choose Project… has no picker: the host never set presentChooser")
+            return
+        }
+        presentChooser()
+    }
+
+    /// The picker's content: the project browser in chooser mode, which opens
+    /// the project it is told to choose after `dismiss` has put the picker
+    /// away — a window must not open behind a panel about to vanish.
+    public func makeChooser(dismiss: @escaping () -> Void) -> ProjectBrowserViewController {
+        let browser = ProjectBrowserViewController(coordinator: self, mode: .chooser)
+        browser.onChoose = { [weak self] repo in
+            dismiss()
             self?.openProject(repo)
         }
+        return browser
     }
 
     private func reload() {
         repos = (try? database.allRepos()) ?? repos
+        listedRepos = Self.listed(repos, by: currentScanner)
         NotificationCenter.default.post(name: Self.didChangeNotification, object: self)
     }
 
@@ -283,6 +326,10 @@ public final class ProjectsCoordinator: AppFeature {
         lastScanSummary = summary
         isScanning = false
         reload()
+        if rescanPending {
+            rescanPending = false
+            scan(showingProgress: false)
+        }
 
         Self.logger.info("Scan complete: \(summary.summaryText, privacy: .public)")
         progressWindow?.finish()

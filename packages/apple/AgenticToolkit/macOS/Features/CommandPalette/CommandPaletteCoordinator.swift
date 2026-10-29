@@ -120,9 +120,28 @@ public final class CommandPaletteCoordinator: AppFeature {
     /// Idempotent: a second call while it is open re-positions and re-focuses
     /// the same panel rather than stacking another.
     public func showPalette() {
+        paletteWindow().show()
+    }
+
+    /// Bring the palette up in picker mode: another feature's chooser in place
+    /// of the command list, in the same panel.
+    ///
+    /// The palette knows nothing about what is being picked. `makePicker` is
+    /// handed the palette's dismissal and builds the chooser around it, so a
+    /// feature's picker can put the palette away before it acts on the choice
+    /// — and the palette never imports the feature (`dependency-injection`).
+    /// Built fresh on every call, so a picker never opens on the last visit's
+    /// filter.
+    public func showPicker(_ makePicker: (_ dismiss: @escaping () -> Void) -> NSViewController) {
+        let controller = paletteWindow()
+        let picker = makePicker { [weak controller] in controller?.close() }
+        controller.show(picker: picker)
+    }
+
+    private func paletteWindow() -> CommandPaletteWindowController {
         let controller = windowController ?? makeWindowController()
         windowController = controller
-        controller.show()
+        return controller
     }
 
     private func makeWindowController() -> CommandPaletteWindowController {

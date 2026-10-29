@@ -13,6 +13,16 @@ extension ComposableSettings {
         /// The sidebar's section titles, top to bottom. See `sortedForSidebar`.
         private let sectionOrder: [String]
 
+        /// The sidebar row each section is shown as, by section title.
+        private let sectionIcons: [String: NSImage]
+
+        /// Every panel handed over, before sections are folded into tabs.
+        private var panels: [any ComposableSettingsPanel]
+
+        /// One topic per section, kept across `addPanel` so the tab a reader
+        /// is on survives a panel arriving late.
+        private var sectionTopics: [String: SectionTabsPanel] = [:]
+
         /// The ids this feature's actions answer to.
         public enum CommandID {
             public static let showSettings = "settings.action.showSettings"
@@ -21,6 +31,8 @@ extension ComposableSettings {
         /// - Parameter sectionOrder: The order of the sidebar's sections, by the
         ///   titles panels carry in `descriptor.section`. Empty (the default)
         ///   leaves one alphabetical list for apps whose panels have no sections.
+        /// - Parameter sectionIcons: The icon of each section's sidebar row, by
+        ///   section title. A section left out takes its first panel's icon.
         /// - Parameter commandRegistry: See `ProjectsCoordinator.init` —
         ///   required, so a dropped registry is a compile error rather than a
         ///   palette that silently lost this feature.
@@ -28,12 +40,18 @@ extension ComposableSettings {
             windowTitle: String = "Settings",
             settingsPanels: [any ComposableSettingsPanel],
             sectionOrder: [String] = [],
+            sectionIcons: [String: NSImage] = [:],
             commandRegistry registry: CommandRegistry
         ) {
             let settingsWindow = ComposableSettings.SettingsWindow()
             settingsWindow.windowTitle = windowTitle
-            settingsWindow.settingPanels = Self.sortedForSidebar(settingsPanels, sectionOrder: sectionOrder)
+            // The topics arrive already in the order `sortedForSidebar` gives
+            // them, sections included; an alphabetical pass on top would mix the
+            // sections in among the unsectioned panels.
+            settingsWindow.viewController?.sortsPanelsByTitle = false
             self.sectionOrder = sectionOrder
+            self.sectionIcons = sectionIcons
+            self.panels = settingsPanels
 
             settingsWindow.windowSpec = WindowSpec(
                 defaultSize: NSSize(width: 720, height: 480),
@@ -44,6 +62,7 @@ extension ComposableSettings {
 
             self.settingsWindow = settingsWindow
             super.init()
+            publishTopics()
 
             registry.register(AppCommand(
                 id: CommandID.showSettings,
@@ -77,8 +96,33 @@ extension ComposableSettings {
         /// panels whose dependencies (plugin managers, coordinators) aren't
         /// available when `SettingsCoordinator` is built.
         public func addPanel(_ panel: any ComposableSettingsPanel) {
-            settingsWindow.settingPanels = Self.sortedForSidebar(
-                settingsWindow.settingPanels + [panel], sectionOrder: sectionOrder)
+            panels.append(panel)
+            publishTopics()
+        }
+
+        /// Hands the window its sidebar: each unsectioned panel as a topic of
+        /// its own, and each section as one topic whose tabs are its panels.
+        private func publishTopics() {
+            var topics: [any ComposableSettingsPanel] = []
+            var members: [String: [any ComposableSettingsPanel]] = [:]
+            for panel in Self.sortedForSidebar(panels, sectionOrder: sectionOrder) {
+                guard let section = panel.descriptor.section else {
+                    topics.append(panel)
+                    continue
+                }
+                if members[section] == nil {
+                    let topic = sectionTopics[section]
+                        ?? SectionTabsPanel(section: section, icon: sectionIcons[section] ?? panel.descriptor.icon)
+                    sectionTopics[section] = topic
+                    topics.append(topic)
+                }
+                members[section, default: []].append(panel)
+            }
+            sectionTopics = sectionTopics.filter { members[$0.key] != nil }
+            for (section, topic) in sectionTopics {
+                topic.setPanels(members[section] ?? [])
+            }
+            settingsWindow.settingPanels = topics
         }
 
         /// The sidebar is grouped by section and alphabetical within each one, so a

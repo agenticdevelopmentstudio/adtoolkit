@@ -87,12 +87,22 @@ extension ComposableSettings {
         /// with the topic selected *inside* it: that is the panel the reader is
         /// looking at, and naming the outer container instead left the toolbar
         /// stuck on the container's name while the reader moved down its list.
+        /// A section's tabs are looked through the same way, to the tab on screen.
         public var currentPanelTitle: String? {
-            if let nested = currentPanel as? SplitViewController,
+            if let nested = visiblePanel as? SplitViewController,
                let inner = nested.currentPanelTitle {
                 return inner
             }
-            return currentPanel?.descriptor.title
+            return visiblePanel?.descriptor.title
+        }
+
+        /// The panel the reader is looking at at this level: the selected one,
+        /// or — when that is a `SettingsPanelContainer` — the one selected in it.
+        private var visiblePanel: (any ComposableSettingsPanel)? {
+            if let container = currentPanel as? any SettingsPanelContainer {
+                return container.selectedContainedPanel ?? container
+            }
+            return currentPanel
         }
 
         /// The panel on screen. `currentPanelTitle` names it; a host that has to
@@ -111,7 +121,7 @@ extension ComposableSettings {
         /// list — so "back" has to undo *that* before it backs out of the nested
         /// panel entirely.
         private func navigator(goingBack: Bool) -> SplitViewController {
-            guard let inner = (currentPanel as? SplitViewController)?
+            guard let inner = (visiblePanel as? SplitViewController)?
                     .navigator(goingBack: goingBack),
                   goingBack ? inner.history.canGoBack : inner.history.canGoForward
             else { return self }
@@ -331,6 +341,7 @@ extension ComposableSettings {
                 if let panel, let index = self.panels.firstIndex(where: { $0 === panel }) {
                     self.history.record(index)
                 }
+                self.revealSearchMatch(in: panel)
                 self.show(panel)
                 self.notifyNavigationChange()
             }
@@ -622,6 +633,7 @@ extension ComposableSettings {
             }
             history.record(target)
             listViewController.selectPanel(at: target)
+            revealSearchMatch(in: panels[target])
             show(panels[target])
             notifyNavigationChange()
         }
@@ -671,6 +683,26 @@ extension ComposableSettings {
         private func notifyNavigationChange() {
             onNavigationChange?()
             enclosingSettingsSplit?.notifyNavigationChange()
+        }
+
+        /// Told by a `SettingsPanelContainer` hosted here that its selection
+        /// moved: the toolbar title and the help drawer follow the tab.
+        func containedSelectionDidChange() {
+            refreshHelp()
+            notifyNavigationChange()
+        }
+
+        private let revealIndex = SettingsSearchIndex()
+
+        /// Picked from search results, a section opens on the first of its tabs
+        /// the query matched — the tab that put the section in the results —
+        /// rather than on whichever tab it was last left at.
+        private func revealSearchMatch(in panel: (any ComposableSettingsPanel)?) {
+            let query = listViewController.searchQuery
+            guard !query.isEmpty, let container = panel as? any SettingsPanelContainer,
+                  let match = container.containedPanels.first(where: { revealIndex.matches($0, query: query) })
+            else { return }
+            container.selectContainedPanel(match)
         }
 
         // MARK: - Detail pane

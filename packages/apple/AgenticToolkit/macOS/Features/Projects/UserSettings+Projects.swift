@@ -3,17 +3,39 @@ import AgenticToolkitCore
 
 extension UserSettings {
 
-    /// Folder names the project scan refuses to descend into, matched as
-    /// case-insensitive globs against the home directory's own folders.
+    /// The directories the project scan walks, as absolute paths.
     ///
-    /// The scan itself takes this list as a plain `[String]` parameter rather
-    /// than reading the setting — the scanner runs off the main actor, and a
-    /// pure walk that is told what to skip is testable without a settings
-    /// store (`dependency-injection`).
-    public static let projectScanSkipPatterns = UserSetting<[String]>(
-        "projectScanSkipPatterns",
-        default: GitRepoScanner.defaultRootSkipPatterns
-    )
+    /// Empty by default: the scan used to walk `~` on its own, and now walks
+    /// only what the user has named. The scanner takes these as plain values
+    /// rather than reading the settings — it runs off the main actor, and a
+    /// walk that is told what to cover is testable without a settings store
+    /// (`dependency-injection`).
+    public static let projectDirectories =
+        UserSetting<[String]>("project_directories", default: [])
+
+    /// Directories the project scan never enters, as absolute paths.
+    public static let projectSkippedDirectories =
+        UserSetting<[String]>("project_skipped_directories", default: [])
+
+    /// Whether the project scan stays out of dot-directories.
+    public static let projectScanSkipsHiddenDirectories =
+        UserSetting<Bool>("project_scan_skips_hidden_directories", default: true)
+
+    /// Whether the project scan leaves out the submodules of the repositories
+    /// it finds.
+    public static let projectScanSkipsSubmodules =
+        UserSetting<Bool>("project_scan_skips_submodules", default: true)
+
+    /// A scanner configured by the four settings above, read now.
+    @MainActor
+    public static func projectScanner() -> GitRepoScanner {
+        GitRepoScanner(
+            roots: projectDirectories.currentValue.map { URL(fileURLWithPath: $0) },
+            skippedDirectories: projectSkippedDirectories.currentValue.map { URL(fileURLWithPath: $0) },
+            skipsHiddenDirectories: projectScanSkipsHiddenDirectories.currentValue,
+            skipsSubmodules: projectScanSkipsSubmodules.currentValue
+        )
+    }
 
     /// Whether the pane the user last clicked in is outlined. Lives with the
     /// project settings rather than the appearance ones because it is about a
