@@ -2,6 +2,7 @@
 
 import * as React from 'react'
 import { Menu as MenuPrimitive } from '@base-ui/react/menu'
+import { mergeProps } from '@base-ui/react/merge-props'
 import { Check, ChevronRight, Circle } from 'lucide-react'
 
 import { cn } from '../lib/utils'
@@ -19,8 +20,24 @@ function DropdownMenu(props: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root {...props} />
 }
 
-function DropdownMenuTrigger(props: MenuPrimitive.Trigger.Props) {
-  return <MenuPrimitive.Trigger {...props} />
+// `aria-expanded` comes from the trigger's OWN render state — the same value behind
+// `data-popup-open` — rather than Base UI's. Base UI 1.7 writes it from a later store read (the
+// popup's mounted state), and without StrictMode's double render that later render is lost: the
+// menu opens, `data-popup-open` appears, and screen readers are still told it is collapsed. A
+// caller's `render` (function or element) still decides the element; it just receives the
+// corrected props.
+function DropdownMenuTrigger({ render, ...props }: MenuPrimitive.Trigger.Props) {
+  return (
+    <MenuPrimitive.Trigger
+      {...props}
+      render={(triggerProps, state) => {
+        const withState = { ...triggerProps, 'aria-expanded': state.open }
+        if (typeof render === 'function') return render(withState, state)
+        if (render) return React.cloneElement(render, mergeProps(withState, render.props as object))
+        return <button {...withState} />
+      }}
+    />
+  )
 }
 
 function DropdownMenuGroup(props: MenuPrimitive.Group.Props) {

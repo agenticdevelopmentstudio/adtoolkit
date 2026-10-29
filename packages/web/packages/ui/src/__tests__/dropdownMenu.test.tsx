@@ -55,6 +55,50 @@ describe('DropdownMenu — open/close contract', () => {
     expect(screen.getByText('Section')).toHaveClass('adh-dropdown-menu__label')
   })
 
+  // The trigger tells assistive tech whether its menu is open. Base UI 1.7 writes `aria-expanded`
+  // from a second, later store read (the popup's MOUNTED state) than the one behind
+  // `data-popup-open`, and under a production React build that later render is lost: the menu
+  // opens, `data-popup-open` appears, and `aria-expanded` stays "false" (the hub's prod e2e).
+  // The wrapper derives it from the trigger's own render state, the same source as
+  // `data-popup-open`, so the two can never disagree.
+  it('announces open and closed through aria-expanded, in step with data-popup-open', async () => {
+    render(
+      <DropdownMenu>
+        <DropdownMenuTrigger>Open</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>First</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    )
+    expect(trigger()).toHaveAttribute('aria-expanded', 'false')
+    await openMenu()
+    expect(trigger()).toHaveAttribute('data-popup-open')
+    expect(trigger()).toHaveAttribute('aria-expanded', 'true')
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' })
+    await waitFor(() => expect(trigger()).toHaveAttribute('aria-expanded', 'false'))
+  })
+
+  it('keeps aria-expanded, the element and its own props when the trigger is rendered as another element', async () => {
+    const onClick = vi.fn()
+    render(
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<a href="#menu" className="own" onClick={onClick} />}>
+          Open
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>First</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    )
+    const el = screen.getByText('Open').closest('a')!
+    expect(el).toHaveClass('own')
+    expect(el).toHaveAttribute('aria-expanded', 'false')
+    fireEvent.click(el)
+    await waitFor(() => expect(screen.getByRole('menu')).toBeInTheDocument())
+    expect(onClick).toHaveBeenCalledTimes(1)
+    expect(el).toHaveAttribute('aria-expanded', 'true')
+  })
+
   it('fires onClick and closes the menu when an item is clicked', async () => {
     const onClick = vi.fn()
     render(
