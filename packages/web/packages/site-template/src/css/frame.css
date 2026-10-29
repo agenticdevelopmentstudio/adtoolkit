@@ -97,6 +97,20 @@
   min-height: calc(100svh + var(--st-hero-extra, 0px));
 }
 
+/* The hero's stack fits the window, so its last line clears bitbag's dock. The dock is fixed at
+ * the foot of the window and the hero is `safe center`: a stack taller than the room between the
+ * top pad and `--lp-dock-clear` starts at the top and runs on down, under the resting avatar.
+ * The kit sizes the headline by width alone, so at 1280x800 the cookbook's four-line headline,
+ * its mark, lede, actions and trust row ran to 769px, under the avatar at 756px.
+ * So the stack's two big pieces scale with the window's height as well: the headline here
+ * (the kit's own clamp, its `vw` term capped by `7svh`, so its bounds are unchanged and a window
+ * 937px tall or more draws it exactly as before) and the glyph mark below (`12svh`). With the
+ * top pad's own cap (bridge.css) the cookbook's stack ends at 712px at 1280x800 and 668px at
+ * 1280x720, above the dock's 756px and 676px. Same selector as the kit's; this sheet loads after. */
+.lp-hero-flow h1 {
+  font-size: clamp(2.4rem, min(5.4vw, 7svh), 4.1rem);
+}
+
 /* A band the drawer jumps to (`/#about`) lands with its top edge under the fixed bar, not under
  * the burger: the bar is the 32px chip (chrome.css) with `--lp-bar-pad-y` above and below it, so
  * that is the default clearance. A site whose bar is another height sets `--st-band-clear`.
@@ -178,10 +192,12 @@
  * ReactNode), so a glyph is drawn at its own size, and the default mark — content-buildr's
  * `/glyph.svg`, a viewBox and no width — has none: as an <img> it filled the hero's wrap. Capped
  * at 112px, the size the flow hero was drawn at (adh-family.css sized the family's glyph so),
- * and a cap rather than a width, so a mark that draws itself smaller keeps its own size. */
+ * and a cap rather than a width, so a mark that draws itself smaller keeps its own size. And
+ * `12svh`, so on a short window it gives up height with the headline (see "the hero's stack fits
+ * the window" above); 112px still from 934px tall. */
 .st-mark--glyph {
   display: inline-block;
-  max-width: min(112px, 26vw);
+  max-width: min(112px, 26vw, 12svh);
   height: auto;
 }
 

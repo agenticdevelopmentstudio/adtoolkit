@@ -130,9 +130,23 @@ describe('frame.css', () => {
     // of it is as wide as the hero's wrap. A cap, not a width, so a mark that draws itself
     // smaller (`width="64"`) keeps its own size.
     const body = ruleBody(frame(), '.st-mark--glyph')
-    expect(body).toContain('max-width: min(112px, 26vw)')
+    expect(body).toContain('max-width: min(112px, 26vw, 12svh)')
     expect(body).toContain('height: auto')
     expect(body).not.toMatch(/(^|[ ;])width:/)
+  })
+
+  it("fits the hero's stack to the window's height, so its last line clears the dock", () => {
+    // The dock is fixed at the window's foot; a stack sized by width alone ran under it on a
+    // laptop screen (the cookbook at 1280x800). The headline keeps the kit's own clamp, bounds
+    // and width term, with that term capped by the window's height.
+    const kit = ruleBody(read(join(landingCss, 'flow.css')), '.lp-hero-flow h1')
+    const kitSize = /font-size: clamp\(([^,]+), ([^,]+), ([^)]+)\)/.exec(kit)
+    expect(kitSize).not.toBeNull()
+    const [, min, fluid, max] = kitSize!
+    expect(ruleBody(frame(), '.lp-hero-flow h1')).toContain(`font-size: clamp(${min}, min(${fluid}, 7svh), ${max})`)
+    // The mark gives up height with it, and so does the pad above the stack.
+    expect(ruleBody(frame(), '.st-mark--glyph')).toMatch(/max-width: min\([^;]*\d+svh\)/)
+    expect(ruleBody(bridge(), ':root')).toContain('--lp-hero-pad-top: min(6.5rem, 13svh)')
   })
 
   it('keeps the hero status pill its own height beside a button', () => {

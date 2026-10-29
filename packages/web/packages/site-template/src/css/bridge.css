@@ -93,7 +93,10 @@
   --lp-bleed: clamp(2.5rem, 10vw, 9rem);
   --lp-seam: 4.5vw;
   --lp-screen-pad-top: clamp(5.5rem, 14svh, 9rem);
-  --lp-hero-pad-top: 6.5rem;
+  /* The kit's 6.5rem, less on a short window (13svh is 6.5rem at 800px tall): still clear of the
+   * bar (a 32px chip with `--lp-bar-pad-y` either side), and part of what keeps the hero's stack
+   * above bitbag's dock on a laptop screen (frame.css, "the hero's stack fits the window"). */
+  --lp-hero-pad-top: min(6.5rem, 13svh);
   --lp-hero-pad-bottom: var(--lp-dock-clear, 0px);
   --lp-snap-stop: normal;
 
