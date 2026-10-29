@@ -37,6 +37,7 @@ function deploy(over: Partial<DeployFact> = {}): DeployFact {
     buildPhase: "built",
     deployPhase: "deployed",
     createdAtMs: NOW - 60_000,
+    buildStartedAtMs: null,
     commitHash: "abc1234",
     commitMessage: "fix: the thing",
     commitRepo: "adh",
@@ -167,6 +168,41 @@ describe("deployProblems — verdicts", () => {
     expect(p).toHaveLength(1);
     expect(p[0].state).toBe("stuck");
     expect(p[0].detail).toMatch(/^stuck building · \d+m$/);
+  });
+
+  // A fleet-wide push queues ~48 Vercel builds against few slots, so a deploy routinely
+  // waits 30–50 minutes before it starts building. `createdAtMs` is queue ENTRY; judging
+  // age from it flagged every late-admitted build stuck the instant it began, then
+  // "resolved" it when the 3–4 minute build finished.
+  it("5b. a build that waited long in the QUEUE but only just started building is NOT stuck", () => {
+    const f = facts({
+      inFlightDeploys: [
+        deploy({
+          buildPhase: "building",
+          deployPhase: "none",
+          createdAtMs: NOW - 45 * 60_000,
+          buildStartedAtMs: NOW - 2 * 60_000,
+        }),
+      ],
+    });
+    expect(deployProblems(f, NOW)).toEqual([]);
+  });
+
+  it("5c. stuck age — and the detail's minutes — count from build START, not queue entry", () => {
+    const f = facts({
+      inFlightDeploys: [
+        deploy({
+          buildPhase: "building",
+          deployPhase: "none",
+          createdAtMs: NOW - 90 * 60_000,
+          buildStartedAtMs: NOW - 40 * 60_000,
+        }),
+      ],
+    });
+    const p = deployProblems(f, NOW);
+    expect(p).toHaveLength(1);
+    expect(p[0].state).toBe("stuck");
+    expect(p[0].detail).toBe("stuck building · 40m");
   });
 
   it("6. a deploy QUEUED past the threshold is NOT stuck — a hold is intentional", () => {

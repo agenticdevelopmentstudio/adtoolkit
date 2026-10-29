@@ -22,7 +22,7 @@ function failedDeploy(over: Partial<DeployFact> = {}): DeployFact {
     deploymentId: `dpl_${++deploySeq}`,
     platform: "vercel", providerProjectId: null, projectName: "hub-help-testing",
     environment: "production", branch: null, buildPhase: "failed", deployPhase: "none",
-    createdAtMs: NOW - 60_000, commitHash: "abc1234", commitMessage: "wip",
+    createdAtMs: NOW - 60_000, buildStartedAtMs: null, commitHash: "abc1234", commitMessage: "wip",
     commitRepo: "adh", sourceUrl: null, liveUrl: null, errorText: null, ...over,
   };
 }
@@ -257,7 +257,7 @@ describe("Crunchy has no HTTP host, but must still be WATCHED", () => {
       deploymentId: `dpl_${++deploySeq}`,
       platform: "crunchy", providerProjectId: "cl_9", projectName: "prod-cluster",
       environment: null, branch: null, buildPhase: null, deployPhase: "failed",
-      createdAtMs: NOW - 60_000, commitHash: null, commitMessage: null,
+      createdAtMs: NOW - 60_000, buildStartedAtMs: null, commitHash: null, commitMessage: null,
       commitRepo: null, errorText: null, sourceUrl: null, liveUrl: null, ...over,
     };
   }

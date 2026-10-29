@@ -48,6 +48,8 @@ const PROJECTS_OVERALL_BUDGET_MS = 18_000;
 export interface VercelDeploymentSummary {
   id?: string;
   createdAt?: number;
+  /** When the build left the queue and began; absent while still QUEUED. */
+  buildingAt?: number;
   readyState?: string;
   readySubstate?: string | null;
   target?: string | null;
@@ -275,6 +277,7 @@ function toProviderDeploy(
       d.meta?.githubCommitOrg && d.meta?.githubCommitRepo ? `${d.meta.githubCommitOrg}/${d.meta.githubCommitRepo}` : null,
     url: d.url ? `https://${d.url}` : null,
     createdAt,
+    buildStartedAt: toValidDate(d.buildingAt),
   };
 }
 

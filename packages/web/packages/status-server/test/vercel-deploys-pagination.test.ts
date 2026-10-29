@@ -84,6 +84,17 @@ describe('vercel deploys poll — pagination', () => {
     expect(out.deploys.length).toBeGreaterThanOrEqual(0);
   });
 
+  it('carries buildingAt as buildStartedAt — queue entry is NOT build start', async () => {
+    const created = Date.now() - 45 * MIN;
+    const buildingAt = Date.now() - 2 * MIN;
+    stubPages([{ deployments: [{ ...(dep('a-1', 45 * MIN) as object), created, buildingAt, state: 'BUILDING' }, dep('b-1', MIN)], pagination: { next: null } }]);
+    const out = await fetchVercelDeployments({ VERCEL_API_TOKEN: 'tok' });
+    const byId = new Map(out.deploys.map((d) => [d.id, d]));
+    expect(byId.get('vc_a-1')?.createdAt.getTime()).toBe(created);
+    expect(byId.get('vc_a-1')?.buildStartedAt?.getTime()).toBe(buildingAt);
+    expect(byId.get('vc_b-1')?.buildStartedAt).toBeNull(); // not reported → null, never NaN
+  });
+
   it('a FIRST-page failure is definitive (nothing fetched → unreachable)', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: false, status: 500, json: async () => ({}), headers: new Headers() })));
     const out = await fetchVercelDeployments({ VERCEL_API_TOKEN: 'tok' });

@@ -73,6 +73,11 @@ export interface DeployFact {
   deployPhase: DeployPhase;
   /** Epoch ms. Never a Date — the fold is pure and compares numbers. */
   createdAtMs: number;
+  /**
+   * Epoch ms the BUILD began (`deployments.build_started_at`), or null when the provider
+   * reported none. `createdAtMs` is queue entry — stuck age is measured from here instead.
+   */
+  buildStartedAtMs: number | null;
   commitHash: string | null;
   commitMessage: string | null;
   commitRepo: string | null;

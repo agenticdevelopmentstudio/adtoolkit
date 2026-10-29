@@ -19,6 +19,14 @@ import type {
   BoardFacts, DeployFact, EndpointFact, ErrorFact, Problem, RosterEntry,
 } from "./types";
 
+/** Where a deploy's build age starts: when the build began, not when it was queued. A
+ *  fleet-wide push holds Vercel builds QUEUED for 30–50 minutes, and measuring from queue
+ *  entry flagged every late-admitted build stuck the moment it started. Falls back to
+ *  `createdAtMs` for a provider that reports no start time. */
+function buildAgeFrom(d: DeployFact): number {
+  return d.buildStartedAtMs ?? d.createdAtMs;
+}
+
 function stuckDetail(status: string, ageMs: number): string {
   return `stuck ${status} · ${Math.round(ageMs / 60_000)}m`;
 }
@@ -196,7 +204,7 @@ export function deployProblems(facts: BoardFacts, nowMs: number, index?: RosterI
       const status = combinedStatus({ buildPhase: running.fact.buildPhase, deployPhase: running.fact.deployPhase });
       // Crunchy needs no exemption here: `crunchyPhases` only ever yields `failed`/`deployed`,
       // so a cluster's status is always a verdict and never reaches this branch.
-      stuck = deployIsStuck(status, nowMs - running.fact.createdAtMs);
+      stuck = deployIsStuck(status, nowMs - buildAgeFrom(running.fact));
       if (stuck) judged = running;
     }
     if (!judged && verdict) {
@@ -217,7 +225,7 @@ export function deployProblems(facts: BoardFacts, nowMs: number, index?: RosterI
     // predicate out itself but off the SAME `index.vanishedVercel`. A second copy here
     // would be a fourth spelling, and disagreeing spellings are how the deploy rules came
     // to have no gate at all while `hooks.ts` documented one.
-    const ageMs = nowMs - d.createdAtMs;
+    const ageMs = nowMs - buildAgeFrom(d);
     out.push({
       target,
       // The RAW platform, not the canonicalized one: `IssueSource` carries the literal

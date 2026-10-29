@@ -435,6 +435,7 @@ export interface DeployUpsertInput {
   commitRepo: string | null;
   url: string | null;
   createdAt: Date;
+  buildStartedAt?: Date | null;
 }
 
 /** A deploy's correlation fields, for the live-host reconcile. */

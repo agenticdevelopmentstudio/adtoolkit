@@ -63,4 +63,10 @@ describe('latestDeploysOf', () => {
     ]);
     expect(out).toEqual([]);
   });
+
+  it('carries buildingAt as buildStartedAt — a long-queued build is not old the moment it starts', () => {
+    const [out] = latestDeploysOf('web', [{ ...dep('b', 'BUILDING', 1_000), buildingAt: 5_000 }]);
+    expect(out!.createdAt.getTime()).toBe(1_000);
+    expect(out!.buildStartedAt?.getTime()).toBe(5_000);
+  });
 });

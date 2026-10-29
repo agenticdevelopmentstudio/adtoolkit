@@ -99,6 +99,7 @@ export function createDeployStore(db: Db): DeployStore {
             commitRepo: d.commitRepo,
             url: d.url,
             createdAt: d.createdAt,
+            buildStartedAt: d.buildStartedAt ?? null,
           })),
         )
         .onConflictDoUpdate({
@@ -128,6 +129,10 @@ export function createDeployStore(db: Db): DeployStore {
             // time (later than true creation), so letting them overwrite would skew
             // ordering, the reconcile window, and stuck-deploy detection.
             createdAt: sql`min(excluded.created_at, created_at)`,
+            // Earliest KNOWN build start, for the same reason: a webhook's event time trails
+            // the true start. SQLite's two-arg min() is NULL if either side is, so the
+            // COALESCE keeps whichever source actually reported one.
+            buildStartedAt: sql`COALESCE(min(excluded.build_started_at, build_started_at), excluded.build_started_at, build_started_at)`,
             fetchedAt: sql`(unixepoch())`,
           },
         });

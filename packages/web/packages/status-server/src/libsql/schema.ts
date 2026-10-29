@@ -102,6 +102,12 @@ export const deployments = sqliteTable(
     // live-url link — replaces the dead DEPLOY_MAP name matching.
     liveHost: text("live_host"),
     createdAt: integer("created_at", { mode: "timestamp" }).notNull(),
+    // When the BUILD began — distinct from created_at, which is queue entry. A fleet-wide
+    // push queues Vercel builds for 30–50 minutes, so stuck-deploy age measured from
+    // created_at flagged every late-admitted build the instant it started. Null when the
+    // provider reports no start time (Railway, Cloudflare) or the build has not started;
+    // the stuck check then falls back to created_at.
+    buildStartedAt: integer("build_started_at", { mode: "timestamp" }),
     fetchedAt: integer("fetched_at", { mode: "timestamp" }).notNull().default(now),
   },
   (t) => [

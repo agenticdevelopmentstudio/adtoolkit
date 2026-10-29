@@ -52,6 +52,7 @@ export function mapVercelDeployEvent(event: unknown): ProviderDeploy | null {
   if (!dep?.id || !dep?.name) return null;
   const target = e.payload?.target ?? null;
   const meta = dep.meta ?? {};
+  const eventAt = toValidDate(e.createdAt) ?? new Date();
   return {
     id: `vc_${dep.id}`,
     platform: "vercel",
@@ -75,7 +76,11 @@ export function mapVercelDeployEvent(event: unknown): ProviderDeploy | null {
     // Receipt time when absent OR unparseable — a webhook is often the only
     // witness of a terminal state, so approximate time beats a dropped event
     // (and an Invalid Date must never leave this boundary).
-    createdAt: toValidDate(e.createdAt) ?? new Date(),
+    createdAt: eventAt,
+    // The BUILDING event is the queue → build transition, so its time IS the build start.
+    // Every other event says nothing about when building began; the upsert keeps the
+    // earliest known value, and the poll's `buildingAt` corrects any delivery lag.
+    buildStartedAt: state.readyState === "BUILDING" ? eventAt : null,
   };
 }
 

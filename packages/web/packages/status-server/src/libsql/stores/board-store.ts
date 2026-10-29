@@ -87,6 +87,7 @@ function toDeployFact(d: typeof deployments.$inferSelect): DeployFact {
     buildPhase: d.buildPhase as BuildPhase | null,
     deployPhase: d.deployPhase as DeployPhase,
     createdAtMs: d.createdAt.getTime(),
+    buildStartedAtMs: d.buildStartedAt?.getTime() ?? null,
     commitHash: d.commitHash,
     commitMessage: d.commitMessage,
     commitRepo: d.commitRepo,

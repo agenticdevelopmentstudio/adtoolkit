@@ -48,6 +48,16 @@ describe("mapVercelDeployEvent", () => {
     expect(queued?.id).toBe(started?.id); // same deployment row, two phases
   });
 
+  /** Stuck age is measured from build START, so the leaving-the-queue event must carry
+   *  it — and no other event may claim one, or a queued deploy would read as started. */
+  it("stamps buildStartedAt from build-requested, and from no other event", () => {
+    const started = mapVercelDeployEvent(vercelEvent({ type: "deployment.build-requested" }));
+    expect(started?.buildStartedAt?.toISOString()).toBe("2026-08-02T10:00:00.000Z");
+    for (const type of ["deployment.created", "deployment.succeeded", "deployment.error"]) {
+      expect(mapVercelDeployEvent(vercelEvent({ type }))?.buildStartedAt).toBeNull();
+    }
+  });
+
   it("returns null for an event type we do not ingest", () => {
     expect(mapVercelDeployEvent(vercelEvent({ type: "project.created" }))).toBeNull();
     expect(mapVercelDeployEvent({})).toBeNull();

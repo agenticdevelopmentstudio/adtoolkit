@@ -83,4 +83,23 @@ describe("upsertDeployments", () => {
     const rows = await db.select().from(deployments);
     expect(rows.map((r) => r.id)).toEqual(["vc_d1"]);
   });
+
+  it("buildStartedAt keeps the EARLIEST known start, and a source that reports none never erases it", async () => {
+    const db = await freshDb();
+    const storage = createLibsqlStorage(db);
+    const poll = new Date("2026-08-02T10:40:00.000Z");
+    const lateWebhook = new Date("2026-08-02T10:40:05.000Z");
+
+    await storage.deploy.upsertDeployments([deploy({ buildPhase: "queued", deployPhase: "none" })]);
+    expect((await rowOf(db)).buildStartedAt).toBeNull();
+
+    await storage.deploy.upsertDeployments([deploy({ buildPhase: "building", deployPhase: "none", buildStartedAt: lateWebhook })], { source: "webhook" });
+    expect((await rowOf(db)).buildStartedAt?.getTime()).toBe(lateWebhook.getTime());
+
+    await storage.deploy.upsertDeployments([deploy({ buildPhase: "building", deployPhase: "none", buildStartedAt: poll })]);
+    expect((await rowOf(db)).buildStartedAt?.getTime()).toBe(poll.getTime());
+
+    await storage.deploy.upsertDeployments([deploy({ buildStartedAt: null })], { source: "webhook" });
+    expect((await rowOf(db)).buildStartedAt?.getTime()).toBe(poll.getTime());
+  });
 });

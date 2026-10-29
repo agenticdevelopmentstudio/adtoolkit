@@ -32,6 +32,10 @@ export interface ProviderDeploy {
   // constructors that never see an error don't each have to spell out `null`.
   errorText?: string | null;
   createdAt: Date;
+  // When the build actually began, if the provider says. `createdAt` is queue entry, and
+  // Vercel holds builds QUEUED for tens of minutes on a fleet-wide push; stuck-deploy age
+  // is measured from this when present. Optional for the same reason as `errorText`.
+  buildStartedAt?: Date | null;
   // When the PHASES were last confirmed against provider truth: the persisted
   // row's fetched_at, or a webhook's receipt time for live-buffer overlays.
   // Optional because the fetchers construct deploys straight FROM provider truth

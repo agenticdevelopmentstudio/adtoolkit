@@ -55,6 +55,7 @@ function deploy(over: Partial<DeployFact> = {}): DeployFact {
     buildPhase: "failed",
     deployPhase: "none",
     createdAtMs: 1000,
+    buildStartedAtMs: null,
     commitHash: null,
     commitMessage: null,
     commitRepo: null,

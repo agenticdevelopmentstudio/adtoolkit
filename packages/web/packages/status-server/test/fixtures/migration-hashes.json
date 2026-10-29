@@ -88,5 +88,10 @@
     "tag": "0017_harsh_star_brand",
     "when": 1792863699986,
     "sha256": "052ef149db29f9a0d8ef48f97c270507291ac20fa7424f013d98cacc119f29cb"
+  },
+  {
+    "tag": "0018_brief_molly_hayes",
+    "when": 1793292446348,
+    "sha256": "db454f60837b7cca20a6ba503cc624e897ef0846e1b803fcd07f29b505d4a4c7"
   }
 ]

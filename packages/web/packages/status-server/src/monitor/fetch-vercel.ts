@@ -9,6 +9,8 @@ interface VercelDeployment {
   projectId?: string;
   url?: string;
   created: number;
+  /** When the build left the queue and began; absent while still QUEUED. */
+  buildingAt?: number;
   state: string;
   readySubstate?: string | null;
   target?: string | null;
@@ -136,6 +138,7 @@ export async function fetchVercelDeployments(env: {
             : null,
         url: d.inspectorUrl ?? (d.url ? `https://${d.url}` : null),
         createdAt,
+        buildStartedAt: toValidDate(d.buildingAt),
       });
     }
     // `ok:false` on a partial: the rows we DID fetch are still upserted, but the

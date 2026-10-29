@@ -26,6 +26,7 @@ function deploy(over: Partial<DeployFact> = {}): DeployFact {
     platform: "vercel", providerProjectId: null, projectName: "hub-help-testing",
     environment: "production", branch: null, buildPhase: "built", deployPhase: "deployed",
     createdAtMs: NOW - 60_000, commitHash: "abc1234", commitMessage: "fix: thing",
+    buildStartedAtMs: null,
     commitRepo: "adh", errorText: null, sourceUrl: null, liveUrl: null, ...over,
   };
 }
