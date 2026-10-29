@@ -265,8 +265,10 @@
   margin-top: 1.8rem;
 }
 /* A versus straight after prose has nothing of its own above it, so the panels
- * would butt against the text. The same gap a lede takes after a block. */
-.lp-wrap > .lp-lede + .lp-versus {
+ * would butt against the text. The same gap a lede takes after a block. Not
+ * scoped to `.lp-wrap >`: a band's content sits inside `.lp-reveal`, which that
+ * child combinator would skip. */
+.lp-lede + .lp-versus {
   margin-top: 1.8rem;
 }
 

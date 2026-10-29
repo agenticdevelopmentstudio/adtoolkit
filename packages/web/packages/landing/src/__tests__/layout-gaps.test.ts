@@ -18,7 +18,9 @@ function rule(selector: string): string {
 
 describe('versus after prose', () => {
   it('stands 1.8rem clear of a lede it directly follows, the gap a lede takes after a block', () => {
-    expect(rule('.lp-wrap > .lp-lede + .lp-versus')).toContain('margin-top: 1.8rem;')
+    // Not `.lp-wrap > ...`: a band's content sits inside `.lp-reveal`, so a child combinator on
+    // `.lp-wrap` matches only a bare band and never the page a host actually renders.
+    expect(rule('.lp-lede + .lp-versus')).toContain('margin-top: 1.8rem;')
     expect(rule('.lp-wrap > .lp-lede')).toContain('margin-top: 1.8rem;')
   })
 })
