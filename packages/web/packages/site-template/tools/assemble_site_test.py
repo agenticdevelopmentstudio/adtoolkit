@@ -1222,9 +1222,10 @@ class AssembleTest(unittest.TestCase):
         self.assertIn("envDefaults: {},", text)
         config = (self.app / "next.config.ts").read_text()
         self.assertIn(
-            "import { frameBuildIdentity, frameNext, frameThemeFonts } from '@agenticdevelopertoolkit/site-template/next'",
+            "import { frameBuildIdentity, frameNext, frameThemeFonts, frameWorkspaceRoot } from '@agenticdevelopertoolkit/site-template/next'",
             config,
         )
+        self.assertIn("const WORKSPACE_ROOT = frameWorkspaceRoot(APP_DIR)", config)
         self.assertIn("import { nextSite, transpilePackages } from './src/site/next'", config)
 
     def test_rewrites_public_env_and_defaults_reach_the_next_site(self) -> None:

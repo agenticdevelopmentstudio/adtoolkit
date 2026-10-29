@@ -1,8 +1,8 @@
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { frameBuildIdentity, frameNext, frameThemeFonts } from '../frame-next'
+import { frameBuildIdentity, frameNext, frameThemeFonts, frameWorkspaceRoot } from '../frame-next'
 import type { FrameNextSite } from '../frame-next'
 
 const none: FrameNextSite = { rewrites: [], publicEnv: [], envDefaults: {} }
@@ -218,5 +218,39 @@ describe('frameBuildIdentity', () => {
 
   it('adds nothing for a site that does not', () => {
     expect(frameBuildIdentity(none, tmpdir())).toEqual({})
+  })
+})
+
+describe('frameWorkspaceRoot', () => {
+  const dirs: string[] = []
+  function websites(): string {
+    const dir = path.join(realpathSync(mkdtempSync(path.join(tmpdir(), 'frame-workspace-'))), 'websites')
+    dirs.push(path.dirname(dir))
+    return dir
+  }
+  afterEach(() => {
+    for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("is the app's parent when that holds the workspace file (websites/main)", () => {
+    const root = websites()
+    mkdirSync(path.join(root, 'main'), { recursive: true })
+    writeFileSync(path.join(root, 'pnpm-workspace.yaml'), "packages:\n  - 'main'\n")
+    expect(frameWorkspaceRoot(path.join(root, 'main'))).toBe(root)
+  })
+
+  it('walks further up for an app placed deeper (websites/sites/<id>)', () => {
+    const root = websites()
+    const app = path.join(root, 'sites', 'teams')
+    mkdirSync(app, { recursive: true })
+    writeFileSync(path.join(root, 'pnpm-workspace.yaml'), "packages:\n  - 'sites/teams'\n")
+    expect(frameWorkspaceRoot(app)).toBe(root)
+    expect(frameWorkspaceRoot(`${app}/`)).toBe(root)
+  })
+
+  it('fails by name when no workspace file is above the app', () => {
+    const app = path.join(websites(), 'main')
+    mkdirSync(app, { recursive: true })
+    expect(() => frameWorkspaceRoot(app)).toThrow(/pnpm-workspace\.yaml/)
   })
 })

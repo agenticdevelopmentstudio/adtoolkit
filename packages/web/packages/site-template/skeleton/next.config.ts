@@ -2,14 +2,17 @@
 // skeleton in the toolkit and re-assemble.
 import { fileURLToPath } from 'node:url'
 import type { NextConfig } from 'next'
-import { frameBuildIdentity, frameNext, frameThemeFonts } from '@agenticdevelopertoolkit/site-template/next'
+import { frameBuildIdentity, frameNext, frameThemeFonts, frameWorkspaceRoot } from '@agenticdevelopertoolkit/site-template/next'
 import { nextSite, transpilePackages } from './src/site/next'
 
 /** The app's own directory, which holds its `public/` and its `VERSION` file. */
 const APP_DIR = fileURLToPath(new URL('.', import.meta.url))
 
-/** The pnpm workspace root: the app's parent (`websites/`), where the site's lockfile lives. */
-const WORKSPACE_ROOT = fileURLToPath(new URL('..', import.meta.url))
+/**
+ * The pnpm workspace root (`websites/`), where the site's lockfile lives: the nearest
+ * `pnpm-workspace.yaml` above the app, which is its parent unless `output` placed it deeper.
+ */
+const WORKSPACE_ROOT = frameWorkspaceRoot(APP_DIR)
 
 /**
  * `site.json`'s `rewrites`, `headers`, `redirects` and `publicEnv`, resolved now, as the config

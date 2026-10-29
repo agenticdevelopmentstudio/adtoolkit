@@ -5,6 +5,8 @@
 // bundle. The assembler has already checked every `${…}` is well formed; what it cannot know is
 // the environment, so an unset variable with no default fails the build here, by name.
 
+import { existsSync } from 'node:fs'
+import path from 'node:path'
 import { commitSha, readSiteVersion } from '@agentic-toolkit/next-env'
 import { materializeThemeFonts } from '@agenticdevelopertoolkit/themes/materialize-fonts'
 
@@ -202,4 +204,21 @@ export function frameThemeFonts(site: FrameNextSite, appDir: string): void {
 export function frameBuildIdentity(site: FrameNextSite, appDir: string): Record<string, string> {
   if (site.buildIdentity !== true) return {}
   return { NEXT_PUBLIC_ADH_SITE_VERSION: readSiteVersion(appDir), NEXT_PUBLIC_ADH_RELEASE: commitSha() }
+}
+
+/**
+ * The site's pnpm workspace root: the nearest directory above the app that holds a
+ * `pnpm-workspace.yaml`. Usually the app's parent (`websites/` for `websites/main`), but `output`
+ * may place the app deeper (`websites/sites/<id>`), and the root is what Turbopack compiles
+ * within: pinned one level too shallow, every `link:` into `websites/external` lies outside it and
+ * `next` itself cannot be resolved. Fails by name when there is none, rather than letting Next
+ * pick a root on its own.
+ */
+export function frameWorkspaceRoot(appDir: string): string {
+  const app = path.resolve(appDir)
+  for (let dir = path.dirname(app); ; dir = path.dirname(dir)) {
+    if (existsSync(path.join(dir, 'pnpm-workspace.yaml'))) return dir
+    if (path.dirname(dir) === dir) break
+  }
+  throw new Error(`no pnpm-workspace.yaml above ${app}: the site's websites/ workspace root is missing`)
 }
