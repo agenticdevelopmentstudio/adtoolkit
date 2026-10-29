@@ -1,6 +1,7 @@
 import { mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { TYPEGEN_ONLY_FLAG, TYPEGEN_ONLY_ORIGIN } from '@agentic-toolkit/next-env'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { frameBuildIdentity, frameNext, frameThemeFonts, frameWorkspaceRoot } from '../frame-next'
 import type { FrameNextSite } from '../frame-next'
@@ -78,6 +79,43 @@ describe('frameNext', () => {
   it('fails loudly, naming the variable and the rewrite, when a variable is unset with no default', () => {
     const site: FrameNextSite = { ...none, rewrites: [{ source: '/api/:path*', destination: '${BACKEND}/:path*' }] }
     expect(() => frameNext(site, {})).toThrow(/BACKEND.*rewrites\[0\]/s)
+  })
+
+  describe('under `next typegen` (TYPEGEN_ONLY=1)', () => {
+    // Typegen reads only a rewrite's SOURCE, and runs under the same phase as `next build`;
+    // typecheck-all.py sets the flag for it alone. A destination it never serves must not stop
+    // the route types being generated, and must never point anywhere real.
+    const backend: FrameNextSite = { ...none, rewrites: [{ source: '/api/:path*', destination: '${BACKEND}/:path*' }] }
+    const typegen = { [TYPEGEN_ONLY_FLAG]: '1' }
+
+    it('loads with an unset rewrite variable, pointing the rewrite at an origin that cannot resolve', () => {
+      expect(frameNext(backend, typegen).rewrites).toEqual([
+        { source: '/api/:path*', destination: `${TYPEGEN_ONLY_ORIGIN}/:path*` },
+      ])
+    })
+
+    it('reaches the placeholder through an envDefaults entry that names the unset variable', () => {
+      const site: FrameNextSite = { ...backend, envDefaults: { BACKEND: '${UPSTREAM}' } }
+      expect(frameNext(site, typegen).rewrites[0]?.destination).toBe(`${TYPEGEN_ONLY_ORIGIN}/:path*`)
+    })
+
+    it('still prefers a configured value', () => {
+      expect(frameNext(backend, { ...typegen, BACKEND: 'https://b.example' }).rewrites[0]?.destination).toBe(
+        'https://b.example/:path*',
+      )
+    })
+
+    it('still refuses an unset public variable: that one is inlined into the client', () => {
+      expect(() => frameNext({ ...none, publicEnv: ['NEXT_PUBLIC_X'] }, typegen)).toThrow(/NEXT_PUBLIC_X.*publicEnv\[0\]/s)
+    })
+
+    it.each([
+      ['next build', { NODE_ENV: 'production' }],
+      ['next dev', { NODE_ENV: 'development' }],
+      ['a flag that is not exactly 1', { NODE_ENV: 'production', [TYPEGEN_ONLY_FLAG]: 'true' }],
+    ])('still throws by name under %s when the variable is missing', (_label, env) => {
+      expect(() => frameNext(backend, env)).toThrow(/BACKEND.*rewrites\[0\]/s)
+    })
   })
 
   it('picks an envDefaults value by another variable', () => {

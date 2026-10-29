@@ -179,6 +179,14 @@ one under `next dev`:
 A value joined to a path (`${API_BACKEND_URL}/auth/:path*`) loses its trailing slashes, so
 `API_BACKEND_URL=https://api.example.com/` still gives one slash at the join; a value with no path
 after it is substituted whole.
+
+One exemption: under `next typegen`, which the workspace typecheck runs before `tsc`, an unset
+variable in a rewrite's destination resolves to `http://typegen-only.invalid` instead of
+throwing. Typegen types each rewrite's source and never serves a destination, but it loads the
+config under the same phase as `next build`, so the typecheck says which it is with
+`TYPEGEN_ONLY=1` (read by `@agentic-toolkit/next-env`'s `isTypegenOnly`). `next build` and
+`next dev` never set it and still fail by name. `publicEnv` is not exempt.
+
 `publicEnv` names go to Next's `env` (inlined into client code). One with no value anywhere fails
 the build, naming it — a client bundle inlining `undefined` is the failure it would otherwise be —
 unless the site writes it `${NAME:-}`, which says the variable is optional; that one is left out.

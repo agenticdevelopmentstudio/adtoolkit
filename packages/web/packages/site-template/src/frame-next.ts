@@ -7,7 +7,7 @@
 
 import { existsSync } from 'node:fs'
 import path from 'node:path'
-import { commitSha, readSiteVersion } from '@agentic-toolkit/next-env'
+import { TYPEGEN_ONLY_ORIGIN, commitSha, isTypegenOnly, readSiteVersion } from '@agentic-toolkit/next-env'
 import { materializeThemeFonts } from '@agenticdevelopertoolkit/themes/materialize-fonts'
 
 /** One `site.json` rewrite: Next's `{ source, destination }`, the destination substituted. */
@@ -99,9 +99,18 @@ const OPTIONAL = /^\$\{([A-Z_][A-Z0-9_]*):-\}$/
  * variable and where it was used. A `publicEnv` name with no value anywhere throws the same
  * way — a client bundle inlining `undefined` is the failure it would otherwise be — unless the
  * site wrote it `${NAME:-}`, which is how it says the variable is optional; that one is left out.
+ *
+ * One exemption, and only for a rewrite's destination: under `next typegen` (`TYPEGEN_ONLY=1`,
+ * read by `isTypegenOnly`) an unset variable there resolves to `TYPEGEN_ONLY_ORIGIN`, which
+ * cannot resolve. Typegen types each rewrite's source and never serves a destination, and it
+ * loads the config under the same phase as `next build`, so the explicit flag is what tells the
+ * two apart. `next build` and `next dev` never set it, and still throw. Public env is not exempt.
  */
 export function frameNext(site: FrameNextSite, env: Env): FrameNextResult {
   const resolving: string[] = []
+  const typegenOnly = isTypegenOnly(env)
+  // True while a rewrite's destination is being resolved, including any envDefaults it reaches.
+  let inRewrite = false
 
   function lookup(name: string): string | undefined {
     const own = env[name]
@@ -151,16 +160,21 @@ export function frameNext(site: FrameNextSite, env: Env): FrameNextResult {
       const value = lookup(name)
       if (value !== undefined) return trim(value)
       if (inline !== undefined) return trim(inline)
+      if (typegenOnly && inRewrite) return TYPEGEN_ONLY_ORIGIN
       throw new Error(
         `site.json: \${${name}} in ${where} is unset, with no envDefaults entry and no inline default (\${${name}:-…})`,
       )
     })
   }
 
-  const rewrites = site.rewrites.map((rewrite, i) => ({
-    source: rewrite.source,
-    destination: substitute(rewrite.destination, `rewrites[${i}].destination`),
-  }))
+  const rewrites = site.rewrites.map((rewrite, i) => {
+    inRewrite = true
+    try {
+      return { source: rewrite.source, destination: substitute(rewrite.destination, `rewrites[${i}].destination`) }
+    } finally {
+      inRewrite = false
+    }
+  })
   const publicEnv: Record<string, string> = {}
   site.publicEnv.forEach((entry, i) => {
     const optional = OPTIONAL.exec(entry)
