@@ -127,6 +127,10 @@ serve one URL — the same route in both trees, a page and a route handler, an `
 against the frame's `/` — are refused, naming both. So is a site file on any path the skeleton
 writes (`app-routes/layout.tsx` is the root layout's path).
 
+`robots.txt` disallows everything on every tier but production. In production it allows `/` and
+disallows the paths `site.json`'s `robotsDisallow` lists, when it lists any — the sign-in pages
+and the app behind them, on a site that has one.
+
 ## Rewrites and public env in `site.json`
 
 ```json

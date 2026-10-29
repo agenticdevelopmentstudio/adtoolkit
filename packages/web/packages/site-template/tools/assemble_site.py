@@ -1039,6 +1039,7 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
         "drawerExtra": config.get("drawer", []),
         **({"jsonLd": config["jsonLd"]} if "jsonLd" in config else {}),
         "sitemap": config.get("sitemap", []),
+        **({"robotsDisallow": config["robotsDisallow"]} if "robotsDisallow" in config else {}),
         **({"bands": config["bands"]} if "bands" in config else {}),
         **({"heroShot": config["heroShot"]} if "heroShot" in config else {}),
     }

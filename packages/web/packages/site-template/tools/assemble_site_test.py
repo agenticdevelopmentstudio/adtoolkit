@@ -647,6 +647,17 @@ class AssembleTest(unittest.TestCase):
         self.assertNotIn("ogImageType", config)
         self.assertNotIn("authorUrl", config)
 
+    def test_robots_disallow_reaches_the_config_only_when_set(self) -> None:
+        self.assert_ok(self.assemble())
+        self.assertNotIn("robotsDisallow", (self.app / "src/site/config.ts").read_text())
+        self.config["robotsDisallow"] = ["/login", "/api/"]
+        self.assert_ok(self.assemble())
+        self.assertIn("robotsDisallow: [", (self.app / "src/site/config.ts").read_text())
+
+    def test_a_robots_disallow_path_must_be_rooted(self) -> None:
+        self.config["robotsDisallow"] = ["login"]
+        self.assert_refused(self.assemble(), "robotsDisallow[0]")
+
     def test_an_og_image_type_that_is_not_an_image_type_is_refused(self) -> None:
         for bad in ["jpeg", "text/html", "image/"]:
             with self.subTest(bad=bad):

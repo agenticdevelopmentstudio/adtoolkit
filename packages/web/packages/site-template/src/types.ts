@@ -78,6 +78,8 @@ export interface FrameConfig {
   jsonLd?: object
   /** Paths, beyond `/`, the sitemap lists. */
   sitemap: string[]
+  /** Paths production's robots.txt disallows (sign-in, an app behind it); absent, it allows all. */
+  robotsDisallow?: string[]
   /** The bands that step out of the alternation, by section id. */
   bands?: Record<string, BandLook>
   /** How the hero draws its `Shot` (hero-thumb.tsx); the frame bleeds it when absent. */

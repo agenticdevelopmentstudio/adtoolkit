@@ -121,14 +121,21 @@ export function frameViewport(config: FrameConfig): Viewport {
 /**
  * Only production says yes to crawlers. Every tier serves byte-identical markup on its own
  * hostname, and three crawlable copies of one page compete with each other for the same query.
- * Read when Next calls it, at build time, which is when the tier is known.
+ * Read when Next calls it, at build time, which is when the tier is known. In production, the
+ * paths a site disallows — sign-in, the app behind it — stay out of the crawl.
  */
 export function frameRobots(config: FrameConfig): MetadataRoute.Robots {
   if (process.env.DEPLOYMENT_ENV !== 'production') {
     return { rules: [{ userAgent: '*', disallow: '/' }] }
   }
   return {
-    rules: [{ userAgent: '*', allow: '/' }],
+    rules: [
+      {
+        userAgent: '*',
+        allow: '/',
+        ...(config.robotsDisallow === undefined ? {} : { disallow: config.robotsDisallow }),
+      },
+    ],
     sitemap: `${origin(config)}/sitemap.xml`,
     host: origin(config),
   }

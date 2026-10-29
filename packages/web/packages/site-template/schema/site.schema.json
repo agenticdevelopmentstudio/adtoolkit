@@ -84,6 +84,11 @@
       "items": { "type": "string", "pattern": "^/" },
       "description": "Paths beyond `/` the sitemap lists."
     },
+    "robotsDisallow": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^/" },
+      "description": "Paths production's robots.txt keeps crawlers out of — sign-in, an app behind it. Every other tier disallows everything already."
+    },
     "slots": {
       "type": "object",
       "description": "Custom components by the place in the frame each fills. The value is a file under `site/components/` and its export, `file.tsx#Name`. A `band:<id>` key must name a section of `src/landing.json`. `bitbag` replaces the frame's bitbag — a `'use client'` component rendering `SiteBitbag` with the site's voice.",

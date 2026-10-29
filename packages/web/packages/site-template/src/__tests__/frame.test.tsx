@@ -709,6 +709,14 @@ describe('frame metadata helpers', () => {
     expect(robots.sitemap).toBe('https://kitchen.example/sitemap.xml')
   })
 
+  it('robots keeps the paths a site disallows, in production, out of the crawl', () => {
+    const guarded: FrameConfig = { ...config, robotsDisallow: ['/login', '/api/'] }
+    vi.stubEnv('DEPLOYMENT_ENV', 'production')
+    expect(frameRobots(guarded).rules).toEqual([{ userAgent: '*', allow: '/', disallow: ['/login', '/api/'] }])
+    vi.stubEnv('DEPLOYMENT_ENV', 'staging')
+    expect(frameRobots(guarded).rules).toEqual([{ userAgent: '*', disallow: '/' }])
+  })
+
   const slashed: FrameConfig = { ...config, siteUrl: 'https://kitchen.example/', sitemap: ['/downloads'] }
 
   it('robots builds single-slash URLs from a siteUrl ending in /', () => {
