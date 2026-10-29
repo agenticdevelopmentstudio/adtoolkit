@@ -99,6 +99,43 @@ describe('DropdownMenu — open/close contract', () => {
     expect(el).toHaveAttribute('aria-expanded', 'true')
   })
 
+  // A render element's own `ref` must not take the place of Base UI's trigger ref: Base UI
+  // positions the popup against, and returns focus to, the element its ref was handed. The ref
+  // given to DropdownMenuTrigger itself travels inside Base UI's merged trigger ref, so its
+  // receiving the node is that ref receiving it; focus coming back on close is Base UI using it.
+  it("hands the node to both a render element's ref and Base UI's trigger ref", async () => {
+    const elementRef = React.createRef<HTMLButtonElement>()
+    const triggerRef = React.createRef<HTMLButtonElement>()
+    const callbackRef = vi.fn()
+    render(
+      <DropdownMenu>
+        <DropdownMenuTrigger ref={triggerRef} render={<button type="button" ref={elementRef} />}>
+          Open
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>First</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    )
+    const el = trigger()
+    expect(elementRef.current).toBe(el)
+    expect(triggerRef.current).toBe(el)
+    await openMenu()
+    fireEvent.keyDown(screen.getByRole('menu'), { key: 'Escape' })
+    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull())
+    await waitFor(() => expect(document.activeElement).toBe(el))
+
+    render(
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<button type="button" ref={callbackRef} />}>Again</DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem>First</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>,
+    )
+    expect(callbackRef).toHaveBeenCalledWith(screen.getByRole('button', { name: 'Again' }))
+  })
+
   it('fires onClick and closes the menu when an item is clicked', async () => {
     const onClick = vi.fn()
     render(

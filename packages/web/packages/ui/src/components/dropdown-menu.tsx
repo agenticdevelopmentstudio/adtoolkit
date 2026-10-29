@@ -26,6 +26,10 @@ function DropdownMenu(props: MenuPrimitive.Root.Props) {
 // menu opens, `data-popup-open` appears, and screen readers are still told it is collapsed. A
 // caller's `render` (function or element) still decides the element; it just receives the
 // corrected props.
+//
+// A render ELEMENT's own `ref` is merged with Base UI's trigger ref, not laid over it: `mergeProps`
+// merges handlers, classes and styles but lets a later `ref` win, and Base UI positions the popup
+// against, and returns focus to, the node its ref receives.
 function DropdownMenuTrigger({ render, ...props }: MenuPrimitive.Trigger.Props) {
   return (
     <MenuPrimitive.Trigger
@@ -33,11 +37,56 @@ function DropdownMenuTrigger({ render, ...props }: MenuPrimitive.Trigger.Props) 
       render={(triggerProps, state) => {
         const withState = { ...triggerProps, 'aria-expanded': state.open }
         if (typeof render === 'function') return render(withState, state)
-        if (render) return React.cloneElement(render, mergeProps(withState, render.props as object))
+        if (render) {
+          const element = render as React.ReactElement<Record<string, unknown> & { ref?: AnyRef }>
+          const own = element.props
+          return React.cloneElement(element, {
+            ...mergeProps(withState, own),
+            ref: mergeRefs(triggerProps.ref as AnyRef, own.ref),
+          })
+        }
         return <button {...withState} />
       }}
     />
   )
+}
+
+type AnyRef = React.Ref<HTMLElement> | undefined
+
+// Merged refs are cached per pair, so a re-render hands React the SAME callback while neither ref
+// changes. A fresh one each render would detach and reattach the node every time, and Base UI's
+// ref stores the node in state — that churn would re-render the trigger on every render.
+const merges = new WeakMap<object, WeakMap<object, React.RefCallback<HTMLElement>>>()
+
+function mergeRefs(a: AnyRef, b: AnyRef): AnyRef {
+  if (!a) return b
+  if (!b || a === b) return a
+  let inner = merges.get(a)
+  if (!inner) merges.set(a, (inner = new WeakMap()))
+  let merged = inner.get(b)
+  if (!merged) {
+    merged = (node) => {
+      const cleanups = [a, b].map((ref) => assignRef(ref, node))
+      return () => cleanups.forEach((cleanup) => cleanup())
+    }
+    inner.set(b, merged)
+  }
+  return merged
+}
+
+/** Hand `node` to one ref, and return how to take it back (React 19's ref-cleanup contract). */
+function assignRef(ref: React.Ref<HTMLElement>, node: HTMLElement | null): () => void {
+  if (typeof ref === 'function') {
+    const cleanup = ref(node)
+    return typeof cleanup === 'function' ? cleanup : () => ref(null)
+  }
+  if (ref) {
+    ref.current = node
+    return () => {
+      ref.current = null
+    }
+  }
+  return () => {}
 }
 
 function DropdownMenuGroup(props: MenuPrimitive.Group.Props) {
