@@ -26,6 +26,7 @@ export type {
   FamilyMember,
   FrameCopy,
   FrameConfig,
+  FrameSitemapRoute,
   HeroShotLook,
   SiteFamily,
   SlotMap,

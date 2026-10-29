@@ -16,7 +16,8 @@ writes that app:
     site/src/**            -> src/**
     site/public/**         -> public/**
     site/app-root/**       -> the app root
-    generated              -> src/site/{config.ts,slots.tsx,fonts.ts,shot.tsx,next.ts,analytics.tsx},
+    generated              -> src/site/{config.ts,slots.tsx,fonts.ts,shot.tsx,next.ts,analytics.tsx,
+                                        family.ts,sitemap.ts},
                               src/fonts/*, app/theme.css, package.json, eslint.config.mjs,
                               .site-template.json
 
@@ -156,6 +157,43 @@ def family_ts(self_id: str) -> str:
         "/** The family band: every member of the shared family copy but this site. */\n"
         f"export const family: SiteFamily | undefined = {{ copy: words, self: {ts(self_id)} }}\n"
     )
+
+
+# `src/site/sitemap.ts`, which the skeleton's sitemap awaits: no computed routes, or the site's
+# own function (site.json's `sitemapRoutes`, a file under `site/src/` and its export).
+SITEMAP_OFF = (
+    f"{HEADER}\n"
+    "import type { FrameSitemapRoute } from '@agenticdevelopertoolkit/site-template'\n\n"
+    "/** No computed routes: site.json does not set `sitemapRoutes`. */\n"
+    "export async function sitemapRoutes(): Promise<readonly FrameSitemapRoute[]> {\n"
+    "  return []\n"
+    "}\n"
+)
+
+
+def plan_sitemap(site: Path, entry: str | None) -> tuple[str, list[str]]:
+    """`src/site/sitemap.ts`, and what is wrong with `sitemapRoutes` if anything is. The site's
+    function is imported under its own name and re-exported typed, so a function whose result
+    is not `FrameSitemapRoute[]` fails the site's typecheck here rather than at render."""
+    if entry is None:
+        return SITEMAP_OFF, []
+    file, _, name = entry.partition("#")
+    source_root = (site / "site" / "src").resolve()
+    source = (source_root / file).resolve()
+    if not name or source_root not in source.parents or not source.is_file():
+        return SITEMAP_OFF, [
+            f"site/site.json: sitemapRoutes: {entry!r} must name a file under site/src/ and its export "
+            f"(no file site/src/{file})"
+        ]
+    module = re.sub(r"\.tsx?$", "", source.relative_to(source_root).as_posix())
+    text = (
+        f"{HEADER}\n"
+        "import type { FrameSitemapRoute } from '@agenticdevelopertoolkit/site-template'\n"
+        f"import {{ {name} }} from '../{module}'\n\n"
+        "/** The routes the site computes, which the sitemap lists after its listed paths. */\n"
+        f"export const sitemapRoutes: () => Promise<readonly FrameSitemapRoute[]> = {name}\n"
+    )
+    return text, []
 
 
 # `src/site/analytics.tsx`, which the root layout always renders: nothing, or Vercel's two.
@@ -1129,6 +1167,9 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
     plan.add("src/site/shot.tsx", SHOT_TS.encode(), "generated")
     family = family_ts(config["family"]) if "family" in config else FAMILY_OFF
     plan.add("src/site/family.ts", family.encode(), "generated")
+    sitemap_text, sitemap_problems = plan_sitemap(site, config.get("sitemapRoutes"))
+    plan.problems += sitemap_problems
+    plan.add("src/site/sitemap.ts", sitemap_text.encode(), "generated")
     # What next.config.ts resolves against the build's environment (the `./next` export's
     # frameNext); the schema has already checked every `${…}` is well formed.
     analytics = ANALYTICS_ON if config.get("analytics", defaults["analytics"]) else ANALYTICS_OFF

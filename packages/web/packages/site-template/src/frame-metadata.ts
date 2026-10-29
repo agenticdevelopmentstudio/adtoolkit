@@ -1,5 +1,5 @@
 import type { Metadata, MetadataRoute, Viewport } from 'next'
-import type { FrameConfig, FrameCopy } from './types'
+import type { FrameConfig, FrameCopy, FrameSitemapRoute } from './types'
 
 // The root files every content site has in common — metadata, viewport, robots, sitemap —
 // written once from the site's copy and config. The file is `frame-metadata.ts` rather than
@@ -142,10 +142,15 @@ export function frameRobots(config: FrameConfig): MetadataRoute.Robots {
 }
 
 /**
- * `/`, then the site's other public paths. `lastModified` is the build time: the site
- * redeploys whenever its copy changes, so the deploy is the modification.
+ * `/`, then the site's other public paths, then the routes it computes (`computed`, from
+ * site.json's `sitemapRoutes`). `lastModified` is the build time: the site redeploys whenever
+ * its copy changes, so the deploy is the modification. A computed route that knows its own
+ * modification time, or its own hints, keeps them.
  */
-export function frameSitemap(config: FrameConfig): MetadataRoute.Sitemap {
+export function frameSitemap(
+  config: FrameConfig,
+  computed: readonly FrameSitemapRoute[] = [],
+): MetadataRoute.Sitemap {
   const lastModified = new Date()
   const base = origin(config)
   return [
@@ -155,6 +160,12 @@ export function frameSitemap(config: FrameConfig): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: 'monthly' as const,
       priority: 0.8,
+    })),
+    ...computed.map((route) => ({
+      url: `${base}${route.path}`,
+      lastModified: route.lastModified ?? lastModified,
+      changeFrequency: route.changeFrequency ?? ('monthly' as const),
+      priority: route.priority ?? 0.8,
     })),
   ]
 }

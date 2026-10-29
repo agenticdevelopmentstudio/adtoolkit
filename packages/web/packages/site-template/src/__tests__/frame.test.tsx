@@ -733,6 +733,28 @@ describe('frame metadata helpers', () => {
     ])
   })
 
+  it('sitemap appends the computed routes after the listed paths, keeping their own hints', () => {
+    const modified = new Date('2026-06-20T00:00:00Z')
+    const entries = frameSitemap(slashed, [
+      { path: '/author', changeFrequency: 'weekly', priority: 0.6, lastModified: modified },
+      { path: '/author/paper' },
+    ])
+    expect(entries.map((entry) => entry.url)).toEqual([
+      'https://kitchen.example',
+      'https://kitchen.example/downloads',
+      'https://kitchen.example/author',
+      'https://kitchen.example/author/paper',
+    ])
+    expect(entries[2]).toMatchObject({ changeFrequency: 'weekly', priority: 0.6, lastModified: modified })
+    // A computed route that states no hint gets the listed paths' defaults.
+    expect(entries[3]).toMatchObject({ changeFrequency: 'monthly', priority: 0.8 })
+    expect(entries[3]?.lastModified).toBeInstanceOf(Date)
+  })
+
+  it('sitemap with no computed routes is the listed paths alone', () => {
+    expect(frameSitemap(slashed, [])).toEqual(frameSitemap(slashed))
+  })
+
   it('frameMetadata takes its base and title from the config and copy', () => {
     const meta = frameMetadata({ ...copy, title: 'Kitchen — cook the thing' }, config)
     expect(meta.metadataBase?.href).toBe('https://kitchen.example/')

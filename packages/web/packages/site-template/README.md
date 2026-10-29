@@ -132,6 +132,16 @@ writes (`app-routes/layout.tsx` is the root layout's path).
 disallows the paths `site.json`'s `robotsDisallow` lists, when it lists any — the sign-in pages
 and the app behind them, on a site that has one.
 
+The sitemap lists `/` and `site.json`'s `sitemap` paths. A site whose pages are not knowable when
+it is written — a corpus read from a backend — names a function that computes the rest:
+`"sitemapRoutes": "lib/sitemap-routes.ts#loadRoutes"`, a file under `site/src/` and its export.
+It is an async function returning `FrameSitemapRoute[]` (a `path` and, optionally, the
+`lastModified`, `changeFrequency` and `priority` it knows; the listed paths' monthly, 0.8 and
+build time fill what it leaves out). The assembler writes `src/site/sitemap.ts`, which the
+skeleton's `app/sitemap.ts` awaits. It runs when Next renders the sitemap — at build, and again
+on the revalidation its own fetches set — so it should fail soft and return `[]`: a sitemap
+missing its corpus for one window is recoverable, a failed build is not.
+
 ## Rewrites and public env in `site.json`
 
 ```json

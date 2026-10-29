@@ -1,3 +1,4 @@
+import type { MetadataRoute } from 'next'
 import type { ComponentType } from 'react'
 import type { BandTone } from '@agenticdevelopertoolkit/landing'
 
@@ -141,4 +142,16 @@ export interface SlotMap {
   bitbag?: ComponentType
   /** By section id. A key that names no section is refused rather than ignored. */
   bands: Record<string, ComponentType>
+}
+
+/**
+ * One sitemap route a site computes rather than lists (site.json's `sitemapRoutes`): a path,
+ * resolved against the site's origin, and the hints it knows. A hint it leaves out gets the
+ * listed paths' — monthly, 0.8, the build time.
+ */
+export interface FrameSitemapRoute {
+  path: string
+  changeFrequency?: MetadataRoute.Sitemap[number]['changeFrequency']
+  priority?: number
+  lastModified?: Date
 }

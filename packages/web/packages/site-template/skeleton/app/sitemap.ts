@@ -2,7 +2,8 @@
 import type { MetadataRoute } from 'next'
 import { frameSitemap } from '@agenticdevelopertoolkit/site-template'
 import { config } from '../src/site/config'
+import { sitemapRoutes } from '../src/site/sitemap'
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  return frameSitemap(config)
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  return frameSitemap(config, await sitemapRoutes())
 }

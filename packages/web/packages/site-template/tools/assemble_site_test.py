@@ -120,6 +120,7 @@ class AssembleTest(unittest.TestCase):
             "src/site/next.ts",
             "src/site/analytics.tsx",
             "src/site/family.ts",
+            "src/site/sitemap.ts",
             "src/fonts/iosevka-site-400.woff2",
             ".site-template.json",
         ]:
@@ -620,6 +621,40 @@ class AssembleTest(unittest.TestCase):
         self.assertIn("import { SiteVoice as BitbagSlot } from '../components/bitbag'", slots)
         self.assertIn("  bitbag: BitbagSlot,", slots)
         self.assertIn("slots.bitbag", (self.app / "app/(frame)/layout.tsx").read_text())
+
+    def test_no_sitemap_routes_computes_none(self) -> None:
+        self.assert_ok(self.assemble())
+        sitemap = (self.app / "src/site/sitemap.ts").read_text()
+        self.assertIn("export async function sitemapRoutes(): Promise<readonly FrameSitemapRoute[]> {", sitemap)
+        self.assertIn("  return []", sitemap)
+        self.assertNotIn("from '../", sitemap)
+        skeleton = (self.app / "app/sitemap.ts").read_text()
+        self.assertIn("import { sitemapRoutes } from '../src/site/sitemap'", skeleton)
+        self.assertIn("frameSitemap(config, await sitemapRoutes())", skeleton)
+
+    def test_sitemap_routes_import_the_sites_function(self) -> None:
+        self.config["sitemapRoutes"] = "lib/sitemap-routes.ts#loadPaperRoutes"
+        self.write("site/src/lib/sitemap-routes.ts", "export async function loadPaperRoutes() { return [] }\n")
+        self.assert_ok(self.assemble())
+        sitemap = (self.app / "src/site/sitemap.ts").read_text()
+        self.assertIn("import { loadPaperRoutes } from '../lib/sitemap-routes'", sitemap)
+        self.assertIn(
+            "export const sitemapRoutes: () => Promise<readonly FrameSitemapRoute[]> = loadPaperRoutes", sitemap
+        )
+        self.assert_ok(run(self.site, "--check"))
+
+    def test_sitemap_routes_naming_no_file_is_refused(self) -> None:
+        self.config["sitemapRoutes"] = "lib/nope.ts#loadPaperRoutes"
+        self.assert_refused(self.assemble(), "sitemapRoutes", "site/src/lib/nope.ts")
+
+    def test_sitemap_routes_outside_site_src_is_refused(self) -> None:
+        self.config["sitemapRoutes"] = "../site.json#x"
+        self.assert_refused(self.assemble(), "sitemapRoutes")
+
+    def test_sitemap_routes_without_an_export_is_refused(self) -> None:
+        self.config["sitemapRoutes"] = "lib/sitemap-routes.ts"
+        self.write("site/src/lib/sitemap-routes.ts", "export async function loadPaperRoutes() { return [] }\n")
+        self.assert_refused(self.assemble(), "sitemapRoutes")
 
     def test_the_site_shot_is_worded_from_the_copy_once(self) -> None:
         self.assert_ok(self.assemble())
