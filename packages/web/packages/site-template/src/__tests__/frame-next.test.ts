@@ -19,7 +19,7 @@ const tiers: FrameNextSite = {
 
 describe('frameNext', () => {
   it('adds nothing for a site that declares nothing', () => {
-    expect(frameNext(none, {})).toEqual({ env: {}, rewrites: [], headers: [] })
+    expect(frameNext(none, {})).toEqual({ env: {}, rewrites: [], headers: [], redirects: [] })
   })
 
   it('passes headers through literally, and treats a site that omits them as having none', () => {
@@ -46,6 +46,17 @@ describe('frameNext', () => {
     expect(out[0]).not.toBe(rule)
     expect(out[0].headers).not.toBe(rule.headers)
     expect(out[0].headers[0]).not.toBe(rule.headers[0])
+  })
+
+  it('passes redirects through literally, as Next lists, and treats a site that omits them as having none', () => {
+    const redirects = [
+      { source: '/old/:rest*', destination: '/new', permanent: false },
+      { source: '/a', destination: '/${NOT_A_REFERENCE}', permanent: true },
+    ]
+    const out = frameNext({ ...none, redirects }, {}).redirects
+    expect(out).toEqual(redirects)
+    expect(out[0]).not.toBe(redirects[0])
+    expect(frameNext(none, {}).redirects).toEqual([])
   })
 
   it('substitutes a variable from the environment into a destination', () => {

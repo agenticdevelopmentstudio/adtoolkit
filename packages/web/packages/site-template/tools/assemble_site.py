@@ -97,6 +97,10 @@ COLUMN_FLAG = re.compile(r"(?<![\w.$-])(pair|trio)(?![\w-])(?=\s*(?:=|/|$|\s))")
 # The files that make a URL in the App Router: a page and a route handler cannot share one.
 ROUTE_FILE = re.compile(r"^(page|route)\.(tsx|ts|jsx|js|mdx)$")
 
+# The `site.json` keys `src/site/next.ts` carries only when the site sets them, so a site that
+# sets none keeps the next.ts it was assembled with before the key existed.
+NEXT_OPTIONAL = ("redirects",)
+
 # `analytics: true` mounts these in the root layout; the template pins their ranges.
 ANALYTICS_DEPS = {"@vercel/analytics": "^2.0.1", "@vercel/speed-insights": "^2.0.0"}
 
@@ -1080,8 +1084,9 @@ def plan_app(site: Path, web: Path) -> tuple[Path, AppPlan]:
         f"  headers: {ts(config.get('headers', []))},\n"
         f"  publicEnv: {ts(config.get('publicEnv', []))},\n"
         f"  envDefaults: {ts(config.get('envDefaults', {}))},\n"
-        "}\n\n"
-        "/** Every toolkit package the app reaches, which next.config.ts hands Next to compile. */\n"
+        + "".join(f"  {key}: {ts(config[key])},\n" for key in NEXT_OPTIONAL if key in config)
+        + "}\n\n"
+        + "/** Every toolkit package the app reaches, which next.config.ts hands Next to compile. */\n"
         f"export const transpilePackages: readonly string[] = {ts(toolkit_packages(package_json, web))}\n"
     )
     plan.add("src/site/next.ts", next_ts.encode(), "generated")

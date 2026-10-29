@@ -37,8 +37,8 @@ From `@agenticdevelopertoolkit/site-template/next` (node, for `next.config.ts` o
 
 | Export | What it is |
 | --- | --- |
-| `frameNext(site, env)` | `site.json`'s `rewrites` and `publicEnv` resolved against `env` (`process.env`), and its `headers` as written: `{ env, rewrites, headers }`, which the skeleton's `next.config.ts` merges into its config. Throws, naming the variable and where it was used, when a `${NAME}` has no value. See "Rewrites and public env" below. |
-| types `FrameNextSite`, `FrameRewrite`, `FrameHeader`, `FrameEnvDefault`, `FrameEnvChoice`, `FrameNextResult`, `FrameNextHeader` | The generated `src/site/next.ts`'s shape (`FrameHeader` is one `site.json` `headers` rule; `FrameEnvChoice` an `envDefaults` value chosen by a variable), and the result (`FrameNextHeader` is a header rule with the mutable list Next's `headers` takes). |
+| `frameNext(site, env)` | `site.json`'s `rewrites` and `publicEnv` resolved against `env` (`process.env`), and its `headers` and `redirects` as written: `{ env, rewrites, headers, redirects }`, which the skeleton's `next.config.ts` merges into its config. Throws, naming the variable and where it was used, when a `${NAME}` has no value. See "Rewrites and public env" below. |
+| types `FrameNextSite`, `FrameRewrite`, `FrameHeader`, `FrameRedirect`, `FrameEnvDefault`, `FrameEnvChoice`, `FrameNextResult`, `FrameNextHeader` | The generated `src/site/next.ts`'s shape (`FrameHeader` is one `site.json` `headers` rule; `FrameEnvChoice` an `envDefaults` value chosen by a variable), and the result (`FrameNextHeader` is a header rule with the mutable list Next's `headers` takes). |
 
 ## Slots
 
@@ -193,6 +193,18 @@ Next's own `headers` shape: each rule's `source` is a Next path pattern (`/(.*)`
 and its `headers` at least one `{ key, value }`. Values are literal — nothing is substituted — and
 the skeleton's `next.config.ts` hands them to Next only when there is at least one rule. A key
 that is not an HTTP header name is refused at assembly.
+
+## Redirects in `site.json`
+
+```json
+"redirects": [
+  { "source": "/home/settings/:rest*", "destination": "/settings/:rest*", "permanent": false }
+]
+```
+
+Next's own `redirects` shape, in the order Next matches them; each rule needs all three keys.
+Literal, as headers are. A site that sets none has no `redirects` in its `src/site/next.ts`, and
+the skeleton's `next.config.ts` hands Next none.
 
 ## Analytics
 

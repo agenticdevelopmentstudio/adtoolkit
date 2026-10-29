@@ -183,6 +183,20 @@
         }
       }
     },
+    "redirects": {
+      "type": "array",
+      "description": "Next redirects, in the order Next matches them: each `{ source, destination, permanent }` as Next takes it — e.g. an old path sent on to where it lives now. Literal; nothing is substituted.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "destination", "permanent"],
+        "properties": {
+          "source": { "type": "string", "pattern": "^/" },
+          "destination": { "type": "string" },
+          "permanent": { "type": "boolean" }
+        }
+      }
+    },
     "publicEnv": {
       "type": "array",
       "description": "Variables passed through to Next's `env`, so client code reads them inlined at build. Each resolves as a `rewrites` reference does (environment, then `envDefaults`). A bare `NAME` with no value anywhere fails the build, naming it; `${NAME:-}` is the optional form, left out when it has no value.",

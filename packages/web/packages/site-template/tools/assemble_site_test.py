@@ -1304,6 +1304,33 @@ class AssembleTest(unittest.TestCase):
                 self.config["headers"] = [rule]
                 self.assert_refused(self.assemble(), where)
 
+    # --- redirects ----------------------------------------------------------------------------
+
+    def test_no_redirects_leaves_the_key_out_and_the_config_adds_none(self) -> None:
+        self.assert_ok(self.assemble())
+        self.assertNotIn("redirects", (self.app / "src/site/next.ts").read_text())
+        config = (self.app / "next.config.ts").read_text()
+        self.assertIn("...(site.redirects.length === 0 ? {} : { redirects: async () => site.redirects }),", config)
+
+    def test_redirects_reach_the_next_site(self) -> None:
+        self.config["redirects"] = [
+            {"source": "/home/settings/:rest*", "destination": "/settings/:rest*", "permanent": False}
+        ]
+        self.assert_ok(self.assemble())
+        text = (self.app / "src/site/next.ts").read_text()
+        self.assertIn('"source": "/home/settings/:rest*"', text)
+        self.assertIn('"permanent": false', text)
+
+    def test_a_redirect_needs_a_rooted_source_a_destination_and_permanent(self) -> None:
+        for rule, where in (
+            ({"source": "/a", "destination": "/b"}, "'permanent'"),
+            ({"source": "a", "destination": "/b", "permanent": False}, "redirects[0].source"),
+            ({"source": "/a", "permanent": True}, "'destination'"),
+        ):
+            with self.subTest(rule=rule):
+                self.config["redirects"] = [rule]
+                self.assert_refused(self.assemble(), "redirects[0]", where)
+
     # --- family -------------------------------------------------------------------------------
 
     def test_no_family_is_no_band_and_no_family_copy(self) -> None:

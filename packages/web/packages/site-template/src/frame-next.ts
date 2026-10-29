@@ -1,4 +1,4 @@
-// The build-time half of `site.json`: its `rewrites`, `headers`, `publicEnv` and `envDefaults`,
+// The build-time half of `site.json`: its `rewrites`, `headers`, `redirects`, `publicEnv` and `envDefaults`,
 // resolved against the environment `next build` runs in. Published as `@agenticdevelopertoolkit/site-template/next`
 // and imported by the skeleton's `next.config.ts` — never by a page, so nothing here reaches a
 // bundle. The assembler has already checked every `${…}` is well formed; what it cannot know is
@@ -14,6 +14,13 @@ export interface FrameRewrite {
 export interface FrameHeader {
   source: string
   headers: readonly { key: string; value: string }[]
+}
+
+/** One `site.json` redirect: Next's `{ source, destination, permanent }`, passed through as written. */
+export interface FrameRedirect {
+  source: string
+  destination: string
+  permanent: boolean
 }
 
 /**
@@ -41,6 +48,8 @@ export interface FrameNextSite {
   rewrites: readonly FrameRewrite[]
   /** Literal response headers; absent from a `next.ts` assembled before the key existed. */
   headers?: readonly FrameHeader[]
+  /** Literal redirects, in Next's matching order; absent when the site has none. */
+  redirects?: readonly FrameRedirect[]
   /** `NAME`, which must resolve, or `${NAME:-}`, which is left out when it does not. */
   publicEnv: readonly string[]
   envDefaults: Readonly<Record<string, FrameEnvDefault>>
@@ -60,6 +69,7 @@ export interface FrameNextResult {
   env: Record<string, string>
   rewrites: FrameRewrite[]
   headers: FrameNextHeader[]
+  redirects: FrameRedirect[]
 }
 
 type Env = Readonly<Record<string, string | undefined>>
@@ -158,5 +168,6 @@ export function frameNext(site: FrameNextSite, env: Env): FrameNextResult {
     source: rule.source,
     headers: rule.headers.map((header) => ({ key: header.key, value: header.value })),
   }))
-  return { env: publicEnv, rewrites, headers }
+  const redirects = (site.redirects ?? []).map((rule) => ({ ...rule }))
+  return { env: publicEnv, rewrites, headers, redirects }
 }
