@@ -128,6 +128,20 @@ class AssembleTest(unittest.TestCase):
         self.assertFalse((self.app / "app/page.tsx").exists())
         self.assert_ok(run(self.site, "--check"))
 
+    def test_gitignore_keeps_the_vercel_project_link(self) -> None:
+        # A bare `.vercel` ignores the directory itself, and git never looks inside an ignored
+        # directory, so no `!.vercel/project.json` (here or at a repo root) could bring it back.
+        self.assert_ok(self.assemble())
+        subprocess.run(["git", "init", "-q", str(self.app)], check=True)
+
+        def ignored(rel: str) -> bool:
+            probe = subprocess.run(["git", "-C", str(self.app), "check-ignore", "-q", rel])
+            return probe.returncode == 0
+
+        self.assertFalse(ignored(".vercel/project.json"))
+        self.assertTrue(ignored(".vercel/output/config.json"))
+        self.assertTrue(ignored(".next/BUILD_ID"))
+
     def test_rerun_is_idempotent(self) -> None:
         self.assert_ok(self.assemble())
         before = {p: p.stat().st_mtime_ns for p in self.app.rglob("*") if p.is_file()}
