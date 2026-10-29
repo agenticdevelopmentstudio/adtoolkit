@@ -293,7 +293,7 @@ final class ProjectPaneContentTests: XCTestCase {
         let records = try seedTwoStoredTabGroups()
         let window = ComposableTabsWindowController(project: project)
         defer { window.close() }
-        let host = try XCTUnwrap(window.contentViewController as? WindowFooterContentViewController)
+        let host = window.footerContent
         let tabbed = try XCTUnwrap(host.contentViewController as? MultiTabbedViewController)
         let doomed = spies(in: window.panes(inTab: records[0].groupID.uuidString))
         let survivors = spies(in: window.panes(inTab: records[1].groupID.uuidString))

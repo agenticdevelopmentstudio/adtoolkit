@@ -224,13 +224,19 @@ public final class ProjectsCoordinator: AppFeature {
     }
 
     public func openProject(_ repo: GitRepo) {
+        recordOpened(repo)
+        opener?.openProject(repo)
+    }
+
+    /// Stamps `repo` as just opened, which is what the browser sorts by,
+    /// without opening anything — for a caller that opens the window itself.
+    public func recordOpened(_ repo: GitRepo) {
         do {
             try database.markOpened(id: repo.id)
         } catch {
             Self.logger.error("Could not record open time: \(error)")
         }
         reload()
-        opener?.openProject(repo)
     }
 
     /// Shows the picker the host handed in. A host that wired none has a

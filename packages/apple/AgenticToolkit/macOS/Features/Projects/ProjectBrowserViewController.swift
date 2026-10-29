@@ -7,7 +7,11 @@ import AgenticToolkitCoreMacOS
 /// for activating a row differs, which is why this is a mode and not two view
 /// controllers (`dry`).
 public enum ProjectBrowserMode: Sendable {
-    /// Standing UI. Selection is reported as it changes; a double-click opens.
+    /// Standing UI beside the thing it chooses for — the project window's
+    /// shelf. A single click on a project opens it, the way a navigator row
+    /// does; the arrow keys only move the highlight, and Return opens what is
+    /// highlighted. It never takes the keyboard on its own: it appears beside
+    /// work in progress, and focus is the host's to hand it.
     case browser
     /// Presented to answer one question. Selection is reported the same way,
     /// but Return and double-click both mean "this one" and dismiss.
@@ -92,6 +96,7 @@ public final class ProjectBrowserViewController: NSViewController {
         outline.dataSource = self
         outline.delegate = self
         outline.target = self
+        outline.action = #selector(rowClicked(_:))
         outline.doubleAction = #selector(rowDoubleClicked(_:))
         outline.autoresizesOutlineColumn = false
         outline.accessibilityID("project-browser.table")
@@ -143,7 +148,58 @@ public final class ProjectBrowserViewController: NSViewController {
 
     public override func viewDidAppear() {
         super.viewDidAppear()
+        // A chooser is the question on screen, so typing goes to its filter.
+        // A browser sits beside a window's own content and must not steal the
+        // keyboard from it just by being shown.
+        if mode == .chooser {
+            focusFilter()
+        }
+    }
+
+    // MARK: - Focus and selection from the host
+
+    /// Puts the keyboard in the filter field.
+    public func focusFilter() {
         view.window?.makeFirstResponder(searchField)
+    }
+
+    /// Puts the keyboard in the list, so the arrow keys and Return work on it.
+    public func focusList() {
+        view.window?.makeFirstResponder(outline)
+    }
+
+    /// Highlights the project with this id, if the current filter shows it,
+    /// without choosing it — the host saying "this is where you are".
+    public func selectRepo(id: GitRepo.ID) {
+        let projects = roots.flatMap { $0.repositoriesInDisplayOrder }
+        guard let node = projects.first(where: { $0.repo?.id == id }) else { return }
+        select(node)
+    }
+
+    // MARK: - Return in the list
+
+    /// Return on the list opens the highlighted project in browser mode. The
+    /// filter field has its own route (`control(_:textView:doCommandBy:)`);
+    /// this is the one for when the list itself has the keyboard. Which of
+    /// the two an `NSOutlineView` sends an unhandled Return through is its
+    /// business, so both arrive at the same place.
+    public override func keyDown(with event: NSEvent) {
+        if Self.isReturn(event) {
+            insertNewline(nil)
+        } else {
+            super.keyDown(with: event)
+        }
+    }
+
+    public override func insertNewline(_ sender: Any?) {
+        chooseSelection()
+    }
+
+    private static func isReturn(_ event: NSEvent) -> Bool {
+        // 36 is Return, 76 the keypad's Enter.
+        let modifiers = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        return (event.keyCode == 36 || event.keyCode == 76)
+            && modifiers.subtracting([.numericPad, .function]).isEmpty
     }
 
     // MARK: - Filtering
@@ -211,6 +267,19 @@ public final class ProjectBrowserViewController: NSViewController {
         applyFilter()
     }
 
+    /// A single click on a project opens it in browser mode. A folder row, the
+    /// empty space below the last row, and every click in chooser mode only
+    /// select — a chooser commits on its button, Return or a double-click.
+    @objc private func rowClicked(_ sender: Any?) {
+        guard mode == .browser else { return }
+        let row = outline.clickedRow
+        guard row >= 0,
+              let node = outline.item(atRow: row) as? ProjectTreeNode,
+              !node.isFolder
+        else { return }
+        chooseSelection()
+    }
+
     @objc private func rowDoubleClicked(_ sender: Any?) {
         guard let node = selectedNode else { return }
         // A folder has nothing to open, so a double-click means what it means
@@ -223,6 +292,8 @@ public final class ProjectBrowserViewController: NSViewController {
             }
             return
         }
+        // In browser mode the first click of the pair already opened it.
+        guard mode == .chooser else { return }
         chooseSelection()
     }
 

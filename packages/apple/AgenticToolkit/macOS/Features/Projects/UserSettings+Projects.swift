@@ -62,4 +62,15 @@ extension UserSettings {
     /// copy here would be a second answer to "how is it arranged" (`dry`).
     static public var lastActiveProjectWindow =
         UserSetting<String>("last_active_project_window", default: "")
+
+    /// Whether project windows show the project shelf — the list of projects
+    /// down the window's leading edge. One answer for every project window,
+    /// not one per project: choosing a project in the shelf replaces the
+    /// window with that project's, and a shelf that vanished the moment it
+    /// was used would be no way to move between projects.
+    static public var projectShelfVisible = UserSetting<Bool>("project_shelf_visible", default: false)
+
+    /// How wide the project shelf is, in points, as the reader last dragged it.
+    /// Shared for the same reason as `projectShelfVisible`.
+    static public var projectShelfWidth = UserSetting<Double>("project_shelf_width", default: 240)
 }

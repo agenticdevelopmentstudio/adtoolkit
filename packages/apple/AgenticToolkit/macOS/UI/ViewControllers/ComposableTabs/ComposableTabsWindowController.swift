@@ -12,6 +12,7 @@ import AgenticToolkitCoreMacOS
 private extension NSToolbarItem.Identifier {
     static let projectSearch = NSToolbarItem.Identifier("project.toolbar.search")
     static let projectHelp = NSToolbarItem.Identifier("project.toolbar.help")
+    static let projectToggleShelf = NSToolbarItem.Identifier("project.toolbar.toggle-shelf")
 }
 
 /// What a project remembers about its window, under `project_setting`.
@@ -78,6 +79,23 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
     /// which is nil until the window loads.
     private let content: WindowFooterContentViewController
 
+    /// The footer host, for a test that has to reach the tabs through it.
+    var footerContent: WindowFooterContentViewController { content }
+
+    /// What the window actually shows: the project shelf, when there is one,
+    /// beside `content`.
+    private let windowContent: ProjectWindowSplitViewController
+
+    /// The project shelf — every project, filterable — or `nil` for a window
+    /// whose host has no projects to list. Whoever made the window wires its
+    /// `onChoose`; the window only shows it, hides it and points it at itself.
+    public let shelf: ProjectBrowserViewController?
+
+    /// A frame to open at instead of the saved one, set before the window is
+    /// first shown: a project chosen from another window's shelf takes that
+    /// window's place, and has to come up exactly where it was.
+    public var inheritedFrame: NSRect?
+
     /// Stored, never a local in `configureWindow`: `NSToolbar.delegate` is
     /// `weak`, so a delegate with no other owner is deallocated the instant
     /// configuration returns, leaving a toolbar with no items and no error.
@@ -94,7 +112,7 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
     /// the delegate has been asked for it, and a test with no window on screen
     /// has to do the asking itself.
     lazy var toolbarDelegate = WindowToolbarBuilder.Delegate(
-        items: [
+        items: shelfToolbarItems + [
             .flexibleSpace,
             .search(identifier: .projectSearch, placeholder: "Search"),
             .button(
@@ -107,7 +125,10 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         searchDelegate: self,
         onSearchFieldCreated: { [weak self] field in
             self?.applySearchAvailability(to: field)
-        }
+        },
+        // Beside the traffic lights, before the project's name, where Xcode
+        // keeps its navigator toggle.
+        navigationalItems: [.projectToggleShelf]
     )
 
     /// The titlebar search field, once the toolbar has built it.
@@ -235,8 +256,15 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
     ///   rebuilt to correct it. Defaulted, because a window with no project
     ///   controller behind it (every layout test, the demo app) genuinely has
     ///   none.
-    public init(project: ProjectWorkspace, tabItemDataSource: ComposableTabsTabItemDataSource? = nil) {
+    /// - Parameter shelf: The project shelf, wired by the caller. With none,
+    ///   the window has no shelf and no toggle for one.
+    public init(
+        project: ProjectWorkspace,
+        tabItemDataSource: ComposableTabsTabItemDataSource? = nil,
+        shelf: ProjectBrowserViewController? = nil
+    ) {
         self.project = project
+        self.shelf = shelf
         // Locals first: a stored property cannot be read back before
         // `super.init`, and the host needs the tab controller to wrap.
         let tabbed = MultiTabbedViewController()
@@ -244,9 +272,11 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
             contentViewController: tabbed,
             accessibilityPrefix: "project.footer"
         )
+        let windowContent = ProjectWindowSplitViewController(content: content, shelf: shelf)
         self.tabbed = tabbed
         self.content = content
-        super.init(windowID: Self.windowID(for: project.id), contentViewController: content)
+        self.windowContent = windowContent
+        super.init(windowID: Self.windowID(for: project.id), contentViewController: windowContent)
 
         self.windowSpec = WindowSpec(
             defaultSize: NSSize(width: 800, height: 500),
@@ -255,7 +285,9 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
             persistsFrame: true
         )
         self.windowTitle = project.displayName
-        self.windowStyleMask = [.titled, .closable, .resizable, .miniaturizable]
+        // Full-size content: the panes' backdrop runs up behind a clear
+        // titlebar, as Settings' does — see `configureWindow(_:)`.
+        self.windowStyleMask = [.titled, .closable, .resizable, .miniaturizable, .fullSizeContentView]
         self.minSize = NSSize(width: 400, height: 300)
 
         tabbed.delegate = self
@@ -263,6 +295,14 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         backdropObserver = ThemePaletteObserver(host: tabbed.view) { [weak self] palette in
             self?.tabbed.centerBackgroundColor = NSColor(palette.projectPaneBackdrop)
             self?.tabbed.centerOutlineColor = NSColor(palette.projectPaneOutline)
+            // The window's own background too: it is what shows in the instant
+            // before the content draws, and through the titlebar during a
+            // live resize.
+            self?.window?.backgroundColor = NSColor(palette.projectPaneBackdrop)
+            self?.refreshShelfToggleAppearance()
+        }
+        windowContent.onShelfVisibilityChange = { [weak self] in
+            self?.refreshShelfToggleAppearance()
         }
         spacingObservers = PaneSpacing.edgeSettings.values.map { setting in
             UserSettingObserver(setting) { [weak self] _ in
@@ -356,6 +396,12 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         super.configureWindow(window)
         window.toolbar = toolbarDelegate.makeToolbar(identifier: "project.toolbar")
         window.toolbarStyle = .unified
+        // Settings' seamless titlebar: no material of its own and no hairline
+        // under it, so the panes' backdrop and the shelf run straight up
+        // behind the traffic lights. The title stays — see above.
+        window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
+        window.backgroundColor = NSColor(ThemePaletteObserver.currentPalette.projectPaneBackdrop)
         // A project window is its own tab host. Left `.automatic`, AppKit
         // merges a newly opened project into the front project window as a
         // native window tab whenever the system's "Prefer tabs" setting says
@@ -385,6 +431,64 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         restoreFocusedLeafForActiveTab()
         refreshActivePaneChrome()
         refreshHelpButtonAppearance()
+        refreshShelfToggleAppearance()
+        shelf?.selectRepo(id: project.id)
+    }
+
+    /// Applies `inheritedFrame` once the window exists. After the base class
+    /// has restored or placed the window, so it wins over both; and the
+    /// delegate is wired by then, so the frame is saved as this project's —
+    /// which is right, because that is where the window now is.
+    public override func loadWindow() {
+        super.loadWindow()
+        if let inheritedFrame, let window {
+            window.setFrame(inheritedFrame, display: false)
+            self.inheritedFrame = nil
+        }
+    }
+
+    // MARK: - Project shelf
+
+    /// The toggle, when there is a shelf to toggle.
+    private var shelfToolbarItems: [WindowToolbarItem] {
+        guard shelf != nil else { return [] }
+        return [
+            .button(
+                identifier: .projectToggleShelf,
+                symbol: "sidebar.left",
+                label: "Projects",
+                action: #selector(ComposableTabsWindowController.toggleShelf))
+        ]
+    }
+
+    public var isShelfVisible: Bool { windowContent.isShelfVisible }
+
+    @objc public func toggleShelf() {
+        windowContent.toggleShelf()
+    }
+
+    /// Shows the shelf and puts the keyboard in its list, on this project's
+    /// row — what a window that replaced another from the shelf does, so the
+    /// arrow keys carry on from where they were.
+    public func showShelfFocusedOnList() {
+        guard let shelf else { return }
+        windowContent.setShelfVisible(true)
+        shelf.selectRepo(id: project.id)
+        shelf.focusList()
+    }
+
+    /// Keeps the toggle reading as the state it toggles — filled and accented
+    /// while the shelf is out, quiet while it is away. The toolbar builds its
+    /// items lazily, so this is called again once the window is on screen.
+    private func refreshShelfToggleAppearance() {
+        guard let button = toolbarDelegate.button(for: .projectToggleShelf) else { return }
+        WindowToolbarBuilder.applyDisclosureAppearance(
+            to: button,
+            disclosed: isShelfVisible,
+            outlineSymbol: "sidebar.left",
+            filledSymbol: "sidebar.left",
+            showTooltip: "Show Projects",
+            hideTooltip: "Hide Projects")
     }
 
     // MARK: - Titlebar accessories

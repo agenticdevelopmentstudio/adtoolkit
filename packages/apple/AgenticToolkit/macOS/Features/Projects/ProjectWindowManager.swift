@@ -311,6 +311,26 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
     // MARK: - ProjectOpening
 
     public func openProject(_ repo: GitRepo) {
+        openProject(repo, replacing: nil)
+    }
+
+    /// Loads `repo` into the window `current` — what choosing a project in a
+    /// window's shelf does.
+    ///
+    /// A replacement at the same frame rather than a retarget of the same
+    /// window: the window's identity is the project's — its id, its saved
+    /// frame, its workspace and its help drawer are all per project — so the
+    /// chosen project's own window is opened exactly where `current` stood
+    /// and `current` closes. A project that already has a window of its own
+    /// is raised instead, and `current` is left alone; two windows on one
+    /// project is what the one-window-per-project rule exists to prevent.
+    public func loadProject(_ repo: GitRepo, into current: ComposableTabsWindowController) {
+        guard current.project.id != repo.id else { return }
+        coordinator?.recordOpened(repo)
+        openProject(repo, replacing: controllers[repo.id] == nil ? current : nil)
+    }
+
+    private func openProject(_ repo: GitRepo, replacing current: ComposableTabsWindowController?) {
         if let existing = controllers[repo.id] {
             existing.project.update(repo: repo)
             existing.showWindow(nil)
@@ -351,10 +371,17 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
         // the window installs its stored tabs while initializing, and a tab
         // whose item is built before the data source arrives falls back to a
         // plain title, leaving a pane-less tab until something else reloads.
+        let shelf = coordinator.map { ProjectBrowserViewController(coordinator: $0, mode: .browser) }
         let controller = ComposableTabsWindowController(
             project: workspace,
-            tabItemDataSource: projectController
+            tabItemDataSource: projectController,
+            shelf: shelf
         )
+        shelf?.onChoose = { [weak self, weak controller] chosen in
+            guard let self, let controller else { return }
+            self.loadProject(chosen, into: controller)
+        }
+        controller.inheritedFrame = current?.window?.frame
         // Ruling Q: `projectController` is captured weakly here and the window
         // reloads only while this controller is still the one registered for
         // `repo.id`, so a controller that was closed and replaced — or one
@@ -434,6 +461,18 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
         // file-system watcher living in it, to build an identical one.
         Task { await projectController.open() }
         setWindowOpen(true, repoID: repo.id)
+
+        if let current {
+            // The keyboard was in the shelf a moment ago; it goes back there,
+            // on the project just chosen, so the arrow keys carry on.
+            controller.showShelfFocusedOnList()
+            // On the next turn, not now: this is running inside the old
+            // window's shelf — its list's click action, or its keyDown — and
+            // closing it here tears that shelf down underneath its own call.
+            DispatchQueue.main.async {
+                current.close()
+            }
+        }
     }
 
     public func closeProject(repoID: UUID) {

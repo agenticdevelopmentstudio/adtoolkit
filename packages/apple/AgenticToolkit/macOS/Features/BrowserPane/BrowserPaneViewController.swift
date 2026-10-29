@@ -126,6 +126,12 @@ public final class BrowserPaneViewController: NSViewController {
         webView.uiDelegate = self
         webView.allowsBackForwardNavigationGestures = true
         webView.keepPaintingUnderQuietPresentation()
+        // The area past the page's edges on a rubber-band scroll, in the theme
+        // rather than WebKit's grey.
+        webView.observeTheme { view, palette in
+            view.underPageBackgroundColor = palette.windowBackgroundColor
+        }
+        updatePageBackground()
         applyLiveSettings()
         applyCookiePolicy()
         observeSettings()
@@ -346,6 +352,7 @@ public final class BrowserPaneViewController: NSViewController {
     }
 
     private func addressDidChange() {
+        updatePageBackground()
         guard let url = webView.url else { return }
         // A field being edited is the user's; overwriting it mid-keystroke
         // because a redirect landed would throw away what they typed. A field
@@ -357,6 +364,16 @@ public final class BrowserPaneViewController: NSViewController {
             addressField.stringValue = url == Self.blankPage ? "" : url.absoluteString
         }
         onPaneTitleChange?()
+    }
+
+    /// Nothing loaded — no address yet, or the blank page — is see-through, so
+    /// the pane's themed backdrop shows instead of WebKit's white; a real page
+    /// gets its opaque backdrop back the moment the address moves to it, since
+    /// a site with no background of its own is written for white. See
+    /// `WKWebView.setDrawsPageBackground(_:)`.
+    private func updatePageBackground() {
+        let url = webView.url
+        webView.setDrawsPageBackground(url != nil && url != Self.blankPage)
     }
 
     /// Writes the address the pane will reopen on. Once per committed

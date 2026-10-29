@@ -203,6 +203,13 @@ extension WindowToolbarBuilder {
         /// A toolbar with no `.search` slot never calls it.
         private let onSearchFieldCreated: ((NSSearchField) -> Void)?
 
+        /// Items placed at the toolbar's leading edge, before the window
+        /// title, rather than after it — the slot beside the traffic lights
+        /// where Xcode and Finder keep their sidebar toggle. Only matters
+        /// while the title is showing: with it hidden, the first item is
+        /// already there.
+        private let navigationalItems: Set<NSToolbarItem.Identifier>
+
         /// Kept because AppKit skips `NSToolbarItemValidation` for custom-view
         /// items, so the owner has to reach in and set `isEnabled` itself.
         private var buttons: [NSToolbarItem.Identifier: NSButton] = [:]
@@ -218,12 +225,14 @@ extension WindowToolbarBuilder {
             items: [WindowToolbarItem],
             target: AnyObject?,
             searchDelegate: NSSearchFieldDelegate? = nil,
-            onSearchFieldCreated: ((NSSearchField) -> Void)? = nil
+            onSearchFieldCreated: ((NSSearchField) -> Void)? = nil,
+            navigationalItems: Set<NSToolbarItem.Identifier> = []
         ) {
             self.items = items
             self.target = target
             self.searchDelegate = searchDelegate
             self.onSearchFieldCreated = onSearchFieldCreated
+            self.navigationalItems = navigationalItems
             super.init()
         }
 
@@ -279,6 +288,7 @@ extension WindowToolbarBuilder {
                     target: self.target,
                     action: action)
                 self.buttons[identifier] = button
+                item.isNavigational = self.navigationalItems.contains(identifier)
                 return item
 
             case .segmented(let identifier, let label, let segments, let action):

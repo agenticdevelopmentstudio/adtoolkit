@@ -863,6 +863,7 @@
 		4EB892BE77ECEAE7EAD6F7C0 /* ModelCatalogStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21A2733A4CD84EDD73E5D3B /* ModelCatalogStore.swift */; };
 		4F3DB46435C527B74B20BD85 /* ObservingTransportTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1DB88E72DEF43544D1D7CC8C /* ObservingTransportTests.swift */; };
 		4FA737CC8BB96AE6B5B0BBB9 /* UserSettings+Editor.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91AC0BD64023575F1ACB323 /* UserSettings+Editor.swift */; };
+		4FD2A7DD7A7713DA281D8BA6 /* ProjectWindowSplitViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C807A2670F8218965ADE0B73 /* ProjectWindowSplitViewController.swift */; };
 		4FD4ABE52EB52924CD2A27E4 /* ProjectsAppearancePanelViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78868A478AD5ED14796349BC /* ProjectsAppearancePanelViewController.swift */; };
 		4FE8A54A9A9C10003BC4FA13 /* FakeLanguageServerSessionFidelityTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEBF360A040896F04C6C1377 /* FakeLanguageServerSessionFidelityTests.swift */; };
 		4FEE052A0E971B7999495410 /* AgenticToolkitCoreMacOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 61310A916E242BA60A9FE8C1 /* AgenticToolkitCoreMacOS.framework */; };
@@ -2431,6 +2432,7 @@
 		EE2A9B2BD21CDB5D138478F2 /* MCPClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = D41A6C44F445E6C29D2525E2 /* MCPClient.swift */; };
 		EE3AF0D6BC9148B5330DD22E /* ExtensionIdentityComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C18DCBEAB2F005EEAB1BEFB2 /* ExtensionIdentityComponent.swift */; };
 		EE44E35B93E90359063AFAFD /* MCPRegistrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03AB6A327F61E7F32E2A617E /* MCPRegistrationTests.swift */; };
+		EE518DC23A3FDDDF429692B1 /* WKWebView+PageBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA238C676B49BEF35D7FD21F /* WKWebView+PageBackground.swift */; };
 		EE69D24DA32FFC6ED004A35F /* ExtensionSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E62003750CFF66FEE03FCA00 /* ExtensionSettingsTests.swift */; };
 		EE88757A2914F7DB850C2D39 /* AppFocusTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AE4336EFFBBCD5706DAB636 /* AppFocusTrigger.swift */; };
 		EEB3DFD90EBCCAB8E6C80E8A /* ScriptableTerminalSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30AD3EAE92B62896687121A9 /* ScriptableTerminalSession.swift */; };
@@ -6329,6 +6331,7 @@
 		C7F673515544E4F33195B0F0 /* ProjectPaneStateStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectPaneStateStoreTests.swift; sourceTree = "<group>"; };
 		C7FF2159E579349B13C10EAF /* DebugLaunchSwitchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLaunchSwitchTests.swift; sourceTree = "<group>"; };
 		C80769893C01529A5555C8FB /* ConfigurationContributionPointTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurationContributionPointTests.swift; sourceTree = "<group>"; };
+		C807A2670F8218965ADE0B73 /* ProjectWindowSplitViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectWindowSplitViewController.swift; sourceTree = "<group>"; };
 		C83086F9AA30ABF344231CA8 /* VerticalStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VerticalStackView.swift; sourceTree = "<group>"; };
 		C83F03794DCC43989DEF6ED5 /* GitFileStatus+Color.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "GitFileStatus+Color.swift"; sourceTree = "<group>"; };
 		C85ABE851B5CCFC3FBFC8591 /* LanguageDetectionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageDetectionTests.swift; sourceTree = "<group>"; };
@@ -6498,6 +6501,7 @@
 		D9FED81E6FA52B0393AD09BD /* WindowStateNamespaceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowStateNamespaceTests.swift; sourceTree = "<group>"; };
 		DA0470344B9A5D9015F0237F /* CommandPaletteModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandPaletteModel.swift; sourceTree = "<group>"; };
 		DA214EADFAE1BADD1EFC41DF /* ScriptableProjectWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptableProjectWindow.swift; sourceTree = "<group>"; };
+		DA238C676B49BEF35D7FD21F /* WKWebView+PageBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WKWebView+PageBackground.swift"; sourceTree = "<group>"; };
 		DA87C27B92F3648B67D31681 /* TerminalWorkingDirectoryReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalWorkingDirectoryReader.swift; sourceTree = "<group>"; };
 		DA8EBD7DE07EAE6D4F575B42 /* MarkdownNoteStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MarkdownNoteStorage.swift; sourceTree = "<group>"; };
 		DAE81B30F63657B1066251FE /* Migrator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Migrator.swift; sourceTree = "<group>"; };
@@ -7921,6 +7925,7 @@
 		1F555C32F16532FA6F49BD2E /* WebKit */ = {
 			isa = PBXGroup;
 			children = (
+				DA238C676B49BEF35D7FD21F /* WKWebView+PageBackground.swift */,
 				9922EAD1757334923B5A796E /* WKWebView+QuietPresentation.swift */,
 			);
 			path = WebKit;
@@ -9267,6 +9272,7 @@
 				606C595402F5024CBB9EC090 /* PaneMinimizeGeometry.swift */,
 				144A2EACA59A6D6F77EE1E93 /* PaneSpacing.swift */,
 				1781DB434DFFBAFB6B49B5E3 /* ProjectPaneStateStore.swift */,
+				C807A2670F8218965ADE0B73 /* ProjectWindowSplitViewController.swift */,
 			);
 			path = ComposableTabs;
 			sourceTree = "<group>";
@@ -15094,6 +15100,7 @@
 				E10D5A649092BC472D06968A /* ProjectTree.swift in Sources */,
 				241031A8B81F9C80224445BB /* ProjectWindowManager+Scripting.swift in Sources */,
 				71DD82E6767538A86D2C7186 /* ProjectWindowManager.swift in Sources */,
+				4FD2A7DD7A7713DA281D8BA6 /* ProjectWindowSplitViewController.swift in Sources */,
 				1EC4280CDDFA44DEAE40811C /* ProjectWorkspace.swift in Sources */,
 				4FD4ABE52EB52924CD2A27E4 /* ProjectsAppearancePanelViewController.swift in Sources */,
 				CAB4C0A78F902FFC3F5C46D3 /* ProjectsCoordinator.swift in Sources */,
@@ -15262,6 +15269,7 @@
 				1EEFE431083CCF3925C185D3 /* ViewLayout.swift in Sources */,
 				D95E2BA90114CC65AE8BDA0C /* ViewModel.swift in Sources */,
 				19898340262CA488212E8477 /* ViewsContributionPoint.swift in Sources */,
+				EE518DC23A3FDDDF429692B1 /* WKWebView+PageBackground.swift in Sources */,
 				DEAB51E75FC6F0EC5A04333A /* WKWebView+QuietPresentation.swift in Sources */,
 				55DA7660B80482A3C8F5F4C4 /* WebviewPanelSerializer.swift in Sources */,
 				E57CABF48958483AB64BE94D /* WebviewPanelViewController.swift in Sources */,
