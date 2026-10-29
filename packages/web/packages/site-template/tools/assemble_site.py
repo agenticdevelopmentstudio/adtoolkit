@@ -331,6 +331,32 @@ def strip_comments(css: str) -> str:
     return "".join(out)
 
 
+# The confine plugin's directive (postcss/confine.cjs), read the way it reads it: a `/*!` comment
+# at the top level of the sheet naming one class.
+_CONFINE = re.compile(r"!\s*@confine\s+\.[A-Za-z_][\w-]*\s*")
+
+
+def is_confined(css: str) -> bool:
+    """Whether `css` carries a top-level `/*! @confine .marker */`. String-aware like
+    `strip_comments`, and a comment inside a block does not count: the plugin refuses one there."""
+    i, depth = 0, 0
+    while i < len(css):
+        if css[i] == "\\":
+            i += 2
+        elif css[i] in "\"'":
+            i = _skip_string(css, i)
+        elif css.startswith("/*", i):
+            close = css.find("*/", i + 2)
+            end = len(css) if close < 0 else close
+            if depth == 0 and _CONFINE.fullmatch(css[i + 2 : end]):
+                return True
+            i = end + 2
+        else:
+            depth += {"{": 1, "}": -1}.get(css[i], 0)
+            i += 1
+    return False
+
+
 _ESCAPE = re.compile(r"\\(?:([0-9a-fA-F]{1,6})[ \t\n\r\f]?|(.))", re.S)
 
 
@@ -543,6 +569,11 @@ def check_site_css(css: str, label: str) -> list[str]:
         found = frame_names(strip_comments(css))
     except CssError as error:
         return [f"{label}: {error}"]
+    # A confined sheet applies only in the documents that carry its marker, so its `html`, `body`
+    # and `:root` reach none of the frame's pages. The frame's classes stay refused: a confined
+    # document can still hold them.
+    if is_confined(css):
+        found = [(selector, name) for selector, name in found if not _FRAME_ROOT.fullmatch(name)]
     return [f"{label}: the selector '{short(selector)}' names '{name}', which belongs to the frame" for selector, name in found]
 
 

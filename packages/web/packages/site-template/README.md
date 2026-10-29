@@ -295,6 +295,8 @@ every unlayered theme, kit, frame and token rule after it.
 
 A site's own component and route CSS may not name `.lp-*` or `.st-*` classes, or `html`, `body`
 (or `:root`, which is `html`), in a selector: those belong to the frame. Style your own classes.
+A sheet confined with `/*! @confine .marker */` may name `html`, `body` and `:root`, since it
+applies only in the documents that carry its marker; it still may not name the frame's classes.
 
 ## Assemble, check, update
 

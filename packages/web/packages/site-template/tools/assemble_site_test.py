@@ -1189,6 +1189,27 @@ class AssembleTest(unittest.TestCase):
         self.write("site/app-routes/home/home.css", "html:has(.x) { font-size: 100%; }\n")
         self.assert_refused(self.assemble(), "site/app-routes/home/home.css", "html")
 
+    def test_a_confined_sheet_may_name_the_document_roots(self) -> None:
+        self.write(
+            "site/app-routes/(hub)/hub.css",
+            "/*! @confine .adh-hub */\n:root { --bg: red; }\nbody { margin: 0; }\nhtml.dark .x { color: red; }\n",
+        )
+        self.assert_ok(self.assemble())
+
+    def test_a_confined_sheet_still_may_not_name_frame_classes(self) -> None:
+        self.write("site/app-routes/(hub)/hub.css", "/*! @confine .adh-hub */\n.lp-band { margin: 0; }\n")
+        self.assert_refused(self.assemble(), "site/app-routes/(hub)/hub.css", ".lp-band")
+
+    def test_only_the_directive_itself_confines_a_sheet(self) -> None:
+        for css in (
+            "/* @confine .adh-hub */\n:root { --bg: red; }\n",
+            "/*! see @confine .adh-hub for why */\n:root { --bg: red; }\n",
+            ".x { content: '/*! @confine .adh-hub */'; }\n:root { --bg: red; }\n",
+        ):
+            with self.subTest(css=css):
+                self.write("site/app-routes/(hub)/hub.css", css)
+                self.assert_refused(self.assemble(), "site/app-routes/(hub)/hub.css", ":root")
+
     # --- rewrites and public env ---------------------------------------------------------------
 
     def test_no_rewrites_or_public_env_writes_an_empty_next_site(self) -> None:
