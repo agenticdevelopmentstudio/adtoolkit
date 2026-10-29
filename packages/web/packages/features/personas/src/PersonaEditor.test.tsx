@@ -16,7 +16,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { render, screen, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 
 // Prop-echoing stubs for the leaf panels: each renders a testid + the scoping prop it was handed,
 // so the editor's "renders panel X with persona.id / ecosystem" wiring is directly assertable.
@@ -78,9 +78,12 @@ import { PersonaEditor, saveBlockedReason } from "./PersonaEditor";
 import {
   RailHostBoundary,
   RailHostContext,
+  RecordAffordanceContext,
   type PaneExitGuard,
   type RailHostRegistry,
+  type RecordAffordanceProps,
 } from "@agentic-toolkit/resource";
+import { DetailHeaderProvider, DetailHeaderRow } from "@agenticdevelopertoolkit/ui/blocks";
 import {
   api,
   type Persona,
@@ -879,5 +882,41 @@ describe("PersonaEditor unsaved-work guard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("button", { name: "Stay" })).toBeNull();
+  });
+});
+
+// The persona's API button belongs in the stack's DETAIL HEADER, the one [API][?] pair every
+// details view carries. The editor's bar is inline (`hoist={false}`), and while it drew the API
+// inside itself the header — with no claimant — drew its fallback beside it: a disabled "API"
+// saying "This view has no API endpoint", next to the live one for this very persona. Two API
+// buttons, one of them false (hub e2e api-explorer.spec.ts).
+describe("PersonaEditor API button", () => {
+  const seen: RecordAffordanceProps[] = [];
+  const renderApi = (api: RecordAffordanceProps) => {
+    seen.push(api);
+    return <button type="button">API</button>;
+  };
+  const inHeader = ({ children }: { children: ReactNode }) => (
+    <RecordAffordanceContext.Provider value={renderApi}>
+      <DetailHeaderProvider>
+        <DetailHeaderRow />
+        {children}
+      </DetailHeaderProvider>
+    </RecordAffordanceContext.Provider>
+  );
+
+  it("claims the detail header's API slot: one live API, no 'no endpoint' beside it", () => {
+    seen.length = 0;
+    const { container } = renderEditor("identity", PERSONA, { wrapper: inHeader });
+    expect(screen.queryByRole("button", { name: /This view has no API endpoint/ })).toBeNull();
+    const apis = screen.getAllByRole("button", { name: "API" });
+    expect(apis).toHaveLength(1);
+    const header = container.querySelector('[data-slot="detail-header"]');
+    expect(header?.contains(apis[0]!)).toBe(true);
+    expect(seen.at(-1)).toMatchObject({
+      method: "GET",
+      path: "/persona/personas/{id}",
+      pathValues: { id: "persona-1" },
+    });
   });
 });

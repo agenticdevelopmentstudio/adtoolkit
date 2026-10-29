@@ -26,6 +26,7 @@ import { useExitGate, type PaneExitGuard } from "@agenticdevelopertoolkit/ui/hoo
 import { UnsavedChangesAlert } from "@agenticdevelopertoolkit/ui/components/unsaved-changes-alert";
 import {
   ButtonBar,
+  DetailHeaderActions,
   StackGroupDetail,
   useRailExitGuard,
   type GroupTopicItem,
@@ -766,8 +767,27 @@ export function PersonaEditor({
 
   // The Save/Cancel bar sits at the top of the LEAF (the active section's pane), not in a bar above
   // the whole stack. Delete is intentionally absent here.
+  // The persona's API, on every facet: the item read once saved, the create POST while new.
+  const personaApi = persisted
+    ? {
+        method: "GET",
+        path: "/persona/personas/{id}",
+        pathValues: { id: persisted.id },
+        title: "Persona API",
+      }
+    : {
+        method: "POST",
+        path: "/persona/personas",
+        pathValues: {},
+        title: "Create persona API",
+      };
   const leafHeader = (
     <>
+      {/* The API goes in the stack's DETAIL HEADER, the [API][?] pair every details view carries.
+          The bar below stays inline (`hoist={false}`), and a nested bar draws an `api` inside
+          itself, so naming it there left the header with no claimant: it drew its disabled "API —
+          This view has no API endpoint" beside the live button for this very persona. */}
+      <DetailHeaderActions api={personaApi} />
       <ButtonBar
         actions={{
           onCreate: () => {},
@@ -782,22 +802,7 @@ export function PersonaEditor({
         showCreate={false}
         showDelete={false}
         hoist={false}
-        // The persona's API, on every facet: the item read once saved, the create POST while new.
-        api={
-          persisted
-            ? {
-                method: "GET",
-                path: "/persona/personas/{id}",
-                pathValues: { id: persisted.id },
-                title: "Persona API",
-              }
-            : {
-                method: "POST",
-                path: "/persona/personas",
-                pathValues: {},
-                title: "Create persona API",
-              }
-        }
+        showApi={false}
         leading={
           block && (dirty || isNew) ? (
             <span className="text-xs text-apt-text-muted" role="status">
