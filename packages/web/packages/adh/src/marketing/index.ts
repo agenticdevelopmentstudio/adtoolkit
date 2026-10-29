@@ -17,3 +17,6 @@ export type { MarketingRootHtmlProps } from './MarketingRootHtml'
 // The body half on its own, for a family route group under a document the site template owns.
 export { MarketingShell } from './MarketingShell'
 export type { MarketingShellProps } from './MarketingShell'
+// The shell's header alone, for the site template's `header` slot on a templated site's `/`.
+export { MarketingFrameHeader, FRAME_HEADER_CLASS } from './MarketingFrameHeader'
+export type { MarketingFrameHeaderProps } from './MarketingFrameHeader'

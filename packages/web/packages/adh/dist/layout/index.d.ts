@@ -11,7 +11,7 @@ export { SiteNotFound } from './SiteNotFound';
 export type { SiteNotFoundProps } from './SiteNotFound';
 export { HomePlaceholder } from './HomePlaceholder';
 export type { HomePlaceholderProps } from './HomePlaceholder';
-export { AppShell } from './AppShell';
+export { AppShell, AppShellProviders } from './AppShell';
 export type { AppShellProps } from './AppShell';
 export { SiteSwitchNotFound } from './SiteSwitchNotFound';
 export type { SiteSwitchNotFoundProps } from './SiteSwitchNotFound';

@@ -28,4 +28,13 @@ export type AppShellProps = {
  * slot. Stays hook-free itself (server-renderable); the providers are client children.
  */
 export declare function AppShell({ header, children, footer, chromeGate }: AppShellProps): import("react").JSX.Element;
+/**
+ * adh's cross-cutting providers, around whatever is put inside them. `AppShell` wraps its whole
+ * layout in them; `MarketingFrameHeader` wraps a header alone in them, on a templated site's `/`,
+ * where the site template's frame owns the page and no shell is mounted. One list, so the header
+ * there reads the same contexts as the header on every other route.
+ */
+export declare function AppShellProviders({ children }: {
+    children: ReactNode;
+}): import("react").JSX.Element;
 //# sourceMappingURL=AppShell.d.ts.map

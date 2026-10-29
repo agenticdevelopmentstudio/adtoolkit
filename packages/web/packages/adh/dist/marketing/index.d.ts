@@ -9,4 +9,6 @@ export { MarketingRootHtml } from './MarketingRootHtml';
 export type { MarketingRootHtmlProps } from './MarketingRootHtml';
 export { MarketingShell } from './MarketingShell';
 export type { MarketingShellProps } from './MarketingShell';
+export { MarketingFrameHeader, FRAME_HEADER_CLASS } from './MarketingFrameHeader';
+export type { MarketingFrameHeaderProps } from './MarketingFrameHeader';
 //# sourceMappingURL=index.d.ts.map

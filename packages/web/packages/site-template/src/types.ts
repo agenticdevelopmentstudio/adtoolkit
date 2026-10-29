@@ -130,6 +130,13 @@ export interface SiteFamily {
  * window-tall `#top` frame, and a band slot still sits in its band under its `Head`.
  */
 export interface SlotMap {
+  /**
+   * The site's own header, in place of the frame's bar and drawer — for a site whose visitors
+   * sign in, whose header carries the session the bar knows nothing about. Unlike the others it
+   * replaces the place, not its contents: the bar is the template's own chrome, and a site that
+   * brings a header brings its navigation with it.
+   */
+  header?: ComponentType
   hero?: ComponentType
   afterHero?: ComponentType
   footer?: ComponentType

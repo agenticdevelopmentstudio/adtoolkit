@@ -626,6 +626,15 @@ class AssembleTest(unittest.TestCase):
         self.assertIn("  bitbag: BitbagSlot,", slots)
         self.assertIn("slots.bitbag", (self.app / "app/(frame)/layout.tsx").read_text())
 
+    def test_a_header_slot_is_placed(self) -> None:
+        self.config["slots"] = {"header": "header.tsx#Header"}
+        self.write("site/components/header.tsx", "export function Header() { return null }\n")
+        self.assert_ok(self.assemble())
+        slots = (self.app / "src/site/slots.tsx").read_text()
+        self.assertIn("import { Header as HeaderSlot } from '../components/header'", slots)
+        self.assertIn("  header: HeaderSlot,", slots)
+        self.assertIn("slots.header", (self.app / "app/(frame)/layout.tsx").read_text())
+
     def test_no_sitemap_routes_computes_none(self) -> None:
         self.assert_ok(self.assemble())
         sitemap = (self.app / "src/site/sitemap.ts").read_text()

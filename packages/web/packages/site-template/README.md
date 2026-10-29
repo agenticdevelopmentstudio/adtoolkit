@@ -45,6 +45,9 @@ From `@agenticdevelopertoolkit/site-template/next` (node, for `next.config.ts` o
 
 `SlotMap` lets a site replace a piece of the frame without owning it:
 
+- `header` replaces the bar and drawer with the site's own header — for a site whose visitors
+  sign in, where the header carries the session. It is the one slot that replaces its place
+  rather than the place's contents.
 - `hero` replaces the data hero; the `#top` full-height frame stays.
 - `afterHero` renders between the hero and the first band.
 - `bands[sectionId]` replaces that band's blocks; the band, its tone, `Reveal` and `Head` stay. A key
@@ -317,6 +320,7 @@ export. The keys are:
 
 | Key | Fills |
 | --- | --- |
+| `header` | the top of the page, in place of the frame's bar and drawer |
 | `hero` | the hero, in place of the data hero |
 | `afterHero` | between the hero and the first band |
 | `footer` | the footer lines |

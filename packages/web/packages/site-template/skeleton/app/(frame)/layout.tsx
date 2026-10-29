@@ -16,12 +16,17 @@ const copy: FrameCopy = siteCopy
  * The frame, around `/` and every route of a site's `routes`: the bar and drawer above, the
  * footer and bitbag below. They are the page's siblings rather than its children — `<main>` is
  * the bands' flow parent, and the kit's last-band dock clearance holds only while its last child
- * is a band. `(frame)` is a route group, so it adds nothing to any URL.
+ * is a band. `(frame)` is a route group, so it adds nothing to any URL. A `header` slot takes the
+ * bar's place.
  */
 export default function FrameLayout({ children }: { children: ReactNode }): ReactElement {
   return (
     <>
-      <SiteChrome copy={copy} page={landing} extra={config.drawerExtra} />
+      {slots.header === undefined ? (
+        <SiteChrome copy={copy} page={landing} extra={config.drawerExtra} />
+      ) : (
+        <slots.header />
+      )}
       {children}
       <FrameFooter copy={copy} slot={slots.footer} />
       {slots.bitbag === undefined ? <SiteBitbag /> : <slots.bitbag />}

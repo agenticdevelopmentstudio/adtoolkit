@@ -17,7 +17,7 @@ export { HomePlaceholder } from './HomePlaceholder'
 export type { HomePlaceholderProps } from './HomePlaceholder'
 
 // adh's page shell + seams, merged in from the former `@adh/chrome/layout`.
-export { AppShell } from './AppShell'
+export { AppShell, AppShellProviders } from './AppShell'
 export type { AppShellProps } from './AppShell'
 // Renamed from that source's `SiteNotFound` — this barrel already publishes a `SiteNotFound`
 // (the registry-free primitive above, which SiteSwitchNotFound wraps); the two are unrelated

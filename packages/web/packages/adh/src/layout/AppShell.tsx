@@ -104,6 +104,30 @@ export function AppShell({ header, children, footer, chromeGate }: AppShellProps
   // `providers` fallback.
   const Chrome = chromeGate ?? Fragment
   return (
+    <AppShellProviders>
+      <AdhAppShell
+        header={<Chrome>{header}</Chrome>}
+        footer={
+          <Chrome>
+            <SiteFooter links={footer?.links} live={liveBuildIdentity()} />
+          </Chrome>
+        }
+        devTools={DEV_TOOLS_BUILD_ENABLED}
+      >
+        {children}
+      </AdhAppShell>
+    </AppShellProviders>
+  )
+}
+
+/**
+ * adh's cross-cutting providers, around whatever is put inside them. `AppShell` wraps its whole
+ * layout in them; `MarketingFrameHeader` wraps a header alone in them, on a templated site's `/`,
+ * where the site template's frame owns the page and no shell is mounted. One list, so the header
+ * there reads the same contexts as the header on every other route.
+ */
+export function AppShellProviders({ children }: { children: ReactNode }) {
+  return (
     // FeatureFlagsProvider wraps the WHOLE shell, not just the page: the header/landing are
     // consumers, and a site's own pages read the same one flag set rather than fetching it a
     // second time.
@@ -133,19 +157,7 @@ export function AppShell({ header, children, footer, chromeGate }: AppShellProps
               adh AuthProvider. Mounting here is safe either way: SettingsOverlayProvider
               renders its (lazily-loaded) dialog body only while open, and SiteHeader never
               calls openSettings for a signed-out visitor. */}
-          <SettingsOverlayProvider>
-            <AdhAppShell
-              header={<Chrome>{header}</Chrome>}
-              footer={
-                <Chrome>
-                  <SiteFooter links={footer?.links} live={liveBuildIdentity()} />
-                </Chrome>
-              }
-              devTools={DEV_TOOLS_BUILD_ENABLED}
-            >
-              {children}
-            </AdhAppShell>
-          </SettingsOverlayProvider>
+          <SettingsOverlayProvider>{children}</SettingsOverlayProvider>
         </TelemetryProvider>
       </HelpProvider>
     </FeatureFlagsProvider>

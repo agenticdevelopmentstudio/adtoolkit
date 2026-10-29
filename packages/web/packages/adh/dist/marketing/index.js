@@ -202,7 +202,7 @@ function MarketingLanding({ siteId, focusId }) {
 }
 
 // src/marketing/index.ts
-import { MarketingSiteHeader as MarketingSiteHeader2 } from "@agentic-toolkit/adh/marketing/MarketingSiteHeader";
+import { MarketingSiteHeader as MarketingSiteHeader3 } from "@agentic-toolkit/adh/marketing/MarketingSiteHeader";
 
 // src/marketing/MarketingRootHtml.tsx
 import { AdhThemeStyle } from "@agentic-toolkit/adh/server";
@@ -274,12 +274,44 @@ function MarketingRootHtml(props) {
     ] })
   );
 }
+
+// src/marketing/MarketingFrameHeader.tsx
+import { Fragment as Fragment4 } from "react";
+import { AppShellProviders } from "@agentic-toolkit/adh/layout";
+import { AuthProvider as AuthProvider2 } from "@agentic-toolkit/adh/auth";
+import { MarketingSiteHeader as MarketingSiteHeader2 } from "@agentic-toolkit/adh/marketing/MarketingSiteHeader";
+import { HelpContentProvider as HelpContentProvider2 } from "@agenticdevelopertoolkit/ui/components/help-content";
+import { jsx as jsx6 } from "react/jsx-runtime";
+var FRAME_HEADER_CLASS = "adh-frame-header";
+function MarketingFrameHeader({
+  siteId,
+  navLinks,
+  trailingNavLinks,
+  silentSso = true,
+  header,
+  providers,
+  help,
+  chromeGate
+}) {
+  const SiteProviders = providers ?? Fragment4;
+  const Chrome = chromeGate ?? Fragment4;
+  return /* @__PURE__ */ jsx6("div", { className: FRAME_HEADER_CLASS, style: { display: "contents" }, children: /* @__PURE__ */ jsx6(HelpContentProvider2, { help: help ?? {}, children: /* @__PURE__ */ jsx6(AuthProvider2, { clientId: "adh", storageKey: "auth_tokens", silentSso, children: /* @__PURE__ */ jsx6(SiteProviders, { children: /* @__PURE__ */ jsx6(AppShellProviders, { children: /* @__PURE__ */ jsx6(Chrome, { children: header ?? /* @__PURE__ */ jsx6(
+    MarketingSiteHeader2,
+    {
+      siteId,
+      navLinks,
+      trailingNavLinks
+    }
+  ) }) }) }) }) }) });
+}
 export {
   BRAND_PROMISE,
+  FRAME_HEADER_CLASS,
+  MarketingFrameHeader,
   MarketingLanding,
   MarketingRootHtml,
   MarketingShell,
-  MarketingSiteHeader2 as MarketingSiteHeader,
+  MarketingSiteHeader3 as MarketingSiteHeader,
   PILLAR_COPY,
   STAGE_LABEL,
   StorySections
