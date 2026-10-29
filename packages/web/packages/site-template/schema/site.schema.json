@@ -157,7 +157,12 @@
             "additionalProperties": {
               "anyOf": [
                 { "enum": ["off", "warn", "error", 0, 1, 2] },
-                { "type": "array", "minItems": 1, "items": {} }
+                {
+                  "type": "array",
+                  "minItems": 1,
+                  "prefixItems": [{ "enum": ["off", "warn", "error", 0, 1, 2] }],
+                  "items": {}
+                }
               ]
             }
           }

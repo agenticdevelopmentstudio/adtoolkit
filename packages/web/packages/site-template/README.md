@@ -239,7 +239,9 @@ Each is left out of `src/site/next.ts` when the site leaves it out of `site.json
 
 `NEXT_DIST_DIR`, when set, is the build directory in place of `.next` — an e2e run's dev server
 building into `.next-e2e` beside a dev server already serving the checkout. The skeleton's
-`tsconfig.json` leaves every `.next-*` out of the typecheck.
+`tsconfig.json` leaves every `.next-*` out of the typecheck. It is also exactly the file `next dev`
+would write — Next's own format, and the type globs of both `.next` and `.next-e2e` — because a
+dev server that finds a glob missing rewrites the file, and an e2e run would leave the tree dirty.
 
 ## Scripts in `site.json`
 
@@ -270,6 +272,10 @@ markdown package's stylesheet as it was before toolkit `d813c3347` (an `@source`
 over `/* ── … */`) into a templated site: 16.3.3 and 16.3.8 panic; 16.2.9 and 16.4.3 build.
 Move the pin forward only to a release that builds that repro clean — a plain `next build`
 shows it in seconds.
+
+`@next/eslint-plugin-next` is pinned to the same exact version: it ships in lockstep with `next`,
+and as a range it floated to 16.3.3 in every site's lockfile while `next` stayed on 16.2.9. Move
+the two together.
 
 ## ESLint entries in `site.json`
 

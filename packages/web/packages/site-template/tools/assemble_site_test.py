@@ -810,8 +810,10 @@ class AssembleTest(unittest.TestCase):
         # 16.3.x panics printing a code frame over a box-drawing comment rule (README, "Next is
         # pinned"); a range would let any fresh lockfile float onto it.
         self.assert_ok(self.assemble())
-        deps = json.loads((self.app / "package.json").read_text())["dependencies"]
-        self.assertEqual(deps["next"], "16.2.9")
+        package = json.loads((self.app / "package.json").read_text())
+        self.assertEqual(package["dependencies"]["next"], "16.2.9")
+        # Next's ESLint plugin ships in lockstep with next; a range lets it float onto 16.3.
+        self.assertEqual(package["devDependencies"]["@next/eslint-plugin-next"], "16.2.9")
 
     # --- eslint ------------------------------------------------------------------------------
 
@@ -857,6 +859,25 @@ class AssembleTest(unittest.TestCase):
     def test_eslint_rule_severity_is_checked(self) -> None:
         self.config["eslint"] = [{"rules": {"no-console": "loud"}}]
         self.assert_refused(self.assemble(), "eslint[0].rules.no-console")
+
+    def test_eslint_rule_severity_is_checked_in_array_form(self) -> None:
+        # `[severity, ...options]`: the first element is the same severity, the rest are free.
+        self.config["eslint"] = [{"rules": {"no-console": ["loud", {"allow": ["warn"]}]}}]
+        self.assert_refused(self.assemble(), "eslint[0].rules.no-console[0]")
+        self.config["eslint"] = [{"rules": {"no-console": [2, {"allow": ["warn"]}]}}]
+        self.assert_ok(self.assemble())
+
+    def test_the_schema_checker_applies_prefix_items_then_items(self) -> None:
+        module = load_assembler()
+        schema = {"type": "array", "prefixItems": [{"enum": ["a"]}], "items": {"type": "integer"}}
+        problems: list[str] = []
+        module.check_schema(["a", 1, 2], schema, "x", problems)
+        self.assertEqual(problems, [])
+        module.check_schema(["b", 1], schema, "y", problems)
+        module.check_schema(["a", "c"], schema, "z", problems)
+        self.assertEqual(len(problems), 2, problems)
+        self.assertIn("y[0]", problems[0])
+        self.assertIn("z[1]", problems[1])
 
     def test_site_eslint_config_file_is_refused(self) -> None:
         # ESLint loads eslint.config.js ahead of the generated .mjs, so a site file of that name
@@ -1546,6 +1567,19 @@ class AssembleTest(unittest.TestCase):
         self.assertIn("distDir: process.env.NEXT_DIST_DIR || '.next',", config)
         tsconfig = json.loads((self.app / "tsconfig.json").read_text())
         self.assertIn(".next-*", tsconfig["exclude"])
+
+    def test_the_tsconfig_is_what_next_dev_would_write(self) -> None:
+        # `next dev` rewrites tsconfig.json whenever its `include` lacks the dist dir's type
+        # globs, in its own format (JSON.stringify, two spaces, a trailing newline). Holding
+        # both dist dirs' globs in that format leaves it nothing to write, so an e2e run
+        # (NEXT_DIST_DIR=.next-e2e) does not dirty the tree.
+        self.assert_ok(self.assemble())
+        text = (self.app / "tsconfig.json").read_text()
+        tsconfig = json.loads(text)
+        self.assertEqual(text, json.dumps(tsconfig, indent=2) + "\n")
+        for dist in (".next", ".next-e2e"):
+            for glob in (f"{dist}/types/**/*.ts", f"{dist}/dev/types/**/*.ts"):
+                self.assertIn(glob, tsconfig["include"])
 
     # --- family -------------------------------------------------------------------------------
 

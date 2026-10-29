@@ -256,7 +256,7 @@ _TYPES = {
 # schema is a keyword it would silently skip, so it stops rather than pass what it never checked.
 _KEYWORDS = {
     "type", "enum", "anyOf", "required", "properties", "propertyNames", "additionalProperties",
-    "items", "minItems", "pattern", "minimum", "maximum",
+    "prefixItems", "items", "minItems", "pattern", "minimum", "maximum",
     "default", "description", "title", "$schema", "$id",
 }  # fmt: skip
 
@@ -277,15 +277,17 @@ def check_schema(value: object, schema: dict, where: str, problems: list[str]) -
         raise SchemaError(f"site.schema.json at {where or '(root)'}: unsupported {', '.join(sorted(unknown))}")
     label = f"site/site.json: {where}" if where else "site/site.json"
     if "anyOf" in schema:
-        # Passes if any branch passes; otherwise report the branch that got furthest (fewest problems).
+        # Passes if any branch passes; otherwise report the branch that got furthest: one whose
+        # `type` the value has before one it does not, then the fewest problems.
         attempts = []
         for branch in schema["anyOf"]:
             found: list[str] = []
             check_schema(value, branch, where, found)
             if not found:
                 return
-            attempts.append(found)
-        problems.extend(min(attempts, key=len))
+            typed = "type" in branch and _TYPES[branch["type"]](value)
+            attempts.append((not typed, len(found), found))
+        problems.extend(min(attempts, key=lambda a: a[:2])[2])
         return
     if "enum" in schema and value not in schema["enum"]:
         allowed = ", ".join(repr(v) for v in schema["enum"])
@@ -313,8 +315,12 @@ def check_schema(value: object, schema: dict, where: str, problems: list[str]) -
     elif isinstance(value, list):
         if len(value) < schema.get("minItems", 0):
             problems.append(f"{label}: needs at least {schema['minItems']} item(s)")
+        # As in JSON Schema 2020-12: `prefixItems[i]` checks item i, and `items` the rest.
+        prefix = schema.get("prefixItems", [])
         for i, item in enumerate(value):
-            if "items" in schema:
+            if i < len(prefix):
+                check_schema(item, prefix[i], f"{where}[{i}]", problems)
+            elif "items" in schema:
                 check_schema(item, schema["items"], f"{where}[{i}]", problems)
     elif isinstance(value, str):
         if "pattern" in schema and not re.search(schema["pattern"], value):
