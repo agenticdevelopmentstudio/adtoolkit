@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useSyncExternalStore } from "react"
+import { useCallback, useLayoutEffect, useMemo, useSyncExternalStore } from "react"
 
 import {
   APPEARANCE_DEFAULTS,
@@ -120,6 +120,24 @@ export function mountAppearanceScope(): () => void {
     scopesMounted -= 1
     if (scopesMounted === 0) clearAppearance(document.documentElement)
   }
+}
+
+/**
+ * The scope as a component: render it in the layout of the routes whose pages read the
+ * appearance prefs, and <html> wears them only while one of those routes is mounted.
+ *
+ * It exists for a site that puts the site template's frame (which reads none of the prefs)
+ * beside its own routes. The pre-paint script runs only on a document load; a client navigation
+ * keeps the same <html>, so entering the routes from the frame would leave the prefs unapplied
+ * and leaving them would carry the prefs onto the frame. Mounting paints them (a no-op after a
+ * direct load, where the script already did) and the last unmount takes them off. While no scope
+ * is mounted the store leaves <html> alone, so an OS colour-scheme flip or a sign-in that
+ * resolves after the reader left cannot paint the frame either. A site that never renders one
+ * keeps the store painting everywhere, as before.
+ */
+export function AppearanceScope(): null {
+  useLayoutEffect(() => mountAppearanceScope(), [])
+  return null
 }
 
 function setPrefs(patch: Partial<AppearancePrefs>): void {
