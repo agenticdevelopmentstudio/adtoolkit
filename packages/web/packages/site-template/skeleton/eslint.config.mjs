@@ -19,6 +19,13 @@ export default [
     ignores: [
       "**/node_modules/**",
       "**/.next/**",
+      // next.config honours NEXT_DIST_DIR, which a Playwright lane sets (`.next-e2e`) so its
+      // dev server does not take the default `.next` lock; that output is generated too.
+      "**/.next-*/**",
+      // Playwright's own output: a run leaves minified trace bundles here, and lint would fail
+      // on them on any machine that has run e2e once.
+      "**/test-results/**",
+      "**/playwright-report/**",
       "**/dist/**",
       "**/build/**",
       "**/out/**",

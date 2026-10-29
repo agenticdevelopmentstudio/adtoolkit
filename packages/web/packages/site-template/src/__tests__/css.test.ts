@@ -125,6 +125,16 @@ describe('frame.css', () => {
     expect(body).toContain('border-radius: 22.37%')
   })
 
+  it('caps a glyph mark at the flow hero size, leaving a smaller drawn size alone', () => {
+    // The default mark is content-buildr's `/glyph.svg`, which carries only a viewBox: an <img>
+    // of it is as wide as the hero's wrap. A cap, not a width, so a mark that draws itself
+    // smaller (`width="64"`) keeps its own size.
+    const body = ruleBody(frame(), '.st-mark--glyph')
+    expect(body).toContain('max-width: min(112px, 26vw)')
+    expect(body).toContain('height: auto')
+    expect(body).not.toMatch(/(^|[ ;])width:/)
+  })
+
   it('keeps the hero status pill its own height beside a button', () => {
     // The actions row is a stretching flex row: the pill would grow to the button's height with
     // its words pinned to the top.

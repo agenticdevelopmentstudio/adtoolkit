@@ -174,9 +174,15 @@
   border: 0;
 }
 
-/* The mark when it is a glyph: the kit styles it; the template only names it. */
+/* The mark when it is a glyph. The flow kit sizes no hero image (its hero takes the mark as a
+ * ReactNode), so a glyph is drawn at its own size, and the default mark — content-buildr's
+ * `/glyph.svg`, a viewBox and no width — has none: as an <img> it filled the hero's wrap. Capped
+ * at 112px, the size the flow hero was drawn at (adh-family.css sized the family's glyph so),
+ * and a cap rather than a width, so a mark that draws itself smaller keeps its own size. */
 .st-mark--glyph {
   display: inline-block;
+  max-width: min(112px, 26vw);
+  height: auto;
 }
 
 /* The mark when it is an app icon: the iOS squircle's corner radius, 22.37% of the side. A
