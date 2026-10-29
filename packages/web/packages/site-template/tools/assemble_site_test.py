@@ -1378,6 +1378,13 @@ class AssembleTest(unittest.TestCase):
                 self.config["staleTimes"] = bad
                 self.assert_refused(self.assemble(), where)
 
+    def test_the_build_directory_may_be_moved_and_a_moved_one_is_not_typechecked(self) -> None:
+        self.assert_ok(self.assemble())
+        config = (self.app / "next.config.ts").read_text()
+        self.assertIn("distDir: process.env.NEXT_DIST_DIR || '.next',", config)
+        tsconfig = json.loads((self.app / "tsconfig.json").read_text())
+        self.assertIn(".next-*", tsconfig["exclude"])
+
     # --- family -------------------------------------------------------------------------------
 
     def test_no_family_is_no_band_and_no_family_copy(self) -> None:

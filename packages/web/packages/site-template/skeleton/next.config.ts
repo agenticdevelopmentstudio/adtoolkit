@@ -53,6 +53,9 @@ function frameConfig(config: NextConfig): NextConfig {
 export default frameConfig({
   // Hide the floating Next.js dev-tools indicator in `next dev`.
   devIndicators: false,
+  // A second build directory when the environment names one: an e2e run's `next dev` builds into
+  // its own (`NEXT_DIST_DIR=.next-e2e`), beside a dev server already using `.next`.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   env: { ...site.env, ...frameBuildIdentity(nextSite, APP_DIR) },
   ...(site.rewrites.length === 0 ? {} : { rewrites: async () => site.rewrites }),
   ...(site.headers.length === 0 ? {} : { headers: async () => site.headers }),

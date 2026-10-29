@@ -227,6 +227,10 @@ Three switches for a site whose pages are the fleet's app rather than the frame:
 
 Each is left out of `src/site/next.ts` when the site leaves it out of `site.json`.
 
+`NEXT_DIST_DIR`, when set, is the build directory in place of `.next` — an e2e run's dev server
+building into `.next-e2e` beside a dev server already serving the checkout. The skeleton's
+`tsconfig.json` leaves every `.next-*` out of the typecheck.
+
 ## Analytics
 
 `"analytics": true` writes `src/site/analytics.tsx` mounting `@vercel/analytics` and
