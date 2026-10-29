@@ -37,6 +37,7 @@ From `@agenticdevelopertoolkit/site-template/next` (node, for `next.config.ts` o
 
 | Export | What it is |
 | --- | --- |
+| `frameThemeFonts(site, appDir)`, `frameBuildIdentity(site, appDir)` | The build's side of `themeFonts` and `buildIdentity`: the theme's faces copied under `<appDir>/public/fonts/`, and the `NEXT_PUBLIC_ADH_*` identity env. Each does nothing for a site that leaves its key out. See "Theme fonts, build identity and stale times" below. |
 | `frameNext(site, env)` | `site.json`'s `rewrites` and `publicEnv` resolved against `env` (`process.env`), and its `headers` and `redirects` as written: `{ env, rewrites, headers, redirects }`, which the skeleton's `next.config.ts` merges into its config. Throws, naming the variable and where it was used, when a `${NAME}` has no value. See "Rewrites and public env" below. |
 | types `FrameNextSite`, `FrameRewrite`, `FrameHeader`, `FrameRedirect`, `FrameEnvDefault`, `FrameEnvChoice`, `FrameNextResult`, `FrameNextHeader` | The generated `src/site/next.ts`'s shape (`FrameHeader` is one `site.json` `headers` rule; `FrameEnvChoice` an `envDefaults` value chosen by a variable), and the result (`FrameNextHeader` is a header rule with the mutable list Next's `headers` takes). |
 
@@ -209,6 +210,22 @@ that is not an HTTP header name is refused at assembly.
 Next's own `redirects` shape, in the order Next matches them; each rule needs all three keys.
 Literal, as headers are. A site that sets none has no `redirects` in its `src/site/next.ts`, and
 the skeleton's `next.config.ts` hands Next none.
+
+## Theme fonts, build identity and stale times in `site.json`
+
+Three switches for a site whose pages are the fleet's app rather than the frame:
+
+- `"themeFonts": true` — `frameThemeFonts` copies the theme's self-hosted woff2 faces into the
+  app's `public/fonts/` as `next.config.ts` loads, in `next dev` and `next build` alike. A site
+  that inlines the theme's css itself (`AdhThemeStyle`) names those faces by absolute path, so
+  they must exist on disk. The copy fails the build when it cannot be made.
+- `"buildIdentity": true` — `frameBuildIdentity` adds `NEXT_PUBLIC_ADH_SITE_VERSION` (the app's
+  `VERSION` file, from `site/app-root/VERSION`) and `NEXT_PUBLIC_ADH_RELEASE` (Vercel's or
+  Railway's commit, else `git rev-parse HEAD`) to the client env: what the fleet footer shows.
+  It reads them through `@agentic-toolkit/next-env`, bundled into `./next`.
+- `"staleTimes": { "dynamic": 30 }` — Next's `experimental.staleTimes`, in whole seconds.
+
+Each is left out of `src/site/next.ts` when the site leaves it out of `site.json`.
 
 ## Analytics
 

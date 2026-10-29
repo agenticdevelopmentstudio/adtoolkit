@@ -1,8 +1,12 @@
 // The build-time half of `site.json`: its `rewrites`, `headers`, `redirects`, `publicEnv` and `envDefaults`,
-// resolved against the environment `next build` runs in. Published as `@agenticdevelopertoolkit/site-template/next`
+// resolved against the environment `next build` runs in, and what the build does besides Next's
+// config (the theme's font files, the build's identity). Published as `@agenticdevelopertoolkit/site-template/next`
 // and imported by the skeleton's `next.config.ts` — never by a page, so nothing here reaches a
 // bundle. The assembler has already checked every `${…}` is well formed; what it cannot know is
 // the environment, so an unset variable with no default fails the build here, by name.
+
+import { commitSha, readSiteVersion } from '@agentic-toolkit/next-env'
+import { materializeThemeFonts } from '@agenticdevelopertoolkit/themes/materialize-fonts'
 
 /** One `site.json` rewrite: Next's `{ source, destination }`, the destination substituted. */
 export interface FrameRewrite {
@@ -53,6 +57,12 @@ export interface FrameNextSite {
   /** `NAME`, which must resolve, or `${NAME:-}`, which is left out when it does not. */
   publicEnv: readonly string[]
   envDefaults: Readonly<Record<string, FrameEnvDefault>>
+  /** Copy the theme's font files into the app's `public/` (`frameThemeFonts`). */
+  themeFonts?: boolean
+  /** Name the build in the client env by its VERSION file and commit (`frameBuildIdentity`). */
+  buildIdentity?: boolean
+  /** Next's client router cache lifetimes, in seconds: `experimental.staleTimes`. */
+  staleTimes?: { dynamic?: number; static?: number }
 }
 
 /**
@@ -170,4 +180,26 @@ export function frameNext(site: FrameNextSite, env: Env): FrameNextResult {
   }))
   const redirects = (site.redirects ?? []).map((rule) => ({ ...rule }))
   return { env: publicEnv, rewrites, headers, redirects }
+}
+
+/**
+ * Put the theme's self-hosted faces under `<appDir>/public/fonts/`, when the site asks
+ * (`themeFonts`). A site that inlines the theme's css itself — `AdhThemeStyle` does — names those
+ * faces by absolute path, so the bytes must be on disk before Next collects `public/`, in every
+ * mode; the config load is the one hook `next dev` and `next build` share. Fails the build when it
+ * cannot copy them, as the themes package's copier does.
+ */
+export function frameThemeFonts(site: FrameNextSite, appDir: string): void {
+  if (site.themeFonts === true) materializeThemeFonts(appDir)
+}
+
+/**
+ * The build's identity for the client, when the site asks (`buildIdentity`): the app's `VERSION`
+ * file as `NEXT_PUBLIC_ADH_SITE_VERSION` and the commit (Vercel's, Railway's, else `git rev-parse
+ * HEAD`) as `NEXT_PUBLIC_ADH_RELEASE` — what the fleet footer shows and error reports carry. Either
+ * may be `''`: a missing VERSION file, or no commit to be had.
+ */
+export function frameBuildIdentity(site: FrameNextSite, appDir: string): Record<string, string> {
+  if (site.buildIdentity !== true) return {}
+  return { NEXT_PUBLIC_ADH_SITE_VERSION: readSiteVersion(appDir), NEXT_PUBLIC_ADH_RELEASE: commitSha() }
 }

@@ -830,6 +830,7 @@
         "web-themes",
         "web-chrome",
         "web-features",
+        "web-next-env",
         "web-toolchain"
       ],
       "shared": true,

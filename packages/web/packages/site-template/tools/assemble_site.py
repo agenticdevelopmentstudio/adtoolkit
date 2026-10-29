@@ -99,7 +99,7 @@ ROUTE_FILE = re.compile(r"^(page|route)\.(tsx|ts|jsx|js|mdx)$")
 
 # The `site.json` keys `src/site/next.ts` carries only when the site sets them, so a site that
 # sets none keeps the next.ts it was assembled with before the key existed.
-NEXT_OPTIONAL = ("redirects",)
+NEXT_OPTIONAL = ("redirects", "themeFonts", "buildIdentity", "staleTimes")
 
 # `analytics: true` mounts these in the root layout; the template pins their ranges.
 ANALYTICS_DEPS = {"@vercel/analytics": "^2.0.1", "@vercel/speed-insights": "^2.0.0"}

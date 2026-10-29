@@ -2,18 +2,24 @@
 // skeleton in the toolkit and re-assemble.
 import { fileURLToPath } from 'node:url'
 import type { NextConfig } from 'next'
-import { frameNext } from '@agenticdevelopertoolkit/site-template/next'
+import { frameBuildIdentity, frameNext, frameThemeFonts } from '@agenticdevelopertoolkit/site-template/next'
 import { nextSite, transpilePackages } from './src/site/next'
+
+/** The app's own directory, which holds its `public/` and its `VERSION` file. */
+const APP_DIR = fileURLToPath(new URL('.', import.meta.url))
 
 /** The pnpm workspace root: the app's parent (`websites/`), where the site's lockfile lives. */
 const WORKSPACE_ROOT = fileURLToPath(new URL('..', import.meta.url))
 
 /**
- * `site.json`'s `rewrites`, `headers`, `redirects` and `publicEnv`, resolved now, as the config loads, so a
- * variable the build needs and cannot find fails `next build` by name rather than a request at
- * runtime.
+ * `site.json`'s `rewrites`, `headers`, `redirects` and `publicEnv`, resolved now, as the config
+ * loads, so a variable the build needs and cannot find fails `next build` by name rather than a
+ * request at runtime.
  */
 const site = frameNext(nextSite, process.env)
+
+// The theme's font files, when the site asks: on disk before Next collects `public/`.
+frameThemeFonts(nextSite, APP_DIR)
 
 /**
  * Two cross-cutting concerns, carried over from the fleet's `with<Site>Config` wrappers.
@@ -47,10 +53,11 @@ function frameConfig(config: NextConfig): NextConfig {
 export default frameConfig({
   // Hide the floating Next.js dev-tools indicator in `next dev`.
   devIndicators: false,
-  env: site.env,
+  env: { ...site.env, ...frameBuildIdentity(nextSite, APP_DIR) },
   ...(site.rewrites.length === 0 ? {} : { rewrites: async () => site.rewrites }),
   ...(site.headers.length === 0 ? {} : { headers: async () => site.headers }),
   ...(site.redirects.length === 0 ? {} : { redirects: async () => site.redirects }),
+  ...(nextSite.staleTimes === undefined ? {} : { experimental: { staleTimes: { ...nextSite.staleTimes } } }),
   // The suite serves `next dev` at `https://<id>.<name>.dev.local` behind Caddy, and a walk may
   // reach it at 127.0.0.1; Next refuses its dev assets (HMR, the RSC fetches) to any origin not
   // listed, which leaves the page hydrating against nothing.

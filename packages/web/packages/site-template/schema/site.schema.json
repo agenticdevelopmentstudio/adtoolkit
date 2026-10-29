@@ -202,6 +202,23 @@
         }
       }
     },
+    "themeFonts": {
+      "type": "boolean",
+      "description": "Copy the theme's self-hosted font files into the app's `public/fonts/` as `next.config.ts` loads — for a site that inlines the theme's css itself (`AdhThemeStyle`), whose `@font-face` rules name those files by absolute path."
+    },
+    "buildIdentity": {
+      "type": "boolean",
+      "description": "Name the build in the client env: `NEXT_PUBLIC_ADH_SITE_VERSION` from the app's `VERSION` file, `NEXT_PUBLIC_ADH_RELEASE` the commit it was built from — what the fleet footer shows."
+    },
+    "staleTimes": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Next's client router cache lifetimes, in seconds (`experimental.staleTimes`): e.g. `{ \"dynamic\": 30 }`, so going back to a dynamic page within 30s does not re-render it on the server.",
+      "properties": {
+        "dynamic": { "type": "integer", "minimum": 0 },
+        "static": { "type": "integer", "minimum": 0 }
+      }
+    },
     "publicEnv": {
       "type": "array",
       "description": "Variables passed through to Next's `env`, so client code reads them inlined at build. Each resolves as a `rewrites` reference does (environment, then `envDefaults`). A bare `NAME` with no value anywhere fails the build, naming it; `${NAME:-}` is the optional form, left out when it has no value.",

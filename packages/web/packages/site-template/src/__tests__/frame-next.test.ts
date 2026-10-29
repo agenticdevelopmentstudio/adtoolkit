@@ -1,5 +1,8 @@
-import { describe, expect, it } from 'vitest'
-import { frameNext } from '../frame-next'
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { frameBuildIdentity, frameNext, frameThemeFonts } from '../frame-next'
 import type { FrameNextSite } from '../frame-next'
 
 const none: FrameNextSite = { rewrites: [], publicEnv: [], envDefaults: {} }
@@ -165,5 +168,55 @@ describe('frameNext', () => {
   it('refuses an envDefaults cycle rather than recursing', () => {
     const site: FrameNextSite = { ...none, publicEnv: ['A'], envDefaults: { A: '${B}', B: '${A}' } }
     expect(() => frameNext(site, {})).toThrow(/cycle.*A.*B/s)
+  })
+})
+
+describe('frameThemeFonts', () => {
+  const dirs: string[] = []
+  function appDir(): string {
+    const dir = mkdtempSync(path.join(tmpdir(), 'frame-fonts-'))
+    dirs.push(dir)
+    return dir
+  }
+  afterEach(() => {
+    for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("copies the theme's faces under the app's public/fonts when the site asks", () => {
+    const app = appDir()
+    frameThemeFonts({ ...none, themeFonts: true }, app)
+    const [revision] = readdirSync(path.join(app, 'public', 'fonts'))
+    expect(revision).toBeDefined()
+    const faces = readdirSync(path.join(app, 'public', 'fonts', revision ?? ''))
+    expect(faces.some((face) => face.endsWith('.woff2'))).toBe(true)
+  })
+
+  it('writes nothing for a site that does not', () => {
+    const app = appDir()
+    frameThemeFonts(none, app)
+    expect(readdirSync(app)).toEqual([])
+  })
+})
+
+describe('frameBuildIdentity', () => {
+  const dirs: string[] = []
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true })
+  })
+
+  it("names the build by the app's VERSION file and the commit, when the site asks", () => {
+    const app = mkdtempSync(path.join(tmpdir(), 'frame-identity-'))
+    dirs.push(app)
+    writeFileSync(path.join(app, 'VERSION'), '1.0.157\n')
+    vi.stubEnv('VERCEL_GIT_COMMIT_SHA', 'abc123')
+    expect(frameBuildIdentity({ ...none, buildIdentity: true }, app)).toEqual({
+      NEXT_PUBLIC_ADH_SITE_VERSION: '1.0.157',
+      NEXT_PUBLIC_ADH_RELEASE: 'abc123',
+    })
+  })
+
+  it('adds nothing for a site that does not', () => {
+    expect(frameBuildIdentity(none, tmpdir())).toEqual({})
   })
 })

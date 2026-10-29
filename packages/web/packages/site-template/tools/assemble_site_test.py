@@ -1185,7 +1185,10 @@ class AssembleTest(unittest.TestCase):
         self.assertIn("publicEnv: [],", text)
         self.assertIn("envDefaults: {},", text)
         config = (self.app / "next.config.ts").read_text()
-        self.assertIn("import { frameNext } from '@agenticdevelopertoolkit/site-template/next'", config)
+        self.assertIn(
+            "import { frameBuildIdentity, frameNext, frameThemeFonts } from '@agenticdevelopertoolkit/site-template/next'",
+            config,
+        )
         self.assertIn("import { nextSite, transpilePackages } from './src/site/next'", config)
 
     def test_rewrites_public_env_and_defaults_reach_the_next_site(self) -> None:
@@ -1341,6 +1344,39 @@ class AssembleTest(unittest.TestCase):
             with self.subTest(rule=rule):
                 self.config["redirects"] = [rule]
                 self.assert_refused(self.assemble(), "redirects[0]", where)
+
+    # --- what the build does besides Next's config -------------------------------------------
+
+    def test_no_build_extras_leave_the_keys_out(self) -> None:
+        self.assert_ok(self.assemble())
+        text = (self.app / "src/site/next.ts").read_text()
+        for key in ("themeFonts", "buildIdentity", "staleTimes"):
+            self.assertNotIn(key, text)
+        config = (self.app / "next.config.ts").read_text()
+        self.assertIn("frameThemeFonts(nextSite, APP_DIR)", config)
+        self.assertIn("...frameBuildIdentity(nextSite, APP_DIR)", config)
+        self.assertIn(
+            "...(nextSite.staleTimes === undefined ? {} : { experimental: { staleTimes: { ...nextSite.staleTimes } } }),",
+            config,
+        )
+
+    def test_build_extras_reach_the_next_site(self) -> None:
+        self.config.update({"themeFonts": True, "buildIdentity": True, "staleTimes": {"dynamic": 30}})
+        self.assert_ok(self.assemble())
+        text = (self.app / "src/site/next.ts").read_text()
+        self.assertIn("themeFonts: true,", text)
+        self.assertIn("buildIdentity: true,", text)
+        self.assertIn('"dynamic": 30', text)
+
+    def test_stale_times_take_only_nexts_two_keys_as_whole_seconds(self) -> None:
+        for bad, where in (
+            ({"dynamc": 30}, "staleTimes"),
+            ({"dynamic": -1}, "staleTimes.dynamic"),
+            ({"static": "30"}, "staleTimes.static"),
+        ):
+            with self.subTest(bad=bad):
+                self.config["staleTimes"] = bad
+                self.assert_refused(self.assemble(), where)
 
     # --- family -------------------------------------------------------------------------------
 
