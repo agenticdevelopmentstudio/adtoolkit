@@ -34,7 +34,7 @@ export type LandingFooterProps = {
 export function LandingFooter({ contact = ADH_CONTACT }: LandingFooterProps = {}): ReactElement {
   return (
     <>
-      <FamilyFooter version={buildVersionLabel()} />
+      <FamilyFooter version={buildVersionLabel()} anchored />
       <SitesPopover sites={FAMILY_SITES} />
       <ContactPopover contact={contact} />
       <TermsModal />

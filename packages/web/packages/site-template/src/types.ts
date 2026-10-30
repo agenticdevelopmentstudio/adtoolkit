@@ -137,8 +137,8 @@ export interface SlotMap {
    * brings a header brings its navigation with it.
    */
   header?: ComponentType
-  /** More of the drawer after its rows: titled groups of the site's own links (the landing
-   *  kit's `NavSection`). Picking one closes the drawer, as a row does. */
+  /** More of the drawer after its rows: the site's own rows. Picking one closes the drawer, as
+   *  a row does. */
   drawer?: ComponentType
   /** The drawer's foot, in place of the copy's hello, address and byline. */
   drawerFoot?: ComponentType

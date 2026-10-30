@@ -147,6 +147,8 @@ var ADH_CONTACT = {
 };
 var CONTACT_POPOVER_ID = "adh-contact";
 var FAMILY_FOOTER_DIALOG_ID = "adh-family-footer";
+var FAMILY_BAND_ID = "family";
+var MORE_INFO_ANCHOR_ID = "more-info";
 function buildVersionLabel(live) {
   const version = live?.version ?? process.env.NEXT_PUBLIC_ADH_SITE_VERSION ?? "";
   const sha = live?.sha ?? process.env.NEXT_PUBLIC_ADH_RELEASE ?? "";
@@ -311,14 +313,14 @@ function Column({ title, entries }) {
     ] }, e.label)) })
   ] });
 }
-function FamilyFooter({ version, links = [] }) {
+function FamilyFooter({ version, links = [], anchored = false }) {
   const columns = [
     ...links.length > 0 ? [{ title: "This site", entries: links }] : [],
     ...siteColumns(FAMILY_SITES),
     { title: "About", entries: aboutEntries() },
     { title: "Legal", entries: LEGAL_ENTRIES }
   ];
-  return /* @__PURE__ */ jsxs6("div", { className: LANDING_FOOTER_CLASS, children: [
+  return /* @__PURE__ */ jsxs6("div", { id: anchored ? MORE_INFO_ANCHOR_ID : void 0, className: LANDING_FOOTER_CLASS, children: [
     /* @__PURE__ */ jsx7("div", { className: "adh-landing-footer__head", children: /* @__PURE__ */ jsx7(PreviewNotice, { variant: "badge" }) }),
     /* @__PURE__ */ jsx7("div", { className: "adh-landing-footer__directory", children: columns.map((column) => /* @__PURE__ */ jsx7(Column, { ...column }, column.title)) }),
     /* @__PURE__ */ jsxs6("div", { className: "adh-landing-footer__fine-print", children: [
@@ -426,232 +428,12 @@ function SiteFooter({ links = [], chat = true, live, specimen = false, contact =
 }
 
 // src/footer/FamilyDrawer.tsx
-import { NavSection } from "@agenticdevelopertoolkit/landing";
-import { getSite as getSite2, siteProdUrl as siteProdUrl3 } from "@agentic-toolkit/adh-registry";
-
-// src/header/fleetMenuGroups.ts
-import { ADMIN_SITE_IDS } from "@agentic-toolkit/adh-registry";
-var FLEET_SECTION = 1;
-var ADMIN_SECTION = FLEET_SECTION + 1;
-var HELP_SECTION = FLEET_SECTION + 1;
-function leaf(link) {
-  return { kind: "leaf", section: FLEET_SECTION, blurb: true, link };
-}
-function topic(t) {
-  return { kind: "topic", section: FLEET_SECTION, ...t };
-}
-var FLEET_MENU_GROUPS = [
-  leaf({ site: "bitbag", description: "The hub's AI persona" }),
-  leaf({ site: "messages", description: "Your messages, everywhere" }),
-  topic({
-    label: "Hub",
-    description: "The center of it all",
-    link: { site: "hub" },
-    links: [
-      { site: "news" },
-      { site: "status" },
-      // A hub ROUTE, not a site: `/contact` exists on the hub and is resolved through
-      // it from every other site (see useSiteMenu's routeHref).
-      { route: "/contact", label: "Contact", description: "Get in touch" },
-      { site: "community" },
-      // hub-help (help.adh.com), not the delisted 'help' landing — the family's Help
-      // destination since its promotion. Its key is the site id, so it stays distinct
-      // from the Help-MODAL action row SiteMenu adds to the chrome above.
-      { site: "hub-help" },
-      { site: "support" },
-      { site: "store" },
-      // A page of hub-help, not `{ route: '/details' }`: the hub's `/details` brochure was
-      // folded into its landing and only redirects to `/` now, so "Details" is the help site's
-      // hub overview. `{ site, path }` rather than a written-out URL, so it keeps its per-env
-      // host and SSO wrap (fleetMenuGroups.test pins why an absolute row to a real site is a
-      // defect).
-      {
-        site: "hub-help",
-        path: "/hub/~overview",
-        label: "Details",
-        description: "What the hub does",
-        iconKey: "/details"
-      }
-    ]
-  }),
-  leaf({ site: "orgs" }),
-  topic({
-    label: "Learn",
-    description: "Guides & courses",
-    iconKey: "learn",
-    link: { site: "help" },
-    links: [
-      { site: "academy" },
-      // hub-help again, NOT the 'help' landing this topic itself links to. Two reasons,
-      // both from the registry: a family "Help" link points at hub-help by rule (see the
-      // note above SiteDef 'help' in registry.ts), and `{ site: 'help' }` here would
-      // resolve to the identical href as the Learn trigger above it — a row whose only
-      // effect is to repeat its own parent. So Hub ▸ Help and Learn ▸ Help are one
-      // destination reached from two groups, which is why they read the same.
-      { site: "hub-help" }
-    ]
-  }),
-  topic({
-    label: "Plan",
-    description: "Decide what to build",
-    iconKey: "plan",
-    links: [
-      { site: "projects" },
-      { site: "narratives", description: "Your development story" },
-      // The registry calls this site "Notebook"; the menu row is "Notes", so the
-      // registry's own tagline ("Notes & notebooks") would echo the row's label.
-      { site: "notebook", label: "Notes", description: "Your notebook" },
-      { site: "research" },
-      { site: "docs" }
-    ]
-  }),
-  topic({
-    label: "Build",
-    description: "Make it",
-    iconKey: "build",
-    links: [
-      { site: "devteam", label: "Dev Team" },
-      { site: "codereviews", description: "Review your code" },
-      { site: "cookbook" },
-      { site: "recipes" },
-      { site: "toolkit" },
-      { site: "tools" },
-      { site: "testing" },
-      { site: "shipr" },
-      { site: "kitchen" },
-      { site: "stenographer" }
-    ]
-  }),
-  topic({
-    label: "Personas",
-    description: "Your agentic personas",
-    link: { site: "personas" },
-    links: [
-      { site: "personabuilder" },
-      { site: "personaregistry" },
-      { site: "knowledgebases", label: "Knowledge" },
-      { site: "teambuilder" },
-      { site: "teamregistry" },
-      { site: "myagenticteams", label: "My Agentic Teams", description: "Your own agentic teams" }
-    ]
-  }),
-  topic({
-    label: "Products",
-    description: "Your product platform",
-    link: { site: "products" },
-    links: [
-      { site: "storage", label: "Storage Buckets" },
-      { site: "ecosystems" },
-      { site: "authentication" },
-      { site: "customers" },
-      { site: "billing" },
-      { site: "messaging", description: "Email & SMS for your products" },
-      { site: "notifications" },
-      { site: "sites" },
-      { site: "communities" },
-      { site: "dashboards" },
-      { site: "devices" },
-      { site: "domains" },
-      { site: "education" },
-      { site: "integrations" },
-      { site: "registries" },
-      { site: "gamification" },
-      { site: "games" },
-      { site: "stores" }
-    ]
-  }),
-  topic({
-    label: "Hire",
-    description: "Get expert help",
-    link: { site: "consulting" },
-    links: [
-      { site: "consultants" },
-      // Was an absolute href while the family had no registry site; it is a real
-      // registry entry now, so the row is env-aware and SSO-wrapped like the rest.
-      { site: "registry" },
-      // The studio the family sits under. An absolute href, not a `{ site }`: the
-      // Agentic Development Studio has no app in this repo and deliberately no
-      // registry entry (`registry.test.ts` pins that agenticdevelopmentstudio.com is
-      // NOT a registry host — a registry entry would silently re-add the origin to
-      // the OAuth return allowlist and to the generated route map). See MenuLink's
-      // `href` variant for the three things this row therefore does without.
-      {
-        href: "https://agenticdevelopmentstudio.com",
-        label: "Agentic Development Studio",
-        description: "The studio behind the Hub",
-        iconKey: "consulting"
-      }
-    ]
-  })
-];
-var SITE_MENU_GROUPS = [
-  leaf({ site: "bitbag", description: "The hub's AI persona" }),
-  leaf({ site: "hub", description: "The center of it all" }),
-  leaf({ site: "devteam", label: "Dev Team" }),
-  leaf({ site: "cookbook" }),
-  leaf({ site: "toolkit" }),
-  leaf({ site: "personaregistry" }),
-  { kind: "leaf", section: HELP_SECTION, blurb: true, link: { site: "hub-help" } },
-  {
-    kind: "leaf",
-    section: HELP_SECTION,
-    blurb: true,
-    // A hub ROUTE, as in the fleet tree's Hub ▸ Contact.
-    link: { route: "/contact", label: "Contact", description: "Get in touch" }
-  }
-];
-var ADMIN_MENU_GROUPS = [
-  {
-    kind: "topic",
-    section: ADMIN_SECTION,
-    label: "Admin",
-    description: "Operations consoles",
-    iconKey: "admin",
-    links: [
-      ...ADMIN_SITE_IDS.map((site) => ({ site })),
-      {
-        href: "https://lewis.agenticdeveloperhub.com",
-        label: "Fleet Monitor",
-        description: "What every service is doing",
-        iconKey: "monitor"
-      }
-    ]
-  }
-];
-
-// src/footer/FamilyDrawer.tsx
 import { jsx as jsx11 } from "react/jsx-runtime";
-var CONTACT_ROUTE = "/contact";
-function drawerLink(link) {
-  if ("site" in link) {
-    const label = link.label ?? getSite2(link.site)?.label;
-    return label === void 0 ? null : { label, href: siteProdUrl3(link.site, link.path ?? "/") };
-  }
-  if ("route" in link) {
-    return {
-      label: link.label,
-      href: siteProdUrl3("hub", link.route),
-      ...link.route === CONTACT_ROUTE ? { onClick: openLegalModal(CONTACT_POPOVER_ID) } : {}
-    };
-  }
-  return { label: link.label, href: link.href };
-}
-function sectionLinks(section) {
-  return SITE_MENU_GROUPS.flatMap((group) => {
-    if (group.kind === "topic" || group.section !== section) return [];
-    const link = drawerLink(group.link);
-    return link === null ? [] : [link];
-  });
-}
-var LEGAL_LINKS = [
-  { label: "Terms of Use", href: "/terms", onClick: openLegalModal(TERMS_DIALOG_ID) },
-  { label: "Privacy Policy", href: "/privacy", onClick: openLegalModal(PRIVACY_DIALOG_ID) }
-];
-function FamilyDrawerSection() {
-  return /* @__PURE__ */ jsx11(NavSection, { title: "Family", children: sectionLinks(FLEET_SECTION).map((link) => /* @__PURE__ */ jsx11("a", { className: "lp-nav", href: link.href, children: link.label }, link.href)) });
+function FamilyDrawerRow() {
+  return /* @__PURE__ */ jsx11("a", { className: "lp-nav", href: `/#${FAMILY_BAND_ID}`, children: "Family" });
 }
 function MoreInfoDrawerFoot() {
-  return /* @__PURE__ */ jsx11(NavSection, { title: "More Info", children: [...sectionLinks(HELP_SECTION), ...LEGAL_LINKS].map((link) => /* @__PURE__ */ jsx11("a", { href: link.href, onClick: link.onClick, children: link.label }, link.label)) });
+  return /* @__PURE__ */ jsx11("a", { className: "lp-nav", href: `/#${MORE_INFO_ANCHOR_ID}`, children: "More Info" });
 }
 
 // src/footer/FooterForRoute.tsx
@@ -732,7 +514,7 @@ export {
   CONTACT_POPOVER_ID,
   ContactPopover,
   FAMILY_FOOTER_DIALOG_ID,
-  FamilyDrawerSection,
+  FamilyDrawerRow,
   FamilyFooter,
   FooterChat,
   FooterForRoute,

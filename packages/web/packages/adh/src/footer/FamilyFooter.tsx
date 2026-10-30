@@ -16,6 +16,7 @@ import {
   CONTACT_POPOVER_ID,
   FAMILY_SITES,
   LANDING_FOOTER_CLASS,
+  MORE_INFO_ANCHOR_ID,
   SITES_OVERVIEW_POPOVER_ID,
 } from './identity'
 import { openLegalModal, PRIVACY_DIALOG_ID, TERMS_DIALOG_ID } from './LegalModals'
@@ -99,6 +100,9 @@ export type FamilyFooterProps = {
   version: ReactNode
   /** A site's own links, as a "This site" column ahead of the directory. */
   links?: SiteLink[]
+  /** Carry the drawer's More Info jump target (MORE_INFO_ANCHOR_ID). For the in-flow landing
+   *  footer only: a page holds the id once, and SiteFooter's dialog copy must not repeat it. */
+  anchored?: boolean
 }
 
 /**
@@ -116,7 +120,7 @@ export type FamilyFooterProps = {
  * dialog, which is `display: none`, and the header's site switcher opens the same sites
  * overview by id.
  */
-export function FamilyFooter({ version, links = [] }: FamilyFooterProps): ReactElement {
+export function FamilyFooter({ version, links = [], anchored = false }: FamilyFooterProps): ReactElement {
   const columns: ColumnDef[] = [
     ...(links.length > 0 ? [{ title: 'This site', entries: links }] : []),
     ...siteColumns(FAMILY_SITES),
@@ -124,7 +128,7 @@ export function FamilyFooter({ version, links = [] }: FamilyFooterProps): ReactE
     { title: 'Legal', entries: LEGAL_ENTRIES },
   ]
   return (
-    <div className={LANDING_FOOTER_CLASS}>
+    <div id={anchored ? MORE_INFO_ANCHOR_ID : undefined} className={LANDING_FOOTER_CLASS}>
       <div className="adh-landing-footer__head">
         <PreviewNotice variant="badge" />
       </div>

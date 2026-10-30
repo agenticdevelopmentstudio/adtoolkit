@@ -16,7 +16,7 @@ export interface NavChromeProps {
   brand?: ReactNode
   links: NavLink[]
   /**
-   * More of the drawer after the rows: titled groups of a host's own links ({@link NavSection}).
+   * More of the drawer after the rows: a host's own rows (`lp-nav` links, say).
    * Picking any link or button in it closes the drawer, as a row does.
    */
   sections?: ReactNode

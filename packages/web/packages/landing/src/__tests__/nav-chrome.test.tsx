@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { fireEvent, render } from '@testing-library/react'
 import { NavChrome } from '../chrome/NavChrome'
-import { NavSection } from '../chrome/NavSection'
 
 const LINKS = [
   { href: '#one', label: 'One' },
@@ -224,38 +223,36 @@ describe('NavChrome', () => {
     expect(document.activeElement).toBe(burger)
   })
 
-  it('renders titled sections after the rows', () => {
+  it('renders sections after the rows', () => {
     const { container } = render(
       <NavChrome
         links={LINKS}
         sections={
-          <NavSection title="Family">
-            <a className="lp-nav" href="https://example.com/">Example</a>
-          </NavSection>
+          <p>
+            Family <a className="lp-nav" href="https://example.com/">Example</a>
+          </p>
         }
       />
     )
-    const section = container.querySelector('.lp-drawer .lp-sections .lp-nav-section')!
-    expect(section.getAttribute('aria-label')).toBe('Family')
-    expect(section.querySelector('.lp-nav-heading')!.textContent).toBe('Family')
+    expect(container.querySelector('.lp-drawer .lp-sections a')!.textContent).toBe('Example')
     expect(container.querySelectorAll('.lp-drawer a.lp-nav')).toHaveLength(3)
   })
 
-  it('closes when a link in a section or the foot is picked, and not on a caption', () => {
+  it('closes when a link in a section or the foot is picked, and not on plain text', () => {
     const { container, getByLabelText, getByText } = render(
       <NavChrome
         links={LINKS}
         sections={
-          <NavSection title="Family">
-            <a className="lp-nav" href="https://example.com/">Example</a>
-          </NavSection>
+          <p>
+            Family <a className="lp-nav" href="https://example.com/">Example</a>
+          </p>
         }
         footer={<button type="button">Contact</button>}
       />
     )
     const isOpen = () => container.querySelector('.lp-drawer')!.className.includes('lp-drawer--open')
     fireEvent.click(getByLabelText('Open menu'))
-    fireEvent.click(getByText('Family'))
+    fireEvent.click(getByText(/Family/))
     expect(isOpen()).toBe(true)
     fireEvent.click(getByText('Example'))
     expect(isOpen()).toBe(false)

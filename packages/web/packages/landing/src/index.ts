@@ -18,7 +18,6 @@ export { Glow } from './deck/Glow'
 // client boundary it does not have. `NavChromeProps` and `ClipProps` stay in
 // `/client`, with their components.
 export type { NavLink } from './chrome/types'
-export { NavSection } from './chrome/NavSection'
 export { Head } from './blocks/Head'
 export { Lede } from './blocks/Lede'
 export { Cards } from './blocks/Cards'

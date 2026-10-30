@@ -176,6 +176,12 @@
   padding-bottom: 2rem;
 }
 
+/* The drawer's More Info row jumps here (`/#more-info`); land below the fixed header and burger
+   the way the page's bands do, by the clearance the site template sets. */
+.adh-landing-footer[id] {
+  scroll-margin-top: var(--st-band-clear, 5rem);
+}
+
 .adh-landing-footer__heading {
   margin: 0 0 0.6rem;
   font-size: 0.78rem;

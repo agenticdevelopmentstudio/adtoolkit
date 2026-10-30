@@ -338,7 +338,7 @@ function buildVersionLabel(live) {
 import { Fragment as Fragment5, jsx as jsx8, jsxs as jsxs5 } from "react/jsx-runtime";
 function LandingFooter({ contact = ADH_CONTACT } = {}) {
   return /* @__PURE__ */ jsxs5(Fragment5, { children: [
-    /* @__PURE__ */ jsx8(FamilyFooter, { version: buildVersionLabel() }),
+    /* @__PURE__ */ jsx8(FamilyFooter, { version: buildVersionLabel(), anchored: true }),
     /* @__PURE__ */ jsx8(SitesPopover, { sites: FAMILY_SITES }),
     /* @__PURE__ */ jsx8(ContactPopover, { contact }),
     /* @__PURE__ */ jsx8(TermsModal, {}),

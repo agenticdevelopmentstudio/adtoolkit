@@ -17,7 +17,7 @@ export type { FamilyFooterProps, SiteLink } from './FamilyFooter'
 export { ContactPopover } from './ContactPopover'
 export { TermsModal, PrivacyModal } from './LegalModals'
 // The family's half of the site template's drawer: its `drawer` and `drawerFoot` slots.
-export { FamilyDrawerSection, MoreInfoDrawerFoot } from './FamilyDrawer'
+export { FamilyDrawerRow, MoreInfoDrawerFoot } from './FamilyDrawer'
 // The panel itself, for a footer that is not SiteFooter: the landing page's LandingFooter
 // (marketing/) renders it beside its own trigger.
 export { SitesPopover } from './SitesOverview'

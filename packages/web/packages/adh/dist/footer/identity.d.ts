@@ -29,6 +29,12 @@ export declare const CONTACT_POPOVER_ID = "adh-contact";
 /** The DOM id of the dialog the floating copyright opens: the whole family footer, the one
  *  the landing page ends with, over the page. */
 export declare const FAMILY_FOOTER_DIALOG_ID = "adh-family-footer";
+/** The id of the landing page's family band, the cards of the family's sites: what the drawer's
+ *  Family row jumps to (`/#family`). The band is the page's content, so the id is its heading's. */
+export declare const FAMILY_BAND_ID = "family";
+/** The id the in-flow landing footer carries, once per page: what the drawer's More Info row
+ *  jumps to (`/#more-info`). */
+export declare const MORE_INFO_ANCHOR_ID = "more-info";
 /** The footer's build identity: `v1.0.155 · a73e79b7`, or null when neither field exists.
  *
  *  Two fields doing two jobs. The semver is hand-bumped and scoped to ONE site's
