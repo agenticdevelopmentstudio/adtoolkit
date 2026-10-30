@@ -105,6 +105,9 @@ export function OverviewTab(): ReactElement {
 
   // Recent Activity hides canceled deploys by default; its gear opts them in.
   const [showCanceled, setShowCanceled] = useState(false);
+  // Recent Activity's "Filter" gear section: narrow the pane to builds still in flight
+  // (queued/building/deploying) or failed. Component state, like show-canceled.
+  const [inProgressOrFailedOnly, setInProgressOrFailedOnly] = useState(false);
   // Stats time span (uptime% + response chart) — set from the Stats gear.
   const [span, setSpan] = useState<Span>(DEFAULT_SPAN);
 
@@ -269,7 +272,12 @@ export function OverviewTab(): ReactElement {
   // history is filtered out below while the one control that would show it isn't offered.
   const isCanceled = (r: Row): boolean => r.statusWord === "canceled";
   const hasCanceled = activityAll.some(isCanceled);
-  const activity = showCanceled ? activityAll : activityAll.filter((r) => !isCanceled(r));
+  const withCanceled = showCanceled ? activityAll : activityAll.filter((r) => !isCanceled(r));
+  // The tone is the server's verdict on the row (`derive-activity.ts`): "progress" is a
+  // queued/building/deploying phase (or a minor incident), "bad" a failure. Keying off
+  // tone, not the verb text, means a new in-flight or failure verb is covered for free.
+  const isInProgressOrFailed = (r: Row): boolean => r.tone === "progress" || r.tone === "bad";
+  const activity = inProgressOrFailedOnly ? withCanceled.filter(isInProgressOrFailed) : withCanceled;
 
   const uptimePercent = overallUptimePercent(uptimeQuery.data?.services ?? []);
 
@@ -318,6 +326,8 @@ export function OverviewTab(): ReactElement {
       {...env}
       showCanceled={showCanceled}
       onShowCanceledChange={setShowCanceled}
+      inProgressOrFailedOnly={inProgressOrFailedOnly}
+      onInProgressOrFailedOnlyChange={setInProgressOrFailedOnly}
       canceledAvailable={hasCanceled}
       ttlMin={ttlMin}
       onTtlChange={setTtl}

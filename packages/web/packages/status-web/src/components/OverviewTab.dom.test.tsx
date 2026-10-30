@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen, cleanup, fireEvent } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { OverviewTab } from "./OverviewTab";
 import { BOARD_STALE_MS, boardDataStaleMs } from "../lib/board-staleness";
@@ -276,5 +276,55 @@ describe("OverviewTab — an empty roster is a config fault, not a wedged monito
 
     expect(await screen.findByText(/has not refreshed/i)).toBeTruthy();
     expect(screen.queryByText(/no endpoints configured/i)).toBeNull();
+  });
+});
+
+// Recent Activity's gear "Filter" section: the one checkbox narrows the pane to rows
+// still in flight or failed, keyed off the server's tone rather than the verb text.
+describe("OverviewTab — Recent Activity 'in progress or failed only' filter", () => {
+  function activityRow(id: string, name: string, verb: string, tone: string) {
+    return {
+      id, kind: "deploy", step: "build", source: "vercel", tone, verb,
+      target: `vercel:${name}`, name, environment: "production", detail: null,
+      sourceUrl: null, liveUrl: null, commitHash: null, commitMessage: null,
+      commitRepo: null, branch: null, errorText: null, at: new Date().toISOString(),
+    };
+  }
+
+  it("hides finished rows when checked, and shows them again when unchecked", async () => {
+    mobile.current = false;
+    const withActivity = {
+      generatedAt: new Date().toISOString(),
+      dataAsOfMs: Date.now(),
+      indicator: "operational",
+      problems: [],
+      activity: [
+        activityRow("a", "site-queued", "queued", "progress"),
+        activityRow("b", "site-failed", "build failed", "bad"),
+        activityRow("c", "site-done", "deployed", "good"),
+        activityRow("d", "site-stale", "unknown", "stale"),
+      ],
+      monitoredTargets: [],
+    };
+    renderWithBoardFetch(async () => new Response(JSON.stringify(withActivity), {
+      status: 200, headers: { "content-type": "application/json" },
+    }));
+
+    // A name can appear twice — its row and, for the selected row, the details pane —
+    // so presence is "at least one", absence is "none".
+    expect((await screen.findAllByText("site-done")).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Recent Activity options" }));
+    const box = await screen.findByRole("checkbox", { name: "show in progress or failed builds only" });
+    expect(screen.getByText("Filter")).toBeTruthy();
+
+    fireEvent.click(box);
+    expect(screen.getAllByText("site-queued").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("site-failed").length).toBeGreaterThan(0);
+    expect(screen.queryAllByText("site-done")).toHaveLength(0);
+    expect(screen.queryAllByText("site-stale")).toHaveLength(0);
+
+    fireEvent.click(box);
+    expect(screen.getAllByText("site-done").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("site-stale").length).toBeGreaterThan(0);
   });
 });

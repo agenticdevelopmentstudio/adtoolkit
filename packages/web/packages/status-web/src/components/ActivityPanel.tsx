@@ -81,6 +81,10 @@ export interface ActivityPanelProps {
   showCanceled?: boolean;
   onShowCanceledChange?: (v: boolean) => void;
   canceledAvailable?: boolean;
+  /** Show only in-progress (queued/building/deploying) or failed rows — the caller
+   *  applies it to `rows`; the panel owns the checkbox and the empty-state copy. */
+  inProgressOrFailedOnly?: boolean;
+  onInProgressOrFailedOnlyChange?: (v: boolean) => void;
   ttlMin?: ActivityTtl;
   onTtlChange?: (v: ActivityTtl) => void;
   onClear?: () => void;
@@ -141,6 +145,8 @@ export function ActivityPanel({
   showCanceled = false,
   onShowCanceledChange,
   canceledAvailable = false,
+  inProgressOrFailedOnly = false,
+  onInProgressOrFailedOnlyChange,
   ttlMin = null,
   onTtlChange,
   onClear,
@@ -341,18 +347,37 @@ export function ActivityPanel({
   const deselectedEnvs = allEnvs.filter((e) => !envs.has(e)).length;
   const ttlChanged = kind === "activity" && ttlMin !== DEFAULT_TTL_MIN ? 1 : 0;
   const canceledChanged = kind === "activity" && showCanceled ? 1 : 0;
-  const changedCount = deselectedSources + deselectedEnvs + ttlChanged + canceledChanged;
+  const inProgressChanged = kind === "activity" && inProgressOrFailedOnly ? 1 : 0;
+  const changedCount = deselectedSources + deselectedEnvs + ttlChanged + canceledChanged + inProgressChanged;
 
   const envSummary = deselectedEnvs === 0 ? "all" : allEnvs.filter((e) => envs.has(e)).join(", ") || "none";
   const summaryLines = [
     sourcesActive ? `Sources: ${sourceOptions.length - deselectedSources}/${sourceOptions.length}` : null,
     `Environments: ${envSummary}`,
+    kind === "activity" ? `In progress or failed only: ${inProgressOrFailedOnly ? "on" : "off"}` : null,
     kind === "activity" ? `Show canceled: ${showCanceled ? "on" : "off"}` : null,
     kind === "activity" ? `Age out: ${ttlMin == null ? "off" : `${ttlMin}m`}` : null,
   ].filter(Boolean);
 
   const gearContent = (close: () => void): ReactNode => (
     <div style={{ display: "flex", flexDirection: "column", gap: 2, minWidth: 0 }}>
+      {kind === "activity" && (
+        <>
+          <OptionSection title="Filter">
+            <label style={optionRow(inProgressOrFailedOnly)}>
+              <input
+                className="adh-check"
+                type="checkbox"
+                checked={inProgressOrFailedOnly}
+                onChange={(e) => onInProgressOrFailedOnlyChange?.(e.target.checked)}
+                aria-label="show in progress or failed builds only"
+              />
+              Show in progress or failed builds only
+            </label>
+          </OptionSection>
+          <OptionDivider />
+        </>
+      )}
       {sourcesActive && (
         <OptionSection title="Sources">
           {sourceOptions.map((s) => {
@@ -513,7 +538,9 @@ export function ActivityPanel({
   const allClear = kind === "problems" && rows.length === 0;
   const emptyText =
     rows.length === 0
-      ? envFiltered
+      ? kind === "activity" && inProgressOrFailedOnly
+        ? "No builds in progress or failed…"
+        : envFiltered
         ? "No activity in the selected environments…"
         : "No recent build, deploy, or availability changes…"
       : "no matches";
