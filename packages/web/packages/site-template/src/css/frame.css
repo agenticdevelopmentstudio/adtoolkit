@@ -18,8 +18,8 @@
 
   /* Room for bitbag's resting dock at the foot of the last band and of the hero. At rest his
    * box is 66×37px (`BitbagDock`'s 132px default size, halved; bitbag-dock.css), parked so
-   * his face sits 1rem (`--bb-dock-parked-margin`) above the bottom edge, so he reaches about
-   * 50px up. 6rem (96px) leaves him plenty of air under the last line, plus the device's
+   * his face sits 1.75rem (`--bb-dock-parked-margin`) above the bottom edge, so he reaches about
+   * 62px up. 6rem (96px) leaves him plenty of air under the last line, plus the device's
    * bottom inset, which the dock also rides above. */
   --lp-dock-clear: calc(6rem + env(safe-area-inset-bottom, 0px));
 }

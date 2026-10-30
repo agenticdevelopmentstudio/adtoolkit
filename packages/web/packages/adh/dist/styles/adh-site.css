@@ -67,9 +67,10 @@
    family footer in a dialog over the page. bitbag rests in the opposite corner
    (bitbag-dock.css), so the two never meet, and they mirror each other: the circle is the size
    of his resting face (144 of the 350 units across his 66px resting box, about 27px), and each
-   sits the same distance in from its side as up from the bottom, 1rem, or 0.75rem on a phone —
-   bitbag's `--bb-dock-parked-margin`, which this cannot read from here, since his sheet is
-   scoped to his dock and loaded only with his chat.
+   sits the same distance in from its side as up from the bottom: 1rem for the circle, 0.75rem
+   on a phone; bitbag's `--bb-dock-parked-margin` gives him a little more (1.75rem, 1.25rem),
+   and this cannot read it from here anyway, since his sheet is scoped to his dock and loaded
+   only with his chat.
 
    The `<footer>` itself is only the circle's positioning: fixed, transparent, and closed to the
    pointer, so it covers nothing; the circle takes its own clicks. It overrides the toolkit
