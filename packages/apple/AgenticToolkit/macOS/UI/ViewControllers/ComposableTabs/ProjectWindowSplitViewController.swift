@@ -81,6 +81,7 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
 
     isolated deinit {
         dragSettle?.cancel()
+        shelfSlide?.link.invalidate()
         for observer in [resizeObserver, willResizeObserver].compactMap({ $0 }) {
             NotificationCenter.default.removeObserver(observer)
         }
@@ -103,8 +104,8 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
             width.isActive = true
 
             let item = NSSplitViewItem(viewController: shelfHost)
-            item.minimumThickness = 180
-            item.maximumThickness = 480
+            item.minimumThickness = Self.shelfMinimumWidth
+            item.maximumThickness = Self.shelfMaximumWidth
             item.canCollapse = true
             // The window keeps its size and the tabs give up the room, which
             // is what a navigator does in Xcode.
@@ -185,28 +186,94 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
             completion?()
             return
         }
-        // The same animation as the Conversations shelf, for the same reason:
-        // `item.animator()` alone moves the divider while everything laid out
-        // against it jumps to its final place on the first frame.
+        finishShelfSlide()
         isAnimatingShelf = true
         onShelfWillMove?()
         holdsSharesFromBeforeSlide = true
-        NSAnimationContext.runAnimationGroup { context in
-            context.duration = 0.2
-            context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
-            context.allowsImplicitAnimation = true
-            item.animator().isCollapsed = !visible
-        } completionHandler: { [weak self] in
-            MainActor.assumeIsolated {
-                self?.isAnimatingShelf = false
-                self?.splitView.layoutSubtreeIfNeeded()
-                self?.holdsSharesFromBeforeSlide = false
-                self?.onShelfDidMove?()
-                self?.onShelfVisibilityChange?()
-                completion?()
-            }
+
+        // Down to nothing on the way, so the divider can be walked to and from
+        // zero; put back when the slide ends.
+        item.minimumThickness = 0
+        let from = visible ? 0 : item.viewController.view.frame.width
+        if visible {
+            // Uncollapsed at zero width, both in this pass, so the shelf never
+            // shows at its full width before the slide begins.
+            item.isCollapsed = false
+            splitView.setPosition(0, ofDividerAt: 0)
+            splitView.layoutSubtreeIfNeeded()
         }
+        let link = view.displayLink(target: self, selector: #selector(stepShelfSlide(_:)))
+        shelfSlide = ShelfSlide(
+            link: link,
+            start: CACurrentMediaTime(),
+            origin: from,
+            target: visible ? Self.openShelfWidth : 0,
+            completion: completion)
+        link.add(to: .main, forMode: .common)
         onShelfVisibilityChange?()
+    }
+
+    // MARK: - Sliding
+
+    /// A slide in progress: the divider walked from `origin` to `target` one frame
+    /// at a time.
+    ///
+    /// Walked by hand rather than by `item.animator().isCollapsed`, because
+    /// that animates the panes' frames on Core Animation's clock while laying
+    /// everything inside them out once, at the final size — so a web view
+    /// jumps to its end width on the first frame and its pane slides to meet
+    /// it, with its trailing edge nowhere near the pane's on the way. A real
+    /// layout pass per frame gives every view inside the panes the frame its
+    /// constraints say, on every frame, as a live window resize does.
+    private struct ShelfSlide {
+        let link: CADisplayLink
+        let start: CFTimeInterval
+        let origin: CGFloat
+        let target: CGFloat
+        let completion: (@MainActor () -> Void)?
+    }
+
+    private static let shelfSlideDuration: CFTimeInterval = 0.2
+    private var shelfSlide: ShelfSlide?
+
+    /// The width the shelf opens to: the one the reader last gave it, within
+    /// the item's bounds.
+    private static var openShelfWidth: CGFloat {
+        min(max(CGFloat(UserSettings.projectShelfWidth.value), shelfMinimumWidth), shelfMaximumWidth)
+    }
+
+    private static let shelfMinimumWidth: CGFloat = 180
+    private static let shelfMaximumWidth: CGFloat = 480
+
+    @objc private func stepShelfSlide(_ link: CADisplayLink) {
+        guard let slide = shelfSlide else {
+            link.invalidate()
+            return
+        }
+        let elapsed = (link.targetTimestamp - slide.start) / Self.shelfSlideDuration
+        let progress = CGFloat(min(max(elapsed, 0), 1))
+        // Ease in and out, as the animation it replaces did.
+        let eased = progress * progress * (3 - 2 * progress)
+        splitView.setPosition(slide.origin + (slide.target - slide.origin) * eased, ofDividerAt: 0)
+        splitView.layoutSubtreeIfNeeded()
+        if progress >= 1 { finishShelfSlide() }
+    }
+
+    /// Ends the slide in progress, at its destination, if there is one. A
+    /// second toggle mid-slide lands the first before it starts its own.
+    private func finishShelfSlide() {
+        guard let slide = shelfSlide, let item = shelfItem else { return }
+        shelfSlide = nil
+        slide.link.invalidate()
+        splitView.setPosition(slide.target, ofDividerAt: 0)
+        if slide.target == 0 { item.isCollapsed = true }
+        item.minimumThickness = Self.shelfMinimumWidth
+        splitView.layoutSubtreeIfNeeded()
+        isAnimatingShelf = false
+        holdsSharesFromBeforeSlide = false
+        onShelfDidMove?()
+        onShelfVisibilityChange?()
+        slide.completion?()
     }
 
     /// ⌘0 and ⌘1: show the shelf on `panel` with the keyboard in its filter,
@@ -322,6 +389,9 @@ private final class SafeAreaHostViewController: NSViewController {
     override func loadView() {
         let container = NSView()
         container.wantsLayer = true
+        // A shelf sliding in is narrower than its contents; show the part
+        // that fits rather than letting the rest spill over the panes.
+        container.clipsToBounds = true
         addChild(child)
         let childView = child.view
         childView.translatesAutoresizingMaskIntoConstraints = false
