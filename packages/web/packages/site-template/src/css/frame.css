@@ -113,6 +113,21 @@
   scroll-margin-top: var(--st-band-clear, calc(32px + 2 * var(--lp-bar-pad-y, 1.1rem)));
 }
 
+/* The burger and drawer under a site's own header (`SiteChrome underHeader`, beside the frame's
+ * `header` slot). The chrome starts where the header ends, so the header is never covered; the
+ * bar drops its gradient, since the header above already lifts the burger off the page; and the
+ * drawer clears only its own close button. `--st-header-height` is the header's height, which
+ * the site that brings the header sets; 3.5rem is a bar's. The bands' jump clearance grows by
+ * the same height, since a band now lands under the header as well as the burger. */
+.st-chrome-under-header {
+  --lp-chrome-top: var(--st-header-height, 3.5rem);
+  --lp-bar-bg: none;
+  --lp-drawer-pad-top: 4rem;
+}
+:root:has(.st-chrome-under-header) {
+  --st-band-clear: calc(var(--st-header-height, 3.5rem) + 32px + 2 * var(--lp-bar-pad-y, 1.1rem));
+}
+
 /* The hero's meta line (version, platform, licence) reads as a caption. A site whose meta is
  * a sentence sets `--st-hero-meta-transform: none`. */
 .st-hero-meta {

@@ -18,15 +18,21 @@ import { Words } from './words'
  * Every in-page row is written `/#id` rather than `#id`, so it still lands on the section
  * from any other route of the site; on `/` itself the kit's drawer still glides there.
  * The copy's `nav.action`, when it words one, is a ghost button in the bar beside the burger.
+ *
+ * `underHeader` is the same drawer under a site's own header (the frame's `header` slot): the
+ * burger alone, below that header, with no wordmark or action, since the header already carries
+ * both. The wrapper's class is what moves the chrome down (frame.css).
  */
 export function SiteChrome({
   copy,
   page,
   extra,
+  underHeader = false,
 }: {
   copy: FrameCopy
   page: LandingPage
   extra: FrameConfig['drawerExtra']
+  underHeader?: boolean
 }): ReactElement {
   const { email } = copy.contact
   const worded = copy.nav.extra ?? {}
@@ -66,6 +72,13 @@ export function SiteChrome({
     </>
   )
   const { action } = copy.nav
+  if (underHeader) {
+    return (
+      <div className="st-chrome-under-header" style={{ display: 'contents' }}>
+        <NavChrome links={links} footer={footer} />
+      </div>
+    )
+  }
   return (
     <NavChrome
       brand={<Words text={copy.brand} />}

@@ -633,7 +633,10 @@ class AssembleTest(unittest.TestCase):
         slots = (self.app / "src/site/slots.tsx").read_text()
         self.assertIn("import { Header as HeaderSlot } from '../components/header'", slots)
         self.assertIn("  header: HeaderSlot,", slots)
-        self.assertIn("slots.header", (self.app / "app/(frame)/layout.tsx").read_text())
+        layout = (self.app / "app/(frame)/layout.tsx").read_text()
+        self.assertIn("slots.header", layout)
+        # The header takes the bar's place, and the burger and drawer stay, under it.
+        self.assertIn("<SiteChrome copy={copy} page={landing} extra={config.drawerExtra} underHeader />", layout)
 
     def test_no_sitemap_routes_computes_none(self) -> None:
         self.assert_ok(self.assemble())

@@ -17,7 +17,7 @@ const copy: FrameCopy = siteCopy
  * footer and bitbag below. They are the page's siblings rather than its children — `<main>` is
  * the bands' flow parent, and the kit's last-band dock clearance holds only while its last child
  * is a band. `(frame)` is a route group, so it adds nothing to any URL. A `header` slot takes the
- * bar's place.
+ * bar's place, and the burger and drawer move under it.
  */
 export default function FrameLayout({ children }: { children: ReactNode }): ReactElement {
   return (
@@ -25,7 +25,10 @@ export default function FrameLayout({ children }: { children: ReactNode }): Reac
       {slots.header === undefined ? (
         <SiteChrome copy={copy} page={landing} extra={config.drawerExtra} />
       ) : (
-        <slots.header />
+        <>
+          <slots.header />
+          <SiteChrome copy={copy} page={landing} extra={config.drawerExtra} underHeader />
+        </>
       )}
       {children}
       <FrameFooter copy={copy} slot={slots.footer} />
