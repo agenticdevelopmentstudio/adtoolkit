@@ -170,6 +170,27 @@ describe('the floating box', () => {
   })
 })
 
+describe('the preview badge', () => {
+  it("opens its panel from its own left edge, undoing the header panel's centring", () => {
+    // The family dialog clips what overflows it; the header's centring transform, which
+    // adh-components.css gives every `.adh-header__preview-panel`, sent this one out of its left side.
+    const panel = styleRules(adhStylesheet('adh-landing-footer.css')).filter(
+      (r) => r.at.length === 0 && r.selectors.includes('.adh-preview-badge .adh-header__preview-panel'),
+    )
+    expect(panel.map((r) => r.get('transform'))).toContain('none')
+    expect(panel.map((r) => r.get('left'))).toContain('-0.7rem')
+  })
+})
+
+describe('the legal dialogs', () => {
+  it("keep their lists' markers against a host reset", () => {
+    const lists = styleRules(adhStylesheet('adh-landing-footer.css')).filter(
+      (r) => r.at.length === 0 && r.selectors.includes('.adh-modal__body--legal .adh-legal-doc ul'),
+    )
+    expect(lists.map((r) => r.get('list-style'))).toContain('disc')
+  })
+})
+
 describe("bitbag's resting place", () => {
   it('is his own lower-right corner: the dock pins its column right', () => {
     const bitbag = styleRules(bitbagStylesheet('bitbag-dock.css'))

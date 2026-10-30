@@ -352,6 +352,8 @@
 
 .adh-modal__body--legal .adh-legal-doc ul {
   padding-left: 1.25rem;
+  /* A host's reset (Tailwind's preflight) strips list markers; legal lists keep theirs. */
+  list-style: disc;
 }
 
 .adh-modal__body--legal .adh-legal-doc li {
@@ -440,6 +442,10 @@
   position: absolute;
   top: calc(100% + 0.55rem);
   left: -0.7rem;
+  /* The header's own panel is centred under its trigger with a transform; where adh-components.css
+     is on the page too (the hub), that transform would pull this one half its width left, out of
+     the family dialog that clips it. */
+  transform: none;
   z-index: 60;
   width: max-content;
   max-width: min(22rem, calc(100vw - 2rem));

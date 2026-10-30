@@ -39,7 +39,8 @@ function TermsBody() {
       "\u201D) govern your access to and use of the websites, applications, and services published at",
       " ",
       /* @__PURE__ */ jsx2("a", { href: "https://agenticdeveloperhub.com", children: "agenticdeveloperhub.com" }),
-      " and related subdomains (collectively, the \u201C",
+      " ",
+      "and related subdomains (collectively, the \u201C",
       /* @__PURE__ */ jsx2("strong", { children: "Service" }),
       "\u201D), which are operated by Mike Fullerton (\u201C",
       /* @__PURE__ */ jsx2("strong", { children: "we" }),
@@ -56,7 +57,8 @@ function TermsBody() {
       "Some features require an account. You agree to provide accurate information, keep your credentials secure, and notify us promptly at",
       " ",
       /* @__PURE__ */ jsx2("a", { href: `mailto:${LEGAL_CONTACT_EMAIL}`, children: LEGAL_CONTACT_EMAIL }),
-      " of any unauthorized use. You are responsible for activity that occurs under your account. We may suspend or terminate accounts that violate these Terms."
+      " ",
+      "of any unauthorized use. You are responsible for activity that occurs under your account. We may suspend or terminate accounts that violate these Terms."
     ] }),
     /* @__PURE__ */ jsx2("h2", { children: "3. Acceptable Use" }),
     /* @__PURE__ */ jsx2("p", { children: "You agree not to:" }),
@@ -126,7 +128,8 @@ function PrivacyBody() {
       "\u201D) collects, uses, and shares information when you use",
       " ",
       /* @__PURE__ */ jsx3("a", { href: "https://agenticdeveloperhub.com", children: "agenticdeveloperhub.com" }),
-      " and related services (the \u201C",
+      " ",
+      "and related services (the \u201C",
       /* @__PURE__ */ jsx3("strong", { children: "Service" }),
       "\u201D). By using the Service, you agree to the practices described here."
     ] }),
@@ -153,19 +156,23 @@ function PrivacyBody() {
     /* @__PURE__ */ jsxs3("ul", { children: [
       /* @__PURE__ */ jsxs3("li", { children: [
         /* @__PURE__ */ jsx3("strong", { children: "Service providers." }),
-        " We share information with vendors who operate the Service on our behalf \u2014 for example, hosting, authentication, email delivery, and analytics providers. These providers are bound by confidentiality obligations and may only use the information to provide services to us."
+        " ",
+        "We share information with vendors who operate the Service on our behalf \u2014 for example, hosting, authentication, email delivery, and analytics providers. These providers are bound by confidentiality obligations and may only use the information to provide services to us."
       ] }),
       /* @__PURE__ */ jsxs3("li", { children: [
         /* @__PURE__ */ jsx3("strong", { children: "Legal and safety." }),
-        " We may disclose information to comply with legal process, enforce our agreements, or protect the rights, property, or safety of users or the public."
+        " ",
+        "We may disclose information to comply with legal process, enforce our agreements, or protect the rights, property, or safety of users or the public."
       ] }),
       /* @__PURE__ */ jsxs3("li", { children: [
         /* @__PURE__ */ jsx3("strong", { children: "Business transfers." }),
-        " If the Service or its assets are transferred to another party, your information may be transferred as part of that transaction, subject to this Policy."
+        " ",
+        "If the Service or its assets are transferred to another party, your information may be transferred as part of that transaction, subject to this Policy."
       ] }),
       /* @__PURE__ */ jsxs3("li", { children: [
         /* @__PURE__ */ jsx3("strong", { children: "With your consent." }),
-        " We may share information for any other purpose disclosed to you and with your consent."
+        " ",
+        "We may share information for any other purpose disclosed to you and with your consent."
       ] })
     ] }),
     /* @__PURE__ */ jsx3("h2", { children: "4. Text Messages (SMS)" }),
@@ -187,7 +194,8 @@ function PrivacyBody() {
     /* @__PURE__ */ jsxs3("ul", { children: [
       /* @__PURE__ */ jsxs3("li", { children: [
         /* @__PURE__ */ jsx3("strong", { children: "Access & update." }),
-        " You can review and update your account information through your settings page."
+        " ",
+        "You can review and update your account information through your settings page."
       ] }),
       /* @__PURE__ */ jsxs3("li", { children: [
         /* @__PURE__ */ jsx3("strong", { children: "Delete." }),
@@ -198,7 +206,8 @@ function PrivacyBody() {
       ] }),
       /* @__PURE__ */ jsxs3("li", { children: [
         /* @__PURE__ */ jsx3("strong", { children: "Email." }),
-        " Transactional emails (e.g., security and account notices) cannot be opted out of while you maintain an account."
+        " ",
+        "Transactional emails (e.g., security and account notices) cannot be opted out of while you maintain an account."
       ] })
     ] }),
     /* @__PURE__ */ jsx3("h2", { children: "9. California Privacy Rights" }),
