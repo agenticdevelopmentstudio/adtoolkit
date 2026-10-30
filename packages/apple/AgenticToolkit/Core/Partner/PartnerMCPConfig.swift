@@ -13,14 +13,31 @@ public enum PartnerMCPConfig {
         ]
         let root: [String: Any] = ["mcpServers": [serverName: server]]
         let options: JSONSerialization.WritingOptions = [.sortedKeys, .withoutEscapingSlashes]
-        return (try? JSONSerialization.data(withJSONObject: root, options: options)) ?? Data()
+        guard let data = try? JSONSerialization.data(withJSONObject: root, options: options) else {
+            preconditionFailure("MCP config is plain strings and always serializes")
+        }
+        return data
     }
 
-    /// Writes atomically, then restricts to the owner: the file carries the bearer token.
+    /// The file carries the bearer token, so it is never readable by others at any moment: the parent is
+    /// 0700, and the data goes into a sibling temp file created 0600 (`O_EXCL`) and is renamed over the target.
     public static func write(port: UInt16, token: String, callerID: String, to url: URL) throws {
         let files = FileManager.default
-        try files.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        try json(port: port, token: token, callerID: callerID).write(to: url, options: .atomic)
-        try files.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
+        let directory = url.deletingLastPathComponent()
+        try files.createDirectory(at: directory, withIntermediateDirectories: true,
+                                  attributes: [.posixPermissions: 0o700])
+        try files.setAttributes([.posixPermissions: 0o700], ofItemAtPath: directory.path)
+        let temp = directory.appendingPathComponent(".\(url.lastPathComponent).\(UUID().uuidString).tmp")
+        let descriptor = open(temp.path, O_CREAT | O_EXCL | O_WRONLY, 0o600)
+        guard descriptor >= 0 else { throw CocoaError(.fileWriteNoPermission) }
+        let handle = FileHandle(fileDescriptor: descriptor, closeOnDealloc: true)
+        do {
+            try handle.write(contentsOf: json(port: port, token: token, callerID: callerID))
+            try handle.close()
+            if rename(temp.path, url.path) != 0 { throw CocoaError(.fileWriteUnknown) }
+        } catch {
+            try? files.removeItem(at: temp)
+            throw error
+        }
     }
 }

@@ -95,8 +95,9 @@ public enum ClaudeStreamInput {
             "type": "user",
             "message": ["role": "user", "content": [["type": "text", "text": text]]]
         ]
-        var data = (try? JSONSerialization.data(withJSONObject: obj, options: [.withoutEscapingSlashes]))
-            ?? Data()
+        guard var data = try? JSONSerialization.data(withJSONObject: obj, options: [.withoutEscapingSlashes]) else {
+            preconditionFailure("a user message is plain strings and always serializes")
+        }
         data.append(0x0A)
         return data
     }

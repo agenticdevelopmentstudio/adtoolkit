@@ -23,6 +23,31 @@ import Testing
         #expect(text.contains("\"X-ADKitchen-Pane\":\"c1\"") || text.contains("\"X-ADKitchen-Pane\" : \"c1\""))
         #expect(text.contains("http://127.0.0.1:51477/mcp"))
     }
+    @Test func mcpConfigOverwritesLooseFileAndSecuresDirectory() throws {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true,
+                                                attributes: [.posixPermissions: 0o755])
+        let url = dir.appendingPathComponent("mcp.json")
+        try Data("old".utf8).write(to: url)
+        try FileManager.default.setAttributes([.posixPermissions: 0o644], ofItemAtPath: url.path)
+        try PartnerMCPConfig.write(port: 1, token: "new", callerID: "c1", to: url)
+        let file = try FileManager.default.attributesOfItem(atPath: url.path)
+        let folder = try FileManager.default.attributesOfItem(atPath: dir.path)
+        #expect((file[.posixPermissions] as? Int) == 0o600)
+        #expect((folder[.posixPermissions] as? Int) == 0o700)
+        #expect(String(bytes: try Data(contentsOf: url), encoding: .utf8)?.contains("new") == true)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: dir.path) == ["mcp.json"])
+    }
+    @Test func argumentsAreExactlyOrdered() {
+        let id = UUID()
+        let config = PartnerProcessConfiguration(
+            executable: "/x/claude", sessionID: id, resume: true, model: "opus", permissionMode: "dontAsk",
+            allowedTools: ["a", "b"], mcpConfigPath: "/m.json", systemPromptPath: "/p.md", workingDirectory: "/w")
+        #expect(config.arguments == ["-p", "--verbose", "--input-format", "stream-json", "--output-format",
+            "stream-json", "--replay-user-messages", "--resume", id.uuidString.lowercased(), "--permission-mode",
+            "dontAsk", "--mcp-config", "/m.json", "--strict-mcp-config", "--append-system-prompt-file", "/p.md",
+            "--model", "opus", "--allowedTools", "a", "b"])
+    }
     @Test func pathsDeriveFromHomeAndToken() {
         let paths = PartnerPaths(home: URL(fileURLWithPath: "/h"), token: "tok")
         #expect(paths.mcpConfig.path == "/h/.tok/partner/mcp.json")

@@ -31,6 +31,9 @@ import Testing
         let data = ClaudeStreamInput.userMessage("hello")
         let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         #expect(obj?["type"] as? String == "user")
+        let message = obj?["message"] as? [String: Any]
+        let content = message?["content"] as? [[String: Any]]
+        #expect(message?["role"] as? String == "user" && content?.first?["text"] as? String == "hello")
         #expect(ClaudeStreamInput.userMessage("x").last == 0x0A)
     }
 }
