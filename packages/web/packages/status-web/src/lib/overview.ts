@@ -41,6 +41,31 @@ export const INDICATOR_STATE: Record<BoardIndicator, IndicatorState> = {
   outage: "down",
 };
 
+/**
+ * Recent Activity's "in progress or failed builds only" filter: is this row something still
+ * happening, or still wrong?
+ *
+ * An in-flight build/deploy row (`progress` on a deploy step) is kept as-is — its phase is
+ * the server's current reading. A FAILURE-shaped row (a `bad` deploy row, or any issue
+ * opening, minor ones included) is a record of an event, and stays `bad` forever after the
+ * thing it reports has recovered: the recovery arrives as a SEPARATE `[x] resolved` row,
+ * never as an edit to this one. With age-out at "never" that meant every incident the fleet
+ * ever had. So a failure row survives only while the Problems list — the server's verdict
+ * on what is broken NOW — still carries its target, and only if it is not older than that
+ * problem's onset: an earlier failure on the same target, followed by a recovery and a new
+ * failure, is history, not part of the run that is still open.
+ *
+ * `since` is the earlier of the problem's onsets (`problemSince`, derive-problems.ts), and
+ * each of those is at or before the row of the event that opened it, so the open run's own
+ * rows always satisfy `at >= since`.
+ */
+export function isUnresolvedActivity(a: ActivityRow, problems: readonly Problem[]): boolean {
+  if (a.tone !== "progress" && a.tone !== "bad") return false;
+  if (a.step !== null && a.tone === "progress") return true;
+  const at = Date.parse(a.at);
+  return problems.some((p) => p.target === a.target && Date.parse(p.since) <= at);
+}
+
 /** Build/deploy/failure counts for the stats strip — a tally of rows the server already
  *  judged, which is why it may live on the client. `step` and `tone` arrive on the wire.
  *  `sinceMs` is the board's own `activityFromMs`; the client never picks the window. */

@@ -14,7 +14,7 @@ import { useNow } from "../hooks/use-now";
 import { useBuildProgress } from "../hooks/use-build-progress";
 import { problemToRow, activityToRow, type Row } from "../lib/row-model";
 import type { ActivityRow } from "../lib/board-types";
-import { indicatorFromProblems, INDICATOR_STATE } from "../lib/overview";
+import { indicatorFromProblems, INDICATOR_STATE, isUnresolvedActivity } from "../lib/overview";
 import { overallUptimePercent } from "../lib/uptime";
 import { buildSublabel } from "../lib/status-sublabel";
 import { shortSha } from "../lib/format";
@@ -174,7 +174,7 @@ export function OverviewTab(): ReactElement {
   // would re-walk the whole feed — history pages included — every 30 seconds to produce a
   // byte-identical array.
   const ttlNowMs = ttlMs == null ? 0 : nowMs;
-  const { problems, activity: activityAll, feed } = useMemo(() => {
+  const { problems, activity: activityAll, feed, unresolvedIds } = useMemo(() => {
     const problemRows = (board?.problems ?? []).filter(keep).map(problemToRow);
     const pipeline = (rows: ActivityRow[]): Row[] =>
       rows
@@ -203,9 +203,15 @@ export function OverviewTab(): ReactElement {
       a.at === b.at ? (a.id === b.id ? 0 : a.id < b.id ? -1 : 1) : a.at < b.at ? -1 : 1,
     );
     const activityRows = pipeline(feed);
+    // Which feed rows the "in progress or failed only" filter keeps — judged on the WIRE
+    // row, because a resolved failure is recognised by its target and time against the
+    // live Problems list, and `Row` carries neither. Against the unfiltered problems: the
+    // env filter is the pipeline's job, not this one's.
+    const allProblems = board?.problems ?? [];
+    const unresolvedIds = new Set(feed.filter((a) => isUnresolvedActivity(a, allProblems)).map((a) => a.id));
     // `feed` goes out UNFILTERED as well: the controls that decide what the reader is
     // even offered (Clear, the Sources list) have to see the whole record, not the view.
-    return { problems: problemRows, activity: activityRows, feed };
+    return { problems: problemRows, activity: activityRows, feed, unresolvedIds };
   }, [board, history.rows, keep, clearedBefore, ttlMs, ttlNowMs]);
   // Unfiltered (all envs) takes the server's answer verbatim, so the common case
   // can never disagree with it; an env-filtered view re-derives the sign over just
@@ -273,11 +279,9 @@ export function OverviewTab(): ReactElement {
   const isCanceled = (r: Row): boolean => r.statusWord === "canceled";
   const hasCanceled = activityAll.some(isCanceled);
   const withCanceled = showCanceled ? activityAll : activityAll.filter((r) => !isCanceled(r));
-  // The tone is the server's verdict on the row (`derive-activity.ts`): "progress" is a
-  // queued/building/deploying phase (or a minor incident), "bad" a failure. Keying off
-  // tone, not the verb text, means a new in-flight or failure verb is covered for free.
-  const isInProgressOrFailed = (r: Row): boolean => r.tone === "progress" || r.tone === "bad";
-  const activity = inProgressOrFailedOnly ? withCanceled.filter(isInProgressOrFailed) : withCanceled;
+  // In flight, or failed AND still unresolved — `isUnresolvedActivity` (lib/overview.ts)
+  // is the rule; a failure the fleet has since recovered from is history, not shown here.
+  const activity = inProgressOrFailedOnly ? withCanceled.filter((r) => unresolvedIds.has(r.key)) : withCanceled;
 
   const uptimePercent = overallUptimePercent(uptimeQuery.data?.services ?? []);
 

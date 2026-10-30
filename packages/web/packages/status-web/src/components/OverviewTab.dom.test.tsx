@@ -291,16 +291,28 @@ describe("OverviewTab — Recent Activity 'in progress or failed only' filter", 
     };
   }
 
+  function problem(target: string, name: string) {
+    return {
+      target, source: "vercel", name, environment: "production", severity: "major",
+      state: "failed", statusCode: null, detail: null, sourceUrl: null, liveUrl: null,
+      commitHash: null, commitMessage: null, commitRepo: null, branch: null, errorText: null,
+      since: new Date(Date.now() - 60_000).toISOString(),
+    };
+  }
+
   it("hides finished rows when checked, and shows them again when unchecked", async () => {
     mobile.current = false;
     const withActivity = {
       generatedAt: new Date().toISOString(),
       dataAsOfMs: Date.now(),
       indicator: "operational",
-      problems: [],
+      // site-failed is still broken (its target is a live problem); site-recovered failed
+      // and has since recovered (no problem), so it is a resolved failure and must not show.
+      problems: [problem("vercel:site-failed", "site-failed")],
       activity: [
         activityRow("a", "site-queued", "queued", "progress"),
         activityRow("b", "site-failed", "build failed", "bad"),
+        activityRow("e", "site-recovered", "build failed", "bad"),
         activityRow("c", "site-done", "deployed", "good"),
         activityRow("d", "site-stale", "unknown", "stale"),
       ],
@@ -322,6 +334,7 @@ describe("OverviewTab — Recent Activity 'in progress or failed only' filter", 
     expect(screen.getAllByText("site-failed").length).toBeGreaterThan(0);
     expect(screen.queryAllByText("site-done")).toHaveLength(0);
     expect(screen.queryAllByText("site-stale")).toHaveLength(0);
+    expect(screen.queryAllByText("site-recovered")).toHaveLength(0);
 
     fireEvent.click(box);
     expect(screen.getAllByText("site-done").length).toBeGreaterThan(0);
