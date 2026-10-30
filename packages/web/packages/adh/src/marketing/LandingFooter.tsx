@@ -4,6 +4,8 @@ import {
   getSite,
   groupSitesByCategory,
   siteProdUrl,
+  type SiteDef,
+  type SiteId,
 } from "@agentic-toolkit/adh-registry";
 // The panel by package path: SitesOverview is 'use client', and a relative specifier would
 // inline it and hoist its directive over this server entry (see MarketingFrameHeader).
@@ -22,6 +24,13 @@ import {
 export const LANDING_FOOTER_CLASS = "adh-landing-footer";
 
 type FooterEntry = { label: string; href?: string };
+
+/** Working sites the landing page does not link: Shipr and the Registry, and both FishLamp
+ *  doors, since FishLamp Design is linked once, from About. */
+const LANDING_OMITTED = new Set<SiteId>(["shipr", "registry", "fishlamp", "fishlampdesign"]);
+
+/** The sites the landing footer lists: the directory less the ones it leaves out. */
+const LANDING_SITES: SiteDef[] = DIRECTORY_SITES.filter((s) => !LANDING_OMITTED.has(s.id));
 
 /** Who makes the family. The studio's name and address are the copyright's own; FishLamp
  *  comes from its registry entry, so this column cannot drift from the sites overview. */
@@ -65,11 +74,12 @@ function Column({ title, entries }: { title: string; entries: FooterEntry[] }): 
  * bitbag stays where the frame pins him. Every link is in the server HTML, so the directory is
  * also the page's crawlable interlink set.
  *
- * The directory and the panel "All sites" opens both list DIRECTORY_SITES: the family's
- * working sites, without the marketing decks and the placeholders.
+ * The directory and the panel "All sites" opens both list LANDING_SITES: the family's
+ * working sites (DIRECTORY_SITES, without the marketing decks and the placeholders), less
+ * the few the landing page leaves out.
  */
 export function LandingFooter(): ReactElement {
-  const groups = groupSitesByCategory(DIRECTORY_SITES);
+  const groups = groupSitesByCategory(LANDING_SITES);
   const version = buildVersionLabel();
   return (
     <div className={LANDING_FOOTER_CLASS}>
@@ -117,7 +127,7 @@ export function LandingFooter(): ReactElement {
           {version && <li className="adh-landing-footer__item adh-landing-footer__version">{version}</li>}
         </ul>
       </div>
-      <SitesPopover sites={DIRECTORY_SITES} />
+      <SitesPopover sites={LANDING_SITES} />
     </div>
   );
 }

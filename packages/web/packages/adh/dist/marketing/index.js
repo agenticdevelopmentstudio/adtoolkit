@@ -330,6 +330,8 @@ function buildVersionLabel(live) {
 // src/marketing/LandingFooter.tsx
 import { jsx as jsx8, jsxs as jsxs5 } from "react/jsx-runtime";
 var LANDING_FOOTER_CLASS = "adh-landing-footer";
+var LANDING_OMITTED = /* @__PURE__ */ new Set(["shipr", "registry", "fishlamp", "fishlampdesign"]);
+var LANDING_SITES = DIRECTORY_SITES.filter((s) => !LANDING_OMITTED.has(s.id));
 function aboutEntries() {
   const fishlamp = getSite3("fishlamp");
   return [
@@ -345,7 +347,7 @@ function Column({ title, entries }) {
   ] });
 }
 function LandingFooter() {
-  const groups = groupSitesByCategory(DIRECTORY_SITES);
+  const groups = groupSitesByCategory(LANDING_SITES);
   const version = buildVersionLabel();
   return /* @__PURE__ */ jsxs5("div", { className: LANDING_FOOTER_CLASS, children: [
     /* @__PURE__ */ jsxs5("div", { className: "adh-landing-footer__directory", children: [
@@ -385,7 +387,7 @@ function LandingFooter() {
         version && /* @__PURE__ */ jsx8("li", { className: "adh-landing-footer__item adh-landing-footer__version", children: version })
       ] })
     ] }),
-    /* @__PURE__ */ jsx8(SitesPopover, { sites: DIRECTORY_SITES })
+    /* @__PURE__ */ jsx8(SitesPopover, { sites: LANDING_SITES })
   ] });
 }
 export {

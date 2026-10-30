@@ -12,8 +12,9 @@ export declare const LANDING_FOOTER_CLASS = "adh-landing-footer";
  * bitbag stays where the frame pins him. Every link is in the server HTML, so the directory is
  * also the page's crawlable interlink set.
  *
- * The directory and the panel "All sites" opens both list DIRECTORY_SITES: the family's
- * working sites, without the marketing decks and the placeholders.
+ * The directory and the panel "All sites" opens both list LANDING_SITES: the family's
+ * working sites (DIRECTORY_SITES, without the marketing decks and the placeholders), less
+ * the few the landing page leaves out.
  */
 export declare function LandingFooter(): ReactElement;
 //# sourceMappingURL=LandingFooter.d.ts.map
