@@ -1,0 +1,5 @@
+# onnxruntime-node ships its CPU binaries for macOS and Linux inside the
+# package. Its install script only fetches the CUDA provider, which nothing
+# here uses.
+allowBuilds:
+  onnxruntime-node: false

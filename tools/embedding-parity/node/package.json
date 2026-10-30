@@ -1,0 +1,17 @@
+{
+  "name": "embedding-parity-node",
+  "private": true,
+  "type": "module",
+  "description": "Node reference embedder for the semantic search bundle, and the parity runner that checks it against the bundle's golden set.",
+  "scripts": {
+    "parity": "node parity.js",
+    "scaling": "node scaling.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@huggingface/tokenizers": "0.2.0",
+    "onnxruntime-node": "1.31.1"
+  }
+}
