@@ -77,14 +77,18 @@ public final class TerminalSessionContentViewController: NSViewController {
 
         if let session {
             let terminalView = session.terminalView
-            terminalView.translatesAutoresizingMaskIntoConstraints = false
-            view.addSubview(terminalView)
+            // Held still while a shelf slides beside the pane: every new width
+            // redraws the whole grid and resizes the shell's tty, which costs a
+            // slide most of its frames and sends the shell a signal per frame.
+            let holder = FrameHoldingView(content: terminalView)
+            holder.translatesAutoresizingMaskIntoConstraints = false
+            view.addSubview(holder)
 
             let constraints = (
-                top: terminalView.topAnchor.constraint(equalTo: view.topAnchor),
-                leading: terminalView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-                bottom: view.bottomAnchor.constraint(equalTo: terminalView.bottomAnchor),
-                trailing: view.trailingAnchor.constraint(equalTo: terminalView.trailingAnchor)
+                top: holder.topAnchor.constraint(equalTo: view.topAnchor),
+                leading: holder.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                bottom: view.bottomAnchor.constraint(equalTo: holder.bottomAnchor),
+                trailing: view.trailingAnchor.constraint(equalTo: holder.trailingAnchor)
             )
             paddingConstraints = constraints
             NSLayoutConstraint.activate([
@@ -116,7 +120,7 @@ public final class TerminalSessionContentViewController: NSViewController {
             paddingConstraints.trailing.constant = padding.trailing
         }
 
-        guard let terminalView = view.subviews.first as? TerminalView else { return }
+        guard let terminalView = sessionManager.selectedSession?.terminalView else { return }
         TerminalAppearance.apply(to: terminalView, palette: palette)
     }
 }

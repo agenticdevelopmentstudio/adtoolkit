@@ -140,18 +140,22 @@ public final class DocumentEditorViewController: NSViewController {
             ).themedRoot()
         )
 
-        let stack = NSStackView(views: [breadcrumb, hosting])
+        // Held still while a shelf slides beside the pane: every new width
+        // rewraps every line and rebuilds the find bar, which costs a slide
+        // most of its frames.
+        let editor = FrameHoldingView(content: hosting)
+        let stack = NSStackView(views: [breadcrumb, editor])
         stack.orientation = .vertical
         stack.spacing = 0
         stack.distribution = .fill
         breadcrumb.translatesAutoresizingMaskIntoConstraints = false
-        hosting.translatesAutoresizingMaskIntoConstraints = false
+        editor.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             breadcrumb.heightAnchor.constraint(equalToConstant: 24),
             breadcrumb.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
             breadcrumb.trailingAnchor.constraint(equalTo: stack.trailingAnchor),
-            hosting.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
-            hosting.trailingAnchor.constraint(equalTo: stack.trailingAnchor)
+            editor.leadingAnchor.constraint(equalTo: stack.leadingAnchor),
+            editor.trailingAnchor.constraint(equalTo: stack.trailingAnchor)
         ])
 
         let root = NSView(frame: NSRect(x: 0, y: 0, width: 520, height: 424))

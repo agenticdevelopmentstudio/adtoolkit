@@ -73,14 +73,17 @@ public final class PrivateTerminalViewController: NSViewController {
         container.addSubview(concealed)
         pin(concealed, to: container)
 
-        let terminalView = session.terminalView
-        terminalView.translatesAutoresizingMaskIntoConstraints = false
-        concealed.addSubview(terminalView)
+        // Held still while a shelf slides beside the pane, as the ordinary
+        // terminal is: resized on every frame it redraws the whole grid and
+        // resizes the shell's tty each time.
+        let holder = FrameHoldingView(content: session.terminalView)
+        holder.translatesAutoresizingMaskIntoConstraints = false
+        concealed.addSubview(holder)
         let constraints = (
-            top: terminalView.topAnchor.constraint(equalTo: concealed.topAnchor),
-            leading: terminalView.leadingAnchor.constraint(equalTo: concealed.leadingAnchor),
-            bottom: concealed.bottomAnchor.constraint(equalTo: terminalView.bottomAnchor),
-            trailing: concealed.trailingAnchor.constraint(equalTo: terminalView.trailingAnchor)
+            top: holder.topAnchor.constraint(equalTo: concealed.topAnchor),
+            leading: holder.leadingAnchor.constraint(equalTo: concealed.leadingAnchor),
+            bottom: concealed.bottomAnchor.constraint(equalTo: holder.bottomAnchor),
+            trailing: concealed.trailingAnchor.constraint(equalTo: holder.trailingAnchor)
         )
         paddingConstraints = constraints
         NSLayoutConstraint.activate([constraints.top, constraints.leading, constraints.bottom, constraints.trailing])

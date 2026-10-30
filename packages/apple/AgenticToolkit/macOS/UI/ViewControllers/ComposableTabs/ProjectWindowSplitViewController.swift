@@ -54,6 +54,11 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     let shelf: ProjectShelfViewController?
     private var shelfItem: NSSplitViewItem?
 
+    /// The shelf host's width: the width it opens at, at a priority any drag
+    /// beats; and, raised above everything the split view holds, what walks
+    /// the shelf in and out during a slide.
+    private var shelfWidth: NSLayoutConstraint?
+
     /// Keeps each half's strip behind the titlebar in the theme.
     private var themeObserver: ThemePaletteObserver?
 
@@ -102,6 +107,7 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
                 equalToConstant: CGFloat(UserSettings.projectShelfWidth.value))
             width.priority = .defaultLow
             width.isActive = true
+            shelfWidth = width
 
             let item = NSSplitViewItem(viewController: shelfHost)
             item.minimumThickness = Self.shelfMinimumWidth
@@ -195,9 +201,11 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         // zero; put back when the slide ends.
         item.minimumThickness = 0
         let from = visible ? 0 : item.viewController.view.frame.width
+        shelfWidth?.constant = from
+        shelfWidth?.priority = Self.slidingWidthPriority
         if visible {
-            // Uncollapsed at zero width, both in this pass, so the shelf never
-            // shows at its full width before the slide begins.
+            // Uncollapsed at zero width, held there by the raised width, so
+            // the shelf never shows at its full width before the slide begins.
             //
             // The first uncollapse after a launch that began collapsed grows
             // the window by the shelf's remembered width, as if the shelf were
@@ -208,7 +216,6 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
             if let window = view.window, let windowFrame, window.frame != windowFrame {
                 window.setFrame(windowFrame, display: false)
             }
-            splitView.setPosition(0, ofDividerAt: 0)
             splitView.layoutSubtreeIfNeeded()
         }
         let target = visible ? Self.openShelfWidth : 0
@@ -231,8 +238,8 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
 
     // MARK: - Sliding
 
-    /// A slide in progress: the divider walked from `origin` to `target` one frame
-    /// at a time.
+    /// A slide in progress: the shelf's width walked from `origin` to `target`
+    /// one frame at a time.
     ///
     /// Walked by hand rather than by `item.animator().isCollapsed`, because
     /// that animates the panes' frames on Core Animation's clock while laying
@@ -241,6 +248,12 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     /// it, with its trailing edge nowhere near the pane's on the way. A real
     /// layout pass per frame gives every view inside the panes the frame its
     /// constraints say, on every frame, as a live window resize does.
+    ///
+    /// The width is walked through the shelf host's own width constraint, not
+    /// `setPosition(_:ofDividerAt:)`. A divider set near zero collapses a
+    /// collapsible item, and a divider set anywhere is undone by the next
+    /// layout pass in favour of that constraint, so a walked divider fought
+    /// the layout on every frame and the shelf jumped rather than slid.
     private struct ShelfSlide {
         let link: CADisplayLink
         let start: CFTimeInterval
@@ -250,6 +263,10 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     }
 
     private static let shelfSlideDuration: CFTimeInterval = 0.2
+
+    /// Above every holding priority and the reader's drag, below required so
+    /// the content's minimum width still wins.
+    private static let slidingWidthPriority = NSLayoutConstraint.Priority(999)
     private var shelfSlide: ShelfSlide?
 
     /// The width the shelf opens to: the one the reader last gave it, within
@@ -270,7 +287,7 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         let progress = CGFloat(min(max(elapsed, 0), 1))
         // Ease in and out, as the animation it replaces did.
         let eased = progress * progress * (3 - 2 * progress)
-        splitView.setPosition(slide.origin + (slide.target - slide.origin) * eased, ofDividerAt: 0)
+        shelfWidth?.constant = slide.origin + (slide.target - slide.origin) * eased
         splitView.layoutSubtreeIfNeeded()
         if progress >= 1 { finishShelfSlide() }
     }
@@ -281,9 +298,13 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         guard let slide = shelfSlide, let item = shelfItem else { return }
         shelfSlide = nil
         slide.link.invalidate()
-        splitView.setPosition(slide.target, ofDividerAt: 0)
+        shelfWidth?.constant = slide.target
+        splitView.layoutSubtreeIfNeeded()
         if slide.target == 0 { item.isCollapsed = true }
         item.minimumThickness = Self.shelfMinimumWidth
+        // Back to the width the shelf opens at, at the priority a drag beats.
+        shelfWidth?.constant = Self.openShelfWidth
+        shelfWidth?.priority = .defaultLow
         splitView.layoutSubtreeIfNeeded()
         content.view.endAnimatedResize()
         content.view.layoutSubtreeIfNeeded()
@@ -336,6 +357,7 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
             onShelfVisibilityChange?()
         }
         guard layout.isVisible, layout.width >= item.minimumThickness else { return }
+        shelfWidth?.constant = layout.width
         splitView.layoutSubtreeIfNeeded()
         splitView.setPosition(layout.width, ofDividerAt: 0)
     }
@@ -371,6 +393,9 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         // first layout has given the shelf any room at all.
         guard width >= item.minimumThickness else { return }
         UserSettings.projectShelfWidth.value = Double(width)
+        // Kept in step, so the next layout pass does not pull the shelf back
+        // to the width it had before the drag.
+        shelfWidth?.constant = width
     }
 }
 
