@@ -22,10 +22,12 @@ public final class PartnerChatSession: ChatSession, @unchecked Sendable {
 
     public func events() -> AsyncStream<ChatEvent> {
         AsyncStream { continuation in
-            let initial = withLock { () -> [ChatMessage] in
+            let (initial, previous) = withLock { () -> ([ChatMessage], AsyncStream<ChatEvent>.Continuation?) in
+                let previous = self.continuation
                 self.continuation = continuation
-                return transcript
+                return (transcript, previous)
             }
+            previous?.finish()
             continuation.yield(.transcriptLoaded(initial))
         }
     }
