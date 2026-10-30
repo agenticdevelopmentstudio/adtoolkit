@@ -5,8 +5,10 @@ import { LandingFooter } from "../marketing/LandingFooter";
 
 afterEach(cleanup);
 
+// The footer's own links, not the "All sites" panel's: the panel lists every site, these two
+// among them.
 function hrefs(): string[] {
-  return [...document.querySelectorAll("a")].map((a) => a.getAttribute("href") ?? "");
+  return [...document.querySelectorAll(".adh-landing-footer a")].map((a) => a.getAttribute("href") ?? "");
 }
 
 describe("LandingFooter", () => {
@@ -29,6 +31,14 @@ describe("LandingFooter", () => {
       "Agentic Development Studio",
       "FishLamp Design",
     ]);
+  });
+
+  it("opens a panel that does link Shipr, the Registry and both FishLamp domains", () => {
+    render(<LandingFooter />);
+    const panel = [...document.querySelectorAll("#adh-sites-overview a")].map((a) => a.getAttribute("href"));
+    for (const id of ["shipr", "registry", "fishlamp", "fishlampdesign"] as const) {
+      expect(panel).toContain(siteProdUrl(id, "/"));
+    }
   });
 
   it("still links the hub", () => {

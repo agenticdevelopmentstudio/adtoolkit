@@ -171,14 +171,13 @@ describe('the floating box', () => {
 })
 
 describe('the preview badge', () => {
-  it("opens its panel from its own left edge, undoing the header panel's centring", () => {
-    // The family dialog clips what overflows it; the header's centring transform, which
-    // adh-components.css gives every `.adh-header__preview-panel`, sent this one out of its left side.
-    const panel = styleRules(adhStylesheet('adh-landing-footer.css')).filter(
-      (r) => r.at.length === 0 && r.selectors.includes('.adh-preview-badge .adh-header__preview-panel'),
-    )
-    expect(panel.map((r) => r.get('transform'))).toContain('none')
-    expect(panel.map((r) => r.get('left'))).toContain('-0.7rem')
+  it('sits centred across the footer, its panel centred under it', () => {
+    const rules = styleRules(adhStylesheet('adh-landing-footer.css')).filter((r) => r.at.length === 0)
+    const head = rules.filter((r) => r.selectors.includes('.adh-landing-footer__head'))
+    expect(head.map((r) => r.get('justify-content'))).toContain('center')
+    const panel = rules.filter((r) => r.selectors.includes('.adh-preview-badge .adh-header__preview-panel'))
+    expect(panel.map((r) => r.get('left'))).toContain('50%')
+    expect(panel.map((r) => r.get('transform'))).toContain('translateX(-50%)')
   })
 })
 

@@ -322,10 +322,35 @@ import {
 } from "@agentic-toolkit/adh/footer";
 
 // src/footer/identity.tsx
-import { DIRECTORY_SITES } from "@agentic-toolkit/adh-registry";
+import {
+  DIRECTORY_SITES,
+  FOOTER_SITES,
+  getSite,
+  groupSitesByCategory,
+  siteProdUrl
+} from "@agentic-toolkit/adh-registry";
 import { jsx as jsx9 } from "react/jsx-runtime";
 var FAMILY_OMITTED = /* @__PURE__ */ new Set(["shipr", "registry", "fishlamp", "fishlampdesign"]);
 var FAMILY_SITES = DIRECTORY_SITES.filter((s) => !FAMILY_OMITTED.has(s.id));
+var BRAND_LABEL = "Agentic Development Studio";
+var BRAND_HREF = "https://agenticdevelopmentstudio.com/";
+function siteEntry(site) {
+  return { key: site.id, label: site.label, href: siteProdUrl(site.id, "/"), description: site.description };
+}
+function registryEntry(id) {
+  const site = getSite(id);
+  if (!site) throw new Error(`no registry site '${id}'`);
+  return siteEntry(site);
+}
+var SITES_PANEL_ADDITIONS = [
+  // By its full name: the hub's own Help is in the panel too, under Hub.
+  { group: "Learn", entry: { ...registryEntry("help"), label: "Agentic Developer Help" } },
+  { group: "Plan", entry: { key: "myagenticprojects", label: "My Agentic Projects", href: "https://myagenticprojects.com/", description: "Agentic software projects" } },
+  { group: "Build", entry: registryEntry("recipes") },
+  { group: "Products", entry: registryEntry("education") },
+  { group: "Hire", entry: registryEntry("consulting") },
+  { group: "Hire", entry: { key: "studio", label: BRAND_LABEL, href: BRAND_HREF, description: "The studio behind the Hub" } }
+];
 var ADH_CONTACT = {
   name: "Agentic Developer Hub",
   email: "hello@agenticdeveloperhub.com"
@@ -343,7 +368,7 @@ import { Fragment as Fragment3, jsx as jsx10, jsxs as jsxs6 } from "react/jsx-ru
 function LandingFooter({ contact = ADH_CONTACT } = {}) {
   return /* @__PURE__ */ jsxs6(Fragment3, { children: [
     /* @__PURE__ */ jsx10(FamilyFooter, { version: buildVersionLabel(), anchored: true, contact }),
-    /* @__PURE__ */ jsx10(SitesPopover, { sites: FAMILY_SITES }),
+    /* @__PURE__ */ jsx10(SitesPopover, {}),
     /* @__PURE__ */ jsx10(TermsModal, {}),
     /* @__PURE__ */ jsx10(PrivacyModal, {})
   ] });
@@ -398,11 +423,11 @@ function SiteSwitchNotFound({ children }) {
 }
 
 // src/layout/SiteHomePlaceholder.tsx
-import { getSite } from "@agentic-toolkit/adh-registry";
+import { getSite as getSite2 } from "@agentic-toolkit/adh-registry";
 import { HomePlaceholder as AdhHomePlaceholder } from "@agentic-toolkit/adh/layout";
 import { jsx as jsx13 } from "react/jsx-runtime";
 function SiteHomePlaceholder({ siteId, blurb }) {
-  return /* @__PURE__ */ jsx13(AdhHomePlaceholder, { siteLabel: getSite(siteId)?.label ?? "", blurb });
+  return /* @__PURE__ */ jsx13(AdhHomePlaceholder, { siteLabel: getSite2(siteId)?.label ?? "", blurb });
 }
 
 // src/layout/SiteLanding.tsx

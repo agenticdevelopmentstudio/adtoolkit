@@ -15,7 +15,8 @@ export type LandingFooterProps = {
  * `SiteFooter`, and bitbag stays where the frame pins him. Every link is in the server HTML,
  * so the directory is also the page's crawlable interlink set.
  *
- * The directory and the panel "All sites" opens both list FAMILY_SITES.
+ * The directory lists FAMILY_SITES; the panel "All sites" opens lists every site the family
+ * serves, as it does on every page.
  */
 export declare function LandingFooter({ contact }?: LandingFooterProps): ReactElement;
 //# sourceMappingURL=LandingFooter.d.ts.map

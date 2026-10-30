@@ -3,11 +3,27 @@ import { type SiteDef } from '@agentic-toolkit/adh-registry';
  *  (`/*! @confine .adh-landing-footer *\/`). Here rather than beside FamilyFooter, which is
  *  'use client': a server module importing it from there would get a client reference. */
 export declare const LANDING_FOOTER_CLASS = "adh-landing-footer";
-/** The sites the family footer lists: the directory less the ones it leaves out. The panel
- *  its "All sites" opens on the landing page lists the same set (SitesPopover's `sites`). */
+/** The sites the family footer lists: the directory less the ones it leaves out. */
 export declare const FAMILY_SITES: SiteDef[];
 export declare const BRAND_LABEL = "Agentic Development Studio";
 export declare const BRAND_HREF = "https://agenticdevelopmentstudio.com/";
+/** One row of the "All sites" panel (SitesPopover): a name, a line saying what it is, and where
+ *  it goes. */
+export type SitesPanelEntry = {
+    key: string;
+    label: string;
+    href: string;
+    description?: string;
+};
+/** A group of the "All sites" panel, titled like the registry's SITE_CATEGORIES. */
+export type SitesPanelGroup = {
+    label: string;
+    entries: SitesPanelEntry[];
+};
+/** The "All sites" panel: every site the family serves, grouped. FOOTER_SITES in the registry's
+ *  groups, with SITES_PANEL_ADDITIONS appended to theirs. The same on every page, the landing
+ *  page included. */
+export declare function sitesPanelGroups(): SitesPanelGroup[];
 /** The DOM id of the single shared sites-overview popover. The footer renders
  *  the panel once; every trigger (the "Sites" entry in the footer's copyright
  *  menu, the header site-switcher's "?" icon and its "help" command) opens it by this id, so

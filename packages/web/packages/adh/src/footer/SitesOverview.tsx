@@ -1,8 +1,7 @@
 'use client'
 
-import { FOOTER_SITES, groupSitesByCategory, siteProdUrl, type SiteDef } from '@agentic-toolkit/adh-registry'
 import { AdhModalPopover } from './AdhModalPopover'
-import { SITES_OVERVIEW_POPOVER_ID } from './identity'
+import { SITES_OVERVIEW_POPOVER_ID, sitesPanelGroups } from './identity'
 
 /**
  * The footer "sites overview" — a modal dialog (AdhModalPopover) that lists every
@@ -14,12 +13,11 @@ import { SITES_OVERVIEW_POPOVER_ID } from './identity'
  * menu) opens it and
  * the modal's close box dismisses it natively.
  *
- * `sites` narrows the roster; it defaults to the whole of FOOTER_SITES. A landing
- * page's footer passes DIRECTORY_SITES, so the panel it opens links no more than the
- * directory above it.
+ * It lists the same roster on every page, the landing page included: every site the family
+ * serves (sitesPanelGroups).
  */
-export function SitesPopover({ sites = FOOTER_SITES }: { sites?: SiteDef[] } = {}) {
-  const groups = groupSitesByCategory(sites)
+export function SitesPopover() {
+  const groups = sitesPanelGroups()
   return (
     <AdhModalPopover id={SITES_OVERVIEW_POPOVER_ID} title="The Agentic Developer family">
       {groups.map((group) => (
@@ -30,16 +28,13 @@ export function SitesPopover({ sites = FOOTER_SITES }: { sites?: SiteDef[] } = {
         >
           <h3 className="adh-sites-popover__group-title">{group.label}</h3>
           <ul className="adh-sites-popover__list">
-            {group.sites.map((site) => (
-              <li key={site.id}>
-                <a
-                  className="adh-sites-popover__item"
-                  href={siteProdUrl(site.id, '/')}
-                >
-                  <span className="adh-sites-popover__name">{site.label}</span>
-                  {site.description && (
+            {group.entries.map((entry) => (
+              <li key={entry.key}>
+                <a className="adh-sites-popover__item" href={entry.href}>
+                  <span className="adh-sites-popover__name">{entry.label}</span>
+                  {entry.description && (
                     <span className="adh-sites-popover__blurb">
-                      {site.description}
+                      {entry.description}
                     </span>
                   )}
                 </a>

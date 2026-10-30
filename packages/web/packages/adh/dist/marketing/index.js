@@ -316,11 +316,36 @@ import {
 } from "@agentic-toolkit/adh/footer";
 
 // src/footer/identity.tsx
-import { DIRECTORY_SITES } from "@agentic-toolkit/adh-registry";
+import {
+  DIRECTORY_SITES,
+  FOOTER_SITES,
+  getSite as getSite3,
+  groupSitesByCategory,
+  siteProdUrl as siteProdUrl2
+} from "@agentic-toolkit/adh-registry";
 import { jsx as jsx7 } from "react/jsx-runtime";
 var LANDING_FOOTER_CLASS = "adh-landing-footer";
 var FAMILY_OMITTED = /* @__PURE__ */ new Set(["shipr", "registry", "fishlamp", "fishlampdesign"]);
 var FAMILY_SITES = DIRECTORY_SITES.filter((s) => !FAMILY_OMITTED.has(s.id));
+var BRAND_LABEL = "Agentic Development Studio";
+var BRAND_HREF = "https://agenticdevelopmentstudio.com/";
+function siteEntry(site) {
+  return { key: site.id, label: site.label, href: siteProdUrl2(site.id, "/"), description: site.description };
+}
+function registryEntry(id) {
+  const site = getSite3(id);
+  if (!site) throw new Error(`no registry site '${id}'`);
+  return siteEntry(site);
+}
+var SITES_PANEL_ADDITIONS = [
+  // By its full name: the hub's own Help is in the panel too, under Hub.
+  { group: "Learn", entry: { ...registryEntry("help"), label: "Agentic Developer Help" } },
+  { group: "Plan", entry: { key: "myagenticprojects", label: "My Agentic Projects", href: "https://myagenticprojects.com/", description: "Agentic software projects" } },
+  { group: "Build", entry: registryEntry("recipes") },
+  { group: "Products", entry: registryEntry("education") },
+  { group: "Hire", entry: registryEntry("consulting") },
+  { group: "Hire", entry: { key: "studio", label: BRAND_LABEL, href: BRAND_HREF, description: "The studio behind the Hub" } }
+];
 var ADH_CONTACT = {
   name: "Agentic Developer Hub",
   email: "hello@agenticdeveloperhub.com"
@@ -338,7 +363,7 @@ import { Fragment as Fragment5, jsx as jsx8, jsxs as jsxs5 } from "react/jsx-run
 function LandingFooter({ contact = ADH_CONTACT } = {}) {
   return /* @__PURE__ */ jsxs5(Fragment5, { children: [
     /* @__PURE__ */ jsx8(FamilyFooter, { version: buildVersionLabel(), anchored: true, contact }),
-    /* @__PURE__ */ jsx8(SitesPopover, { sites: FAMILY_SITES }),
+    /* @__PURE__ */ jsx8(SitesPopover, {}),
     /* @__PURE__ */ jsx8(TermsModal, {}),
     /* @__PURE__ */ jsx8(PrivacyModal, {})
   ] });

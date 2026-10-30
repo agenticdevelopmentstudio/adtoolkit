@@ -1190,7 +1190,7 @@ import {
   useClientHost as useClientHost4
 } from "@agentic-toolkit/adh/header";
 import { useAnonymousHeaderAuth } from "@agentic-toolkit/adh/header-auth";
-import { getSite as getSite3, siteHeaderTitle as siteHeaderTitle2, siteHomePath, siteProdUrl, siteUrl as siteUrl2 } from "@agentic-toolkit/adh-registry";
+import { getSite as getSite4, siteHeaderTitle as siteHeaderTitle2, siteHomePath, siteProdUrl as siteProdUrl2, siteUrl as siteUrl2 } from "@agentic-toolkit/adh-registry";
 import { isConceptSite } from "@agentic-toolkit/adh/concepts/participating";
 import { useSettingsOverlay } from "@agentic-toolkit/adh/settings";
 
@@ -1211,14 +1211,39 @@ import { usePathname as usePathname3 } from "next/navigation";
 import { CircleHelp as CircleHelp2 } from "lucide-react";
 
 // src/footer/identity.tsx
-import { DIRECTORY_SITES } from "@agentic-toolkit/adh-registry";
+import {
+  DIRECTORY_SITES,
+  FOOTER_SITES,
+  getSite,
+  groupSitesByCategory,
+  siteProdUrl
+} from "@agentic-toolkit/adh-registry";
 import { jsx as jsx12 } from "react/jsx-runtime";
 var FAMILY_OMITTED = /* @__PURE__ */ new Set(["shipr", "registry", "fishlamp", "fishlampdesign"]);
 var FAMILY_SITES = DIRECTORY_SITES.filter((s) => !FAMILY_OMITTED.has(s.id));
+var BRAND_LABEL = "Agentic Development Studio";
+var BRAND_HREF = "https://agenticdevelopmentstudio.com/";
+function siteEntry(site) {
+  return { key: site.id, label: site.label, href: siteProdUrl(site.id, "/"), description: site.description };
+}
+function registryEntry(id) {
+  const site = getSite(id);
+  if (!site) throw new Error(`no registry site '${id}'`);
+  return siteEntry(site);
+}
+var SITES_PANEL_ADDITIONS = [
+  // By its full name: the hub's own Help is in the panel too, under Hub.
+  { group: "Learn", entry: { ...registryEntry("help"), label: "Agentic Developer Help" } },
+  { group: "Plan", entry: { key: "myagenticprojects", label: "My Agentic Projects", href: "https://myagenticprojects.com/", description: "Agentic software projects" } },
+  { group: "Build", entry: registryEntry("recipes") },
+  { group: "Products", entry: registryEntry("education") },
+  { group: "Hire", entry: registryEntry("consulting") },
+  { group: "Hire", entry: { key: "studio", label: BRAND_LABEL, href: BRAND_HREF, description: "The studio behind the Hub" } }
+];
 var SITES_OVERVIEW_POPOVER_ID = "adh-sites-overview";
 
 // src/header/SiteMenu.tsx
-import { getSite as getSite2, siteHeaderTitle } from "@agentic-toolkit/adh-registry";
+import { getSite as getSite3, siteHeaderTitle } from "@agentic-toolkit/adh-registry";
 import {
   HubMark as HubMark2,
   NavigationPopover as NavigationPopover2,
@@ -1234,7 +1259,7 @@ import { confirmNavigation as confirmNavigation2 } from "@agenticdevelopertoolki
 import {
   buildSiteHref,
   detectEnv,
-  getSite,
+  getSite as getSite2,
   hubFeatureSegment,
   siteWorkspaceHref,
   siteWorkspaceSlug,
@@ -1518,7 +1543,7 @@ function menuIcon(key) {
 function useSiteMenu(groups, { currentSiteId, resolveHref, personalSlug, authenticated, hubOffersFeature }) {
   const pathname = usePathname2() ?? "/";
   const router = useRouter();
-  const currentSite = getSite(currentSiteId);
+  const currentSite = getSite2(currentSiteId);
   const workspaceSlug = useMemo2(() => {
     if (currentSiteId === "hub")
       return isHubWorkspacePath(pathname) ? hubWorkspaceSlug(pathname) ?? personalSlug ?? null : null;
@@ -1621,7 +1646,7 @@ function useSiteMenu(groups, { currentSiteId, resolveHref, personalSlug, authent
           icon: menuIcon(link.iconKey)
         };
       }
-      const site = getSite(link.site);
+      const site = getSite2(link.site);
       if (!site) return null;
       if (link.path !== void 0) {
         const pageHref = hrefFor(site, link.external, link.path);
@@ -1995,7 +2020,7 @@ function SiteMenu({
   omitChromeRows,
   omitHelpButton
 }) {
-  const hub = getSite2("hub");
+  const hub = getSite3("hub");
   const label = hub ? siteHeaderTitle(hub) : "Agentic Developer Hub";
   const tree = useMemo3(
     () => userIsAdmin === true ? [...groups, ...ADMIN_MENU_GROUPS] : groups,
@@ -2510,11 +2535,11 @@ function SiteHeader({
   const conceptSite = isConceptSite(siteId);
   const onLandingPage = usePathname6() === "/";
   const landingDetailsHref = detailsHref ?? (conceptSite ? "/details" : void 0);
-  const site = getSite3(siteId);
+  const site = getSite4(siteId);
   const siteName = site ? siteHeaderTitle2(site) : siteId;
   const siteShortName = site?.label ?? siteId;
-  const resolveHubHref = (path) => hostname ? siteUrl2("hub", path, hostname) : siteProdUrl("hub", path);
-  const selfReturn = hostname ? siteUrl2(siteId, siteHomePath(siteId), hostname) : siteProdUrl(siteId, siteHomePath(siteId));
+  const resolveHubHref = (path) => hostname ? siteUrl2("hub", path, hostname) : siteProdUrl2("hub", path);
+  const selfReturn = hostname ? siteUrl2(siteId, siteHomePath(siteId), hostname) : siteProdUrl2(siteId, siteHomePath(siteId));
   const hubAuthHref = (path) => `${resolveHubHref(path)}?return_to=${encodeURIComponent(selfReturn)}`;
   const resolvedLoginHref = loginHref ?? (onLogin ? void 0 : hubAuthHref("/login"));
   const resolvedSignupHref = signupHref ?? (onSignup ? void 0 : hubAuthHref("/signup"));

@@ -362,10 +362,11 @@
    The header's "Developer Preview Release" strip as a pill, with the same disclosure. Its parts
    keep the strip's class names, so the theme's `--adh-header-preview-*` tokens dress both; the
    rules are restated here, under the badge, because a site carrying only this sheet has none of
-   adh-components.css. The panel hangs from the badge's left edge, not its centre: the badge
-   sits at the footer's left, and a centred panel would run off the screen. */
+   adh-components.css. The badge is centred across the footer, and its panel is centred under it,
+   which keeps the panel on screen at any width. */
 .adh-landing-footer__head {
   display: flex;
+  justify-content: center;
   padding-bottom: 1.75rem;
 }
 
@@ -427,11 +428,10 @@
 .adh-preview-badge .adh-header__preview-panel {
   position: absolute;
   top: calc(100% + 0.55rem);
-  left: -0.7rem;
-  /* The header's own panel is centred under its trigger with a transform; where adh-components.css
-     is on the page too (the hub), that transform would pull this one half its width left, out of
-     the family dialog that clips it. */
-  transform: none;
+  left: 50%;
+  /* Restated rather than inherited: where adh-components.css is on the page too (the hub), its
+     header panel's transform would otherwise be the one that applies. */
+  transform: translateX(-50%);
   z-index: 60;
   width: max-content;
   max-width: min(22rem, calc(100vw - 2rem));
@@ -447,19 +447,22 @@
   white-space: normal;
 }
 
-/* ---- a native tool's platform (the Native Tools column's "macOS") ---- */
+/* ---- a native tool's platform (the Native Tools column's "macOS") ----
+   Apple's blue pill, the one its own "Learn more" buttons wear: the same in both themes, since
+   it is Apple's colour rather than the page's. */
 .adh-landing-footer__badge {
   display: inline-block;
   margin-left: 0.4rem;
-  padding: 0.05rem 0.35rem;
-  border: 1px solid var(--lp-hairline, var(--color-border));
-  border-radius: 0.25rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: #0071e3;
   font-family: var(--lp-font-mono, var(--font-mono));
   font-size: 0.6rem;
+  font-weight: 600;
   line-height: 1.4;
   letter-spacing: 0.04em;
   vertical-align: 0.1em;
-  color: var(--lp-ink-dim, var(--color-text-dim));
+  color: #fff;
 }
 
 /* Without the Popover API (iOS before 17, Firefox before 125) the modal would render inline at

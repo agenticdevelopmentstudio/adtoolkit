@@ -3,7 +3,15 @@
 // server-rendered LandingFooter (marketing/) needs these as real values, and a server module
 // importing a constant from a client module gets a client reference, not the string.
 
-import { DIRECTORY_SITES, type SiteDef, type SiteId } from '@agentic-toolkit/adh-registry'
+import {
+  DIRECTORY_SITES,
+  FOOTER_SITES,
+  getSite,
+  groupSitesByCategory,
+  siteProdUrl,
+  type SiteDef,
+  type SiteId,
+} from '@agentic-toolkit/adh-registry'
 
 /** The class on the family footer's root element: the scope a site confines its stylesheet to
  *  (`/*! @confine .adh-landing-footer *\/`). Here rather than beside FamilyFooter, which is
@@ -14,8 +22,7 @@ export const LANDING_FOOTER_CLASS = 'adh-landing-footer'
  *  doors, since FishLamp Design is linked once, from About. */
 const FAMILY_OMITTED = new Set<SiteId>(['shipr', 'registry', 'fishlamp', 'fishlampdesign'])
 
-/** The sites the family footer lists: the directory less the ones it leaves out. The panel
- *  its "All sites" opens on the landing page lists the same set (SitesPopover's `sites`). */
+/** The sites the family footer lists: the directory less the ones it leaves out. */
 export const FAMILY_SITES: SiteDef[] = DIRECTORY_SITES.filter((s) => !FAMILY_OMITTED.has(s.id))
 
 // The company the copyright belongs to — Agentic Development Studio, which is also
@@ -29,6 +36,54 @@ export const FAMILY_SITES: SiteDef[] = DIRECTORY_SITES.filter((s) => !FAMILY_OMI
 // studio row is an absolute `{ href }`.
 export const BRAND_LABEL = 'Agentic Development Studio'
 export const BRAND_HREF = 'https://agenticdevelopmentstudio.com/'
+
+/** One row of the "All sites" panel (SitesPopover): a name, a line saying what it is, and where
+ *  it goes. */
+export type SitesPanelEntry = { key: string; label: string; href: string; description?: string }
+
+/** A group of the "All sites" panel, titled like the registry's SITE_CATEGORIES. */
+export type SitesPanelGroup = { label: string; entries: SitesPanelEntry[] }
+
+function siteEntry(site: SiteDef): SitesPanelEntry {
+  return { key: site.id, label: site.label, href: siteProdUrl(site.id, '/'), description: site.description }
+}
+
+function registryEntry(id: SiteId): SitesPanelEntry {
+  const site = getSite(id)
+  if (!site) throw new Error(`no registry site '${id}'`)
+  return siteEntry(site)
+}
+
+/** What the panel lists beyond FOOTER_SITES, each with the group it files under. The four the
+ *  registry delists (`listed: false`) are still served, each from its own app, so the panel
+ *  links them; SITE_CATEGORIES may name only listed sites, so their group is set here. The
+ *  studio and My Agentic Projects have no registry entry at all (the studio deliberately; see
+ *  BRAND_HREF above), so their rows are literal. */
+const SITES_PANEL_ADDITIONS: { group: string; entry: SitesPanelEntry }[] = [
+  // By its full name: the hub's own Help is in the panel too, under Hub.
+  { group: 'Learn', entry: { ...registryEntry('help'), label: 'Agentic Developer Help' } },
+  { group: 'Plan', entry: { key: 'myagenticprojects', label: 'My Agentic Projects', href: 'https://myagenticprojects.com/', description: 'Agentic software projects' } },
+  { group: 'Build', entry: registryEntry('recipes') },
+  { group: 'Products', entry: registryEntry('education') },
+  { group: 'Hire', entry: registryEntry('consulting') },
+  { group: 'Hire', entry: { key: 'studio', label: BRAND_LABEL, href: BRAND_HREF, description: 'The studio behind the Hub' } },
+]
+
+/** The "All sites" panel: every site the family serves, grouped. FOOTER_SITES in the registry's
+ *  groups, with SITES_PANEL_ADDITIONS appended to theirs. The same on every page, the landing
+ *  page included. */
+export function sitesPanelGroups(): SitesPanelGroup[] {
+  const groups: SitesPanelGroup[] = groupSitesByCategory(FOOTER_SITES).map((g) => ({
+    label: g.label,
+    entries: g.sites.map(siteEntry),
+  }))
+  for (const { group, entry } of SITES_PANEL_ADDITIONS) {
+    const target = groups.find((g) => g.label === group)
+    if (!target) throw new Error(`no "All sites" group '${group}'`)
+    target.entries.push(entry)
+  }
+  return groups
+}
 
 /** The DOM id of the single shared sites-overview popover. The footer renders
  *  the panel once; every trigger (the "Sites" entry in the footer's copyright

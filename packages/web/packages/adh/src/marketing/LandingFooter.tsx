@@ -9,7 +9,7 @@ import {
 } from "@agentic-toolkit/adh/footer";
 // Relative, deliberately: identity holds constants and one pure function, no state and no
 // directive, so the copy inlined here forks nothing.
-import { ADH_CONTACT, FAMILY_SITES, buildVersionLabel, type SiteContact } from "../footer/identity";
+import { ADH_CONTACT, buildVersionLabel, type SiteContact } from "../footer/identity";
 
 export { LANDING_FOOTER_CLASS } from "../footer/identity";
 
@@ -28,13 +28,14 @@ export type LandingFooterProps = {
  * `SiteFooter`, and bitbag stays where the frame pins him. Every link is in the server HTML,
  * so the directory is also the page's crawlable interlink set.
  *
- * The directory and the panel "All sites" opens both list FAMILY_SITES.
+ * The directory lists FAMILY_SITES; the panel "All sites" opens lists every site the family
+ * serves, as it does on every page.
  */
 export function LandingFooter({ contact = ADH_CONTACT }: LandingFooterProps = {}): ReactElement {
   return (
     <>
       <FamilyFooter version={buildVersionLabel()} anchored contact={contact} />
-      <SitesPopover sites={FAMILY_SITES} />
+      <SitesPopover />
       <TermsModal />
       <PrivacyModal />
     </>

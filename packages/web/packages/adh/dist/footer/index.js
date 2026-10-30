@@ -133,7 +133,7 @@ function AdhModalPopover({ id, title, children, bodyClassName, className }) {
 }
 
 // src/footer/FamilyFooter.tsx
-import { getSite, groupSitesByCategory, siteProdUrl } from "@agentic-toolkit/adh-registry";
+import { getSite as getSite2, groupSitesByCategory as groupSitesByCategory2, siteProdUrl as siteProdUrl2 } from "@agentic-toolkit/adh-registry";
 
 // src/header/PreviewNotice.tsx
 import { useEffect, useId, useRef, useState } from "react";
@@ -188,13 +188,48 @@ function PreviewNotice({
 }
 
 // src/footer/identity.tsx
-import { DIRECTORY_SITES } from "@agentic-toolkit/adh-registry";
+import {
+  DIRECTORY_SITES,
+  FOOTER_SITES,
+  getSite,
+  groupSitesByCategory,
+  siteProdUrl
+} from "@agentic-toolkit/adh-registry";
 import { jsx as jsx4 } from "react/jsx-runtime";
 var LANDING_FOOTER_CLASS = "adh-landing-footer";
 var FAMILY_OMITTED = /* @__PURE__ */ new Set(["shipr", "registry", "fishlamp", "fishlampdesign"]);
 var FAMILY_SITES = DIRECTORY_SITES.filter((s) => !FAMILY_OMITTED.has(s.id));
 var BRAND_LABEL = "Agentic Development Studio";
 var BRAND_HREF = "https://agenticdevelopmentstudio.com/";
+function siteEntry(site) {
+  return { key: site.id, label: site.label, href: siteProdUrl(site.id, "/"), description: site.description };
+}
+function registryEntry(id) {
+  const site = getSite(id);
+  if (!site) throw new Error(`no registry site '${id}'`);
+  return siteEntry(site);
+}
+var SITES_PANEL_ADDITIONS = [
+  // By its full name: the hub's own Help is in the panel too, under Hub.
+  { group: "Learn", entry: { ...registryEntry("help"), label: "Agentic Developer Help" } },
+  { group: "Plan", entry: { key: "myagenticprojects", label: "My Agentic Projects", href: "https://myagenticprojects.com/", description: "Agentic software projects" } },
+  { group: "Build", entry: registryEntry("recipes") },
+  { group: "Products", entry: registryEntry("education") },
+  { group: "Hire", entry: registryEntry("consulting") },
+  { group: "Hire", entry: { key: "studio", label: BRAND_LABEL, href: BRAND_HREF, description: "The studio behind the Hub" } }
+];
+function sitesPanelGroups() {
+  const groups = groupSitesByCategory(FOOTER_SITES).map((g) => ({
+    label: g.label,
+    entries: g.sites.map(siteEntry)
+  }));
+  for (const { group, entry } of SITES_PANEL_ADDITIONS) {
+    const target = groups.find((g) => g.label === group);
+    if (!target) throw new Error(`no "All sites" group '${group}'`);
+    target.entries.push(entry);
+  }
+  return groups;
+}
 var SITES_OVERVIEW_POPOVER_ID = "adh-sites-overview";
 var ADH_CONTACT = {
   name: "Agentic Developer Hub",
@@ -266,28 +301,28 @@ function openLegalModal(dialogId) {
 import { jsx as jsx6, jsxs as jsxs5 } from "react/jsx-runtime";
 var NATIVE_TOOLS_TITLE = "Native Tools";
 var NATIVE_BADGE = "macOS";
-function siteEntry(site) {
+function siteEntry2(site) {
   return {
     label: site.label,
-    href: siteProdUrl(site.id, "/"),
+    href: siteProdUrl2(site.id, "/"),
     ...site.nativeApp ? { badge: NATIVE_BADGE } : {}
   };
 }
 function siteColumns(sites) {
   const columns = [];
-  for (const group of groupSitesByCategory(sites)) {
+  for (const group of groupSitesByCategory2(sites)) {
     const web = group.sites.filter((s) => !s.nativeApp);
     const native = group.sites.filter((s) => s.nativeApp);
-    if (web.length > 0) columns.push({ title: group.label, entries: web.map(siteEntry) });
-    if (native.length > 0) columns.push({ title: NATIVE_TOOLS_TITLE, entries: native.map(siteEntry) });
+    if (web.length > 0) columns.push({ title: group.label, entries: web.map(siteEntry2) });
+    if (native.length > 0) columns.push({ title: NATIVE_TOOLS_TITLE, entries: native.map(siteEntry2) });
   }
   return columns;
 }
 function aboutEntries() {
-  const fishlamp = getSite("fishlamp");
+  const fishlamp = getSite2("fishlamp");
   return [
     { label: BRAND_LABEL, href: BRAND_HREF },
-    ...fishlamp ? [{ label: fishlamp.label, href: siteProdUrl("fishlamp", "/") }] : []
+    ...fishlamp ? [{ label: fishlamp.label, href: siteProdUrl2("fishlamp", "/") }] : []
   ];
 }
 var LEGAL_ENTRIES = [
@@ -354,10 +389,9 @@ function FooterChat() {
 }
 
 // src/footer/SitesOverview.tsx
-import { FOOTER_SITES, groupSitesByCategory as groupSitesByCategory2, siteProdUrl as siteProdUrl2 } from "@agentic-toolkit/adh-registry";
 import { jsx as jsx8, jsxs as jsxs6 } from "react/jsx-runtime";
-function SitesPopover({ sites = FOOTER_SITES } = {}) {
-  const groups = groupSitesByCategory2(sites);
+function SitesPopover() {
+  const groups = sitesPanelGroups();
   return /* @__PURE__ */ jsx8(AdhModalPopover, { id: SITES_OVERVIEW_POPOVER_ID, title: "The Agentic Developer family", children: groups.map((group) => /* @__PURE__ */ jsxs6(
     "nav",
     {
@@ -365,17 +399,10 @@ function SitesPopover({ sites = FOOTER_SITES } = {}) {
       "aria-label": group.label,
       children: [
         /* @__PURE__ */ jsx8("h3", { className: "adh-sites-popover__group-title", children: group.label }),
-        /* @__PURE__ */ jsx8("ul", { className: "adh-sites-popover__list", children: group.sites.map((site) => /* @__PURE__ */ jsx8("li", { children: /* @__PURE__ */ jsxs6(
-          "a",
-          {
-            className: "adh-sites-popover__item",
-            href: siteProdUrl2(site.id, "/"),
-            children: [
-              /* @__PURE__ */ jsx8("span", { className: "adh-sites-popover__name", children: site.label }),
-              site.description && /* @__PURE__ */ jsx8("span", { className: "adh-sites-popover__blurb", children: site.description })
-            ]
-          }
-        ) }, site.id)) })
+        /* @__PURE__ */ jsx8("ul", { className: "adh-sites-popover__list", children: group.entries.map((entry) => /* @__PURE__ */ jsx8("li", { children: /* @__PURE__ */ jsxs6("a", { className: "adh-sites-popover__item", href: entry.href, children: [
+          /* @__PURE__ */ jsx8("span", { className: "adh-sites-popover__name", children: entry.label }),
+          entry.description && /* @__PURE__ */ jsx8("span", { className: "adh-sites-popover__blurb", children: entry.description })
+        ] }) }, entry.key)) })
       ]
     },
     group.label
