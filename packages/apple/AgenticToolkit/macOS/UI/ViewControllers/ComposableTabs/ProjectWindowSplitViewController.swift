@@ -8,9 +8,10 @@ import AgenticToolkitCoreUI
 ///
 /// Both halves run the full height of the window, up behind a clear titlebar,
 /// and each paints that strip in its own colour, which is what makes the
-/// titlebar seamless: there is no band of a third colour across the top. What
-/// each half *lays out* starts at the safe area, below the traffic lights and
-/// the toolbar, so nothing clickable sits under them.
+/// titlebar seamless: there is no band of a third colour across the top. The
+/// content is laid out from the safe area, below the toolbar; the shelf is
+/// given the whole height, because its card encloses the traffic lights and
+/// lays out its own controls from the safe area.
 ///
 /// The shelf is the Conversations shelf's shape, for the same reasons: a plain
 /// split item rather than a sidebar one, because sidebar material is drawn by
@@ -38,10 +39,10 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
 
     /// - Parameters:
     ///   - content: The window's content. Laid out from the safe area down;
-    ///     the strip above it is painted the project's pane backdrop.
+    ///     the strip above it is painted the window background.
     ///   - shelf: The shelf, or `nil` for a window with none — a host with no
-    ///     projects to list. Laid out from the safe area down on the project's
-    ///     pane backdrop, which its bordered card sits on.
+    ///     projects to list. Given the full height on the project's pane
+    ///     backdrop, which its bordered card sits on.
     init(content: NSViewController, shelf: ProjectShelfViewController?) {
         self.content = content
         self.shelf = shelf
@@ -63,7 +64,7 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         let contentHost = SafeAreaHostViewController(child: content)
 
         if let shelf {
-            let shelfHost = SafeAreaHostViewController(child: shelf)
+            let shelfHost = SafeAreaHostViewController(child: shelf, pinsToSafeArea: false)
             // The width the shelf opens at, and the reason it is a constraint
             // rather than a divider position: it is what a split view asks the
             // pane for, and it loses to the reader's own drag the moment there
@@ -104,7 +105,10 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
             MainActor.assumeIsolated { self?.rememberShelfWidth() }
         }
         themeObserver = ThemePaletteObserver(host: view) { [weak contentHost, weak self] palette in
-            contentHost?.backdropColor = NSColor(palette.projectPaneBackdrop)
+            // The window background, the shelf card's and the tab list's
+            // fill, so the strip behind the title reads as the same window
+            // rather than as a titlebar laid across it.
+            contentHost?.backdropColor = palette.nsColor(.windowBackground)
             if let shelfHost = self?.shelfItem?.viewController as? SafeAreaHostViewController {
                 shelfHost.backdropColor = NSColor(palette.projectPaneBackdrop)
             }
@@ -214,19 +218,24 @@ public struct ProjectShelfLayout: Sendable, Equatable {
     public var width: CGFloat
 }
 
-/// Hosts one view controller below the window's safe area, over a backdrop that
-/// fills the whole pane — the strip behind the clear titlebar included.
+/// Hosts one view controller — below the window's safe area, or over the whole
+/// height — on a backdrop that fills the whole pane, the strip behind the clear
+/// titlebar included.
 @MainActor
 private final class SafeAreaHostViewController: NSViewController {
 
     private let child: NSViewController
+    private let pinsToSafeArea: Bool
 
     var backdropColor: NSColor = .clear {
         didSet { view.layer?.backgroundColor = backdropColor.cgColor }
     }
 
-    init(child: NSViewController) {
+    /// - Parameter pinsToSafeArea: Whether the child starts below the
+    ///   titlebar, or is given the whole height to place things itself.
+    init(child: NSViewController, pinsToSafeArea: Bool = true) {
         self.child = child
+        self.pinsToSafeArea = pinsToSafeArea
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -251,7 +260,8 @@ private final class SafeAreaHostViewController: NSViewController {
         for constraint in horizontal { constraint.priority = .defaultHigh }
 
         NSLayoutConstraint.activate(horizontal + [
-            childView.topAnchor.constraint(equalTo: container.safeAreaLayoutGuide.topAnchor),
+            childView.topAnchor.constraint(
+                equalTo: pinsToSafeArea ? container.safeAreaLayoutGuide.topAnchor : container.topAnchor),
             childView.bottomAnchor.constraint(equalTo: container.bottomAnchor)
         ])
         self.view = container

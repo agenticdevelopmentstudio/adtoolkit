@@ -165,6 +165,20 @@ public enum WindowToolbarItem {
         action: Selector)
     case search(identifier: NSToolbarItem.Identifier, placeholder: String)
     case flexibleSpace
+    /// Splits the toolbar at a split view's divider, as a sidebar does: the
+    /// items before it sit over the leading pane, and the window title and
+    /// everything after it over the rest. The split view is asked for when
+    /// the item is built, because a toolbar delegate is made before the
+    /// window it decorates.
+    case trackingSeparator(
+        identifier: NSToolbarItem.Identifier,
+        splitView: @MainActor () -> NSSplitView?,
+        dividerIndex: Int)
+    /// The window's title, drawn as a toolbar item so it sits where the list
+    /// puts it — after a tracking separator, over the content rather than the
+    /// sidebar — instead of where AppKit puts its own. For a window whose
+    /// `titleVisibility` is `.hidden`; see `Delegate.titleWindow`.
+    case windowTitle(identifier: NSToolbarItem.Identifier)
 
     var identifier: NSToolbarItem.Identifier {
         switch self {
@@ -172,6 +186,8 @@ public enum WindowToolbarItem {
         case .segmented(let identifier, _, _, _): identifier
         case .search(let identifier, _): identifier
         case .flexibleSpace: .flexibleSpace
+        case .trackingSeparator(let identifier, _, _): identifier
+        case .windowTitle(let identifier): identifier
         }
     }
 }
@@ -221,6 +237,17 @@ extension WindowToolbarBuilder {
 
         public private(set) var searchField: NSSearchField?
 
+        /// The window whose title a `.windowTitle` slot shows. Bound, not
+        /// copied: `NSWindow.title` stays the one place the title is set, and
+        /// it still feeds the Window menu and Mission Control (`dry`). Set it
+        /// before the toolbar builds the slot or after; either way the label
+        /// ends up bound.
+        public weak var titleWindow: NSWindow? {
+            didSet { bindTitleLabel() }
+        }
+
+        private var titleLabel: ThemedLabel?
+
         public init(
             items: [WindowToolbarItem],
             target: AnyObject?,
@@ -246,6 +273,13 @@ extension WindowToolbarBuilder {
         /// asked for it (or for a slot that is not a picker).
         public func segmentedControl(for identifier: NSToolbarItem.Identifier) -> NSSegmentedControl? {
             self.segmentedControls[identifier]
+        }
+
+        private func bindTitleLabel() {
+            guard let titleLabel else { return }
+            titleLabel.unbind(.value)
+            guard let titleWindow else { return }
+            titleLabel.bind(.value, to: titleWindow, withKeyPath: "title")
         }
 
         /// A toolbar already pointed at this delegate. Call it from somewhere
@@ -279,6 +313,28 @@ extension WindowToolbarBuilder {
             switch descriptor {
             case .flexibleSpace:
                 return nil  // AppKit supplies the standard spacer itself.
+
+            case .windowTitle(let identifier):
+                let label = ThemedLabel(string: "", role: .primaryText, textRole: .heading)
+                label.setContentHuggingPriority(.defaultHigh, for: .horizontal)
+                label.lineBreakMode = .byTruncatingTail
+                label.accessibilityID(identifier.rawValue)
+                let item = NSToolbarItem(itemIdentifier: identifier)
+                item.label = "Title"
+                item.paletteLabel = item.label
+                item.view = label
+                item.visibilityPriority = .high
+                // Only the item going into the toolbar is the live one; see
+                // `SettingsWindow`'s help button for the same rule.
+                guard flag else { return item }
+                titleLabel = label
+                bindTitleLabel()
+                return item
+
+            case .trackingSeparator(let identifier, let splitView, let dividerIndex):
+                guard let splitView = splitView() else { return nil }
+                return NSTrackingSeparatorToolbarItem(
+                    identifier: identifier, splitView: splitView, dividerIndex: dividerIndex)
 
             case .button(let identifier, let symbol, let label, let action):
                 let (item, button) = WindowToolbarBuilder.iconButtonItem(

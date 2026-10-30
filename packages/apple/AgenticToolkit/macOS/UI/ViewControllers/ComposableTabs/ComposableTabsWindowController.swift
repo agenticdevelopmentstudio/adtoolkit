@@ -19,6 +19,36 @@ private extension NSToolbarItem.Identifier {
 /// UI suite finds it by this one string in either.
 extension NSToolbarItem.Identifier {
     static let projectToggleShelf = NSToolbarItem.Identifier("project.toolbar.toggle-shelf")
+    /// Tracks the shelf's divider, so the toggle stays over the shelf and the
+    /// window title starts over the project — Xcode's navigator.
+    static let projectShelfSeparator = NSToolbarItem.Identifier("project.toolbar.shelf-separator")
+    /// The window's title, after the separator: left-justified over the
+    /// project, as Xcode puts its scheme and title, not over the shelf.
+    static let projectTitle = NSToolbarItem.Identifier("project.toolbar.title")
+}
+
+extension WindowToolbarItem {
+    /// The leading end of a project window's toolbar: the shelf toggle, over
+    /// the shelf, the separator that tracks the shelf's divider, and the
+    /// window's title over the project. The window hides AppKit's own title,
+    /// which stays beside the traffic lights whatever the toolbar says. Shared
+    /// by the project window and the empty one, which must look the same
+    /// (`dry`).
+    @MainActor
+    static func projectShelfItems(
+        toggleAction: Selector,
+        splitView: @escaping @MainActor () -> NSSplitView?
+    ) -> [WindowToolbarItem] {
+        [
+            .button(
+                identifier: .projectToggleShelf,
+                symbol: "sidebar.left",
+                label: "Projects",
+                action: toggleAction),
+            .trackingSeparator(identifier: .projectShelfSeparator, splitView: splitView, dividerIndex: 0),
+            .windowTitle(identifier: .projectTitle)
+        ]
+    }
 }
 
 /// What a project remembers about its window, under `project_setting`.
@@ -132,10 +162,7 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         searchDelegate: self,
         onSearchFieldCreated: { [weak self] field in
             self?.applySearchAvailability(to: field)
-        },
-        // Beside the traffic lights, before the project's name, where Xcode
-        // keeps its navigator toggle.
-        navigationalItems: [.projectToggleShelf]
+        }
     )
 
     /// The titlebar search field, once the toolbar has built it.
@@ -392,6 +419,9 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
     /// A unified toolbar, matching the Notes window, and the help drawer. The
     /// window title stays visible here where it does not in Notes: the title is
     /// the project's name, which is the one thing the toolbar does not say.
+    /// With a shelf, the toolbar draws it after the shelf's tracking
+    /// separator, so it is left-justified over the project rather than over
+    /// the shelf.
     ///
     /// Deliberately deprecated, exactly as `SettingsWindow`'s override is:
     /// `ProjectHelpDrawerController` wraps `NSDrawer`, and naming it from
@@ -408,6 +438,12 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         // behind the traffic lights. The title stays — see above.
         window.titlebarAppearsTransparent = true
         window.titlebarSeparatorStyle = .none
+        if shelf != nil {
+            // The toolbar draws the title after the shelf instead — see
+            // `WindowToolbarItem.projectShelfItems`.
+            window.titleVisibility = .hidden
+            toolbarDelegate.titleWindow = window
+        }
         window.backgroundColor = NSColor(ThemePaletteObserver.currentPalette.projectPaneBackdrop)
         // A project window is its own tab host. Left `.automatic`, AppKit
         // merges a newly opened project into the front project window as a
@@ -459,13 +495,9 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
     /// The toggle, when there is a shelf to toggle.
     private var shelfToolbarItems: [WindowToolbarItem] {
         guard shelf != nil else { return [] }
-        return [
-            .button(
-                identifier: .projectToggleShelf,
-                symbol: "sidebar.left",
-                label: "Projects",
-                action: #selector(ComposableTabsWindowController.toggleShelf))
-        ]
+        return WindowToolbarItem.projectShelfItems(
+            toggleAction: #selector(ComposableTabsWindowController.toggleShelf),
+            splitView: { [weak self] in self?.windowContent.splitView })
     }
 
     public var isShelfVisible: Bool { windowContent.isShelfVisible }

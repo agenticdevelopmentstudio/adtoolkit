@@ -59,8 +59,13 @@ public final class ProjectShelfViewController: NSViewController {
 
         // Inset from the pane and drawn on the project backdrop the split view
         // paints behind it — the border is what makes it read as a navigator
-        // rather than as more window.
-        let card = ThemedBox(fill: .windowBackground, stroke: .border, cornerRadius: 10)
+        // rather than as more window. It runs the full height of the window,
+        // up behind the clear titlebar, so the traffic lights and the shelf
+        // toggle sit inside it, as they do in Xcode's navigator; what is laid
+        // out in it starts below them, at the safe area.
+        // `outline`, the stronger stroke: `border` is a hairline meant to sit
+        // between two things and vanished against the pane backdrop.
+        let card = ThemedBox(fill: .windowBackground, stroke: .outline, cornerRadius: 12)
         card.layer?.masksToBounds = true
         card.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(card)
@@ -106,10 +111,10 @@ public final class ProjectShelfViewController: NSViewController {
         for constraint in edges { constraint.priority = .defaultHigh }
 
         NSLayoutConstraint.activate(edges + [
-            card.topAnchor.constraint(equalTo: container.topAnchor, constant: 4),
+            card.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
             card.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8),
 
-            bar.topAnchor.constraint(equalTo: card.topAnchor),
+            bar.topAnchor.constraint(equalTo: container.safeAreaLayoutGuide.topAnchor),
             bar.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 4),
             bar.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -4),
             bar.heightAnchor.constraint(equalToConstant: 30),
@@ -162,13 +167,17 @@ public final class ProjectShelfViewController: NSViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
-        browser.onChoose = { [weak self] repo in self?.onLoadProject?(repo) }
+        // Choosing from the browser makes the project active, so the shelf
+        // moves to where it now is: the active list, with it highlighted. Its
+        // filter is cleared so nothing typed there earlier can hide it.
+        browser.onChoose = { [weak self] repo in
+            guard let self else { return }
+            self.onLoadProject?(repo)
+            self.group.filterText[.activeProjects] = ""
+            self.group.panel = .activeProjects
+        }
         activeProjects.onChoose = { [weak self] id in self?.onShowActiveProject?(id) }
         activeProjects.onClose = { [weak self] id in self?.onCloseActiveProject?(id) }
-        activeProjects.hasKeyboardFocus = { [weak self] in
-            guard let self, self.view.window?.isKeyWindow == true else { return false }
-            return self.focus != .elsewhere
-        }
 
         themeObserver = ThemePaletteObserver(host: view) { [weak self] _ in self?.refreshPanelButtons() }
 

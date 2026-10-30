@@ -10,21 +10,19 @@ import AgenticToolkitCoreMacOS
 /// choosing one is a swap rather than a load. The list follows the window's
 /// `ProjectWindowGroup`; it owns nothing but the highlight.
 ///
-/// While the list or the shelf's filter has the keyboard, the highlight
-/// follows the pointer, so a project can be picked by moving to it and
-/// pressing Return. A click chooses at once.
+/// Moving the highlight is choosing: an arrow key, a click, or — while the
+/// list or the shelf's filter has the keyboard — the pointer moving onto a
+/// row puts that project on screen at once, with no Return needed. That is
+/// only affordable because every project here is already running.
 @MainActor
 public final class ActiveProjectsViewController: NSViewController {
 
-    /// Called to put a project on screen: Return, Enter or a click.
+    /// Called to put a project on screen: the user moved the highlight onto
+    /// it, or pressed Return or Enter.
     public var onChoose: ((UUID) -> Void)?
     /// Called by a row's close box: close the project and drop it from the
     /// list.
     public var onClose: ((UUID) -> Void)?
-    /// Whether the shelf this list sits in has the keyboard — the list itself
-    /// or the shared filter field. Asked by the pointer-follows-highlight
-    /// rule, which must not move a highlight the user is not looking at.
-    var hasKeyboardFocus: () -> Bool = { false }
 
     private let coordinator: ProjectsCoordinator
     private let group: ProjectWindowGroup
@@ -34,6 +32,10 @@ public final class ActiveProjectsViewController: NSViewController {
     private var rows: [GitRepo] = []
     private var query = ""
     private var hoveredRow = -1
+    /// Raised while the list moves its own highlight to follow the window —
+    /// the shown project, a reload — so that move is not taken for the user
+    /// choosing a project.
+    private var isFollowingWindow = false
     private var cancellables: Set<AnyCancellable> = []
     private var changeObserver: NSObjectProtocol?
 
@@ -170,7 +172,7 @@ public final class ActiveProjectsViewController: NSViewController {
     /// the project you are looking at".
     public func highlight(repoID: UUID) {
         guard let row = rows.firstIndex(where: { $0.id == repoID }) else { return }
-        select(row: row)
+        follow(row: row)
     }
 
     // MARK: - Rows
@@ -188,12 +190,20 @@ public final class ActiveProjectsViewController: NSViewController {
             : "No active projects match “\(query)”."
 
         if let previous, let row = rows.firstIndex(where: { $0.id == previous }) {
-            select(row: row)
+            follow(row: row)
         } else if !query.isEmpty, !rows.isEmpty {
-            select(row: 0)
+            follow(row: 0)
         }
     }
 
+    /// Moves the highlight without choosing anything.
+    private func follow(row: Int) {
+        isFollowingWindow = true
+        defer { isFollowingWindow = false }
+        select(row: row)
+    }
+
+    /// Moves the highlight, which chooses that project — see the type's note.
     private func select(row: Int) {
         guard rows.indices.contains(row) else { return }
         table.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
@@ -217,18 +227,23 @@ public final class ActiveProjectsViewController: NSViewController {
         onChoose?(rows[row].id)
     }
 
-    /// The pointer moved onto `row` (`-1`: off every row). The close box
-    /// follows the pointer always; the highlight only while the keyboard is
-    /// in the shelf.
+    /// The user moved the highlight: show that project, unless it is the one
+    /// already on screen.
+    private func chooseAfterUserMove() {
+        guard !isFollowingWindow, let id = highlightedRepoID, id != group.selectedRepoID else { return }
+        onChoose?(id)
+    }
+
+    /// The pointer moved onto `row` (`-1`: off every row). Only the close box
+    /// follows the pointer: moving the highlight shows that project, so a
+    /// highlight that tracked the pointer would swap projects as it crossed
+    /// the list (principle-of-least-astonishment).
     private func hover(row: Int) {
         guard row != hoveredRow else { return }
         let previous = hoveredRow
         hoveredRow = row
         refreshCloseBox(row: previous)
         refreshCloseBox(row: row)
-        if row >= 0, hasKeyboardFocus() {
-            select(row: row)
-        }
     }
 
     private func refreshCloseBox(row: Int) {
@@ -266,6 +281,7 @@ extension ActiveProjectsViewController: NSTableViewDataSource, NSTableViewDelega
 
     public func tableViewSelectionDidChange(_ notification: Notification) {
         for row in 0..<rows.count { refreshCloseBox(row: row) }
+        chooseAfterUserMove()
     }
 }
 

@@ -37,16 +37,11 @@ public final class EmptyProjectWindowController: SingleWindowController {
     /// Stored for the reason `ComposableTabsWindowController.toolbarDelegate`
     /// is: `NSToolbar.delegate` is weak.
     private lazy var toolbarDelegate = WindowToolbarBuilder.Delegate(
-        items: [
-            .button(
-                identifier: .projectToggleShelf,
-                symbol: "sidebar.left",
-                label: "Projects",
-                action: #selector(EmptyProjectWindowController.toggleShelf)),
-            .flexibleSpace
-        ],
-        target: self,
-        navigationalItems: [.projectToggleShelf]
+        items: WindowToolbarItem.projectShelfItems(
+            toggleAction: #selector(EmptyProjectWindowController.toggleShelf),
+            splitView: { [weak self] in self?.windowContent.splitView }
+        ) + [.flexibleSpace],
+        target: self
     )
 
     /// The window id an empty window of group `groupID` saves its frame
@@ -85,6 +80,8 @@ public final class EmptyProjectWindowController: SingleWindowController {
         window.toolbarStyle = .unified
         window.titlebarAppearsTransparent = true
         window.titlebarSeparatorStyle = .none
+        window.titleVisibility = .hidden
+        toolbarDelegate.titleWindow = window
         window.tabbingMode = .disallowed
         window.backgroundColor = NSColor(ThemePaletteObserver.currentPalette.projectPaneBackdrop)
         backdropObserver = ThemePaletteObserver(host: windowContent.view) { [weak self] palette in
