@@ -376,6 +376,15 @@
   width: var(--bb-dock-panel-w);
   pointer-events: none;
 }
+/* The chat's wrapper is the theme's scope, and ThemeStyle rewrites a theme's `body` rule to
+ * `:scope` — so a site theme's page surface (fishlamp's near-black and its glow) lands on this
+ * box and paints a square behind the rounded chat. In the dock he rides over someone else's
+ * page, which keeps its own background; only `.persona-chat` paints. (0,2,0) outranks the
+ * scoped `:scope` (0,1,0). On bitbag.ai, where he IS the page, the wrapper keeps it. */
+.bb-dock .bb-dock__chat {
+  background: none;
+}
+
 .bb-dock__chat {
   pointer-events: auto;
 }
