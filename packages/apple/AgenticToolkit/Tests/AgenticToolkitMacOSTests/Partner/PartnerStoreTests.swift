@@ -39,6 +39,72 @@ final class PartnerStoreTests: XCTestCase {
         return names
     }
 
+    /// Runs `sql` on a separate raw connection and returns the first column of each row as text.
+    @discardableResult
+    private func rawQuery(_ sql: String) throws -> [String] {
+        var handle: OpaquePointer?
+        XCTAssertEqual(sqlite3_open_v2(databasePath, &handle, SQLITE_OPEN_READWRITE, nil), SQLITE_OK)
+        defer { sqlite3_close(handle) }
+        var stmt: OpaquePointer?
+        defer { sqlite3_finalize(stmt) }
+        XCTAssertEqual(sqlite3_prepare_v2(handle, sql, -1, &stmt, nil), SQLITE_OK)
+        var values: [String] = []
+        while sqlite3_step(stmt) == SQLITE_ROW {
+            values.append(sqlite3_column_text(stmt, 0).map { String(cString: $0) } ?? "")
+        }
+        return values
+    }
+
+    func testStoredVersionMatchesCurrentSchemaVersion() throws {
+        XCTAssertEqual(try rawQuery("SELECT MAX(version) FROM schema_migrations"),
+                       [String(PartnerStore.currentSchemaVersion)])
+        store = nil
+        store = try PartnerStore(path: databasePath)
+        XCTAssertEqual(try rawQuery("SELECT COUNT(*) FROM schema_migrations"), ["1"])
+    }
+
+    func testNewerSchemaFileFailsToOpen() throws {
+        store = nil
+        try rawQuery("INSERT INTO schema_migrations (version) VALUES (99)")
+        XCTAssertThrowsError(try PartnerStore(path: databasePath)) { error in
+            guard case PartnerStoreError.newerSchema(let found, let supported) = error else {
+                return XCTFail("unexpected error \(error)")
+            }
+            XCTAssertEqual(found, 99)
+            XCTAssertEqual(supported, PartnerStore.currentSchemaVersion)
+        }
+    }
+
+    func testDatabaseFilesAreOwnerOnly() throws {
+        try store.append(ChatMessage(role: .user, text: "secret"))
+        store = nil
+        store = try PartnerStore(path: databasePath)
+        for suffix in ["", "-wal", "-shm"] where FileManager.default.fileExists(atPath: databasePath + suffix) {
+            let attributes = try FileManager.default.attributesOfItem(atPath: databasePath + suffix)
+            XCTAssertEqual(attributes[.posixPermissions] as? Int, 0o600, "permissions of Partner.db\(suffix)")
+        }
+    }
+
+    func testTwoStoresOnOneFileCannotBothAcquireTheLock() throws {
+        let other = try PartnerStore(path: databasePath)
+        XCTAssertTrue(try store.acquireLock(pid: 100, isAlive: { _ in true }))
+        XCTAssertFalse(try other.acquireLock(pid: 200, isAlive: { _ in true }))
+        XCTAssertEqual(try other.liveLock()?.pid, 100)
+    }
+
+    func testConcurrentAcquireAcrossStoresHasOneWinner() throws {
+        let stores = [store!, try PartnerStore(path: databasePath)]
+        for round in 0..<20 {
+            try rawQuery("DELETE FROM partner_lock")
+            let results = LockedResults()
+            DispatchQueue.concurrentPerform(iterations: 2) { index in
+                let won = (try? stores[index].acquireLock(pid: Int32(1000 + index), isAlive: { _ in true })) ?? false
+                results.add(won)
+            }
+            XCTAssertEqual(results.values.filter { $0 }.count, 1, "round \(round)")
+        }
+    }
+
     func testMigrationCreatesTablesAndVersion() throws {
         let expected: Set<String> = [
             "attention_item", "attention_action", "partner_message", "job", "partner_session",
@@ -170,6 +236,9 @@ final class PartnerStoreTests: XCTestCase {
     func testToolCallLog() throws {
         try store.logToolCall(caller: nil, name: "open", arguments: "{}", isError: true)
         try store.logToolCall(caller: "pane-1", name: "close", arguments: "{}", isError: false)
+        let rows = try rawQuery(
+            "SELECT name || ':' || COALESCE(caller, '-') || ':' || is_error FROM tool_call ORDER BY id")
+        XCTAssertEqual(rows, ["open:-:1", "close:pane-1:0"])
     }
 
     func testLockRefusesLivePidAndTakesOverDeadOne() throws {
@@ -192,6 +261,14 @@ final class PartnerStoreTests: XCTestCase {
         try store.append(ChatMessage(role: .user, text: "x"))
         try store.upsert(PartnerJob(id: "j", name: "n", isEnabled: true, guidelines: "", steps: []))
         try store.setValue("v", forKey: "k")
-        XCTAssertEqual(received, [.attention, .transcript, .jobs, .settings])
+        try store.upsert(PartnerStore.SessionRecord(id: "s", title: "t", directory: "/", openedAt: Date()))
+        XCTAssertEqual(received, [.attention, .transcript, .jobs, .settings, .sessions])
     }
+}
+
+private final class LockedResults: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: [Bool] = []
+    func add(_ value: Bool) { lock.lock(); storage.append(value); lock.unlock() }
+    var values: [Bool] { lock.lock(); defer { lock.unlock() }; return storage }
 }

@@ -46,7 +46,7 @@ extension PartnerStore {
                 sql += " OR (state = 'done' AND completed_at > ?)"
                 binds.append(.date(cutoff))
             }
-            sql += " ORDER BY (state = 'done'), created_at DESC"
+            sql += " ORDER BY (state = 'done'), created_at DESC, rowid"
             return try runQuery(sql, binds, Self.attentionItem(from:))
         }
     }
@@ -78,11 +78,13 @@ extension PartnerStore {
     public func purgeDone(completedBefore date: Date) throws -> Int {
         try write(.attention) {
             let cutoff = Value.date(date)
-            try run("""
-                DELETE FROM attention_action WHERE item_id IN
-                    (SELECT id FROM attention_item WHERE state = 'done' AND completed_at < ?)
-            """, [cutoff])
-            return try run("DELETE FROM attention_item WHERE state = 'done' AND completed_at < ?", [cutoff])
+            return try transaction {
+                try run("""
+                    DELETE FROM attention_action WHERE item_id IN
+                        (SELECT id FROM attention_item WHERE state = 'done' AND completed_at < ?)
+                """, [cutoff])
+                return try run("DELETE FROM attention_item WHERE state = 'done' AND completed_at < ?", [cutoff])
+            }
         }
     }
 

@@ -38,7 +38,7 @@ extension PartnerStore {
                 SELECT id, role, text, attribution_source, attribution_name, attribution_icon,
                     attribution_context_json, created_at
                 FROM partner_message ORDER BY rowid DESC LIMIT ?
-            """, [.int(Int64(limit))], Self.message(from:)).reversed()
+            """, [.int(Int64(max(limit, 0)))], Self.message(from:)).reversed()
         }
     }
 

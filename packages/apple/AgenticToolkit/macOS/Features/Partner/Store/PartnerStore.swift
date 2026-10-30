@@ -9,6 +9,9 @@ public enum PartnerStoreError: Error {
     case prepareFailed(String)
     case executionFailed(String)
     case invalidData(String)
+    case invalidSchema(String)
+    /// The file was written by a newer build than this one understands.
+    case newerSchema(found: Int, supported: Int)
 }
 
 /// The Coding Partner's one database, `Partner.db`.
@@ -50,6 +53,7 @@ public final class PartnerStore: @unchecked Sendable {
         }
         try openDatabase()
         try runMigrations()
+        restrictPermissions()
     }
 
     deinit {
@@ -79,13 +83,31 @@ public final class PartnerStore: @unchecked Sendable {
                     applied_at TEXT NOT NULL DEFAULT (datetime('now'))
                 )
             """)
-            if try schemaVersion() < 1 {
+            let stored = try schemaVersion()
+            guard stored <= Self.currentSchemaVersion else {
+                throw PartnerStoreError.newerSchema(found: stored, supported: Self.currentSchemaVersion)
+            }
+            if stored < 1 {
                 try migration001_createSchema()
+            }
+            // A migration added without bumping `currentSchemaVersion` (or the reverse) fails here, not later.
+            let migrated = try schemaVersion()
+            guard migrated == Self.currentSchemaVersion else {
+                throw PartnerStoreError.invalidSchema(
+                    "schema version \(migrated) after migrating, expected \(Self.currentSchemaVersion)")
             }
             try execute("COMMIT")
         } catch {
             _ = try? execute("ROLLBACK")
             throw error
+        }
+    }
+
+    /// The database holds transcripts, tool arguments and screens, so it and its WAL files are owner-only.
+    /// Called after the migration chain, once the WAL files exist.
+    private func restrictPermissions() {
+        for suffix in ["", "-wal", "-shm"] where FileManager.default.fileExists(atPath: databasePath + suffix) {
+            try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: databasePath + suffix)
         }
     }
 
@@ -186,11 +208,15 @@ public final class PartnerStore: @unchecked Sendable {
 
     /// Takes the lock for `pid`. False when another pid holds it and `isAlive` says it still runs.
     public func acquireLock(pid: Int32, isAlive: (Int32) -> Bool) throws -> Bool {
+        // The read and the write are one transaction: another process (Debug builds run several app copies
+        // against this file) must not slip in between and also see "no holder".
         try locked {
-            if let held = try readLock(), held.pid != pid, isAlive(held.pid) { return false }
-            try run("INSERT OR REPLACE INTO partner_lock (id, pid, started_at) VALUES (1, ?, ?)",
-                    [.int(Int64(pid)), .text(Self.string(from: Date()))])
-            return true
+            try transaction {
+                if let held = try readLock(), held.pid != pid, isAlive(held.pid) { return false }
+                try run("INSERT OR REPLACE INTO partner_lock (id, pid, started_at) VALUES (1, ?, ?)",
+                        [.int(Int64(pid)), .text(Self.string(from: Date()))])
+                return true
+            }
         }
     }
 
@@ -228,7 +254,8 @@ public final class PartnerStore: @unchecked Sendable {
 
     // MARK: - Dates
 
-    // ISO8601DateFormatter is documented thread-safe; every use here is also under `lock`.
+    // Shared across calls; this relies on ISO8601DateFormatter being documented thread-safe, because
+    // encoding of a bind value happens outside `lock` in some callers.
     nonisolated(unsafe) private static let formatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -286,6 +313,23 @@ public final class PartnerStore: @unchecked Sendable {
     }
 
     /// Runs `body` under the lock, then announces `change` once the lock is released.
+    /// Runs `body` in one `BEGIN IMMEDIATE` transaction, rolling back if it throws.
+    ///
+    /// IMMEDIATE takes the write lock up front, so the transaction is atomic against other processes on the
+    /// same file as well as other threads. Use it for any check-then-write or multi-statement write. The caller
+    /// must already hold `lock` (call from inside `locked` / `write`), and transactions do not nest.
+    func transaction<T>(_ body: () throws -> T) throws -> T {
+        try execute("BEGIN IMMEDIATE TRANSACTION")
+        do {
+            let result = try body()
+            try execute("COMMIT")
+            return result
+        } catch {
+            _ = try? execute("ROLLBACK")
+            throw error
+        }
+    }
+
     @discardableResult
     func write<T>(_ change: Change, _ body: () throws -> T) throws -> T {
         let result = try locked(body)
@@ -313,10 +357,16 @@ public final class PartnerStore: @unchecked Sendable {
         }
         for (offset, bind) in binds.enumerated() {
             let index = Int32(offset + 1)
+            let result: Int32
             switch bind {
-            case .text(let value): sqlite3_bind_text(stmt, index, value, -1, Self.transient)
-            case .int(let value): sqlite3_bind_int64(stmt, index, value)
-            case .null: sqlite3_bind_null(stmt, index)
+            case .text(let value): result = sqlite3_bind_text(stmt, index, value, -1, Self.transient)
+            case .int(let value): result = sqlite3_bind_int64(stmt, index, value)
+            case .null: result = sqlite3_bind_null(stmt, index)
+            }
+            guard result == SQLITE_OK else {
+                let message = lastErrorMessage
+                sqlite3_finalize(stmt)
+                throw PartnerStoreError.prepareFailed(message)
             }
         }
         return stmt
