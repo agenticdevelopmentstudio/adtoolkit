@@ -243,6 +243,22 @@
   font-size: 0.72rem;
 }
 
+/* The band AppShell's `landingFooter` puts the footer in on a site with no landing frame: the
+   frame's `.lp-site-foot` and `.lp-wrap`, restated (a hairline above, the band's padding, the
+   page's measure), and room at the bottom for bitbag, who rests in his own corner there. The
+   6rem is the site template's `--lp-dock-clear`, the clearance it gives him under the frame. */
+.adh-landing-footer-band {
+  padding-top: clamp(3rem, 6vw, 5rem);
+  padding-bottom: calc(clamp(3rem, 6vw, 5rem) + var(--lp-dock-clear, calc(6rem + env(safe-area-inset-bottom, 0px))));
+  border-top: 1px solid var(--lp-hairline, var(--color-border));
+  background: var(--lp-ground, var(--color-surface));
+}
+
+.adh-landing-footer-band > .adh-landing-footer {
+  width: min(100% - 2.5rem, var(--lp-measure, 70rem));
+  margin-inline: auto;
+}
+
 /* Without the Popover API (iOS before 17, Firefox before 125) the modal would render inline at
    the foot of the page, so it is hidden. Its links are still in the server HTML, so crawlers
    follow them regardless of this. adh-site.css hides the fixed footer's menu hosts the same

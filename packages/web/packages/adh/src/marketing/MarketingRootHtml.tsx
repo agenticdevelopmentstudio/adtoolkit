@@ -42,8 +42,8 @@ export type MarketingRootHtmlProps = MarketingShellProps
  * and it is not waivable by recording an exception, because the four documents that were once
  * excused are what taught us the cost: each was a copy of this file made to reach ONE slot, and
  * each silently dropped `dir` and the locale seam on the way. The per-site seams are
- * `header`, `providers`, `navLinks`, `trailingNavLinks`, `footerLinks`, `silentSso` and
- * `chromeGate`.
+ * `header`, `providers`, `navLinks`, `trailingNavLinks`, `footerLinks`, `silentSso`,
+ * `chromeGate` and `landingFooter`.
  *
  * The body half is `MarketingShell`, exported on its own for a layout below a document it does
  * not own (a site-template site's family route group).

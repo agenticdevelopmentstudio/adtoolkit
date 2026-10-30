@@ -304,7 +304,7 @@ function HomePlaceholder({ siteLabel, blurb }) {
 
 // src/layout/AppShell.tsx
 import { Fragment as Fragment3 } from "react";
-import { SiteFooter } from "@agentic-toolkit/adh/footer";
+import { FooterChat, FooterForRoute, SiteFooter } from "@agentic-toolkit/adh/footer";
 import { SiteTelemetryProvider as TelemetryProvider } from "@agentic-toolkit/adh/telemetry";
 import { FeatureFlagsProvider } from "@agentic-toolkit/adh/flags";
 import { HelpProvider } from "@agentic-toolkit/adh/help";
@@ -312,15 +312,118 @@ import { SettingsOverlayProvider } from "@agentic-toolkit/adh/settings";
 import { AdhAppShell as AdhAppShell2 } from "@agentic-toolkit/adh/layout";
 import { liveBuildIdentity } from "@agentic-toolkit/adh/live-build-identity";
 import { DEV_BUILD } from "@agentic-toolkit/adh-registry/deployment-env";
+
+// src/marketing/LandingFooter.tsx
+import {
+  DIRECTORY_SITES,
+  getSite,
+  groupSitesByCategory,
+  siteProdUrl
+} from "@agentic-toolkit/adh-registry";
+import { SitesPopover } from "@agentic-toolkit/adh/footer";
+
+// src/footer/identity.tsx
 import { jsx as jsx9 } from "react/jsx-runtime";
+var BRAND_LABEL = "Agentic Development Studio";
+var BRAND_HREF = "https://agenticdevelopmentstudio.com/";
+var SITES_OVERVIEW_POPOVER_ID = "adh-sites-overview";
+function buildVersionLabel(live) {
+  const version = live?.version ?? process.env.NEXT_PUBLIC_ADH_SITE_VERSION ?? "";
+  const sha = live?.sha ?? process.env.NEXT_PUBLIC_ADH_RELEASE ?? "";
+  const label = [version && `v${version}`, sha && sha.slice(0, 8)].filter(Boolean).join(" \xB7 ");
+  if (!label) return null;
+  return /* @__PURE__ */ jsx9("span", { title: sha || void 0, children: label });
+}
+
+// src/marketing/LandingFooter.tsx
+import { jsx as jsx10, jsxs as jsxs6 } from "react/jsx-runtime";
+var LANDING_FOOTER_CLASS = "adh-landing-footer";
+var LANDING_OMITTED = /* @__PURE__ */ new Set(["shipr", "registry", "fishlamp", "fishlampdesign"]);
+var LANDING_SITES = DIRECTORY_SITES.filter((s) => !LANDING_OMITTED.has(s.id));
+function aboutEntries() {
+  const fishlamp = getSite("fishlamp");
+  return [
+    { label: BRAND_LABEL, href: BRAND_HREF },
+    ...fishlamp ? [{ label: fishlamp.label, href: siteProdUrl("fishlamp", "/") }] : []
+  ];
+}
+function Column({ title, entries }) {
+  return /* @__PURE__ */ jsxs6("nav", { className: "adh-landing-footer__column", "aria-label": title, children: [
+    /* @__PURE__ */ jsx10("h3", { className: "adh-landing-footer__heading", children: title }),
+    /* @__PURE__ */ jsx10("ul", { className: "adh-landing-footer__list", children: entries.map((e) => /* @__PURE__ */ jsx10("li", { className: "adh-landing-footer__item", children: /* @__PURE__ */ jsx10("a", { className: "adh-landing-footer__link", href: e.href, children: e.label }) }, e.label)) })
+  ] });
+}
+function LandingFooter() {
+  const groups = groupSitesByCategory(LANDING_SITES);
+  const version = buildVersionLabel();
+  return /* @__PURE__ */ jsxs6("div", { className: LANDING_FOOTER_CLASS, children: [
+    /* @__PURE__ */ jsxs6("div", { className: "adh-landing-footer__directory", children: [
+      groups.map((group) => /* @__PURE__ */ jsx10(
+        Column,
+        {
+          title: group.label,
+          entries: group.sites.map((site) => ({
+            label: site.label,
+            href: siteProdUrl(site.id, "/")
+          }))
+        },
+        group.label
+      )),
+      /* @__PURE__ */ jsx10(Column, { title: "About", entries: aboutEntries() })
+    ] }),
+    /* @__PURE__ */ jsxs6("div", { className: "adh-landing-footer__fine-print", children: [
+      /* @__PURE__ */ jsxs6("p", { className: "adh-landing-footer__copyright", children: [
+        "Copyright \xA9 ",
+        (/* @__PURE__ */ new Date()).getFullYear(),
+        " ",
+        /* @__PURE__ */ jsx10("a", { className: "adh-landing-footer__link", href: BRAND_HREF, children: BRAND_LABEL }),
+        ". All rights reserved."
+      ] }),
+      /* @__PURE__ */ jsxs6("ul", { className: "adh-landing-footer__legal", children: [
+        /* @__PURE__ */ jsx10("li", { className: "adh-landing-footer__item", children: /* @__PURE__ */ jsx10("a", { className: "adh-landing-footer__link", href: "/terms", children: "Terms of Use" }) }),
+        /* @__PURE__ */ jsx10("li", { className: "adh-landing-footer__item", children: /* @__PURE__ */ jsx10("a", { className: "adh-landing-footer__link", href: "/privacy", children: "Privacy Policy" }) }),
+        /* @__PURE__ */ jsx10("li", { className: "adh-landing-footer__item", children: /* @__PURE__ */ jsx10(
+          "button",
+          {
+            type: "button",
+            className: "adh-landing-footer__link adh-landing-footer__sites",
+            popoverTarget: SITES_OVERVIEW_POPOVER_ID,
+            children: "All sites"
+          }
+        ) }),
+        version && /* @__PURE__ */ jsx10("li", { className: "adh-landing-footer__item adh-landing-footer__version", children: version })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx10(SitesPopover, { sites: LANDING_SITES })
+  ] });
+}
+
+// src/layout/AppShell.tsx
+import { jsx as jsx11, jsxs as jsxs7 } from "react/jsx-runtime";
 var DEV_TOOLS_BUILD_ENABLED = DEV_BUILD;
-function AppShell({ header, children, footer, chromeGate }) {
+function AppShell({ header, children, footer, chromeGate, landingFooter }) {
   const Chrome = chromeGate ?? Fragment3;
-  return /* @__PURE__ */ jsx9(AppShellProviders, { children: /* @__PURE__ */ jsx9(
+  const bar = /* @__PURE__ */ jsx11(SiteFooter, { links: footer?.links, live: liveBuildIdentity() });
+  return /* @__PURE__ */ jsx11(AppShellProviders, { children: /* @__PURE__ */ jsx11(
     AdhAppShell2,
     {
-      header: /* @__PURE__ */ jsx9(Chrome, { children: header }),
-      footer: /* @__PURE__ */ jsx9(Chrome, { children: /* @__PURE__ */ jsx9(SiteFooter, { links: footer?.links, live: liveBuildIdentity() }) }),
+      header: /* @__PURE__ */ jsx11(Chrome, { children: header }),
+      footer: /* @__PURE__ */ jsx11(Chrome, { children: landingFooter ? /* @__PURE__ */ jsx11(
+        FooterForRoute,
+        {
+          landing: (
+            // In flow, not pinned like the bar: the directory closes the page. bitbag
+            // goes with it, since the bar that otherwise mounts him is not on this route;
+            // with no bar to rest in, he rests in his own corner, which the band's
+            // bottom padding clears.
+            /* @__PURE__ */ jsxs7("footer", { className: "adh-landing-footer-band", children: [
+              /* @__PURE__ */ jsx11(LandingFooter, {}),
+              /* @__PURE__ */ jsx11(FooterChat, {})
+            ] })
+          ),
+          rest: bar
+        }
+      ) : bar }),
       devTools: DEV_TOOLS_BUILD_ENABLED,
       children
     }
@@ -331,28 +434,28 @@ function AppShellProviders({ children }) {
     // FeatureFlagsProvider wraps the WHOLE shell, not just the page: the header/landing are
     // consumers, and a site's own pages read the same one flag set rather than fetching it a
     // second time.
-    /* @__PURE__ */ jsx9(FeatureFlagsProvider, { children: /* @__PURE__ */ jsx9(HelpProvider, { children: /* @__PURE__ */ jsx9(TelemetryProvider, { children: /* @__PURE__ */ jsx9(SettingsOverlayProvider, { children }) }) }) })
+    /* @__PURE__ */ jsx11(FeatureFlagsProvider, { children: /* @__PURE__ */ jsx11(HelpProvider, { children: /* @__PURE__ */ jsx11(TelemetryProvider, { children: /* @__PURE__ */ jsx11(SettingsOverlayProvider, { children }) }) }) })
   );
 }
 
 // src/layout/SiteSwitchNotFound.tsx
 import { SITE_SWITCH_HASH } from "@agentic-toolkit/adh-registry";
 import { SiteNotFound as AdhSiteNotFound } from "@agentic-toolkit/adh/layout";
-import { jsx as jsx10 } from "react/jsx-runtime";
+import { jsx as jsx12 } from "react/jsx-runtime";
 function SiteSwitchNotFound({ children }) {
-  return /* @__PURE__ */ jsx10(AdhSiteNotFound, { siteSwitchHash: SITE_SWITCH_HASH, children });
+  return /* @__PURE__ */ jsx12(AdhSiteNotFound, { siteSwitchHash: SITE_SWITCH_HASH, children });
 }
 
 // src/layout/SiteHomePlaceholder.tsx
-import { getSite } from "@agentic-toolkit/adh-registry";
+import { getSite as getSite2 } from "@agentic-toolkit/adh-registry";
 import { HomePlaceholder as AdhHomePlaceholder } from "@agentic-toolkit/adh/layout";
-import { jsx as jsx11 } from "react/jsx-runtime";
+import { jsx as jsx13 } from "react/jsx-runtime";
 function SiteHomePlaceholder({ siteId, blurb }) {
-  return /* @__PURE__ */ jsx11(AdhHomePlaceholder, { siteLabel: getSite(siteId)?.label ?? "", blurb });
+  return /* @__PURE__ */ jsx13(AdhHomePlaceholder, { siteLabel: getSite2(siteId)?.label ?? "", blurb });
 }
 
 // src/layout/SiteLanding.tsx
-import { jsx as jsx12, jsxs as jsxs6 } from "react/jsx-runtime";
+import { jsx as jsx14, jsxs as jsxs8 } from "react/jsx-runtime";
 var SERIF = "var(--font-serif, ui-serif, Georgia, serif)";
 var SANS = "var(--font-sans, ui-sans-serif, system-ui, sans-serif)";
 var MONO = "var(--font-mono, ui-monospace, monospace)";
@@ -377,8 +480,8 @@ function SiteLanding({
   titleAccent,
   blurb
 }) {
-  return /* @__PURE__ */ jsx12("main", { style: wrap, children: /* @__PURE__ */ jsxs6("div", { style: { maxWidth: 720 }, children: [
-    /* @__PURE__ */ jsx12(
+  return /* @__PURE__ */ jsx14("main", { style: wrap, children: /* @__PURE__ */ jsxs8("div", { style: { maxWidth: 720 }, children: [
+    /* @__PURE__ */ jsx14(
       "div",
       {
         style: {
@@ -394,7 +497,7 @@ function SiteLanding({
         children: eyebrow
       }
     ),
-    /* @__PURE__ */ jsxs6(
+    /* @__PURE__ */ jsxs8(
       "h1",
       {
         style: {
@@ -408,11 +511,11 @@ function SiteLanding({
         children: [
           titleLead,
           " ",
-          /* @__PURE__ */ jsx12("span", { style: { color: ACCENT, fontStyle: "italic" }, children: titleAccent })
+          /* @__PURE__ */ jsx14("span", { style: { color: ACCENT, fontStyle: "italic" }, children: titleAccent })
         ]
       }
     ),
-    /* @__PURE__ */ jsx12(
+    /* @__PURE__ */ jsx14(
       "p",
       {
         style: {
@@ -428,7 +531,7 @@ function SiteLanding({
         children: blurb
       }
     ),
-    /* @__PURE__ */ jsx12(
+    /* @__PURE__ */ jsx14(
       "div",
       {
         role: "separator",

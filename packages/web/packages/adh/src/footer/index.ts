@@ -13,6 +13,11 @@ export { SITES_OVERVIEW_POPOVER_ID } from './identity'
 // The panel itself, for a footer that is not SiteFooter: the landing page's LandingFooter
 // (marketing/) renders it beside its own trigger.
 export { SitesPopover } from './SitesOverview'
+// For AppShell's `landingFooter` seam (layout/), which is a server component and so reaches
+// these client pieces by package path: the route switch, and bitbag beside the landing footer.
+export { FooterForRoute } from './FooterForRoute'
+export type { FooterForRouteProps } from './FooterForRoute'
+export { FooterChat } from './FooterChat'
 // The seeded-backend primitives are exported because the Help sites reuse them
 // (see sites/help/src/components/helpMockBackend.ts); the footer itself no longer
 // does — bitbag speaks his own scripted voice through BitbagDock.

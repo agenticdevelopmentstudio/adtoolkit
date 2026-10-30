@@ -1,0 +1,1 @@
+{"version":3,"file":"FooterForRoute.d.ts","sourceRoot":"","sources":["../../src/footer/FooterForRoute.tsx"],"names":[],"mappings":"AAEA,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,OAAO,CAAA;AAGtC,MAAM,MAAM,mBAAmB,GAAG;IAChC,kDAAkD;IAClD,OAAO,EAAE,SAAS,CAAA;IAClB,uCAAuC;IACvC,IAAI,EAAE,SAAS,CAAA;CAChB,CAAA;AAED;;;;;;;GAOG;AACH,wBAAgB,cAAc,CAAC,EAAE,OAAO,EAAE,IAAI,EAAE,EAAE,mBAAmB,+BAEpE"}

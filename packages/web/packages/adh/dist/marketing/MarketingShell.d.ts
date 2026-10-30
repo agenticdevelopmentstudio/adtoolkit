@@ -98,6 +98,13 @@ export type MarketingShellProps = {
     chromeGate?: ComponentType<{
         children: ReactNode;
     }>;
+    /**
+     * Whether `/` ends with the landing page's footer, the family directory, instead of the
+     * shared bar. Every other route keeps the bar. For a site whose landing page is under this
+     * shell (hub-help); a templated site's `/` belongs to the template and takes the same footer
+     * through the template's `footer` slot. See AppShell's prop of the same name.
+     */
+    landingFooter?: boolean;
     children: ReactNode;
 };
 /**
@@ -122,6 +129,6 @@ export declare const FAMILY_ROOT_CLASS = "adh-family";
  * `<AdhThemeStyle/>` beside it, instead of copying the chain — the copy is what the uniformity
  * check's `shell` rule exists to stop. The family's design rationale is on `MarketingRootHtml`.
  */
-export declare function MarketingShell({ siteId, navLinks, trailingNavLinks, footerLinks, silentSso, header, providers, help, chromeGate, children, }: MarketingShellProps): ReactElement;
+export declare function MarketingShell({ siteId, navLinks, trailingNavLinks, footerLinks, silentSso, header, providers, help, chromeGate, landingFooter, children, }: MarketingShellProps): ReactElement;
 export {};
 //# sourceMappingURL=MarketingShell.d.ts.map

@@ -118,6 +118,13 @@ export type MarketingShellProps = {
    * whether the shared frame is around it. Omitted, the chrome always renders.
    */
   chromeGate?: ComponentType<{ children: ReactNode }>;
+  /**
+   * Whether `/` ends with the landing page's footer, the family directory, instead of the
+   * shared bar. Every other route keeps the bar. For a site whose landing page is under this
+   * shell (hub-help); a templated site's `/` belongs to the template and takes the same footer
+   * through the template's `footer` slot. See AppShell's prop of the same name.
+   */
+  landingFooter?: boolean;
   children: ReactNode;
 };
 
@@ -159,6 +166,7 @@ export function MarketingShell({
   providers,
   help,
   chromeGate,
+  landingFooter,
   children,
 }: MarketingShellProps): ReactElement {
   // Fragment, not `providers ?? (({children}) => <>{children}</>)`: a fresh arrow on every
@@ -186,6 +194,7 @@ export function MarketingShell({
               }
               footer={{ links: footerLinks ?? [] }}
               chromeGate={chromeGate}
+              landingFooter={landingFooter}
             >
               {children}
             </AppShell>

@@ -360,6 +360,13 @@ function SiteFooter({ links = [], chat = true, live, specimen = false }) {
   ] });
 }
 
+// src/footer/FooterForRoute.tsx
+import { usePathname } from "next/navigation";
+import { Fragment as Fragment2, jsx as jsx9 } from "react/jsx-runtime";
+function FooterForRoute({ landing, rest }) {
+  return /* @__PURE__ */ jsx9(Fragment2, { children: usePathname() === "/" ? landing : rest });
+}
+
 // src/footer/seededBackend.ts
 var BITBAG_PERSONA = { name: "bitbag" };
 function hash(s) {
@@ -428,6 +435,8 @@ function useChatTheme() {
 export {
   AdhFooter,
   BITBAG_PERSONA,
+  FooterChat,
+  FooterForRoute,
   FooterMenu,
   SITES_OVERVIEW_POPOVER_ID,
   SiteFooter,

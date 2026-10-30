@@ -231,6 +231,7 @@ function MarketingShell({
   providers,
   help,
   chromeGate,
+  landingFooter,
   children
 }) {
   const SiteProviders = providers ?? Fragment3;
@@ -253,6 +254,7 @@ function MarketingShell({
           ),
           footer: { links: footerLinks ?? [] },
           chromeGate,
+          landingFooter,
           children
         }
       ) })

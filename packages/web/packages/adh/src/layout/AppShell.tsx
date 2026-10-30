@@ -5,7 +5,7 @@ import { Fragment, type ComponentType, type ReactNode } from 'react'
 // would be INLINED, giving this entry a private copy of that state that the rest of the app
 // never sees. The other half of the remedy is the matching entry in the `external` array of
 // this package's tsup.config.ts (and, for the toolkit specifiers, of the toolkit's).
-import { SiteFooter, type FooterLink } from '@agentic-toolkit/adh/footer'
+import { FooterChat, FooterForRoute, SiteFooter, type FooterLink } from '@agentic-toolkit/adh/footer'
 import { SiteTelemetryProvider as TelemetryProvider } from '@agentic-toolkit/adh/telemetry'
 import { FeatureFlagsProvider } from '@agentic-toolkit/adh/flags'
 import { HelpProvider } from '@agentic-toolkit/adh/help'
@@ -35,6 +35,11 @@ import { liveBuildIdentity } from '@agentic-toolkit/adh/live-build-identity'
 // specifier stays bare in this dist — see the const below, and the chunk-gate contract at the
 // top of that module.
 import { DEV_BUILD } from '@agentic-toolkit/adh-registry/deployment-env'
+// Relative, and the one exception to the rule above: LandingFooter is a server component with
+// no state and no directive (its one client piece, the sites panel, it reaches by package path
+// itself), so the copy inlined into this entry forks nothing. By package path it would be the
+// `marketing` entry, which imports this one: a cycle between the two.
+import { LandingFooter } from '../marketing/LandingFooter'
 
 // Build-time gate for the dev-only switches (same gate as devToolsEntries'
 // DEV_TOOLS_BUILD_ENABLED): the env var is inlined per build, so a production build folds this
@@ -87,6 +92,12 @@ export type AppShellProps = {
    *  that must stand alone. Omitted, the chrome always renders. See MarketingRootHtml's
    *  prop of the same name. */
   chromeGate?: ComponentType<{ children: ReactNode }>
+  /** On `/`, the landing page's footer (marketing/LandingFooter: the family directory and the
+   *  fine print) in place of the shared bar, with bitbag beside it; every other route keeps the
+   *  bar. For a site whose landing page is under this shell. A templated site's `/` is the
+   *  template's own and takes LandingFooter through the template's `footer` slot instead.
+   *  Omitted, every route gets the bar. */
+  landingFooter?: boolean
 }
 
 /**
@@ -98,18 +109,35 @@ export type AppShellProps = {
  * adh-specific composition root — which providers wrap the shell, and what goes in its footer
  * slot. Stays hook-free itself (server-renderable); the providers are client children.
  */
-export function AppShell({ header, children, footer, chromeGate }: AppShellProps) {
+export function AppShell({ header, children, footer, chromeGate, landingFooter }: AppShellProps) {
   // Fragment, not an inline pass-through arrow: a fresh arrow is a new component TYPE every
   // render and would remount the header and footer each time. Same reason as MarketingRootHtml's
   // `providers` fallback.
   const Chrome = chromeGate ?? Fragment
+  const bar = <SiteFooter links={footer?.links} live={liveBuildIdentity()} />
   return (
     <AppShellProviders>
       <AdhAppShell
         header={<Chrome>{header}</Chrome>}
         footer={
           <Chrome>
-            <SiteFooter links={footer?.links} live={liveBuildIdentity()} />
+            {landingFooter ? (
+              <FooterForRoute
+                landing={
+                  // In flow, not pinned like the bar: the directory closes the page. bitbag
+                  // goes with it, since the bar that otherwise mounts him is not on this route;
+                  // with no bar to rest in, he rests in his own corner, which the band's
+                  // bottom padding clears.
+                  <footer className="adh-landing-footer-band">
+                    <LandingFooter />
+                    <FooterChat />
+                  </footer>
+                }
+                rest={bar}
+              />
+            ) : (
+              bar
+            )}
           </Chrome>
         }
         devTools={DEV_TOOLS_BUILD_ENABLED}
