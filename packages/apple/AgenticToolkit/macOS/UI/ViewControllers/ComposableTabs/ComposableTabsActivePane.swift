@@ -46,6 +46,17 @@ public final class ComposableTabsActivePane {
 
     private var followsMouseObserver: UserSettingObserver<Bool>?
 
+    /// The windows whose keyboard is in a `PointerFocusRegionView` rather than
+    /// a pane. The active pane is kept while the shelf has the keys — it is
+    /// where they go back to — but no pane is drawn as the one being typed in,
+    /// because none is.
+    private var regionHasKeyboard: Set<ObjectIdentifier> = []
+
+    /// One first-responder watch per window, so the outline follows the keys
+    /// however they moved: the pointer, a click, Tab, or code calling
+    /// `makeFirstResponder`.
+    private var responderWatches: [ObjectIdentifier: NSKeyValueObservation] = [:]
+
     private init() {
         // Local, not global: this only cares about the pointer in this app's
         // own windows, and a local monitor sees the events before the responder
@@ -74,7 +85,10 @@ public final class ComposableTabsActivePane {
             .compactMap { $0.object as? NSWindow }
             .receive(on: DispatchQueue.main)
             .sink { [weak self] window in
-                self?.activeByWindow.removeValue(forKey: ObjectIdentifier(window))
+                let key = ObjectIdentifier(window)
+                self?.activeByWindow.removeValue(forKey: key)
+                self?.regionHasKeyboard.remove(key)
+                self?.responderWatches.removeValue(forKey: key)
             }
             .store(in: &cancellables)
     }
@@ -82,6 +96,13 @@ public final class ComposableTabsActivePane {
     public func activeNodeID(in window: NSWindow?) -> UUID? {
         guard let window else { return nil }
         return activeByWindow[ObjectIdentifier(window)]
+    }
+
+    /// Whether a part of `window` outside its panes — a project window's
+    /// shelf — has the keyboard, so that no pane is the one being typed in.
+    public func regionHoldsKeyboard(in window: NSWindow?) -> Bool {
+        guard let window else { return false }
+        return regionHasKeyboard.contains(ObjectIdentifier(window))
     }
 
     /// Whether `view` sits inside the pane the user is working in.
@@ -102,7 +123,7 @@ public final class ComposableTabsActivePane {
         while let current = candidate {
             if let background = current as? ComposableTabsPaneBackgroundView {
                 guard let active = activeNodeID(in: view.window) else { return true }
-                return active == background.nodeID
+                return active == background.nodeID && !regionHoldsKeyboard(in: view.window)
             }
             candidate = current.superview
         }
@@ -127,6 +148,7 @@ public final class ComposableTabsActivePane {
         paneWindows.add(window)
         paneViews.add(pane)
         acceptMouseMoved(in: window)
+        watchKeyboard(in: window)
         if livePane(for: activeNodeID(in: window), in: window) == nil {
             activate(nodeID: pane.nodeID, in: window)
         }
@@ -137,6 +159,25 @@ public final class ComposableTabsActivePane {
     public func regionDidAppear(in window: NSWindow) {
         paneWindows.add(window)
         acceptMouseMoved(in: window)
+        watchKeyboard(in: window)
+    }
+
+    /// `firstResponder` is key-value observable; watching it, rather than the
+    /// events that usually move it, is what catches every way the keys move.
+    private func watchKeyboard(in window: NSWindow) {
+        let key = ObjectIdentifier(window)
+        guard responderWatches[key] == nil else { return }
+        responderWatches[key] = window.observe(\.firstResponder, options: [.initial, .new]) { window, _ in
+            MainActor.assumeIsolated { ComposableTabsActivePane.shared.keyboardMoved(in: window) }
+        }
+    }
+
+    private func keyboardMoved(in window: NSWindow) {
+        let key = ObjectIdentifier(window)
+        let inRegion = keyboardIsInRegion(of: window)
+        guard inRegion != regionHasKeyboard.contains(key) else { return }
+        if inRegion { regionHasKeyboard.insert(key) } else { regionHasKeyboard.remove(key) }
+        NotificationCenter.default.post(name: Self.didChangeNotification, object: window)
     }
 
     /// Told by each pane's backdrop as it leaves a window — closed, or swapped
@@ -354,7 +395,8 @@ public final class ComposableTabsActivePane {
 /// into when *Active Pane Follows the Mouse* is on — a project window's shelf.
 /// It holds no pane and draws no active outline; the pointer moving over it
 /// hands the keyboard to what is under the pointer, and moving back to the
-/// active pane hands it back.
+/// active pane hands it back. While it has the keyboard no pane is outlined as
+/// active — the keys are not in one.
 ///
 /// A marker view rather than a protocol, so the tracker finds it with the same
 /// walk out from the hit view that finds a pane's backdrop (`dry`).
@@ -504,6 +546,7 @@ public final class ComposableTabsPaneBackgroundView: NSView, Themeable {
         let isActive = highlights
             && isWindowFocused
             && ComposableTabsActivePane.shared.activeNodeID(in: window) == nodeID
+            && !ComposableTabsActivePane.shared.regionHoldsKeyboard(in: window)
         // **Every** pane is outlined, and only the colour says which one is
         // active. A pane is a window-shaped thing, and a window has edges
         // whether or not it is the front one; outlining only the active pane

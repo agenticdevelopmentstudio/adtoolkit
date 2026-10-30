@@ -37,10 +37,10 @@ public final class ProjectShelfViewController: NSViewController {
     private let browser: ProjectBrowserViewController
     private let activeProjects: ActiveProjectsViewController
     private let searchField = ThemedSearchField()
-    /// One button per panel — Xcode's navigator bar, shared (`dry`).
+    /// One segment per panel — Xcode's navigator selector, shared (`dry`).
     private let panelBar = IconTabBar(
         items: ProjectShelfPanel.allCases.map { .init(id: $0.rawValue, symbol: $0.symbol, title: $0.title) },
-        accessibilityPrefix: "project-shelf.panel.")
+        accessibilityID: "project-shelf.panels")
     private var cancellables: Set<AnyCancellable> = []
 
     public init(coordinator: ProjectsCoordinator, group: ProjectWindowGroup) {
@@ -130,8 +130,8 @@ public final class ProjectShelfViewController: NSViewController {
             card.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8),
 
             bar.topAnchor.constraint(equalTo: container.safeAreaLayoutGuide.topAnchor, constant: 2),
-            bar.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 8),
-            bar.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -8),
+            bar.centerXAnchor.constraint(equalTo: card.centerXAnchor),
+            bar.leadingAnchor.constraint(greaterThanOrEqualTo: card.leadingAnchor, constant: 8),
 
             topRule.topAnchor.constraint(equalTo: bar.bottomAnchor, constant: 6),
             topRule.leadingAnchor.constraint(equalTo: card.leadingAnchor),
