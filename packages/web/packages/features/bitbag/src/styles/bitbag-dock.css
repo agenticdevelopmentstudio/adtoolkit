@@ -94,9 +94,8 @@
    * it) shows one bitbag, not one who hops between pages.
    *
    * His FACE, not his box, sits `--bb-dock-parked-margin` in from the right edge and
-   * the same up from the bottom: a square corner. It is a little more air than the adh
-   * footer's `i` has in the opposite one, since his face is a busier shape than a circle
-   * and crowds a corner the `i` doesn't. His box is wider than his face — Bitbag.tsx's 350×195 viewBox
+   * the same up from the bottom: a square corner, matching the adh footer's `i` in the
+   * opposite one. His box is wider than his face — Bitbag.tsx's 350×195 viewBox
    * (origin −15,−72) draws the glyph across x 88–232 and down to y 107, so 103 units of
    * empty box are right of it and 16 below — so the lift and the sideways shift subtract
    * those, scaled to his resting width (`--bb-dock-rest-w`, BitbagDock's half size).

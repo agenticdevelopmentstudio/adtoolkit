@@ -67,10 +67,9 @@
    family footer in a dialog over the page. bitbag rests in the opposite corner
    (bitbag-dock.css), so the two never meet, and they mirror each other: the circle is the size
    of his resting face (144 of the 350 units across his 66px resting box, about 27px), and each
-   sits the same distance in from its side as up from the bottom: 1rem for the circle, 0.75rem
-   on a phone; bitbag's `--bb-dock-parked-margin` gives him a little more (1.75rem, 1.25rem),
-   and this cannot read it from here anyway, since his sheet is scoped to his dock and loaded
-   only with his chat.
+   sits the same distance in from its side as up from the bottom, 1.75rem, or 1.25rem on a
+   phone — bitbag's `--bb-dock-parked-margin`, which this cannot read from here, since his
+   sheet is scoped to his dock and loaded only with his chat.
 
    The `<footer>` itself is only the circle's positioning: fixed, transparent, and closed to the
    pointer, so it covers nothing; the circle takes its own clicks. It overrides the toolkit
@@ -83,8 +82,8 @@
    copyright itself is the dialog's, and the plain line's where there is no Popover API. */
 .adh-footer.adh-footer--floating {
   position: fixed;
-  left: 1rem;
-  bottom: 1rem;
+  left: 1.75rem;
+  bottom: 1.75rem;
   z-index: 45;
   background: none;
   border: 0;
@@ -157,8 +156,8 @@ a.adh-footer__brand-link:focus-visible {
 /* A phone: closer to the corner, as bitbag is on the other side. */
 @media (max-width: 40rem) {
   .adh-footer.adh-footer--floating {
-    left: 0.75rem;
-    bottom: 0.75rem;
+    left: 1.25rem;
+    bottom: 1.25rem;
   }
 }
 
