@@ -132,47 +132,13 @@ function AdhModalPopover({ id, title, children, bodyClassName, className }) {
   );
 }
 
-// src/footer/identity.tsx
-import { DIRECTORY_SITES } from "@agentic-toolkit/adh-registry";
-import { jsx as jsx3 } from "react/jsx-runtime";
-var LANDING_FOOTER_CLASS = "adh-landing-footer";
-var FAMILY_OMITTED = /* @__PURE__ */ new Set(["shipr", "registry", "fishlamp", "fishlampdesign"]);
-var FAMILY_SITES = DIRECTORY_SITES.filter((s) => !FAMILY_OMITTED.has(s.id));
-var BRAND_LABEL = "Agentic Development Studio";
-var BRAND_HREF = "https://agenticdevelopmentstudio.com/";
-var SITES_OVERVIEW_POPOVER_ID = "adh-sites-overview";
-var ADH_CONTACT = {
-  name: "Agentic Developer Hub",
-  email: "hello@agenticdeveloperhub.com"
-};
-var CONTACT_POPOVER_ID = "adh-contact";
-var FAMILY_FOOTER_DIALOG_ID = "adh-family-footer";
-var FAMILY_BAND_ID = "family";
-var MORE_INFO_ANCHOR_ID = "more-info";
-function buildVersionLabel(live) {
-  const version = live?.version ?? process.env.NEXT_PUBLIC_ADH_SITE_VERSION ?? "";
-  const sha = live?.sha ?? process.env.NEXT_PUBLIC_ADH_RELEASE ?? "";
-  const label = [version && `v${version}`, sha && sha.slice(0, 8)].filter(Boolean).join(" \xB7 ");
-  if (!label) return null;
-  return /* @__PURE__ */ jsx3("span", { title: sha || void 0, children: label });
-}
-
-// src/footer/ContactPopover.tsx
-import { jsx as jsx4, jsxs as jsxs3 } from "react/jsx-runtime";
-function ContactPopover({ contact = ADH_CONTACT } = {}) {
-  return /* @__PURE__ */ jsxs3(AdhModalPopover, { id: CONTACT_POPOVER_ID, title: `Contact ${contact.name}`, bodyClassName: "adh-modal__body--contact", children: [
-    /* @__PURE__ */ jsx4("p", { className: "adh-contact__lead", children: "Questions, ideas or anything else: write to us at" }),
-    /* @__PURE__ */ jsx4("a", { className: "adh-contact__email", href: `mailto:${contact.email}`, children: contact.email })
-  ] });
-}
-
 // src/footer/FamilyFooter.tsx
 import { getSite, groupSitesByCategory, siteProdUrl } from "@agentic-toolkit/adh-registry";
 
 // src/header/PreviewNotice.tsx
 import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, TriangleAlert } from "lucide-react";
-import { jsx as jsx5, jsxs as jsxs4 } from "react/jsx-runtime";
+import { jsx as jsx3, jsxs as jsxs3 } from "react/jsx-runtime";
 var DEFAULT_PREVIEW_NOTICE = "Developer Preview Release";
 var DEFAULT_PREVIEW_DETAIL = "We are in very early stages, and are only taking requests to join. Right now, membership is by invitation only.";
 function PreviewNotice({
@@ -199,8 +165,8 @@ function PreviewNotice({
       document.removeEventListener("keydown", onKeyDown, true);
     };
   }, [open]);
-  return /* @__PURE__ */ jsx5("div", { className: variant === "badge" ? "adh-preview-badge" : "adh-header__preview", children: /* @__PURE__ */ jsxs4("span", { className: "adh-header__preview-disclosure", onMouseLeave: () => setOpen(false), children: [
-    /* @__PURE__ */ jsxs4(
+  return /* @__PURE__ */ jsx3("div", { className: variant === "badge" ? "adh-preview-badge" : "adh-header__preview", children: /* @__PURE__ */ jsxs3("span", { className: "adh-header__preview-disclosure", onMouseLeave: () => setOpen(false), children: [
+    /* @__PURE__ */ jsxs3(
       "button",
       {
         ref: triggerRef,
@@ -210,22 +176,46 @@ function PreviewNotice({
         "aria-controls": open ? panelId : void 0,
         onClick: () => setOpen((v) => !v),
         children: [
-          /* @__PURE__ */ jsx5(TriangleAlert, { className: "adh-header__preview-icon", "aria-hidden": true }),
-          /* @__PURE__ */ jsx5("span", { className: "adh-header__preview-text", children: notice }),
-          /* @__PURE__ */ jsx5(TriangleAlert, { className: "adh-header__preview-icon", "aria-hidden": true }),
-          /* @__PURE__ */ jsx5(ChevronDown, { className: "adh-header__preview-caret", "aria-hidden": true })
+          /* @__PURE__ */ jsx3(TriangleAlert, { className: "adh-header__preview-icon", "aria-hidden": true }),
+          /* @__PURE__ */ jsx3("span", { className: "adh-header__preview-text", children: notice }),
+          /* @__PURE__ */ jsx3(TriangleAlert, { className: "adh-header__preview-icon", "aria-hidden": true }),
+          /* @__PURE__ */ jsx3(ChevronDown, { className: "adh-header__preview-caret", "aria-hidden": true })
         ]
       }
     ),
-    open && /* @__PURE__ */ jsx5("span", { className: "adh-header__preview-panel", id: panelId, children: detail })
+    open && /* @__PURE__ */ jsx3("span", { className: "adh-header__preview-panel", id: panelId, children: detail })
   ] }) });
+}
+
+// src/footer/identity.tsx
+import { DIRECTORY_SITES } from "@agentic-toolkit/adh-registry";
+import { jsx as jsx4 } from "react/jsx-runtime";
+var LANDING_FOOTER_CLASS = "adh-landing-footer";
+var FAMILY_OMITTED = /* @__PURE__ */ new Set(["shipr", "registry", "fishlamp", "fishlampdesign"]);
+var FAMILY_SITES = DIRECTORY_SITES.filter((s) => !FAMILY_OMITTED.has(s.id));
+var BRAND_LABEL = "Agentic Development Studio";
+var BRAND_HREF = "https://agenticdevelopmentstudio.com/";
+var SITES_OVERVIEW_POPOVER_ID = "adh-sites-overview";
+var ADH_CONTACT = {
+  name: "Agentic Developer Hub",
+  email: "hello@agenticdeveloperhub.com"
+};
+var FAMILY_FOOTER_DIALOG_ID = "adh-family-footer";
+var FAMILY_BAND_ID = "family";
+var MORE_INFO_ANCHOR_ID = "more-info";
+function buildVersionLabel(live) {
+  const version = live?.version ?? process.env.NEXT_PUBLIC_ADH_SITE_VERSION ?? "";
+  const sha = live?.sha ?? process.env.NEXT_PUBLIC_ADH_RELEASE ?? "";
+  const label = [version && `v${version}`, sha && sha.slice(0, 8)].filter(Boolean).join(" \xB7 ");
+  if (!label) return null;
+  return /* @__PURE__ */ jsx4("span", { title: sha || void 0, children: label });
 }
 
 // src/footer/LegalModals.tsx
 import { useEffect as useEffect2, useState as useState2 } from "react";
 import { isModifiedClick } from "@agenticdevelopertoolkit/ui/lib/navigation-guard";
 import { LEGAL_EFFECTIVE_DATE, TermsBody, PrivacyBody } from "@agentic-toolkit/adh/legal";
-import { jsx as jsx6, jsxs as jsxs5 } from "react/jsx-runtime";
+import { jsx as jsx5, jsxs as jsxs4 } from "react/jsx-runtime";
 var TERMS_DIALOG_ID = "adh-terms-dialog";
 var PRIVACY_DIALOG_ID = "adh-privacy-dialog";
 function useOpenedOnce(id) {
@@ -243,8 +233,8 @@ function useOpenedOnce(id) {
   return opened;
 }
 function LegalDoc({ children }) {
-  return /* @__PURE__ */ jsxs5("article", { className: "adh-legal-doc", children: [
-    /* @__PURE__ */ jsxs5("p", { className: "adh-legal-doc__meta", children: [
+  return /* @__PURE__ */ jsxs4("article", { className: "adh-legal-doc", children: [
+    /* @__PURE__ */ jsxs4("p", { className: "adh-legal-doc__meta", children: [
       "Effective ",
       LEGAL_EFFECTIVE_DATE
     ] }),
@@ -253,11 +243,11 @@ function LegalDoc({ children }) {
 }
 function TermsModal() {
   const opened = useOpenedOnce(TERMS_DIALOG_ID);
-  return /* @__PURE__ */ jsx6(AdhModalPopover, { id: TERMS_DIALOG_ID, title: "Terms of Service", bodyClassName: "adh-modal__body--legal", children: opened && /* @__PURE__ */ jsx6(LegalDoc, { children: /* @__PURE__ */ jsx6(TermsBody, {}) }) });
+  return /* @__PURE__ */ jsx5(AdhModalPopover, { id: TERMS_DIALOG_ID, title: "Terms of Service", bodyClassName: "adh-modal__body--legal", children: opened && /* @__PURE__ */ jsx5(LegalDoc, { children: /* @__PURE__ */ jsx5(TermsBody, {}) }) });
 }
 function PrivacyModal() {
   const opened = useOpenedOnce(PRIVACY_DIALOG_ID);
-  return /* @__PURE__ */ jsx6(AdhModalPopover, { id: PRIVACY_DIALOG_ID, title: "Privacy Policy", bodyClassName: "adh-modal__body--legal", children: opened && /* @__PURE__ */ jsx6(LegalDoc, { children: /* @__PURE__ */ jsx6(PrivacyBody, {}) }) });
+  return /* @__PURE__ */ jsx5(AdhModalPopover, { id: PRIVACY_DIALOG_ID, title: "Privacy Policy", bodyClassName: "adh-modal__body--legal", children: opened && /* @__PURE__ */ jsx5(LegalDoc, { children: /* @__PURE__ */ jsx5(PrivacyBody, {}) }) });
 }
 function openLegalModal(dialogId) {
   return (e) => {
@@ -273,7 +263,7 @@ function openLegalModal(dialogId) {
 }
 
 // src/footer/FamilyFooter.tsx
-import { jsx as jsx7, jsxs as jsxs6 } from "react/jsx-runtime";
+import { jsx as jsx6, jsxs as jsxs5 } from "react/jsx-runtime";
 var NATIVE_TOOLS_TITLE = "Native Tools";
 var NATIVE_BADGE = "macOS";
 function siteEntry(site) {
@@ -305,43 +295,40 @@ var LEGAL_ENTRIES = [
   { label: "Privacy Policy", href: "/privacy", onClick: openLegalModal(PRIVACY_DIALOG_ID) }
 ];
 function Column({ title, entries }) {
-  return /* @__PURE__ */ jsxs6("nav", { className: "adh-landing-footer__column", "aria-label": title, children: [
-    /* @__PURE__ */ jsx7("h3", { className: "adh-landing-footer__heading", children: title }),
-    /* @__PURE__ */ jsx7("ul", { className: "adh-landing-footer__list", children: entries.map((e) => /* @__PURE__ */ jsxs6("li", { className: "adh-landing-footer__item", children: [
-      /* @__PURE__ */ jsx7("a", { className: "adh-landing-footer__link", href: e.href, onClick: e.onClick, children: e.label }),
-      e.badge && /* @__PURE__ */ jsx7("span", { className: "adh-landing-footer__badge", children: e.badge })
+  return /* @__PURE__ */ jsxs5("nav", { className: "adh-landing-footer__column", "aria-label": title, children: [
+    /* @__PURE__ */ jsx6("h3", { className: "adh-landing-footer__heading", children: title }),
+    /* @__PURE__ */ jsx6("ul", { className: "adh-landing-footer__list", children: entries.map((e) => /* @__PURE__ */ jsxs5("li", { className: "adh-landing-footer__item", children: [
+      /* @__PURE__ */ jsx6("a", { className: "adh-landing-footer__link", href: e.href, onClick: e.onClick, children: e.label }),
+      e.badge && /* @__PURE__ */ jsx6("span", { className: "adh-landing-footer__badge", children: e.badge })
     ] }, e.label)) })
   ] });
 }
-function FamilyFooter({ version, links = [], anchored = false }) {
+function FamilyFooter({
+  version,
+  links = [],
+  anchored = false,
+  contact = ADH_CONTACT
+}) {
   const columns = [
     ...links.length > 0 ? [{ title: "This site", entries: links }] : [],
     ...siteColumns(FAMILY_SITES),
     { title: "About", entries: aboutEntries() },
-    { title: "Legal", entries: LEGAL_ENTRIES }
+    { title: "Legal", entries: LEGAL_ENTRIES },
+    { title: "Contact", entries: [{ label: contact.email, href: `mailto:${contact.email}` }] }
   ];
-  return /* @__PURE__ */ jsxs6("div", { id: anchored ? MORE_INFO_ANCHOR_ID : void 0, className: LANDING_FOOTER_CLASS, children: [
-    /* @__PURE__ */ jsx7("div", { className: "adh-landing-footer__head", children: /* @__PURE__ */ jsx7(PreviewNotice, { variant: "badge" }) }),
-    /* @__PURE__ */ jsx7("div", { className: "adh-landing-footer__directory", children: columns.map((column) => /* @__PURE__ */ jsx7(Column, { ...column }, column.title)) }),
-    /* @__PURE__ */ jsxs6("div", { className: "adh-landing-footer__fine-print", children: [
-      /* @__PURE__ */ jsxs6("p", { className: "adh-landing-footer__copyright", children: [
+  return /* @__PURE__ */ jsxs5("div", { id: anchored ? MORE_INFO_ANCHOR_ID : void 0, className: LANDING_FOOTER_CLASS, children: [
+    /* @__PURE__ */ jsx6("div", { className: "adh-landing-footer__head", children: /* @__PURE__ */ jsx6(PreviewNotice, { variant: "badge" }) }),
+    /* @__PURE__ */ jsx6("div", { className: "adh-landing-footer__directory", children: columns.map((column) => /* @__PURE__ */ jsx6(Column, { ...column }, column.title)) }),
+    /* @__PURE__ */ jsxs5("div", { className: "adh-landing-footer__fine-print", children: [
+      /* @__PURE__ */ jsxs5("p", { className: "adh-landing-footer__copyright", children: [
         "Copyright \xA9 ",
         (/* @__PURE__ */ new Date()).getFullYear(),
         " ",
-        /* @__PURE__ */ jsx7("a", { className: "adh-landing-footer__link", href: BRAND_HREF, children: BRAND_LABEL }),
+        /* @__PURE__ */ jsx6("a", { className: "adh-landing-footer__link", href: BRAND_HREF, children: BRAND_LABEL }),
         ". All rights reserved."
       ] }),
-      /* @__PURE__ */ jsxs6("ul", { className: "adh-landing-footer__legal", children: [
-        /* @__PURE__ */ jsx7("li", { className: "adh-landing-footer__item", children: /* @__PURE__ */ jsx7(
-          "button",
-          {
-            type: "button",
-            className: "adh-landing-footer__link adh-landing-footer__contact",
-            popoverTarget: CONTACT_POPOVER_ID,
-            children: "Contact"
-          }
-        ) }),
-        /* @__PURE__ */ jsx7("li", { className: "adh-landing-footer__item", children: /* @__PURE__ */ jsx7(
+      /* @__PURE__ */ jsxs5("ul", { className: "adh-landing-footer__legal", children: [
+        /* @__PURE__ */ jsx6("li", { className: "adh-landing-footer__item", children: /* @__PURE__ */ jsx6(
           "button",
           {
             type: "button",
@@ -350,7 +337,7 @@ function FamilyFooter({ version, links = [], anchored = false }) {
             children: "All sites"
           }
         ) }),
-        version && /* @__PURE__ */ jsx7("li", { className: "adh-landing-footer__item adh-landing-footer__version", children: version })
+        version && /* @__PURE__ */ jsx6("li", { className: "adh-landing-footer__item adh-landing-footer__version", children: version })
       ] })
     ] })
   ] });
@@ -358,34 +345,34 @@ function FamilyFooter({ version, links = [], anchored = false }) {
 
 // src/footer/FooterChat.tsx
 import dynamic from "next/dynamic";
-import { jsx as jsx8 } from "react/jsx-runtime";
+import { jsx as jsx7 } from "react/jsx-runtime";
 var FooterChatInner = dynamic(() => import("@agentic-toolkit/adh/footer/FooterChatInner"), {
   ssr: false
 });
 function FooterChat() {
-  return /* @__PURE__ */ jsx8(FooterChatInner, {});
+  return /* @__PURE__ */ jsx7(FooterChatInner, {});
 }
 
 // src/footer/SitesOverview.tsx
 import { FOOTER_SITES, groupSitesByCategory as groupSitesByCategory2, siteProdUrl as siteProdUrl2 } from "@agentic-toolkit/adh-registry";
-import { jsx as jsx9, jsxs as jsxs7 } from "react/jsx-runtime";
+import { jsx as jsx8, jsxs as jsxs6 } from "react/jsx-runtime";
 function SitesPopover({ sites = FOOTER_SITES } = {}) {
   const groups = groupSitesByCategory2(sites);
-  return /* @__PURE__ */ jsx9(AdhModalPopover, { id: SITES_OVERVIEW_POPOVER_ID, title: "The Agentic Developer family", children: groups.map((group) => /* @__PURE__ */ jsxs7(
+  return /* @__PURE__ */ jsx8(AdhModalPopover, { id: SITES_OVERVIEW_POPOVER_ID, title: "The Agentic Developer family", children: groups.map((group) => /* @__PURE__ */ jsxs6(
     "nav",
     {
       className: "adh-sites-popover__group",
       "aria-label": group.label,
       children: [
-        /* @__PURE__ */ jsx9("h3", { className: "adh-sites-popover__group-title", children: group.label }),
-        /* @__PURE__ */ jsx9("ul", { className: "adh-sites-popover__list", children: group.sites.map((site) => /* @__PURE__ */ jsx9("li", { children: /* @__PURE__ */ jsxs7(
+        /* @__PURE__ */ jsx8("h3", { className: "adh-sites-popover__group-title", children: group.label }),
+        /* @__PURE__ */ jsx8("ul", { className: "adh-sites-popover__list", children: group.sites.map((site) => /* @__PURE__ */ jsx8("li", { children: /* @__PURE__ */ jsxs6(
           "a",
           {
             className: "adh-sites-popover__item",
             href: siteProdUrl2(site.id, "/"),
             children: [
-              /* @__PURE__ */ jsx9("span", { className: "adh-sites-popover__name", children: site.label }),
-              site.description && /* @__PURE__ */ jsx9("span", { className: "adh-sites-popover__blurb", children: site.description })
+              /* @__PURE__ */ jsx8("span", { className: "adh-sites-popover__name", children: site.label }),
+              site.description && /* @__PURE__ */ jsx8("span", { className: "adh-sites-popover__blurb", children: site.description })
             ]
           }
         ) }, site.id)) })
@@ -396,51 +383,50 @@ function SitesPopover({ sites = FOOTER_SITES } = {}) {
 }
 
 // src/footer/SiteFooter.tsx
-import { Fragment, jsx as jsx10, jsxs as jsxs8 } from "react/jsx-runtime";
+import { Fragment, jsx as jsx9, jsxs as jsxs7 } from "react/jsx-runtime";
 var COPYRIGHT_PREFIX = "\xA9 2026 ";
 function SiteFooter({ links = [], chat = true, live, specimen = false, contact = ADH_CONTACT }) {
   const version = buildVersionLabel(live);
-  return /* @__PURE__ */ jsxs8(Fragment, { children: [
-    /* @__PURE__ */ jsx10("footer", { className: "adh-footer adh-footer--floating", role: "contentinfo", children: /* @__PURE__ */ jsxs8("div", { className: "adh-footer__copyright", children: [
-      /* @__PURE__ */ jsxs8("button", { type: "button", className: "adh-footer__copyright-trigger", popoverTarget: FAMILY_FOOTER_DIALOG_ID, children: [
+  return /* @__PURE__ */ jsxs7(Fragment, { children: [
+    /* @__PURE__ */ jsx9("footer", { className: "adh-footer adh-footer--floating", role: "contentinfo", children: /* @__PURE__ */ jsxs7("div", { className: "adh-footer__copyright", children: [
+      /* @__PURE__ */ jsxs7("button", { type: "button", className: "adh-footer__copyright-trigger", popoverTarget: FAMILY_FOOTER_DIALOG_ID, children: [
         COPYRIGHT_PREFIX,
-        /* @__PURE__ */ jsx10("span", { className: "adh-footer__brand-link", children: BRAND_LABEL }),
-        /* @__PURE__ */ jsx10(ChevronsUpDown2, { className: "adh-footer__menu-caret", "aria-hidden": true })
+        /* @__PURE__ */ jsx9("span", { className: "adh-footer__brand-link", children: BRAND_LABEL }),
+        /* @__PURE__ */ jsx9(ChevronsUpDown2, { className: "adh-footer__menu-caret", "aria-hidden": true })
       ] }),
-      /* @__PURE__ */ jsxs8("span", { className: "adh-footer__copyright-fallback", children: [
+      /* @__PURE__ */ jsxs7("span", { className: "adh-footer__copyright-fallback", children: [
         COPYRIGHT_PREFIX,
-        /* @__PURE__ */ jsx10("a", { className: "adh-footer__brand-link", href: BRAND_HREF, children: BRAND_LABEL }),
-        version && /* @__PURE__ */ jsxs8("span", { className: "adh-footer__copyright-version", children: [
+        /* @__PURE__ */ jsx9("a", { className: "adh-footer__brand-link", href: BRAND_HREF, children: BRAND_LABEL }),
+        version && /* @__PURE__ */ jsxs7("span", { className: "adh-footer__copyright-version", children: [
           " \xB7 ",
           version
         ] })
       ] })
     ] }) }),
-    chat && !specimen && /* @__PURE__ */ jsx10(FooterChat, {}),
-    !specimen && /* @__PURE__ */ jsxs8(Fragment, { children: [
-      /* @__PURE__ */ jsx10(AdhModalPopover, { id: FAMILY_FOOTER_DIALOG_ID, title: "The Agentic Developer family", className: "adh-modal--wide", children: /* @__PURE__ */ jsx10(FamilyFooter, { version, links }) }),
-      /* @__PURE__ */ jsx10(SitesPopover, {}),
-      /* @__PURE__ */ jsx10(ContactPopover, { contact }),
-      /* @__PURE__ */ jsx10(TermsModal, {}),
-      /* @__PURE__ */ jsx10(PrivacyModal, {})
+    chat && !specimen && /* @__PURE__ */ jsx9(FooterChat, {}),
+    !specimen && /* @__PURE__ */ jsxs7(Fragment, { children: [
+      /* @__PURE__ */ jsx9(AdhModalPopover, { id: FAMILY_FOOTER_DIALOG_ID, title: "The Agentic Developer family", className: "adh-modal--wide", children: /* @__PURE__ */ jsx9(FamilyFooter, { version, links, contact }) }),
+      /* @__PURE__ */ jsx9(SitesPopover, {}),
+      /* @__PURE__ */ jsx9(TermsModal, {}),
+      /* @__PURE__ */ jsx9(PrivacyModal, {})
     ] })
   ] });
 }
 
 // src/footer/FamilyDrawer.tsx
-import { jsx as jsx11 } from "react/jsx-runtime";
+import { jsx as jsx10 } from "react/jsx-runtime";
 function FamilyDrawerRow() {
-  return /* @__PURE__ */ jsx11("a", { className: "lp-nav", href: `/#${FAMILY_BAND_ID}`, children: "Family" });
+  return /* @__PURE__ */ jsx10("a", { className: "lp-nav", href: `/#${FAMILY_BAND_ID}`, children: "Hub Websites" });
 }
 function MoreInfoDrawerFoot() {
-  return /* @__PURE__ */ jsx11("a", { className: "lp-nav", href: `/#${MORE_INFO_ANCHOR_ID}`, children: "More Info" });
+  return /* @__PURE__ */ jsx10("a", { className: "lp-nav", href: `/#${MORE_INFO_ANCHOR_ID}`, children: "More Info" });
 }
 
 // src/footer/FooterForRoute.tsx
 import { usePathname } from "next/navigation";
-import { Fragment as Fragment2, jsx as jsx12 } from "react/jsx-runtime";
+import { Fragment as Fragment2, jsx as jsx11 } from "react/jsx-runtime";
 function FooterForRoute({ landing, rest }) {
-  return /* @__PURE__ */ jsx12(Fragment2, { children: usePathname() === "/" ? landing : rest });
+  return /* @__PURE__ */ jsx11(Fragment2, { children: usePathname() === "/" ? landing : rest });
 }
 
 // src/footer/seededBackend.ts
@@ -511,8 +497,6 @@ function useChatTheme() {
 export {
   AdhFooter,
   BITBAG_PERSONA,
-  CONTACT_POPOVER_ID,
-  ContactPopover,
   FAMILY_FOOTER_DIALOG_ID,
   FamilyDrawerRow,
   FamilyFooter,

@@ -188,12 +188,14 @@
   transform: none;
   box-shadow: 40px 0 120px var(--lp-drawer-shadow, rgba(0, 0, 0, 0.55));
 }
+/* Type two points under the page's, rows as tall as they were: the extra padding gives back the
+ * height the smaller line took, so the list keeps its air. */
 .lp-drawer a.lp-nav {
   display: block;
-  padding: 0.72rem 0;
+  padding: 0.8rem 0;
   color: var(--lp-ink, #ededed);
   text-decoration: none;
-  font-size: 1.08rem;
+  font-size: 0.95rem;
   font-weight: 300;
   letter-spacing: 0.08em;
   /* Another literal rgba in the original with no backing site variable;

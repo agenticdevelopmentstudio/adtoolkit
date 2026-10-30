@@ -315,7 +315,6 @@ import { DEV_BUILD } from "@agentic-toolkit/adh-registry/deployment-env";
 
 // src/marketing/LandingFooter.tsx
 import {
-  ContactPopover,
   FamilyFooter,
   PrivacyModal,
   SitesPopover,
@@ -343,9 +342,8 @@ function buildVersionLabel(live) {
 import { Fragment as Fragment3, jsx as jsx10, jsxs as jsxs6 } from "react/jsx-runtime";
 function LandingFooter({ contact = ADH_CONTACT } = {}) {
   return /* @__PURE__ */ jsxs6(Fragment3, { children: [
-    /* @__PURE__ */ jsx10(FamilyFooter, { version: buildVersionLabel(), anchored: true }),
+    /* @__PURE__ */ jsx10(FamilyFooter, { version: buildVersionLabel(), anchored: true, contact }),
     /* @__PURE__ */ jsx10(SitesPopover, { sites: FAMILY_SITES }),
-    /* @__PURE__ */ jsx10(ContactPopover, { contact }),
     /* @__PURE__ */ jsx10(TermsModal, {}),
     /* @__PURE__ */ jsx10(PrivacyModal, {})
   ] });

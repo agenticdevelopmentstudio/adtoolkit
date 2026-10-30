@@ -2,7 +2,6 @@
 
 import { ChevronsUpDown } from 'lucide-react'
 import { AdhModalPopover } from './AdhModalPopover'
-import { ContactPopover } from './ContactPopover'
 import { FamilyFooter, type SiteLink } from './FamilyFooter'
 import { ADH_CONTACT, BRAND_HREF, BRAND_LABEL, FAMILY_FOOTER_DIALOG_ID, buildVersionLabel, type SiteContact } from './identity'
 import { FooterChat } from './FooterChat'
@@ -19,7 +18,7 @@ export type SiteFooterProps = {
    *  (theme-editor/areas.tsx). The footer carries things a page must have exactly one of,
    *  and a specimen renders none of them:
    *
-   *  - No family-footer, Sites, Contact, Terms or Privacy dialog. Those are found by id
+   *  - No family-footer, Sites, Terms or Privacy dialog. Those are found by id
    *    (`popovertarget` looks across the whole document), so the specimen's copyright opens
    *    the page footer's own. On a page with no SiteFooter it opens nothing, which a
    *    specimen can afford: it is there to show what the footer looks like, not to be one.
@@ -37,7 +36,7 @@ export type SiteFooterProps = {
    *  value has to cross the server/client boundary as data. It cannot be read here —
    *  resolving it needs `node:fs` and a `git` fork. */
   live?: { version?: string; sha?: string }
-  /** Who the Contact entry writes to; the hub by default. */
+  /** Who the family footer's Contact column writes to; the hub by default. */
   contact?: SiteContact
 }
 
@@ -79,10 +78,9 @@ export function SiteFooter({ links = [], chat = true, live, specimen = false, co
       {!specimen && (
         <>
           <AdhModalPopover id={FAMILY_FOOTER_DIALOG_ID} title="The Agentic Developer family" className="adh-modal--wide">
-            <FamilyFooter version={version} links={links} />
+            <FamilyFooter version={version} links={links} contact={contact} />
           </AdhModalPopover>
           <SitesPopover />
-          <ContactPopover contact={contact} />
           <TermsModal />
           <PrivacyModal />
         </>

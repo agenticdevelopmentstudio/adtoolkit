@@ -10,7 +10,7 @@ export type SiteFooterProps = {
      *  (theme-editor/areas.tsx). The footer carries things a page must have exactly one of,
      *  and a specimen renders none of them:
      *
-     *  - No family-footer, Sites, Contact, Terms or Privacy dialog. Those are found by id
+     *  - No family-footer, Sites, Terms or Privacy dialog. Those are found by id
      *    (`popovertarget` looks across the whole document), so the specimen's copyright opens
      *    the page footer's own. On a page with no SiteFooter it opens nothing, which a
      *    specimen can afford: it is there to show what the footer looks like, not to be one.
@@ -31,7 +31,7 @@ export type SiteFooterProps = {
         version?: string;
         sha?: string;
     };
-    /** Who the Contact entry writes to; the hub by default. */
+    /** Who the family footer's Contact column writes to; the hub by default. */
     contact?: SiteContact;
 };
 /** adh's footer on every page but a landing page: a small floating box in the viewport's

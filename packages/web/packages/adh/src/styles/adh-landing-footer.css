@@ -1,6 +1,6 @@
 /* The family footer (footer/FamilyFooter, in flow on `/` through marketing/LandingFooter and in a
  * dialog everywhere else through SiteFooter) and the dialogs it opens: the sites overview
- * (SitesPopover), Contact (ContactPopover), Terms and Privacy (LegalModals), all on the shared
+ * (SitesPopover), Terms and Privacy (LegalModals), all on the shared
  * modal frame (AdhModalPopover). Exported alone as
  * `@agentic-toolkit/adh/landing-footer.css` so a site can carry the footer without the rest of
  * adh's sheet, whose themes, primitives and Tailwind sources would restyle a page that is not
@@ -11,7 +11,7 @@
  * Tailwind. */
 
 /* The shared footer modal dialog (native HTML Popover API) — used by the family footer,
-   Sites, Contact, Terms and Privacy triggers. Open state is centered in the top layer with a
+   Sites, Terms and Privacy triggers. Open state is centered in the top layer with a
    dimmed backdrop; a flex column pins the header while the body scrolls.
 
    CLOSED state must be `display:none` so the modal doesn't render inline in the
@@ -169,11 +169,21 @@
   color: var(--lp-ink-dim, var(--color-text-dim));
 }
 
+/* Four columns a row: the landing page's eight (five of sites, About, Legal, Contact) are two
+   rows of four, and a dialog's "This site" starts a third. Two a row on a phone. A column's
+   width is the grid's, never its longest name's, so an address breaks rather than widen it. */
 .adh-landing-footer__directory {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.75rem 1.5rem;
   padding-bottom: 2rem;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 40rem) {
+  .adh-landing-footer__directory {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 /* The drawer's More Info row jumps here (`/#more-info`); land below the fixed header and burger
@@ -272,36 +282,6 @@
    already gives it. */
 .adh-modal--wide {
   width: min(92vw, 64rem);
-}
-
-/* ---- Contact (footer/ContactPopover) ---- */
-.adh-modal__body--contact {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  font-family: var(--font-sans, ui-sans-serif, system-ui, sans-serif);
-}
-
-.adh-contact__lead {
-  margin: 0;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  color: var(--color-text-secondary, var(--color-text-dim));
-}
-
-.adh-contact__email {
-  align-self: flex-start;
-  font-family: var(--font-mono);
-  font-size: 1.05rem;
-  color: var(--color-accent);
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--color-accent) 40%, transparent);
-  text-underline-offset: 3px;
-}
-
-.adh-contact__email:hover,
-.adh-contact__email:focus-visible {
-  text-decoration-color: var(--color-accent);
 }
 
 /* ---- Terms and Privacy in their dialogs (footer/LegalModals) ----

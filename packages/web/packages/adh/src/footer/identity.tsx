@@ -37,9 +37,9 @@ export const BRAND_HREF = 'https://agenticdevelopmentstudio.com/'
  *  interlink set. */
 export const SITES_OVERVIEW_POPOVER_ID = 'adh-sites-overview'
 
-/** Who a site's Contact entry writes to: the name its dialog is titled with and the address
- *  it links. Per site, unlike the copyright: a family site writes to the hub, and the studio
- *  and FishLamp Design each to their own (they pass theirs to `LandingFooter`). */
+/** Who a site's Contact column writes to: whose address it is, and the address it links. Per
+ *  site, unlike the copyright: a family site writes to the hub, and the studio and FishLamp
+ *  Design each to their own (they pass theirs to `LandingFooter`). */
 export type SiteContact = { name: string; email: string }
 
 /** The family's own contact, the default for every site that does not pass one. */
@@ -48,16 +48,12 @@ export const ADH_CONTACT: SiteContact = {
   email: 'hello@agenticdeveloperhub.com',
 }
 
-/** The DOM id of the Contact dialog, opened from the footer's fine print. One per page, for
- *  the same reason as the sites overview's. */
-export const CONTACT_POPOVER_ID = 'adh-contact'
-
 /** The DOM id of the dialog the floating copyright opens: the whole family footer, the one
  *  the landing page ends with, over the page. */
 export const FAMILY_FOOTER_DIALOG_ID = 'adh-family-footer'
 
 /** The id of the landing page's family band, the cards of the family's sites: what the drawer's
- *  Family row jumps to (`/#family`). The band is the page's content, so the id is its heading's. */
+ *  Hub Websites row jumps to (`/#family`). The band is the page's content, so the id is its heading's. */
 export const FAMILY_BAND_ID = 'family'
 
 /** The id the in-flow landing footer carries, once per page: what the drawer's More Info row

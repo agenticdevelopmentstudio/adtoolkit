@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { type SiteContact } from "../footer/identity";
 export { LANDING_FOOTER_CLASS } from "../footer/identity";
 export type LandingFooterProps = {
-    /** Who the Contact entry writes to. The family's sites write to the hub (the default); the
+    /** Who the Contact column writes to. The family's sites write to the hub (the default); the
      *  studio and FishLamp Design pass their own. */
     contact?: SiteContact;
 };

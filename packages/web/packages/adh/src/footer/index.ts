@@ -8,13 +8,12 @@ export type { AdhFooterProps, FooterLink, FooterMenuItem } from './AdhFooter'
 // primitive above); the two are unrelated components that happened to share a name.
 export { SiteFooter } from './SiteFooter'
 export type { SiteFooterProps } from './SiteFooter'
-export { SITES_OVERVIEW_POPOVER_ID, CONTACT_POPOVER_ID, FAMILY_FOOTER_DIALOG_ID } from './identity'
+export { SITES_OVERVIEW_POPOVER_ID, FAMILY_FOOTER_DIALOG_ID } from './identity'
 export type { SiteContact } from './identity'
 // The family footer and the dialogs its entries open, for a footer that is not SiteFooter: the
 // landing page's LandingFooter (marketing/), a server component, renders them by package path.
 export { FamilyFooter } from './FamilyFooter'
 export type { FamilyFooterProps, SiteLink } from './FamilyFooter'
-export { ContactPopover } from './ContactPopover'
 export { TermsModal, PrivacyModal } from './LegalModals'
 // The family's half of the site template's drawer: its `drawer` and `drawerFoot` slots.
 export { FamilyDrawerRow, MoreInfoDrawerFoot } from './FamilyDrawer'

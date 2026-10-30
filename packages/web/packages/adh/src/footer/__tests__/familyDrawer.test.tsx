@@ -6,9 +6,9 @@ import { FamilyFooter } from '../FamilyFooter'
 afterEach(cleanup)
 
 describe('the drawer rows', () => {
-  it('Family is one drawer row, to the family band', () => {
+  it('Hub Websites is one drawer row, to the family band', () => {
     render(<FamilyDrawerRow />)
-    const row = screen.getByRole('link', { name: 'Family' })
+    const row = screen.getByRole('link', { name: 'Hub Websites' })
     expect(row.classList.contains('lp-nav')).toBe(true)
     expect(row.getAttribute('href')).toBe('/#family')
   })

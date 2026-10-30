@@ -19,27 +19,29 @@ describe('adh SiteFooter', () => {
     expect(dialog.getAttribute('popover')).toBe('auto')
     const headings = Array.from(dialog.querySelectorAll('.adh-landing-footer__heading')).map((h) => h.textContent)
     expect(headings[0]).toBe('This site')
-    expect(headings.slice(-2)).toEqual(['About', 'Legal'])
+    expect(headings.slice(-3)).toEqual(['About', 'Legal', 'Contact'])
     expect(within(dialog).getByRole('link', { name: 'GitHub', hidden: true })).toHaveAttribute('href', 'https://example.com')
   })
 
   it('renders each dialog the family footer opens once, beside it rather than inside it', () => {
     render(<SiteFooter />)
     const family = document.getElementById('adh-family-footer')!
-    for (const id of ['adh-contact', 'adh-sites-overview', 'adh-terms-dialog', 'adh-privacy-dialog']) {
+    for (const id of ['adh-sites-overview', 'adh-terms-dialog', 'adh-privacy-dialog']) {
       expect(document.querySelectorAll(`#${id}`)).toHaveLength(1)
       expect(family.contains(document.getElementById(id))).toBe(false)
     }
   })
 
-  it('writes to the hub by default, and to a site\'s own address when it passes one', () => {
+  it('ends the directory with a Contact column of the hub\'s address, or a site\'s own', () => {
+    const contactLink = () =>
+      document.querySelector('#adh-family-footer nav[aria-label="Contact"] a')
     const { unmount } = render(<SiteFooter />)
-    expect(document.querySelector('#adh-contact a')).toHaveAttribute('href', 'mailto:hello@agenticdeveloperhub.com')
+    expect(contactLink()).toHaveAttribute('href', 'mailto:hello@agenticdeveloperhub.com')
+    expect(contactLink()?.textContent).toBe('hello@agenticdeveloperhub.com')
     unmount()
     render(<SiteFooter contact={{ name: 'FishLamp Design', email: 'hello@fishlamp.com' }} />)
-    const contact = document.getElementById('adh-contact')!
-    expect(contact.textContent).toContain('Contact FishLamp Design')
-    expect(contact.querySelector('a')).toHaveAttribute('href', 'mailto:hello@fishlamp.com')
+    expect(contactLink()).toHaveAttribute('href', 'mailto:hello@fishlamp.com')
+    expect(document.querySelector('#adh-contact')).toBeNull()
   })
 
   it('keeps the studio\'s link and the build on screen without the Popover API', () => {

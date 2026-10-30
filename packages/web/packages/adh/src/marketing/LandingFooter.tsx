@@ -2,7 +2,6 @@ import type { ReactElement } from "react";
 // The client pieces by package path: each is 'use client', and a relative specifier would
 // inline it and hoist its directive over this server entry (see MarketingFrameHeader).
 import {
-  ContactPopover,
   FamilyFooter,
   PrivacyModal,
   SitesPopover,
@@ -15,7 +14,7 @@ import { ADH_CONTACT, FAMILY_SITES, buildVersionLabel, type SiteContact } from "
 export { LANDING_FOOTER_CLASS } from "../footer/identity";
 
 export type LandingFooterProps = {
-  /** Who the Contact entry writes to. The family's sites write to the hub (the default); the
+  /** Who the Contact column writes to. The family's sites write to the hub (the default); the
    *  studio and FishLamp Design pass their own. */
   contact?: SiteContact;
 };
@@ -34,9 +33,8 @@ export type LandingFooterProps = {
 export function LandingFooter({ contact = ADH_CONTACT }: LandingFooterProps = {}): ReactElement {
   return (
     <>
-      <FamilyFooter version={buildVersionLabel()} anchored />
+      <FamilyFooter version={buildVersionLabel()} anchored contact={contact} />
       <SitesPopover sites={FAMILY_SITES} />
-      <ContactPopover contact={contact} />
       <TermsModal />
       <PrivacyModal />
     </>

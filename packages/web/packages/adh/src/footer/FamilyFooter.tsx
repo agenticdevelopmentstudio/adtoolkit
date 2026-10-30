@@ -12,12 +12,13 @@ import { getSite, groupSitesByCategory, siteProdUrl, type SiteDef } from '@agent
 import { PreviewNotice } from '../header/PreviewNotice'
 import {
   BRAND_HREF,
+  ADH_CONTACT,
   BRAND_LABEL,
-  CONTACT_POPOVER_ID,
   FAMILY_SITES,
   LANDING_FOOTER_CLASS,
   MORE_INFO_ANCHOR_ID,
   SITES_OVERVIEW_POPOVER_ID,
+  type SiteContact,
 } from './identity'
 import { openLegalModal, PRIVACY_DIALOG_ID, TERMS_DIALOG_ID } from './LegalModals'
 
@@ -103,29 +104,37 @@ export type FamilyFooterProps = {
   /** Carry the drawer's More Info jump target (MORE_INFO_ANCHOR_ID). For the in-flow landing
    *  footer only: a page holds the id once, and SiteFooter's dialog copy must not repeat it. */
   anchored?: boolean
+  /** Who the Contact column writes to; the hub by default. */
+  contact?: SiteContact
 }
 
 /**
  * The family footer: a directory of the whole family, the way a store's site ends. The
  * preview badge heads it; then every group of sites as a column of plain links, the native
- * tools in a column of their own, who makes them, and the legal pages; then one line of fine
- * print with the copyright, Contact, the sites overview and the build.
+ * tools in a column of their own, who makes them, the legal pages, and the address to write to;
+ * then one line of fine print with the copyright, the sites overview and the build.
  *
  * It is the landing page's footer (LandingFooter, in flow at the foot of `/`) and, on every
  * other page, what the floating copyright opens in a dialog (SiteFooter). Every link is in
  * the server HTML either way, so it is also the page's crawlable interlink set.
  *
- * Terms, Privacy, Contact and All sites open dialogs, and those dialogs are the CALLER's to
+ * Terms, Privacy and All sites open dialogs, and those dialogs are the CALLER's to
  * render, once per page: a dialog inside this footer would be inside SiteFooter's closed
  * dialog, which is `display: none`, and the header's site switcher opens the same sites
  * overview by id.
  */
-export function FamilyFooter({ version, links = [], anchored = false }: FamilyFooterProps): ReactElement {
+export function FamilyFooter({
+  version,
+  links = [],
+  anchored = false,
+  contact = ADH_CONTACT,
+}: FamilyFooterProps): ReactElement {
   const columns: ColumnDef[] = [
     ...(links.length > 0 ? [{ title: 'This site', entries: links }] : []),
     ...siteColumns(FAMILY_SITES),
     { title: 'About', entries: aboutEntries() },
     { title: 'Legal', entries: LEGAL_ENTRIES },
+    { title: 'Contact', entries: [{ label: contact.email, href: `mailto:${contact.email}` }] },
   ]
   return (
     <div id={anchored ? MORE_INFO_ANCHOR_ID : undefined} className={LANDING_FOOTER_CLASS}>
@@ -146,15 +155,6 @@ export function FamilyFooter({ version, links = [], anchored = false }: FamilyFo
           . All rights reserved.
         </p>
         <ul className="adh-landing-footer__legal">
-          <li className="adh-landing-footer__item">
-            <button
-              type="button"
-              className="adh-landing-footer__link adh-landing-footer__contact"
-              popoverTarget={CONTACT_POPOVER_ID}
-            >
-              Contact
-            </button>
-          </li>
           <li className="adh-landing-footer__item">
             <button
               type="button"
