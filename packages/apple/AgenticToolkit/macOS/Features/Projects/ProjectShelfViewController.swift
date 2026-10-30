@@ -37,8 +37,10 @@ public final class ProjectShelfViewController: NSViewController {
     private let browser: ProjectBrowserViewController
     private let activeProjects: ActiveProjectsViewController
     private let searchField = ThemedSearchField()
-    private var panelButtons: [ProjectShelfPanel: NSButton] = [:]
-    private var themeObserver: ThemePaletteObserver?
+    /// One button per panel — Xcode's navigator bar, shared (`dry`).
+    private let panelBar = IconTabBar(
+        items: ProjectShelfPanel.allCases.map { .init(id: $0.rawValue, symbol: $0.symbol, title: $0.title) },
+        accessibilityPrefix: "project-shelf.panel.")
     private var cancellables: Set<AnyCancellable> = []
 
     public init(coordinator: ProjectsCoordinator, group: ProjectWindowGroup) {
@@ -54,8 +56,17 @@ public final class ProjectShelfViewController: NSViewController {
     // MARK: - View
 
     public override func loadView() {
-        let container = ThemedBackgroundView(role: .windowBackground)
-        container.setAccessibilityElement(false)
+        let container = PointerFocusRegionView()
+        let backdrop = ThemedBackgroundView(role: .windowBackground)
+        backdrop.setAccessibilityElement(false)
+        backdrop.translatesAutoresizingMaskIntoConstraints = false
+        container.addSubview(backdrop)
+        NSLayoutConstraint.activate([
+            backdrop.topAnchor.constraint(equalTo: container.topAnchor),
+            backdrop.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            backdrop.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            backdrop.bottomAnchor.constraint(equalTo: container.bottomAnchor)
+        ])
 
         // Inset from the pane and drawn on the project backdrop the split view
         // paints behind it — the border is what makes it read as a navigator
@@ -70,7 +81,11 @@ public final class ProjectShelfViewController: NSViewController {
         card.translatesAutoresizingMaskIntoConstraints = false
         container.addSubview(card)
 
-        let bar = makeButtonBar()
+        let bar = panelBar
+        bar.onSelect = { [weak self] raw in
+            guard let panel = ProjectShelfPanel(rawValue: raw) else { return }
+            self?.choosePanel(panel)
+        }
         let topRule = ThemedSeparatorView(role: .border)
         let bottomRule = ThemedSeparatorView(role: .border)
 
@@ -114,12 +129,11 @@ public final class ProjectShelfViewController: NSViewController {
             card.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
             card.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -8),
 
-            bar.topAnchor.constraint(equalTo: container.safeAreaLayoutGuide.topAnchor),
-            bar.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 4),
-            bar.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -4),
-            bar.heightAnchor.constraint(equalToConstant: 30),
+            bar.topAnchor.constraint(equalTo: container.safeAreaLayoutGuide.topAnchor, constant: 2),
+            bar.leadingAnchor.constraint(equalTo: card.leadingAnchor, constant: 8),
+            bar.trailingAnchor.constraint(equalTo: card.trailingAnchor, constant: -8),
 
-            topRule.topAnchor.constraint(equalTo: bar.bottomAnchor),
+            topRule.topAnchor.constraint(equalTo: bar.bottomAnchor, constant: 6),
             topRule.leadingAnchor.constraint(equalTo: card.leadingAnchor),
             topRule.trailingAnchor.constraint(equalTo: card.trailingAnchor),
 
@@ -140,30 +154,6 @@ public final class ProjectShelfViewController: NSViewController {
         self.view = container
     }
 
-    /// One borderless icon button per panel, sharing the bar's width equally
-    /// — Xcode's navigator bar.
-    private func makeButtonBar() -> NSStackView {
-        let buttons: [NSButton] = ProjectShelfPanel.allCases.map { panel in
-            let image = NSImage(systemSymbolName: panel.symbol, accessibilityDescription: panel.title) ?? NSImage()
-            let button = NSButton(image: image, target: self, action: #selector(panelButtonClicked(_:)))
-            button.isBordered = false
-            button.imagePosition = .imageOnly
-            button.toolTip = panel.title
-            button.identifier = NSUserInterfaceItemIdentifier(panel.rawValue)
-            button.setButtonType(.momentaryChange)
-            button.accessibilityID("project-shelf.panel.\(panel.rawValue)")
-            panelButtons[panel] = button
-            return button
-        }
-        let bar = NSStackView(views: buttons)
-        bar.orientation = .horizontal
-        bar.distribution = .fillEqually
-        bar.alignment = .centerY
-        bar.spacing = 0
-        bar.translatesAutoresizingMaskIntoConstraints = false
-        return bar
-    }
-
     public override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -178,8 +168,6 @@ public final class ProjectShelfViewController: NSViewController {
         }
         activeProjects.onChoose = { [weak self] id in self?.onShowActiveProject?(id) }
         activeProjects.onClose = { [weak self] id in self?.onCloseActiveProject?(id) }
-
-        themeObserver = ThemePaletteObserver(host: view) { [weak self] _ in self?.refreshPanelButtons() }
 
         applyPanel(group.panel)
         applyFilterText(group.filterText)
@@ -198,9 +186,13 @@ public final class ProjectShelfViewController: NSViewController {
 
     // MARK: - Panels
 
-    @objc private func panelButtonClicked(_ sender: NSButton) {
-        guard let raw = sender.identifier?.rawValue, let panel = ProjectShelfPanel(rawValue: raw) else { return }
-        group.panel = panel
+    /// A click on the panel's button. The keyboard goes with it: a button does
+    /// not take the keyboard, so without this the arrow keys stayed wherever
+    /// they were — a pane — and beeped instead of moving through the panel
+    /// the user had just picked (principle-of-least-astonishment).
+    private func choosePanel(_ panel: ProjectShelfPanel) {
+        show(panel)
+        focusList()
     }
 
     /// Shows `panel`. The group is what is changed, so every shelf in it
@@ -212,6 +204,11 @@ public final class ProjectShelfViewController: NSViewController {
 
     private func applyPanel(_ panel: ProjectShelfPanel) {
         guard isViewLoaded else { return }
+        // A list the keyboard is in is about to be hidden; the keys follow to
+        // the list taking its place rather than going on into one nobody can
+        // see. Choosing in the browser lands here, on its way to Active
+        // Projects.
+        let keysInList = focus == .list
         browser.view.isHidden = panel != .browser
         activeProjects.view.isHidden = panel != .activeProjects
         searchField.placeholderString = panel.filterPlaceholder
@@ -220,16 +217,8 @@ public final class ProjectShelfViewController: NSViewController {
         searchField.applyTheme(view.resolvedThemeScope.palette)
         let text = group.filterText[panel] ?? ""
         if searchField.stringValue != text { searchField.stringValue = text }
-        refreshPanelButtons()
-    }
-
-    private func refreshPanelButtons() {
-        let palette = view.resolvedThemeScope.palette
-        for (panel, button) in panelButtons {
-            let selected = panel == group.panel
-            button.contentTintColor = palette.nsColor(selected ? .accent : .secondaryText)
-            button.setAccessibilityValue(selected ? "selected" : nil)
-        }
+        panelBar.selectedID = panel.rawValue
+        if keysInList { focusList() }
     }
 
     // MARK: - Filter

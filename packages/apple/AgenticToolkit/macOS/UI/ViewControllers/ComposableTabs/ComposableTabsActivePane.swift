@@ -132,6 +132,13 @@ public final class ComposableTabsActivePane {
         }
     }
 
+    /// Told by a `PointerFocusRegionView` as it lands in a window, for the
+    /// same reason a pane is: so the setting reaches its window.
+    public func regionDidAppear(in window: NSWindow) {
+        paneWindows.add(window)
+        acceptMouseMoved(in: window)
+    }
+
     /// Told by each pane's backdrop as it leaves a window — closed, or swapped
     /// out by a tab switch.
     ///
@@ -182,15 +189,33 @@ public final class ComposableTabsActivePane {
         let following = event.type == .mouseMoved
         if following, !followsMouse(in: window) { return }
 
-        guard let chain = paneChain(under: event, in: window),
-              let background = chain.last as? ComposableTabsPaneBackgroundView else { return }
+        guard let chain = paneChain(under: event, in: window) else { return }
+
+        // A region outside the panes — a project window's shelf — follows the
+        // pointer too, but it is not a pane: there is no outline to move, only
+        // the keyboard. A click there focuses the ordinary way.
+        if let region = chain.last as? PointerFocusRegionView {
+            guard following, !holdsKeyboard(region, in: window) else { return }
+            takeFocus(within: chain, in: window)
+            return
+        }
+        guard let background = chain.last as? ComposableTabsPaneBackgroundView else { return }
 
         // A click that has not moved the user is a click inside the pane they
         // are already in, and there is nothing to say about it. The pointer
         // merely passing through is the same thing said far more often — and
         // taking the keyboard again on every one of those moves would interrupt
         // whatever the user was doing with it inside the pane.
-        guard activeNodeID(in: window) != background.nodeID else { return }
+        //
+        // The one exception is the pointer coming back from a region: the pane
+        // is still the active one, but the region took the keys, so they come
+        // back with the pointer.
+        guard activeNodeID(in: window) != background.nodeID else {
+            if following, keyboardIsInRegion(of: window) {
+                takeFocus(within: chain, in: window)
+            }
+            return
+        }
 
         // A click carries its own focus: the view under it takes first
         // responder the ordinary AppKit way. The pointer carries nothing, so a
@@ -220,7 +245,8 @@ public final class ComposableTabsActivePane {
     }
 
     /// The views under the pointer, innermost first, out to the pane's backdrop
-    /// — or `nil` when the point is not inside a pane at all.
+    /// or the `PointerFocusRegionView` holding them — or `nil` when the point
+    /// is inside neither.
     private func paneChain(under event: NSEvent, in window: NSWindow) -> [NSView]? {
         guard let contentView = window.contentView else { return nil }
         let point = contentView.convert(event.locationInWindow, from: nil)
@@ -231,10 +257,36 @@ public final class ComposableTabsActivePane {
         var view = contentView.hitTest(point)
         while let candidate = view {
             chain.append(candidate)
-            if candidate is ComposableTabsPaneBackgroundView { return chain }
+            if candidate is ComposableTabsPaneBackgroundView || candidate is PointerFocusRegionView {
+                return chain
+            }
             view = candidate.superview
         }
         return nil
+    }
+
+    /// The view the keyboard is in: the first responder, or — while a text
+    /// field is being edited — the field rather than its field editor, which
+    /// lives outside the field in the view tree.
+    private func keyboardView(in window: NSWindow) -> NSView? {
+        if let editor = window.firstResponder as? NSTextView, editor.isFieldEditor {
+            return editor.delegate as? NSView
+        }
+        return window.firstResponder as? NSView
+    }
+
+    private func holdsKeyboard(_ region: PointerFocusRegionView, in window: NSWindow) -> Bool {
+        keyboardView(in: window)?.isDescendant(of: region) == true
+    }
+
+    /// Whether a region, rather than a pane, has the keyboard.
+    private func keyboardIsInRegion(of window: NSWindow) -> Bool {
+        var view = keyboardView(in: window)
+        while let current = view {
+            if current is PointerFocusRegionView { return true }
+            view = current.superview
+        }
+        return false
     }
 
     /// What came of trying to hand the keyboard to the pane under the pointer.
@@ -295,6 +347,25 @@ public final class ComposableTabsActivePane {
         // `.refused` as "leave both where they were", which is the closest
         // this can get to honest.
         return window.makeFirstResponder(original) ? .nowhereToPut : .refused
+    }
+}
+
+/// A part of a window outside every pane that the keyboard follows the pointer
+/// into when *Active Pane Follows the Mouse* is on — a project window's shelf.
+/// It holds no pane and draws no active outline; the pointer moving over it
+/// hands the keyboard to what is under the pointer, and moving back to the
+/// active pane hands it back.
+///
+/// A marker view rather than a protocol, so the tracker finds it with the same
+/// walk out from the hit view that finds a pane's backdrop (`dry`).
+@MainActor
+public final class PointerFocusRegionView: NSView {
+
+    /// A window holding only a region — a project window with no project yet —
+    /// has no pane to switch its pointer events on.
+    public override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        if let window { ComposableTabsActivePane.shared.regionDidAppear(in: window) }
     }
 }
 

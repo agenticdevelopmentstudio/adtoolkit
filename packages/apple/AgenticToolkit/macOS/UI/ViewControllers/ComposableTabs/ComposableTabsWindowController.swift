@@ -1182,7 +1182,12 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
               let focusedNodeID = focusedLeafByTabID[activeTabID] else { return }
         // Defer one runloop tick so the tab's view hierarchy is fully
         // mounted before we try to make a leaf first responder.
-        DispatchQueue.main.async {
+        DispatchQueue.main.async { [weak self] in
+            // A project swap hands this window the shelf's keyboard after
+            // `showWindow` and before this tick. Taking it back for the pane
+            // left the arrow keys beeping in a pane the user had not chosen,
+            // instead of moving through the shelf they were using.
+            if let shelf = self?.shelf, shelf.focus != .elsewhere { return }
             activeSplit.makeLeafFirstResponder(nodeID: focusedNodeID)
         }
     }

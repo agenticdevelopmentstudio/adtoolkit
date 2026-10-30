@@ -508,10 +508,20 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
             incoming.adoptShelfLayout(outgoing.shelfLayout)
         }
         incoming.window?.isExcludedFromWindowsMenu = false
-        incoming.showWindow(nil)
-        // After `showWindow`, not before: showing restores the window's own
-        // saved frame, which would undo the hand-off and make the group jump.
+        // Two windows standing in for one: neither may play AppKit's order-in
+        // or order-out animation, which scales a document window down and
+        // back up — the whole window seemed to bounce on every project swap.
+        incoming.window?.animationBehavior = .none
+        outgoing?.window?.animationBehavior = .none
+        // Before showing as well as after: a window ordered in at its own
+        // stale frame and then resized is the same bounce by another route.
         if let outgoingFrame {
+            incoming.window?.setFrame(outgoingFrame, display: false)
+        }
+        incoming.showWindow(nil)
+        // After `showWindow` too: showing restores the window's own saved
+        // frame, which would undo the hand-off and make the group jump.
+        if let outgoingFrame, incoming.window?.frame != outgoingFrame {
             incoming.window?.setFrame(outgoingFrame, display: true)
         }
         incoming.window?.makeKeyAndOrderFront(nil)

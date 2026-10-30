@@ -279,6 +279,7 @@
 		8A01F8C319BD347D84DFDFED /* ObservingHook.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111EF0D45F3B9BF2F7BE9258 /* ObservingHook.swift */; };
 		8A4D3703E84F41E920A214A3 /* ColorTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = EECB68B9B9695826A3DCFDA4 /* ColorTheme.swift */; };
 		8A65E2515AA69782A7F8ED8E /* PermissionPrompt.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0D3CF9F8D4D78E70981042E /* PermissionPrompt.swift */; };
+		8BA3D28338F26FC5F3CAC928 /* IconTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = EB378901EC9A6BD89F34135E /* IconTabBar.swift */; };
 		8C304F5E0ADB76C46C28C583 /* SemanticPalette.swift in Sources */ = {isa = PBXBuildFile; fileRef = E84EFB03882CB9FC0AE9D166 /* SemanticPalette.swift */; };
 		8D0154045AE16444C8F3C740 /* HookContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C0F8ABE0C49F213B319AC5F /* HookContext.swift */; };
 		8D612A94D7E290FBB9793E17 /* ObservingHook.swift in Sources */ = {isa = PBXBuildFile; fileRef = 111EF0D45F3B9BF2F7BE9258 /* ObservingHook.swift */; };
@@ -778,6 +779,7 @@
 		E7A1A8E873030EA0447E2DCC /* AgenticDeveloperToolkitUI-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "AgenticDeveloperToolkitUI-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		E7EBE8154611FFD8FFDBEDA1 /* ChatFixtures.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatFixtures.swift; sourceTree = "<group>"; };
 		E84EFB03882CB9FC0AE9D166 /* SemanticPalette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticPalette.swift; sourceTree = "<group>"; };
+		EB378901EC9A6BD89F34135E /* IconTabBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconTabBar.swift; sourceTree = "<group>"; };
 		ECD74705DF1A654B3D2A0FDE /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 		EECB68B9B9695826A3DCFDA4 /* ColorTheme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorTheme.swift; sourceTree = "<group>"; };
 		F05B078424AAA34464FE0F28 /* Skill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Skill.swift; sourceTree = "<group>"; };
@@ -1156,6 +1158,7 @@
 			isa = PBXGroup;
 			children = (
 				AEA51676F29DFFE0C783BEA5 /* AnimatedBackdrop.swift */,
+				EB378901EC9A6BD89F34135E /* IconTabBar.swift */,
 				0EEB29F163D5A4F4F905F36C /* KeyWindowBorderView.swift */,
 				29C0C6C21B827DEFF396C099 /* OptionsDialogViewController.swift */,
 				CC049D2CA2F3C309F894A772 /* PaneControlCluster.swift */,
@@ -1904,6 +1907,7 @@
 				2575B961DE690F87C11214D6 /* ChatInputField.swift in Sources */,
 				801D6B8071BFDE57F85D10BD /* ChatWindowAppearanceController.swift in Sources */,
 				32AF65886AFCBF5098AC7675 /* ChatWindowController.swift in Sources */,
+				8BA3D28338F26FC5F3CAC928 /* IconTabBar.swift in Sources */,
 				20CDBD770B64FCDBCE84B7F5 /* InlineChatChrome.swift in Sources */,
 				846CECC156354765C60F9F89 /* InlineChatSizing.swift in Sources */,
 				7036F3420D19271D40F599A4 /* InlineChatView.swift in Sources */,
