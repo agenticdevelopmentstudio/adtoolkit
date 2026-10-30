@@ -1,7 +1,7 @@
 import { Fragment } from 'react'
 import type { ReactElement, ReactNode } from 'react'
 import {
-  DeckScript,
+  deckScript,
   Flow,
   FlowHero,
   Head,
@@ -10,6 +10,7 @@ import {
   renderBlock,
 } from '@agenticdevelopertoolkit/landing'
 import type { BandTone, LandingPage, LandingSection } from '@agenticdevelopertoolkit/landing'
+import { DocumentLoadScript } from '@agenticdevelopertoolkit/themes/DocumentLoadScript'
 import { FAMILY_ID, FamilyBand } from './family-band'
 import { FrameBand } from './frame-band'
 import { HeroThumb } from './hero-thumb'
@@ -118,8 +119,10 @@ function dataHero(page: LandingPage, mark: ReactNode, pendingLabel: ReactNode, l
  * parent of the bands, and the kit's last-band dock clearance holds only while its last child
  * is a band — so the site's layout mounts those (`SiteChrome`, `FrameFooter`, `SiteBitbag`).
  *
- * `DeckScript` runs with snapping and the open-at-top reset off, as in adh's `LandingFlow`:
- * what is left is the eased in-page jump the drawer's rows use and the iOS zoom fix.
+ * The deck script runs with snapping and the open-at-top reset off, as in adh's `LandingFlow`:
+ * what is left is the eased in-page jump the drawer's rows use. It goes in through
+ * `DocumentLoadScript`, not the kit's `DeckScript`: a client navigation back to `/` mounts this
+ * frame in the browser, where a plain `<script>` never runs and React reports it.
  */
 export function LandingFrame({
   page,
@@ -174,7 +177,7 @@ export function LandingFrame({
   return (
     <>
       {/* The zoom restore is the root layout's FrameZoomGuard, which every route renders. */}
-      <DeckScript armSnapping={false} openAtTop={false} restoreZoomOffIos={false} />
+      <DocumentLoadScript code={deckScript({ armSnapping: false, openAtTop: false, restoreZoomOffIos: false })} />
       <Flow>
         {HeroSlot === undefined ? (
           dataHero(page, mark, pendingLabel, heroShot)

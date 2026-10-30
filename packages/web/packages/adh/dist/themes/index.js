@@ -6,6 +6,7 @@ import { preload } from "react-dom";
 import { themes as themes2 } from "@agenticdevelopertoolkit/themes/manifest";
 import { splitImports, parseRootProps } from "@agenticdevelopertoolkit/themes/tokens";
 import { APPEARANCE_PREPAINT_SCRIPT } from "@agenticdevelopertoolkit/themes/appearance";
+import { DocumentLoadScript } from "@agenticdevelopertoolkit/themes/DocumentLoadScript";
 import { THEME_FONT_PRELOADS } from "@agenticdevelopertoolkit/themes/fonts";
 
 // src/themes/adh-themes.ts
@@ -206,7 +207,7 @@ function ThemeSwitcherAssets({ defaultImports }) {
       },
       `alt:${key}`
     )),
-    /* @__PURE__ */ jsx("script", { dangerouslySetInnerHTML: { __html: prePaint } }),
+    /* @__PURE__ */ jsx(DocumentLoadScript, { code: prePaint }),
     DbThemeApplier ? /* @__PURE__ */ jsx(DbThemeApplier, {}) : null
   ] });
 }
@@ -261,7 +262,7 @@ function AdhThemeStyle() {
         dangerouslySetInnerHTML: { __html: rest }
       }
     ),
-    /* @__PURE__ */ jsx("script", { dangerouslySetInnerHTML: { __html: APPEARANCE_PREPAINT_SCRIPT } }),
+    /* @__PURE__ */ jsx(DocumentLoadScript, { code: APPEARANCE_PREPAINT_SCRIPT }),
     /* @__PURE__ */ jsx(SiteDefaultTheme, { baseImports: imports }),
     /* @__PURE__ */ jsx(ThemeSwitcherAssets, { defaultImports: imports })
   ] });

@@ -3,6 +3,7 @@ import { preload } from 'react-dom'
 import { themes } from '@agenticdevelopertoolkit/themes/manifest'
 import { splitImports, parseRootProps } from '@agenticdevelopertoolkit/themes/tokens'
 import { APPEARANCE_PREPAINT_SCRIPT } from '@agenticdevelopertoolkit/themes/appearance'
+import { DocumentLoadScript } from '@agenticdevelopertoolkit/themes/DocumentLoadScript'
 import { THEME_FONT_PRELOADS } from '@agenticdevelopertoolkit/themes/fonts'
 import {
   DEFAULT_ADH_THEME,
@@ -157,7 +158,7 @@ function ThemeSwitcherAssets({ defaultImports }: { defaultImports: string[] }) {
         />
       ))}
       {/* Trusted, static bootstrap (no user input). */}
-      <script dangerouslySetInnerHTML={{ __html: prePaint }} />
+      <DocumentLoadScript code={prePaint} />
       {/* Applies a persisted DB theme on load (seeds ride the pre-paint above). Absent from
           a production BUILD entirely — see the gate above; this branch only ever runs in a
           dev env, where the gate is true. */}
@@ -269,8 +270,9 @@ export function AdhThemeStyle() {
           signed-in user's theme doesn't flash. Reads this browser's cached copy; the server
           is the truth and AppearanceSync (@agentic-toolkit/adh/auth) reconciles a moment
           later. With no cache — a first visit, or a signed-out visitor — colour mode is
-          `auto`, i.e. the OS setting. Static, self-authored script (no user input). */}
-      <script dangerouslySetInnerHTML={{ __html: APPEARANCE_PREPAINT_SCRIPT }} />
+          `auto`, i.e. the OS setting. Static, self-authored script (no user input). Only in
+          the server's HTML: a client navigation in leaves the job to AppearanceScope. */}
+      <DocumentLoadScript code={APPEARANCE_PREPAINT_SCRIPT} />
       <SiteDefaultTheme baseImports={imports} />
       <ThemeSwitcherAssets defaultImports={imports} />
     </>
