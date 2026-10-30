@@ -336,14 +336,13 @@ function aboutEntries() {
   const fishlamp = getSite3("fishlamp");
   return [
     { label: BRAND_LABEL, href: BRAND_HREF },
-    ...fishlamp ? [{ label: fishlamp.label, href: siteProdUrl2("fishlamp", "/") }] : [],
-    { label: "Tect" }
+    ...fishlamp ? [{ label: fishlamp.label, href: siteProdUrl2("fishlamp", "/") }] : []
   ];
 }
 function Column({ title, entries }) {
   return /* @__PURE__ */ jsxs5("nav", { className: "adh-landing-footer__column", "aria-label": title, children: [
     /* @__PURE__ */ jsx8("h3", { className: "adh-landing-footer__heading", children: title }),
-    /* @__PURE__ */ jsx8("ul", { className: "adh-landing-footer__list", children: entries.map((e) => /* @__PURE__ */ jsx8("li", { className: "adh-landing-footer__item", children: e.href ? /* @__PURE__ */ jsx8("a", { className: "adh-landing-footer__link", href: e.href, children: e.label }) : /* @__PURE__ */ jsx8("span", { className: "adh-landing-footer__link", children: e.label }) }, e.label)) })
+    /* @__PURE__ */ jsx8("ul", { className: "adh-landing-footer__list", children: entries.map((e) => /* @__PURE__ */ jsx8("li", { className: "adh-landing-footer__item", children: /* @__PURE__ */ jsx8("a", { className: "adh-landing-footer__link", href: e.href, children: e.label }) }, e.label)) })
   ] });
 }
 function LandingFooter() {

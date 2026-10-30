@@ -23,7 +23,7 @@ import {
  *  (`/*! @confine .adh-landing-footer *\/`). */
 export const LANDING_FOOTER_CLASS = "adh-landing-footer";
 
-type FooterEntry = { label: string; href?: string };
+type FooterEntry = { label: string; href: string };
 
 /** Working sites the landing page does not link: Shipr and the Registry, and both FishLamp
  *  doors, since FishLamp Design is linked once, from About. */
@@ -39,7 +39,6 @@ function aboutEntries(): FooterEntry[] {
   return [
     { label: BRAND_LABEL, href: BRAND_HREF },
     ...(fishlamp ? [{ label: fishlamp.label, href: siteProdUrl("fishlamp", "/") }] : []),
-    { label: "Tect" },
   ];
 }
 
@@ -50,13 +49,9 @@ function Column({ title, entries }: { title: string; entries: FooterEntry[] }): 
       <ul className="adh-landing-footer__list">
         {entries.map((e) => (
           <li key={e.label} className="adh-landing-footer__item">
-            {e.href ? (
-              <a className="adh-landing-footer__link" href={e.href}>
-                {e.label}
-              </a>
-            ) : (
-              <span className="adh-landing-footer__link">{e.label}</span>
-            )}
+            <a className="adh-landing-footer__link" href={e.href}>
+              {e.label}
+            </a>
           </li>
         ))}
       </ul>

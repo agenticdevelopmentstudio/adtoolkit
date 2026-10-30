@@ -22,6 +22,15 @@ describe("LandingFooter", () => {
     expect(hrefs()).not.toContain(siteProdUrl("fishlampdesign", "/"));
   });
 
+  it("lists only the studio and FishLamp Design under About", () => {
+    render(<LandingFooter />);
+    const about = document.querySelector('nav[aria-label="About"]');
+    expect([...(about?.querySelectorAll("li") ?? [])].map((li) => li.textContent)).toEqual([
+      "Agentic Development Studio",
+      "FishLamp Design",
+    ]);
+  });
+
   it("still links the hub", () => {
     render(<LandingFooter />);
     expect(hrefs()).toContain(siteProdUrl("hub", "/"));
