@@ -58,9 +58,9 @@ describe('frame.css', () => {
     }
   })
 
-  it('lays the family band two across, each card a link stretched to its row', () => {
-    expect(frame()).toMatch(/@media \(min-width: 48rem\) \{\s*\.lp-cards\.st-family \{/)
-    expect(ruleBody(frame(), '.lp-cards.st-family')).toContain('grid-template-columns: repeat(2, minmax(0, 1fr))')
+  it('lays the family band one card to a row, each card a link stretched to its row', () => {
+    expect(frame()).not.toContain('.st-family {')
+    expect(ruleBody(frame(), '.lp-cards')).toContain('grid-template-columns: minmax(0, 1fr)')
     expect(ruleBody(frame(), '.st-family__link')).toContain('text-decoration: none')
     expect(ruleBody(frame(), '.st-family__link > .lp-card')).toContain('flex: 1')
   })
