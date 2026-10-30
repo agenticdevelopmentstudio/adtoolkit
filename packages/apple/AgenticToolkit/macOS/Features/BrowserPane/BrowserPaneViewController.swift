@@ -260,17 +260,20 @@ public final class BrowserPaneViewController: NSViewController {
         bar.edgeInsets = NSEdgeInsets(top: 4, left: 6, bottom: 4, right: 6)
         bar.translatesAutoresizingMaskIntoConstraints = false
 
-        webView.translatesAutoresizingMaskIntoConstraints = false
+        // Held still while a shelf slides beside the pane: the page paints
+        // behind its frame, so resized on every frame it trails the edge.
+        let page = FrameHoldingView(content: webView)
+        page.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(bar)
-        root.addSubview(webView)
+        root.addSubview(page)
         NSLayoutConstraint.activate([
             bar.topAnchor.constraint(equalTo: root.topAnchor),
             bar.leadingAnchor.constraint(equalTo: root.leadingAnchor),
             bar.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-            webView.topAnchor.constraint(equalTo: bar.bottomAnchor),
-            webView.leadingAnchor.constraint(equalTo: root.leadingAnchor),
-            webView.trailingAnchor.constraint(equalTo: root.trailingAnchor),
-            webView.bottomAnchor.constraint(equalTo: root.bottomAnchor)
+            page.topAnchor.constraint(equalTo: bar.bottomAnchor),
+            page.leadingAnchor.constraint(equalTo: root.leadingAnchor),
+            page.trailingAnchor.constraint(equalTo: root.trailingAnchor),
+            page.bottomAnchor.constraint(equalTo: root.bottomAnchor)
         ])
     }
 

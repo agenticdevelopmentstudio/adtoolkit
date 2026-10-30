@@ -198,16 +198,32 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         if visible {
             // Uncollapsed at zero width, both in this pass, so the shelf never
             // shows at its full width before the slide begins.
+            //
+            // The first uncollapse after a launch that began collapsed grows
+            // the window by the shelf's remembered width, as if the shelf were
+            // being added beside the content rather than into it; the shelf
+            // takes its room from the panes, so the window is put back.
+            let windowFrame = view.window?.frame
             item.isCollapsed = false
+            if let window = view.window, let windowFrame, window.frame != windowFrame {
+                window.setFrame(windowFrame, display: false)
+            }
             splitView.setPosition(0, ofDividerAt: 0)
             splitView.layoutSubtreeIfNeeded()
+        }
+        let target = visible ? Self.openShelfWidth : 0
+        // The content gives up what the shelf gains, point for point.
+        let contentWidth = content.view.frame.width
+        if contentWidth > 0 {
+            content.view.beginAnimatedResize(
+                expectedWidthScale: (contentWidth + from - target) / contentWidth)
         }
         let link = view.displayLink(target: self, selector: #selector(stepShelfSlide(_:)))
         shelfSlide = ShelfSlide(
             link: link,
             start: CACurrentMediaTime(),
             origin: from,
-            target: visible ? Self.openShelfWidth : 0,
+            target: target,
             completion: completion)
         link.add(to: .main, forMode: .common)
         onShelfVisibilityChange?()
@@ -269,6 +285,8 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         if slide.target == 0 { item.isCollapsed = true }
         item.minimumThickness = Self.shelfMinimumWidth
         splitView.layoutSubtreeIfNeeded()
+        content.view.endAnimatedResize()
+        content.view.layoutSubtreeIfNeeded()
         isAnimatingShelf = false
         holdsSharesFromBeforeSlide = false
         onShelfDidMove?()
