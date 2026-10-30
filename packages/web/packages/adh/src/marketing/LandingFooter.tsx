@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import {
-  FOOTER_SITES,
+  DIRECTORY_SITES,
   getSite,
   groupSitesByCategory,
   siteProdUrl,
@@ -64,9 +64,12 @@ function Column({ title, entries }: { title: string; entries: FooterEntry[] }): 
  * component and draws no fixed bar: the routes under `MarketingShell` keep `SiteFooter`, and
  * bitbag stays where the frame pins him. Every link is in the server HTML, so the directory is
  * also the page's crawlable interlink set.
+ *
+ * The directory and the panel "All sites" opens both list DIRECTORY_SITES: the family's
+ * working sites, without the marketing decks and the placeholders.
  */
 export function LandingFooter(): ReactElement {
-  const groups = groupSitesByCategory(FOOTER_SITES);
+  const groups = groupSitesByCategory(DIRECTORY_SITES);
   const version = buildVersionLabel();
   return (
     <div className={LANDING_FOOTER_CLASS}>
@@ -114,7 +117,7 @@ export function LandingFooter(): ReactElement {
           {version && <li className="adh-landing-footer__item adh-landing-footer__version">{version}</li>}
         </ul>
       </div>
-      <SitesPopover />
+      <SitesPopover sites={DIRECTORY_SITES} />
     </div>
   );
 }

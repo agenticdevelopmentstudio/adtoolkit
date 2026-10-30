@@ -307,7 +307,7 @@ function MarketingFrameHeader({
 
 // src/marketing/LandingFooter.tsx
 import {
-  FOOTER_SITES,
+  DIRECTORY_SITES,
   getSite as getSite3,
   groupSitesByCategory,
   siteProdUrl as siteProdUrl2
@@ -345,7 +345,7 @@ function Column({ title, entries }) {
   ] });
 }
 function LandingFooter() {
-  const groups = groupSitesByCategory(FOOTER_SITES);
+  const groups = groupSitesByCategory(DIRECTORY_SITES);
   const version = buildVersionLabel();
   return /* @__PURE__ */ jsxs5("div", { className: LANDING_FOOTER_CLASS, children: [
     /* @__PURE__ */ jsxs5("div", { className: "adh-landing-footer__directory", children: [
@@ -385,7 +385,7 @@ function LandingFooter() {
         version && /* @__PURE__ */ jsx8("li", { className: "adh-landing-footer__item adh-landing-footer__version", children: version })
       ] })
     ] }),
-    /* @__PURE__ */ jsx8(SitesPopover, {})
+    /* @__PURE__ */ jsx8(SitesPopover, { sites: DIRECTORY_SITES })
   ] });
 }
 export {

@@ -193,8 +193,8 @@ function FooterChat() {
 // src/footer/SitesOverview.tsx
 import { FOOTER_SITES, groupSitesByCategory, siteProdUrl as siteProdUrl2 } from "@agentic-toolkit/adh-registry";
 import { jsx as jsx6, jsxs as jsxs4 } from "react/jsx-runtime";
-function SitesPopover() {
-  const groups = groupSitesByCategory(FOOTER_SITES);
+function SitesPopover({ sites = FOOTER_SITES } = {}) {
+  const groups = groupSitesByCategory(sites);
   return /* @__PURE__ */ jsx6(AdhModalPopover, { id: SITES_OVERVIEW_POPOVER_ID, title: "The Agentic Developer family", children: groups.map((group) => /* @__PURE__ */ jsxs4(
     "nav",
     {

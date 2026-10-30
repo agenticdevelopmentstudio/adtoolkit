@@ -1,6 +1,6 @@
 'use client'
 
-import { FOOTER_SITES, groupSitesByCategory, siteProdUrl } from '@agentic-toolkit/adh-registry'
+import { FOOTER_SITES, groupSitesByCategory, siteProdUrl, type SiteDef } from '@agentic-toolkit/adh-registry'
 import { AdhModalPopover } from './AdhModalPopover'
 import { SITES_OVERVIEW_POPOVER_ID } from './identity'
 
@@ -13,9 +13,13 @@ import { SITES_OVERVIEW_POPOVER_ID } from './identity'
  * client JS — a `popovertarget` trigger (the Sites entry of SiteFooter's copyright
  * menu) opens it and
  * the modal's close box dismisses it natively.
+ *
+ * `sites` narrows the roster; it defaults to the whole of FOOTER_SITES. A landing
+ * page's footer passes DIRECTORY_SITES, so the panel it opens links no more than the
+ * directory above it.
  */
-export function SitesPopover() {
-  const groups = groupSitesByCategory(FOOTER_SITES)
+export function SitesPopover({ sites = FOOTER_SITES }: { sites?: SiteDef[] } = {}) {
+  const groups = groupSitesByCategory(sites)
   return (
     <AdhModalPopover id={SITES_OVERVIEW_POPOVER_ID} title="The Agentic Developer family">
       {groups.map((group) => (
