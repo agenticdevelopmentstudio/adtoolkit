@@ -42,26 +42,31 @@ export const INDICATOR_STATE: Record<BoardIndicator, IndicatorState> = {
 };
 
 /**
- * Recent Activity's "in progress or failed builds only" filter: is this row something still
- * happening, or still wrong?
+ * Recent Activity's "in progress or failed builds only" filter: is this row a build or
+ * deploy that is still happening, or still wrong?
  *
- * An in-flight build/deploy row (`progress` on a deploy step) is kept as-is — its phase is
- * the server's current reading. A FAILURE-shaped row (a `bad` deploy row, or any issue
- * opening, minor ones included) is a record of an event, and stays `bad` forever after the
- * thing it reports has recovered: the recovery arrives as a SEPARATE `[x] resolved` row,
- * never as an edit to this one. With age-out at "never" that meant every incident the fleet
- * ever had. So a failure row survives only while the Problems list — the server's verdict
- * on what is broken NOW — still carries its target, and only if it is not older than that
- * problem's onset: an earlier failure on the same target, followed by a recovery and a new
- * failure, is history, not part of the run that is still open.
+ * Builds and deploys only (`step` set). An issue row (`step === null` — an incident
+ * opening such as "app errors on glitchtip", or its resolution) is not a build: nothing
+ * shipped to cause it, and while it is open the Problems pane already carries it. So the
+ * filter drops it whatever its tone.
+ *
+ * An in-flight build/deploy row (`progress`) is kept as-is — its phase is the server's
+ * current reading. A FAILED one (`bad`) is a record of an event, and stays `bad` forever
+ * after the target has recovered: the recovery arrives as a SEPARATE row, never as an
+ * edit to this one. With age-out at "never" that meant every failure the fleet ever had.
+ * So a failure survives only while the Problems list — the server's verdict on what is
+ * broken NOW — still carries its target, and only if it is not older than that problem's
+ * onset: an earlier failure on the same target, followed by a recovery and a new failure,
+ * is history, not part of the run that is still open.
  *
  * `since` is the earlier of the problem's onsets (`problemSince`, derive-problems.ts), and
  * each of those is at or before the row of the event that opened it, so the open run's own
  * rows always satisfy `at >= since`.
  */
 export function isUnresolvedActivity(a: ActivityRow, problems: readonly Problem[]): boolean {
-  if (a.tone !== "progress" && a.tone !== "bad") return false;
-  if (a.step !== null && a.tone === "progress") return true;
+  if (a.step === null) return false;
+  if (a.tone === "progress") return true;
+  if (a.tone !== "bad") return false;
   const at = Date.parse(a.at);
   return problems.some((p) => p.target === a.target && Date.parse(p.since) <= at);
 }

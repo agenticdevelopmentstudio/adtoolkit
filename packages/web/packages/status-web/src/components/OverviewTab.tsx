@@ -10,6 +10,7 @@ import { useIntegrations } from "../hooks/use-integrations";
 import { useMediaQuery } from "../hooks/use-media-query";
 import { useEnvFilter } from "../hooks/use-env-filter";
 import { useActivityTtl } from "../hooks/use-activity-ttl";
+import { usePersistedState, decodeBoolean } from "../hooks/use-persisted-state";
 import { useNow } from "../hooks/use-now";
 import { useBuildProgress } from "../hooks/use-build-progress";
 import { problemToRow, activityToRow, type Row } from "../lib/row-model";
@@ -20,7 +21,7 @@ import { buildSublabel } from "../lib/status-sublabel";
 import { shortSha } from "../lib/format";
 import { ISSUE_SOURCES, type IssueSource } from "../lib/issue-sources";
 import { BigIndicator } from "./BigIndicator";
-import { OverviewStats, StatsGear, DEFAULT_SPAN, type Span } from "./OverviewStats";
+import { OverviewStats, StatsGear, DEFAULT_SPAN, SPANS, type Span } from "./OverviewStats";
 import { SelfCheckBanner } from "./SelfCheckBanner";
 import { DegradedBanner } from "./DegradedBanner";
 import { UnconfiguredProjectsBanner } from "./UnconfiguredProjectsBanner";
@@ -103,13 +104,24 @@ export function OverviewTab(): ReactElement {
   // Coarse 30s clock — drives TTL/stuck derivations without per-second re-renders.
   const nowMs = useNow();
 
+  // The gear settings below are persisted (localStorage), so a reader's choices
+  // survive a reload — like the environment filter and age-out.
   // Recent Activity hides canceled deploys by default; its gear opts them in.
-  const [showCanceled, setShowCanceled] = useState(false);
+  const [showCanceled, setShowCanceled] = usePersistedState("adh-status-show-canceled", false, decodeBoolean);
   // Recent Activity's "Filter" gear section: narrow the pane to builds still in flight
-  // (queued/building/deploying) or failed. Component state, like show-canceled.
-  const [inProgressOrFailedOnly, setInProgressOrFailedOnly] = useState(false);
-  // Stats time span (uptime% + response chart) — set from the Stats gear.
-  const [span, setSpan] = useState<Span>(DEFAULT_SPAN);
+  // (queued/building/deploying) or failed.
+  const [inProgressOrFailedOnly, setInProgressOrFailedOnly] = usePersistedState(
+    "adh-status-in-progress-or-failed-only",
+    false,
+    decodeBoolean,
+  );
+  // Stats time span (uptime% + response chart) — set from the Stats gear. Stored by key.
+  const [span, setSpan] = usePersistedState<Span>(
+    "adh-status-stats-span",
+    DEFAULT_SPAN,
+    (raw) => SPANS.find((s) => s.key === raw),
+    (s) => s.key,
+  );
 
   // How long activity stays in the list (persisted; default 1h, "never" = keep).
   // Applied here (the view), so changing it is instant.
@@ -131,9 +143,7 @@ export function OverviewTab(): ReactElement {
   // is not merely waste: the pane's auto-fill keeps firing while `shown` is under its
   // threshold, so the budget would spend itself pulling 1500 rows the reader just
   // pressed a button to hide.
-  const historyDisabledReason: "age-out" | "cleared" | undefined =
-    ttlMs != null ? "age-out" : clearedBefore > 0 ? "cleared" : undefined;
-  const historyEnabled = historyDisabledReason === undefined;
+  const historyEnabled = ttlMs == null && clearedBefore === 0;
   const liveActivityRaw = useMemo(() => board?.activity ?? [], [board]);
   const history = useActivityHistory({ enabled: historyEnabled, live: liveActivityRaw });
 
@@ -344,9 +354,7 @@ export function OverviewTab(): ReactElement {
       historyLoading={history.loading}
       historyExhausted={history.exhausted}
       onScrollGesture={history.resetAutoBudget}
-      historyBudgetSpent={history.autoBudgetSpent}
       historyError={history.error}
-      historyDisabledReason={historyDisabledReason}
       center={
         <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
           <BuildProgressBar progress={buildProgress} />

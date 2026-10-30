@@ -111,12 +111,15 @@ describe("isUnresolvedActivity — the 'in progress or failed only' rule", () =>
     expect(isUnresolvedActivity(row({ at: "2026-10-30T13:05:00.000Z" }), [p])).toBe(true);
   });
 
-  it("treats an incident opening (minor ones included) like a failure, never as in flight", () => {
-    const opened = row({ kind: "probe", step: null, source: "http", target: "ep-1", verb: "down" });
-    const minor = { ...opened, tone: "progress" as const, verb: "degraded" };
+  it("drops issue rows (incident openings, minor ones included) — they are not builds", () => {
+    // e.g. "app errors on glitchtip": nothing shipped to cause it, and while it is open the
+    // Problems pane already carries it — so even a LIVE problem doesn't keep it here.
+    const opened = row({ kind: "probe", step: null, source: "glitchtip", target: "gt-1", verb: "app errors" });
+    const minor = { ...opened, tone: "progress" as const };
+    const live = [problem({ target: "gt-1", source: "glitchtip" })];
     expect(isUnresolvedActivity(opened, [])).toBe(false);
     expect(isUnresolvedActivity(minor, [])).toBe(false);
-    expect(isUnresolvedActivity(opened, [problem({ target: "ep-1", source: "http" })])).toBe(true);
-    expect(isUnresolvedActivity(minor, [problem({ target: "ep-1", source: "http" })])).toBe(true);
+    expect(isUnresolvedActivity(opened, live)).toBe(false);
+    expect(isUnresolvedActivity(minor, live)).toBe(false);
   });
 });
