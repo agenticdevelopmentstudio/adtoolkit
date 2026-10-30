@@ -28,7 +28,7 @@ import { useSettingsEntityLevel } from "../settings-level";
 import { ProjectBrowser } from "./ProjectBrowser";
 import { useEditorMutations } from "./use-editor-mutations";
 import { useDraftForSelection } from "./use-draft-for-selection";
-import { EntityEditorShell, SectionPlaceholder, rosterEmptyLabel, rosterOverviewHelp, type RosterLoadState } from "./section-chrome";
+import { EntityEditorShell, rosterEmptyLabel, rosterOverview, type RosterLoadState } from "./section-chrome";
 import { AutoConfigureButton } from "../AutoConfigureButton";
 import { MultiSelectFilter } from "../MultiSelectFilter";
 
@@ -170,7 +170,7 @@ export function EndpointsSection({
   /** URL-selected endpoint id (`/settings/sites/<id>`), owned by the board level. */
   selectedId: string | null;
   onNavigate: (id: string | null) => void;
-}): ReactElement {
+}): ReactElement | null {
   const [creating, setCreating] = useState(false);
   const [filter, setFilter] = useState("");
   // Two pop filters over the list, AND-composed with the text filter. Both default to
@@ -276,11 +276,11 @@ export function EndpointsSection({
       },
       newLabel: "New site",
       newActive: creating,
-      emptyLabel: endpoints.length === 0 ? rosterEmptyLabel("sites", load) : "Nothing matches.",
+      emptyLabel: rosterEmptyLabel("sites", load),
       // The nudge is the ONLY thing the package renders beside an empty frontier list,
       // so it is where a failed load has to speak — ConfigPanel's error line sits in the
       // detail pane the nudge replaces.
-      overviewHelp: rosterOverviewHelp(load, "Pick a site to edit its URL, group, environment and deploy wiring."),
+      ...rosterOverview(load),
       // Auto Configure rides the level's TITLE row (next to +), per the shared recipe;
       // the filters get a header row to themselves.
       titleActions: <AutoConfigureButton />,
@@ -462,7 +462,7 @@ export function EndpointsSection({
       : null;
 
   if (!creating && !current) {
-    return <SectionPlaceholder>Select a site to edit, or add a new one.</SectionPlaceholder>;
+    return null;
   }
   return (
     <EntityEditorShell
@@ -501,7 +501,6 @@ export function EndpointsSection({
                 className="flex min-h-9 items-center gap-2 rounded-md border border-apt-border bg-apt-surface px-3 py-2 font-mono text-[0.8rem] text-apt-text"
               >
                 {derivedEnv || "—"}
-                <span className="text-[0.68rem] text-apt-text-dim">— inferred from the URL</span>
               </div>
             </Field>
           </div>
@@ -514,19 +513,13 @@ export function EndpointsSection({
               no place to say what a paused site is exempt from. Off = paused, NOT
               unconfigured: the site keeps its wiring, its deploy project stays claimed,
               and Auto Configure leaves it alone in both directions. */}
-          <Label className="flex items-start gap-2">
+          <Label className="flex items-center gap-2">
             <Checkbox
               checked={draft.isActive}
               onCheckedChange={(checked) => patch({ isActive: checked === true })}
               aria-label="Monitoring enabled"
-              className="mt-0.5"
             />
-            <span className="flex flex-col gap-0.5">
-              <span className="font-mono text-[0.8rem] text-apt-text-muted">Monitoring enabled</span>
-              <span className="font-mono text-[0.7rem] leading-snug text-apt-text-dim">
-                Off — this site is paused: no checks run, and Auto Configure ignores it (its platform project stays claimed).
-              </span>
-            </span>
+            <span className="font-mono text-[0.8rem] text-apt-text-muted">Monitoring enabled</span>
           </Label>
         </FieldGroup>
 
@@ -566,7 +559,7 @@ export function EndpointsSection({
               </div>
             ) : (
               <div className="flex min-h-9 items-center rounded-md border border-dashed border-apt-border bg-apt-surface px-3 py-2 font-mono text-[0.8rem] text-apt-text-dim">
-                No platform project set.
+                —
               </div>
             )}
           </Field>
@@ -588,23 +581,15 @@ export function EndpointsSection({
               its current value at rest. Checked ⇔ `ignoreProjectWarning` false. Inert while
               monitoring is off (a paused site is out of the conversation either way), so
               disabled rather than left there looking effective. */}
-          <Label className="flex items-start gap-2">
+          <Label className="flex items-center gap-2">
             <Checkbox
               checked={!draft.ignoreProjectWarning}
               onCheckedChange={(checked) => patch({ ignoreProjectWarning: checked !== true })}
               disabled={!draft.isActive}
               aria-label="Automatically Configure"
-              className="mt-0.5"
             />
-            <span className="flex flex-col gap-0.5">
-              <span className={cn("font-mono text-[0.8rem]", draft.isActive ? "text-apt-text-muted" : "text-apt-text-dim")}>
-                Automatically Configure
-              </span>
-              <span className="font-mono text-[0.7rem] leading-snug text-apt-text-dim">
-                {draft.isActive
-                  ? "Let Auto Configure wire this site to the platform project serving it, and warn while it has none."
-                  : "Monitoring is off — Auto Configure already ignores this site."}
-              </span>
+            <span className={cn("font-mono text-[0.8rem]", draft.isActive ? "text-apt-text-muted" : "text-apt-text-dim")}>
+              Automatically Configure
             </span>
           </Label>
         </FieldGroup>
@@ -623,9 +608,6 @@ export function EndpointsSection({
             ) : undefined
           }
         >
-          <p className="font-mono text-[0.7rem] leading-snug text-apt-text-dim">
-            The host passes DNS if it resolves via any enabled record type. Turn all off to skip the DNS check.
-          </p>
           <div className="flex flex-col gap-2.5">
             <Label className="flex items-center gap-2">
               <Switch checked={draft.dnsCheckA} onCheckedChange={(checked) => patch({ dnsCheckA: checked })} aria-label="Check A record" />

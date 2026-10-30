@@ -81,18 +81,14 @@ export function DetailPanel({
         {/* Pane 2: Recent checks + incidents */}
         <div style={{ ...paneStyle, borderRight: `1px solid ${COLORS.border}` }}>
           <h4 className={sectionLabelClass}>Recent checks · last {stripStatuses.length || 40}</h4>
-          {stripStatuses.length > 0 ? (
-            <ChecksStrip statuses={stripStatuses} />
-          ) : (
-            <div style={{ color: PALETTE.dim, fontFamily: "var(--mono,ui-monospace,monospace)", fontSize: 11 }}>no check data</div>
-          )}
+          {stripStatuses.length > 0 && <ChecksStrip statuses={stripStatuses} />}
         </div>
 
         {/* Pane 3: Deploys for this env endpoint */}
         <div style={{ ...paneStyle, borderRight: "none" }}>
           <h4 className={sectionLabelClass}>Deploys for this endpoint</h4>
           <div style={{ flex: 1, overflow: "hidden" }}>
-            <DeployList deploys={endpointDeploys} emptyLabel="no deploys (token not set?)" probeIntervalMs={probeIntervalMs} />
+            <DeployList deploys={endpointDeploys} probeIntervalMs={probeIntervalMs} />
           </div>
         </div>
       </div>

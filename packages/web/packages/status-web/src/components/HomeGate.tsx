@@ -31,7 +31,7 @@ export function HomeGate({ children }: { children: ReactNode }): ReactElement {
         }}
       >
         <h1 style={{ fontFamily: mono, fontSize: 22, fontWeight: 600, margin: 0 }}>Not approved yet</h1>
-        <p style={{ opacity: 0.7, fontSize: 15, margin: 0 }}>Your account is pending approval. Check back soon.</p>
+        <p style={{ opacity: 0.7, fontSize: 15, margin: 0 }}>Your account is pending approval.</p>
       </main>
     );
   }

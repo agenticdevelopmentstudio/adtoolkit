@@ -68,8 +68,6 @@ export interface ActivityPanelProps {
   /** Every source present in the store (NOT just this panel's filtered rows) so the
    *  source filter lists them all, even when the env filter hides a source's rows. */
   allSources: readonly IssueSource[];
-  /** True when some environments are unchecked — changes the empty-state copy. */
-  envFiltered: boolean;
   /** Side-by-side ("1 1 0") vs stacked sizing handled by the caller via flex. */
   flex?: string;
   maxHeight?: string;
@@ -82,7 +80,7 @@ export interface ActivityPanelProps {
   onShowCanceledChange?: (v: boolean) => void;
   canceledAvailable?: boolean;
   /** Show only in-progress (queued/building/deploying) or failed rows — the caller
-   *  applies it to `rows`; the panel owns the checkbox and the empty-state copy. */
+   *  applies it to `rows`; the panel owns the checkbox. */
   inProgressOrFailedOnly?: boolean;
   onInProgressOrFailedOnlyChange?: (v: boolean) => void;
   ttlMin?: ActivityTtl;
@@ -126,7 +124,6 @@ export function ActivityPanel({
   allEnvs,
   onToggleEnv,
   allSources,
-  envFiltered,
   flex = "1 1 0",
   maxHeight,
   showCount = false,
@@ -523,15 +520,6 @@ export function ActivityPanel({
 
   // Problems, when truly empty, gets a big centered green check (not a text line).
   const allClear = kind === "problems" && rows.length === 0;
-  const emptyText =
-    rows.length === 0
-      ? kind === "activity" && inProgressOrFailedOnly
-        ? "No builds in progress or failed…"
-        : envFiltered
-        ? "No activity in the selected environments…"
-        : "No recent build, deploy, or availability changes…"
-      : "no matches";
-
   // The scroll-back status line, and the one place it may live: ABOVE the scroll
   // container, never inside it. Inside, it was a child of the element `useFollowNewItems`
   // measures — invisible to that hook's deps (which are derived from `shown` alone), so it
@@ -614,14 +602,6 @@ export function ActivityPanel({
             }}
           />
         ))}
-        {/* Inside the scroll container, so an empty FILTERED list still leaves the pane —
-            and with it the scroll container, the gesture handlers and the status line above
-            — mounted. See the render below. */}
-        {shown.length === 0 && (
-          <div role="presentation" style={emptyStyle}>
-            {emptyText}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -633,9 +613,7 @@ export function ActivityPanel({
         // Keyed per row so the card's uncontrolled Tabs reset to overview on every
         // selection — without it, "git info" chosen on one row leaks to the next.
         <ActivityDetails key={selected.key} detail={selectedDetail} />
-      ) : (
-        <div style={emptyStyle}>Select a row to see details…</div>
-      )}
+      ) : null}
     </div>
   );
 
@@ -660,7 +638,6 @@ export function ActivityPanel({
         <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, textAlign: "center", padding: 24 }}>
           <StatusSign state="ok" size={76} />
           <div style={{ fontFamily: mono, fontSize: 13, fontWeight: 600, color: PALETTE.green }}>No problems</div>
-          <div style={{ fontFamily: mono, fontSize: 12, color: PALETTE.dim }}>all monitored sites are healthy</div>
         </div>
       ) : (rows.length === 0 || shown.length === 0) && !canPageBack && historyStatus === null ? (
         // An empty pane that CAN page back keeps `listPane` instead of this centered
@@ -670,9 +647,11 @@ export function ActivityPanel({
         // is exactly when a reader most needs to be able to reach for more history.
         //
         // `historyStatus` keeps it mounted too, so a "loading"/"beginning" line is never
-        // swapped out from under the reader. `listPane` renders `emptyText` inside its
-        // own scroll container, so nothing is lost.
-        <div style={{ padding: "8px 16px" }}><div style={emptyStyle}>{emptyText}</div></div>
+        // swapped out from under the reader.
+        //
+        // An empty pane is just empty — no "No builds…"/"no matches"/"Select a row…"
+        // placeholder copy: the operator asked for inline help labels to go.
+        null
       ) : (
         <ResizableSplit
           className="h-full"

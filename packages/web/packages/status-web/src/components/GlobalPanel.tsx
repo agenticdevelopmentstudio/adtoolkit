@@ -190,9 +190,6 @@ export function GlobalPanel({ platforms }: GlobalPanelProps): ReactElement {
                 )}
               </span>
             ))}
-            {platforms.length === 0 && (
-              <span style={{ fontFamily: "var(--mono,ui-monospace,monospace)", fontSize: 12, color: PALETTE.dim }}>no deploy data</span>
-            )}
           </div>
 
         </div>

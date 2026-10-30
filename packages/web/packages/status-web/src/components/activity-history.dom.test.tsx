@@ -47,7 +47,6 @@ function activityProps(overrides: Partial<ActivityPanelProps> = {}): ActivityPan
     allEnvs: ["production"],
     onToggleEnv: () => {},
     allSources: [],
-    envFiltered: false,
     ...overrides,
   };
 }

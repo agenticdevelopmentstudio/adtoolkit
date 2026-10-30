@@ -122,9 +122,7 @@ export function AutoConfigureReview({ projects, groups, busy, progress, onApply,
         <DialogHeader>
           <DialogTitle className="text-apt-gold">⚙ Review discovered projects</DialogTitle>
           <DialogDescription>
-            {projects.length} {projects.length === 1 ? "project isn't" : "projects aren't"} monitored yet. Check the ones to
-            ignore — the rest are configured (matched to a site, or a new site is created). A project with no domain
-            is monitored by its builds and deploys only — there is no URL to probe.
+            {projects.length} {projects.length === 1 ? "project isn't" : "projects aren't"} monitored yet.
           </DialogDescription>
         </DialogHeader>
 

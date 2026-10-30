@@ -10,21 +10,14 @@ import { useNow } from "../hooks/use-now";
 import { COLORS, PALETTE, TINT } from "../lib/colors";
 export interface DeployListProps {
   deploys: DeploymentDTO[];
-  emptyLabel?: string;
   /** Backend probe cadence (snapshot.probeIntervalMs) — scales the demotion window so
    *  a stale in-flight deploy greys to "outcome unknown" in lockstep with the activity list. */
   probeIntervalMs?: number;
 }
 
-export function DeployList({ deploys, emptyLabel = "no recent deploys", probeIntervalMs }: DeployListProps): ReactElement {
+export function DeployList({ deploys, probeIntervalMs }: DeployListProps): ReactElement | null {
   const nowMs = useNow();
-  if (deploys.length === 0) {
-    return (
-      <div style={{ color: PALETTE.dim, fontFamily: "var(--mono,ui-monospace,monospace)", fontSize: 12 }}>
-        {emptyLabel}
-      </div>
-    );
-  }
+  if (deploys.length === 0) return null;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0, overflow: "hidden" }}>

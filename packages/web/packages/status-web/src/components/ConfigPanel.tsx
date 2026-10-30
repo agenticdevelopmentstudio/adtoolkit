@@ -36,9 +36,8 @@ import { useDraftForSelection } from "./configure/use-draft-for-selection";
 import {
   EntityEditorShell,
   SectionErrorText,
-  SectionPlaceholder,
   rosterEmptyLabel,
-  rosterOverviewHelp,
+  rosterOverview,
   type RosterLoadState,
 } from "./configure/section-chrome";
 
@@ -74,7 +73,7 @@ function GroupsSection({
   /** URL-selected group id (`/settings/groups/<id>`), owned by the board level. */
   selectedId: string | null;
   onNavigate: (id: string | null) => void;
-}): ReactElement {
+}): ReactElement | null {
   const apiClient = useStatusApi();
   const [creating, setCreating] = useState(false);
   const { busy, error, setError, run } = useEditorMutations();
@@ -153,14 +152,14 @@ function GroupsSection({
       newLabel: "New group",
       newActive: creating,
       emptyLabel: rosterEmptyLabel("groups", load),
-      overviewHelp: rosterOverviewHelp(load, "Pick a group to edit its name and retention window."),
+      ...rosterOverview(load),
     }),
     [groups, load, selectedId, creating, onNavigate, setError, setDraft, discardDraft],
   );
   useSettingsEntityLevel(level);
 
   if (!creating && !current) {
-    return <SectionPlaceholder>Select a group to edit, or create a new one.</SectionPlaceholder>;
+    return null;
   }
   return (
     <EntityEditorShell
@@ -217,7 +216,7 @@ function PlatformsSection({
   /** URL-selected integration id (`/settings/platforms/<id>`), owned by the board level. */
   selectedId: string | null;
   onNavigate: (id: string | null) => void;
-}): ReactElement {
+}): ReactElement | null {
   const apiClient = useStatusApi();
   const qc = useQueryClient();
   const [creating, setCreating] = useState(false);
@@ -358,8 +357,8 @@ function PlatformsSection({
         },
         newLabel: "New platform",
         newActive: creating,
-        emptyLabel: integrations.length === 0 ? rosterEmptyLabel("platforms", load) : "Nothing matches.",
-        overviewHelp: rosterOverviewHelp(load, "Pick a platform to edit its credentials and monitored projects."),
+        emptyLabel: rosterEmptyLabel("platforms", load),
+        ...rosterOverview(load),
         // Auto-configure lives in the headerSlot (not titleActions: the HMDV level
         // header centers the title under titleActions and the two overlap on this
         // narrow level) on its own row (not in the ListHeader actions row, which is
@@ -393,7 +392,7 @@ function PlatformsSection({
   useSettingsEntityLevel(level);
 
   if (!creating && !current) {
-    return <SectionPlaceholder>Select a platform integration to edit, or create a new one.</SectionPlaceholder>;
+    return null;
   }
   return (
     <EntityEditorShell
@@ -433,7 +432,7 @@ function PlatformsSection({
               <Input value={draft.accountId} onChange={(e) => setDraft((d) => ({ ...d, accountId: e.target.value }))} aria-label="Account ID" />
             </Field>
           )}
-          <Field label="API token — env var (secret; not stored in the DB while unauthenticated)">
+          <Field label="API token env var">
             <Input value={draft.tokenEnvVar} placeholder="e.g. VERCEL_API_TOKEN" onChange={(e) => setDraft((d) => ({ ...d, tokenEnvVar: e.target.value }))} aria-label="Token env var" />
           </Field>
           <Label className="flex items-center gap-2">
@@ -478,7 +477,6 @@ export function AppearanceSection({ fontScale, onFontScaleChange }: { fontScale:
     <div className="flex min-h-0 flex-1 flex-col gap-5 p-4">
       <div>
         <h2 className="font-mono text-sm font-semibold text-apt-text">Appearance</h2>
-        <p className="mt-0.5 font-mono text-[12px] text-apt-text-muted">Display preferences for this wallboard, stored in your browser.</p>
       </div>
       <div className="max-w-[360px]">
         <div className="mb-1.5 flex items-baseline justify-between">
@@ -508,12 +506,9 @@ export function AppearanceSection({ fontScale, onFontScaleChange }: { fontScale:
           onChange={(e) => onReduceMotionChange(e.target.value as ReduceMotionPref)}
         >
           <option value="auto">Auto</option>
-          <option value="on">On — skip animations</option>
-          <option value="off">Off — always animate</option>
+          <option value="on">On</option>
+          <option value="off">Off</option>
         </select>
-        <p className="mt-1 font-mono text-[11px] text-apt-text-muted">
-          On skips hide/show animations (e.g. the details-pane disclosure).
-        </p>
       </div>
     </div>
   );
@@ -576,7 +571,6 @@ export function ConfigPanel({
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col">
       {err && <SectionErrorText>{err}</SectionErrorText>}
-      {activeSection === null && <SectionPlaceholder>Select a section from the list.</SectionPlaceholder>}
       {activeSection === "groups" && <GroupsSection groups={groups} load={load} onChanged={reload} selectedId={entityId} onNavigate={onNavigateEntity} />}
       {activeSection === "sites" && <EndpointsSection groups={groups} sites={sites} endpoints={endpoints} load={load} onChanged={reload} selectedId={entityId} onNavigate={onNavigateEntity} />}
       {activeSection === "platforms" && <PlatformsSection integrations={integrations} load={load} onChanged={reload} unmonitoredByPlatform={status.unmonitoredByPlatform} selectedId={entityId} onNavigate={onNavigateEntity} />}

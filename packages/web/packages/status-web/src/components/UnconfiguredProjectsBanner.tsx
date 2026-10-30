@@ -137,7 +137,6 @@ export function UnconfiguredProjectsBanner(): ReactElement | null {
           </div>
         </PopoverContent>
       </Popover>
-      <span style={{ fontFamily: mono, fontSize: 11.5, color: PALETTE.amber }}>open Settings ▸ Sites to fix each, or Settings ▸ Platforms to Match / Ignore</span>
     </div>
   );
 }

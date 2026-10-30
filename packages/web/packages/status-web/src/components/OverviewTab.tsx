@@ -79,7 +79,7 @@ function UnknownBoardPanel({ detail }: { detail?: string | null }): ReactElement
         <StatusDot status="unknown" size={96} decorative />
         <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "0.05em", color: PALETTE.amber }}>Status unknown — board unavailable</div>
         <div style={{ fontFamily: mono, fontSize: 12.5, color: PALETTE.muted, maxWidth: "48ch" }}>
-          {detail ?? "the status board could not be read — check the monitor's connection to its own API"}
+          {detail ?? "the status board could not be read"}
         </div>
       </div>
     </InfoPanel>
@@ -322,10 +322,10 @@ export function OverviewTab(): ReactElement {
   // Only the `blind` panel below reads this now — a transient live-feed outage no
   // longer tears the board down (BoardShell's ConnectionOverlay covers it calmly),
   // so the OfflinePanel is reserved for the real config fault of nothing to watch.
-  const blindDetail = "no endpoints configured — the monitor has nothing to watch (check the shipped config)";
+  const blindDetail = "no endpoints configured — the monitor has nothing to watch";
 
   // Shared props for both promoted activity panels.
-  const env = { envs, allEnvs: allEnvNames, onToggleEnv: toggleEnv, allSources, envFiltered: !allEnvs };
+  const env = { envs, allEnvs: allEnvNames, onToggleEnv: toggleEnv, allSources };
 
   const problemsPanel = (flex: string, maxHeight?: string): ReactElement => (
     <ActivityPanel kind="problems" icon={<AlertTriangle size={15} color={PALETTE.amber} />} title="Problems" rows={problems} flex={flex} maxHeight={maxHeight} {...env} />
@@ -462,11 +462,11 @@ export function OverviewTab(): ReactElement {
     // honest "the first cycle hasn't finished — or hasn't run".
     const detail =
       boardReason === "stale"
-        ? "the status board has not refreshed — check the monitor's connection to its own API"
+        ? "the status board has not refreshed"
         : boardReason === "frozen"
-          ? "the status board is refreshing, but nothing behind it is — no new observation has been recorded, so nothing on screen can be trusted as current (check the monitor process)"
+          ? "the status board is refreshing, but nothing behind it is — no new observation has been recorded, so nothing on screen can be trusted as current"
           : boardReason === "no-data"
-            ? "the monitor has endpoints to watch but has not recorded a single observation yet — nothing on screen can be trusted as current until its first cycle completes (check the monitor process)"
+            ? "the monitor has endpoints to watch but has not recorded a single observation yet — nothing on screen can be trusted as current until its first cycle completes"
             : (boardError?.message ?? null);
     return stopSign(<UnknownBoardPanel detail={detail} />);
   }
@@ -480,7 +480,6 @@ export function OverviewTab(): ReactElement {
         <div className="adh-snap-scroll">
           <section className="adh-snap-pane adh-snap-hero">
             <BigIndicator state={indicator.state} count={indicator.count} sublabel={sublabel} extra={<OverviewStats uptimePercent={uptimePercent} span={span} onSpanChange={setSpan} />} />
-            <div className="adh-snap-hint" aria-hidden>scroll for details ↓</div>
           </section>
           <section className="adh-snap-pane" style={{ display: "flex", flexDirection: "column", gap: 12, padding: 12 }}>
             {problemsPanel("0 1 auto", "45%")}

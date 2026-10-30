@@ -42,8 +42,7 @@ export function SnapshotStaleBanner(): ReactElement | null {
       </span>
       <span style={{ fontFamily: BANNER_MONO, fontSize: 11.5, color }}>
         status data last refreshed {timeAgo(lastCycleAt, Date.parse(snapshot.generatedAt))} — the
-        monitor stopped recording new checks (a redeploy/restart resumes it); states below may be out
-        of date.
+        monitor stopped recording new checks.
       </span>
     </div>
   );

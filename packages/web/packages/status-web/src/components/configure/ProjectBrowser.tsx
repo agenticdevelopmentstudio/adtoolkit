@@ -335,18 +335,16 @@ export function ProjectBrowser({
                   <Input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${platformProjects.length} projects…`} aria-label="Search projects" className="h-8 text-sm" />
                 </div>
                 <div className="flex min-h-0 flex-1 flex-col gap-px overflow-y-auto px-2 pb-2">
-                  {platformProjects.length === 0 && <span className={cn(fieldCap, "p-1.5")}>No projects on this platform yet — they appear after the first sync.</span>}
                   {platformProjects.length > 0 && (
                     <div className={groupHead}>{platformLabel(effectivePlatform)} · {filtered.length}</div>
                   )}
                   {filtered.map((p, i) => (
                     <ListItem key={`${projKey(p)}:${i}`} p={p} selected={effectiveKey === projKey(p)} onSelect={(x) => setSelKey(projKey(x))} />
                   ))}
-                  {platformProjects.length > 0 && filtered.length === 0 && <span className={cn(fieldCap, "p-1.5")}>No match.</span>}
                 </div>
               </div>
               <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-                {selected ? <InfoPanel p={selected} nowMs={nowMs} /> : <div className={cn(fieldCap, "p-4")}>Select a project to wire it to this site.</div>}
+                {selected && <InfoPanel p={selected} nowMs={nowMs} />}
               </div>
             </div>
             {/* FOOTER — Cancel / OK. Extra right padding clears the resize grip. */}

@@ -15,7 +15,7 @@ import { isValidPeerBaseUrl, normalizePeerBaseUrl } from "../../lib/peer-url";
 import { useSettingsEntityLevel } from "../settings-level";
 import { useEditorMutations } from "./use-editor-mutations";
 import { useDraftForSelection } from "./use-draft-for-selection";
-import { EntityEditorShell, SectionErrorText, SectionPlaceholder } from "./section-chrome";
+import { EntityEditorShell, SectionErrorText } from "./section-chrome";
 
 const NO_PEERS: PeerView[] = [];
 export const PEERS_QUERY_KEY = ["status-peers"] as const;
@@ -52,7 +52,7 @@ export function PeersSection({
   /** URL-selected peer id (`/settings/peers/<id>`), owned by the board level. */
   selectedId: string | null;
   onNavigate: (id: string | null) => void;
-}): ReactElement {
+}): ReactElement | null {
   const apiClient = useStatusApi();
   const queryClient = useQueryClient();
   const { busy, error, setError, run } = useEditorMutations();
@@ -179,7 +179,8 @@ export function PeersSection({
       },
       newLabel: "New peer",
       newActive: creating,
-      emptyLabel: queryError ? "Failed to load peers." : "No peers yet.",
+      emptyLabel: queryError ? "Failed to load peers." : "",
+      overview: false,
     }),
     [peers, selectedId, creating, onNavigate, setError, setDraft, discardDraft, queryError],
   );
@@ -190,7 +191,7 @@ export function PeersSection({
   }
 
   if (!creating && !current) {
-    return <SectionPlaceholder>Select a peer to edit, or add the monitor you want this one to watch.</SectionPlaceholder>;
+    return null;
   }
 
   return (
@@ -235,13 +236,13 @@ export function PeersSection({
           />
         </Field>
         {urlInvalid && <SectionErrorText>Must be an absolute http(s) URL.</SectionErrorText>}
-        <Field label="Peer token (blank = leave unchanged; the stored value is never shown)">
+        <Field label="Peer token">
           <Input
             type="password"
             autoComplete="off"
             value={draft.token}
             disabled={draft.clearToken}
-            placeholder={current?.hasToken ? "•••••••• — type to replace" : "none — this peer's reads are public"}
+            placeholder={current?.hasToken ? "••••••••" : "none"}
             onChange={(e) => setDraft((d) => ({ ...d, token: e.target.value }))}
             aria-label="Peer token"
           />

@@ -115,7 +115,7 @@ function SharedTop({ detail }: { detail: RowDetail }): ReactElement {
 /** Overview tab: build/deploy outcome headline (FAILED links to the platform's
  *  error page), the failure reason with the copy-diagnostics button, scrollable
  *  logs, and the endpoint-problem diagnostics. */
-function OverviewTab({ detail }: { detail: RowDetail }): ReactElement {
+function OverviewTab({ detail }: { detail: RowDetail }): ReactElement | null {
   const errorLink = detail.platformLink ?? detail.problemLink ?? detail.titleUrl;
   // The short human reason: the issue detail when present, else the first log line.
   const reason = detail.problem ?? detail.errorText?.split("\n", 1)[0] ?? null;
@@ -131,7 +131,7 @@ function OverviewTab({ detail }: { detail: RowDetail }): ReactElement {
         )}
       </div>,
       <Line key="reason" label="reason" meta={<CopyDiagnostics detail={detail} />}>
-        {reason ?? <span style={{ color: PALETTE.dim }}>see logs</span>}
+        {reason ?? <span style={{ color: PALETTE.dim }}>—</span>}
       </Line>,
     );
   } else if (detail.deployOutcome === "success") {
@@ -200,7 +200,7 @@ function OverviewTab({ detail }: { detail: RowDetail }): ReactElement {
   }
 
   if (rows.length === 0) {
-    return <div style={{ fontFamily: mono, fontSize: 12, color: PALETTE.dim }}>no further details</div>;
+    return null;
   }
   return <LineGrid>{rows}</LineGrid>;
 }
