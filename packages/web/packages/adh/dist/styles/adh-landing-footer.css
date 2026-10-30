@@ -281,7 +281,65 @@
    than a dialog of prose, and the footer's own padding is the band's, which a dialog body
    already gives it. */
 .adh-modal--wide {
-  width: min(92vw, 64rem);
+  width: min(100vw - 3rem, 68rem);
+}
+
+.adh-modal--wide .adh-modal__body {
+  padding: 1.5rem 2rem 1.75rem;
+}
+
+/* A name and its badge are one line: the badge never drops below the name it labels. */
+.adh-modal--wide .adh-landing-footer__item {
+  white-space: nowrap;
+}
+
+/* Where the four columns have room for their longest names, each is as wide as its longest name
+   and the spare room goes between them, so no name wraps. Below that the dialog falls back to
+   the footer's own two columns, then one. */
+@media (min-width: 60rem) {
+  .adh-modal--wide .adh-landing-footer__directory {
+    grid-template-columns: repeat(4, max-content);
+    justify-content: space-between;
+    column-gap: 2.5rem;
+  }
+}
+
+@media (min-width: 30rem) and (max-width: 59.99rem) {
+  .adh-modal--wide .adh-landing-footer__directory {
+    grid-template-columns: repeat(2, max-content);
+    justify-content: space-between;
+    column-gap: 2rem;
+  }
+}
+
+/* A phone: the dialog takes the screen less a small margin and the safe areas, one column, and
+   names may wrap again, since a phone's width is narrower than the longest of them. */
+@media (max-width: 29.99rem) {
+  .adh-modal--wide {
+    width: calc(100vw - 1.5rem);
+    max-height: calc(100dvh - 1.5rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+
+  .adh-modal--wide .adh-modal__header {
+    padding: 0.85rem 1rem;
+  }
+
+  .adh-modal--wide .adh-modal__body {
+    padding: 1.25rem 1.25rem 1.5rem;
+  }
+
+  .adh-modal--wide .adh-landing-footer__directory {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+
+  .adh-modal--wide .adh-landing-footer__item {
+    white-space: normal;
+  }
+
+  .adh-modal--wide .adh-landing-footer__badge {
+    white-space: nowrap;
+  }
 }
 
 /* ---- Terms and Privacy in their dialogs (footer/LegalModals) ----
