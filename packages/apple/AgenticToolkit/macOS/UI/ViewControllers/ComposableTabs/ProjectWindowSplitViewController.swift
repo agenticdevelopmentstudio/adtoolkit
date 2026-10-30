@@ -24,6 +24,26 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     /// repaint the toggle as the state it reached.
     var onShelfVisibilityChange: (() -> Void)?
 
+    /// Called as the shelf's width is about to change beside the content —
+    /// sliding out or away, a divider drag — and again once it has, on every
+    /// step of the way. Not called for a window resize, which moves the
+    /// content's edge without moving the shelf's. The window uses the pair to
+    /// keep each pane its share of the width (see
+    /// `ComposableTabsViewController.reapplyThicknessFractions()`).
+    var onShelfWillMove: (() -> Void)?
+    var onShelfDidMove: (() -> Void)?
+
+    /// The split's width at the last resize, which is what tells a shelf move
+    /// (same width, divider moved) from a window resize (width changed).
+    private var lastSplitWidth: CGFloat = 0
+    private var isShelfMoving = false
+
+    /// Raised while the shelf slides in or out on shares taken before it
+    /// started. Sliding *out*, AppKit lays the content out at its final width
+    /// before the first step, so shares read at a step would already be the
+    /// lopsided ones; a drag has no such pass and reads its shares as it goes.
+    private var holdsSharesFromBeforeSlide = false
+
     private let content: NSViewController
     let shelf: ProjectShelfViewController?
     private var shelfItem: NSSplitViewItem?
@@ -36,6 +56,7 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     private var isAnimatingShelf = false
 
     private var resizeObserver: NSObjectProtocol?
+    private var willResizeObserver: NSObjectProtocol?
 
     /// - Parameters:
     ///   - content: The window's content. Laid out from the safe area down;
@@ -53,8 +74,8 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
     isolated deinit {
-        if let resizeObserver {
-            NotificationCenter.default.removeObserver(resizeObserver)
+        for observer in [resizeObserver, willResizeObserver].compactMap({ $0 }) {
+            NotificationCenter.default.removeObserver(observer)
         }
     }
 
@@ -102,7 +123,17 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
             object: splitView,
             queue: .main
         ) { [weak self] _ in
-            MainActor.assumeIsolated { self?.rememberShelfWidth() }
+            MainActor.assumeIsolated {
+                self?.rememberShelfWidth()
+                self?.shelfDidMove()
+            }
+        }
+        willResizeObserver = NotificationCenter.default.addObserver(
+            forName: NSSplitView.willResizeSubviewsNotification,
+            object: splitView,
+            queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.shelfWillMove() }
         }
         themeObserver = ThemePaletteObserver(host: view) { [weak contentHost, weak self] palette in
             // The window background, the shelf card's and the tab list's
@@ -151,6 +182,8 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         // `item.animator()` alone moves the divider while everything laid out
         // against it jumps to its final place on the first frame.
         isAnimatingShelf = true
+        onShelfWillMove?()
+        holdsSharesFromBeforeSlide = true
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.2
             context.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
@@ -159,6 +192,8 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         } completionHandler: { [weak self] in
             MainActor.assumeIsolated {
                 self?.isAnimatingShelf = false
+                self?.holdsSharesFromBeforeSlide = false
+                self?.onShelfDidMove?()
                 self?.onShelfVisibilityChange?()
                 completion?()
             }
@@ -192,6 +227,14 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     /// be ordered in where another stood.
     func adoptShelfLayout(_ layout: ProjectShelfLayout) {
         guard let item = shelfItem else { return }
+        // The panes keep their shares through this too, read before the shelf
+        // moves for the same reason a slide's are.
+        onShelfWillMove?()
+        holdsSharesFromBeforeSlide = true
+        defer {
+            holdsSharesFromBeforeSlide = false
+            onShelfDidMove?()
+        }
         if item.isCollapsed == layout.isVisible {
             item.isCollapsed = !layout.isVisible
             onShelfVisibilityChange?()
@@ -199,6 +242,22 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         guard layout.isVisible, layout.width >= item.minimumThickness else { return }
         splitView.layoutSubtreeIfNeeded()
         splitView.setPosition(layout.width, ofDividerAt: 0)
+    }
+
+    /// The split's own width has not changed, so what is about to move is the
+    /// divider: the shelf, not the window.
+    private func shelfWillMove() {
+        guard shelfItem != nil else { return }
+        let width = splitView.bounds.width
+        defer { lastSplitWidth = width }
+        isShelfMoving = width > 0 && width == lastSplitWidth
+        if isShelfMoving, !holdsSharesFromBeforeSlide { onShelfWillMove?() }
+    }
+
+    private func shelfDidMove() {
+        guard isShelfMoving else { return }
+        isShelfMoving = false
+        onShelfDidMove?()
     }
 
     /// Writes down the shelf's width whenever the reader drags the divider.

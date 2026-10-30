@@ -338,6 +338,15 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         windowContent.onShelfVisibilityChange = { [weak self] in
             self?.refreshShelfToggleAppearance()
         }
+        // The shelf's room comes out of every pane in proportion to its width,
+        // not out of whichever pane holds its width least: the shares are read
+        // before each step of the move and put back after it.
+        windowContent.onShelfWillMove = { [weak self] in
+            self?.activeSplit?.captureThicknessFractions()
+        }
+        windowContent.onShelfDidMove = { [weak self] in
+            self?.activeSplit?.reapplyThicknessFractions()
+        }
         spacingObservers = PaneSpacing.edgeSettings.values.map { setting in
             UserSettingObserver(setting) { [weak self] _ in
                 guard let tabbed = self?.tabbed else { return }

@@ -590,6 +590,45 @@ public final class ComposableTabsViewController: ThemedSplitViewController {
         }
     }
 
+    // MARK: - Keeping shares while the container moves
+
+    /// Puts every divider in the tree back at the share it was last captured
+    /// at, so a change in the container's width is spread over the panes in
+    /// proportion to what each one had, rather than taken out of whichever
+    /// pane holds its width least.
+    ///
+    /// For a project window's shelf sliding out or away: that is the panes'
+    /// room changing beside them, not the window growing, and a pane that
+    /// keeps its share is what makes the slide look like one motion. A window
+    /// resize keeps its own rule — the holding priorities — because there a
+    /// sidebar keeping its width is the point.
+    ///
+    /// The capture rules hold here read the other way: a zoomed tree is left
+    /// alone (its collapsed panes have no share to keep), and so is a split
+    /// showing a rail, whose stored shares describe the pane before it was
+    /// minimized, not the rail on screen.
+    func reapplyThicknessFractions() {
+        guard rootSplit()?.zoomedLeaf == nil else { return }
+        reapplyDividers()
+    }
+
+    private func reapplyDividers() {
+        guard isViewLoaded else { return }
+        let showsRail = splitViewItems.contains {
+            $0.maximumThickness != NSSplitViewItem.unspecifiedDimension
+        }
+        if !showsRail {
+            hasAppliedPreferredThicknesses = false
+            applyPreferredThicknessesIfNeeded()
+        }
+        // A nested split's bounds follow its parent's dividers on the next
+        // layout pass; take that pass now so its shares are of its new size.
+        view.layoutSubtreeIfNeeded()
+        for child in layoutChildren {
+            (child as? ComposableTabsViewController)?.reapplyDividers()
+        }
+    }
+
     // MARK: - Wearing another tab's sizes
 
     /// Takes `template`'s divider positions without rebuilding anything.
