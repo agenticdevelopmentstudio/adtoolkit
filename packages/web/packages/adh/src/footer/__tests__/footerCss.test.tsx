@@ -144,10 +144,10 @@ describe('a browser without the Popover API', () => {
 })
 
 describe('a browser with the Popover API', () => {
-  it('shows the copyright as the one button, and none of its plain form', () => {
+  it('shows the `i` as the one button, and none of the plain copyright', () => {
     const { copyright } = renderFooter()
-    expect(reachable(copyright, 'popovers')).toEqual(['© 2026 Agentic Development Studio (button)'])
-    expect(visibleText(copyright, 'popovers')).toBe('© 2026 Agentic Development Studio')
+    expect(reachable(copyright, 'popovers')).toEqual(['i (button)'])
+    expect(visibleText(copyright, 'popovers')).toBe('i')
   })
 
   it('shows the brand the theme editor reads, which is the first one in the footer', () => {
@@ -207,13 +207,14 @@ describe("bitbag's resting place", () => {
     expect(resting[0]!.get('transform')).toContain('var(--bb-dock-rest-x,0px)')
     expect(resting[0]!.get('margin-bottom')).toContain('var(--bb-dock-rest-lift,0px)')
 
-    // The footer lifts him to the parked height bitbag declares, and moves him nowhere: his
-    // corner is bitbag's own, so the sideways hook is left at its fallback.
+    // The footer parks him where bitbag declares: his face as far in from the right as up
+    // from the bottom, by bitbag's own shift and lift.
     const dock = site.filter(
       (r) => r.at.length === 0 && r.selectors.length === 1 && r.selectors[0] === DOCK_SELECTOR,
     )
     const set = dock.flatMap((r) => r.properties.filter((p) => p.startsWith('--bb-dock-rest-')))
-    expect(set).toEqual(['--bb-dock-rest-lift'])
+    expect(set).toEqual(['--bb-dock-rest-x', '--bb-dock-rest-lift'])
+    expect(dock.map((r) => r.get('--bb-dock-rest-x')).join()).toBe('var(--bb-dock-parked-shift)')
     expect(dock.map((r) => r.get('--bb-dock-rest-lift')).join()).toBe('var(--bb-dock-parked-lift)')
 
     // adh used to restate both of bitbag's resting selectors one class stronger, to win when

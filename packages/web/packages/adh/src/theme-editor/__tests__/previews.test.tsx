@@ -104,7 +104,7 @@ describe('the footer preview, beside the page footer', () => {
     const { page, specimen } = renderBoth()
     for (const footer of [page, specimen]) {
       const triggers = Array.from(footer.querySelectorAll('.adh-footer__copyright-trigger'))
-      expect(triggers.map((t) => t.textContent?.trim())).toEqual(['© 2026 Agentic Development Studio'])
+      expect(triggers.map((t) => t.getAttribute('aria-label'))).toEqual(['About the Agentic Developer family'])
       const panel = document.getElementById(triggers[0]!.getAttribute('popovertarget') ?? '')
       // One dialog, the page's: the specimen brings none of its own.
       expect(panel).not.toBeNull()

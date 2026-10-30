@@ -93,9 +93,6 @@ function AdhFooter({ links = [], copyright, trailing, className }) {
   ] });
 }
 
-// src/footer/SiteFooter.tsx
-import { ChevronsUpDown as ChevronsUpDown2 } from "lucide-react";
-
 // src/footer/AdhModalPopover.tsx
 import { X } from "lucide-react";
 import { jsx as jsx2, jsxs as jsxs2 } from "react/jsx-runtime";
@@ -413,15 +410,22 @@ function SitesPopover() {
 // src/footer/SiteFooter.tsx
 import { Fragment, jsx as jsx9, jsxs as jsxs7 } from "react/jsx-runtime";
 var COPYRIGHT_PREFIX = "\xA9 2026 ";
+var FAMILY_FOOTER_TRIGGER_LABEL = "About the Agentic Developer family";
 function SiteFooter({ links = [], chat = true, live, specimen = false, contact = ADH_CONTACT }) {
   const version = buildVersionLabel(live);
   return /* @__PURE__ */ jsxs7(Fragment, { children: [
     /* @__PURE__ */ jsx9("footer", { className: "adh-footer adh-footer--floating", role: "contentinfo", children: /* @__PURE__ */ jsxs7("div", { className: "adh-footer__copyright", children: [
-      /* @__PURE__ */ jsxs7("button", { type: "button", className: "adh-footer__copyright-trigger", popoverTarget: FAMILY_FOOTER_DIALOG_ID, children: [
-        COPYRIGHT_PREFIX,
-        /* @__PURE__ */ jsx9("span", { className: "adh-footer__brand-link", children: BRAND_LABEL }),
-        /* @__PURE__ */ jsx9(ChevronsUpDown2, { className: "adh-footer__menu-caret", "aria-hidden": true })
-      ] }),
+      /* @__PURE__ */ jsx9(
+        "button",
+        {
+          type: "button",
+          className: "adh-footer__copyright-trigger",
+          popoverTarget: FAMILY_FOOTER_DIALOG_ID,
+          "aria-label": FAMILY_FOOTER_TRIGGER_LABEL,
+          title: FAMILY_FOOTER_TRIGGER_LABEL,
+          children: /* @__PURE__ */ jsx9("span", { className: "adh-footer__brand-link", "aria-hidden": true, children: "i" })
+        }
+      ),
       /* @__PURE__ */ jsxs7("span", { className: "adh-footer__copyright-fallback", children: [
         COPYRIGHT_PREFIX,
         /* @__PURE__ */ jsx9("a", { className: "adh-footer__brand-link", href: BRAND_HREF, children: BRAND_LABEL }),

@@ -34,11 +34,12 @@ export type SiteFooterProps = {
     /** Who the family footer's Contact column writes to; the hub by default. */
     contact?: SiteContact;
 };
-/** adh's footer on every page but a landing page: a small floating box in the viewport's
- *  lower-left corner carrying the studio's copyright. The copyright is a button that opens
- *  the whole family footer (FamilyFooter) in a dialog over the page, and the dialogs the
- *  family footer's entries open are rendered here beside it, one each. bitbag rests in the
- *  opposite corner (FooterChat). The copyright is a fixed brand line, deliberately not
- *  per-site. */
+/** What the `i` says to a screen reader and in its tooltip: what it opens. */
+export declare const FAMILY_FOOTER_TRIGGER_LABEL = "About the Agentic Developer family";
+/** adh's footer on every page but a landing page: a big `i` in a circle, floating in the
+ *  viewport's lower-left corner. It is a button that opens the whole family footer
+ *  (FamilyFooter, which carries the studio's copyright) in a dialog over the page, and the
+ *  dialogs the family footer's entries open are rendered here beside it, one each. bitbag
+ *  rests in the opposite corner (FooterChat), and the circle is the size of his face. */
 export declare function SiteFooter({ links, chat, live, specimen, contact }: SiteFooterProps): import("react").JSX.Element;
 //# sourceMappingURL=SiteFooter.d.ts.map

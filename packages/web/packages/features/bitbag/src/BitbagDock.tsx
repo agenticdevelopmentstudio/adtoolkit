@@ -356,7 +356,11 @@ export function BitbagDock({
     : undefined
 
   return (
-    <div className={rootClass} style={avatarRest ? SLIDE_VARS : undefined}>
+    <div
+      className={rootClass}
+      // `--bb-dock-rest-w` is his resting width, which bitbag-dock.css parks his face by.
+      style={avatarRest ? ({ ...SLIDE_VARS, '--bb-dock-rest-w': `${size / 2}px` } as CSSProperties) : undefined}
+    >
       <div
         ref={bitbagRef}
         className="bb-dock__avatar"

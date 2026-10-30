@@ -117,7 +117,7 @@ export type FamilyFooterProps = {
  * then one line of fine print with the copyright, the sites overview and the build.
  *
  * It is the landing page's footer (LandingFooter, in flow at the foot of `/`) and, on every
- * other page, what the floating copyright opens in a dialog (SiteFooter). Every link is in
+ * other page, what the floating `i` opens in a dialog (SiteFooter). Every link is in
  * the server HTML either way, so it is also the page's crawlable interlink set.
  *
  * Terms, Privacy and All sites open dialogs, and those dialogs are the CALLER's to

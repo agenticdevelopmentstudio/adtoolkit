@@ -62,20 +62,24 @@
  * lives in this always-loaded stylesheet; his skin is his own toolkit theme,
  * injected scoped by BitbagChat. */
 
-/* THE FLOATING COPYRIGHT (SiteFooter) — the footer on every page but a landing page is
-   one small box in the viewport's lower-left corner, as wide as its text: the studio's
-   copyright and a caret. Clicking it opens the whole family footer in a dialog over the
-   page. bitbag rests in the opposite corner (bitbag-dock.css), so the two never meet.
+/* THE FLOATING `i` (SiteFooter) — the footer on every page but a landing page is one round
+   button in the viewport's lower-left corner, a big `i` in a circle. Clicking it opens the whole
+   family footer in a dialog over the page. bitbag rests in the opposite corner
+   (bitbag-dock.css), so the two never meet, and they mirror each other: the circle is the size
+   of his resting face (144 of the 350 units across his 66px resting box, about 27px), and each
+   sits the same distance in from its side as up from the bottom, 1rem, or 0.75rem on a phone —
+   bitbag's `--bb-dock-parked-margin`, which this cannot read from here, since his sheet is
+   scoped to his dock and loaded only with his chat.
 
-   The `<footer>` itself is only the box's positioning: fixed, transparent, and closed to
-   the pointer, so it covers nothing; the box takes its own clicks. It overrides the
-   toolkit bar's own rules (adh-components.css), which still style the primitive
-   `AdhFooter` for any host that uses it.
+   The `<footer>` itself is only the circle's positioning: fixed, transparent, and closed to the
+   pointer, so it covers nothing; the circle takes its own clicks. It overrides the toolkit
+   bar's own rules (adh-components.css), which still style the primitive `AdhFooter` for any
+   host that uses it.
 
-   The studio's name is tinted with the site's highlight (accent) colour so it reads as
-   the brand; the class keeps its old `-link` name because the theme editor targets it
-   (theme-editor/areas.tsx). Never wrapped, at any width: the studio's name broken over two
-   lines read as broken. */
+   The class names are the copyright's still, because the theme editor targets them
+   (theme-editor/areas.tsx): `.adh-footer__copyright` is the circle, and
+   `.adh-footer__brand-link` is the `i`, tinted with the site's highlight (accent) colour. The
+   copyright itself is the dialog's, and the plain line's where there is no Popover API. */
 .adh-footer.adh-footer--floating {
   position: fixed;
   left: 1rem;
@@ -89,10 +93,14 @@
 .adh-footer--floating .adh-footer__copyright {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 1.7rem;
+  height: 1.7rem;
   margin: 0;
-  padding: 0.45rem 0.7rem;
+  padding: 0;
   border: 1px solid var(--color-border);
-  border-radius: 0.5rem;
+  border-radius: 999px;
   background: var(--color-surface-raised, var(--color-surface));
   box-shadow: 0 8px 24px -12px color-mix(in srgb, var(--color-shadow, #000) 60%, transparent);
   white-space: nowrap;
@@ -102,9 +110,13 @@
 .adh-footer__copyright-trigger {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
   margin: 0;
   padding: 0;
   border: 0;
+  border-radius: inherit;
   background: none;
   color: inherit;
   font: inherit;
@@ -117,6 +129,15 @@
   color: var(--adh-footer-brand-color, var(--color-accent));
   text-decoration: none;
   transition: color calc(0.2s * var(--apt-anim-scale, 1));
+}
+
+/* The `i`: a serif one, set big and bold so it reads as the info mark rather than a letter. */
+.adh-footer__copyright-trigger .adh-footer__brand-link {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .adh-footer__copyright-trigger:hover .adh-footer__brand-link,
@@ -216,15 +237,17 @@ a.adh-footer__brand-link:focus-visible {
    bitbag-dock.css's own geometry now, so this footer measures nothing and reserves no
    room for him.
 
-   His resting face sat on the bottom edge, reading as cut off, so he is lifted by
-   `--bb-dock-parked-lift`, bitbag-dock.css's ONE copy of how high a parked face sits,
-   which `BitbagStandalone` (his mounting on a page with no footer) reads too.
+   He parks by `--bb-dock-parked-shift` and `--bb-dock-parked-lift`, bitbag-dock.css's ONE
+   copy of where a parked face sits — his face as far in from the right edge as up from the
+   bottom, mirroring the `i` — which `BitbagStandalone` (his mounting on a page with no
+   footer) reads too.
 
    His chat is wider here than bitbag's default 560px — 784px, two-fifths more — so a
    conversation on a desktop reads as a panel rather than a strip. Same kind of hook,
    `--bb-dock-panel-width`; bitbag's own phone rule still takes the full width below
    640px, whatever this says. */
 .bb-dock.adh-footer__chat {
+  --bb-dock-rest-x: var(--bb-dock-parked-shift);
   --bb-dock-rest-lift: var(--bb-dock-parked-lift);
   --bb-dock-panel-width: min(784px, calc(100% - 2rem));
 }
@@ -236,6 +259,11 @@ a.adh-footer__brand-link:focus-visible {
 @supports not selector(:popover-open) {
   .adh-footer__copyright-trigger {
     display: none;
+  }
+  .adh-footer--floating .adh-footer__copyright {
+    height: auto;
+    padding: 0.45rem 0.7rem;
+    border-radius: 0.5rem;
   }
   .adh-footer__copyright-fallback {
     display: revert;

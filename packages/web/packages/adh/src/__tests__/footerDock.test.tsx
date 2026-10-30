@@ -131,15 +131,21 @@ describe('his resting place', () => {
     expect(baseElement.querySelector('.bb-dock')).toHaveClass('bb-dock--resting')
   })
 
-  it('is lifted by the lift bitbag declares, so a page without the footer lands him in the same place', () => {
-    // `BitbagStandalone` mounts him on a footerless page by reading `--bb-dock-parked-lift`
-    // (bitbag-dock.css, where it is declared — the only copy). This rule reading the same
-    // property, rather than a number of its own, is what keeps the two mountings level.
+  it('is parked where bitbag declares, so a page without the footer lands him in the same place', () => {
+    // `BitbagStandalone` mounts him on a footerless page by reading `--bb-dock-parked-shift`
+    // and `--bb-dock-parked-lift` (bitbag-dock.css, where they are declared — the only copy).
+    // This rule reading the same properties, rather than numbers of its own, is what keeps
+    // the two mountings level.
     const footer = styleRules(adhStylesheet('adh-site.css')).find((r) => r.selectors.includes(REST_DOCK_SELECTOR))
     expect(footer, `no ${REST_DOCK_SELECTOR} rule in adh-site.css — did it move?`).toBeDefined()
+    expect(footer!.get('--bb-dock-rest-x')).toBe('var(--bb-dock-parked-shift)')
     expect(footer!.get('--bb-dock-rest-lift')).toBe('var(--bb-dock-parked-lift)')
+    // Both are worked out from one margin, so his face sits as far in from the right as up
+    // from the bottom.
     const rig = styleRules(bitbagStylesheet('bitbag-dock.css')).find((r) => r.selectors.includes('.bb-dock'))
-    expect(rig?.get('--bb-dock-parked-lift')).toMatch(/^\d+(\.\d+)?px$/)
+    expect(rig?.get('--bb-dock-parked-margin')).toMatch(/^\d+(\.\d+)?rem$/)
+    for (const prop of ['--bb-dock-parked-shift', '--bb-dock-parked-lift'])
+      expect(rig?.get(prop)).toContain('var(--bb-dock-parked-margin)')
   })
 })
 

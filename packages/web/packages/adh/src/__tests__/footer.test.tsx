@@ -3,13 +3,16 @@ import { describe, expect, it, vi } from 'vitest'
 import { SiteFooter } from '../footer/SiteFooter'
 
 describe('adh SiteFooter', () => {
-  it('is a floating box whose copyright opens the family footer, and names the studio', () => {
+  it('is a floating `i` that opens the family footer, which names the studio', () => {
     const { container } = render(<SiteFooter />)
     const footer = container.querySelector('footer')!
     expect(footer).toHaveClass('adh-footer', 'adh-footer--floating')
-    const trigger = within(footer).getByRole('button', { name: /© 2026 Agentic Development Studio/ })
+    const trigger = within(footer).getByRole('button', { name: 'About the Agentic Developer family' })
     expect(trigger.closest('.adh-footer__copyright')).not.toBeNull()
+    expect(trigger.textContent).toBe('i')
     expect(trigger.getAttribute('popovertarget')).toBe('adh-family-footer')
+    const dialog = document.getElementById('adh-family-footer')!
+    expect(dialog.textContent).toContain('© 2026 Agentic Development Studio')
   })
 
   it('opens the whole family footer in a dialog, with the site\'s own links first', () => {
@@ -59,7 +62,7 @@ describe('adh SiteFooter', () => {
 
   it('renders no dialogs as a specimen', () => {
     render(<SiteFooter specimen />)
-    expect(screen.getByRole('button', { name: /Agentic Development Studio/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'About the Agentic Developer family' })).toBeInTheDocument()
     expect(document.querySelectorAll('[popover]')).toHaveLength(0)
   })
 })

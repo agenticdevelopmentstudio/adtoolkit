@@ -87,16 +87,26 @@
    * Percentages here resolve against the dock, which is viewport-wide. */
   --bb-dock-panel-w: var(--bb-dock-panel-width, min(560px, calc(100% - 2rem)));
 
-  /* WHERE HIS RESTING FACE SITS, measured from the bottom edge: the ONE copy of it.
-   * Both of his mountings read it — the adh footer, which parks him in its bar and
-   * lifts him this much so he reads as sitting in the bar rather than cut off by its
-   * edge, and `BitbagStandalone` (`.bb-dock--standalone` below), which mounts him on a
-   * page with no bar and has to land him in the SAME place, so a site whose pages mix
-   * the two (fishlamp.com: a marketing page without the footer, app pages with it)
-   * shows one bitbag, not one who hops 6px between pages. The footer used to carry
-   * this number as a literal of its own; the standalone mount would have been a
-   * second, and nothing would have kept the two in step. */
-  --bb-dock-parked-lift: 6px;
+  /* WHERE HIS RESTING FACE SITS: the ONE copy of it. Both of his mountings read it —
+   * the adh footer, and `BitbagStandalone` (`.bb-dock--standalone` below), which mounts
+   * him on a page with no footer and has to land him in the SAME place, so a site whose
+   * pages mix the two (fishlamp.com: a marketing page without the footer, app pages with
+   * it) shows one bitbag, not one who hops between pages.
+   *
+   * His FACE, not his box, sits `--bb-dock-parked-margin` in from the right edge and
+   * the same up from the bottom: a square corner, matching the adh footer's `i` in the
+   * opposite one. His box is wider than his face — Bitbag.tsx's 350×195 viewBox
+   * (origin −15,−72) draws the glyph across x 88–232 and down to y 107, so 103 units of
+   * empty box are right of it and 16 below — so the lift and the sideways shift subtract
+   * those, scaled to his resting width (`--bb-dock-rest-w`, BitbagDock's half size).
+   * The shift is a translate off the column's corner, which is `--bb-dock-edge` in. */
+  --bb-dock-parked-margin: 1rem;
+  --bb-dock-parked-lift: calc(
+    var(--bb-dock-parked-margin) - 0.1rem - var(--bb-dock-rest-w, 66px) * 16 / 350
+  );
+  --bb-dock-parked-shift: calc(
+    var(--bb-dock-edge) + var(--bb-dock-rest-w, 66px) * 103 / 350 - var(--bb-dock-parked-margin)
+  );
 
   /* How far in from the viewport's right edge he and his chat sit. He lives in the
    * lower-right corner, resting and open alike, so the column is pinned right and
@@ -130,6 +140,8 @@
   .bb-dock {
     --bb-dock-panel-w: 100%;
     --bb-dock-edge: 0px;
+    /* His resting face closer to the corner, as the adh footer's `i` is on a phone. */
+    --bb-dock-parked-margin: 0.75rem;
   }
   .bb-dock .persona-chat {
     border-left-width: 0;
@@ -245,11 +257,10 @@
  *                        so waking slides him back to the corner on the same curve; a
  *                        layout move would jump, because a margin or a justify doesn't
  *                        animate.
- *   --bb-dock-rest-lift  room under him beyond this rule's own 0.1rem. A host that
- *                        parks him at bar height sets it to `--bb-dock-parked-lift`
- *                        (declared on `.bb-dock`), never to a number of its own.
- * The adh footer sets both on its dock, to park him in the slot its bar keeps for
- * him. Before these existed it restated both selectors below, one class stronger,
+ *   --bb-dock-rest-lift  room under him beyond this rule's own 0.1rem.
+ * A host that parks him sets them to `--bb-dock-parked-shift` and
+ * `--bb-dock-parked-lift` (declared on `.bb-dock`), never to numbers of its own; the
+ * adh footer and `.bb-dock--standalone` both do. Before these existed it restated both selectors below, one class stronger,
  * which held only while the two copies stayed in step — and nothing checked that.
  *
  * Closing (`bb-dock--closing`) he is already laid out at rest, so the travel down
@@ -269,11 +280,10 @@
   position: relative;
   z-index: 1;
 }
-/* `BitbagStandalone`: the dock on a page that gives him no bar. No slot to measure,
- * so he rests in the column's corner (`--bb-dock-rest-x`'s own fallback), lifted by
- * the shared parked lift above — the height the footer's bar parks him at — so he
- * sits where the footer would have put him. */
+/* `BitbagStandalone`: the dock on a page with no adh footer. He parks by the shared
+ * parked place above, so he sits where the footer would have put him. */
 .bb-dock--standalone {
+  --bb-dock-rest-x: var(--bb-dock-parked-shift);
   --bb-dock-rest-lift: var(--bb-dock-parked-lift);
 }
 /* Open, he moves onto his chat's lower-right corner, in place of the send button —

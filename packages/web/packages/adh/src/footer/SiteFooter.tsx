@@ -1,6 +1,5 @@
 'use client'
 
-import { ChevronsUpDown } from 'lucide-react'
 import { AdhModalPopover } from './AdhModalPopover'
 import { FamilyFooter, type SiteLink } from './FamilyFooter'
 import { ADH_CONTACT, BRAND_HREF, BRAND_LABEL, FAMILY_FOOTER_DIALOG_ID, buildVersionLabel, type SiteContact } from './identity'
@@ -42,28 +41,36 @@ export type SiteFooterProps = {
 
 const COPYRIGHT_PREFIX = '© 2026 '
 
-/** adh's footer on every page but a landing page: a small floating box in the viewport's
- *  lower-left corner carrying the studio's copyright. The copyright is a button that opens
- *  the whole family footer (FamilyFooter) in a dialog over the page, and the dialogs the
- *  family footer's entries open are rendered here beside it, one each. bitbag rests in the
- *  opposite corner (FooterChat). The copyright is a fixed brand line, deliberately not
- *  per-site. */
+/** What the `i` says to a screen reader and in its tooltip: what it opens. */
+export const FAMILY_FOOTER_TRIGGER_LABEL = 'About the Agentic Developer family'
+
+/** adh's footer on every page but a landing page: a big `i` in a circle, floating in the
+ *  viewport's lower-left corner. It is a button that opens the whole family footer
+ *  (FamilyFooter, which carries the studio's copyright) in a dialog over the page, and the
+ *  dialogs the family footer's entries open are rendered here beside it, one each. bitbag
+ *  rests in the opposite corner (FooterChat), and the circle is the size of his face. */
 export function SiteFooter({ links = [], chat = true, live, specimen = false, contact = ADH_CONTACT }: SiteFooterProps) {
   const version = buildVersionLabel(live)
   return (
     <>
       <footer className="adh-footer adh-footer--floating" role="contentinfo">
         <div className="adh-footer__copyright">
-          <button type="button" className="adh-footer__copyright-trigger" popoverTarget={FAMILY_FOOTER_DIALOG_ID}>
-            {COPYRIGHT_PREFIX}
-            <span className="adh-footer__brand-link">{BRAND_LABEL}</span>
-            <ChevronsUpDown className="adh-footer__menu-caret" aria-hidden />
+          <button
+            type="button"
+            className="adh-footer__copyright-trigger"
+            popoverTarget={FAMILY_FOOTER_DIALOG_ID}
+            aria-label={FAMILY_FOOTER_TRIGGER_LABEL}
+            title={FAMILY_FOOTER_TRIGGER_LABEL}
+          >
+            <span className="adh-footer__brand-link" aria-hidden>
+              i
+            </span>
           </button>
           {/* Without the Popover API the trigger is a dead button and the family footer never
               opens, so the studio's link and this build's version have no other way onto the
               screen. Shown only there (adh-site.css). AFTER the trigger, because the theme
               editor reads the brand's current values off the first `.adh-footer__brand-link`
-              it finds (theme-editor/areas.tsx), and that has to be the one people see. */}
+              it finds (theme-editor/areas.tsx), and that has to be the one people see: the `i`. */}
           <span className="adh-footer__copyright-fallback">
             {COPYRIGHT_PREFIX}
             <a className="adh-footer__brand-link" href={BRAND_HREF}>
