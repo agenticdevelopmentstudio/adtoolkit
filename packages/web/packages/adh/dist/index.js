@@ -914,10 +914,11 @@ import { useEffect as useEffect2, useId as useId3, useRef as useRef2, useState a
 import { ChevronDown as ChevronDown3, TriangleAlert } from "lucide-react";
 import { jsx as jsx8, jsxs as jsxs5 } from "react/jsx-runtime";
 var DEFAULT_PREVIEW_NOTICE = "Developer Preview Release";
-var DEFAULT_PREVIEW_DETAIL = "We are in very early stages, and are only taking requests to join.";
+var DEFAULT_PREVIEW_DETAIL = "We are in very early stages, and are only taking requests to join. Right now, membership is by invitation only.";
 function PreviewNotice({
   notice = DEFAULT_PREVIEW_NOTICE,
-  detail = DEFAULT_PREVIEW_DETAIL
+  detail = DEFAULT_PREVIEW_DETAIL,
+  variant = "strip"
 }) {
   const [open, setOpen] = useState2(false);
   const panelId = useId3();
@@ -938,7 +939,7 @@ function PreviewNotice({
       document.removeEventListener("keydown", onKeyDown, true);
     };
   }, [open]);
-  return /* @__PURE__ */ jsx8("div", { className: "adh-header__preview", children: /* @__PURE__ */ jsxs5("span", { className: "adh-header__preview-disclosure", onMouseLeave: () => setOpen(false), children: [
+  return /* @__PURE__ */ jsx8("div", { className: variant === "badge" ? "adh-preview-badge" : "adh-header__preview", children: /* @__PURE__ */ jsxs5("span", { className: "adh-header__preview-disclosure", onMouseLeave: () => setOpen(false), children: [
     /* @__PURE__ */ jsxs5(
       "button",
       {

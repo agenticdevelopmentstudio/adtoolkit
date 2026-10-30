@@ -98,9 +98,17 @@
    * second, and nothing would have kept the two in step. */
   --bb-dock-parked-lift: 6px;
 
+  /* How far in from the viewport's right edge he and his chat sit. He lives in the
+   * lower-right corner, resting and open alike, so the column is pinned right and
+   * this is its one inset; the absolutely placed pieces below (his face on the
+   * open chat's corner, the chat sliding away) read the same number. A phone gives
+   * the chat the whole width, so there it is 0. */
+  --bb-dock-edge: 1rem;
+  padding-right: var(--bb-dock-edge);
+
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   /* The column itself ignores the pointer so it never eats a scroll or tap meant
    * for the page behind it; each child re-enables pointer events for itself. */
   pointer-events: none;
@@ -121,6 +129,7 @@
 @media (max-width: 640px) {
   .bb-dock {
     --bb-dock-panel-w: 100%;
+    --bb-dock-edge: 0px;
   }
   .bb-dock .persona-chat {
     border-left-width: 0;
@@ -206,7 +215,7 @@
    * own middle and leaving him hovering. Transform rather than width so the
    * growth composites on the GPU and never reflows the bottom-anchored column —
    * his layout box is unchanged, so the chat below him never moves. */
-  transform-origin: bottom center;
+  transform-origin: bottom right;
   transition: transform 0.34s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -232,8 +241,8 @@
  *
  * Where in the bar he rests is the HOST's to say, and it says it through two hooks
  * this rule reads with neutral fallbacks — the way `--kb-inset` reaches the rig:
- *   --bb-dock-rest-x     how far off the column's centre his face sits. A translate,
- *                        so waking slides him back to the centre on the same curve; a
+ *   --bb-dock-rest-x     how far off the column's corner his face sits. A translate,
+ *                        so waking slides him back to the corner on the same curve; a
  *                        layout move would jump, because a margin or a justify doesn't
  *                        animate.
  *   --bb-dock-rest-lift  room under him beyond this rule's own 0.1rem. A host that
@@ -261,7 +270,7 @@
   z-index: 1;
 }
 /* `BitbagStandalone`: the dock on a page that gives him no bar. No slot to measure,
- * so he rests at the column's centre (`--bb-dock-rest-x`'s own fallback), lifted by
+ * so he rests in the column's corner (`--bb-dock-rest-x`'s own fallback), lifted by
  * the shared parked lift above — the height the footer's bar parks him at — so he
  * sits where the footer would have put him. */
 .bb-dock--standalone {
@@ -270,9 +279,8 @@
 /* Open, he moves onto his chat's lower-right corner, in place of the send button —
  * tapping him there is the send (BitbagDock), and he giggles for it. Out of the
  * column, so the chat alone sets the dock's height and he sits over it; placed
- * against the dock, whose bottom is the chat's bottom and whose width is the
- * viewport's, so the chat's right edge is half the leftover width in from its
- * own. He travels there from the bar as the chat slides up, and lands with a small
+ * against the dock, whose bottom is the chat's bottom and whose right edge is
+ * the chat's plus `--bb-dock-edge`. He travels there from the bar as the chat slides up, and lands with a small
  * hop (BitbagDock) — not one of his moods: opening is not a reaction, and the laugh
  * it used to play read as a wince. The selector outranks the doze scale's `:has()`
  * above, which would otherwise halve him in the moment before the caret unfolds
@@ -280,7 +288,7 @@
 .bb-dock.bb-dock--rest-avatar:not(.bb-dock--resting):not(.bb-dock--closing) .bb-dock__avatar {
   position: absolute;
   z-index: 1;
-  right: calc((100% - var(--bb-dock-panel-w)) / 2 + 0.3rem);
+  right: calc(var(--bb-dock-edge) + 0.3rem);
   bottom: 0.3rem;
   margin: 0;
   transform: none;
@@ -304,7 +312,7 @@
 .bb-dock--closing .bb-dock__panel {
   position: absolute;
   bottom: 0;
-  left: calc((100% - var(--bb-dock-panel-w)) / 2);
+  right: var(--bb-dock-edge);
   animation: bb-dock-panel-out var(--bb-dock-slide-out, 320ms)
     var(--bb-dock-slide-out-ease, cubic-bezier(0.5, 0, 0.75, 0)) forwards;
 }

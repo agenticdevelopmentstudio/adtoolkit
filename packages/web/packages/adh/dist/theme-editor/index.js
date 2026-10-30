@@ -54,16 +54,7 @@ function HeaderPreview() {
 function FooterPreview() {
   return /* @__PURE__ */ jsxs("div", { className: "tep-preview", children: [
     /* @__PURE__ */ jsx("style", { children: `.tep-preview .adh-theme-switcher { display: none; }` }),
-    /* @__PURE__ */ jsx(
-      SiteFooter,
-      {
-        specimen: true,
-        links: [
-          { label: "GitHub", href: "#" },
-          { label: "Status", href: "#" }
-        ]
-      }
-    )
+    /* @__PURE__ */ jsx(SiteFooter, { specimen: true })
   ] });
 }
 function SiteMenuPreview() {
@@ -226,23 +217,16 @@ var THEME_AREAS = [
       // — Footer —
       {
         id: "global.footer-bar",
-        label: "Footer bar",
-        selector: ".adh-footer",
-        props: ["background-color", "border-top-color", "color"],
+        label: "Footer box",
+        selector: ".adh-footer__copyright",
+        props: ["background-color", "border-color", "color"],
         Preview: FooterPreview
       },
       {
         id: "global.footer-text",
         label: "Footer text",
-        selector: ".adh-footer__copyright",
+        selector: ".adh-footer__copyright-trigger",
         props: ["color", "font-family", "font-size", "letter-spacing"],
-        Preview: FooterPreview
-      },
-      {
-        id: "global.footer-links",
-        label: "Footer links",
-        selector: ".adh-footer__link",
-        props: ["color", "font-family", "font-size"],
         Preview: FooterPreview
       },
       {

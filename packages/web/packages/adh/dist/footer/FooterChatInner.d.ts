@@ -22,17 +22,16 @@ import '@agentic-toolkit/bitbag/css/bitbag-dock.css';
  * No `backend` prop: he speaks his built-in scripted voice.
  *
  * At rest he is his face alone — the dock's default, and fishlamp's mounting too —
- * in the slot the bar keeps just left of its Legal menu (of Terms, where a browser
- * without popovers shows the inline pair), and when he is tapped he grows back to
- * the centre with his chat opening under him (the slot is adh-site.css's;
- * `useFooterRestOffset` measures where it is and writes it on this dock). His
- * resting entry line used to lie across the middle of the bar, over its links, and
- * made every page reserve 6rem for it.
+ * in the viewport's lower-right corner, opposite the floating copyright in the
+ * lower left; when he is tapped his chat opens under him, pinned to that same
+ * right edge (bitbag-dock.css). His resting entry line used to lie across the
+ * middle of a full-width bar, over its links, and made every page reserve 6rem
+ * for it.
  *
  * PORTALLED TO `document.body`, not rendered in place. The dock positions itself
- * (`position: fixed`, bottom-centred, riding the keyboard — see bitbag-dock.css),
+ * (`position: fixed`, bottom-right, riding the keyboard — see bitbag-dock.css),
  * so it has no reason to sit inside the footer's DOM, and one strong reason not
- * to: `.adh-footer` is `position: sticky` WITH a `z-index`, which makes it a
+ * to: `.adh-footer` is positioned WITH a `z-index`, which makes it a
  * stacking context that its descendants cannot paint out of. Left inside it, the
  * dock would be trapped under the header at z-index 50 no matter what it asked
  * for, and the scrim that dims the page behind an engaged bitbag would stop

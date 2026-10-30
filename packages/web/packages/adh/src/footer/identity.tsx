@@ -3,6 +3,21 @@
 // server-rendered LandingFooter (marketing/) needs these as real values, and a server module
 // importing a constant from a client module gets a client reference, not the string.
 
+import { DIRECTORY_SITES, type SiteDef, type SiteId } from '@agentic-toolkit/adh-registry'
+
+/** The class on the family footer's root element: the scope a site confines its stylesheet to
+ *  (`/*! @confine .adh-landing-footer *\/`). Here rather than beside FamilyFooter, which is
+ *  'use client': a server module importing it from there would get a client reference. */
+export const LANDING_FOOTER_CLASS = 'adh-landing-footer'
+
+/** Working sites the family footer does not link: Shipr and the Registry, and both FishLamp
+ *  doors, since FishLamp Design is linked once, from About. */
+const FAMILY_OMITTED = new Set<SiteId>(['shipr', 'registry', 'fishlamp', 'fishlampdesign'])
+
+/** The sites the family footer lists: the directory less the ones it leaves out. The panel
+ *  its "All sites" opens on the landing page lists the same set (SitesPopover's `sites`). */
+export const FAMILY_SITES: SiteDef[] = DIRECTORY_SITES.filter((s) => !FAMILY_OMITTED.has(s.id))
+
 // The company the copyright belongs to — Agentic Development Studio, which is also
 // the wordmark closing the site menu (see StudioWordmark). NOT FishLamp Design, which
 // the copyright used to name and which is still a family site with its own row.
@@ -21,6 +36,25 @@ export const BRAND_HREF = 'https://agenticdevelopmentstudio.com/'
  *  there's exactly one instance — and therefore one crawlable copy of the SEO
  *  interlink set. */
 export const SITES_OVERVIEW_POPOVER_ID = 'adh-sites-overview'
+
+/** Who a site's Contact entry writes to: the name its dialog is titled with and the address
+ *  it links. Per site, unlike the copyright: a family site writes to the hub, and the studio
+ *  and FishLamp Design each to their own (they pass theirs to `LandingFooter`). */
+export type SiteContact = { name: string; email: string }
+
+/** The family's own contact, the default for every site that does not pass one. */
+export const ADH_CONTACT: SiteContact = {
+  name: 'Agentic Developer Hub',
+  email: 'hello@agenticdeveloperhub.com',
+}
+
+/** The DOM id of the Contact dialog, opened from the footer's fine print. One per page, for
+ *  the same reason as the sites overview's. */
+export const CONTACT_POPOVER_ID = 'adh-contact'
+
+/** The DOM id of the dialog the floating copyright opens: the whole family footer, the one
+ *  the landing page ends with, over the page. */
+export const FAMILY_FOOTER_DIALOG_ID = 'adh-family-footer'
 
 /** The footer's build identity: `v1.0.155 · a73e79b7`, or null when neither field exists.
  *

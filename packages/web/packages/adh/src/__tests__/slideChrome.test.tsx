@@ -43,11 +43,12 @@ import { AdhAppShell } from '../layout/AdhAppShell'
 import { SLIDE_ATTR } from '@agentic-toolkit/adh/layout/SlideNavigation'
 import { SiteHeader } from '../header/SiteHeader'
 import { SiteFooter } from '../footer/SiteFooter'
-import { REST_DOCK_SELECTOR } from '../footer/useFooterRestOffset'
 import { THEME_AREAS } from '../theme-editor/areas'
 import { adhStylesheet, styleRules } from './stylesheetRules'
 
 const SLIDE = `:root[${SLIDE_ATTR}]`
+/** The selector adh-site.css styles the footer's dock by; footerDock.test pins it to the real dock. */
+const REST_DOCK_SELECTOR = '.bb-dock.adh-footer__chat'
 const rules = styleRules(adhStylesheet('adh-site.css')).filter((r) => r.at.length === 0)
 
 /** Every selector the sheet names an element by while a slide runs, with the name it gives. */
@@ -130,7 +131,7 @@ describe('a slide navigation', () => {
     expect(got('adh-dock')[0]).toBe(page.dock[0])
   })
 
-  it('finds the dock by the selector the resting offset finds it by', () => {
+  it('finds the dock by the selector the footer styles it by', () => {
     // footerDock.test pins REST_DOCK_SELECTOR to bitbag's real dock; one spelling keeps this
     // rule on the element that test checks.
     expect(naming.filter((n) => n.name === 'adh-dock').map((n) => n.selector)).toEqual([

@@ -262,9 +262,6 @@ const COHABITANTS: Record<string, { source: string; on: Record<string, string[]>
 /** Selectors whose subject names no class, attribute or root, so nothing here can say which
  *  elements they reach. Each is named with what it styles, and why no package rule is there. */
 const UNKEYED: Record<string, string> = {
-  'site .adh-modal__body--legal .adh-legal-doc h2': 'Headings of the legal text. They carry no class of ui or bitbag.',
-  'site .adh-modal__body--legal .adh-legal-doc h3': 'Headings of the legal text. They carry no class of ui or bitbag.',
-  'site .adh-about__build dd': "A value in About's build list, a plain <dl> of adh's own.",
   'components .adh-header__icon-button > svg':
     "The glyph in one of the header's own icon buttons. ui's one rule on a bare svg is ColorModeToggle's, and adh does not render ColorModeToggle.",
   'components .adh-header__lead .adh-nav-popover__trigger > span': "The label inside adh's own nav trigger.",
@@ -544,7 +541,11 @@ describe('what is no longer a contest', () => {
 
   it("the host places the resting dock through bitbag's hooks, not by restating its rule", () => {
     const hooks = ['--bb-dock-rest-x', '--bb-dock-rest-lift', '--bb-dock-panel-width']
-    expect(rule('site .bb-dock.adh-footer__chat').properties.sort()).toEqual([...hooks].sort())
+    // He rests in his own corner, so the host lifts him and widens his chat and leaves the x
+    // at bitbag's default.
+    expect(rule('site .bb-dock.adh-footer__chat').properties.sort()).toEqual(
+      ['--bb-dock-panel-width', '--bb-dock-rest-lift'],
+    )
     const resting = rule(
       // The closing dock shares the rule: he travels back to the same resting spot.
       'bitbag .bb-dock--resting .bb-dock__avatar, .bb-dock--resting:has(.persona-chat.pc-collapsed) .bb-dock__avatar, ' +
@@ -557,8 +558,8 @@ describe('what is no longer a contest', () => {
     // bitbag's own sheet sets a hook in ONE rule: its standalone mount, `BitbagStandalone`,
     // which is his mounting for a page with no footer and has to land him where the footer
     // does. It sets the lift alone, and reads it from `--bb-dock-parked-lift` — the one
-    // copy, declared on `.bb-dock` — never as a number; the x and the chat's width stay
-    // the host's. The footer reads the same copy (footerDock.test.tsx), which is what
+    // copy, declared on `.bb-dock` — never as a number; the chat's width stays the
+    // host's. The footer reads the same copy (footerDock.test.tsx), which is what
     // keeps the two mountings level.
     const standalone = rule('bitbag .bb-dock--standalone')
     expect(standalone.properties).toEqual(['--bb-dock-rest-lift'])

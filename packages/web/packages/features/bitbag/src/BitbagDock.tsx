@@ -98,7 +98,7 @@ export interface BitbagDockProps {
  * `BitbagChat` (see `BitbagVariant`), so his voice and reflexes can't fork.
  *
  * WHERE HE PARKS IS PART OF HIM: the column fixes itself to the bottom of the
- * viewport, centred, riding above the on-screen keyboard when one opens. That
+ * viewport's lower-right corner, riding above the on-screen keyboard when one opens. That
  * used to be left to the host, and the result was that every host invented its
  * own — fishlamp.com's fixed rig against the adh footer's absolute strip — which
  * is drift in the one dimension the two mountings were supposed to share. The

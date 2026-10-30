@@ -88,7 +88,12 @@ export function openLegalModal(dialogId: string) {
     const el = document.getElementById(dialogId)
     if (el && 'showPopover' in el) {
       e.preventDefault()
-      ;(el as HTMLElement & { showPopover: () => void }).showPopover()
+      // `source` makes the link the dialog's invoker, which is what nests it under a popover
+      // the link sits in — the family footer's dialog (SiteFooter) — instead of closing that
+      // one as an unrelated auto popover opens. A browser without the option ignores it.
+      ;(el as HTMLElement & { showPopover: (options?: { source?: HTMLElement }) => void }).showPopover({
+        source: e.currentTarget,
+      })
     }
   }
 }

@@ -69,7 +69,8 @@ describe("the family sheets are scoped to the family shell", () => {
     // header without the shell), so they cannot all be put under the shell's class. What they
     // may do to the document is what cannot collide with a page that is not the family's: a
     // `:root` that assigns only `--adh-*` tokens, or one gated on an adh attribute
-    // (`:root[data-adh-slide]`, which the family chrome sets). An html, body or `.lp-*` rule, or
+    // (`:root[data-adh-slide]`, which the family chrome sets) or on an adh element being on the
+    // page (`:root:has(.adh-frame-header)`). An html, body or `.lp-*` rule, or
     // a `:root` that assigns anything else, has to be in the family sheets, under the shell.
     const reaching = OWN_SHEETS.filter(
       (sheet) => !FAMILY_SHEETS.includes(sheet),
@@ -81,7 +82,7 @@ describe("the family sheets are scoped to the family shell", () => {
               DOCUMENT_OR_LANDING.test(s) &&
               !s.includes(`.${FAMILY_ROOT_CLASS}`),
           )
-          .filter((s) => !/^:root\[data-adh-/.test(s))
+          .filter((s) => !/^:root(\[data-adh-|:has\(\.adh-[\w-]+\)$)/.test(s))
           .filter(
             (s) =>
               !(

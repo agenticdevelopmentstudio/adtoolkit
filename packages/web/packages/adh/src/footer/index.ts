@@ -5,11 +5,17 @@ export type { AdhFooterProps, FooterLink, FooterMenuItem } from './AdhFooter'
 
 // adh's registry-aware footer, merged in from the former `@adh/chrome/footer`. Renamed from that
 // source's `AdhFooter` — this barrel already publishes an `AdhFooter` (the registry-free
-// primitive above, which SiteFooter wraps); the two are unrelated components that
-// happened to share a name.
+// primitive above); the two are unrelated components that happened to share a name.
 export { SiteFooter } from './SiteFooter'
 export type { SiteFooterProps } from './SiteFooter'
-export { SITES_OVERVIEW_POPOVER_ID } from './identity'
+export { SITES_OVERVIEW_POPOVER_ID, CONTACT_POPOVER_ID, FAMILY_FOOTER_DIALOG_ID } from './identity'
+export type { SiteContact } from './identity'
+// The family footer and the dialogs its entries open, for a footer that is not SiteFooter: the
+// landing page's LandingFooter (marketing/), a server component, renders them by package path.
+export { FamilyFooter } from './FamilyFooter'
+export type { FamilyFooterProps, SiteLink } from './FamilyFooter'
+export { ContactPopover } from './ContactPopover'
+export { TermsModal, PrivacyModal } from './LegalModals'
 // The panel itself, for a footer that is not SiteFooter: the landing page's LandingFooter
 // (marketing/) renders it beside its own trigger.
 export { SitesPopover } from './SitesOverview'

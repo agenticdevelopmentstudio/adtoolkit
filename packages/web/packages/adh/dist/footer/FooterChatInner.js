@@ -47,69 +47,11 @@ function useChatTheme() {
   return [theme, setTheme];
 }
 
-// src/footer/useFooterRestOffset.ts
-import { useLayoutEffect } from "react";
-var REST_OFFSET_VAR = "--adh-footer-rest-x";
-var REST_SLOT_HOST_CLASS = "adh-footer__rest-slot-host";
-var REST_SLOT_SELECTOR = `.adh-footer--with-chat .${REST_SLOT_HOST_CLASS}`;
-var REST_DOCK_SELECTOR = ".bb-dock.adh-footer__chat";
-var REST_COPYRIGHT_SELECTOR = ".adh-footer--with-chat .adh-footer__copyright";
-var REST_CENTRE_CLEARANCE = 32;
-var RESIZE_SOURCES = [
-  ".adh-footer--with-chat",
-  ".adh-footer--with-chat .adh-footer__links",
-  REST_COPYRIGHT_SELECTOR
-].join(", ");
-var laidOut = (el) => el instanceof HTMLElement && el.getClientRects().length > 0;
-function leftNeighbour(doc, host) {
-  for (let el = host.previousElementSibling; el; el = el.previousElementSibling) {
-    if (laidOut(el)) return el;
-  }
-  const copyright = doc.querySelector(REST_COPYRIGHT_SELECTOR);
-  return laidOut(copyright) ? copyright : null;
-}
-function restOffset(doc) {
-  const host = Array.from(doc.querySelectorAll(REST_SLOT_SELECTOR)).find(laidOut);
-  if (!host) return null;
-  const slot = parseFloat(getComputedStyle(host).marginLeft) || 0;
-  const centre = doc.documentElement.clientWidth / 2;
-  const right = host.getBoundingClientRect().left;
-  const neighbour = leftNeighbour(doc, host);
-  if (!neighbour) return right - slot / 2 - centre;
-  const left = neighbour.getBoundingClientRect().right;
-  const fitsCentred = centre - slot / 2 - left >= REST_CENTRE_CLEARANCE && right - (centre + slot / 2) >= REST_CENTRE_CLEARANCE;
-  return fitsCentred ? 0 : (left + right) / 2 - centre;
-}
-function useFooterRestOffset() {
-  useLayoutEffect(() => {
-    const dock = document.querySelector(REST_DOCK_SELECTOR);
-    if (!dock) return;
-    const update = () => {
-      const x = restOffset(document);
-      if (x === null) dock.style.removeProperty(REST_OFFSET_VAR);
-      else dock.style.setProperty(REST_OFFSET_VAR, `${x}px`);
-    };
-    update();
-    const ro = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(update);
-    for (const el of document.querySelectorAll(RESIZE_SOURCES)) ro?.observe(el);
-    let live = true;
-    document.fonts?.ready.then(() => {
-      if (live) update();
-    });
-    return () => {
-      live = false;
-      ro?.disconnect();
-      dock.style.removeProperty(REST_OFFSET_VAR);
-    };
-  }, []);
-}
-
 // src/footer/FooterChatInner.tsx
 import "@agentic-toolkit/bitbag/css/bitbag-dock.css";
 import { jsx } from "react/jsx-runtime";
 function FooterChatInner() {
   const [chatTheme] = useChatTheme();
-  useFooterRestOffset();
   if (typeof document === "undefined") return null;
   return createPortal(
     /* @__PURE__ */ jsx(BitbagDock, { className: "adh-footer__chat", theme: chatTheme ?? void 0 }),

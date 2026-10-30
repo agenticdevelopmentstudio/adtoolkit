@@ -23,8 +23,8 @@ export const STANDALONE_CLASS = 'bb-dock--standalone'
  * So this is where that lift is applied for a footerless page — by ONE class,
  * `.bb-dock--standalone`, whose rule in bitbag-dock.css reads the same
  * `--bb-dock-parked-lift` the footer reads. The number lives in that stylesheet,
- * once; neither mounting states it. Horizontally he rests at the centre, which is
- * the dock's own fallback and where the footer puts him too when its bar has room.
+ * once; neither mounting states it. Horizontally he rests in the lower-right corner,
+ * which is the dock's own and where the footer puts him too.
  *
  * Everything else is `BitbagDock`'s, passed straight through: theme, backend, voice, size,
  * rest, and a `className` of the host's own alongside this one. Mount it client-only

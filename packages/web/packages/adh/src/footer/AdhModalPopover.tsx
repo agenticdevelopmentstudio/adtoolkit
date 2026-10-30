@@ -11,19 +11,21 @@ export type AdhModalPopoverProps = {
   children: ReactNode
   /** Extra class on the scrollable body wrapper (e.g. for legal prose). */
   bodyClassName?: string
+  /** Extra class on the dialog itself (e.g. `adh-modal--wide` for the family footer). */
+  className?: string
 }
 
 /**
  * A modal dialog built on the native HTML Popover API (top layer + backdrop +
  * Escape + light-dismiss, all native), styled with a header (title + close box)
- * and a scrollable body. Used by the footer's Sites / Terms / Privacy triggers.
+ * and a scrollable body. Used by the footer's family-footer, Contact, Sites, Terms and Privacy dialogs.
  *
  * Popover (not <dialog>) so it stays declarative — a `popovertarget` button opens
  * it and the header's `popovertargetaction="hide"` button closes it with no JS —
  * and so the header site-switcher keeps opening the sites overview via the same
  * id. role/aria make it announce as a modal dialog.
  */
-export function AdhModalPopover({ id, title, children, bodyClassName }: AdhModalPopoverProps) {
+export function AdhModalPopover({ id, title, children, bodyClassName, className }: AdhModalPopoverProps) {
   const titleId = `${id}-title`
   return (
     <div
@@ -35,7 +37,7 @@ export function AdhModalPopover({ id, title, children, bodyClassName }: AdhModal
       // Focusable so a programmatic opener (the switcher's "?" / "help") can move
       // focus in, enabling native Escape-to-dismiss.
       tabIndex={-1}
-      className="adh-modal"
+      className={`adh-modal${className ? ` ${className}` : ''}`}
     >
       <div className="adh-modal__header">
         <h2 id={titleId} className="adh-modal__title">

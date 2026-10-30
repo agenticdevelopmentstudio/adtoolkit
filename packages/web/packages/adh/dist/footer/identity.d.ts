@@ -1,3 +1,11 @@
+import { type SiteDef } from '@agentic-toolkit/adh-registry';
+/** The class on the family footer's root element: the scope a site confines its stylesheet to
+ *  (`/*! @confine .adh-landing-footer *\/`). Here rather than beside FamilyFooter, which is
+ *  'use client': a server module importing it from there would get a client reference. */
+export declare const LANDING_FOOTER_CLASS = "adh-landing-footer";
+/** The sites the family footer lists: the directory less the ones it leaves out. The panel
+ *  its "All sites" opens on the landing page lists the same set (SitesPopover's `sites`). */
+export declare const FAMILY_SITES: SiteDef[];
 export declare const BRAND_LABEL = "Agentic Development Studio";
 export declare const BRAND_HREF = "https://agenticdevelopmentstudio.com/";
 /** The DOM id of the single shared sites-overview popover. The footer renders
@@ -6,6 +14,21 @@ export declare const BRAND_HREF = "https://agenticdevelopmentstudio.com/";
  *  there's exactly one instance — and therefore one crawlable copy of the SEO
  *  interlink set. */
 export declare const SITES_OVERVIEW_POPOVER_ID = "adh-sites-overview";
+/** Who a site's Contact entry writes to: the name its dialog is titled with and the address
+ *  it links. Per site, unlike the copyright: a family site writes to the hub, and the studio
+ *  and FishLamp Design each to their own (they pass theirs to `LandingFooter`). */
+export type SiteContact = {
+    name: string;
+    email: string;
+};
+/** The family's own contact, the default for every site that does not pass one. */
+export declare const ADH_CONTACT: SiteContact;
+/** The DOM id of the Contact dialog, opened from the footer's fine print. One per page, for
+ *  the same reason as the sites overview's. */
+export declare const CONTACT_POPOVER_ID = "adh-contact";
+/** The DOM id of the dialog the floating copyright opens: the whole family footer, the one
+ *  the landing page ends with, over the page. */
+export declare const FAMILY_FOOTER_DIALOG_ID = "adh-family-footer";
 /** The footer's build identity: `v1.0.155 · a73e79b7`, or null when neither field exists.
  *
  *  Two fields doing two jobs. The semver is hand-bumped and scoped to ONE site's

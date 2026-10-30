@@ -19,12 +19,17 @@ export declare const DEFAULT_PREVIEW_NOTICE = "Developer Preview Release";
  *  caret. Same host-owns-the-words carve-out as {@link DEFAULT_PREVIEW_NOTICE}, and a
  *  default for the same reason: the sentence is true of the whole family, so 46 hosts
  *  should not each restate it. */
-export declare const DEFAULT_PREVIEW_DETAIL = "We are in very early stages, and are only taking requests to join.";
+export declare const DEFAULT_PREVIEW_DETAIL = "We are in very early stages, and are only taking requests to join. Right now, membership is by invitation only.";
 export type PreviewNoticeProps = {
     /** The strip's headline words. */
     notice?: string;
     /** The sentence the caret reveals. */
     detail?: string;
+    /** `strip` (the default) is the header's full-width notice above the bar; `badge` is the
+     *  same notice and panel as a compact pill, for the family footer's head
+     *  (`adh-preview-badge`, styled in adh-landing-footer.css so a site carrying only the
+     *  footer's sheet gets it too). */
+    variant?: 'strip' | 'badge';
 };
 /**
  * The family-wide preview strip: a caution-flanked headline that doubles as a
@@ -33,5 +38,5 @@ export type PreviewNoticeProps = {
  * Its own module rather than markup inside {@link AdhHeader} because it now holds
  * state and three dismissal paths; the header composes it as a leaf.
  */
-export declare function PreviewNotice({ notice, detail, }: PreviewNoticeProps): ReactElement;
+export declare function PreviewNotice({ notice, detail, variant, }: PreviewNoticeProps): ReactElement;
 //# sourceMappingURL=PreviewNotice.d.ts.map
