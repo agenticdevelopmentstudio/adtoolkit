@@ -269,6 +269,10 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
     /// is open, so the Spacing panel previews on the window behind its sheet.
     private var spacingObservers: [UserSettingObserver<Int>] = []
 
+    /// The tree holding its panes' shares while the shelf moves, if any. See
+    /// `ComposableTabsViewController.holdThicknessFractions()`.
+    private weak var sharesHeldBy: ComposableTabsViewController?
+
     /// Keeps the plane behind the panes following the theme.
     private var backdropObserver: ThemePaletteObserver?
 
@@ -340,12 +344,17 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         }
         // The shelf's room comes out of every pane in proportion to its width,
         // not out of whichever pane holds its width least: the shares are read
-        // before each step of the move and put back after it.
+        // before the move and held until it is over. Released on the tree that
+        // took them, which is not the active one if the tab changed meanwhile.
         windowContent.onShelfWillMove = { [weak self] in
-            self?.activeSplit?.captureThicknessFractions()
+            guard let self, let split = activeSplit else { return }
+            if sharesHeldBy !== split { sharesHeldBy?.releaseThicknessFractions() }
+            sharesHeldBy = split
+            split.holdThicknessFractions()
         }
         windowContent.onShelfDidMove = { [weak self] in
-            self?.activeSplit?.reapplyThicknessFractions()
+            self?.sharesHeldBy?.releaseThicknessFractions()
+            self?.sharesHeldBy = nil
         }
         spacingObservers = PaneSpacing.edgeSettings.values.map { setting in
             UserSettingObserver(setting) { [weak self] _ in

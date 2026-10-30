@@ -25,23 +25,29 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     var onShelfVisibilityChange: (() -> Void)?
 
     /// Called as the shelf's width is about to change beside the content —
-    /// sliding out or away, a divider drag — and again once it has, on every
-    /// step of the way. Not called for a window resize, which moves the
-    /// content's edge without moving the shelf's. The window uses the pair to
-    /// keep each pane its share of the width (see
-    /// `ComposableTabsViewController.reapplyThicknessFractions()`).
+    /// sliding out or away, a divider drag — and once it has finished: at the
+    /// end of a slide, or once a drag has rested. Not called for a window
+    /// resize, which moves the content's edge without moving the shelf's. The
+    /// window uses the pair to hold each pane at its share of the width (see
+    /// `ComposableTabsViewController.holdThicknessFractions()`).
     var onShelfWillMove: (() -> Void)?
     var onShelfDidMove: (() -> Void)?
+
+    /// How long a drag must rest before it counts as finished. AppKit has no
+    /// "the user let go" notification for a divider.
+    private static let dragSettleDelay: Duration = .milliseconds(250)
+    private var dragSettle: Task<Void, Never>?
 
     /// The split's width at the last resize, which is what tells a shelf move
     /// (same width, divider moved) from a window resize (width changed).
     private var lastSplitWidth: CGFloat = 0
     private var isShelfMoving = false
 
-    /// Raised while the shelf slides in or out on shares taken before it
-    /// started. Sliding *out*, AppKit lays the content out at its final width
-    /// before the first step, so shares read at a step would already be the
-    /// lopsided ones; a drag has no such pass and reads its shares as it goes.
+    /// Raised while the shelf slides in or out, or is adopted, so the steps
+    /// along the way neither start nor end the hold its caller took before
+    /// it started. Sliding *out*, AppKit lays the content out at its final
+    /// width before the first step, so shares read at a step would already be
+    /// the lopsided ones.
     private var holdsSharesFromBeforeSlide = false
 
     private let content: NSViewController
@@ -74,6 +80,7 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     required init?(coder: NSCoder) { fatalError("init(coder:) is not supported") }
 
     isolated deinit {
+        dragSettle?.cancel()
         for observer in [resizeObserver, willResizeObserver].compactMap({ $0 }) {
             NotificationCenter.default.removeObserver(observer)
         }
@@ -192,6 +199,7 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         } completionHandler: { [weak self] in
             MainActor.assumeIsolated {
                 self?.isAnimatingShelf = false
+                self?.splitView.layoutSubtreeIfNeeded()
                 self?.holdsSharesFromBeforeSlide = false
                 self?.onShelfDidMove?()
                 self?.onShelfVisibilityChange?()
@@ -232,6 +240,9 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         onShelfWillMove?()
         holdsSharesFromBeforeSlide = true
         defer {
+            // Laid out while the shares still hold, or the pass after the
+            // release would be AppKit's own lopsided one.
+            splitView.layoutSubtreeIfNeeded()
             holdsSharesFromBeforeSlide = false
             onShelfDidMove?()
         }
@@ -254,10 +265,17 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         if isShelfMoving, !holdsSharesFromBeforeSlide { onShelfWillMove?() }
     }
 
+    /// A drag's steps each come through here; it is finished once they stop.
     private func shelfDidMove() {
         guard isShelfMoving else { return }
         isShelfMoving = false
-        onShelfDidMove?()
+        guard !holdsSharesFromBeforeSlide else { return }
+        dragSettle?.cancel()
+        dragSettle = Task { [weak self] in
+            try? await Task.sleep(for: Self.dragSettleDelay)
+            guard !Task.isCancelled, let self, !self.holdsSharesFromBeforeSlide else { return }
+            self.onShelfDidMove?()
+        }
     }
 
     /// Writes down the shelf's width whenever the reader drags the divider.

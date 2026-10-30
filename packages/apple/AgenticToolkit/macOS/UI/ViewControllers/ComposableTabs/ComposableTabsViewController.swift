@@ -130,6 +130,11 @@ public final class ComposableTabsViewController: ThemedSplitViewController {
     /// describe an arrangement that is no longer on screen.
     private var hasAppliedPreferredThicknesses = false
 
+    /// See `holdThicknessFractions()`: raised on the split it was called on,
+    /// and the constraints each split in the tree holds its panes with.
+    private var isHoldingShares = false
+    private var heldShares: [NSLayoutConstraint] = []
+
     /// Root only, once. See `viewDidAppear()`.
     private var hasAppliedPersistedPaneState = false
 
@@ -592,10 +597,10 @@ public final class ComposableTabsViewController: ThemedSplitViewController {
 
     // MARK: - Keeping shares while the container moves
 
-    /// Puts every divider in the tree back at the share it was last captured
-    /// at, so a change in the container's width is spread over the panes in
-    /// proportion to what each one had, rather than taken out of whichever
-    /// pane holds its width least.
+    /// Captures each pane's share of the tree and holds it there, until
+    /// `releaseThicknessFractions()`. A change in the container's width is
+    /// then spread over the panes in proportion to what each had, rather than
+    /// taken out of whichever pane holds its width least.
     ///
     /// For a project window's shelf sliding out or away: that is the panes'
     /// room changing beside them, not the window growing, and a pane that
@@ -603,29 +608,72 @@ public final class ComposableTabsViewController: ThemedSplitViewController {
     /// resize keeps its own rule — the holding priorities — because there a
     /// sidebar keeping its width is the point.
     ///
-    /// The capture rules hold here read the other way: a zoomed tree is left
+    /// Held by constraints rather than by putting the dividers back after each
+    /// step, so every layout pass comes out proportional the first time. A
+    /// divider put back after AppKit has laid the panes out its own way gives
+    /// each pane two sizes per step, and a web view paints both: the slide
+    /// flickers. Each share is a width (or height) equal to that fraction of
+    /// the split, below required so a pane's minimum still wins; the last pane
+    /// takes what is left, as it does in `applyPreferredThicknessesIfNeeded`.
+    ///
+    /// Idempotent: a drag holds on its first step and keeps the shares it
+    /// read there. The capture rules hold here too: a zoomed tree is left
     /// alone (its collapsed panes have no share to keep), and so is a split
-    /// showing a rail, whose stored shares describe the pane before it was
-    /// minimized, not the rail on screen.
-    func reapplyThicknessFractions() {
-        guard rootSplit()?.zoomedLeaf == nil else { return }
-        reapplyDividers()
+    /// showing a rail, whose geometry is not a share the user chose.
+    func holdThicknessFractions() {
+        guard !isHoldingShares, rootSplit()?.zoomedLeaf == nil else { return }
+        isHoldingShares = true
+        captureThicknessFractions()
+        holdShares()
     }
 
-    private func reapplyDividers() {
+    /// Lets the panes go back to AppKit's holding priorities, where they are.
+    func releaseThicknessFractions() {
+        guard isHoldingShares else { return }
+        isHoldingShares = false
+        releaseShares()
+    }
+
+    private func holdShares() {
         guard isViewLoaded else { return }
         let showsRail = splitViewItems.contains {
             $0.maximumThickness != NSSplitViewItem.unspecifiedDimension
         }
-        if !showsRail {
-            hasAppliedPreferredThicknesses = false
-            applyPreferredThicknessesIfNeeded()
+        if !showsRail, splitViewItems.count == layoutChildren.count {
+            let along = splitView.isVertical ? splitView.widthAnchor : splitView.heightAnchor
+            for (child, item) in zip(layoutChildren, splitViewItems).dropLast() {
+                guard !item.isCollapsed, let fraction = child.thicknessFraction, fraction > 0 else { continue }
+                let pane = item.viewController.view
+                let size = splitView.isVertical ? pane.widthAnchor : pane.heightAnchor
+                let share = size.constraint(equalTo: along, multiplier: fraction)
+                share.priority = .init(999)
+                share.isActive = true
+                heldShares.append(share)
+            }
         }
-        // A nested split's bounds follow its parent's dividers on the next
-        // layout pass; take that pass now so its shares are of its new size.
-        view.layoutSubtreeIfNeeded()
         for child in layoutChildren {
-            (child as? ComposableTabsViewController)?.reapplyDividers()
+            (child as? ComposableTabsViewController)?.holdShares()
+        }
+    }
+
+    /// The dividers are set where the held shares put them before those go:
+    /// a split view remembers the positions it last set itself, and without
+    /// this would snap back to the ones from before the move.
+    private func releaseShares() {
+        if !heldShares.isEmpty {
+            view.layoutSubtreeIfNeeded()
+            let ends = splitViewItems.dropLast().map { item in
+                let frame = item.viewController.view.frame
+                return splitView.isVertical ? frame.maxX : frame.maxY
+            }
+            NSLayoutConstraint.deactivate(heldShares)
+            heldShares.removeAll()
+            for (index, end) in ends.enumerated() {
+                splitView.setPosition(end, ofDividerAt: index)
+            }
+        }
+        for child in layoutChildren {
+            (child as? ComposableTabsViewController)?.releaseShares()
         }
     }
 
