@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactElement } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import { Btn, indexRows } from '@agenticdevelopertoolkit/landing'
 import type { LandingPage, NavLink } from '@agenticdevelopertoolkit/landing'
 import { NavChrome } from '@agenticdevelopertoolkit/landing/client'
@@ -22,16 +22,23 @@ import { Words } from './words'
  * `underHeader` is the same drawer under a site's own header (the frame's `header` slot): the
  * burger alone, below that header, with no wordmark or action, since the header already carries
  * both. The wrapper's class is what moves the chrome down (frame.css).
+ *
+ * `sections` and `foot` are the frame's `drawer` and `drawerFoot` slots, rendered: the first
+ * goes after the rows, the second takes the place of the copy's foot.
  */
 export function SiteChrome({
   copy,
   page,
   extra,
+  sections,
+  foot,
   underHeader = false,
 }: {
   copy: FrameCopy
   page: LandingPage
   extra: FrameConfig['drawerExtra']
+  sections?: ReactNode
+  foot?: ReactNode
   underHeader?: boolean
 }): ReactElement {
   const { email } = copy.contact
@@ -54,7 +61,7 @@ export function SiteChrome({
     ...extraRows,
     ...(copy.nav.contact === undefined ? [] : [{ href: `mailto:${email}`, label: copy.nav.contact }]),
   ]
-  const footer = (
+  const footer = foot ?? (
     <>
       {copy.drawer === undefined ? null : (
         <>
@@ -75,7 +82,7 @@ export function SiteChrome({
   if (underHeader) {
     return (
       <div className="st-chrome-under-header" style={{ display: 'contents' }}>
-        <NavChrome links={links} footer={footer} />
+        <NavChrome links={links} sections={sections} footer={footer} />
       </div>
     )
   }
@@ -83,6 +90,7 @@ export function SiteChrome({
     <NavChrome
       brand={<Words text={copy.brand} />}
       links={links}
+      sections={sections}
       footer={footer}
       action={
         action === undefined ? undefined : (

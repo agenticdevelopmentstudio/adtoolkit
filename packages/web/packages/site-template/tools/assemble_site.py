@@ -720,7 +720,7 @@ def plan_slots(site: Path, slots: dict[str, str], ids: list[str], slotted: list[
     places: list[str] = []
     bands: list[str] = []
     components = (site / "site" / "components").resolve()
-    order = ["header", "hero", "afterHero", "footer", "bitbag"] + [key for key in slots if key.startswith("band:")]
+    order = ["header", "drawer", "drawerFoot", "hero", "afterHero", "footer", "bitbag"] + [key for key in slots if key.startswith("band:")]
     for n, key in enumerate(key for key in order if key in slots):
         file, name = slots[key].split("#")
         source = (components / file).resolve()

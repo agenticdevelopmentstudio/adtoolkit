@@ -215,6 +215,27 @@
   color: var(--lp-accent, #9a9a9a);
   text-decoration: none;
 }
+/* A titled group of links after the rows (NavSection): a small caption over the group, set
+ * off from the rows above it by space rather than a rule, since every row already ends in
+ * one. In the foot the same group keeps the foot's small links, one to a line. */
+.lp-drawer .lp-nav-section {
+  margin-top: 1.6rem;
+}
+.lp-drawer .lp-nav-heading {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lp-ink-dim, #a0a0a0);
+}
+.lp-drawer .lp-foot .lp-nav-section {
+  margin-top: 0;
+}
+.lp-drawer .lp-foot .lp-nav-section a {
+  display: block;
+  padding: 0.3rem 0;
+}
 /* Studio credit under the address. `block` with a top margin rather than a
  * <br />, so the gap is a rule that can be tuned rather than a line height. */
 .lp-drawer .lp-foot .lp-by {

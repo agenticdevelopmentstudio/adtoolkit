@@ -636,7 +636,23 @@ class AssembleTest(unittest.TestCase):
         layout = (self.app / "app/(frame)/layout.tsx").read_text()
         self.assertIn("slots.header", layout)
         # The header takes the bar's place, and the burger and drawer stay, under it.
-        self.assertIn("<SiteChrome copy={copy} page={landing} extra={config.drawerExtra} underHeader />", layout)
+        self.assertIn(
+            "<SiteChrome copy={copy} page={landing} extra={config.drawerExtra} sections={sections} foot={foot} underHeader />",
+            layout,
+        )
+
+    def test_drawer_slots_are_placed(self) -> None:
+        self.config["slots"] = {"drawer": "drawer.tsx#Family", "drawerFoot": "drawer.tsx#MoreInfo"}
+        self.write("site/components/drawer.tsx", "export function Family() { return null }\nexport function MoreInfo() { return null }\n")
+        self.assert_ok(self.assemble())
+        slots = (self.app / "src/site/slots.tsx").read_text()
+        self.assertIn("import { Family as DrawerSlot } from '../components/drawer'", slots)
+        self.assertIn("import { MoreInfo as DrawerFootSlot } from '../components/drawer'", slots)
+        self.assertIn("  drawer: DrawerSlot,", slots)
+        self.assertIn("  drawerFoot: DrawerFootSlot,", slots)
+        layout = (self.app / "app/(frame)/layout.tsx").read_text()
+        self.assertIn("<slots.drawer />", layout)
+        self.assertIn("<slots.drawerFoot />", layout)
 
     def test_no_sitemap_routes_computes_none(self) -> None:
         self.assert_ok(self.assemble())

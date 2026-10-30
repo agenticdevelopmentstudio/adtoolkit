@@ -8,6 +8,7 @@ export { FamilyFooter } from './FamilyFooter';
 export type { FamilyFooterProps, SiteLink } from './FamilyFooter';
 export { ContactPopover } from './ContactPopover';
 export { TermsModal, PrivacyModal } from './LegalModals';
+export { FamilyDrawerSection, MoreInfoDrawerFoot } from './FamilyDrawer';
 export { SitesPopover } from './SitesOverview';
 export { FooterForRoute } from './FooterForRoute';
 export type { FooterForRouteProps } from './FooterForRoute';

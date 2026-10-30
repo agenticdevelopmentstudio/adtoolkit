@@ -473,6 +473,23 @@ describe('SiteChrome', () => {
     expect(links.map((a) => a.getAttribute('href'))).toEqual(['/#top', '/#one', '/#two'])
   })
 
+  it('adds the drawer slot after the rows and puts the foot slot in the foot', () => {
+    const { container } = render(
+      <SiteChrome
+        copy={copy}
+        page={two}
+        extra={[]}
+        sections={<a className="lp-nav" href="https://example.com/">Example</a>}
+        foot={<a href="/terms">Terms</a>}
+      />,
+    )
+    const links = Array.from(container.querySelectorAll('.lp-drawer a.lp-nav'))
+    expect(links.map((a) => a.getAttribute('href'))).toEqual(['/#top', '/#one', '/#two', 'https://example.com/'])
+    const foot = container.querySelector('.lp-drawer .lp-foot')!
+    expect(foot.textContent).toBe('Terms')
+    expect(foot.querySelector('a[href^="mailto:"]')).toBeNull()
+  })
+
   it('is not under a header unless told so', () => {
     const { container } = render(<SiteChrome copy={copy} page={empty} extra={[]} />)
     expect(container.querySelector('.st-chrome-under-header')).toBeNull()
