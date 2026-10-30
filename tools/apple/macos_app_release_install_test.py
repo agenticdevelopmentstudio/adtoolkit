@@ -279,9 +279,12 @@ class Env:
         self.die_on_term = True
         self.clock = 0.0
         self.out: list[str] = []
+        self.finder_refuses = False
 
     def run(self, argv):
         self.calls.append(list(argv))
+        if argv[0] == "osascript" and self.finder_refuses:
+            return subprocess.CompletedProcess(argv, 1, "", "Not authorized (-1743)")
         if argv[0] == "ditto":
             app = Path(argv[-1]) / self.name
             if self.complete:
@@ -339,7 +342,20 @@ def test_replaces_the_old_bundle_and_opens_the_new(tmp_path):
     assert env.renames == [(old, env.apps / f"{env.name}.old-4242"),
                            (staging / env.name, old)]
     assert not staging.exists()
+    finder = env.calls[-2]
+    assert finder[:2] == ["osascript", "-e"]
+    assert 'tell application "Finder" to update' in finder[2] and str(old) in finder[2]
     assert env.calls[-1] == ["open", "-a", str(old)]
+
+
+def test_a_finder_that_will_not_refresh_the_icon_does_not_fail_the_install(tmp_path):
+    env = Env(tmp_path)
+    env.make_old()
+    env.finder_refuses = True
+    assert env.go() == 0
+    assert _new_marker(env) == "new"
+    assert env.calls[-1][0] == "open"
+    assert any("Finder did not refresh the icon" in line for line in env.out)
 
 
 def test_first_install_has_nothing_to_move_aside(tmp_path):

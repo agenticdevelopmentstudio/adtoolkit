@@ -49,6 +49,37 @@ def quit_app(app: Path, *, pids: Callable[[Path], list[int]],
                                monotonic=monotonic)
 
 
+FINDER_REFRESH_TIMEOUT_S = 10
+
+
+def refresh_finder_icon(dest: Path, *, run: Runner = run_command,
+                        say: Callable[[str], None] = print) -> bool:
+    """Tell Finder to re-read the bundle that just landed at `dest`.
+
+    Finder keeps its own per-item icon cache, and a bundle that arrives by rename
+    can stay the generic app placeholder there for as long as Finder runs:
+    `touch` and `lsregister -f` reach LaunchServices, not that cache. Finder's
+    own `update` command does. Best-effort: a headless install has no Finder,
+    and a terminal without Automation access to it gets a refusal; neither
+    should fail an install whose bundle is already in place. True when Finder
+    took it.
+    """
+    script = (f"with timeout of {FINDER_REFRESH_TIMEOUT_S} seconds\n"
+              f'tell application "Finder" to update (POSIX file "{dest}" as alias)\n'
+              "end timeout")
+    try:
+        result = run(["osascript", "-e", script])
+    except OSError as exc:
+        say(f"note: Finder did not refresh the icon ({exc}); it may show a generic "
+            "icon until Finder relaunches")
+        return False
+    if result.returncode != 0:
+        say(f"note: Finder did not refresh the icon ({(result.stderr or '').strip()}); "
+            "it may show a generic icon until Finder relaunches")
+        return False
+    return True
+
+
 def install(zip_path: Path, cfg: ReleaseConfig, *, apps_dir: Path | None = None,
             run: Runner = run_command,
             pids: Callable[[Path], list[int]] = processes.bundle_pids,
@@ -58,7 +89,8 @@ def install(zip_path: Path, cfg: ReleaseConfig, *, apps_dir: Path | None = None,
             rename: Callable[[Path, Path], object] = os.rename,
             pid: int | None = None, uid: int | None = None,
             say: Callable[[str], None] = print) -> int:
-    """Order: ownership check, extract, layout gate, quit, swap, open. A bad zip
+    """Order: ownership check, extract, layout gate, quit, swap, Finder refresh,
+    open. A bad zip
     leaves the running app untouched; the swap is two same-volume renames.
     Returns 0 on success, 1 on any refusal."""
     from . import layout
@@ -121,6 +153,7 @@ def install(zip_path: Path, cfg: ReleaseConfig, *, apps_dir: Path | None = None,
     finally:
         shutil.rmtree(staging, ignore_errors=True)
 
+    refresh_finder_icon(dest, run=run, say=say)
     opened = run(["open", "-a", str(dest)])
     if opened.returncode != 0:
         say(f"error: installed {dest} but could not open it: {(opened.stderr or '').strip()}")
