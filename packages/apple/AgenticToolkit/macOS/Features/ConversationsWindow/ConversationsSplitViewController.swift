@@ -285,8 +285,12 @@ public final class ConversationsSplitViewController: NSSplitViewController {
         return true
     }
 
+    /// Whether the keystroke is this window's — the window it was sent to,
+    /// which is the key window unless the app is inactive and the key was
+    /// posted to it.
     private var isKeyWindow: Bool {
-        view.window?.isKeyWindow == true
+        guard let window = view.window else { return false }
+        return KeyCommandRegistry.shared.commandWindow === window
     }
 
     /// Whether the keyboard is in a text field or text view — the field editor

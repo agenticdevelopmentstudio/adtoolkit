@@ -90,6 +90,17 @@ public struct KeyCommandDescriptor {
     /// under a heading that was not where it actually fired.
     public internal(set) var scope: KeyCommandScope = .app
 
+    /// The window the command acts in, when it acts in one window only — the
+    /// title of a ``KeyCommandSection`` declared `isWindowSpecific`, stamped
+    /// by that section the way `scope` is. `nil` for a command that acts
+    /// wherever the app is.
+    ///
+    /// Two commands that each act in a different window can share a chord:
+    /// only one of those windows is key, and the other's `perform` declines.
+    /// ⌘0 shows the Conversations window's list there and a project window's
+    /// browser here, the way Xcode and Mail both use it for their own sidebar.
+    public internal(set) var window: String?
+
     /// The chord shipped with the command. `nil` means the command is listed
     /// with no key command until the user gives it one.
     public let defaultShortcut: KeyboardShortcuts.Shortcut?
@@ -154,13 +165,22 @@ public struct KeyCommandDescriptor {
 
     /// The same command, listened for in `scope`. Used by ``KeyCommandSection``
     /// to stamp its own scope through everything it carries.
-    func scoped(to scope: KeyCommandScope) -> KeyCommandDescriptor {
+    func scoped(to scope: KeyCommandScope, window: String? = nil) -> KeyCommandDescriptor {
         var copy = self
         copy.scope = scope
+        copy.window = window
         if scope == .global {
             copy.isEnabledByDefault = false
         }
         return copy
+    }
+
+    /// Whether this command and `other` may not share a chord. Commands that
+    /// act in two different windows never meet: whichever window is key, one
+    /// of them declines the keystroke and the other takes it.
+    func clashes(with other: KeyCommandDescriptor) -> Bool {
+        guard let window, let otherWindow = other.window else { return true }
+        return window == otherWindow
     }
 }
 
@@ -182,8 +202,8 @@ public struct KeyCommandFeature {
         self.commands = commands
     }
 
-    func scoped(to scope: KeyCommandScope) -> KeyCommandFeature {
-        KeyCommandFeature(title: title, commands: commands.map { $0.scoped(to: scope) })
+    func scoped(to scope: KeyCommandScope, window: String?) -> KeyCommandFeature {
+        KeyCommandFeature(title: title, commands: commands.map { $0.scoped(to: scope, window: window) })
     }
 }
 
@@ -217,18 +237,26 @@ public struct KeyCommandSection {
     /// Named runs within the section.
     public let features: [KeyCommandFeature]
 
+    /// Whether every command here acts only in the one window the section
+    /// names, and declines everywhere else. Such a section's chords may repeat
+    /// another window-specific section's — see ``KeyCommandDescriptor/window``.
+    public let isWindowSpecific: Bool
+
     public init(
         title: String,
         caption: String? = nil,
         scope: KeyCommandScope,
+        isWindowSpecific: Bool = false,
         commands: [KeyCommandDescriptor] = [],
         features: [KeyCommandFeature] = []
     ) {
         self.title = title
         self.caption = caption
         self.scope = scope
-        self.commands = commands.map { $0.scoped(to: scope) }
-        self.features = features.map { $0.scoped(to: scope) }
+        self.isWindowSpecific = isWindowSpecific
+        let window = isWindowSpecific ? title : nil
+        self.commands = commands.map { $0.scoped(to: scope, window: window) }
+        self.features = features.map { $0.scoped(to: scope, window: window) }
     }
 
     /// Everything the section carries, in the order the panel lists it: the

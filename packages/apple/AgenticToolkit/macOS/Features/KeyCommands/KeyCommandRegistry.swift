@@ -199,22 +199,50 @@ public final class KeyCommandRegistry {
         matching event: NSEvent,
         scope: KeyCommandScope = .app
     ) -> KeyCommandDescriptor? {
-        guard let pressed = KeyboardShortcuts.Shortcut(event: event) else { return nil }
-        return allCommands.first { command in
+        commands(matching: event, scope: scope).first
+    }
+
+    /// Every app-scope command `event` is bound to, in installation order.
+    /// More than one only for commands that act in different windows — see
+    /// ``KeyCommandDescriptor/window``.
+    public func commands(
+        matching event: NSEvent,
+        scope: KeyCommandScope = .app
+    ) -> [KeyCommandDescriptor] {
+        guard let pressed = KeyboardShortcuts.Shortcut(event: event) else { return [] }
+        return allCommands.filter { command in
             command.scope == scope && shortcut(for: command.id) == pressed
         }
     }
 
-    /// Perform whatever `event` is bound to in `scope`. Returns whether the
+    /// Perform whatever `event` is bound to in `scope`. Returns whether a
     /// command handled it — not merely whether a chord matched — which is what
     /// a local event monitor needs in order to swallow the event, or let a
     /// command that declined it pass it on.
+    ///
+    /// Each match is offered the keystroke in turn until one takes it: two
+    /// windows' commands can share a chord, and the first to be asked is
+    /// usually the one whose window is not key.
     @discardableResult
     public func perform(matching event: NSEvent, scope: KeyCommandScope = .app) -> Bool {
-        guard !isRecordingChord,
-              let command = command(matching: event, scope: scope)
-        else { return false }
-        return command.perform()
+        guard !isRecordingChord else { return false }
+        dispatchingEvent = event
+        defer { dispatchingEvent = nil }
+        return commands(matching: event, scope: scope).contains { $0.perform() }
+    }
+
+    /// The keystroke being offered to commands right now, `nil` between them.
+    private var dispatchingEvent: NSEvent?
+
+    /// The window the keystroke being performed was sent to — the window a
+    /// window-specific command should act on.
+    ///
+    /// Not simply `NSApp.keyWindow`: a keystroke can reach a window of an
+    /// inactive app (posted to its pid, as automation does), and then there is
+    /// no key window at all, though the event still names the window it is
+    /// for (`explicit-over-implicit`). Outside a dispatch, the key window.
+    public var commandWindow: NSWindow? {
+        dispatchingEvent?.window ?? NSApp.keyWindow
     }
 
     /// Every app-scope command is performed from here: one local monitor for
@@ -263,7 +291,12 @@ public final class KeyCommandRegistry {
         // clash can arise *after* this command was given the chord — another
         // row claimed it while this one was switched off — so "it is already
         // mine" does not settle it.
-        if let clash = allCommands.first(where: { $0.id != id && self.shortcut(for: $0.id) == shortcut }) {
+        let command = descriptor(for: id)
+        if let clash = allCommands.first(where: { other in
+            other.id != id
+                && self.shortcut(for: other.id) == shortcut
+                && (command.map { $0.clashes(with: other) } ?? true)
+        }) {
             return .unavailable("taken by “\(clash.title)”")
         }
 

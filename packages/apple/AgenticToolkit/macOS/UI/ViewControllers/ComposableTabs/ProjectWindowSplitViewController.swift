@@ -24,7 +24,7 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     var onShelfVisibilityChange: (() -> Void)?
 
     private let content: NSViewController
-    private let shelf: NSViewController?
+    let shelf: ProjectShelfViewController?
     private var shelfItem: NSSplitViewItem?
 
     /// Keeps each half's strip behind the titlebar in the theme.
@@ -40,9 +40,9 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     ///   - content: The window's content. Laid out from the safe area down;
     ///     the strip above it is painted the project's pane backdrop.
     ///   - shelf: The shelf, or `nil` for a window with none — a host with no
-    ///     projects to list. Laid out from the safe area down on the window
-    ///     background.
-    init(content: NSViewController, shelf: NSViewController?) {
+    ///     projects to list. Laid out from the safe area down on the project's
+    ///     pane backdrop, which its bordered card sits on.
+    init(content: NSViewController, shelf: ProjectShelfViewController?) {
         self.content = content
         self.shelf = shelf
         super.init(nibName: nil, bundle: nil)
@@ -106,7 +106,7 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         themeObserver = ThemePaletteObserver(host: view) { [weak contentHost, weak self] palette in
             contentHost?.backdropColor = NSColor(palette.projectPaneBackdrop)
             if let shelfHost = self?.shelfItem?.viewController as? SafeAreaHostViewController {
-                shelfHost.backdropColor = palette.windowBackgroundColor
+                shelfHost.backdropColor = NSColor(palette.projectPaneBackdrop)
             }
         }
     }
@@ -125,12 +125,22 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     /// Slides the shelf out or away, doing nothing if it is already there. The
     /// choice is remembered for every project window — see
     /// `UserSettings.projectShelfVisible`.
-    func setShelfVisible(_ visible: Bool) {
-        guard let item = shelfItem, item.isCollapsed == visible else { return }
+    ///
+    /// - Parameter completion: Run once the shelf has reached `visible` — at
+    ///   once if it was already there. Focus waits for it: a field still
+    ///   sliding in from zero width takes the keyboard and then loses it.
+    func setShelfVisible(_ visible: Bool, completion: (@MainActor () -> Void)? = nil) {
+        guard let item = shelfItem else { return }
+        guard item.isCollapsed == visible else {
+            completion?()
+            return
+        }
         UserSettings.projectShelfVisible.value = visible
+        if !visible { shelf?.resignFocus() }
         guard view.window != nil else {
             item.isCollapsed = !visible
             onShelfVisibilityChange?()
+            completion?()
             return
         }
         // The same animation as the Conversations shelf, for the same reason:
@@ -146,9 +156,45 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
             MainActor.assumeIsolated {
                 self?.isAnimatingShelf = false
                 self?.onShelfVisibilityChange?()
+                completion?()
             }
         }
         onShelfVisibilityChange?()
+    }
+
+    /// ⌘0 and ⌘1: show the shelf on `panel` with the keyboard in its filter,
+    /// or — when it is already showing that panel — put the shelf away.
+    func toggleShelfPanel(_ panel: ProjectShelfPanel) {
+        guard let shelf else { return }
+        if isShelfVisible, shelf.group.panel == panel {
+            setShelfVisible(false)
+            return
+        }
+        shelf.show(panel)
+        setShelfVisible(true) { [weak shelf] in shelf?.focusFilter() }
+    }
+
+    /// What the shelf looks like now, for a window about to take this one's
+    /// place. Each active project's window has a shelf of its own, and the
+    /// swap must not visibly move one.
+    var shelfLayout: ProjectShelfLayout {
+        ProjectShelfLayout(
+            isVisible: isShelfVisible,
+            width: shelfItem.map { $0.viewController.view.frame.width } ?? 0
+        )
+    }
+
+    /// Takes on `layout` at once, without animating — this window is about to
+    /// be ordered in where another stood.
+    func adoptShelfLayout(_ layout: ProjectShelfLayout) {
+        guard let item = shelfItem else { return }
+        if item.isCollapsed == layout.isVisible {
+            item.isCollapsed = !layout.isVisible
+            onShelfVisibilityChange?()
+        }
+        guard layout.isVisible, layout.width >= item.minimumThickness else { return }
+        splitView.layoutSubtreeIfNeeded()
+        splitView.setPosition(layout.width, ofDividerAt: 0)
     }
 
     /// Writes down the shelf's width whenever the reader drags the divider.
@@ -160,6 +206,12 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
         guard width >= item.minimumThickness else { return }
         UserSettings.projectShelfWidth.value = Double(width)
     }
+}
+
+/// A shelf's visibility and width — what one project window hands the next.
+public struct ProjectShelfLayout: Sendable, Equatable {
+    public var isVisible: Bool
+    public var width: CGFloat
 }
 
 /// Hosts one view controller below the window's safe area, over a backdrop that

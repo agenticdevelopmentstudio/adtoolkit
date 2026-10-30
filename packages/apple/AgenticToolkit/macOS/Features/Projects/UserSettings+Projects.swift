@@ -73,4 +73,15 @@ extension UserSettings {
     /// How wide the project shelf is, in points, as the reader last dragged it.
     /// Shared for the same reason as `projectShelfVisible`.
     static public var projectShelfWidth = UserSetting<Double>("project_shelf_width", default: 240)
+
+    /// Every project window, as it stood the last time one changed: which
+    /// projects each has active, which of them it shows, and which shelf panel
+    /// is up. Read once at launch by `ProjectWindowManager.restoreOpenProjects()`
+    /// and rewritten on every change after that, so a quit — however it
+    /// happens — leaves the windows to come back as they were.
+    ///
+    /// An app preference rather than a `project_setting` row: a window is not
+    /// one project's, it holds several, and the row it would belong to does
+    /// not exist.
+    static public var projectWindows = UserSetting<[ProjectWindowState]>("project_windows", default: [])
 }

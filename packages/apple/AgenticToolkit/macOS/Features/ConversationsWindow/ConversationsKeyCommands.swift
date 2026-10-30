@@ -41,6 +41,10 @@ public enum ConversationsKeyCommands {
         KeyCommandSection(
             title: sectionTitle,
             scope: .app,
+            // Every command here declines unless this window is key, so its
+            // chords may repeat another window's — ⌘0 is also a project
+            // window's Project Browser.
+            isWindowSpecific: true,
             commands: [
                 KeyCommandDescriptor(
                     id: toggleShelfID,

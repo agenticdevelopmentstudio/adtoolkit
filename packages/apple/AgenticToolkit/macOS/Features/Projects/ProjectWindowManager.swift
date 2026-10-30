@@ -205,7 +205,10 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
         if let key = NSApp.keyWindow?.windowController as? ComposableTabsWindowController {
             return key
         }
+        // Visible only: a project window group keeps its other active
+        // projects' windows loaded and ordered out.
         if let ordered = NSApp.orderedWindows
+            .filter(\.isVisible)
             .compactMap({ $0.windowController as? ComposableTabsWindowController })
             .first {
             return ordered
@@ -310,40 +313,225 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
 
     // MARK: - ProjectOpening
 
-    public func openProject(_ repo: GitRepo) {
-        openProject(repo, replacing: nil)
-    }
-
-    /// Loads `repo` into the window `current` — what choosing a project in a
-    /// window's shelf does.
+    /// Opens `repo` in a project window.
     ///
-    /// A replacement at the same frame rather than a retarget of the same
-    /// window: the window's identity is the project's — its id, its saved
-    /// frame, its workspace and its help drawer are all per project — so the
-    /// chosen project's own window is opened exactly where `current` stood
-    /// and `current` closes. A project that already has a window of its own
-    /// is raised instead, and `current` is left alone; two windows on one
-    /// project is what the one-window-per-project rule exists to prevent.
-    public func loadProject(_ repo: GitRepo, into current: ComposableTabsWindowController) {
-        guard current.project.id != repo.id else { return }
-        coordinator?.recordOpened(repo)
-        openProject(repo, replacing: controllers[repo.id] == nil ? current : nil)
-    }
-
-    private func openProject(_ repo: GitRepo, replacing current: ComposableTabsWindowController?) {
-        if let existing = controllers[repo.id] {
+    /// A project already active in a window is put on screen in that window.
+    /// Anything else becomes an active project of the frontmost window — or of
+    /// a new one, when there is no project window at all.
+    public func openProject(_ repo: GitRepo) {
+        if let group = group(containing: repo.id), let existing = controllers[repo.id] {
             existing.project.update(repo: repo)
-            existing.showWindow(nil)
-            existing.window?.makeKeyAndOrderFront(nil)
+            present(repo.id, in: group)
             // Asking for a project that is already open is still the user
             // asking for it, and a window raised behind the app that is
             // actually frontmost reads as nothing having happened.
             activateApp()
             return
         }
+        if let existing = controllers[repo.id] {
+            // A window adopted for scripting belongs to no group; raise it
+            // the way this manager always has.
+            existing.project.update(repo: repo)
+            existing.showWindow(nil)
+            existing.window?.makeKeyAndOrderFront(nil)
+            activateApp()
+            return
+        }
+        load(repo, into: frontGroup ?? makeGroup())
+    }
+
+    /// Loads `repo` into `group`'s window — what choosing a project in a
+    /// window's Project Browser does. The project joins the window's active
+    /// projects and goes on screen; one already active in another window is
+    /// put on screen there instead, since one project has one set of panes.
+    public func loadProject(_ repo: GitRepo, into group: ProjectWindowGroup) {
+        coordinator?.recordOpened(repo)
+        if group.contains(repo.id) {
+            present(repo.id, in: group)
+            return
+        }
+        if controllers[repo.id] != nil {
+            openProject(repo)
+            return
+        }
+        load(repo, into: group)
+    }
+
+    /// Opens a project window with no project in it, its shelf out on the
+    /// Project Browser with the keyboard in the filter — File ▸ New Project
+    /// Window.
+    public func openNewWindow() {
+        let template = frontGroup.flatMap { shownWindows[$0.id]?.window }
+        let group = makeGroup()
+        guard let empty = showEmptyWindow(for: group) else {
+            removeGroup(group)
+            return
+        }
+        // Sized like the window in front and cascaded off it, as New is in a
+        // document app — a project chosen here inherits this frame, so the
+        // 800×500 default would shrink every project opened from a new window
+        // (`principle-of-least-astonishment`).
+        if let template, let window = empty.window {
+            // Offset by hand: `cascadeTopLeft(from:)` moves the window it is
+            // sent to, which here would be the template.
+            window.setFrame(template.frame.offsetBy(dx: 22, dy: -22), display: false)
+        }
+        empty.showShelfForChoosing()
+        persistGroups()
+        activateApp()
+    }
+
+    public func closeProject(repoID: UUID) {
+        if let group = group(containing: repoID) {
+            // The scan closes a deleted project and deletes its row in the same
+            // turn, so the window has to be gone by the time this returns.
+            closeActiveProject(repoID, in: group, synchronously: true)
+        } else {
+            controllers[repoID]?.close()
+        }
+    }
+
+    // MARK: - Window groups
+
+    /// The project windows, as the user sees them: each one a list of active
+    /// projects with one of them on screen. See `ProjectWindowGroup`.
+    public private(set) var groups: [ProjectWindowGroup] = []
+
+    /// Which window each group has on screen: the shown project's, or its
+    /// empty window.
+    private var shownWindows: [UUID: NSWindowController & ProjectShelfWindow] = [:]
+    private var emptyWindows: [UUID: EmptyProjectWindowController] = [:]
+    private var emptyCloseObservers: [UUID: NSObjectProtocol] = [:]
+    private var groupObservers: [UUID: AnyCancellable] = [:]
+
+    /// Set while `restoreOpenProjects()` rebuilds the groups, so their
+    /// half-built state is not written back over the state being read.
+    private var isRestoring = false
+
+    /// The group whose window is frontmost, or failing that the last made.
+    private var frontGroup: ProjectWindowGroup? {
+        let windows = [NSApp.keyWindow].compactMap { $0 } + NSApp.orderedWindows.filter(\.isVisible)
+        for window in windows {
+            if let group = groups.first(where: { shownWindows[$0.id]?.window === window }) {
+                return group
+            }
+        }
+        return groups.last
+    }
+
+    /// The window group `repoID` is an active project of.
+    public func group(containing repoID: UUID) -> ProjectWindowGroup? {
+        groups.first { $0.contains(repoID) }
+    }
+
+    @discardableResult
+    private func makeGroup(state: ProjectWindowState = ProjectWindowState()) -> ProjectWindowGroup {
+        let group = ProjectWindowGroup(state: state)
+        groups.append(group)
+        // The panel is the one piece of shelf state that changes without
+        // passing through this manager; the active list and the selection are
+        // written where they change.
+        groupObservers[group.id] = group.$panel
+            .dropFirst()
+            .removeDuplicates()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in self?.persistGroups() }
+        return group
+    }
+
+    private func removeGroup(_ group: ProjectWindowGroup) {
+        groups.removeAll { $0 === group }
+        groupObservers.removeValue(forKey: group.id)
+        shownWindows.removeValue(forKey: group.id)
+    }
+
+    /// A shelf for one of `group`'s windows, wired to this manager. `nil` in
+    /// a host with no registry, which has no projects to browse.
+    private func makeShelf(for group: ProjectWindowGroup) -> ProjectShelfViewController? {
+        guard let coordinator else { return nil }
+        let shelf = ProjectShelfViewController(coordinator: coordinator, group: group)
+        shelf.onLoadProject = { [weak self, weak group] repo in
+            guard let self, let group else { return }
+            self.loadProject(repo, into: group)
+        }
+        shelf.onShowActiveProject = { [weak self, weak group] repoID in
+            guard let self, let group else { return }
+            self.present(repoID, in: group)
+        }
+        shelf.onCloseActiveProject = { [weak self, weak group] repoID in
+            guard let self, let group else { return }
+            self.closeActiveProject(repoID, in: group, synchronously: false)
+        }
+        return shelf
+    }
+
+    /// Builds `repo`'s window hidden, makes it one of `group`'s active
+    /// projects and puts it on screen.
+    private func load(_ repo: GitRepo, into group: ProjectWindowGroup) {
+        guard makeProjectWindow(repo, in: group) != nil else { return }
+        group.activate(repo.id)
+        present(repo.id, in: group)
+        activateApp()
+        // After the window is on screen and the app offered activation, not
+        // at registration: every consumer of `onOpenProjectsChanged` asks a
+        // question about the window that just opened, and two of them read
+        // AppKit through `frontWindowController` — firing earlier published
+        // "the open set changed" while `NSApp` still described the previous
+        // window, and the extension hosts' `workspaceContains:` check ran
+        // against the old project's roots and never ran again.
+        refreshOpenWorkspaceIDs()
+    }
+
+    /// Puts `repoID`'s window on screen in place of whatever `group` shows.
+    private func present(_ repoID: UUID, in group: ProjectWindowGroup) {
+        guard let incoming = controllers[repoID] else { return }
+        group.select(repoID)
+        persistGroups()
+        swap(to: incoming, in: group)
+    }
+
+    /// The swap that makes a group read as one window: the incoming window
+    /// takes the outgoing one's frame, shelf and keyboard focus, is ordered
+    /// in, and the outgoing one is ordered out — nothing is built or torn
+    /// down, so every session in the outgoing project keeps running.
+    private func swap(to incoming: NSWindowController & ProjectShelfWindow, in group: ProjectWindowGroup) {
+        let outgoing = shownWindows[group.id]
+        guard outgoing !== incoming else {
+            incoming.showWindow(nil)
+            incoming.window?.makeKeyAndOrderFront(nil)
+            return
+        }
+        let focus = outgoing?.projectShelf?.focus ?? .elsewhere
+        if incoming.window == nil { incoming.loadWindow() }
+        let outgoingFrame = outgoing?.window?.frame
+        if let outgoing {
+            incoming.adoptShelfLayout(outgoing.shelfLayout)
+        }
+        incoming.window?.isExcludedFromWindowsMenu = false
+        incoming.showWindow(nil)
+        // After `showWindow`, not before: showing restores the window's own
+        // saved frame, which would undo the hand-off and make the group jump.
+        if let outgoingFrame {
+            incoming.window?.setFrame(outgoingFrame, display: true)
+        }
+        incoming.window?.makeKeyAndOrderFront(nil)
+        shownWindows[group.id] = incoming
+        if let outgoing {
+            outgoing.window?.isExcludedFromWindowsMenu = true
+            outgoing.window?.orderOut(nil)
+            if let empty = outgoing as? EmptyProjectWindowController {
+                discardEmptyWindow(empty, of: group)
+            }
+        }
+        incoming.projectShelf?.restore(focus: focus)
+    }
+
+    /// Builds `repo`'s window without showing it.
+    @discardableResult
+    private func makeProjectWindow(_ repo: GitRepo, in group: ProjectWindowGroup) -> ComposableTabsWindowController? {
         guard let database else {
             Self.logger.error("Cannot open \(repo.name, privacy: .public): no project database attached")
-            return
+            return nil
         }
         let languageServices = languageServicesFactory?(repo.url)
         if languageServices == nil {
@@ -371,17 +559,11 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
         // the window installs its stored tabs while initializing, and a tab
         // whose item is built before the data source arrives falls back to a
         // plain title, leaving a pane-less tab until something else reloads.
-        let shelf = coordinator.map { ProjectBrowserViewController(coordinator: $0, mode: .browser) }
         let controller = ComposableTabsWindowController(
             project: workspace,
             tabItemDataSource: projectController,
-            shelf: shelf
+            shelf: makeShelf(for: group)
         )
-        shelf?.onChoose = { [weak self, weak controller] chosen in
-            guard let self, let controller else { return }
-            self.loadProject(chosen, into: controller)
-        }
-        controller.inheritedFrame = current?.window?.frame
         // Ruling Q: `projectController` is captured weakly here and the window
         // reloads only while this controller is still the one registered for
         // `repo.id`, so a controller that was closed and replaced — or one
@@ -410,73 +592,141 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
         }
         controllers[repo.id] = controller
         openOrder.append(repo.id)
-        controller.showWindow(nil)
-        // `makeKeyAndOrderFront(nil)` runs before `observeBecameKey` is
-        // installed below, so whether this window's own *initial* key
-        // notification is seen by that observer is left to AppKit timing.
-        // That is deliberately not guarded against: `reconcile()`
-        // early-returns on `plan.isUnchanged` before ever calling
-        // `onTabsDidChange?()`, so a redundant refresh this ordering might
-        // let through costs one `git worktree list` and no rebuild — not
-        // worth reordering two calls whose relative order is otherwise
-        // arbitrary.
-        controller.window?.makeKeyAndOrderFront(nil)
-        // `makeKeyAndOrderFront` is window-scoped and app activation is not:
-        // in a menubar host the window lands above the other application's
-        // windows while the menu bar and the keyboard stay with that
-        // application, so the window has to be clicked before it can be used.
-        // Declined under quiet presentation, which is the whole point of the
-        // helper — an automated session opens project windows constantly.
-        activateApp()
-        // Fired here — *after* the window is registered, ordered front and the
-        // app has been offered activation — and not at the registration above.
-        //
-        // Every consumer of this callback asks a question about the window
-        // that just opened, and two of the three seams it drives read AppKit
-        // rather than this type's dictionaries: `frontWindow` and
-        // `workspaceRoots` both go through `frontWindowController`. Firing at
-        // registration time therefore published "the open set changed" while
-        // `NSApp` still described the previous window — so the extension
-        // hosts' `workspaceContains:` check ran against the *old* project's
-        // roots, or against none at all on the first project of the session,
-        // and never ran again.
-        //
-        // `frontWindowController` now carries a fallback that makes it
-        // answer correctly even if the window server has not caught up, so
-        // this ordering is belt and braces rather than the only guard. Both
-        // are kept: the fallback is what makes the seam *correct*, and this
-        // ordering is what makes it *accurate* — the difference between
-        // naming the right project and naming the window the user is actually
-        // looking at.
-        refreshOpenWorkspaceIDs()
+        // Loaded but not shown: an active project that is not on screen keeps
+        // its window, its panes and its sessions, so switching to it is an
+        // order-in rather than a build. Out of the Window menu until it is the
+        // one on screen — there, the group is one window.
+        controller.loadWindow()
+        controller.window?.isExcludedFromWindowsMenu = true
         observeClose(of: controller, repoID: repo.id, recordsOpenState: true)
         observeBecameKey(of: controller, repoID: repo.id)
-        // The window is on screen with whatever tabs were stored; the checkout
-        // scan runs git, so it is a task. There is no reload here: the scan
-        // reloads the window through `onTabsDidChange` if — and only if — it
-        // actually wrote a different set of tabs. Reloading unconditionally
-        // once the scan returned was the bug: the common case is a project
-        // whose checkouts have not changed since last time, and it threw away
-        // the pane tree the window had just built, and every shell and
-        // file-system watcher living in it, to build an identical one.
+        // The checkout scan runs git, so it is a task. There is no reload
+        // here: the scan reloads the window through `onTabsDidChange` if — and
+        // only if — it actually wrote a different set of tabs. Reloading
+        // unconditionally once the scan returned was the bug: the common case
+        // is a project whose checkouts have not changed since last time, and
+        // it threw away the pane tree the window had just built, and every
+        // shell and file-system watcher living in it, to build an identical one.
         Task { await projectController.open() }
         setWindowOpen(true, repoID: repo.id)
+        return controller
+    }
 
-        if let current {
-            // The keyboard was in the shelf a moment ago; it goes back there,
-            // on the project just chosen, so the arrow keys carry on.
-            controller.showShelfFocusedOnList()
-            // On the next turn, not now: this is running inside the old
-            // window's shelf — its list's click action, or its keyDown — and
-            // closing it here tears that shelf down underneath its own call.
-            DispatchQueue.main.async {
-                current.close()
+    /// Takes `repoID` out of `group`: the next active project goes on screen
+    /// in its place if it was the one shown — the empty window if it was the
+    /// last — and its window closes, stopping its sessions.
+    ///
+    /// - Parameter synchronously: close the window before returning. False
+    ///   for the shelf's close box, which is running inside the very window
+    ///   being closed when the project is the one on screen.
+    private func closeActiveProject(_ repoID: UUID, in group: ProjectWindowGroup, synchronously: Bool) {
+        guard let controller = controllers[repoID] else { return }
+        let wasShown = shownWindows[group.id] === controller
+        let next = group.deactivate(repoID)
+        if wasShown {
+            if let next, let incoming = controllers[next] {
+                group.select(next)
+                swap(to: incoming, in: group)
+            } else {
+                group.select(nil)
+                if let empty = showEmptyWindow(for: group) {
+                    swap(to: empty, in: group)
+                }
             }
+        }
+        persistGroups()
+        if synchronously {
+            controller.close()
+        } else {
+            DispatchQueue.main.async { controller.close() }
         }
     }
 
-    public func closeProject(repoID: UUID) {
-        controllers[repoID]?.close()
+    /// The window `group` shows while it has no project, made on first use
+    /// and shown at once when the group has nothing else on screen. `nil` in
+    /// a host with no registry: a window with nothing to choose from is not
+    /// worth showing.
+    @discardableResult
+    private func showEmptyWindow(for group: ProjectWindowGroup) -> EmptyProjectWindowController? {
+        if let existing = emptyWindows[group.id] { return existing }
+        guard let shelf = makeShelf(for: group) else { return nil }
+        let empty = EmptyProjectWindowController(groupID: group.id, shelf: shelf)
+        emptyWindows[group.id] = empty
+        empty.loadWindow()
+        if shownWindows[group.id] == nil {
+            shownWindows[group.id] = empty
+            empty.showWindow(nil)
+            empty.window?.makeKeyAndOrderFront(nil)
+        }
+        if let window = empty.window {
+            emptyCloseObservers[group.id] = NotificationCenter.default.addObserver(
+                forName: NSWindow.willCloseNotification,
+                object: window,
+                queue: nil
+            ) { [weak self, weak group] _ in
+                MainActor.assumeIsolated {
+                    guard let self, let group, !WindowManager.shared.isTerminating,
+                          self.groups.contains(where: { $0 === group }) else { return }
+                    self.closeGroup(group)
+                }
+            }
+        }
+        return empty
+    }
+
+    /// Drops an empty window a project has just replaced. On the next turn:
+    /// the swap may be running inside that window's own shelf.
+    private func discardEmptyWindow(_ empty: EmptyProjectWindowController, of group: ProjectWindowGroup) {
+        guard emptyWindows[group.id] === empty else { return }
+        emptyWindows.removeValue(forKey: group.id)
+        if let observer = emptyCloseObservers.removeValue(forKey: group.id) {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        DispatchQueue.main.async {
+            empty.close()
+            Self.forgetEmptyWindowState(of: group.id)
+        }
+    }
+
+    /// An empty window's saved frame and visibility outlive it otherwise —
+    /// keyed by a group id nothing will ever use again.
+    private static func forgetEmptyWindowState(of groupID: UUID) {
+        let windowID = EmptyProjectWindowController.windowID(for: groupID)
+        WindowManager.shared.frames.clearSavedState(for: windowID)
+        WindowManager.shared.frames.clearVisibility(for: windowID)
+    }
+
+    /// Closing a project window closes all of it: every active project in
+    /// it, not only the one on screen.
+    ///
+    /// - Parameter closing: a project whose window is already closing, and
+    ///   so is not closed again.
+    private func closeGroup(_ group: ProjectWindowGroup, sparing closing: UUID? = nil) {
+        // Out of the list first, so the closes below — each of which fires
+        // this manager's close observer — find no group left to close.
+        removeGroup(group)
+        persistGroups()
+        for repoID in group.activeRepoIDs where repoID != closing {
+            controllers[repoID]?.close()
+        }
+        if let empty = emptyWindows.removeValue(forKey: group.id) {
+            if let observer = emptyCloseObservers.removeValue(forKey: group.id) {
+                NotificationCenter.default.removeObserver(observer)
+            }
+            empty.close()
+            Self.forgetEmptyWindowState(of: group.id)
+        }
+    }
+
+    /// Writes every group to `UserSettings.projectWindows`. Not while quitting
+    /// — AppKit closes every window on the way out, and recording those as
+    /// the user's closes would reopen nothing next launch.
+    private func persistGroups() {
+        guard !WindowManager.shared.isTerminating, !isRestoring else { return }
+        let states = groups.map(\.state)
+        if UserSettings.projectWindows.currentValue != states {
+            UserSettings.projectWindows.value = states
+        }
     }
 
     // MARK: - Termination
@@ -514,8 +764,11 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
 
     // MARK: - Restore
 
-    /// Reopens every project whose window was open when the app last quit.
-    /// Hosts call this once at launch, after the registry exists.
+    /// Reopens every project window that was open when the app last quit,
+    /// each with all of its active projects built — the ones not on screen
+    /// too, so their sessions are running before anyone switches to them —
+    /// and the one that was on screen shown. Hosts call this once at launch,
+    /// after the registry exists.
     ///
     /// Deliberately not routed through `ProjectsCoordinator.openProject(_:)`:
     /// restoring a window is not the user opening a project, and must not
@@ -527,17 +780,51 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
     /// this to stop reopening it.
     public func restoreOpenProjects() {
         guard let coordinator else { return }
-        let plan = Self.restorePlan(
-            repos: coordinator.repos,
-            wasOpen: { [weak self] in self?.isWindowOpen(repoID: $0.id) ?? false },
-            existsOnDisk: { FileManager.default.fileExists(atPath: $0.path) }
-        )
-        for repo in plan.forget {
-            Self.logger.info("Not reopening \(repo.name, privacy: .public): its folder is gone")
-            setWindowOpen(false, repoID: repo.id)
+        var states = UserSettings.projectWindows.currentValue
+        if states.isEmpty {
+            // From before a project window held several projects: one window
+            // per project flagged open.
+            let plan = Self.restorePlan(
+                repos: coordinator.repos,
+                wasOpen: { [weak self] in self?.isWindowOpen(repoID: $0.id) ?? false },
+                existsOnDisk: { FileManager.default.fileExists(atPath: $0.path) }
+            )
+            for repo in plan.forget {
+                Self.logger.info("Not reopening \(repo.name, privacy: .public): its folder is gone")
+                setWindowOpen(false, repoID: repo.id)
+            }
+            states = plan.reopen.map { ProjectWindowState(activeRepoIDs: [$0.id], selectedRepoID: $0.id) }
         }
-        for repo in plan.reopen {
-            openProject(repo)
+        let repos = Dictionary(coordinator.repos.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        isRestoring = true
+        for var state in states {
+            state.activeRepoIDs = state.activeRepoIDs.filter { id in
+                guard let repo = repos[id], controllers[id] == nil else { return false }
+                guard FileManager.default.fileExists(atPath: repo.path) else {
+                    Self.logger.info("Not reopening \(repo.name, privacy: .public): its folder is gone")
+                    setWindowOpen(false, repoID: id)
+                    return false
+                }
+                return true
+            }
+            if let selected = state.selectedRepoID, !state.activeRepoIDs.contains(selected) {
+                state.selectedRepoID = state.activeRepoIDs.first
+            }
+            let group = makeGroup(state: state)
+            for id in state.activeRepoIDs {
+                if let repo = repos[id] { makeProjectWindow(repo, in: group) }
+            }
+            if let selected = state.selectedRepoID, controllers[selected] != nil {
+                present(selected, in: group)
+            } else if showEmptyWindow(for: group) == nil {
+                removeGroup(group)
+            }
+        }
+        isRestoring = false
+        persistGroups()
+        if !groups.isEmpty {
+            refreshOpenWorkspaceIDs()
+            activateApp()
         }
     }
 
@@ -633,6 +920,13 @@ public final class ProjectWindowManager: ProjectOpening, ObservableObject {
                 // what quitting with windows open means.
                 if recordsOpenState, !WindowManager.shared.isTerminating {
                     self.setWindowOpen(false, repoID: repoID)
+                }
+                // Still active in its group means this is the window's own
+                // close button, not the shelf's close box (which takes the
+                // project out of the group first) — and closing a project
+                // window closes every project in it.
+                if !WindowManager.shared.isTerminating, let group = self.group(containing: repoID) {
+                    self.closeGroup(group, sparing: repoID)
                 }
                 // Captured strongly and *before* the controller is dropped:
                 // dropping it releases the workspace and with it the services,

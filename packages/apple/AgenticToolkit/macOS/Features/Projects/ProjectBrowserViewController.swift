@@ -35,6 +35,11 @@ public final class ProjectBrowserViewController: NSViewController {
     public var onSelectionChange: ((GitRepo?) -> Void)?
 
     private let coordinator: ProjectsCoordinator
+    /// Whether the browser draws its own filter field above the list. The
+    /// project window's shelf draws one field for all its panels, at the
+    /// bottom as Xcode's navigator does, and drives this one through
+    /// `setFilterQuery(_:)` and `handleFilterCommand(_:)`.
+    private let showsFilterField: Bool
     private let searchField = ThemedSearchField(placeholder: "Filter Projects")
     private let outline = ThemedOutlineView(role: .windowBackground)
     private let scrollView = ThemedScrollView()
@@ -43,11 +48,18 @@ public final class ProjectBrowserViewController: NSViewController {
     /// What the rows highlight, kept because a row is built long after the
     /// filter ran and has to be able to ask what it survived.
     private var query = ""
+    /// The filter as typed, whichever field it was typed in.
+    private var filterText = ""
     private var changeObserver: NSObjectProtocol?
 
-    public init(coordinator: ProjectsCoordinator, mode: ProjectBrowserMode = .browser) {
+    public init(
+        coordinator: ProjectsCoordinator,
+        mode: ProjectBrowserMode = .browser,
+        showsFilterField: Bool = true
+    ) {
         self.coordinator = coordinator
         self.mode = mode
+        self.showsFilterField = showsFilterField
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -112,16 +124,22 @@ public final class ProjectBrowserViewController: NSViewController {
         emptyLabel.isHidden = true
         emptyLabel.accessibilityID("project-browser.empty")
 
-        container.addSubview(searchField)
         container.addSubview(scrollView)
         container.addSubview(emptyLabel)
 
-        NSLayoutConstraint.activate([
-            searchField.topAnchor.constraint(equalTo: container.topAnchor, constant: 10),
-            searchField.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 10),
-            searchField.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -10),
+        if showsFilterField {
+            container.addSubview(searchField)
+            NSLayoutConstraint.activate([
+                searchField.topAnchor.constraint(equalTo: container.topAnchor, constant: 10),
+                searchField.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 10),
+                searchField.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -10),
+                scrollView.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 8)
+            ])
+        } else {
+            scrollView.topAnchor.constraint(equalTo: container.topAnchor).isActive = true
+        }
 
-            scrollView.topAnchor.constraint(equalTo: searchField.bottomAnchor, constant: 8),
+        NSLayoutConstraint.activate([
             scrollView.leadingAnchor.constraint(equalTo: container.leadingAnchor),
             scrollView.trailingAnchor.constraint(equalTo: container.trailingAnchor),
             scrollView.bottomAnchor.constraint(equalTo: container.bottomAnchor),
@@ -158,9 +176,73 @@ public final class ProjectBrowserViewController: NSViewController {
 
     // MARK: - Focus and selection from the host
 
-    /// Puts the keyboard in the filter field.
+    /// Puts the keyboard in the filter field — this browser's own, when it
+    /// draws one; a host that drew the field focuses its own.
     public func focusFilter() {
+        guard showsFilterField else { return }
         view.window?.makeFirstResponder(searchField)
+    }
+
+    /// Filters the list by `text`, typed into a field the host drew.
+    public func setFilterQuery(_ text: String) {
+        guard text != filterText else { return }
+        filterText = text
+        if isViewLoaded { applyFilter() }
+    }
+
+    /// The list's half of a filter field's keys, for a host whose field
+    /// drives this browser: ↑ and ↓ move the highlight, Return chooses, → and
+    /// ← (with ⌘ or without) open and close the highlighted folder. Answers
+    /// whether it took the key; one it did not take edits the field as usual,
+    /// so ← still moves the caret when there is no folder to close.
+    public func handleFilterCommand(_ commandSelector: Selector) -> Bool {
+        switch commandSelector {
+        case #selector(NSResponder.insertNewline(_:)):
+            chooseSelection()
+            return true
+        case #selector(NSResponder.moveDown(_:)):
+            moveSelection(by: 1)
+            return true
+        case #selector(NSResponder.moveUp(_:)):
+            moveSelection(by: -1)
+            return true
+        case #selector(NSResponder.moveRight(_:)),
+             #selector(NSResponder.moveToRightEndOfLine(_:)),
+             #selector(NSResponder.moveToEndOfLine(_:)):
+            return expandOrDescend()
+        case #selector(NSResponder.moveLeft(_:)),
+             #selector(NSResponder.moveToLeftEndOfLine(_:)),
+             #selector(NSResponder.moveToBeginningOfLine(_:)):
+            return collapseOrAscend()
+        default:
+            return false
+        }
+    }
+
+    /// → on a folder: open it, or if it is open, step into its first child —
+    /// what → does in Finder's list view and Xcode's navigator.
+    private func expandOrDescend() -> Bool {
+        guard let node = selectedNode, node.isFolder else { return false }
+        if !outline.isItemExpanded(node) {
+            outline.expandItem(node)
+            return true
+        }
+        guard let first = node.children.first else { return false }
+        select(first)
+        return true
+    }
+
+    /// ← on an open folder closes it; anywhere else it steps out to the
+    /// folder the row lives in.
+    private func collapseOrAscend() -> Bool {
+        guard let node = selectedNode else { return false }
+        if node.isFolder, outline.isItemExpanded(node) {
+            outline.collapseItem(node)
+            return true
+        }
+        guard let parent = outline.parent(forItem: node) as? ProjectTreeNode else { return false }
+        select(parent)
+        return true
     }
 
     /// Puts the keyboard in the list, so the arrow keys and Return work on it.
@@ -208,7 +290,7 @@ public final class ProjectBrowserViewController: NSViewController {
     /// still says where the survivors live. `ProjectFilter` owns what a match
     /// is; here it only decides which rows are drawn.
     private func applyFilter() {
-        query = searchField.stringValue.trimmingCharacters(in: .whitespaces)
+        query = filterText.trimmingCharacters(in: .whitespaces)
         let previous = selectedRepo?.id
         let all = coordinator.listedRepos
         let matching = all.filter { ProjectFilter.matches($0, query: query) }
@@ -223,7 +305,7 @@ public final class ProjectBrowserViewController: NSViewController {
         if matching.isEmpty {
             emptyLabel.stringValue = all.isEmpty
                 ? Self.noProjectsMessage
-                : "No projects match “\(searchField.stringValue)”."
+                : "No projects match “\(filterText)”."
         }
 
         // Keep whatever was selected if it survived the filter. Otherwise the
@@ -264,7 +346,7 @@ public final class ProjectBrowserViewController: NSViewController {
     }
 
     @objc private func filterChanged(_ sender: Any?) {
-        applyFilter()
+        setFilterQuery(searchField.stringValue)
     }
 
     /// A single click on a project opens it in browser mode. A folder row, the
@@ -317,7 +399,7 @@ public final class ProjectBrowserViewController: NSViewController {
 extension ProjectBrowserViewController: NSSearchFieldDelegate {
 
     public func controlTextDidChange(_ notification: Notification) {
-        applyFilter()
+        setFilterQuery(searchField.stringValue)
     }
 
     /// The arrow keys and Return have to be taken from the field editor, or
@@ -328,19 +410,7 @@ extension ProjectBrowserViewController: NSSearchFieldDelegate {
         textView: NSTextView,
         doCommandBy commandSelector: Selector
     ) -> Bool {
-        switch commandSelector {
-        case #selector(NSResponder.insertNewline(_:)):
-            chooseSelection()
-            return true
-        case #selector(NSResponder.moveDown(_:)):
-            moveSelection(by: 1)
-            return true
-        case #selector(NSResponder.moveUp(_:)):
-            moveSelection(by: -1)
-            return true
-        default:
-            return false
-        }
+        handleFilterCommand(commandSelector)
     }
 }
 

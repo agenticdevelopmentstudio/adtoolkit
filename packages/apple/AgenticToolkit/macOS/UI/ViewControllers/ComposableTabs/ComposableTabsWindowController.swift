@@ -12,6 +12,12 @@ import AgenticToolkitCoreMacOS
 private extension NSToolbarItem.Identifier {
     static let projectSearch = NSToolbarItem.Identifier("project.toolbar.search")
     static let projectHelp = NSToolbarItem.Identifier("project.toolbar.help")
+}
+
+/// The shelf toggle beside the traffic lights. Module-wide rather than private
+/// like the rest: the empty project window carries the same toggle, and the
+/// UI suite finds it by this one string in either.
+extension NSToolbarItem.Identifier {
     static let projectToggleShelf = NSToolbarItem.Identifier("project.toolbar.toggle-shelf")
 }
 
@@ -86,10 +92,11 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
     /// beside `content`.
     private let windowContent: ProjectWindowSplitViewController
 
-    /// The project shelf — every project, filterable — or `nil` for a window
-    /// whose host has no projects to list. Whoever made the window wires its
-    /// `onChoose`; the window only shows it, hides it and points it at itself.
-    public let shelf: ProjectBrowserViewController?
+    /// The project shelf — the project browser and the window's active
+    /// projects — or `nil` for a window whose host has no projects to list.
+    /// Whoever made the window wires its callbacks; the window only shows it,
+    /// hides it and points it at itself.
+    public let shelf: ProjectShelfViewController?
 
     /// A frame to open at instead of the saved one, set before the window is
     /// first shown: a project chosen from another window's shelf takes that
@@ -261,7 +268,7 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
     public init(
         project: ProjectWorkspace,
         tabItemDataSource: ComposableTabsTabItemDataSource? = nil,
-        shelf: ProjectBrowserViewController? = nil
+        shelf: ProjectShelfViewController? = nil
     ) {
         self.project = project
         self.shelf = shelf
@@ -432,7 +439,7 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         refreshActivePaneChrome()
         refreshHelpButtonAppearance()
         refreshShelfToggleAppearance()
-        shelf?.selectRepo(id: project.id)
+        shelf?.reveal(repoID: project.id)
     }
 
     /// Applies `inheritedFrame` once the window exists. After the base class
@@ -467,14 +474,17 @@ public final class ComposableTabsWindowController: WindowController<NSViewContro
         windowContent.toggleShelf()
     }
 
-    /// Shows the shelf and puts the keyboard in its list, on this project's
-    /// row — what a window that replaced another from the shelf does, so the
-    /// arrow keys carry on from where they were.
-    public func showShelfFocusedOnList() {
-        guard let shelf else { return }
-        windowContent.setShelfVisible(true)
-        shelf.selectRepo(id: project.id)
-        shelf.focusList()
+    /// Opens or closes the shelf on `panel` — ⌘0 and ⌘1.
+    public func toggleShelfPanel(_ panel: ProjectShelfPanel) {
+        windowContent.toggleShelfPanel(panel)
+    }
+
+    /// The shelf's visibility and width, for the window swapped in for this
+    /// one to take over.
+    public var shelfLayout: ProjectShelfLayout { windowContent.shelfLayout }
+
+    public func adoptShelfLayout(_ layout: ProjectShelfLayout) {
+        windowContent.adoptShelfLayout(layout)
     }
 
     /// Keeps the toggle reading as the state it toggles — filled and accented

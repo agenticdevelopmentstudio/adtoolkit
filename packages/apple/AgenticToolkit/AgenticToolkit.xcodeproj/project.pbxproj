@@ -208,6 +208,7 @@
 		097249F96A3BAEDE1E7D11F8 /* FrameCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BCD4ADABC33A32ACE6641188 /* FrameCalculator.swift */; };
 		09850732077655840883CDBB /* WarpHeuristic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 866E7DF1463F73D4AF3F6741 /* WarpHeuristic.swift */; };
 		09935A340D1401B177BB9573 /* BillingEditing.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E163936D9F6D3F226B6E3D7 /* BillingEditing.swift */; };
+		09998BAB1F7187C873BB888E /* ActiveProjectsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CEFE1E313DDACD529F320F2 /* ActiveProjectsViewController.swift */; };
 		09C3954BBA0B35CFB58A1200 /* AgenticToolkitSystemMonitor.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6D32482D7D22F4A2655779AC /* AgenticToolkitSystemMonitor.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		09D9B61C9A8ECA71F8677DDE /* FormSpec.swift in Sources */ = {isa = PBXBuildFile; fileRef = F85EA336747D7E8F9247E422 /* FormSpec.swift */; };
 		09F33AD6CD9C35E244AD1B8F /* ChatViewScrollTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F83AC9153D7D827D4041DD92 /* ChatViewScrollTests.swift */; };
@@ -1427,6 +1428,7 @@
 		84E16F89E69F89F512093019 /* ConversationsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B1F34069EB62EC76BD71FEB /* ConversationsViewController.swift */; };
 		84E77E2414BE46DD23E59263 /* AIPluginChatBackend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 935E6D6BD290281F72BFF2AC /* AIPluginChatBackend.swift */; };
 		84F5716884848F129C95372E /* PaneMinimizeGeometryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71942A25CE71F5CEFEDBF694 /* PaneMinimizeGeometryTests.swift */; };
+		850DCFA2CC6D578F2F9D65AD /* ProjectShelfViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FECD0243E112600E38D3867B /* ProjectShelfViewController.swift */; };
 		851EEE48DC44D5E9A1DBA20A /* LogView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5113DB0106DEB9C27CF1F564 /* LogView.swift */; };
 		853E6D7497E0D8C498516B91 /* AgenticToolkitPermissions.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BF04ADB42980B9D5DE44BF46 /* AgenticToolkitPermissions.framework */; };
 		8545E174BE63747F9E896E5C /* EventIngestStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = F19B9AFAB7703CB9E39D9BB2 /* EventIngestStore.swift */; };
@@ -2141,6 +2143,7 @@
 		D01190009DC0A9B5E9EF570E /* ReplyOnce.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BC71F849F2F861E56863594 /* ReplyOnce.swift */; };
 		D0279CFDE8C33FBB88D7B160 /* SigninAppsTopic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36F88E4839EBA82D4D7E4336 /* SigninAppsTopic.swift */; };
 		D029C1AC727851112AF739F9 /* MarkdownStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94EF1E82A9102CD12ED9E76B /* MarkdownStore.swift */; };
+		D0367480BC8A957476336FCC /* ProjectWindowKeyCommands.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74F33E302098843AC5ED05B3 /* ProjectWindowKeyCommands.swift */; };
 		D058BFA46687D8C57F3AE9E9 /* HelpDrawerControllerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0D1E9F27A0043E6E7C95BAB /* HelpDrawerControllerTests.swift */; };
 		D05B43C7B4AD560380776DD2 /* ReopenOnLaunchPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F0D644FBD5150190F9AD9E9A /* ReopenOnLaunchPolicyTests.swift */; };
 		D0616ACF77AD251E4A8288AE /* AgenticToolkitHub-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29F78337D841C951F8CE9EAB /* AgenticToolkitHub-macOS.framework */; };
@@ -2437,6 +2440,7 @@
 		EE88757A2914F7DB850C2D39 /* AppFocusTrigger.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AE4336EFFBBCD5706DAB636 /* AppFocusTrigger.swift */; };
 		EEB3DFD90EBCCAB8E6C80E8A /* ScriptableTerminalSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30AD3EAE92B62896687121A9 /* ScriptableTerminalSession.swift */; };
 		EEB52956853752F82F9C3903 /* Waiting.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4CA69DAF20DF37EA12BEB47 /* Waiting.swift */; };
+		EEC831EEB4FB5C2807891379 /* EmptyProjectWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0691115280FD46262181AD33 /* EmptyProjectWindowController.swift */; };
 		EEE6AB7227F76203EBF2D69E /* EcosystemsAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8346E6091CA80DA71C5FAF8D /* EcosystemsAdapter.swift */; };
 		EEE7CC2F5EEAFB55DE4117E7 /* EcosystemsModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D889B0CC6F47C39934E3401 /* EcosystemsModule.swift */; };
 		EEF997E6E95D4F75736DCC4F /* LocalModelCatalog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C768913C2E67B08FB03FB83 /* LocalModelCatalog.swift */; };
@@ -2525,6 +2529,7 @@
 		F84BC16614D447A3B4639C4D /* HookEnvelopeBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AC0BDB5F967FBC5D04B7772 /* HookEnvelopeBuilder.swift */; };
 		F86FB4F61B17274405F615ED /* FrontmostFocusAdapterReadsWindowsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 862C3208E8BE8712931CEF3D /* FrontmostFocusAdapterReadsWindowsTests.swift */; };
 		F8849890FE60B55C85BEE97B /* GitStatusProviderRefreshTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1B5A562CCDA5EF229D01B99F /* GitStatusProviderRefreshTests.swift */; };
+		F8A4249777DA5BC11431B2A1 /* ProjectWindowGroup.swift in Sources */ = {isa = PBXBuildFile; fileRef = B910AAB05FDDE206694CCE94 /* ProjectWindowGroup.swift */; };
 		F8B98EF1B775D5033F45725E /* FileTreeNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5892B23358CC8088DB3A07AA /* FileTreeNode.swift */; };
 		F8CF5762D4AE28BA379C3272 /* MachineDescriptor.swift in Sources */ = {isa = PBXBuildFile; fileRef = D605E43041F58637D282E4E9 /* MachineDescriptor.swift */; };
 		F9002C1AE12D985DD43358FE /* EcosystemConfigModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94A21990F17A44C7EC18B9DD /* EcosystemConfigModels.swift */; };
@@ -4843,6 +4848,7 @@
 		064FAE04F37F00C47FA800F7 /* FirstRunExperience.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FirstRunExperience.swift; sourceTree = "<group>"; };
 		0669FFF08E38545D41332FD4 /* MacPermissionGateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MacPermissionGateTests.swift; sourceTree = "<group>"; };
 		068A462BB3B6D36768A88DE2 /* PermissionsSettingsPanelViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PermissionsSettingsPanelViewController.swift; sourceTree = "<group>"; };
+		0691115280FD46262181AD33 /* EmptyProjectWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmptyProjectWindowController.swift; sourceTree = "<group>"; };
 		06981BE7678C13904564EBF0 /* AppleScriptRunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScriptRunnerTests.swift; sourceTree = "<group>"; };
 		069B25C0A0BA9BDD92848858 /* SemanticTokenHighlightProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SemanticTokenHighlightProvider.swift; sourceTree = "<group>"; };
 		06ABDC2ADA7DCFA276BFCAC9 /* FormViewController+UIKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "FormViewController+UIKit.swift"; sourceTree = "<group>"; };
@@ -4914,6 +4920,7 @@
 		0CBD6D7113FA1954DBC255E4 /* SpacingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpacingTests.swift; sourceTree = "<group>"; };
 		0CE456E90740D57BE552A003 /* FileFingerprintEnricher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileFingerprintEnricher.swift; sourceTree = "<group>"; };
 		0CE882F7D14667CDC3988D8B /* CommandRegistryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommandRegistryTests.swift; sourceTree = "<group>"; };
+		0CEFE1E313DDACD529F320F2 /* ActiveProjectsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveProjectsViewController.swift; sourceTree = "<group>"; };
 		0D143B3B977407BA9175AF8D /* IngestionErrorLogTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IngestionErrorLogTests.swift; sourceTree = "<group>"; };
 		0D288C64E539B1D7D8FE1F41 /* RefusalFeedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RefusalFeedback.swift; sourceTree = "<group>"; };
 		0D56DB175F5F02CCD812AD0E /* ActivitySpanDTO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivitySpanDTO.swift; sourceTree = "<group>"; };
@@ -5714,6 +5721,7 @@
 		74955CF8F55BF0CF5BA49FB1 /* WorkTrackingXPCProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkTrackingXPCProtocol.swift; sourceTree = "<group>"; };
 		74ACA02D3311EC18A5F98F9B /* WebviewPanelScriptPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebviewPanelScriptPolicyTests.swift; sourceTree = "<group>"; };
 		74C92B38CFF2B10315FC31EF /* HTDVControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTDVControllerTests.swift; sourceTree = "<group>"; };
+		74F33E302098843AC5ED05B3 /* ProjectWindowKeyCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectWindowKeyCommands.swift; sourceTree = "<group>"; };
 		7502C971E9C3CADD46B91414 /* FeatureModuleRegistry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeatureModuleRegistry.swift; sourceTree = "<group>"; };
 		75045910C87AC7E5A13907F2 /* HTDVModelTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HTDVModelTests.swift; sourceTree = "<group>"; };
 		754077B055C5961C7199C040 /* ProjectDatabaseWorkingDirectoryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectDatabaseWorkingDirectoryTests.swift; sourceTree = "<group>"; };
@@ -6199,6 +6207,7 @@
 		B8C6F25D5AEDC37D45C4D7D3 /* ActivateAppCommand.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivateAppCommand.swift; sourceTree = "<group>"; };
 		B8CCA6AD8B209B1AFDB7C8C8 /* MoneyFieldViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyFieldViewTests.swift; sourceTree = "<group>"; };
 		B8FF3ED94AA2D04452043174 /* ProjectController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectController.swift; sourceTree = "<group>"; };
+		B910AAB05FDDE206694CCE94 /* ProjectWindowGroup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectWindowGroup.swift; sourceTree = "<group>"; };
 		B91CBB49688AF84DAE03D8AF /* UTCDay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UTCDay.swift; sourceTree = "<group>"; };
 		B95836248F50BCF8124D984C /* PathViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathViewTests.swift; sourceTree = "<group>"; };
 		B96245BEEF6960524F4E7269 /* MoneyFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyFormatter.swift; sourceTree = "<group>"; };
@@ -6791,6 +6800,7 @@
 		FE4D7CD70F49720EA92F1B42 /* AIChatCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIChatCommands.swift; sourceTree = "<group>"; };
 		FE62BC0E5BD469D279301239 /* DiagnosticTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticTypes.swift; sourceTree = "<group>"; };
 		FE96B6E1FE8C88EB8EA7B286 /* SnippetStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SnippetStore.swift; sourceTree = "<group>"; };
+		FECD0243E112600E38D3867B /* ProjectShelfViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectShelfViewController.swift; sourceTree = "<group>"; };
 		FECE6B0C78E2FF2E329F156B /* BrowserSettingsPanelViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserSettingsPanelViewController.swift; sourceTree = "<group>"; };
 		FF17B12A5FB63E0A1EFD88EC /* SceneLifecycleQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneLifecycleQueueTests.swift; sourceTree = "<group>"; };
 		FF283A265D5ADF577159C01E /* LegacyThemePersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegacyThemePersistenceTests.swift; sourceTree = "<group>"; };
@@ -9267,6 +9277,7 @@
 				7600580077B5E7991D5129D4 /* ComposableTabsViewID.swift */,
 				0721AF2482B9A583B0C2537D /* ComposableTabsViewRegistry.swift */,
 				72F536752058A9E015395FB6 /* ComposableTabsWindowController.swift */,
+				0691115280FD46262181AD33 /* EmptyProjectWindowController.swift */,
 				F864B610757469F2C3618288 /* LayoutNode.swift */,
 				A3909CE4FC6CB7A86865DFF0 /* PaneArranger.swift */,
 				606C595402F5024CBB9EC090 /* PaneMinimizeGeometry.swift */,
@@ -11400,6 +11411,7 @@
 			children = (
 				7180803E1BFBBE5DBD6CBF90 /* Scripting */,
 				64EA91AF0D3825BE3A2B8071 /* Settings */,
+				0CEFE1E313DDACD529F320F2 /* ActiveProjectsViewController.swift */,
 				DEC2C7DD8FC32A8E5A05D971 /* BranchController.swift */,
 				1865EEFDAFBFCF557DCDCDC2 /* GitRepo.swift */,
 				2F4B099BD52998E1AADC274C /* GitRepoScanner.swift */,
@@ -11412,8 +11424,11 @@
 				EEB56C08E03EB52BF42DB82A /* ProjectReconciler.swift */,
 				C66667DCA02B801B5D59DD3D /* ProjectScanProgressWindow.swift */,
 				6667710358B319E8F16BAB02 /* ProjectsCoordinator.swift */,
+				FECD0243E112600E38D3867B /* ProjectShelfViewController.swift */,
 				441052E15EEBEC4403209207 /* ProjectTabReconciler.swift */,
 				6955FB0BB19459F31EC1BB25 /* ProjectTree.swift */,
+				B910AAB05FDDE206694CCE94 /* ProjectWindowGroup.swift */,
+				74F33E302098843AC5ED05B3 /* ProjectWindowKeyCommands.swift */,
 				677FA8E599601D661129D938 /* ProjectWindowManager.swift */,
 				ECDE8A61C9B5FD8D1CC15D6B /* ProjectWorkspace.swift */,
 				40BDEC16E69F6327E8B370EC /* UserSettings+Projects.swift */,
@@ -14774,6 +14789,7 @@
 				5A9ABB47DDDBA71195315237 /* AccountsSettingsPanelViewController.swift in Sources */,
 				083C8A7CC91F643B9CB94F49 /* ActivateAppCommand.swift in Sources */,
 				7847162238C29E20CC2564BF /* ActivationTestLog.swift in Sources */,
+				09998BAB1F7187C873BB888E /* ActiveProjectsViewController.swift in Sources */,
 				3AD1633725AC96987B8873C6 /* AddRemoveFooterView.swift in Sources */,
 				70BF8765D4A701A3081C9801 /* AppCommand.swift in Sources */,
 				BFA5C197382FA80A40BFFD08 /* AppFeature.swift in Sources */,
@@ -14898,6 +14914,7 @@
 				E40C0EBA8B564CFC45D5E3E1 /* EditorOptionsOverride.swift in Sources */,
 				5660E21076E17B85874E65A4 /* EditorPeripherals.swift in Sources */,
 				F93CCD29ADB58E31C9C14E60 /* EditorSettingsPanelViewController.swift in Sources */,
+				EEC831EEB4FB5C2807891379 /* EmptyProjectWindowController.swift in Sources */,
 				AB23FAC1C0384772CC1F3C6D /* ExplanationView.swift in Sources */,
 				B7BCE17617DABDBE84098073 /* ExtensionEvent.swift in Sources */,
 				837DF5E29CA1F61211DCCD89 /* ExtensionHost.swift in Sources */,
@@ -15096,8 +15113,11 @@
 				D0FA87A8D9A08A28556C2183 /* ProjectPaneStateStore.swift in Sources */,
 				39BB3DB32C5BE56ECAE5F37F /* ProjectReconciler.swift in Sources */,
 				1C2646340730B42803418548 /* ProjectScanProgressWindow.swift in Sources */,
+				850DCFA2CC6D578F2F9D65AD /* ProjectShelfViewController.swift in Sources */,
 				16DA4040869C3964057ED939 /* ProjectTabReconciler.swift in Sources */,
 				E10D5A649092BC472D06968A /* ProjectTree.swift in Sources */,
+				F8A4249777DA5BC11431B2A1 /* ProjectWindowGroup.swift in Sources */,
+				D0367480BC8A957476336FCC /* ProjectWindowKeyCommands.swift in Sources */,
 				241031A8B81F9C80224445BB /* ProjectWindowManager+Scripting.swift in Sources */,
 				71DD82E6767538A86D2C7186 /* ProjectWindowManager.swift in Sources */,
 				4FD2A7DD7A7713DA281D8BA6 /* ProjectWindowSplitViewController.swift in Sources */,

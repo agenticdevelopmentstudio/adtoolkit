@@ -13,6 +13,9 @@ public protocol ProjectOpening: AnyObject {
     /// stops existing: a window still bound to a row that is about to be
     /// deleted can only fail on its next write (`fail-fast`).
     func closeProject(repoID: UUID)
+
+    /// Opens a project window with no project in it yet.
+    func openNewWindow()
 }
 
 /// The project registry feature: one database, the list of known git
@@ -70,6 +73,7 @@ public final class ProjectsCoordinator: AppFeature {
     /// `contributes.menus` (4.5) and the extension host (Stage 5) address, so a
     /// typo in one of two copies would be a silently dead menu item.
     public enum CommandID {
+        public static let newProjectWindow = "projects.action.newProjectWindow"
         public static let openProject = "projects.action.openProject"
         public static let scanForProjects = "projects.action.scanForProjects"
     }
@@ -113,6 +117,12 @@ public final class ProjectsCoordinator: AppFeature {
             UserSettingObserver(UserSettings.projectScanSkipsSubmodules) { _ in changed() }
         ]
 
+        registry.register(AppCommand(
+            id: CommandID.newProjectWindow,
+            title: "New Project Window",
+            category: "Projects",
+            run: { [weak self] in self?.openNewWindow() }
+        ))
         registry.register(AppCommand(
             id: CommandID.openProject,
             title: "Choose Project…",
@@ -226,6 +236,12 @@ public final class ProjectsCoordinator: AppFeature {
     public func openProject(_ repo: GitRepo) {
         recordOpened(repo)
         opener?.openProject(repo)
+    }
+
+    /// Opens a project window with no project in it — File ▸ New Project
+    /// Window.
+    public func openNewWindow() {
+        opener?.openNewWindow()
     }
 
     /// Stamps `repo` as just opened, which is what the browser sorts by,
