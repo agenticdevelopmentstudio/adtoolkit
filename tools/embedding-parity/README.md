@@ -53,5 +53,5 @@ tokenizer code. For EmbeddingGemma 2 it cannot: onnxruntime-extensions 0.15.2
 refuses `GemmaTokenizer`. Each platform therefore loads the bundle's
 `tokenizer.json`, and the golden token IDs are the check that they agree.
 
-The results and what they mean for the plan are in the planning repo, at
-`docs/planning/semantic-search-parity-results.md`.
+The results and what they mean for the plan are recorded in the planning
+repo, beside the semantic search plan.
