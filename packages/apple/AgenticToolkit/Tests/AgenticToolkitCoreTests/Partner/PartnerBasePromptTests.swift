@@ -31,9 +31,23 @@ struct PartnerBasePromptTests {
         }
     }
 
+    @Test func baseTextCoversButtonMessagesAndItemReplies() {
+        let text = PartnerBasePrompt.text
+        #expect(text.contains("Resolved: <text>"))
+        #expect(text.contains("Confirmed: <text>"))
+        #expect(text.contains("carries an item id"))
+        #expect(text.contains("close that item with `partner_attention_update`"))
+    }
+
+    @Test func skillDescriptionIsYAMLQuoted() {
+        let markdown = PartnerBasePrompt.skillMarkdown(for: job("Say \"hi\": a\\b", enabled: true))
+        #expect(markdown.contains("description: \"Say \\\"hi\\\": a\\\\b\"\n"))
+    }
+
     @Test func skillMarkdownHasFrontmatter() {
         let markdown = PartnerBasePrompt.skillMarkdown(for: job("General coding partner", enabled: true))
-        #expect(markdown.hasPrefix("---\nname: adkitchen-partner-general\ndescription: General coding partner\n---\n"))
+        let head = "---\nname: adkitchen-partner-general\ndescription: \"General coding partner\"\n---\n"
+        #expect(markdown.hasPrefix(head))
         #expect(markdown.contains("Be useful."))
     }
 }

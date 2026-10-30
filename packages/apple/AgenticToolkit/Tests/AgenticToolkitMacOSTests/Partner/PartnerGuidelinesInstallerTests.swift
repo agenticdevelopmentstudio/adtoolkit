@@ -45,4 +45,41 @@ final class PartnerGuidelinesInstallerTests: XCTestCase {
         let body = try String(contentsOf: paths.jobsDirectory.appendingPathComponent("general.md"), encoding: .utf8)
         XCTAssertEqual(body, "Be useful.")
     }
+
+    func testEditedFileSurvivesWriteJobFilesAndLoadReturnsIt() throws {
+        let installer = PartnerGuidelinesInstaller(paths: paths)
+        try installer.writeJobFiles(jobs: [job(enabled: true)])
+        try installer.saveGuidelines(jobID: "general", text: "Edited.")
+        try installer.writeJobFiles(jobs: [job(enabled: true)])
+        XCTAssertEqual(installer.loadGuidelines(jobs: [job(enabled: true)]).first?.guidelines, "Edited.")
+    }
+
+    func testResetRestoresDefaultAndMissingFileIsFine() throws {
+        let installer = PartnerGuidelinesInstaller(paths: paths)
+        try installer.resetGuidelines(jobID: "general")
+        try installer.saveGuidelines(jobID: "general", text: "Edited.")
+        try installer.resetGuidelines(jobID: "general")
+        XCTAssertEqual(installer.loadGuidelines(jobs: [job(enabled: true)]).first?.guidelines, "Be useful.")
+    }
+
+    func testInvalidJobIDThrows() {
+        let installer = PartnerGuidelinesInstaller(paths: paths)
+        for id in ["", "../x", "a/b"] {
+            let bad = PartnerJob(id: id, name: "x", isEnabled: true, guidelines: "g", steps: [])
+            XCTAssertThrowsError(try installer.installSkills(jobs: [bad]))
+            XCTAssertThrowsError(try installer.writeJobFiles(jobs: [bad]))
+        }
+    }
+
+    func testRemovesOrphanedPartnerSkillsOnly() throws {
+        let skills = paths.skillsDirectory
+        let orphan = skills.appendingPathComponent("adkitchen-partner-gone")
+        let other = skills.appendingPathComponent("someone-elses")
+        for dir in [orphan, other] {
+            try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
+        try PartnerGuidelinesInstaller(paths: paths).installSkills(jobs: [job(enabled: true)])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: orphan.path))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: other.path))
+    }
 }

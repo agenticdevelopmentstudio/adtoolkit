@@ -23,6 +23,12 @@ public enum PartnerBasePrompt {
     You run only when a message arrives. Messages come in these kinds:
 
     - An owner message: the owner typed to you. Answer it, and do what it asks.
+    - A button message: the owner clicked a button on an attention item, and the app sent it in the owner's voice. \
+    "Resolved: <text>" means the owner handled a blocked item or a question; close that item with \
+    `partner_attention_update`. "Confirmed: <text>" means the owner acknowledged a notification; close that item \
+    the same way.
+    - An owner reply that carries an item id: the owner answered an item you raised (after Discuss). Act on the \
+    answer, then close the item with `partner_attention_update`.
     - A tick: a job's timer fired. Do that job's work now, using its guidelines.
     - A session went idle: a terminal session you opened has produced no output for a while. Read its screen \
     and decide what it needs.
@@ -87,7 +93,11 @@ public enum PartnerBasePrompt {
 
     /// The Claude Code skill that carries a job's guidelines to sessions the partner opens.
     public static func skillMarkdown(for job: PartnerJob) -> String {
-        "---\nname: adkitchen-partner-\(job.id)\ndescription: \(job.name)\n---\n\n\(job.guidelines)\n"
+        let quoted = job.name
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+            .replacingOccurrences(of: "\n", with: "\\n")
+        return "---\nname: adkitchen-partner-\(job.id)\ndescription: \"\(quoted)\"\n---\n\n\(job.guidelines)\n"
     }
 }
 // swiftlint:enable line_length
