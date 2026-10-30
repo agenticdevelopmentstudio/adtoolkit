@@ -2,7 +2,8 @@ import AppKit
 
 /// Holds one content view edge to edge, except during an animated resize,
 /// when it keeps the content at a single width — the wider of its start and
-/// end widths — pinned to the leading edge and clipped at the trailing one.
+/// end widths, and never narrower than the view — pinned to the leading edge
+/// and clipped at the trailing one.
 ///
 /// The content is resized twice per animation at most, at the start and at
 /// the end, instead of on every frame, so content that repaints behind its
@@ -13,6 +14,7 @@ public final class FrameHoldingView: NSView, AnimatedResizeParticipant {
 
     private var trailingToEdge: NSLayoutConstraint?
     private var heldWidth: NSLayoutConstraint?
+    private var atLeastViewWidth: NSLayoutConstraint?
 
     public init(content: NSView) {
         self.content = content
@@ -36,19 +38,30 @@ public final class FrameHoldingView: NSView, AnimatedResizeParticipant {
     public func animatedResizeWillBegin(expectedWidthScale: CGFloat) {
         guard heldWidth == nil, let trailingToEdge else { return }
         let start = bounds.width
-        // A couple of points over, so a slightly short estimate still never
-        // uncovers the background at the very end of a widening.
         let width = ceil(max(start, start * expectedWidthScale)) + 2
         trailingToEdge.isActive = false
+        // Held below required, under a floor of the view's own width: an
+        // estimate that comes up short — it is a scale of the start width, and
+        // the pane's real end width is the split view's to decide — lets the
+        // content follow the edge for the last few points instead of
+        // uncovering the background behind it. Low, below the window's own
+        // size-holding priority: held any higher, the floor was met by
+        // shrinking the window to the estimate instead of stretching the
+        // content, and every slide left the window narrower.
         let held = content.widthAnchor.constraint(equalToConstant: width)
-        held.isActive = true
+        held.priority = .defaultLow
+        let floor = content.widthAnchor.constraint(greaterThanOrEqualTo: widthAnchor)
+        NSLayoutConstraint.activate([held, floor])
         heldWidth = held
+        atLeastViewWidth = floor
     }
 
     public func animatedResizeDidEnd() {
         guard let held = heldWidth else { return }
         held.isActive = false
+        atLeastViewWidth?.isActive = false
         heldWidth = nil
+        atLeastViewWidth = nil
         trailingToEdge?.isActive = true
     }
 }

@@ -32,4 +32,20 @@ extension WKWebView {
         let implementation = unsafeBitCast(method(for: selector), to: Setter.self)
         implementation(self, selector, ObjCBool(draws))
     }
+
+    /// The colour of that opaque backdrop, or `nil` for WebKit's default,
+    /// `controlBackgroundColor`.
+    ///
+    /// The backdrop is all that shows in the part of the view the page has
+    /// not yet painted — the strip a widening resize uncovers before the web
+    /// content process catches up — so giving it the page's own background
+    /// makes that strip invisible on most sites.
+    ///
+    /// SPI, like `setDrawsPageBackground(_:)`: `_setBackgroundColor:` is asked
+    /// for by name and skipped where this WebKit has no such selector.
+    func setPageBackdropColor(_ color: NSColor?) {
+        let selector = NSSelectorFromString("_setBackgroundColor:")
+        guard responds(to: selector) else { return }
+        perform(selector, with: color)
+    }
 }
