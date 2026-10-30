@@ -31,3 +31,12 @@ describe('the drawer rows', () => {
     expect(container.querySelector('#more-info')).toBeNull()
   })
 })
+
+describe('the Native Tools column', () => {
+  it('names the macOS apps in full, each with its badge', () => {
+    render(<FamilyFooter version={null} />)
+    for (const name of ['Agentic Developer Kitchen', 'Agentic Developer Stenographer']) {
+      expect(screen.getByRole('link', { name }).closest('li')!.textContent).toContain('macOS')
+    }
+  })
+})

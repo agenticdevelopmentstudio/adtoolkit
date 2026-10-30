@@ -17,6 +17,12 @@ describe('the "All sites" panel', () => {
     expect(hrefs).toContain('https://myagenticprojects.com/')
   })
 
+  it('names the macOS apps in full', () => {
+    const labels = entries.map((e) => e.label)
+    expect(labels).toContain('Agentic Developer Kitchen')
+    expect(labels).toContain('Agentic Developer Stenographer')
+  })
+
   it('lists each once, in the registry groups and no catch-all', () => {
     expect(new Set(entries.map((e) => e.key)).size).toBe(entries.length)
     expect(sitesPanelGroups().map((g) => g.label)).toEqual(['Hub', 'Learn', 'Plan', 'Build', 'Personas', 'Products', 'Hire'])

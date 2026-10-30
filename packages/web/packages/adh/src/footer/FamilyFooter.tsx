@@ -39,9 +39,11 @@ type ColumnDef = { title: string; entries: Entry[] }
 const NATIVE_TOOLS_TITLE = 'Native Tools'
 const NATIVE_BADGE = 'macOS'
 
+/** A native tool is listed by its full name (Agentic Developer Kitchen): its short one alone
+ *  reads as a generic word next to the web sites. */
 function siteEntry(site: SiteDef): Entry {
   return {
-    label: site.label,
+    label: site.nativeApp ? site.fullLabel ?? site.label : site.label,
     href: siteProdUrl(site.id, '/'),
     ...(site.nativeApp ? { badge: NATIVE_BADGE } : {}),
   }

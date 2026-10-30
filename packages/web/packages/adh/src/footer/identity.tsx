@@ -44,8 +44,10 @@ export type SitesPanelEntry = { key: string; label: string; href: string; descri
 /** A group of the "All sites" panel, titled like the registry's SITE_CATEGORIES. */
 export type SitesPanelGroup = { label: string; entries: SitesPanelEntry[] }
 
+/** A native tool by its full name, as the footer's Native Tools column lists it. */
 function siteEntry(site: SiteDef): SitesPanelEntry {
-  return { key: site.id, label: site.label, href: siteProdUrl(site.id, '/'), description: site.description }
+  const label = site.nativeApp ? site.fullLabel ?? site.label : site.label
+  return { key: site.id, label, href: siteProdUrl(site.id, '/'), description: site.description }
 }
 
 function registryEntry(id: SiteId): SitesPanelEntry {

@@ -330,7 +330,8 @@ var FAMILY_SITES = DIRECTORY_SITES.filter((s) => !FAMILY_OMITTED.has(s.id));
 var BRAND_LABEL = "Agentic Development Studio";
 var BRAND_HREF = "https://agenticdevelopmentstudio.com/";
 function siteEntry(site) {
-  return { key: site.id, label: site.label, href: siteProdUrl2(site.id, "/"), description: site.description };
+  const label = site.nativeApp ? site.fullLabel ?? site.label : site.label;
+  return { key: site.id, label, href: siteProdUrl2(site.id, "/"), description: site.description };
 }
 function registryEntry(id) {
   const site = getSite3(id);
