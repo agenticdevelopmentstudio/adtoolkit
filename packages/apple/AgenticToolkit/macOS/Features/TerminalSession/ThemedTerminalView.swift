@@ -67,6 +67,24 @@ class ThemedTerminalView: LocalProcessTerminalView {
         onDataReceived?()
     }
 
+    /// Called before input goes to the shell: a keystroke, a paste, or
+    /// `TerminalSession.sendInput`. Not for the terminal's own replies to the
+    /// program's queries (cursor position, device attributes), which reach the
+    /// shell by the same door but are nobody typing.
+    var onDataSent: (() -> Void)?
+    private var isReplyingToProgram = false
+
+    override func send(source: Terminal, data: ArraySlice<UInt8>) {
+        isReplyingToProgram = true
+        defer { isReplyingToProgram = false }
+        super.send(source: source, data: data)
+    }
+
+    override func send(source: TerminalView, data: ArraySlice<UInt8>) {
+        if !isReplyingToProgram { onDataSent?() }
+        super.send(source: source, data: data)
+    }
+
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
         // Until it is in a window there is no pane to be active in, so this is

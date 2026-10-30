@@ -49,12 +49,17 @@ public final class PartnerSession: Identifiable, ObservableObject {
         self.openedAt = now()
         self.lastActivity = openedAt
         terminal.outputActivity
-            .sink { [weak self] in MainActor.assumeIsolated { self?.outputArrived(at: now()) } }
+            .sink { [weak self] in MainActor.assumeIsolated { self?.lastActivity = now() } }
+            .store(in: &subscriptions)
+        // Busy again only on input: a program can keep printing at a prompt
+        // nobody has answered (Claude Code does, after a turn), and that is
+        // not a new piece of work.
+        terminal.inputActivity
+            .sink { [weak self] in MainActor.assumeIsolated { self?.inputArrived() } }
             .store(in: &subscriptions)
     }
 
-    private func outputArrived(at date: Date) {
-        lastActivity = date
+    private func inputArrived() {
         if state == .idle { state = .running }
     }
 
@@ -63,8 +68,13 @@ public final class PartnerSession: Identifiable, ObservableObject {
         state = .idle
     }
 
-    func markExited() {
+    /// When the shell was seen to exit, kept so a later close does not
+    /// restamp the record with the time of the close.
+    private(set) var exitedAt: Date?
+
+    func markExited(at date: Date) {
         state = .exited
+        exitedAt = date
     }
 
     /// The last `lines` non-blank-trailing lines the terminal shows, read off

@@ -17,7 +17,6 @@ final class CombinedSessionEventDetectorTests: XCTestCase {
 
     private var primary: ManualSessionEventDetector!
     private var fallback: ManualSessionEventDetector!
-    private var clock = Date(timeIntervalSince1970: 1_000_000)
     private var detector: CombinedSessionEventDetector!
     private var idles: [UUID] = []
     private var exits: [UUID] = []
@@ -25,8 +24,7 @@ final class CombinedSessionEventDetectorTests: XCTestCase {
     override func setUp() async throws {
         primary = ManualSessionEventDetector()
         fallback = ManualSessionEventDetector()
-        detector = CombinedSessionEventDetector(primary: primary, fallback: fallback,
-                                                now: { [unowned self] in clock })
+        detector = CombinedSessionEventDetector(primary: primary, fallback: fallback)
         idles = []
         exits = []
         detector.onIdle = { [unowned self] in idles.append($0) }
@@ -43,36 +41,41 @@ final class CombinedSessionEventDetectorTests: XCTestCase {
         XCTAssertEqual(fallback.watched, [])
     }
 
+    func testNothingIsForwardedBeforeAnyInput() {
+        let session = makeDetachedPartnerSession()
+        detector.watch(session)
+        session.terminal.outputActivity.send()
+        primary.onIdle?(session.id)
+        XCTAssertEqual(idles, [])
+    }
+
     func testBothFiringIsOneIdle() {
         let session = makeDetachedPartnerSession()
         detector.watch(session)
-        session.terminal.outputActivity.send()
+        session.terminal.inputActivity.send()
         primary.onIdle?(session.id)
         fallback.onIdle?(session.id)
         XCTAssertEqual(idles, [session.id])
     }
 
-    func testActivityThenFallbackIsOneMore() {
+    func testOutputAfterAnIdleIsNoSecondIdle() {
         let session = makeDetachedPartnerSession()
         detector.watch(session)
-        session.terminal.outputActivity.send()
+        session.terminal.inputActivity.send()
         primary.onIdle?(session.id)
-        clock += 30
-        session.terminal.outputActivity.send()
+        session.terminal.outputActivity.send()  // Claude Code trickling at its prompt
+        fallback.onIdle?(session.id)
+        XCTAssertEqual(idles, [session.id])
+    }
+
+    func testInputThenIdleIsOneMore() {
+        let session = makeDetachedPartnerSession()
+        detector.watch(session)
+        session.terminal.inputActivity.send()
+        primary.onIdle?(session.id)
+        session.terminal.inputActivity.send()
         fallback.onIdle?(session.id)
         XCTAssertEqual(idles, [session.id, session.id])
-    }
-
-    func testOutputRightAfterAnIdleDoesNotRearm() {
-        let session = makeDetachedPartnerSession()
-        detector.watch(session)
-        session.terminal.outputActivity.send()
-        primary.onIdle?(session.id)
-        clock += 0.5
-        session.terminal.outputActivity.send()  // the prompt settling after Stop
-        clock += 60
-        fallback.onIdle?(session.id)
-        XCTAssertEqual(idles, [session.id])
     }
 
     func testOneExitPerSession() {

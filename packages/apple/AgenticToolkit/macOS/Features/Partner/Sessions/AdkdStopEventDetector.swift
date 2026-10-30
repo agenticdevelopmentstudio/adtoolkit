@@ -7,15 +7,23 @@ import AgenticToolkitCore
 public struct AdkdSessionActivity: Sendable, Equatable {
     public var sessionID: String
     public var directory: String
-    /// The raw hook event name (`Stop`, `PreToolUse`, …).
+    /// The `TERM_SESSION_ID` the session's hooks ran under; empty when the
+    /// terminal set none.
+    public var termSessionID: String
+    /// The raw hook event name of the main agent's turn state (`Stop`,
+    /// `PreToolUse`, …).
     public var lastEventType: String
-    public var lastActivityAt: String
+    /// When ``lastEventType`` was recorded; empty from a daemon that predates
+    /// the field.
+    public var turnStateAt: String
 
-    public init(sessionID: String, directory: String, lastEventType: String, lastActivityAt: String) {
+    public init(sessionID: String, directory: String, termSessionID: String = "", lastEventType: String,
+                turnStateAt: String = "") {
         self.sessionID = sessionID
         self.directory = directory
+        self.termSessionID = termSessionID
         self.lastEventType = lastEventType
-        self.lastActivityAt = lastActivityAt
+        self.turnStateAt = turnStateAt
     }
 }
 
@@ -41,21 +49,28 @@ public struct DaemonSessionActivitySource: AdkdSessionActivitySource {
         guard let dtos = await service.sessions(status: nil, project: nil, sinceHours: sinceHours,
                                                 includeCounts: false) else { return nil }
         return dtos.map {
-            AdkdSessionActivity(sessionID: $0.sessionId, directory: $0.cwd, lastEventType: $0.lastEventType,
-                                lastActivityAt: $0.lastActivityAt)
+            AdkdSessionActivity(sessionID: $0.sessionId, directory: $0.cwd, termSessionID: $0.termSessionId,
+                                lastEventType: $0.lastEventType, turnStateAt: $0.turnStateAt)
         }
     }
 }
 
-/// Calls a session idle when a Claude Code session running in its directory
-/// ends a turn: the daemon's latest hook event for it is `Stop`.
+/// Calls a session idle when the Claude Code session running in its pane ends
+/// a turn: the daemon's turn state for it moves into `Stop` (or `StopFailure`,
+/// a turn ended by an API error).
 ///
 /// Exact where the quiet-period detector guesses — Claude Code prints at its
 /// idle prompt, so silence is a poor signal there — but only for Claude Code,
-/// and only while the daemon is up. Polls every `interval` seconds. A Stop
-/// already on record when a session is first polled is the past, not news;
-/// each later Stop (a new session, or a new `lastActivityAt`) is one idle.
-/// Exits come from the terminal, as for any detector.
+/// and only while the daemon is up. Polls every `interval` seconds.
+///
+/// A row belongs to the pane whose id is its `TERM_SESSION_ID` (the registry
+/// sets it); a row with none falls back to matching the pane's directory. A
+/// turn end is a *change* of turn state — keyed on the state's own clock
+/// (`turnStateAt`) when the daemon reports it, on the event name alone when it
+/// does not — so the activity that follows a Stop without starting a turn (the
+/// idle-prompt notification a minute later, a background subagent) is never a
+/// second idle. The state found by the first poll after watching is the past,
+/// not news. Exits come from the terminal, as for any detector.
 @MainActor
 public final class AdkdStopEventDetector: PartnerSessionEventDetecting {
 
@@ -69,13 +84,27 @@ public final class AdkdStopEventDetector: PartnerSessionEventDetecting {
     private var pollTimer: AnyCancellable?
     private var polling = false
 
+    private static let turnEndingEvents: Set<String> = [HookEventType.stop.rawValue,
+                                                        HookEventType.stopFailure.rawValue]
+
     private final class Watch {
+        let paneID: String
         let directory: String
-        /// Nil until the first poll after watching has taken its baseline.
-        var reportedStops: Set<String>?
+        /// The last turn state seen for each Claude session in the pane. Nil
+        /// until the first poll after watching has taken its baseline.
+        var turnStates: [String: String]?
         var exitSubscription: AnyCancellable?
 
-        init(directory: String) { self.directory = directory }
+        init(paneID: String, directory: String) {
+            self.paneID = paneID
+            self.directory = directory
+        }
+
+        func owns(_ row: AdkdSessionActivity) -> Bool {
+            row.termSessionID.isEmpty
+                ? AdkdStopEventDetector.resolved(row.directory) == directory
+                : row.termSessionID == paneID
+        }
     }
 
     public init(source: any AdkdSessionActivitySource, interval: TimeInterval = 5,
@@ -88,7 +117,7 @@ public final class AdkdStopEventDetector: PartnerSessionEventDetecting {
     public func watch(_ session: PartnerSession) {
         unwatch(id: session.id)
         let id = session.id
-        let watch = Watch(directory: Self.normalized(session.directory))
+        let watch = Watch(paneID: id.uuidString, directory: Self.resolved(session.directory))
         watch.exitSubscription = session.terminal.onTermination { [weak self] in self?.exited(id: id) }
         watched[id] = watch
         schedulePoll()
@@ -100,24 +129,27 @@ public final class AdkdStopEventDetector: PartnerSessionEventDetecting {
         if watched.isEmpty { pollTimer = nil }
     }
 
-    /// Reads the daemon once and reports every new Stop. The timer calls it;
-    /// so can a test.
+    /// Reads the daemon once and reports every pane whose agent ended a turn.
+    /// The timer calls it; so can a test.
     public func poll() async {
         guard !polling, !watched.isEmpty else { return }
         polling = true
         defer { polling = false }
         guard let rows = await source.recentSessions() else { return }
-        let stops = rows.filter { $0.lastEventType == HookEventType.stop.rawValue }
         for (id, watch) in watched {
-            let keys = Set(stops.filter { Self.normalized($0.directory) == watch.directory }
-                .map { "\($0.sessionID)@\($0.lastActivityAt)" })
-            guard let reported = watch.reportedStops else {
-                watch.reportedStops = keys
-                continue
+            let isBaseline = watch.turnStates == nil
+            var states = watch.turnStates ?? [:]
+            var endedTurn = false
+            for row in rows where watch.owns(row) {
+                let state = row.turnStateAt.isEmpty ? row.lastEventType : "\(row.lastEventType)@\(row.turnStateAt)"
+                if !isBaseline, states[row.sessionID] != state,
+                   Self.turnEndingEvents.contains(row.lastEventType) {
+                    endedTurn = true
+                }
+                states[row.sessionID] = state
             }
-            let fresh = keys.subtracting(reported)
-            watch.reportedStops = reported.union(fresh)
-            if !fresh.isEmpty { onIdle?(id) }
+            watch.turnStates = states
+            if endedTurn { onIdle?(id) }
         }
     }
 
@@ -138,7 +170,7 @@ public final class AdkdStopEventDetector: PartnerSessionEventDetecting {
         onExit?(id)
     }
 
-    private static func normalized(_ path: String) -> String {
-        (path as NSString).standardizingPath
+    nonisolated static func resolved(_ path: String) -> String {
+        URL(fileURLWithPath: path).resolvingSymlinksInPath().path
     }
 }

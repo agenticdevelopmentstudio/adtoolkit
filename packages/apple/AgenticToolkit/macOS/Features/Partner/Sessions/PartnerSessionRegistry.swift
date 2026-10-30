@@ -42,6 +42,11 @@ public final class PartnerSessionRegistry: ObservableObject {
         let id = UUID()
         var variables = environment()
         variables["ADKITCHEN_PANE_ID"] = id.uuidString
+        // What Claude Code's hooks record as the session's terminal, so the
+        // Stop detector can tell this pane's agent from any other in the same
+        // directory. Set here, over anything inherited, or every pane would
+        // carry the same one.
+        variables["TERM_SESSION_ID"] = id.uuidString
         variables["ADKITCHEN_PROJECT"] = directory
         let manager = TerminalSessionManager(workingDirectory: directory, environment: variables)
         let terminal = manager.addSession()
@@ -88,7 +93,7 @@ public final class PartnerSessionRegistry: ObservableObject {
         detector.unwatch(id: id)
         var record = session.record
         record.finalScreen = session.screenText()
-        record.closedAt = now()
+        record.closedAt = session.exitedAt ?? now()
         session.chat.close()
         session.manager.terminateAll()
         save(record)
@@ -121,11 +126,12 @@ public final class PartnerSessionRegistry: ObservableObject {
 
     private func sessionExited(id: UUID) {
         guard let session = session(id: id), session.state != .exited else { return }
-        session.markExited()
+        let exitedAt = now()
+        session.markExited(at: exitedAt)
         detector.unwatch(id: id)
         var record = session.record
         record.finalScreen = session.screenText()
-        record.closedAt = now()
+        record.closedAt = exitedAt
         save(record)
         onEvent?(.sessionExited(sessionID: id.uuidString, title: session.title))
     }

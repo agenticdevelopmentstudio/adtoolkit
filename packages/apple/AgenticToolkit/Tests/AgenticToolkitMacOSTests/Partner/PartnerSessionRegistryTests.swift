@@ -1,3 +1,4 @@
+import Combine
 import XCTest
 import AgenticToolkitCore
 @testable import AgenticToolkitMacOS
@@ -11,6 +12,7 @@ final class PartnerSessionRegistryTests: XCTestCase {
     private var detector: ManualSessionEventDetector!
     private var registry: PartnerSessionRegistry!
     private var events: [PartnerInbound] = []
+    private var clock = Date()
 
     override func setUp() async throws {
         directory = FileManager.default.temporaryDirectory
@@ -18,7 +20,9 @@ final class PartnerSessionRegistryTests: XCTestCase {
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         store = try PartnerStore(path: directory.appendingPathComponent("Partner.db").path)
         detector = ManualSessionEventDetector()
-        registry = PartnerSessionRegistry(store: store, environment: { ["PARTNER_TEST": "1"] }, detector: detector)
+        registry = PartnerSessionRegistry(store: store,
+                                          environment: { ["PARTNER_TEST": "1", "TERM_SESSION_ID": "inherited"] },
+                                          detector: detector, now: { [unowned self] in clock })
         events = []
         registry.onEvent = { [unowned self] in events.append($0) }
     }
@@ -51,6 +55,8 @@ final class PartnerSessionRegistryTests: XCTestCase {
         XCTAssertEqual(session.terminal.environment["ADKITCHEN_PANE_ID"], session.id.uuidString)
         XCTAssertEqual(session.terminal.environment["ADKITCHEN_PROJECT"], directory.path)
         XCTAssertEqual(session.terminal.environment["PARTNER_TEST"], "1")
+        XCTAssertEqual(session.terminal.environment["TERM_SESSION_ID"], session.id.uuidString,
+                       "the pane id, over whatever the app inherited")
     }
 
     func testCloseStoresTheFinalScreenAndClosedAt() async throws {
@@ -85,6 +91,35 @@ final class PartnerSessionRegistryTests: XCTestCase {
                                 .sessionExited(sessionID: session.id.uuidString, title: "t")])
         let record = try XCTUnwrap(store.sessions().first)
         XCTAssertNotNil(record.closedAt)
+    }
+
+    func testInputNotOutputEndsAnIdle() {
+        let session = registry.open(directory: directory.path, title: "t", firstCommand: nil)
+        detector.onIdle?(session.id)
+        session.terminal.outputActivity.send()
+        XCTAssertEqual(session.state, .idle, "a program printing at its prompt is still waiting")
+        session.terminal.inputActivity.send()
+        XCTAssertEqual(session.state, .running)
+    }
+
+    func testSendInputIsInputActivity() async {
+        let session = registry.open(directory: directory.path, title: "t", firstCommand: nil)
+        await waitUntil { session.terminal.isRunning }
+        var inputs = 0
+        let subscription = session.terminal.inputActivity.sink { inputs += 1 }
+        defer { subscription.cancel() }
+        session.terminal.sendInput("true\r")
+        XCTAssertGreaterThan(inputs, 0)
+    }
+
+    func testCloseAfterExitKeepsTheExitTime() throws {
+        let session = registry.open(directory: directory.path, title: "t", firstCommand: nil)
+        let exitedAt = clock
+        detector.onExit?(session.id)
+        clock += 600
+        registry.close(id: session.id)
+        let record = try XCTUnwrap(store.sessions().first { $0.id == session.id.uuidString })
+        XCTAssertEqual(record.closedAt?.timeIntervalSince1970 ?? 0, exitedAt.timeIntervalSince1970, accuracy: 1)
     }
 
     func testPurgeForgetsOldClosedSessions() throws {

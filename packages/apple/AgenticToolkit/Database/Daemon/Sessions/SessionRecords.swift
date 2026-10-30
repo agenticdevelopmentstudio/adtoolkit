@@ -344,7 +344,7 @@ extension DaemonDatabase {
                    s.last_tool, s.status, s.git_branch, s.summary, s.pid, s.term_program,
                    s.project_root, s.term_session_id, s.transcript_title, s.last_output,
                    s.last_event_type, s.summary_at, \(countExpr) as event_count,
-                   \(Self.subagentWorkingColumn)
+                   \(Self.subagentWorkingColumn), s.turn_state_at
             FROM sessions s
         """
         var conditions: [String] = []
@@ -408,7 +408,8 @@ extension DaemonDatabase {
                 lastEventType: string(row, 15),
                 summaryAt: string(row, 16),
                 eventCount: Int(int(row, 17)),
-                subagentWorking: int(row, 18) != 0
+                subagentWorking: int(row, 18) != 0,
+                turnStateAt: string(row, 19)
             ))
         }
         return results
@@ -562,7 +563,7 @@ extension DaemonDatabase {
                    s.last_tool, s.status, s.git_branch, s.summary, s.pid, s.term_program,
                    s.project_root, s.term_session_id, s.transcript_title, s.last_output,
                    s.last_event_type, s.summary_at, \(countExpr) as event_count,
-                   \(Self.subagentWorkingColumn)
+                   \(Self.subagentWorkingColumn), s.turn_state_at
             FROM sessions s
             WHERE s.session_id = ?
         """, params: [sessionId]) { row in
@@ -585,7 +586,8 @@ extension DaemonDatabase {
                 lastEventType: string(row, 15),
                 summaryAt: string(row, 16),
                 eventCount: Int(int(row, 17)),
-                subagentWorking: int(row, 18) != 0
+                subagentWorking: int(row, 18) != 0,
+                turnStateAt: string(row, 19)
             )
         }
         return result
