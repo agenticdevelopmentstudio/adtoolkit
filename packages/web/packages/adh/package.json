@@ -317,6 +317,7 @@
     },
     "./family.css": "./dist/styles/adh-family.css",
     "./styles.css": "./dist/styles/adh-site.css",
+    "./landing-footer.css": "./dist/styles/adh-landing-footer.css",
     "./sources.css": "./sources.css",
     "./legal.css": "./dist/styles/adh-legal.css",
     "./debug.css": "./dist/styles/adh-debug.css",

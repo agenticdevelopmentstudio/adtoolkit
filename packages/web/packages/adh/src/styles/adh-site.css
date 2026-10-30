@@ -41,6 +41,12 @@
  * whoever remembered. */
 @import "@agentic-toolkit/messaging/sources.css";
 
+/* The landing footer and the sites overview it opens, kept in their own sheet so a site off the
+ * adh theme can import them alone (see that file). Imported here, before every rule below, so
+ * `styles.css` still carries them; nothing below restyles them, so moving them ahead of the
+ * rest of this sheet changes no cascade. */
+@import "./adh-landing-footer.css";
+
 /* NOTE: @agentic-toolkit/account no longer ships a stylesheet, so there is no line for it
  * here. Its settings.css described a hand-rolled nav/content grid; SettingsLayout renders
  * HierarchicalDetailView now, which is Tailwind utilities the account package's own
@@ -273,95 +279,6 @@ a.adh-footer__brand-link:focus-visible {
   --bb-dock-panel-width: min(784px, calc(100% - 2rem));
 }
 
-/* The shared footer modal dialog (native HTML Popover API) — used by the About, Sites,
-   Terms and Privacy triggers. Open state is centered in the top layer with a
-   dimmed backdrop; a flex column pins the header while the body scrolls.
-
-   CLOSED state must be `display:none` so the modal doesn't render inline in the
-   footer (and intercept clicks across the page). The UA stylesheet's
-   `[popover]:not(:popover-open){display:none}` would do that, BUT an author rule
-   setting `display` on `.adh-modal` overrides it (author beats UA origin) — so we
-   scope the layout `display:flex` to `:popover-open` and keep an explicit closed
-   rule. The <a href>s inside stay in the DOM (display:none → still crawlable). */
-.adh-modal:not(:popover-open) {
-  display: none;
-}
-.adh-modal {
-  flex-direction: column;
-  width: min(92vw, 44rem);
-  max-height: 80vh;
-  margin: auto; /* UA sets inset:0; this centers it in the viewport */
-  padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--pc-radius, 0.5rem);
-  background: var(--color-surface-raised);
-  color: var(--color-text-primary);
-  box-shadow: 0 16px 40px -12px color-mix(in srgb, var(--color-shadow, #000) 60%, transparent);
-  font-family: var(--font-mono);
-}
-.adh-modal:popover-open {
-  display: flex;
-}
-
-.adh-modal::backdrop {
-  background: color-mix(in srgb, var(--color-shadow, #000) 50%, transparent);
-}
-
-/* Header — title (left) + close box (right), pinned above the scrolling body. */
-.adh-modal__header {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.adh-modal__title {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 600;
-  color: var(--color-text-primary);
-}
-
-.adh-modal__close {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 2rem;
-  width: 2rem;
-  margin: -0.25rem -0.35rem -0.25rem 0;
-  border: none;
-  border-radius: 0.5rem;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: color calc(0.15s * var(--apt-anim-scale, 1)), background-color calc(0.15s * var(--apt-anim-scale, 1));
-}
-
-.adh-modal__close:hover,
-.adh-modal__close:focus-visible {
-  color: var(--color-accent);
-  background: var(--color-surface-hover, rgba(255, 255, 255, 0.06));
-  outline: none;
-}
-
-.adh-modal__close-icon {
-  height: 1.1rem;
-  width: 1.1rem;
-}
-
-/* Body — the scrolling content region (site groups, or legal prose). */
-.adh-modal__body {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 1.25rem;
-}
-
 /* Legal content inside the modal: drop the standalone page's centering/width so
    it reads as modal-body prose (legal.css styles the headings/paragraphs).
 
@@ -448,152 +365,6 @@ a.adh-footer__brand-link:focus-visible {
   color: var(--color-text-secondary);
 }
 
-.adh-sites-popover__group {
-  margin-bottom: 1.25rem;
-}
-
-.adh-sites-popover__group:last-child {
-  margin-bottom: 0;
-}
-
-.adh-sites-popover__group-title {
-  margin: 0 0 0.5rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--color-text-dim);
-}
-
-.adh-sites-popover__list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.25rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-@media (min-width: 34rem) {
-  .adh-sites-popover__list {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-.adh-sites-popover__item {
-  display: block;
-  padding: 0.5rem 0.6rem;
-  border-radius: 0.375rem;
-  text-decoration: none;
-  color: var(--color-text-primary);
-  transition: background-color calc(0.15s * var(--apt-anim-scale, 1));
-}
-
-.adh-sites-popover__item:hover,
-.adh-sites-popover__item:focus-visible {
-  background: var(--color-surface-hover);
-  outline: none;
-}
-
-.adh-sites-popover__name {
-  display: block;
-  color: var(--color-accent);
-}
-
-.adh-sites-popover__blurb {
-  display: block;
-  margin-top: 0.1rem;
-  font-size: 0.75rem;
-  line-height: 1.35;
-  color: var(--color-text-dim);
-}
-
-/* ---- the landing page's footer (marketing/LandingFooter) ----
-   Sits inside the frame's `.lp-site-foot`, so it reads the landing kit's `--lp-*` tokens,
-   falling back to adh's own. Its links are set plainer than the frame's underlined credit
-   line: a directory of forty names is read as a list, not as prose. */
-.adh-landing-footer {
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: var(--lp-ink-dim, var(--color-text-dim));
-}
-
-.adh-landing-footer__directory {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
-  gap: 1.75rem 1.5rem;
-  padding-bottom: 2rem;
-}
-
-.adh-landing-footer__heading {
-  margin: 0 0 0.6rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--lp-ink, var(--color-text-primary));
-}
-
-.adh-landing-footer__list,
-.adh-landing-footer__legal {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.adh-landing-footer__item + .adh-landing-footer__item {
-  margin-top: 0.35rem;
-}
-
-.adh-landing-footer .adh-landing-footer__link {
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: var(--lp-ink-dim, var(--color-text-dim));
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.adh-landing-footer span.adh-landing-footer__link {
-  cursor: default;
-}
-
-.adh-landing-footer a.adh-landing-footer__link:hover,
-.adh-landing-footer button.adh-landing-footer__link:hover {
-  color: var(--lp-ink, var(--color-text-primary));
-  text-decoration: underline;
-}
-
-.adh-landing-footer__fine-print {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem 1.5rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--lp-hairline, var(--color-border));
-}
-
-.adh-landing-footer__copyright {
-  margin: 0;
-}
-
-.adh-landing-footer__legal {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-}
-
-.adh-landing-footer__legal .adh-landing-footer__item + .adh-landing-footer__item::before {
-  content: "|";
-  margin: 0 0.6rem;
-  color: var(--lp-hairline, var(--color-border));
-}
-
-.adh-landing-footer__version {
-  font-family: var(--lp-font-mono, var(--font-mono));
-  font-size: 0.72rem;
-}
-
 /* Hide everything popover-related in browsers without the Popover API (iOS before 17,
    Firefox before 125) so no panel dumps inline and no dead trigger is shown, and put
    the plain form of what each footer menu holds in its place. The <a href>s are still
@@ -606,7 +377,6 @@ a.adh-footer__brand-link:focus-visible {
    opened nothing — and the studio's link and the build's version, which that menu's
    About had replaced, had no way onto the screen at all. */
 @supports not selector(:popover-open) {
-  .adh-modal,
   .adh-footer__menu-host {
     display: none;
   }

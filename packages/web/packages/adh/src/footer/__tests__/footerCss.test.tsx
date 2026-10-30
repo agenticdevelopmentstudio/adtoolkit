@@ -43,7 +43,9 @@ vi.mock('../FooterChat', () => ({ FooterChat: () => null }))
 /** A build identity, so the version the plain copyright line carries is there to be found. */
 const LIVE = { version: '1.0.155', sha: 'a73e79b7c0ffee00deadbeef1234567890abcdef' }
 
-const site = styleRules(adhStylesheet('adh-site.css'))
+// adh-site.css @imports the modal's own sheet ahead of its rules, so the footer's world is that
+// sheet's rules followed by its own, in that order.
+const site = [...styleRules(adhStylesheet('adh-landing-footer.css')), ...styleRules(adhStylesheet('adh-site.css'))]
 const components = styleRules(adhStylesheet('adh-components.css'))
 
 /** The block that swaps the menus for their plain forms where popovers are missing. */
