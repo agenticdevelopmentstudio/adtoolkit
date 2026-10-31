@@ -157,6 +157,33 @@ struct GitClientTests {
         #expect(status.files["a.txt"] == .modified)
     }
 
+    @Test("run executes a verb no typed method models and returns its output")
+    func runUnmodelledVerb() async throws {
+        let fixture = try await Fixture.make()
+        defer { fixture.tearDown() }
+        let client = GitClient(configuration: .default)
+        let subject = try await client.run("log", ["-1", "--format=%s"], in: fixture.root)
+        #expect(subject.trimmingCharacters(in: .whitespacesAndNewlines) == "initial")
+    }
+
+    @Test("run reports a non-zero exit as commandFailed with its status")
+    func runFailureCarriesStatus() async throws {
+        let fixture = try await Fixture.make()
+        defer { fixture.tearDown() }
+        let client = GitClient(configuration: .default)
+        do {
+            _ = try await client.run("merge-base", ["--is-ancestor", "feature", "HEAD~5"], in: fixture.root)
+            Issue.record("expected a failure")
+        } catch let error as GitClientError {
+            guard case let .commandFailed(verb, status, _) = error else {
+                Issue.record("unexpected \(error)")
+                return
+            }
+            #expect(verb == "merge-base")
+            #expect(status != 0)
+        }
+    }
+
     @Test("currentBranch names the checked-out branch")
     func currentBranch() async throws {
         let fixture = try await Fixture.make()
@@ -188,6 +215,23 @@ struct GitClientTests {
         #expect(trees[1].branch == "feature")
         #expect(trees[1].directory.resolvingSymlinksInPath().path
             == fixture.worktree.resolvingSymlinksInPath().path)
+    }
+
+    @Test("resolveCommit names a branch's commit, returns nil for a missing ref, and ignores a same-named tag")
+    func resolveCommit() async throws {
+        let fixture = try await Fixture.make()
+        defer { fixture.tearDown() }
+        let client = GitClient(configuration: .default)
+        let main = try await client.resolveCommit("refs/heads/main", in: fixture.root)
+        #expect(main?.count == 40)
+        #expect(try await client.resolveCommit("refs/heads/nope", in: fixture.root) == nil)
+        #expect(try await client.resolveCommit("--nope", in: fixture.root) == nil)
+        // A tag named like the branch, on a different commit.
+        _ = try await client.run("commit", ["--allow-empty", "-m", "later"], in: fixture.worktree)
+        _ = try await client.run("tag", ["feature", "main"], in: fixture.root)
+        let branch = try await client.resolveCommit("refs/heads/feature", in: fixture.root)
+        #expect(branch != main)
+        #expect(try await client.resolveCommit("feature", in: fixture.root) == main)
     }
 
     @Test("a missing executable throws executableNotFound before spawning")

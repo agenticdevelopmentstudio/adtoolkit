@@ -2,11 +2,13 @@ import AppKit
 
 import AgenticToolkitCore
 
-/// The Coding Partner's settings: one sidebar topic with General, Jobs and Attention tabs.
+/// The Coding Partner's settings: one sidebar topic with General, Jobs, Attention and Code Reviews tabs.
 @MainActor
 public enum PartnerSettingsPanel {
 
-    public static func make(controller: PartnerController) -> ComposableSettings.SectionTabsPanel {
+    public static func make(controller: PartnerController,
+                            projects: @escaping @MainActor () -> [PartnerToolSource.Project] = { [] })
+        -> ComposableSettings.SectionTabsPanel {
         let panel = ComposableSettings.SectionTabsPanel(
             section: "Coding Partner",
             icon: NSImage(systemSymbolName: "person.2.wave.2", accessibilityDescription: nil))
@@ -17,7 +19,8 @@ public enum PartnerSettingsPanel {
         panel.setPanels([
             PartnerGeneralSettingsViewController(controller: controller),
             PartnerJobsSettingsViewController(controller: controller, model: editor),
-            PartnerAttentionSettingsViewController()
+            PartnerAttentionSettingsViewController(),
+            PartnerCodeReviewsSettingsViewController(store: controller.store, projects: projects)
         ])
         return panel
     }

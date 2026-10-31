@@ -23,7 +23,7 @@ public enum PartnerStoreError: Error {
 /// store from its sink without deadlocking.
 public final class PartnerStore: @unchecked Sendable {
 
-    public static let currentSchemaVersion = 1
+    public static let currentSchemaVersion = 2
 
     /// What kind of rows a committed write touched.
     public enum Change: Sendable, Equatable { case attention, transcript, jobs, sessions, reviews, settings }
@@ -89,6 +89,9 @@ public final class PartnerStore: @unchecked Sendable {
             }
             if stored < 1 {
                 try migration001_createSchema()
+            }
+            if stored < 2 {
+                try migration002_reviews()
             }
             // A migration added without bumping `currentSchemaVersion` (or the reverse) fails here, not later.
             let migrated = try schemaVersion()
@@ -166,6 +169,30 @@ public final class PartnerStore: @unchecked Sendable {
             """,
             "CREATE TABLE IF NOT EXISTS partner_setting (key TEXT PRIMARY KEY, value TEXT NOT NULL)",
             "INSERT INTO schema_migrations (version) VALUES (1)"
+        ]
+        for sql in statements { try execute(sql) }
+    }
+
+    private func migration002_reviews() throws {
+        let statements = [
+            """
+            CREATE TABLE IF NOT EXISTS review (
+                id TEXT PRIMARY KEY, repo_id TEXT NOT NULL, repo_path TEXT NOT NULL, repo_name TEXT NOT NULL,
+                sha TEXT NOT NULL, parent TEXT NOT NULL, branch TEXT NOT NULL, subject TEXT NOT NULL,
+                author TEXT NOT NULL, committed_at TEXT NOT NULL, state TEXT NOT NULL, session_id TEXT,
+                started_at TEXT, finished_at TEXT, summary TEXT, skip_reason TEXT,
+                superseded_json TEXT NOT NULL DEFAULT '[]',
+                UNIQUE(repo_id, sha)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_review_state ON review(state, committed_at)",
+            """
+            CREATE TABLE IF NOT EXISTS review_setting (
+                repo_id TEXT NOT NULL, key TEXT NOT NULL, value TEXT NOT NULL,
+                PRIMARY KEY (repo_id, key)
+            )
+            """,
+            "INSERT INTO schema_migrations (version) VALUES (2)"
         ]
         for sql in statements { try execute(sql) }
     }

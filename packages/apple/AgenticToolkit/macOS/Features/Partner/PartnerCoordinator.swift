@@ -35,7 +35,13 @@ public final class PartnerCoordinator: AppFeature {
     private let status: AutomationServerStatus
     private let settings: SettingsStore
     private let registerTools: @MainActor (any ChatToolSource) -> Void
+    private let projects: @MainActor () -> [PartnerToolSource.Project]
     private let toolSource: PartnerToolSource
+    /// The code-reviews job: the tools' service and the crawl run before each of its ticks.
+    let reviews: ReviewService
+    let codeReviewsScheduler: CodeReviewsScheduler
+    /// Running reviews left by an earlier run are requeued once per launch, before the first tick.
+    private var interruptedRequeued = false
     private var toolsRegistered = false
     private var subscriptions: Set<AnyCancellable> = []
     /// Starts and stops run one after another, never interleaved.
@@ -73,6 +79,7 @@ public final class PartnerCoordinator: AppFeature {
         self.settings = settings
         self.quitLimit = quitLimit
         self.registerTools = registerTools
+        self.projects = projects
         let sessions = PartnerSessionRegistry(
             store: store, environment: { terminalEnvironment() },
             detector: detector ?? QuietPeriodDetector(settle: {
@@ -82,9 +89,14 @@ public final class PartnerCoordinator: AppFeature {
         controller = makeController(store, sessions, notifier, paths, {
             status.port.flatMap { port in status.token.map { PartnerController.Endpoint(port: port, token: $0) } }
         })
+        reviews = ReviewService(store: store, sessions: sessions, notifier: notifier, paths: paths,
+                                settings: settings, steps: { Self.codeReviewSteps(store: store) })
+        codeReviewsScheduler = CodeReviewsScheduler(store: store, projects: projects, settings: settings)
+        let scheduler = codeReviewsScheduler
+        controller.tickPreparers[PartnerJobDefaults.codeReviewsID] = { await scheduler.crawlAndSummarise() }
         let box = callerIDBox
         toolSource = PartnerToolSource(callerID: { box.value }, store: store, sessions: sessions,
-                                       projects: projects, notifier: notifier)
+                                       projects: projects, notifier: notifier, reviews: reviews)
         super.init()
         featureName = "Coding Partner"
 
@@ -118,6 +130,10 @@ public final class PartnerCoordinator: AppFeature {
             toolsRegistered = true
             registerTools(toolSource)
         }
+        if !interruptedRequeued {
+            interruptedRequeued = true
+            requeueInterruptedReviews()
+        }
         guard subscriptions.isEmpty else { return }
         let box = callerIDBox
         // `callerID` is set before the state leaves `.starting` and cleared before it reaches `.stopped`.
@@ -130,6 +146,19 @@ public final class PartnerCoordinator: AppFeature {
             .filter { $0 == UserSettings.partnerEnabled.name }
             .sink { [weak self] _ in self?.reconcile() }
             .store(in: &subscriptions)
+        settings.changes
+            .receive(on: DispatchQueue.main)
+            .filter { $0 == UserSettings.partnerReviewsCrawlIntervalMinutes.name }
+            .sink { [weak self] _ in self?.applyCrawlInterval() }
+            .store(in: &subscriptions)
+        // A job write (Reset to default, a schedule typed on the Jobs tab) is brought back to the setting.
+        // The rewrite is itself a jobs change, which finds the schedule already right and stops.
+        controller.store.changes
+            .receive(on: DispatchQueue.main)
+            .filter { $0 == .jobs }
+            .sink { [weak self] _ in self?.applyCrawlInterval() }
+            .store(in: &subscriptions)
+        applyCrawlInterval()
         // The endpoint binds after every feature has started, so an enabled partner waits for it.
         status.$port
             .removeDuplicates()
@@ -160,7 +189,7 @@ public final class PartnerCoordinator: AppFeature {
     }
 
     public func settingsPanel() -> ComposableSettings.SectionTabsPanel {
-        PartnerSettingsPanel.make(controller: controller)
+        PartnerSettingsPanel.make(controller: controller, projects: projects)
     }
 
     /// The system-wide key command that opens the window. Ships switched off.
@@ -226,6 +255,48 @@ public final class PartnerCoordinator: AppFeature {
             return opens ? .open(resolved) : .reveal(url)
         }
         return .ignore(reasons.isEmpty ? "no url or path" : reasons.joined(separator: "; "))
+    }
+
+    // MARK: - Code reviews
+
+    /// The stored code-reviews job's steps (the owner may have edited them), else the shipped ones.
+    private static func codeReviewSteps(store: PartnerStore) -> [PartnerJobStep] {
+        do {
+            if let job = try store.jobs().first(where: { $0.id == PartnerJobDefaults.codeReviewsID }) {
+                return job.steps
+            }
+        } catch {
+            logger.error("Reading the code-reviews job failed: \(error.localizedDescription, privacy: .public)")
+        }
+        return PartnerJobDefaults.codeReviews().steps
+    }
+
+    /// The code-reviews job's schedule follows ``UserSettings/partnerReviewsCrawlIntervalMinutes``: the stored
+    /// job is rewritten and its timer restarted. Internal for tests.
+    func applyCrawlInterval() {
+        let seconds = max(settings.get(UserSettings.partnerReviewsCrawlIntervalMinutes), 1) * 60
+        // `jobs()` seeds the job when it has never been stored, so the first change still lands.
+        guard var job = controller.jobs().first(where: { $0.id == PartnerJobDefaults.codeReviewsID }),
+              job.scheduleSeconds != seconds else { return }
+        job.scheduleSeconds = seconds
+        do {
+            try controller.store.upsert(job)
+        } catch {
+            Self.logger.error(
+                "Saving the code-reviews schedule failed: \(error.localizedDescription, privacy: .public)")
+            return
+        }
+        controller.restartSchedule(jobID: job.id)
+    }
+
+    /// A review left `running` when the app last quit has no session any more; it goes back to the queue.
+    private func requeueInterruptedReviews() {
+        do {
+            let count = try reviews.requeueInterrupted()
+            if count > 0 { Self.logger.notice("Requeued \(count) interrupted reviews") }
+        } catch {
+            Self.logger.error("Requeueing interrupted reviews failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     // MARK: - Run state

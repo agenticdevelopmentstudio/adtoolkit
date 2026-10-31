@@ -40,6 +40,14 @@ public final class PartnerJobsEditorModel: ObservableObject {
         reload()
     }
 
+    /// Changes only the job's guidelines, on its current stored row, and writes them to its file, so a
+    /// schedule or enabled flag written elsewhere since the last reload is kept.
+    public func saveGuidelines(jobID: String, text: String) throws {
+        try update(jobID) { $0.guidelines = text }
+        try guidelines.saveGuidelines(jobID: jobID, text: text)
+        reload()
+    }
+
     /// Restores a built-in job to its bundled default, and removes its edited guidelines file.
     public func resetToDefault(id: String) throws {
         guard let original = PartnerJobDefaults.all.first(where: { $0.id == id }) else {
@@ -75,7 +83,10 @@ public final class PartnerJobsEditorModel: ObservableObject {
 
     /// Persists a change to a job in the store only (steps, schedule, enabled).
     /// The guidelines file is not touched, so a job that has none keeps following its stored default.
+    /// The store is re-read first, so a write made elsewhere since the last reload (the coordinator rewriting
+    /// the code-reviews schedule, say) is changed rather than overwritten with the stale copy.
     public func update(_ jobID: String, _ change: (inout PartnerJob) throws -> Void) throws {
+        reload()
         guard var job = jobs.first(where: { $0.id == jobID }) else { throw EditorError.unknownJob(jobID) }
         try change(&job)
         try store.upsert(job)

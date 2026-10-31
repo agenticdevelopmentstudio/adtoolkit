@@ -133,6 +133,144 @@ final class PartnerCoordinatorTests: XCTestCase {
         XCTAssertTrue(refused.isError)
     }
 
+    // MARK: - Code reviews
+
+    func testTheCodeReviewsJobHasATickPreparerAndTheReviewTools() async {
+        let coordinator = makeCoordinator()
+        XCTAssertNotNil(coordinator.controller.tickPreparers[PartnerJobDefaults.codeReviewsID])
+        coordinator.startServices()
+        let names = await registered.first?.toolDefinitions().map(\.name) ?? []
+        XCTAssertTrue(names.contains("partner_review_start"), "\(names)")
+        let summary = await coordinator.controller.tickPreparers[PartnerJobDefaults.codeReviewsID]?()
+        XCTAssertEqual(summary, "0 queued, 0 running, 0 inserted this crawl")
+    }
+
+    func testInterruptedReviewsAreRequeuedOnceAtStart() throws {
+        let running = PartnerReview(
+            id: "repo:abc", repoID: "repo", repoPath: "/tmp/none", repoName: "demo", sha: "abc", parent: "def",
+            branch: "main", subject: "s", author: "Ann", committedAt: Date(), state: .running, supersededBy: [])
+        try store.insertReview(running)
+        let coordinator = makeCoordinator()
+        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .running)
+        coordinator.startServices()
+        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .queued)
+
+        var later = try XCTUnwrap(try store.review(id: "repo:abc"))
+        later.state = .running
+        try store.updateReview(later)
+        coordinator.stop()
+        coordinator.startServices()
+        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .running, "only the first start requeues")
+    }
+
+    // MARK: - Crawl interval
+
+    private func codeReviewsJob() throws -> PartnerJob? {
+        try store.jobs().first { $0.id == PartnerJobDefaults.codeReviewsID }
+    }
+
+    func testTheCrawlIntervalRewritesTheStoppedJobsSchedule() async throws {
+        let coordinator = makeCoordinator()
+        coordinator.startServices()
+        settings.set(5, for: UserSettings.partnerReviewsCrawlIntervalMinutes)
+        await waitUntil { (try? self.codeReviewsJob())??.scheduleSeconds == 300 }
+        XCTAssertEqual(try codeReviewsJob()?.scheduleSeconds, 300, "the job is seeded, then rewritten")
+        XCTAssertTrue(coordinator.controller.refreshers.isEmpty, "a stopped partner keeps no timers")
+    }
+
+    func testTheCrawlIntervalRestartsTheRunningJobsTimer() async throws {
+        var job = PartnerJobDefaults.codeReviews()
+        job.isEnabled = true
+        try store.upsert(job)
+        endpointUp()
+        settings.set(true, for: UserSettings.partnerEnabled)
+        let coordinator = makeCoordinator()
+        coordinator.startServices()
+        let id = PartnerJobDefaults.codeReviewsID
+        await waitUntil { coordinator.controller.refreshers[id] != nil }
+        XCTAssertEqual(coordinator.controller.refreshers[id]?.interval, 1800)
+        let before = coordinator.controller.refreshers[id]
+
+        settings.set(1, for: UserSettings.partnerReviewsCrawlIntervalMinutes)
+        await waitUntil { coordinator.controller.refreshers[id]?.interval == 60 }
+        XCTAssertEqual(coordinator.controller.refreshers[id]?.interval, 60)
+        XCTAssertEqual(try codeReviewsJob()?.scheduleSeconds, 60)
+        XCTAssertFalse(before?.isRunning ?? true, "the old timer is stopped")
+        XCTAssertTrue(coordinator.controller.refreshers[id]?.isRunning ?? false)
+    }
+
+    func testStartingAppliesTheCrawlInterval() throws {
+        settings.set(5, for: UserSettings.partnerReviewsCrawlIntervalMinutes)
+        makeCoordinator().startServices()
+        XCTAssertEqual(try codeReviewsJob()?.scheduleSeconds, 300, "a setting changed while quit still lands")
+    }
+
+    func testAJobWriteIsBroughtBackToTheCrawlInterval() async throws {
+        let coordinator = makeCoordinator()
+        coordinator.startServices()
+        settings.set(2, for: UserSettings.partnerReviewsCrawlIntervalMinutes)
+        await waitUntil { (try? self.codeReviewsJob())??.scheduleSeconds == 120 }
+        try store.upsert(PartnerJobDefaults.codeReviews()) // Reset to default stores 1800
+        await waitUntil { (try? self.codeReviewsJob())??.scheduleSeconds == 120 }
+        XCTAssertEqual(try codeReviewsJob()?.scheduleSeconds, 120)
+    }
+
+    func testTheCrawlIntervalStopsFollowingOnceStopped() async throws {
+        let coordinator = makeCoordinator()
+        coordinator.startServices()
+        coordinator.stop()
+        settings.set(7, for: UserSettings.partnerReviewsCrawlIntervalMinutes)
+        try? await Task.sleep(for: .milliseconds(200))
+        XCTAssertNotEqual(try codeReviewsJob()?.scheduleSeconds, 420)
+    }
+
+    // MARK: - Review counts and subtitles
+
+    private func review(_ sha: String, state: PartnerReviewState, summary: String? = nil) -> PartnerReview {
+        PartnerReview(
+            id: "repo:\(sha)", repoID: "repo", repoPath: "/tmp/none", repoName: "demo", sha: sha, parent: "p",
+            branch: "main", subject: "s", author: "Ann", committedAt: Date(), state: state, summary: summary,
+            supersededBy: [])
+    }
+
+    func testAReviewsWriteRefreshesTheToolbarQueue() async throws {
+        let coordinator = makeCoordinator()
+        let toolbar = PartnerToolbar(controller: coordinator.controller)
+        XCTAssertFalse(toolbar.statusLabel.stringValue.contains("queue"), toolbar.statusLabel.stringValue)
+        let store = self.store!
+        let running = review("aaa", state: .running)
+        let queued = review("bbb", state: .queued)
+        let done = review("ccc", state: .done)
+        try await Task.detached {
+            try store.insertReview(running)
+            try store.insertReview(queued)
+            try store.insertReview(done)
+        }.value
+        let expected = "queue: 1 waiting · 1 running · 1 done"
+        await waitUntil { toolbar.statusLabel.stringValue.contains(expected) }
+        XCTAssertTrue(toolbar.statusLabel.stringValue.hasSuffix(expected), toolbar.statusLabel.stringValue)
+    }
+
+    func testAReviewSessionsSubtitleShowsTheReviewsStateAndSummary() async throws {
+        let coordinator = makeCoordinator()
+        let split = PartnerSplitViewController(controller: coordinator.controller)
+        split.loadViewIfNeeded()
+        var owned = review("abc1234", state: .running)
+        owned.sessionID = "s1"  // the session the review is running in
+        try store.insertReview(owned)
+        try store.upsert(PartnerStore.SessionRecord(id: "s1", title: "review abc1234", directory: "/w/demo",
+                                                    openedAt: Date(), closedAt: Date(), reviewID: "repo:abc1234"))
+        await waitUntil { split.shelf.rows.contains { $0.id == "s1" } }
+        XCTAssertEqual(split.shelf.rows.first { $0.id == "s1" }?.subtitle, "review running")
+
+        var finished = try XCTUnwrap(try store.review(id: "repo:abc1234"))
+        finished.state = .done
+        finished.summary = "Fixed one finding."
+        try store.updateReview(finished)
+        await waitUntil { split.shelf.rows.first { $0.id == "s1" }?.subtitle == "review done · Fixed one finding." }
+        XCTAssertEqual(split.shelf.rows.first { $0.id == "s1" }?.subtitle, "review done · Fixed one finding.")
+    }
+
     // MARK: - Quit
 
     func testQuitTurnFitsTheFlushBudget() {

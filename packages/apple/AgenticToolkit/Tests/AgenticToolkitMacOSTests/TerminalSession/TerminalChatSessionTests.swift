@@ -71,6 +71,46 @@ final class TerminalChatSessionTests: XCTestCase {
         XCTAssertFalse(terminal.isRunning)
     }
 
+    /// Claude Code reads a long line arriving in one write as a paste and keeps
+    /// a Return inside it as pasted text, so the message never sends. Return
+    /// has to reach the program as a read of its own.
+    func testReturnArrivesAsAWriteOfItsOwn() async throws {
+        let (chat, terminal) = try await connectedShell()
+        defer { withExtendedLifetime(terminal) {} }
+        // Reads two raw chunks and prints them, putting the tty back first.
+        let reader = #"/usr/bin/python3 -c 'import os,termios,tty; o=termios.tcgetattr(0); tty.setraw(0); "#
+            + #"a=os.read(0,99); b=os.read(0,99); termios.tcsetattr(0,termios.TCSADRAIN,o); print("CHUNKS",a,b)'"#
+        _ = await chat.run(reader, settle: .seconds(1), timeout: .seconds(3))
+        let reply = await chat.run("hello", settle: .milliseconds(800), timeout: .seconds(5))
+        XCTAssertTrue(reply.contains(#"CHUNKS b'hello' b'\r'"#), reply)
+    }
+
+    /// The echo of the text must not settle a short wait before Return is written: the command's
+    /// output belongs to this run, not to the next wait.
+    func testAShortSettleStillGetsTheCommandsOutput() async throws {
+        let (chat, terminal) = try await connectedShell()
+        defer { withExtendedLifetime(terminal) {} }
+        let reply = await chat.run("echo $((40+2))QQ", settle: .milliseconds(50), timeout: .seconds(5))
+        XCTAssertTrue(reply.contains("42QQ"), reply)
+        let next = await chat.waitForOutput(settle: .milliseconds(300), timeout: .seconds(1))
+        XCTAssertFalse(next.contains("42QQ"), "the output went to the next wait: \(next)")
+    }
+
+    /// Two quick messages keep their order: each one's Return comes before the next one's text.
+    func testQuickSendsKeepTheirOrder() async throws {
+        let (chat, terminal) = try await connectedShell()
+        defer { withExtendedLifetime(terminal) {} }
+        // Reads raw input until two Returns have arrived, then prints everything it read.
+        let reader = #"/usr/bin/python3 -c 'import os,termios,tty; o=termios.tcgetattr(0); tty.setraw(0); "#
+            + #"d=b""; exec("while d.count(13) < 2: d += os.read(0,99)"); "#
+            + #"termios.tcsetattr(0,termios.TCSADRAIN,o); print("GOT",d)'"#
+        _ = await chat.run(reader, settle: .seconds(1), timeout: .seconds(3))
+        chat.send("one")
+        chat.send("two")
+        let reply = await chat.waitForOutput(settle: .milliseconds(800), timeout: .seconds(5))
+        XCTAssertTrue(reply.contains(#"GOT b'one\rtwo\r'"#), reply)
+    }
+
     // MARK: - Helpers
 
     /// A chat connected to a freshly started shell, once its first prompt is up.

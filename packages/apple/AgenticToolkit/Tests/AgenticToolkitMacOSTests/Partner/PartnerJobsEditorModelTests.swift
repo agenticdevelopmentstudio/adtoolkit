@@ -36,6 +36,28 @@ final class PartnerJobsEditorModelTests: XCTestCase {
         XCTAssertEqual(model.jobs.first { $0.id == "code-reviews" }?.steps.map(\.name), names)
     }
 
+    func testSavingGuidelinesKeepsAScheduleWrittenElsewhere() throws {
+        model.reload()
+        var other = try XCTUnwrap(try store.jobs().first { $0.id == PartnerJobDefaults.codeReviewsID })
+        other.scheduleSeconds = 120
+        try store.upsert(other)
+        try model.saveGuidelines(jobID: PartnerJobDefaults.codeReviewsID, text: "edited")
+        let stored = try XCTUnwrap(try store.jobs().first { $0.id == PartnerJobDefaults.codeReviewsID })
+        XCTAssertEqual(stored.scheduleSeconds, 120)
+        XCTAssertEqual(model.jobs.first { $0.id == PartnerJobDefaults.codeReviewsID }?.guidelines, "edited")
+    }
+
+    func testAnUpdateKeepsAScheduleWrittenElsewhere() throws {
+        // The coordinator rewrites the schedule behind the tab's back; enabling must not put the old one back.
+        var job = try XCTUnwrap(store.jobs().first { $0.id == "code-reviews" })
+        job.scheduleSeconds = 60
+        try store.upsert(job)
+        try model.update("code-reviews") { $0.isEnabled = true }
+        let stored = try XCTUnwrap(store.jobs().first { $0.id == "code-reviews" })
+        XCTAssertEqual(stored.scheduleSeconds, 60)
+        XCTAssertTrue(stored.isEnabled)
+    }
+
     func testRemoveStepAndBadIndex() throws {
         try model.removeStep(in: "code-reviews", at: 0)
         XCTAssertEqual(try store.jobs().first { $0.id == "code-reviews" }?.steps.count, 2)
