@@ -34,6 +34,11 @@ production `next build` first is minutes it then ignores. `--site DIR` names the
 
 The toolkit this builds is the one this file is in — the site's own submodule — so a site cannot
 be built against a toolkit other than the one it links. A `link:` into anywhere else is refused.
+
+A site may also link a package from another submodule that is its own pnpm workspace (fishlamp's
+olylo avatar, from `external/whatsnowtoolkit`). That workspace is installed and built the same
+way, filtered to what the site links, after the toolkit: its dist is as gitignored, and the
+websites-root install walks into it no more than into the toolkit.
 """
 from __future__ import annotations
 
@@ -74,6 +79,37 @@ def toolkit_packages(package_json: Path, toolkit: Path = TOOLKIT) -> list[str]:
                 "submodule."
             )
     return names
+
+
+def workspace_root(target: Path) -> Path | None:
+    """The nearest directory at or above `target` that holds a `pnpm-workspace.yaml`, or None."""
+    for directory in (target, *target.parents):
+        if (directory / "pnpm-workspace.yaml").is_file():
+            return directory
+    return None
+
+
+def peer_workspaces(package_json: Path, toolkit: Path = TOOLKIT) -> dict[Path, list[str]]:
+    """The site's `link:` dependencies that live in another pnpm workspace — neither the toolkit
+    nor the site's own — grouped by that workspace's root, each list sorted.
+
+    A `link:` to a directory in no workspace is the site's own business and is left alone, as is
+    one into the site's own workspace, which the websites-root install already covers.
+    """
+    deps = json.loads(package_json.read_text()).get("dependencies", {})
+    root = toolkit.resolve()
+    own = workspace_root(package_json.parent.resolve())
+    peers: dict[Path, list[str]] = {}
+    for name, spec in sorted(deps.items()):
+        if not spec.startswith("link:"):
+            continue
+        target = (package_json.parent / spec[len("link:"):]).resolve()
+        if target == root or root in target.parents:
+            continue
+        workspace = workspace_root(target)
+        if workspace is not None and workspace != own:
+            peers.setdefault(workspace, []).append(name)
+    return peers
 
 
 def toolkit_filters(packages: list[str]) -> list[str]:
@@ -128,7 +164,9 @@ def workspace_projects(env: dict[str, str], toolkit: Path = TOOLKIT) -> set[str]
         sys.exit(f"could not parse `pnpm ls -r --json` output: {exc}")
 
 
-def assert_filters_resolve(packages: list[str], present: set[str], package_json: Path) -> None:
+def assert_filters_resolve(
+    packages: list[str], present: set[str], package_json: Path, workspace: Path = TOOLKIT
+) -> None:
     """Fail loudly if a filter matches nothing — pnpm does not.
 
     A `--filter` naming a package the workspace lacks selects zero projects, prints a line
@@ -137,11 +175,11 @@ def assert_filters_resolve(packages: list[str], present: set[str], package_json:
     from an earlier build is still on disk.
     """
     if not packages:
-        sys.exit(f"{package_json} links no package into the toolkit at {TOOLKIT}; nothing to build.")
+        sys.exit(f"{package_json} links no package into the workspace at {workspace}; nothing to build.")
     missing = [name for name in packages if name not in present]
     if missing:
         sys.exit(
-            f"{package_json} links these packages into the toolkit, but its workspace has no "
+            f"{package_json} links these packages into {workspace}, but that workspace has no "
             f"such project: {', '.join(missing)}.\npnpm would filter them to nothing and exit 0, "
             "so the build stops here. Either the toolkit renamed or moved them (re-assemble the "
             "site) or the submodule is checked out at the wrong commit."
@@ -170,13 +208,14 @@ def main(argv: list[str] | None = None) -> int:
     # (tsup, typescript) — exactly the tools needed to BUILD its dist. Strip it.
     env = {k: v for k, v in os.environ.items() if k != "NODE_ENV"}
 
-    packages = toolkit_packages(package_json)
-    assert_filters_resolve(packages, workspace_projects(env), package_json)
-    filters = toolkit_filters(packages)
-    run(pnpm([*filters, "install", "--frozen-lockfile"]), cwd=TOOLKIT, env=env)
-    # --workspace-concurrency=1: pnpm builds independent packages four at a time by default;
-    # Vercel's build machine has one shared CPU/memory budget, so one tsup/tsc at a time.
-    run(pnpm([*filters, "--workspace-concurrency=1", "run", "build"]), cwd=TOOLKIT, env=env)
+    workspaces = {TOOLKIT: toolkit_packages(package_json), **peer_workspaces(package_json)}
+    for workspace, packages in workspaces.items():
+        assert_filters_resolve(packages, workspace_projects(env, workspace), package_json, workspace)
+        filters = toolkit_filters(packages)
+        run(pnpm([*filters, "install", "--frozen-lockfile"]), cwd=workspace, env=env)
+        # --workspace-concurrency=1: pnpm builds independent packages four at a time by default;
+        # Vercel's build machine has one shared CPU/memory budget, so one tsup/tsc at a time.
+        run(pnpm([*filters, "--workspace-concurrency=1", "run", "build"]), cwd=workspace, env=env)
     if args.toolkits_only:
         return 0
 

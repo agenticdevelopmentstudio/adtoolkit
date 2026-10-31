@@ -25,13 +25,18 @@ export const DEFAULT_PREVIEW_NOTICE = 'Developer Preview Release'
  *  default for the same reason: the sentence is true of the whole family, so 46 hosts
  *  should not each restate it. */
 export const DEFAULT_PREVIEW_DETAIL =
-  'We are in very early stages, and are only taking requests to join.'
+  'We are in very early stages, and are only taking requests to join. Right now, membership is by invitation only.'
 
 export type PreviewNoticeProps = {
   /** The strip's headline words. */
   notice?: string
   /** The sentence the caret reveals. */
   detail?: string
+  /** `strip` (the default) is the header's full-width notice above the bar; `badge` is the
+   *  same notice and panel as a compact pill, for the family footer's head
+   *  (`adh-preview-badge`, styled in adh-landing-footer.css so a site carrying only the
+   *  footer's sheet gets it too). */
+  variant?: 'strip' | 'badge'
 }
 
 /**
@@ -44,6 +49,7 @@ export type PreviewNoticeProps = {
 export function PreviewNotice({
   notice = DEFAULT_PREVIEW_NOTICE,
   detail = DEFAULT_PREVIEW_DETAIL,
+  variant = 'strip',
 }: PreviewNoticeProps): ReactElement {
   const [open, setOpen] = useState(false)
   const panelId = useId()
@@ -78,7 +84,7 @@ export function PreviewNotice({
   }, [open])
 
   return (
-    <div className="adh-header__preview">
+    <div className={variant === 'badge' ? 'adh-preview-badge' : 'adh-header__preview'}>
       {/* Trigger and panel share one box so a single `mouseleave` covers both. The panel
           is absolutely positioned and so contributes nothing to this element's layout
           box — but `mouseleave` is defined over the DOM TREE, not the box, so moving the

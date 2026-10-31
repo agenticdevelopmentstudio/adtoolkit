@@ -13,7 +13,7 @@ const FooterChatInner = dynamic(() => import('@agentic-toolkit/adh/footer/Footer
 })
 
 /**
- * The persona chat embedded in the center of the shared footer — so it appears,
+ * bitbag, resting in the lower-right corner opposite the floating footer — so he appears,
  * identically, on every family site. A thin loader: the actual chat (and its
  * weight) lives in FooterChatInner, pulled in only on the client.
  */

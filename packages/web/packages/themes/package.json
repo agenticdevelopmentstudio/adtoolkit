@@ -42,6 +42,11 @@
       "development": "./src/appearance-store.tsx",
       "import": "./dist/appearance-store.js"
     },
+    "./DocumentLoadScript": {
+      "types": "./dist/DocumentLoadScript.d.ts",
+      "development": "./src/DocumentLoadScript.tsx",
+      "import": "./dist/DocumentLoadScript.js"
+    },
     "./manifest": {
       "types": "./dist/manifest.d.ts",
       "development": "./src/manifest.ts",

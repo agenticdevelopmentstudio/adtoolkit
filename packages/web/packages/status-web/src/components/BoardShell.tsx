@@ -71,7 +71,6 @@ function BoardHome(): ReactElement {
         <StatusSign state={pillKey} count={count} size={56} />
       )}
       <h1 style={{ fontFamily: mono, fontSize: 20, fontWeight: 600, margin: 0 }}>{headline}</h1>
-      <p style={{ margin: 0, fontSize: 14, opacity: 0.65 }}>Pick a view from the list to get started.</p>
     </div>
   );
 }
@@ -224,6 +223,8 @@ export function BoardShell({ children }: { children: ReactNode }): ReactElement 
     title: "Settings",
     railLabel: "Settings sections",
     itemNoun: "section",
+    // No "Select a section …" nudge: inline help copy is off board-wide.
+    overview: false,
     items: visibleSections.map((s) => {
       const warn = s.id === "sites" && unconfiguredSites > 0;
       const warnTitle = warn ? `${plural(unconfiguredSites, "site")} not configured` : undefined;

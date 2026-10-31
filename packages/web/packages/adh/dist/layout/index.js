@@ -303,7 +303,7 @@ function HomePlaceholder({ siteLabel, blurb }) {
 }
 
 // src/layout/AppShell.tsx
-import { Fragment as Fragment3 } from "react";
+import { Fragment as Fragment4 } from "react";
 import { FooterChat, FooterForRoute, SiteFooter } from "@agentic-toolkit/adh/footer";
 import { SiteTelemetryProvider as TelemetryProvider } from "@agentic-toolkit/adh/telemetry";
 import { FeatureFlagsProvider } from "@agentic-toolkit/adh/flags";
@@ -315,18 +315,47 @@ import { DEV_BUILD } from "@agentic-toolkit/adh-registry/deployment-env";
 
 // src/marketing/LandingFooter.tsx
 import {
+  FamilyFooter,
+  PrivacyModal,
+  SitesPopover,
+  TermsModal
+} from "@agentic-toolkit/adh/footer";
+
+// src/footer/identity.tsx
+import {
   DIRECTORY_SITES,
+  FOOTER_SITES,
   getSite,
   groupSitesByCategory,
   siteProdUrl
 } from "@agentic-toolkit/adh-registry";
-import { SitesPopover } from "@agentic-toolkit/adh/footer";
-
-// src/footer/identity.tsx
 import { jsx as jsx9 } from "react/jsx-runtime";
+var FAMILY_OMITTED = /* @__PURE__ */ new Set(["shipr", "registry", "fishlamp", "fishlampdesign"]);
+var FAMILY_SITES = DIRECTORY_SITES.filter((s) => !FAMILY_OMITTED.has(s.id));
 var BRAND_LABEL = "Agentic Development Studio";
 var BRAND_HREF = "https://agenticdevelopmentstudio.com/";
-var SITES_OVERVIEW_POPOVER_ID = "adh-sites-overview";
+function siteEntry(site) {
+  const label = site.nativeApp ? site.fullLabel ?? site.label : site.label;
+  return { key: site.id, label, href: siteProdUrl(site.id, "/"), description: site.description };
+}
+function registryEntry(id) {
+  const site = getSite(id);
+  if (!site) throw new Error(`no registry site '${id}'`);
+  return siteEntry(site);
+}
+var SITES_PANEL_ADDITIONS = [
+  // By its full name: the hub's own Help is in the panel too, under Hub.
+  { group: "Learn", entry: { ...registryEntry("help"), label: "Agentic Developer Help" } },
+  { group: "Plan", entry: { key: "myagenticprojects", label: "My Agentic Projects", href: "https://myagenticprojects.com/", description: "Agentic software projects" } },
+  { group: "Build", entry: registryEntry("recipes") },
+  { group: "Products", entry: registryEntry("education") },
+  { group: "Hire", entry: registryEntry("consulting") },
+  { group: "Hire", entry: { key: "studio", label: BRAND_LABEL, href: BRAND_HREF, description: "The studio behind the Hub" } }
+];
+var ADH_CONTACT = {
+  name: "Agentic Developer Hub",
+  email: "hello@agenticdeveloperhub.com"
+};
 function buildVersionLabel(live) {
   const version = live?.version ?? process.env.NEXT_PUBLIC_ADH_SITE_VERSION ?? "";
   const sha = live?.sha ?? process.env.NEXT_PUBLIC_ADH_RELEASE ?? "";
@@ -336,65 +365,13 @@ function buildVersionLabel(live) {
 }
 
 // src/marketing/LandingFooter.tsx
-import { jsx as jsx10, jsxs as jsxs6 } from "react/jsx-runtime";
-var LANDING_FOOTER_CLASS = "adh-landing-footer";
-var LANDING_OMITTED = /* @__PURE__ */ new Set(["shipr", "registry", "fishlamp", "fishlampdesign"]);
-var LANDING_SITES = DIRECTORY_SITES.filter((s) => !LANDING_OMITTED.has(s.id));
-function aboutEntries() {
-  const fishlamp = getSite("fishlamp");
-  return [
-    { label: BRAND_LABEL, href: BRAND_HREF },
-    ...fishlamp ? [{ label: fishlamp.label, href: siteProdUrl("fishlamp", "/") }] : []
-  ];
-}
-function Column({ title, entries }) {
-  return /* @__PURE__ */ jsxs6("nav", { className: "adh-landing-footer__column", "aria-label": title, children: [
-    /* @__PURE__ */ jsx10("h3", { className: "adh-landing-footer__heading", children: title }),
-    /* @__PURE__ */ jsx10("ul", { className: "adh-landing-footer__list", children: entries.map((e) => /* @__PURE__ */ jsx10("li", { className: "adh-landing-footer__item", children: /* @__PURE__ */ jsx10("a", { className: "adh-landing-footer__link", href: e.href, children: e.label }) }, e.label)) })
-  ] });
-}
-function LandingFooter() {
-  const groups = groupSitesByCategory(LANDING_SITES);
-  const version = buildVersionLabel();
-  return /* @__PURE__ */ jsxs6("div", { className: LANDING_FOOTER_CLASS, children: [
-    /* @__PURE__ */ jsxs6("div", { className: "adh-landing-footer__directory", children: [
-      groups.map((group) => /* @__PURE__ */ jsx10(
-        Column,
-        {
-          title: group.label,
-          entries: group.sites.map((site) => ({
-            label: site.label,
-            href: siteProdUrl(site.id, "/")
-          }))
-        },
-        group.label
-      )),
-      /* @__PURE__ */ jsx10(Column, { title: "About", entries: aboutEntries() })
-    ] }),
-    /* @__PURE__ */ jsxs6("div", { className: "adh-landing-footer__fine-print", children: [
-      /* @__PURE__ */ jsxs6("p", { className: "adh-landing-footer__copyright", children: [
-        "Copyright \xA9 ",
-        (/* @__PURE__ */ new Date()).getFullYear(),
-        " ",
-        /* @__PURE__ */ jsx10("a", { className: "adh-landing-footer__link", href: BRAND_HREF, children: BRAND_LABEL }),
-        ". All rights reserved."
-      ] }),
-      /* @__PURE__ */ jsxs6("ul", { className: "adh-landing-footer__legal", children: [
-        /* @__PURE__ */ jsx10("li", { className: "adh-landing-footer__item", children: /* @__PURE__ */ jsx10("a", { className: "adh-landing-footer__link", href: "/terms", children: "Terms of Use" }) }),
-        /* @__PURE__ */ jsx10("li", { className: "adh-landing-footer__item", children: /* @__PURE__ */ jsx10("a", { className: "adh-landing-footer__link", href: "/privacy", children: "Privacy Policy" }) }),
-        /* @__PURE__ */ jsx10("li", { className: "adh-landing-footer__item", children: /* @__PURE__ */ jsx10(
-          "button",
-          {
-            type: "button",
-            className: "adh-landing-footer__link adh-landing-footer__sites",
-            popoverTarget: SITES_OVERVIEW_POPOVER_ID,
-            children: "All sites"
-          }
-        ) }),
-        version && /* @__PURE__ */ jsx10("li", { className: "adh-landing-footer__item adh-landing-footer__version", children: version })
-      ] })
-    ] }),
-    /* @__PURE__ */ jsx10(SitesPopover, { sites: LANDING_SITES })
+import { Fragment as Fragment3, jsx as jsx10, jsxs as jsxs6 } from "react/jsx-runtime";
+function LandingFooter({ contact = ADH_CONTACT } = {}) {
+  return /* @__PURE__ */ jsxs6(Fragment3, { children: [
+    /* @__PURE__ */ jsx10(FamilyFooter, { version: buildVersionLabel(), anchored: true, contact }),
+    /* @__PURE__ */ jsx10(SitesPopover, {}),
+    /* @__PURE__ */ jsx10(TermsModal, {}),
+    /* @__PURE__ */ jsx10(PrivacyModal, {})
   ] });
 }
 
@@ -402,8 +379,8 @@ function LandingFooter() {
 import { jsx as jsx11, jsxs as jsxs7 } from "react/jsx-runtime";
 var DEV_TOOLS_BUILD_ENABLED = DEV_BUILD;
 function AppShell({ header, children, footer, chromeGate, landingFooter }) {
-  const Chrome = chromeGate ?? Fragment3;
-  const bar = /* @__PURE__ */ jsx11(SiteFooter, { links: footer?.links, live: liveBuildIdentity() });
+  const Chrome = chromeGate ?? Fragment4;
+  const bar = /* @__PURE__ */ jsx11(SiteFooter, { links: footer?.links, contact: footer?.contact, live: liveBuildIdentity() });
   return /* @__PURE__ */ jsx11(AppShellProviders, { children: /* @__PURE__ */ jsx11(
     AdhAppShell2,
     {
@@ -417,7 +394,7 @@ function AppShell({ header, children, footer, chromeGate, landingFooter }) {
             // with no bar to rest in, he rests in his own corner, which the band's
             // bottom padding clears.
             /* @__PURE__ */ jsxs7("footer", { className: "adh-landing-footer-band", children: [
-              /* @__PURE__ */ jsx11(LandingFooter, {}),
+              /* @__PURE__ */ jsx11(LandingFooter, { contact: footer?.contact }),
               /* @__PURE__ */ jsx11(FooterChat, {})
             ] })
           ),

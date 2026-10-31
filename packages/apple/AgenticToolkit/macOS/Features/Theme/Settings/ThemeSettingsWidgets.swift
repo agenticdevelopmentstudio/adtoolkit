@@ -23,7 +23,7 @@ final class ThemeCard: NSView {
 
         // Elevated (vs. the detail pane's own surface) with an outline, so cards
         // read as distinct panels against the background.
-        let box = ThemedBox(fill: .elevatedSurface, stroke: .outline, cornerRadius: 10)
+        let box = ThemedBox(fill: .card, stroke: .outline, cornerRadius: 10)
         box.translatesAutoresizingMaskIntoConstraints = false
         box.addSubview(content)
         NSLayoutConstraint.activate([

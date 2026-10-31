@@ -30,8 +30,9 @@ public enum BuiltInThemes {
 
     /// All built-in themes, in display order: the hand-authored set followed
     /// by the themes ported from the web catalogue (`webPorted`, in
-    /// `BuiltInThemes+Web.swift`).
-    public static let all: [ColorTheme] = handAuthored + webPorted
+    /// `BuiltInThemes+Web.swift`), with their native adjustments applied
+    /// (`webPortedNative`, in `BuiltInThemes+Native.swift`).
+    public static let all: [ColorTheme] = handAuthored + webPortedNative
 
     /// The default theme ID (Solarized Dark).
     public static let defaultID = "A1B2C3D4-0001-4000-8000-000000000001"

@@ -111,7 +111,6 @@ export function DeviceApproval({ initialCode }: { initialCode: string }): ReactE
 
         {phase === "prompt" && (
           <div className="mt-4 flex flex-col gap-3">
-            <p className="text-sm text-apt-text-dim">Enter the code shown in your terminal.</p>
             <input
               value={code}
               onChange={(e) => setCode(e.target.value)}
@@ -163,7 +162,7 @@ export function DeviceApproval({ initialCode }: { initialCode: string }): ReactE
         )}
 
         {phase === "approved" && (
-          <p className="mt-4 text-sm text-apt-green">Approved — return to your terminal.</p>
+          <p className="mt-4 text-sm text-apt-green">Approved.</p>
         )}
         {phase === "denied" && (
           <p className="mt-4 text-sm text-apt-text-dim">Denied. The device was not granted access.</p>

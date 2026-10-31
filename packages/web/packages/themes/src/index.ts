@@ -30,3 +30,4 @@ export {
   AppearanceScope,
   type UseAppearancePreferences,
 } from './appearance-store'
+export { DocumentLoadScript } from './DocumentLoadScript'

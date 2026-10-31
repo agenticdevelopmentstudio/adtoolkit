@@ -3,16 +3,6 @@ import { useState, type ReactElement, type ReactNode } from "react";
 import { ButtonBar } from "@agenticdevelopertoolkit/ui/blocks";
 import { AlertModal } from "@agenticdevelopertoolkit/ui/components/alert-modal";
 
-/** The centered no-selection state every Settings section (and the panel host)
- *  shows in its leaf — one home for the styling. */
-export function SectionPlaceholder({ children }: { children: ReactNode }): ReactElement {
-  return (
-    <div className="flex flex-1 items-center justify-center p-8 text-center font-mono text-sm text-apt-text-dim">
-      {children}
-    </div>
-  );
-}
-
 /** How the shared `["configure-data"]` read is doing, as the roster levels need to
  *  render it. Threaded from ConfigPanel — the ONE component that holds the query — down
  *  to each roster so all of them say the same thing about the same load. */
@@ -23,7 +13,9 @@ export interface RosterLoadState {
 }
 
 /**
- * The rail's empty-list line, told apart by WHY the list is empty.
+ * The rail's empty-list line, told apart by WHY the list is empty — and blank when it is
+ * simply empty: the operator asked for inline help copy ("No sites yet.", "Select a …") to
+ * go, so only a load that is in flight or failed says anything.
  *
  * A roster level is the hierarchy's frontier, and an unselected frontier renders the
  * package's select-nudge INSTEAD of the detail pane (`overview`, on by default) — so
@@ -36,13 +28,19 @@ export interface RosterLoadState {
 export function rosterEmptyLabel(noun: string, load: RosterLoadState): string {
   if (load.error) return `Couldn't load ${noun}.`;
   if (load.isLoading) return `Loading ${noun}…`;
-  return `No ${noun} yet.`;
+  return "";
 }
 
-/** The nudge's blurb — the one slot the package still renders with an EMPTY list, and
- *  therefore the only place a failed roster load can say what went wrong. */
-export function rosterOverviewHelp(load: RosterLoadState, blurb: ReactNode): ReactNode {
-  return load.error ? <span className="text-apt-red">{load.error}</span> : blurb;
+/**
+ * A roster level's no-selection detail. The package's automatic select nudge ("Select a
+ * site …") is inline help, so it is OFF — the leaf is simply empty — except while the
+ * load has failed: the nudge is the one slot the package renders beside an EMPTY frontier
+ * list, and therefore the only place that failure can be said. Spread into the level.
+ */
+export function rosterOverview(load: RosterLoadState): { overview: boolean; overviewHelp?: ReactNode } {
+  return load.error
+    ? { overview: true, overviewHelp: <span className="text-apt-red">{load.error}</span> }
+    : { overview: false };
 }
 
 /** The inline mutation/query error line rendered under a section's button bar. */

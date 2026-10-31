@@ -122,9 +122,6 @@ export function TrafficCard(): ReactElement {
     { label: "pageviews · 7d", value: kpi(analytics, "pageviews", "7d") },
     { label: "visitors · 7d", value: kpi(analytics, "visitors", "7d") },
   ];
-  // "Not configured / no data" (every window null) vs a genuine measured 0 — only
-  // the former gets the onboarding note; a real 0 shows as 0.
-  const unconfigured = figures.every((f) => f.value === null);
   const { posthogUrl } = useStatusHost();
 
   return (
@@ -133,13 +130,6 @@ export function TrafficCard(): ReactElement {
       icon={<TrendingUp size={15} className="text-apt-blue" />}
       link={posthogUrl ? { href: posthogUrl, label: "PostHog" } : undefined}
       stats={figures.map((f) => ({ label: f.label, value: fmt(f.value) }))}
-      footnote={
-        unconfigured
-          ? "No traffic yet — anonymous, cookieless pageviews from the shared chrome land here."
-          : // Visitors is session-scoped under cookieless capture (no cross-session id),
-            // so it approximates unique sessions, not unique people — flag it honestly.
-            "anonymous · cookieless · approximate"
-      }
     />
   );
 }

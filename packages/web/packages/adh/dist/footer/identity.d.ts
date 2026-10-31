@@ -1,11 +1,53 @@
+import { type SiteDef } from '@agentic-toolkit/adh-registry';
+/** The class on the family footer's root element: the scope a site confines its stylesheet to
+ *  (`/*! @confine .adh-landing-footer *\/`). Here rather than beside FamilyFooter, which is
+ *  'use client': a server module importing it from there would get a client reference. */
+export declare const LANDING_FOOTER_CLASS = "adh-landing-footer";
+/** The sites the family footer lists: the directory less the ones it leaves out. */
+export declare const FAMILY_SITES: SiteDef[];
 export declare const BRAND_LABEL = "Agentic Development Studio";
 export declare const BRAND_HREF = "https://agenticdevelopmentstudio.com/";
+/** One row of the "All sites" panel (SitesPopover): a name, a line saying what it is, and where
+ *  it goes. */
+export type SitesPanelEntry = {
+    key: string;
+    label: string;
+    href: string;
+    description?: string;
+};
+/** A group of the "All sites" panel, titled like the registry's SITE_CATEGORIES. */
+export type SitesPanelGroup = {
+    label: string;
+    entries: SitesPanelEntry[];
+};
+/** The "All sites" panel: every site the family serves, grouped. FOOTER_SITES in the registry's
+ *  groups, with SITES_PANEL_ADDITIONS appended to theirs. The same on every page, the landing
+ *  page included. */
+export declare function sitesPanelGroups(): SitesPanelGroup[];
 /** The DOM id of the single shared sites-overview popover. The footer renders
  *  the panel once; every trigger (the "Sites" entry in the footer's copyright
  *  menu, the header site-switcher's "?" icon and its "help" command) opens it by this id, so
  *  there's exactly one instance — and therefore one crawlable copy of the SEO
  *  interlink set. */
 export declare const SITES_OVERVIEW_POPOVER_ID = "adh-sites-overview";
+/** Who a site's Contact column writes to: whose address it is, and the address it links. Per
+ *  site, unlike the copyright: a family site writes to the hub, and the studio and FishLamp
+ *  Design each to their own (they pass theirs to `LandingFooter`). */
+export type SiteContact = {
+    name: string;
+    email: string;
+};
+/** The family's own contact, the default for every site that does not pass one. */
+export declare const ADH_CONTACT: SiteContact;
+/** The DOM id of the dialog the floating copyright opens: the whole family footer, the one
+ *  the landing page ends with, over the page. */
+export declare const FAMILY_FOOTER_DIALOG_ID = "adh-family-footer";
+/** The id of the landing page's family band, the cards of the family's sites: what the drawer's
+ *  Hub Websites row jumps to (`/#family`). The band is the page's content, so the id is its heading's. */
+export declare const FAMILY_BAND_ID = "family";
+/** The id the in-flow landing footer carries, once per page: what the drawer's More Info row
+ *  jumps to (`/#more-info`). */
+export declare const MORE_INFO_ANCHOR_ID = "more-info";
 /** The footer's build identity: `v1.0.155 · a73e79b7`, or null when neither field exists.
  *
  *  Two fields doing two jobs. The semver is hand-bumped and scoped to ONE site's

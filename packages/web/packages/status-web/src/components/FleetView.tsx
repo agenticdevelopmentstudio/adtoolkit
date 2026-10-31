@@ -1,12 +1,10 @@
 "use client";
 import { type ReactElement } from "react";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useStatusApi } from "../api/client";
 import { StatusDot } from "./StatusDot";
 import { timeAgo } from "../lib/time-ago";
 import { useNow } from "../hooks/use-now";
-import { useStatusUser } from "../hooks/useStatusUser";
 import { COLORS, PALETTE } from "../lib/colors";
 // ---------------------------------------------------------------------------
 // Types
@@ -231,7 +229,6 @@ function hasDivergence(members: FleetMember[]): boolean {
 export function FleetView(): ReactElement {
   const query = useFleet();
   const nowMs = useNow(30_000);
-  const user = useStatusUser();
 
   const sharedStyle: React.CSSProperties = {
     display: "flex",
@@ -320,26 +317,6 @@ export function FleetView(): ReactElement {
             nowMs={nowMs}
           />
         ))}
-        {/* `/fleet` always returns THIS monitor, so the state worth calling out is "self
-            only", i.e. no peers configured yet. Admins get sent to the roster that fixes
-            it; everyone else just learns why it's bare. The length check is load-bearing:
-            `every` is true for an empty array, so a failed/empty payload would otherwise
-            claim "no peers configured" when the truth is that we don't know. */}
-        {members.length > 0 && members.every((m) => m.self) && (
-          <div style={{ color: PALETTE.muted, fontSize: 13 }}>
-            {user?.role === "admin" ? (
-              <>
-                No peers yet — add the monitors this one should watch in{" "}
-                <Link href="/settings/peers" style={{ color: PALETTE.blue, textDecoration: "underline" }}>
-                  Settings ▸ Fleet peers
-                </Link>
-                .
-              </>
-            ) : (
-              "No peers configured — this monitor is the whole fleet."
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

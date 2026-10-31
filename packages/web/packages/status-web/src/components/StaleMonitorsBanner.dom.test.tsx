@@ -100,7 +100,6 @@ describe("StaleMonitorsBanner", () => {
     for (const dnsOk of [true, false]) {
       banner([svc({ dnsOk, error: dnsOk ? "HTTP 500" : "DNS: does not resolve" })]);
       expect(screen.getByText(/🗑 RETIRE: 1 stale monitor down 7d\+/)).toBeTruthy();
-      expect(screen.getByText(/nothing says it was deleted — only you know/)).toBeTruthy();
       open();
       expect(await screen.findByRole("button", { name: "Retire" })).toBeTruthy();
       cleanup();

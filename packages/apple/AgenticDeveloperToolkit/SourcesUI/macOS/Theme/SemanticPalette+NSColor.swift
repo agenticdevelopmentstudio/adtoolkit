@@ -14,6 +14,7 @@ extension SemanticPalette {
     public var windowBackgroundColor: NSColor { nsColor(.windowBackground) }
     public var surfaceColor: NSColor { nsColor(.surface) }
     public var elevatedSurfaceColor: NSColor { nsColor(.elevatedSurface) }
+    public var cardColor: NSColor { nsColor(.card) }
     public var controlBackgroundColor: NSColor { nsColor(.controlBackground) }
     public var primaryTextColor: NSColor { nsColor(.primaryText) }
     public var secondaryTextColor: NSColor { nsColor(.secondaryText) }
@@ -30,6 +31,7 @@ extension SemanticPalette {
     public var dividerColor: NSColor { nsColor(.divider) }
     public var selectionColor: NSColor { nsColor(.selection) }
     public var selectionTextColor: NSColor { nsColor(.selectionText) }
+    public var selectionEdgeColor: NSColor { nsColor(.selectionEdge) }
     public var cursorColor: NSColor { nsColor(.cursor) }
 
     /// The 16 ANSI colors as `NSColor`s (for chart series, terminal previews, etc.).

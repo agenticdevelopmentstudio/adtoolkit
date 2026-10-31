@@ -199,8 +199,12 @@ export function useChatSizing(
       anchorRo.observe(cap.ref.current)
     }
 
+    // No window `scroll` listener, deliberately. A fixed chat does not move when the page
+    // scrolls, so it never needed one; a chat in the page's flow does, and capping it by
+    // where scrolling had carried it crushed it: scrolled down to help's footer, the chat
+    // was a 45px sliver, and each cap moved the page, which moved the scroll, which moved
+    // the cap, so the page shook by a pixel on every frame.
     window.addEventListener('resize', recompute)
-    window.addEventListener('scroll', recompute, { passive: true })
 
     // visualViewport reflects the iOS soft-keyboard height; window.resize
     // does not. Without these listeners, content-hugging maxHeight is stale
@@ -215,7 +219,6 @@ export function useChatSizing(
       ro.disconnect()
       anchorRo?.disconnect()
       window.removeEventListener('resize', recompute)
-      window.removeEventListener('scroll', recompute)
       vv?.removeEventListener('resize', recompute)
       vv?.removeEventListener('scroll', recompute)
       releaseOnly()

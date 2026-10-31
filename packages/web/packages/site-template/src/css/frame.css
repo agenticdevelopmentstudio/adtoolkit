@@ -17,9 +17,9 @@
   --lp-bar-bg: linear-gradient(var(--lp-ground) 75%, transparent);
 
   /* Room for bitbag's resting dock at the foot of the last band and of the hero. At rest his
-   * face is 66px (`BitbagDock`'s 132px default size, halved; bitbag-dock.css) sitting
-   * 6px (`--bb-dock-parked-lift`) + 0.1rem above the bottom edge, so he occupies about
-   * 74px. 6rem (96px) leaves him a clear 22px of air under the last line, plus the device's
+   * box is 66×37px (`BitbagDock`'s 132px default size, halved; bitbag-dock.css), parked so
+   * his face sits 1.75rem (`--bb-dock-parked-margin`) above the bottom edge, so he reaches about
+   * 62px up. 6rem (96px) leaves him plenty of air under the last line, plus the device's
    * bottom inset, which the dock also rides above. */
   --lp-dock-clear: calc(6rem + env(safe-area-inset-bottom, 0px));
 }
@@ -111,6 +111,21 @@
  * base.css says why), and the bands do not snap. */
 .lp-band {
   scroll-margin-top: var(--st-band-clear, calc(32px + 2 * var(--lp-bar-pad-y, 1.1rem)));
+}
+
+/* The burger and drawer under a site's own header (`SiteChrome underHeader`, beside the frame's
+ * `header` slot). The chrome starts where the header ends, so the header is never covered; the
+ * bar drops its gradient, since the header above already lifts the burger off the page; and the
+ * drawer clears only its own close button. `--st-header-height` is the header's height, which
+ * the site that brings the header sets; 3.5rem is a bar's. The bands' jump clearance grows by
+ * the same height, since a band now lands under the header as well as the burger. */
+.st-chrome-under-header {
+  --lp-chrome-top: var(--st-header-height, 3.5rem);
+  --lp-bar-bg: none;
+  --lp-drawer-pad-top: 4rem;
+}
+:root:has(.st-chrome-under-header) {
+  --st-band-clear: calc(var(--st-header-height, 3.5rem) + 32px + 2 * var(--lp-bar-pad-y, 1.1rem));
 }
 
 /* The hero's meta line (version, platform, licence) reads as a caption. A site whose meta is

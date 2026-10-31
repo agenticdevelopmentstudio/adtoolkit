@@ -9,7 +9,7 @@ import { useStatusApi } from "../../api/client";
 import { useSettingsEntityLevel } from "../settings-level";
 import { useEditorMutations } from "./use-editor-mutations";
 import { useDraftForSelection } from "./use-draft-for-selection";
-import { EntityEditorShell, SectionErrorText, SectionPlaceholder } from "./section-chrome";
+import { EntityEditorShell, SectionErrorText } from "./section-chrome";
 
 interface UserRow {
   id: string;
@@ -34,7 +34,7 @@ export function UsersSection({
   /** URL-selected user id (`/settings/users/<id>`), owned by the board level. */
   selectedId: string | null;
   onNavigate: (id: string | null) => void;
-}): ReactElement {
+}): ReactElement | null {
   const api = useStatusApi();
   const queryClient = useQueryClient();
   const { busy, error, setError, run } = useEditorMutations();
@@ -108,7 +108,8 @@ export function UsersSection({
         setError(null);
         onNavigate(null);
       },
-      emptyLabel: queryError ? "Failed to load users." : "No users found.",
+      emptyLabel: queryError ? "Failed to load users." : "",
+      overview: false,
     }),
     [users, selectedId, onNavigate, setError, queryError],
   );
@@ -118,7 +119,7 @@ export function UsersSection({
     return <SectionErrorText>{queryError.message}</SectionErrorText>;
   }
   if (!current) {
-    return <SectionPlaceholder>Select a user to manage their role.</SectionPlaceholder>;
+    return null;
   }
   return (
     <EntityEditorShell

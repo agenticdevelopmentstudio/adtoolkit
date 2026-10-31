@@ -237,15 +237,7 @@ export function PlatformProjects({ platform, onChanged }: { platform: string; on
       {error && <span className="font-mono text-[0.7rem] text-apt-red">{error}</span>}
       {notice && <span className="font-mono text-[0.7rem] text-apt-text-muted">{notice}</span>}
 
-      {projects.length === 0 ? (
-        <span className="font-mono text-[0.7rem] uppercase tracking-wider text-apt-text-dim">
-          No projects seen on this platform yet — they appear after the first sync.
-        </span>
-      ) : visible.length === 0 ? (
-        <span className="font-mono text-[0.7rem] uppercase tracking-wider text-apt-text-dim">
-          No projects match this filter.
-        </span>
-      ) : (
+      {visible.length === 0 ? null : (
         <div className="flex min-h-0 flex-1 flex-col gap-px overflow-y-auto rounded-md border border-apt-border bg-apt-bg p-1">
           {visible.map((p) => {
             const acting = busy === rowKey(p);

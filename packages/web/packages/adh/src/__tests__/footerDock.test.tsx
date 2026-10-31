@@ -17,25 +17,23 @@
  *      <ThemeStyle> around the dock sets the same custom properties on a FARTHER ancestor and
  *      silently loses, which is exactly how the picker spent a while looking wired and
  *      theming nothing (see footer/chat-theme-store.ts);
- *   4. his resting box FITTING the slot the bar keeps for it. The box's width is bitbag's
- *      (an inline style, from his `size`) and the slot's is adh-site.css's, so neither file
- *      can see the other; only the real dock beside the real stylesheet can.
+ *   4. his resting place: adh-site.css styles the dock by one selector, which has to match the
+ *      real root, and lifts him by the lift bitbag declares rather than a number of its own.
  *
  * `FooterChatInner` is rendered directly rather than through `FooterChat`: the loader is a
  * three-line `next/dynamic` wrapper whose import resolves to the package's built dist, so
  * going through it would test the last build instead of the source.
  */
-import { readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 // Type-side too, not just the runtime setup — see footerBitbag.test.tsx.
 import '@testing-library/jest-dom/vitest'
 import { render, cleanup } from '@testing-library/react'
 import { ThemeStyle, type ThemeKey } from '@agenticdevelopertoolkit/themes'
 import { DEFAULT_THEME } from '@agentic-toolkit/bitbag'
-import { REST_DOCK_SELECTOR } from '../footer/useFooterRestOffset'
 import { adhStylesheet, bitbagStylesheet, styleRules } from './stylesheetRules'
 
+/** The selector adh-site.css styles the footer's dock by. */
+const REST_DOCK_SELECTOR = '.bb-dock.adh-footer__chat'
 /** Mirrors footer/chat-theme-store.ts — the localStorage key the Debug console writes. */
 const STORAGE_KEY = 'adh-chat-theme'
 /** bitbag scopes his own theme block to `.pc-theme-scope` (BitbagChat). */
@@ -124,43 +122,30 @@ describe('footer dock', () => {
   })
 })
 
-describe('his resting box and the slot the bar keeps for it', () => {
-  it('is the element `useFooterRestOffset` writes his offset on', async () => {
-    // The hook finds the dock by selector. Were that to stop matching the real root, the
-    // offset would land nowhere and he would rest at the centre, over the bar's links.
+describe('his resting place', () => {
+  it('is the element adh-site.css styles the footer dock by', async () => {
+    // Were that selector to stop matching the real root, the footer's lift and his wider chat
+    // would land nowhere.
     const { baseElement } = await dockIn(undefined)
     expect(baseElement.querySelector(REST_DOCK_SELECTOR)).toBe(baseElement.querySelector('.bb-dock'))
-  })
-
-  it('is never wider than the slot, in the same unit', async () => {
-    const { baseElement } = await dockIn(undefined)
     expect(baseElement.querySelector('.bb-dock')).toHaveClass('bb-dock--resting')
-    const box = baseElement.querySelector<HTMLElement>('.bb-dock__avatar')!.style.width
-    expect(box).toMatch(/^\d+(\.\d+)?px$/)
-
-    // Source text, comments stripped: vitest hands a CSS import back as an empty string.
-    const css = readFileSync(resolve(import.meta.dirname, '../styles/adh-site.css'), 'utf8').replace(
-      /\/\*[\s\S]*?\*\//g,
-      '',
-    )
-    const slot = css.match(/--adh-footer-rest-slot:\s*([^;]+);/)
-    expect(slot, 'no --adh-footer-rest-slot in adh-site.css — did it move?').not.toBeNull()
-    // In px, the unit his box is laid out in. The slot was 4.25rem, and the Text size
-    // setting's Small root (14px) made it 59.5px against his 66px box, which then covered
-    // the left edge of Legal and took its clicks.
-    expect(slot![1]!.trim()).toMatch(/^\d+(\.\d+)?px$/)
-    expect(parseFloat(slot![1]!)).toBeGreaterThanOrEqual(parseFloat(box))
   })
 
-  it('is lifted by the lift bitbag declares, so a page without the footer lands him in the same place', () => {
-    // `BitbagStandalone` mounts him on a footerless page by reading `--bb-dock-parked-lift`
-    // (bitbag-dock.css, where it is declared — the only copy). This rule reading the same
-    // property, rather than a number of its own, is what keeps the two mountings level.
+  it('is parked where bitbag declares, so a page without the footer lands him in the same place', () => {
+    // `BitbagStandalone` mounts him on a footerless page by reading `--bb-dock-parked-shift`
+    // and `--bb-dock-parked-lift` (bitbag-dock.css, where they are declared — the only copy).
+    // This rule reading the same properties, rather than numbers of its own, is what keeps
+    // the two mountings level.
     const footer = styleRules(adhStylesheet('adh-site.css')).find((r) => r.selectors.includes(REST_DOCK_SELECTOR))
     expect(footer, `no ${REST_DOCK_SELECTOR} rule in adh-site.css — did it move?`).toBeDefined()
+    expect(footer!.get('--bb-dock-rest-x')).toBe('var(--bb-dock-parked-shift)')
     expect(footer!.get('--bb-dock-rest-lift')).toBe('var(--bb-dock-parked-lift)')
+    // Both are worked out from one margin, so his face sits as far in from the right as up
+    // from the bottom.
     const rig = styleRules(bitbagStylesheet('bitbag-dock.css')).find((r) => r.selectors.includes('.bb-dock'))
-    expect(rig?.get('--bb-dock-parked-lift')).toMatch(/^\d+(\.\d+)?px$/)
+    expect(rig?.get('--bb-dock-parked-margin')).toMatch(/^\d+(\.\d+)?rem$/)
+    for (const prop of ['--bb-dock-parked-shift', '--bb-dock-parked-lift'])
+      expect(rig?.get(prop)).toContain('var(--bb-dock-parked-margin)')
   })
 })
 

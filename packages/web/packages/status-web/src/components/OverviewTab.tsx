@@ -10,17 +10,18 @@ import { useIntegrations } from "../hooks/use-integrations";
 import { useMediaQuery } from "../hooks/use-media-query";
 import { useEnvFilter } from "../hooks/use-env-filter";
 import { useActivityTtl } from "../hooks/use-activity-ttl";
+import { usePersistedState, decodeBoolean } from "../hooks/use-persisted-state";
 import { useNow } from "../hooks/use-now";
 import { useBuildProgress } from "../hooks/use-build-progress";
 import { problemToRow, activityToRow, type Row } from "../lib/row-model";
 import type { ActivityRow } from "../lib/board-types";
-import { indicatorFromProblems, INDICATOR_STATE } from "../lib/overview";
+import { indicatorFromProblems, INDICATOR_STATE, isUnresolvedActivity } from "../lib/overview";
 import { overallUptimePercent } from "../lib/uptime";
 import { buildSublabel } from "../lib/status-sublabel";
 import { shortSha } from "../lib/format";
 import { ISSUE_SOURCES, type IssueSource } from "../lib/issue-sources";
 import { BigIndicator } from "./BigIndicator";
-import { OverviewStats, StatsGear, DEFAULT_SPAN, type Span } from "./OverviewStats";
+import { OverviewStats, StatsGear, DEFAULT_SPAN, SPANS, type Span } from "./OverviewStats";
 import { SelfCheckBanner } from "./SelfCheckBanner";
 import { DegradedBanner } from "./DegradedBanner";
 import { UnconfiguredProjectsBanner } from "./UnconfiguredProjectsBanner";
@@ -78,7 +79,7 @@ function UnknownBoardPanel({ detail }: { detail?: string | null }): ReactElement
         <StatusDot status="unknown" size={96} decorative />
         <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "0.05em", color: PALETTE.amber }}>Status unknown — board unavailable</div>
         <div style={{ fontFamily: mono, fontSize: 12.5, color: PALETTE.muted, maxWidth: "48ch" }}>
-          {detail ?? "the status board could not be read — check the monitor's connection to its own API"}
+          {detail ?? "the status board could not be read"}
         </div>
       </div>
     </InfoPanel>
@@ -103,13 +104,24 @@ export function OverviewTab(): ReactElement {
   // Coarse 30s clock — drives TTL/stuck derivations without per-second re-renders.
   const nowMs = useNow();
 
+  // The gear settings below are persisted (localStorage), so a reader's choices
+  // survive a reload — like the environment filter and age-out.
   // Recent Activity hides canceled deploys by default; its gear opts them in.
-  const [showCanceled, setShowCanceled] = useState(false);
+  const [showCanceled, setShowCanceled] = usePersistedState("adh-status-show-canceled", false, decodeBoolean);
   // Recent Activity's "Filter" gear section: narrow the pane to builds still in flight
-  // (queued/building/deploying) or failed. Component state, like show-canceled.
-  const [inProgressOrFailedOnly, setInProgressOrFailedOnly] = useState(false);
-  // Stats time span (uptime% + response chart) — set from the Stats gear.
-  const [span, setSpan] = useState<Span>(DEFAULT_SPAN);
+  // (queued/building/deploying) or failed.
+  const [inProgressOrFailedOnly, setInProgressOrFailedOnly] = usePersistedState(
+    "adh-status-in-progress-or-failed-only",
+    false,
+    decodeBoolean,
+  );
+  // Stats time span (uptime% + response chart) — set from the Stats gear. Stored by key.
+  const [span, setSpan] = usePersistedState<Span>(
+    "adh-status-stats-span",
+    DEFAULT_SPAN,
+    (raw) => SPANS.find((s) => s.key === raw),
+    (s) => s.key,
+  );
 
   // How long activity stays in the list (persisted; default 1h, "never" = keep).
   // Applied here (the view), so changing it is instant.
@@ -131,9 +143,7 @@ export function OverviewTab(): ReactElement {
   // is not merely waste: the pane's auto-fill keeps firing while `shown` is under its
   // threshold, so the budget would spend itself pulling 1500 rows the reader just
   // pressed a button to hide.
-  const historyDisabledReason: "age-out" | "cleared" | undefined =
-    ttlMs != null ? "age-out" : clearedBefore > 0 ? "cleared" : undefined;
-  const historyEnabled = historyDisabledReason === undefined;
+  const historyEnabled = ttlMs == null && clearedBefore === 0;
   const liveActivityRaw = useMemo(() => board?.activity ?? [], [board]);
   const history = useActivityHistory({ enabled: historyEnabled, live: liveActivityRaw });
 
@@ -174,7 +184,7 @@ export function OverviewTab(): ReactElement {
   // would re-walk the whole feed — history pages included — every 30 seconds to produce a
   // byte-identical array.
   const ttlNowMs = ttlMs == null ? 0 : nowMs;
-  const { problems, activity: activityAll, feed } = useMemo(() => {
+  const { problems, activity: activityAll, feed, unresolvedIds } = useMemo(() => {
     const problemRows = (board?.problems ?? []).filter(keep).map(problemToRow);
     const pipeline = (rows: ActivityRow[]): Row[] =>
       rows
@@ -203,9 +213,15 @@ export function OverviewTab(): ReactElement {
       a.at === b.at ? (a.id === b.id ? 0 : a.id < b.id ? -1 : 1) : a.at < b.at ? -1 : 1,
     );
     const activityRows = pipeline(feed);
+    // Which feed rows the "in progress or failed only" filter keeps — judged on the WIRE
+    // row, because a resolved failure is recognised by its target and time against the
+    // live Problems list, and `Row` carries neither. Against the unfiltered problems: the
+    // env filter is the pipeline's job, not this one's.
+    const allProblems = board?.problems ?? [];
+    const unresolvedIds = new Set(feed.filter((a) => isUnresolvedActivity(a, allProblems)).map((a) => a.id));
     // `feed` goes out UNFILTERED as well: the controls that decide what the reader is
     // even offered (Clear, the Sources list) have to see the whole record, not the view.
-    return { problems: problemRows, activity: activityRows, feed };
+    return { problems: problemRows, activity: activityRows, feed, unresolvedIds };
   }, [board, history.rows, keep, clearedBefore, ttlMs, ttlNowMs]);
   // Unfiltered (all envs) takes the server's answer verbatim, so the common case
   // can never disagree with it; an env-filtered view re-derives the sign over just
@@ -273,11 +289,9 @@ export function OverviewTab(): ReactElement {
   const isCanceled = (r: Row): boolean => r.statusWord === "canceled";
   const hasCanceled = activityAll.some(isCanceled);
   const withCanceled = showCanceled ? activityAll : activityAll.filter((r) => !isCanceled(r));
-  // The tone is the server's verdict on the row (`derive-activity.ts`): "progress" is a
-  // queued/building/deploying phase (or a minor incident), "bad" a failure. Keying off
-  // tone, not the verb text, means a new in-flight or failure verb is covered for free.
-  const isInProgressOrFailed = (r: Row): boolean => r.tone === "progress" || r.tone === "bad";
-  const activity = inProgressOrFailedOnly ? withCanceled.filter(isInProgressOrFailed) : withCanceled;
+  // In flight, or failed AND still unresolved — `isUnresolvedActivity` (lib/overview.ts)
+  // is the rule; a failure the fleet has since recovered from is history, not shown here.
+  const activity = inProgressOrFailedOnly ? withCanceled.filter((r) => unresolvedIds.has(r.key)) : withCanceled;
 
   const uptimePercent = overallUptimePercent(uptimeQuery.data?.services ?? []);
 
@@ -308,10 +322,10 @@ export function OverviewTab(): ReactElement {
   // Only the `blind` panel below reads this now — a transient live-feed outage no
   // longer tears the board down (BoardShell's ConnectionOverlay covers it calmly),
   // so the OfflinePanel is reserved for the real config fault of nothing to watch.
-  const blindDetail = "no endpoints configured — the monitor has nothing to watch (check the shipped config)";
+  const blindDetail = "no endpoints configured — the monitor has nothing to watch";
 
   // Shared props for both promoted activity panels.
-  const env = { envs, allEnvs: allEnvNames, onToggleEnv: toggleEnv, allSources, envFiltered: !allEnvs };
+  const env = { envs, allEnvs: allEnvNames, onToggleEnv: toggleEnv, allSources };
 
   const problemsPanel = (flex: string, maxHeight?: string): ReactElement => (
     <ActivityPanel kind="problems" icon={<AlertTriangle size={15} color={PALETTE.amber} />} title="Problems" rows={problems} flex={flex} maxHeight={maxHeight} {...env} />
@@ -340,9 +354,7 @@ export function OverviewTab(): ReactElement {
       historyLoading={history.loading}
       historyExhausted={history.exhausted}
       onScrollGesture={history.resetAutoBudget}
-      historyBudgetSpent={history.autoBudgetSpent}
       historyError={history.error}
-      historyDisabledReason={historyDisabledReason}
       center={
         <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
           <BuildProgressBar progress={buildProgress} />
@@ -450,11 +462,11 @@ export function OverviewTab(): ReactElement {
     // honest "the first cycle hasn't finished — or hasn't run".
     const detail =
       boardReason === "stale"
-        ? "the status board has not refreshed — check the monitor's connection to its own API"
+        ? "the status board has not refreshed"
         : boardReason === "frozen"
-          ? "the status board is refreshing, but nothing behind it is — no new observation has been recorded, so nothing on screen can be trusted as current (check the monitor process)"
+          ? "the status board is refreshing, but nothing behind it is — no new observation has been recorded, so nothing on screen can be trusted as current"
           : boardReason === "no-data"
-            ? "the monitor has endpoints to watch but has not recorded a single observation yet — nothing on screen can be trusted as current until its first cycle completes (check the monitor process)"
+            ? "the monitor has endpoints to watch but has not recorded a single observation yet — nothing on screen can be trusted as current until its first cycle completes"
             : (boardError?.message ?? null);
     return stopSign(<UnknownBoardPanel detail={detail} />);
   }
@@ -468,7 +480,6 @@ export function OverviewTab(): ReactElement {
         <div className="adh-snap-scroll">
           <section className="adh-snap-pane adh-snap-hero">
             <BigIndicator state={indicator.state} count={indicator.count} sublabel={sublabel} extra={<OverviewStats uptimePercent={uptimePercent} span={span} onSpanChange={setSpan} />} />
-            <div className="adh-snap-hint" aria-hidden>scroll for details ↓</div>
           </section>
           <section className="adh-snap-pane" style={{ display: "flex", flexDirection: "column", gap: 12, padding: 12 }}>
             {problemsPanel("0 1 auto", "45%")}

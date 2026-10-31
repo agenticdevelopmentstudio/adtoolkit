@@ -70,6 +70,31 @@ class ToolkitPackages(unittest.TestCase):
             self.assertIn("not the toolkit this script belongs to", str(raised.exception.code))
 
 
+class PeerWorkspaces(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name).resolve()
+        # The root is the site's own workspace; external/peer/web is another one.
+        (self.root / "pnpm-workspace.yaml").write_text("packages: ['site']\n")
+        self.peer = self.root / "external" / "peer" / "web"
+        (self.peer / "packages" / "avatar").mkdir(parents=True)
+        (self.peer / "pnpm-workspace.yaml").write_text("packages: ['packages/*']\n")
+        (self.root / "loose").mkdir()
+
+    def test_a_link_into_another_workspace_is_grouped_under_its_root(self):
+        site = site_with(self.root, {
+            "@peer/avatar": "link:../external/peer/web/packages/avatar",
+            "@agenticdevelopertoolkit/site-template": link("site-template", self.root / "site"),
+            "next": "16.0.0",
+        })
+        self.assertEqual(build_site.peer_workspaces(site / "package.json"), {self.peer: ["@peer/avatar"]})
+
+    def test_a_link_in_the_sites_own_workspace_or_in_none_is_left_alone(self):
+        site = site_with(self.root, {"loose": "link:../loose", "gone": "link:../../nowhere"})
+        self.assertEqual(build_site.peer_workspaces(site / "package.json"), {})
+
+
 class ToolkitFilters(unittest.TestCase):
     def test_each_package_is_built_with_its_workspace_dependencies(self):
         self.assertEqual(
@@ -123,6 +148,26 @@ class Main(unittest.TestCase):
                 (["pnpm", *filters, "install", "--frozen-lockfile"], TOOLKIT),
                 (["pnpm", *filters, "--workspace-concurrency=1", "run", "build"], TOOLKIT),
                 (["pnpm", "run", "build"], self.site.resolve()),
+            ],
+        )
+
+    def test_a_peer_workspace_is_installed_and_built_after_the_toolkit(self):
+        peer = Path(self.tmp.name).resolve() / "peer"
+        (peer / "packages" / "avatar").mkdir(parents=True)
+        (peer / "pnpm-workspace.yaml").write_text("packages: ['packages/*']\n")
+        deps = json.loads((self.site / "package.json").read_text())["dependencies"]
+        deps["@peer/avatar"] = "link:" + os.path.relpath(peer / "packages" / "avatar", self.site)
+        (self.site / "package.json").write_text(json.dumps({"dependencies": deps}))
+        with mock.patch.object(
+            build_site, "workspace_projects",
+            side_effect=lambda env, workspace: {"@agenticdevelopertoolkit/site-template", "@peer/avatar"},
+        ):
+            build_site.main(["--site", str(self.site), "--toolkits-only"])
+        self.assertEqual(
+            [(cmd, cwd) for cmd, cwd, _ in self.calls[2:]],
+            [
+                (["pnpm", "--filter", "@peer/avatar...", "install", "--frozen-lockfile"], peer),
+                (["pnpm", "--filter", "@peer/avatar...", "--workspace-concurrency=1", "run", "build"], peer),
             ],
         )
 

@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactElement } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import { Btn, indexRows } from '@agenticdevelopertoolkit/landing'
 import type { LandingPage, NavLink } from '@agenticdevelopertoolkit/landing'
 import { NavChrome } from '@agenticdevelopertoolkit/landing/client'
@@ -18,15 +18,28 @@ import { Words } from './words'
  * Every in-page row is written `/#id` rather than `#id`, so it still lands on the section
  * from any other route of the site; on `/` itself the kit's drawer still glides there.
  * The copy's `nav.action`, when it words one, is a ghost button in the bar beside the burger.
+ *
+ * `underHeader` is the same drawer under a site's own header (the frame's `header` slot): the
+ * burger alone, below that header, with no wordmark or action, since the header already carries
+ * both. The wrapper's class is what moves the chrome down (frame.css).
+ *
+ * `sections` and `foot` are the frame's `drawer` and `drawerFoot` slots, rendered: the first
+ * goes after the rows, the second takes the place of the copy's foot.
  */
 export function SiteChrome({
   copy,
   page,
   extra,
+  sections,
+  foot,
+  underHeader = false,
 }: {
   copy: FrameCopy
   page: LandingPage
   extra: FrameConfig['drawerExtra']
+  sections?: ReactNode
+  foot?: ReactNode
+  underHeader?: boolean
 }): ReactElement {
   const { email } = copy.contact
   const worded = copy.nav.extra ?? {}
@@ -48,7 +61,7 @@ export function SiteChrome({
     ...extraRows,
     ...(copy.nav.contact === undefined ? [] : [{ href: `mailto:${email}`, label: copy.nav.contact }]),
   ]
-  const footer = (
+  const footer = foot ?? (
     <>
       {copy.drawer === undefined ? null : (
         <>
@@ -66,10 +79,18 @@ export function SiteChrome({
     </>
   )
   const { action } = copy.nav
+  if (underHeader) {
+    return (
+      <div className="st-chrome-under-header" style={{ display: 'contents' }}>
+        <NavChrome links={links} sections={sections} footer={footer} />
+      </div>
+    )
+  }
   return (
     <NavChrome
       brand={<Words text={copy.brand} />}
       links={links}
+      sections={sections}
       footer={footer}
       action={
         action === undefined ? undefined : (

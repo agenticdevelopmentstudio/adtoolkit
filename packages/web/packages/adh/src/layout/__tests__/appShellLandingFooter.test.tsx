@@ -18,6 +18,11 @@ vi.mock('@agentic-toolkit/adh/footer', async () => {
     SiteFooter: () => <footer>BAR</footer>,
     FooterChat: () => <div>BITBAG</div>,
     SitesPopover: () => null,
+    // The landing footer's body and the dialogs it brings, reduced to the one class the test
+    // looks for: what they render is footer.test's.
+    FamilyFooter: () => <div className="adh-landing-footer" />,
+    TermsModal: () => null,
+    PrivacyModal: () => null,
   }
 })
 

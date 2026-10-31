@@ -15,7 +15,13 @@ export interface NavChromeProps {
    */
   brand?: ReactNode
   links: NavLink[]
-  /** Rendered in the drawer's foot — a mailto, a byline, whatever. */
+  /**
+   * More of the drawer after the rows: a host's own rows (`lp-nav` links, say).
+   * Picking any link or button in it closes the drawer, as a row does.
+   */
+  sections?: ReactNode
+  /** Rendered in the drawer's foot — a mailto, a byline, whatever. Picking a link or button in
+   *  it closes the drawer too. */
   footer?: ReactNode
   /**
    * One call to action pinned to the bar's right end, on a wide viewport only — the

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { DeploymentDTO } from "../types";
-import { isRealEnvDeploy, isRealEnvDeployRow, activityWindowLabel } from "./overview";
+import type { ActivityRow, Problem } from "./board-types";
+import { isRealEnvDeploy, isRealEnvDeployRow, activityWindowLabel, isUnresolvedActivity } from "./overview";
 
 function deploy(overrides: Partial<DeploymentDTO>): DeploymentDTO {
   return {
@@ -65,5 +66,60 @@ describe("activityWindowLabel — the caption for the window the SERVER chose", 
 
   it("never captions a sub-hour window as 0h", () => {
     expect(activityWindowLabel(0, 60_000)).toBe("1h");
+  });
+});
+
+describe("isUnresolvedActivity — the 'in progress or failed only' rule", () => {
+  const T = "vercel:site";
+  function row(o: Partial<ActivityRow>): ActivityRow {
+    return {
+      id: "r", kind: "deploy", step: "build", source: "vercel", tone: "bad", verb: "build failed",
+      target: T, name: "site", environment: "production", detail: null, sourceUrl: null,
+      liveUrl: null, commitHash: null, commitMessage: null, commitRepo: null, branch: null,
+      errorText: null, at: "2026-10-30T12:00:00.000Z", ...o,
+    };
+  }
+  function problem(o: Partial<Problem>): Problem {
+    return {
+      target: T, source: "vercel", name: "site", environment: "production", severity: "major",
+      state: "failed", statusCode: null, detail: null, sourceUrl: null, liveUrl: null,
+      commitHash: null, commitMessage: null, commitRepo: null, branch: null, errorText: null,
+      since: "2026-10-30T12:00:00.000Z", ...o,
+    };
+  }
+
+  it("keeps an in-flight build or deploy row with no problem at all", () => {
+    expect(isUnresolvedActivity(row({ tone: "progress", verb: "building" }), [])).toBe(true);
+    expect(isUnresolvedActivity(row({ step: "deploy", tone: "progress", verb: "deploying" }), [])).toBe(true);
+  });
+
+  it("drops finished, canceled and unknown rows", () => {
+    for (const tone of ["good", "neutral", "stale"] as const) {
+      expect(isUnresolvedActivity(row({ tone }), [problem({})])).toBe(false);
+    }
+  });
+
+  it("keeps a failure only while its target is still a problem", () => {
+    expect(isUnresolvedActivity(row({}), [problem({})])).toBe(true);
+    expect(isUnresolvedActivity(row({}), [])).toBe(false);
+    expect(isUnresolvedActivity(row({}), [problem({ target: "vercel:other" })])).toBe(false);
+  });
+
+  it("drops a failure older than the open problem's onset — an earlier, recovered run", () => {
+    const p = problem({ since: "2026-10-30T13:00:00.000Z" });
+    expect(isUnresolvedActivity(row({ at: "2026-10-30T12:00:00.000Z" }), [p])).toBe(false);
+    expect(isUnresolvedActivity(row({ at: "2026-10-30T13:05:00.000Z" }), [p])).toBe(true);
+  });
+
+  it("drops issue rows (incident openings, minor ones included) — they are not builds", () => {
+    // e.g. "app errors on glitchtip": nothing shipped to cause it, and while it is open the
+    // Problems pane already carries it — so even a LIVE problem doesn't keep it here.
+    const opened = row({ kind: "probe", step: null, source: "glitchtip", target: "gt-1", verb: "app errors" });
+    const minor = { ...opened, tone: "progress" as const };
+    const live = [problem({ target: "gt-1", source: "glitchtip" })];
+    expect(isUnresolvedActivity(opened, [])).toBe(false);
+    expect(isUnresolvedActivity(minor, [])).toBe(false);
+    expect(isUnresolvedActivity(opened, live)).toBe(false);
+    expect(isUnresolvedActivity(minor, live)).toBe(false);
   });
 });

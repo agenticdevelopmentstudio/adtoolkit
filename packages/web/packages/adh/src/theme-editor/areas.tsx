@@ -151,22 +151,16 @@ function FooterPreview() {
           outranks its single-class default — no !important. */}
       <style>{`.tep-preview .adh-theme-switcher { display: none; }`}</style>
       {/* A `specimen`, because the page's own footer is on the page too, and what there
-          must be one of — the menus' ids, the dialogs, bitbag — this copy leaves to that
-          one (SiteFooterProps.specimen). On the page's ids, both copyright buttons opened
-          the page's menu, and it opened at this copy's caret, whichever was clicked.
+          must be one of — the dialogs, bitbag — this copy leaves to that one
+          (SiteFooterProps.specimen). No links: they live in the family footer, which is
+          the page's dialog and not this copy's.
 
           bitbag is NOT hidden the way the theme switcher is, and can't be: he portals
           himself to `document.body`, so he is not a descendant of `.tep-preview` and a
           scoped rule never matches him. Hiding him from here used to work and silently
           stopped when the portal landed — a second, full-size, live dock over the
           console previewing him. A specimen doesn't mount him at all. */}
-      <SiteFooter
-        specimen
-        links={[
-          { label: 'GitHub', href: '#' },
-          { label: 'Status', href: '#' },
-        ]}
-      />
+      <SiteFooter specimen />
     </div>
   )
 }
@@ -369,23 +363,16 @@ export const THEME_AREAS: ThemeArea[] = [
       // — Footer —
       {
         id: 'global.footer-bar',
-        label: 'Footer bar',
-        selector: '.adh-footer',
-        props: ['background-color', 'border-top-color', 'color'],
+        label: 'Footer box',
+        selector: '.adh-footer__copyright',
+        props: ['background-color', 'border-color', 'color'],
         Preview: FooterPreview,
       },
       {
         id: 'global.footer-text',
         label: 'Footer text',
-        selector: '.adh-footer__copyright',
+        selector: '.adh-footer__copyright-trigger',
         props: ['color', 'font-family', 'font-size', 'letter-spacing'],
-        Preview: FooterPreview,
-      },
-      {
-        id: 'global.footer-links',
-        label: 'Footer links',
-        selector: '.adh-footer__link',
-        props: ['color', 'font-family', 'font-size'],
         Preview: FooterPreview,
       },
       {

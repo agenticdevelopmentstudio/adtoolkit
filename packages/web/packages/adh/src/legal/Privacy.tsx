@@ -12,7 +12,7 @@ export function PrivacyBody(): ReactElement {
         This Privacy Policy explains how Mike Fullerton (&ldquo;<strong>we</strong>&rdquo;,
         &ldquo;<strong>us</strong>&rdquo;, or &ldquo;<strong>our</strong>&rdquo;) collects,
         uses, and shares information when you use{' '}
-        <a href="https://agenticdeveloperhub.com">agenticdeveloperhub.com</a> and related
+        <a href="https://agenticdeveloperhub.com">agenticdeveloperhub.com</a>{' '}and related
         services (the &ldquo;<strong>Service</strong>&rdquo;). By using the Service, you
         agree to the practices described here.
       </p>
@@ -67,24 +67,24 @@ export function PrivacyBody(): ReactElement {
       <p>We do not sell your personal information. We share information only as follows:</p>
       <ul>
         <li>
-          <strong>Service providers.</strong> We share information with vendors who
+          <strong>Service providers.</strong>{' '}We share information with vendors who
           operate the Service on our behalf — for example, hosting, authentication,
           email delivery, and analytics providers. These providers are bound by
           confidentiality obligations and may only use the information to provide
           services to us.
         </li>
         <li>
-          <strong>Legal and safety.</strong> We may disclose information to comply
+          <strong>Legal and safety.</strong>{' '}We may disclose information to comply
           with legal process, enforce our agreements, or protect the rights, property,
           or safety of users or the public.
         </li>
         <li>
-          <strong>Business transfers.</strong> If the Service or its assets are
+          <strong>Business transfers.</strong>{' '}If the Service or its assets are
           transferred to another party, your information may be transferred as part of
           that transaction, subject to this Policy.
         </li>
         <li>
-          <strong>With your consent.</strong> We may share information for any other
+          <strong>With your consent.</strong>{' '}We may share information for any other
           purpose disclosed to you and with your consent.
         </li>
       </ul>
@@ -136,7 +136,7 @@ export function PrivacyBody(): ReactElement {
       <h2>8. Your Choices</h2>
       <ul>
         <li>
-          <strong>Access &amp; update.</strong> You can review and update your account
+          <strong>Access &amp; update.</strong>{' '}You can review and update your account
           information through your settings page.
         </li>
         <li>
@@ -145,7 +145,7 @@ export function PrivacyBody(): ReactElement {
           limited information as required by law or for legitimate business purposes.
         </li>
         <li>
-          <strong>Email.</strong> Transactional emails (e.g., security and account
+          <strong>Email.</strong>{' '}Transactional emails (e.g., security and account
           notices) cannot be opted out of while you maintain an account.
         </li>
       </ul>

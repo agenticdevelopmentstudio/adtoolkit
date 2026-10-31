@@ -159,9 +159,6 @@ export function StaleMonitorsBanner(): ReactElement | null {
           </div>
         </PopoverContent>
       </Popover>
-      <span style={{ fontFamily: BANNER_MONO, fontSize: 11.5, color: bannerColor("red") }}>
-        {"down for weeks and nothing says it was deleted — only you know if it should still be monitored"}
-      </span>
       {pending && (
         <AlertModal
           open

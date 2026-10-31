@@ -1142,6 +1142,13 @@
   --adh-chrome-bar-height: 2.75rem;
 }
 
+/* On a site-template frame whose `header` slot is MarketingFrameHeader, the template's burger and
+   drawer sit under this header (site-template's `.st-chrome-under-header`), and that is the
+   height they start below. */
+:root:has(.adh-frame-header) {
+  --st-header-height: var(--adh-header-height);
+}
+
 /* Shared not-found body. */
 .adh-not-found {
   flex: 1;

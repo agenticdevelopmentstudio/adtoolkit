@@ -68,8 +68,6 @@ export interface ActivityPanelProps {
   /** Every source present in the store (NOT just this panel's filtered rows) so the
    *  source filter lists them all, even when the env filter hides a source's rows. */
   allSources: readonly IssueSource[];
-  /** True when some environments are unchecked — changes the empty-state copy. */
-  envFiltered: boolean;
   /** Side-by-side ("1 1 0") vs stacked sizing handled by the caller via flex. */
   flex?: string;
   maxHeight?: string;
@@ -82,7 +80,7 @@ export interface ActivityPanelProps {
   onShowCanceledChange?: (v: boolean) => void;
   canceledAvailable?: boolean;
   /** Show only in-progress (queued/building/deploying) or failed rows — the caller
-   *  applies it to `rows`; the panel owns the checkbox and the empty-state copy. */
+   *  applies it to `rows`; the panel owns the checkbox. */
   inProgressOrFailedOnly?: boolean;
   onInProgressOrFailedOnlyChange?: (v: boolean) => void;
   ttlMin?: ActivityTtl;
@@ -104,20 +102,9 @@ export interface ActivityPanelProps {
    *  on the false→true edge into the threshold zone, and on a wheel/touch inside it; see
    *  the handlers for why those two and nothing else. */
   onScrollGesture?: () => void;
-  /** The auto-continue budget (Task 6's `MAX_AUTOPAGE_FETCHES`) is spent and history
-   *  is not yet exhausted — a filter matching almost nothing could otherwise dead-end
-   *  the pane silently. */
-  historyBudgetSpent?: boolean;
   /** The last page FAILED. Never conflated with `historyExhausted`: one says there is
    *  nothing older, the other says we don't know. */
   historyError?: boolean;
-  /** WHY paging back is turned off, or undefined when it isn't. The pane says so where
-   *  the older rows would have been, because the alternative is a feature that ships
-   *  dark: age-out defaults to 1 hour, so out of the box scrolling back does nothing and
-   *  nothing on screen explains it. One field rather than a boolean per cause — the two
-   *  reasons are mutually exclusive states of one thing, and splitting them would let a
-   *  render show both lines or neither. */
-  historyDisabledReason?: "age-out" | "cleared";
 }
 
 /**
@@ -137,7 +124,6 @@ export function ActivityPanel({
   allEnvs,
   onToggleEnv,
   allSources,
-  envFiltered,
   flex = "1 1 0",
   maxHeight,
   showCount = false,
@@ -155,12 +141,10 @@ export function ActivityPanel({
   historyLoading = false,
   historyExhausted = false,
   onScrollGesture,
-  historyBudgetSpent = false,
   historyError = false,
-  historyDisabledReason,
 }: ActivityPanelProps): ReactElement {
   const [q, setQ] = useState("");
-  const { sources, toggleSource } = useSourceFilter();
+  const { sources, toggleSource } = useSourceFilter(`adh-status-sources-${kind}`);
   const nowMs = useNow();
 
   // The source filter is inert when only one source exists anywhere — applying it
@@ -237,10 +221,10 @@ export function ActivityPanel({
 
   // The OTHER way into the budget, and the reason the edge above can't be the only one: a
   // reader who scrolls to the very top and keeps pushing never leaves the zone, so the
-  // edge never fires again and "scroll again to load more history" names a gesture that
-  // cannot be performed. A raw INPUT event is the missing signal — unlike `scroll`, none of
-  // them is ever synthesized by a `scrollTop` write, so the prepended-page feedback loop
-  // the edge gate exists to stop still cannot reach the budget through here.
+  // edge never fires again and a spent budget could never be re-armed. A raw INPUT event is
+  // the missing signal — unlike `scroll`, none of them is ever synthesized by a
+  // `scrollTop` write, so the prepended-page feedback loop the edge gate exists to stop
+  // still cannot reach the budget through here.
   //
   // The throttle is what keeps this a budget: without it one flick's worth of `wheel`
   // events re-arms it dozens of times and MAX_AUTOPAGE_FETCHES never binds. `onLoadOlder`
@@ -287,10 +271,10 @@ export function ActivityPanel({
     [rearmAndLoad],
   );
 
-  // Keyboard and scrollbar readers need a way in too, or "scroll again to load more
-  // history" names a gesture they cannot perform: the edge gate skips them (they are
+  // Keyboard and scrollbar readers need a way in too, or paging back is a gesture they
+  // cannot perform: the edge gate skips them (they are
   // already parked inside the zone) and wheel/touch are devices they aren't using, so a
-  // spent budget — and a failed page's "scroll to retry" — is a permanent dead end for
+  // spent budget — and a failed page — is a permanent dead end for
   // them. The key handler defers to the next frame because the browser scrolls AFTER the
   // keydown, and the threshold has to be read against where the pane ends up.
   const handleKeyDown = useCallback(
@@ -536,15 +520,6 @@ export function ActivityPanel({
 
   // Problems, when truly empty, gets a big centered green check (not a text line).
   const allClear = kind === "problems" && rows.length === 0;
-  const emptyText =
-    rows.length === 0
-      ? kind === "activity" && inProgressOrFailedOnly
-        ? "No builds in progress or failed…"
-        : envFiltered
-        ? "No activity in the selected environments…"
-        : "No recent build, deploy, or availability changes…"
-      : "no matches";
-
   // The scroll-back status line, and the one place it may live: ABOVE the scroll
   // container, never inside it. Inside, it was a child of the element `useFollowNewItems`
   // measures — invisible to that hook's deps (which are derived from `shown` alone), so it
@@ -555,22 +530,16 @@ export function ActivityPanel({
   // used to carry was papering over.
   //
   // One line at most, in priority order: loading, then the error (never conflated with
-  // exhausted — one says nothing is older, the other says we don't know), then exhausted,
-  // then budget-spent, then the age-out explanation. A page arriving just as the budget
-  // trips still reads "loading" rather than flashing "scroll again" first.
+  // exhausted — one says nothing is older, the other says we don't know), then exhausted.
+  // It reports state only, never inline instructions ("scroll again…", "set age-out to
+  // never…"): the operator asked for that help text to go.
   const historyStatus =
     kind !== "activity" ? null : historyLoading ? (
       "loading older activity…"
     ) : historyError ? (
-      "couldn't load older activity — scroll to retry"
+      "couldn't load older activity"
     ) : historyExhausted ? (
       "beginning of recorded activity"
-    ) : historyBudgetSpent ? (
-      "scroll again to load more history"
-    ) : historyDisabledReason === "age-out" ? (
-      "older activity is hidden by age-out — set it to “never” to scroll further back"
-    ) : historyDisabledReason === "cleared" ? (
-      "activity was cleared — reload to scroll back through older activity"
     ) : null;
 
   const listPane = (
@@ -633,14 +602,6 @@ export function ActivityPanel({
             }}
           />
         ))}
-        {/* Inside the scroll container, so an empty FILTERED list still leaves the pane —
-            and with it the scroll container, the gesture handlers and the status line above
-            — mounted. See the render below. */}
-        {shown.length === 0 && (
-          <div role="presentation" style={emptyStyle}>
-            {emptyText}
-          </div>
-        )}
       </div>
     </div>
   );
@@ -652,9 +613,7 @@ export function ActivityPanel({
         // Keyed per row so the card's uncontrolled Tabs reset to overview on every
         // selection — without it, "git info" chosen on one row leaks to the next.
         <ActivityDetails key={selected.key} detail={selectedDetail} />
-      ) : (
-        <div style={emptyStyle}>Select a row to see details…</div>
-      )}
+      ) : null}
     </div>
   );
 
@@ -679,7 +638,6 @@ export function ActivityPanel({
         <div style={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 12, textAlign: "center", padding: 24 }}>
           <StatusSign state="ok" size={76} />
           <div style={{ fontFamily: mono, fontSize: 13, fontWeight: 600, color: PALETTE.green }}>No problems</div>
-          <div style={{ fontFamily: mono, fontSize: 12, color: PALETTE.dim }}>all monitored sites are healthy</div>
         </div>
       ) : (rows.length === 0 || shown.length === 0) && !canPageBack && historyStatus === null ? (
         // An empty pane that CAN page back keeps `listPane` instead of this centered
@@ -688,13 +646,12 @@ export function ActivityPanel({
         // pane is empty, and any chance of the auto-fill rule being seen to work. Empty
         // is exactly when a reader most needs to be able to reach for more history.
         //
-        // `historyStatus` keeps it mounted too, and paging back is exactly when it is
-        // NULL: with age-out on, `canPageBack` is false and the only line that explains
-        // WHY there is no history — "older activity is hidden by age-out" — lives inside
-        // `listPane`. Falling through to the centered state made that line unreachable in
-        // the one state where the setting is invisible from what's on screen. `listPane`
-        // renders `emptyText` inside its own scroll container, so nothing is lost.
-        <div style={{ padding: "8px 16px" }}><div style={emptyStyle}>{emptyText}</div></div>
+        // `historyStatus` keeps it mounted too, so a "loading"/"beginning" line is never
+        // swapped out from under the reader.
+        //
+        // An empty pane is just empty — no "No builds…"/"no matches"/"Select a row…"
+        // placeholder copy: the operator asked for inline help labels to go.
+        null
       ) : (
         <ResizableSplit
           className="h-full"

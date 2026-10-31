@@ -100,40 +100,29 @@ describe('the footer preview, beside the page footer', () => {
     expect(ids.filter((id, i) => ids.indexOf(id) !== i)).toEqual([])
   })
 
-  it("opens each footer's menus from that footer, each at its own caret", () => {
+  it("opens the page's family footer from either copyright", () => {
     const { page, specimen } = renderBoth()
     for (const footer of [page, specimen]) {
-      const triggers = Array.from(footer.querySelectorAll('.adh-footer__menu-trigger'))
-      expect(triggers.map((t) => t.textContent?.trim())).toEqual([
-        '© 2026 Agentic Development Studio',
-        'Legal',
-      ])
-      for (const trigger of triggers) {
-        const panel = document.getElementById(trigger.getAttribute('popovertarget') ?? '')
-        // The panel the platform finds is the one in this trigger's own host, which holds the
-        // caret the panel is positioned at (adh-components.css, `anchor-scope`).
-        expect(panel?.closest('.adh-footer__menu-host')).toBe(trigger.closest('.adh-footer__menu-host'))
-      }
+      const triggers = Array.from(footer.querySelectorAll('.adh-footer__copyright-trigger'))
+      expect(triggers.map((t) => t.getAttribute('aria-label'))).toEqual(['About the Agentic Developer family'])
+      const panel = document.getElementById(triggers[0]!.getAttribute('popovertarget') ?? '')
+      // One dialog, the page's: the specimen brings none of its own.
+      expect(panel).not.toBeNull()
+      expect(page.parentElement?.contains(panel!) && !specimen.contains(panel!)).toBe(true)
     }
-    // Where a browser positions by anchor name but cannot scope one, the names themselves must
-    // differ: two carets declaring one name hand every panel that names it the LAST one's.
-    const anchors = Array.from(document.querySelectorAll<HTMLElement>('.adh-footer__menu-host'), (host) =>
-      host.style.getPropertyValue('--adh-footer-menu-anchor'),
-    )
-    expect(anchors).toHaveLength(4)
-    expect(new Set(anchors).size).toBe(anchors.length)
   })
 
   it("leaves the dialogs and bitbag to the page, and its entries open the page's dialogs", () => {
     const { specimen, console } = renderBoth()
-    // Its own two menus are the only popovers it brings; About, Sites, Terms and Privacy are
-    // the page's, one each.
-    expect(console.querySelectorAll('[popover]')).toHaveLength(2)
+    // It brings no popover at all; the family footer, Sites, Contact, Terms and Privacy are the
+    // page's, one each.
+    expect(console.querySelectorAll('[popover]')).toHaveLength(0)
     expect(document.querySelectorAll('.bb-dock')).toHaveLength(1)
-    // And every entry still opens something: About and Sites find the page's own.
+    // And its copyright still opens something: the page's own family footer.
     const targets = Array.from(specimen.querySelectorAll('[popovertarget]'), (el) =>
       el.getAttribute('popovertarget')!,
     )
+    expect(targets).toHaveLength(1)
     expect(targets.filter((id) => document.getElementById(id) === null)).toEqual([])
   })
 })

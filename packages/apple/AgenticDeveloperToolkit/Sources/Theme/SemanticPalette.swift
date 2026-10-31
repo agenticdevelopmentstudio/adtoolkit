@@ -13,6 +13,10 @@ public enum ThemeRole: String, CaseIterable, Sendable {
     case elevatedSurface
     /// Background of editable controls (text fields, wells, list rows).
     case controlBackground
+    /// Fill of a card or settings group box. Derives to `elevatedSurface`, the
+    /// tone it always had; its own role so a theme can set cards apart from
+    /// the pane title bars and footers, which stay on `elevatedSurface`.
+    case card
 
     // Text (highest → lowest emphasis)
     /// Primary, high-emphasis text.
@@ -51,6 +55,10 @@ public enum ThemeRole: String, CaseIterable, Sendable {
     case selection
     /// Text drawn on top of a `selection` fill (auto-contrasted).
     case selectionText
+    /// The line that marks a selection: a bar down the leading edge of a
+    /// selected row, the outline of the front tab card. Clear by default, so a
+    /// theme opts in by declaring it and every other theme draws no line.
+    case selectionEdge
     /// Text-insertion cursor.
     case cursor
 
@@ -215,6 +223,8 @@ public struct SemanticPalette: Equatable, Sendable {
             return background.blended(withFraction: 0.12, of: foreground)
         case .controlBackground:
             return background.blended(withFraction: 0.09, of: foreground)
+        case .card:
+            return derive(.elevatedSurface, theme: theme)
         case .primaryText:
             return foreground
         case .secondaryText:
@@ -245,6 +255,8 @@ public struct SemanticPalette: Equatable, Sendable {
             return theme.selection
         case .selectionText:
             return theme.selection.bestTextColor()
+        case .selectionEdge:
+            return .clear
         case .cursor:
             return theme.cursor
         case .personaBubble:
@@ -356,6 +368,7 @@ extension SemanticPalette {
     public var surface: RGBAColor { color(.surface) }
     public var elevatedSurface: RGBAColor { color(.elevatedSurface) }
     public var controlBackground: RGBAColor { color(.controlBackground) }
+    public var card: RGBAColor { color(.card) }
     public var primaryText: RGBAColor { color(.primaryText) }
     public var secondaryText: RGBAColor { color(.secondaryText) }
     public var tertiaryText: RGBAColor { color(.tertiaryText) }
@@ -371,6 +384,7 @@ extension SemanticPalette {
     public var divider: RGBAColor { color(.divider) }
     public var selection: RGBAColor { color(.selection) }
     public var selectionText: RGBAColor { color(.selectionText) }
+    public var selectionEdge: RGBAColor { color(.selectionEdge) }
     public var cursor: RGBAColor { color(.cursor) }
     public var personaBubble: RGBAColor { color(.personaBubble) }
     public var personaBubbleBorder: RGBAColor { color(.personaBubbleBorder) }

@@ -263,7 +263,6 @@ export function Dashboard(): ReactElement {
         <span><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: PALETTE.green, marginRight: 5, verticalAlign: "middle" }} />healthy</span>
         <span><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: PALETTE.amber, marginRight: 5, verticalAlign: "middle" }} />degraded</span>
         <span><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: "50%", background: PALETTE.red, marginRight: 5, verticalAlign: "middle" }} />down</span>
-        <span>click any row → detail below · click again to deselect · drag divider to resize</span>
         <span style={{ marginLeft: "auto" }}>▲ Vercel ☁ Cloudflare ⬢ Railway</span>
       </div>
     </div>

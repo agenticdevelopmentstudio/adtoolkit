@@ -118,6 +118,18 @@ describe('useChatSizing — content-hugging math', () => {
     expect(api.style.maxHeight).toBe('700px')
   })
 
+  it('keeps its viewport-offset cap when the page scrolls the chat away', () => {
+    const api = renderProbe(
+      { active: { mode: 'content-hugging', maxHeight: { kind: 'viewport-offset', topOffsetPx: 80 } } },
+      { bottom: 780 },
+    )
+    act(() => {
+      setRect(api.el!, { bottom: 125 })
+      window.dispatchEvent(new Event('scroll'))
+    })
+    expect(api.style.maxHeight).toBe('700px')
+  })
+
   it('resolves element-offset: chatBottom - (anchorBottom + gapPx)', () => {
     const anchor = document.createElement('div')
     document.body.appendChild(anchor)

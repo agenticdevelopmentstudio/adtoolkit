@@ -41,6 +41,36 @@ export const INDICATOR_STATE: Record<BoardIndicator, IndicatorState> = {
   outage: "down",
 };
 
+/**
+ * Recent Activity's "in progress or failed builds only" filter: is this row a build or
+ * deploy that is still happening, or still wrong?
+ *
+ * Builds and deploys only (`step` set). An issue row (`step === null` — an incident
+ * opening such as "app errors on glitchtip", or its resolution) is not a build: nothing
+ * shipped to cause it, and while it is open the Problems pane already carries it. So the
+ * filter drops it whatever its tone.
+ *
+ * An in-flight build/deploy row (`progress`) is kept as-is — its phase is the server's
+ * current reading. A FAILED one (`bad`) is a record of an event, and stays `bad` forever
+ * after the target has recovered: the recovery arrives as a SEPARATE row, never as an
+ * edit to this one. With age-out at "never" that meant every failure the fleet ever had.
+ * So a failure survives only while the Problems list — the server's verdict on what is
+ * broken NOW — still carries its target, and only if it is not older than that problem's
+ * onset: an earlier failure on the same target, followed by a recovery and a new failure,
+ * is history, not part of the run that is still open.
+ *
+ * `since` is the earlier of the problem's onsets (`problemSince`, derive-problems.ts), and
+ * each of those is at or before the row of the event that opened it, so the open run's own
+ * rows always satisfy `at >= since`.
+ */
+export function isUnresolvedActivity(a: ActivityRow, problems: readonly Problem[]): boolean {
+  if (a.step === null) return false;
+  if (a.tone === "progress") return true;
+  if (a.tone !== "bad") return false;
+  const at = Date.parse(a.at);
+  return problems.some((p) => p.target === a.target && Date.parse(p.since) <= at);
+}
+
 /** Build/deploy/failure counts for the stats strip — a tally of rows the server already
  *  judged, which is why it may live on the client. `step` and `tone` arrive on the wire.
  *  `sinceMs` is the board's own `activityFromMs`; the client never picks the window. */

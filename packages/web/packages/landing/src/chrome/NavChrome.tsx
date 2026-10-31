@@ -43,6 +43,7 @@ function fragmentId(href: string): string | null {
 export function NavChrome({
   brand,
   links,
+  sections,
   footer,
   action,
   openLabel = 'Open menu',
@@ -167,6 +168,21 @@ export function NavChrome({
     target.scrollIntoView()
   }
 
+  /**
+   * The host's own content — the sections and the foot — closes the drawer when a link or
+   * button in it is picked, the way a row does, on one listener on its wrapper rather than one
+   * per control the host renders. It runs after the control's own handler, so a control that
+   * opened something over the page (a dialog that `preventDefault`s the link it hangs on) has
+   * already said so: that is an arrival too, focus is the dialog's, and the return to the
+   * burger is cleared for the reason `go` gives.
+   */
+  const pick = (event: MouseEvent<HTMLElement>): void => {
+    const control = (event.target as Element).closest('a[href], button')
+    if (control === null || !event.currentTarget.contains(control)) return
+    if (event.defaultPrevented) wasOpen.current = false
+    setOpen(false)
+  }
+
   return (
     <>
       {/* A plain div, not a <header>. It was one, and it read as a landmark
@@ -233,7 +249,16 @@ export function NavChrome({
             {label}
           </a>
         ))}
-        {footer !== undefined && <div className="lp-foot">{footer}</div>}
+        {sections !== undefined && (
+          <div className="lp-sections" onClick={pick}>
+            {sections}
+          </div>
+        )}
+        {footer !== undefined && (
+          <div className="lp-foot" onClick={pick}>
+            {footer}
+          </div>
+        )}
       </nav>
     </>
   )

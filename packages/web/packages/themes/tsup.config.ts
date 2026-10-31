@@ -7,6 +7,7 @@ export default defineConfig({
     colorMode: 'src/colorMode.tsx',
     appearance: 'src/appearance.ts',
     'appearance-store': 'src/appearance-store.tsx',
+    DocumentLoadScript: 'src/DocumentLoadScript.tsx',
     ThemeStyle: 'src/ThemeStyle.tsx',
     manifest: 'src/manifest.ts',
     tokens: 'src/tokens.ts',

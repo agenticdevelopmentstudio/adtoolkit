@@ -11,7 +11,7 @@ export function TermsBody(): ReactElement {
       <p>
         These Terms of Service (&ldquo;<strong>Terms</strong>&rdquo;) govern your access to and
         use of the websites, applications, and services published at{' '}
-        <a href="https://agenticdeveloperhub.com">agenticdeveloperhub.com</a> and related
+        <a href="https://agenticdeveloperhub.com">agenticdeveloperhub.com</a>{' '}and related
         subdomains (collectively, the &ldquo;<strong>Service</strong>&rdquo;), which are
         operated by Mike Fullerton (&ldquo;<strong>we</strong>&rdquo;, &ldquo;
         <strong>us</strong>&rdquo;, or &ldquo;<strong>our</strong>&rdquo;). By accessing or
@@ -31,7 +31,7 @@ export function TermsBody(): ReactElement {
       <p>
         Some features require an account. You agree to provide accurate information,
         keep your credentials secure, and notify us promptly at{' '}
-        <a href={`mailto:${LEGAL_CONTACT_EMAIL}`}>{LEGAL_CONTACT_EMAIL}</a> of any unauthorized
+        <a href={`mailto:${LEGAL_CONTACT_EMAIL}`}>{LEGAL_CONTACT_EMAIL}</a>{' '}of any unauthorized
         use. You are responsible for activity that occurs under your account. We may
         suspend or terminate accounts that violate these Terms.
       </p>

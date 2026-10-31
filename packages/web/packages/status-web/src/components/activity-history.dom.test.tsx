@@ -47,7 +47,6 @@ function activityProps(overrides: Partial<ActivityPanelProps> = {}): ActivityPan
     allEnvs: ["production"],
     onToggleEnv: () => {},
     allSources: [],
-    envFiltered: false,
     ...overrides,
   };
 }
@@ -93,8 +92,8 @@ describe("ActivityPanel scroll-back", () => {
     fireEvent.scroll(body); // the one edge grant
     fireEvent.scroll(body); // parked at the top: no further grant from scrolling alone
     expect(onScrollGesture).toHaveBeenCalledTimes(1);
-    // A reader pinned at scrollTop 0 still pushing. Without this the "scroll again to load
-    // more history" line names a gesture that cannot be performed.
+    // A reader pinned at scrollTop 0 still pushing. Without this a spent budget could never
+    // be re-armed.
     fireEvent.wheel(body, { deltaY: -20 });
     expect(onScrollGesture).toHaveBeenCalledTimes(2);
   });
@@ -135,8 +134,7 @@ describe("ActivityPanel scroll-back", () => {
   it("lets a scrollbar drag re-arm a spent budget", () => {
     // Keyboard and scrollbar readers are already parked inside the zone, so the scroll
     // EDGE never fires for them and wheel/touch are devices they aren't using. Without a
-    // path of their own, "scroll again to load more history" names a gesture they cannot
-    // perform.
+    // path of their own, a spent budget could never be re-armed for them.
     const onScrollGesture = vi.fn();
     render(<ActivityPanel {...activityProps({ onScrollGesture, onLoadOlder: vi.fn() })} />);
     const body = screen.getByTestId("activity-list");
@@ -156,20 +154,6 @@ describe("ActivityPanel scroll-back", () => {
     );
     expect(screen.getByTestId("activity-list")).toBeTruthy();
     expect(screen.getByText(/beginning of recorded activity/i)).toBeTruthy();
-  });
-
-  it("says why scroll-back is off when age-out is not never", () => {
-    render(<ActivityPanel {...activityProps({ historyDisabledReason: "age-out" as const })} />);
-    expect(screen.getByText(/set it to .never. to scroll further back/i)).toBeTruthy();
-  });
-
-  it("names CLEARED as its own reason, never the age-out one", () => {
-    // The two are one tri-state, and they are not interchangeable copy: telling a reader
-    // who just pressed Clear to change their age-out setting sends them to a control that
-    // would not help.
-    render(<ActivityPanel {...activityProps({ historyDisabledReason: "cleared" as const })} />);
-    expect(screen.getByText(/activity was cleared/i)).toBeTruthy();
-    expect(screen.queryByText(/set it to .never./i)).toBeNull();
   });
 
   it("reports a failed page as a failure, never as the beginning of history", () => {
@@ -199,15 +183,11 @@ describe("ActivityPanel scroll-back", () => {
     expect(screen.getByText(/beginning of recorded activity/i)).toBeTruthy();
   });
 
-  it("shows the budget-spent affordance when the budget is spent and history isn't exhausted", () => {
-    render(<ActivityPanel {...activityProps({ historyBudgetSpent: true, historyExhausted: false })} />);
-    expect(screen.getByText(/scroll again to load more history/i)).toBeTruthy();
-  });
-
-  it("prefers the exhausted line over the budget-spent line when both are true", () => {
-    render(<ActivityPanel {...activityProps({ historyBudgetSpent: true, historyExhausted: true })} />);
-    expect(screen.getByText(/beginning of recorded activity/i)).toBeTruthy();
-    expect(screen.queryByText(/scroll again to load more history/i)).toBeNull();
+  it("shows no inline help text — only state", () => {
+    // The operator asked for the instructional lines to go: no "scroll again…", no
+    // "set age-out to never…", no "reload to scroll back…", no "scroll to retry".
+    render(<ActivityPanel {...activityProps({ onLoadOlder: vi.fn(), historyError: true })} />);
+    expect(screen.queryByText(/scroll again|set it to|reload to|scroll to retry/i)).toBeNull();
   });
 
   it("never offers scroll-back on the Problems pane", () => {

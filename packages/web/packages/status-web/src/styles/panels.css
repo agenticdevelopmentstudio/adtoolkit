@@ -128,23 +128,3 @@
   padding: 24px 18px;
   position: relative;
 }
-.adh-snap-hint {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 20px;
-  text-align: center;
-  font-family: var(--mono, ui-monospace, monospace);
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  color: var(--color-apt-text-dim);
-  animation: adh-bob 1.7s ease-in-out infinite;
-}
-@keyframes adh-bob {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(5px); }
-}
-/* Ignore prefers-reduced-motion (owner directive 2026-06-13) — un-comment to re-honor:
-@media (prefers-reduced-motion: reduce) {
-  .adh-snap-hint { animation: none; }
-} */

@@ -13,7 +13,7 @@ import { ButtonBar, Field, type TopicLevel } from "@agenticdevelopertoolkit/ui/b
 import { useStatusApi } from "../../api/client";
 import { useSettingsEntityLevel } from "../settings-level";
 import { useEditorMutations } from "./use-editor-mutations";
-import { EntityEditorShell, SectionErrorText, SectionPlaceholder } from "./section-chrome";
+import { EntityEditorShell, SectionErrorText } from "./section-chrome";
 
 type TokenRole = "admin" | "user";
 type TokenKind = "minted" | "device";
@@ -83,7 +83,7 @@ export function TokensSection({
   /** URL-selected token id (`/settings/tokens/<id>`), owned by the board level. */
   selectedId: string | null;
   onNavigate: (id: string | null) => void;
-}): ReactElement {
+}): ReactElement | null {
   const api = useStatusApi();
   const queryClient = useQueryClient();
   const { busy, error, setError, run } = useEditorMutations();
@@ -187,7 +187,8 @@ export function TokensSection({
       },
       newLabel: "New token",
       newActive: creating,
-      emptyLabel: queryError ? "Failed to load tokens." : "No tokens yet.",
+      emptyLabel: queryError ? "Failed to load tokens." : "",
+      overview: false,
     }),
     [tokens, selectedId, creating, onNavigate, setError, queryError],
   );
@@ -249,7 +250,7 @@ export function TokensSection({
               <option value="admin">admin</option>
             </Select>
           </Field>
-          <Field label="Expiry (days — blank = no expiry)" className="max-w-40">
+          <Field label="Expiry (days)" className="max-w-40">
             <Input
               type="number"
               min={1}
@@ -265,7 +266,7 @@ export function TokensSection({
   }
 
   if (!current) {
-    return <SectionPlaceholder>Select a token to view it, or create a new one.</SectionPlaceholder>;
+    return null;
   }
 
   const badge = statusBadge(current);

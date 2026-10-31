@@ -786,10 +786,22 @@ open class ThemedTableRowView: NSTableRowView, Themeable {
 
     public override func drawSelection(in dirtyRect: NSRect) {
         guard selectionHighlightStyle != .none else { return }
+        let rect = bounds.insetBy(dx: 2, dy: 1)
         palette.nsColor(.selection).setFill()
-        let path = NSBezierPath(roundedRect: bounds.insetBy(dx: 2, dy: 1), xRadius: 4, yRadius: 4)
+        let path = NSBezierPath(roundedRect: rect, xRadius: 4, yRadius: 4)
         path.fill()
+        // A theme that sets `selectionEdge` marks the row with a line down its
+        // leading edge, clipped to the fill's rounded corners.
+        guard palette.selectionEdge.alpha > 0 else { return }
+        NSGraphicsContext.saveGraphicsState()
+        path.addClip()
+        palette.nsColor(.selectionEdge).setFill()
+        let edgeX = userInterfaceLayoutDirection == .rightToLeft ? rect.maxX - Self.selectionEdgeWidth : rect.minX
+        NSRect(x: edgeX, y: rect.minY, width: Self.selectionEdgeWidth, height: rect.height).fill()
+        NSGraphicsContext.restoreGraphicsState()
     }
+
+    private static let selectionEdgeWidth: CGFloat = 2
 }
 
 @MainActor

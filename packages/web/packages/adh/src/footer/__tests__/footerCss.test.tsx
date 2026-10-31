@@ -1,27 +1,22 @@
 /**
  * The footer's two worlds, read off the stylesheets that make them.
  *
- * What the bar shows is decided by CSS this package's other footer tests cannot see: vitest
- * hands a CSS import back empty, and jsdom applies no author stylesheet. Where the Popover API
- * exists the bar is two menus, the copyright's and Legal's, and their plain forms are hidden;
- * where it does not (iOS before 17, Firefox before 125) an `@supports` block hides every menu
- * and shows the plain forms instead. So this file parses the real sheets (stylesheetRules.ts),
+ * What the floating box shows is decided by CSS this package's other footer tests cannot see:
+ * vitest hands a CSS import back empty, and jsdom applies no author stylesheet. Where the
+ * Popover API exists the box is one button, the copyright, which opens the family footer, and
+ * its plain form is hidden; where it does not (iOS before 17, Firefox before 125) an
+ * `@supports` block hides the button and every dialog and shows the plain line instead. So this file parses the real sheets (stylesheetRules.ts),
  * takes from them what each world hides, and asks the REAL rendered footer what a visitor in
  * each world can see and reach.
  *
  * The model is the sheets' own selectors, so a rule that stops matching the markup changes the
  * answer here instead of going stale in silence. That is how the no-popover block came to name
- * a Sites trigger that no longer existed, while the copyright menu, which it did not name,
- * stayed on screen as a button that opened nothing.
+ * a Sites trigger that no longer existed, while the copyright's own trigger, which it did not
+ * name, stayed on screen as a button that opened nothing.
  */
 import { describe, expect, it, vi } from 'vitest'
 import { render } from '@testing-library/react'
 import { SiteFooter } from '../SiteFooter'
-import {
-  REST_DOCK_SELECTOR,
-  REST_OFFSET_VAR,
-  REST_SLOT_SELECTOR,
-} from '../useFooterRestOffset'
 import {
   adhStylesheet,
   bitbagStylesheet,
@@ -29,16 +24,11 @@ import {
   styleRules,
 } from '../../__tests__/stylesheetRules'
 
-// A plain anchor: next/link's own needs an app router this file has no use for.
-vi.mock('next/link', () => ({
-  default: ({ href, prefetch: _prefetch, ...rest }: { href: string; prefetch?: boolean }) => (
-    <a href={href} {...rest} />
-  ),
-}))
-
-// bitbag stands down to nothing. The footer keeps his slot only while it mounts him, so these
-// renders mount "him", but what he renders is his own tests' business (footerDock.test.tsx).
+// bitbag stands down to nothing: what he renders is his own tests' business (footerDock.test.tsx).
 vi.mock('../FooterChat', () => ({ FooterChat: () => null }))
+
+/** The dock the footer mounts him in, the one element adh styles of his. */
+const DOCK_SELECTOR = '.bb-dock.adh-footer__chat'
 
 /** A build identity, so the version the plain copyright line carries is there to be found. */
 const LIVE = { version: '1.0.155', sha: 'a73e79b7c0ffee00deadbeef1234567890abcdef' }
@@ -48,7 +38,7 @@ const LIVE = { version: '1.0.155', sha: 'a73e79b7c0ffee00deadbeef1234567890abcde
 const site = [...styleRules(adhStylesheet('adh-landing-footer.css')), ...styleRules(adhStylesheet('adh-site.css'))]
 const components = styleRules(adhStylesheet('adh-components.css'))
 
-/** The block that swaps the menus for their plain forms where popovers are missing. */
+/** The block that swaps the copyright's trigger for its plain form where popovers are missing. */
 const NO_POPOVERS = 'not selector(:popover-open)'
 const switchBlock = site.filter(
   (r) => r.at.length === 1 && canonicalValue(r.at[0]!) === NO_POPOVERS,
@@ -57,7 +47,7 @@ const switchBlock = site.filter(
 const HIDDEN_WITHOUT_POPOVERS = switchBlock
   .filter((r) => r.get('display') === 'none')
   .flatMap((r) => r.selectors)
-/** What it brings back: the plain forms, which are hidden everywhere else. */
+/** What it brings back: the plain line, which is hidden everywhere else. */
 const PLAIN_FORMS = switchBlock.filter((r) => r.get('display') === 'revert').flatMap((r) => r.selectors)
 
 type World = 'popovers' | 'no popovers'
@@ -95,19 +85,11 @@ function visibleText(root: Element, world: World): string {
   return out.replace(/\s+/g, ' ').trim()
 }
 
-/** The bar items `world` lays out that keep bitbag's slot, by the label they show. */
-function slotHosts(root: Element, world: World): string[] {
-  return Array.from(root.querySelectorAll(REST_SLOT_SELECTOR))
-    .filter((el) => shown(el, world))
-    .map((el) => text(el.querySelector('.adh-footer__menu-trigger') ?? el))
-}
-
 function renderFooter() {
   const { container } = render(<SiteFooter live={LIVE} />)
   return {
     container,
     copyright: container.querySelector('.adh-footer__copyright')!,
-    nav: container.querySelector('.adh-footer__links')!,
   }
 }
 
@@ -140,42 +122,32 @@ describe('the popover switch itself', () => {
 })
 
 describe('a browser without the Popover API', () => {
-  it('shows no popover, and no trigger for one', () => {
-    // A trigger there is a button that opens nothing, and a popover is a panel dumped inline.
-    const { container } = renderFooter()
-    const popoverParts = Array.from(container.querySelectorAll('[popover], [popovertarget]'))
+  it('shows no dialog, and no trigger for one', () => {
+    // A trigger there is a button that opens nothing, and a dialog is a panel dumped inline.
+    renderFooter()
+    const popoverParts = Array.from(document.querySelectorAll('[popover], [popovertarget]'))
     expect(popoverParts.length).toBeGreaterThan(0)
     expect(popoverParts.filter((el) => shown(el, 'no popovers')).map((el) => el.outerHTML)).toEqual([])
   })
 
-  it('still reaches the studio, this build, Terms and Privacy, as plain links and text', () => {
-    // The copyright menu's About had taken over the studio's link and the version the bar used
-    // to carry, so a dead menu left both with no way onto the screen at all.
-    const { copyright, nav } = renderFooter()
+  it('still reaches the studio and this build, as a plain link and text', () => {
+    // The family footer took over the studio's link and the version, so a dead trigger left
+    // both with no way onto the screen at all.
+    const { copyright } = renderFooter()
     expect(reachable(copyright, 'no popovers')).toEqual([
       'Agentic Development Studio → https://agenticdevelopmentstudio.com/',
     ])
     expect(visibleText(copyright, 'no popovers')).toBe(
       '© 2026 Agentic Development Studio · v1.0.155 · a73e79b7',
     )
-    expect(reachable(nav, 'no popovers')).toEqual(['Terms → /terms', 'Privacy → /privacy'])
-  })
-
-  it("keeps bitbag's slot beside Terms, the item that holds the corner in Legal's place", () => {
-    // The slot was Legal's margin alone, and Legal is hidden here: the fallback bar had no
-    // slot, and the offset measured off a hidden Legal put his face off the screen.
-    const { container } = renderFooter()
-    expect(slotHosts(container, 'no popovers')).toEqual(['Terms'])
   })
 })
 
 describe('a browser with the Popover API', () => {
-  it('shows the two menus and none of their plain forms', () => {
-    const { container, copyright, nav } = renderFooter()
-    expect(reachable(copyright, 'popovers')).toEqual(['© 2026 Agentic Development Studio (button)'])
-    expect(visibleText(copyright, 'popovers')).toBe('© 2026 Agentic Development Studio')
-    expect(reachable(nav, 'popovers')).toEqual(['Legal (button)'])
-    expect(slotHosts(container, 'popovers')).toEqual(['Legal'])
+  it('shows the `i` as the one button, and none of the plain copyright', () => {
+    const { copyright } = renderFooter()
+    expect(reachable(copyright, 'popovers')).toEqual(['i (button)'])
+    expect(visibleText(copyright, 'popovers')).toBe('i')
   })
 
   it('shows the brand the theme editor reads, which is the first one in the footer', () => {
@@ -186,13 +158,46 @@ describe('a browser with the Popover API', () => {
   })
 })
 
+describe('the floating box', () => {
+  it('is fixed in the lower-left corner, and takes the pointer only on its box', () => {
+    const footer = site.filter((r) => r.at.length === 0 && r.selectors.includes('.adh-footer.adh-footer--floating'))
+    expect(footer.map((r) => r.get('position'))).toContain('fixed')
+    expect(footer.some((r) => r.get('left') !== '' && r.get('bottom') !== '')).toBe(true)
+    expect(footer.some((r) => r.get('right') !== '' && r.get('right') !== 'auto')).toBe(false)
+    expect(footer.map((r) => r.get('pointer-events'))).toContain('none')
+    const box = site.filter((r) => r.at.length === 0 && r.selectors.includes('.adh-footer--floating .adh-footer__copyright'))
+    expect(box.map((r) => r.get('pointer-events'))).toContain('auto')
+  })
+})
+
+describe('the preview badge', () => {
+  it('sits centred across the footer, its panel centred under it', () => {
+    const rules = styleRules(adhStylesheet('adh-landing-footer.css')).filter((r) => r.at.length === 0)
+    const head = rules.filter((r) => r.selectors.includes('.adh-landing-footer__head'))
+    expect(head.map((r) => r.get('justify-content'))).toContain('center')
+    const panel = rules.filter((r) => r.selectors.includes('.adh-preview-badge .adh-header__preview-panel'))
+    expect(panel.map((r) => r.get('left'))).toContain('50%')
+    expect(panel.map((r) => r.get('transform'))).toContain('translateX(-50%)')
+  })
+})
+
+describe('the legal dialogs', () => {
+  it("keep their lists' markers against a host reset", () => {
+    const lists = styleRules(adhStylesheet('adh-landing-footer.css')).filter(
+      (r) => r.at.length === 0 && r.selectors.includes('.adh-modal__body--legal .adh-legal-doc ul'),
+    )
+    expect(lists.map((r) => r.get('list-style'))).toContain('disc')
+  })
+})
+
 describe("bitbag's resting place", () => {
-  it('is kept as the left margin of the slot host, only while the bar mounts him', () => {
-    const slot = site.filter((r) => r.at.length === 0 && r.selectors.includes(REST_SLOT_SELECTOR))
-    expect(slot.map((r) => r.get('margin-left'))).toEqual(['var(--adh-footer-rest-slot)'])
+  it('is his own lower-right corner: the dock pins its column right', () => {
+    const bitbag = styleRules(bitbagStylesheet('bitbag-dock.css'))
+    const dock = bitbag.filter((r) => r.at.length === 0 && r.selectors.length === 1 && r.selectors[0] === '.bb-dock')
+    expect(dock.map((r) => r.get('align-items'))).toContain('flex-end')
   })
 
-  it("reaches him through the hooks bitbag's resting rule reads, never by restating its selectors", () => {
+  it("is reached through the hooks bitbag's resting rule reads, never by restating its selectors", () => {
     const bitbag = styleRules(bitbagStylesheet('bitbag-dock.css'))
     const resting = bitbag.filter((r) =>
       r.selectors.includes('.bb-dock--resting .bb-dock__avatar'),
@@ -202,20 +207,15 @@ describe("bitbag's resting place", () => {
     expect(resting[0]!.get('transform')).toContain('var(--bb-dock-rest-x,0px)')
     expect(resting[0]!.get('margin-bottom')).toContain('var(--bb-dock-rest-lift,0px)')
 
-    // Exactly the hooks he reads, on the element the offset is written on.
-    const read = new Set(
-      bitbag.flatMap((r) =>
-        r.properties.flatMap((p) =>
-          Array.from(r.get(p).matchAll(/var\((--bb-dock-rest-[\w-]+)/g), (m) => m[1]!),
-        ),
-      ),
-    )
+    // The footer parks him where bitbag declares: his face as far in from the right as up
+    // from the bottom, by bitbag's own shift and lift.
     const dock = site.filter(
-      (r) => r.at.length === 0 && r.selectors.length === 1 && r.selectors[0] === REST_DOCK_SELECTOR,
+      (r) => r.at.length === 0 && r.selectors.length === 1 && r.selectors[0] === DOCK_SELECTOR,
     )
     const set = dock.flatMap((r) => r.properties.filter((p) => p.startsWith('--bb-dock-rest-')))
-    expect(set.sort()).toEqual([...read].sort())
-    expect(dock.map((r) => r.get('--bb-dock-rest-x')).join()).toContain(`var(${REST_OFFSET_VAR}`)
+    expect(set).toEqual(['--bb-dock-rest-x', '--bb-dock-rest-lift'])
+    expect(dock.map((r) => r.get('--bb-dock-rest-x')).join()).toBe('var(--bb-dock-parked-shift)')
+    expect(dock.map((r) => r.get('--bb-dock-rest-lift')).join()).toBe('var(--bb-dock-parked-lift)')
 
     // adh used to restate both of bitbag's resting selectors one class stronger, to win when
     // bitbag's sheet landed later; that held only while the two copies stayed in step, and
@@ -232,10 +232,9 @@ describe("bitbag's resting place", () => {
 
 describe('footer menus', () => {
   it("keep each menu's anchor inside its own host", () => {
-    // The theme editor shows a second footer beside the page's own, and an anchor name that
-    // two carets declare resolves to the LAST one: the page's menus opened at the specimen's
-    // carets. Scoped to the host that holds both the caret and its panel, a panel can only
-    // ever see its own caret, whatever the ids.
+    // A page can show two footers (the theme editor's specimen beside the page's own), and an
+    // anchor name that two carets declare resolves to the LAST one. Scoped to the host that
+    // holds both the caret and its panel, a panel can only ever see its own caret.
     const host = components.filter((r) => r.at.length === 0 && r.selectors.includes('.adh-footer__menu-host'))
     expect(host.map((r) => r.get('anchor-scope'))).toContain('all')
   })

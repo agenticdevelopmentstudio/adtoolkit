@@ -1,14 +1,16 @@
 import { type ComponentType, type ReactNode } from 'react';
-import { type FooterLink } from '@agentic-toolkit/adh/footer';
+import { type SiteContact, type SiteLink } from '@agentic-toolkit/adh/footer';
 export type AppShellProps = {
     /** The site header (e.g. <AdhHeader siteId=… />), supplied by the site so it
      *  can wire in its own auth/user. */
     header: ReactNode;
     children: ReactNode;
-    /** Extra footer links; the copyright is a fixed brand line owned by the shared
-     *  footer (not per-site). */
+    /** The site's own footer links (the family footer's "This site" column), and who its
+     *  Contact entry writes to (the hub when omitted). The copyright is a fixed brand line
+     *  owned by the shared footer, not per-site. */
     footer?: {
-        links?: FooterLink[];
+        links?: SiteLink[];
+        contact?: SiteContact;
     };
     /** Wraps the header and the footer — never the page — and decides whether they render.
      *  A client component (it reads the route), so a site can drop the chrome on the routes
@@ -18,8 +20,8 @@ export type AppShellProps = {
         children: ReactNode;
     }>;
     /** On `/`, the landing page's footer (marketing/LandingFooter: the family directory and the
-     *  fine print) in place of the shared bar, with bitbag beside it; every other route keeps the
-     *  bar. For a site whose landing page is under this shell. A templated site's `/` is the
+     *  fine print) in flow in place of the floating copyright, with bitbag beside it; every other
+     *  route keeps the floating copyright. For a site whose landing page is under this shell. A templated site's `/` is the
      *  template's own and takes LandingFooter through the template's `footer` slot instead.
      *  Omitted, every route gets the bar. */
     landingFooter?: boolean;
