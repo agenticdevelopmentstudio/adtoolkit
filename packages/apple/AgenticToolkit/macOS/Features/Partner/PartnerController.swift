@@ -72,6 +72,11 @@ public final class PartnerController: ObservableObject {
     /// The process has spoken for this session id, so claude has created it and a relaunch may resume it.
     /// Only an established id is stored.
     var sessionEstablished = false
+    /// The current process has emitted a message.
+    var processSpoke = false
+    /// Once per start, a resumed process that exits without a word is taken to mean claude no longer has
+    /// the session, and a fresh one is launched in its place.
+    var freshSessionAvailable = false
     var currentInbound: PartnerInbound?
     /// Set when the willQuit turn's result arrives.
     var quitTurnFinished = false
@@ -161,6 +166,7 @@ public final class PartnerController: ObservableObject {
             // its first turn, and resuming an id it never created fails every start after.
             let stored = try store.sessionID()
             sessionEstablished = stored != nil
+            freshSessionAvailable = true
             configuration = PartnerProcessConfiguration(
                 executable: claude, sessionID: stored ?? UUID(), resume: stored != nil,
                 model: settings.get(UserSettings.partnerModel),
@@ -247,6 +253,7 @@ public final class PartnerController: ObservableObject {
         }
         self.configuration = configuration
         self.process = process
+        processSpoke = false
         let stream = process.messages()
         readerTask = Task { [weak self] in
             for await message in stream {
@@ -262,12 +269,71 @@ public final class PartnerController: ObservableObject {
         if await process.isRunning { await process.terminate() }
         let stderr = await process.standardErrorText().trimmingCharacters(in: .whitespacesAndNewlines)
         guard generation == self.generation, !isStopping else { return }
+        if !processSpoke, freshSessionAvailable, let configuration, configuration.resume {
+            return await startFreshSession(replacing: configuration, stderr: stderr)
+        }
         self.generation += 1
         self.process = nil
         currentInbound = nil
         tearDown()
         releaseLock()
         fail("partner process exited", notify: true, detail: String(stderr.suffix(2_000)))
+    }
+
+    /// A resumed process exited without a word: claude no longer has that session. Forgets it, says so,
+    /// and launches a new session, once per start, so a claude that keeps exiting still ends in failure.
+    private func startFreshSession(replacing previous: PartnerProcessConfiguration, stderr: String) async {
+        freshSessionAvailable = false
+        isRelaunching = true
+        defer { isRelaunching = false }
+        timeoutTask?.cancel()
+        timeoutTask = nil
+        let interrupted = currentInbound
+        currentInbound = nil
+        sessionEstablished = false
+        do { try store.setSessionID(nil) } catch {
+            Self.logger.error("Clearing the partner session id failed: \(error.localizedDescription)")
+        }
+        let tail = stderr.isEmpty ? "" : "\n\(stderr.suffix(2_000))"
+        do {
+            try notifier.notify(title: "Partner started a new conversation",
+                                body: "The earlier conversation could not be resumed.\(tail)",
+                                createdBy: Self.createdBy)
+        } catch {
+            Self.logger.error("Recording a lost partner session failed: \(error.localizedDescription)")
+        }
+
+        var configuration = previous
+        configuration.sessionID = UUID()
+        configuration.resume = false
+        do {
+            try await launch(configuration)
+        } catch is CancellationError {
+            return  // A stop or restart overtook it and owns the state now.
+        } catch {
+            process = nil
+            tearDown()
+            releaseLock()
+            fail("could not launch claude: \(error.localizedDescription)", notify: true)
+            return
+        }
+        // The turn in flight went to the dead process: close it in the chat and send it again,
+        // a `started` notice now saying the session is new.
+        if state == .thinking {
+            _ = chatSession.apply(ClaudeStreamMessage(
+                kind: .result, isError: true, resultText: "The earlier conversation could not be resumed."))
+        }
+        switch interrupted {
+        case .lifecycle(.started(_, let gone))?:
+            queue.enqueueFirst(.lifecycle(.started(resumed: false, goneSessions: gone)))
+        case let inbound?:
+            queue.enqueueFirst(inbound)
+        case nil:
+            break
+        }
+        setQueuedCount(queue.count)
+        setState(.idle)
+        runNextTurnIfIdle()
     }
 
     // MARK: - State

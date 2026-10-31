@@ -61,6 +61,7 @@ extension PartnerController {
     /// One decoded message from the current process.
     func handle(_ message: ClaudeStreamMessage, generation: Int) {
         guard generation == self.generation else { return }
+        processSpoke = true
         if !sessionEstablished, let sessionID = configuration?.sessionID {
             sessionEstablished = true
             do { try store.setSessionID(sessionID) } catch {

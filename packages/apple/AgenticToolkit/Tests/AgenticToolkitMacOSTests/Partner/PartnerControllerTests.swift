@@ -15,10 +15,13 @@ final class FakePartnerProcess: PartnerProcessing, @unchecked Sendable {
     private let continuation: AsyncStream<ClaudeStreamMessage>.Continuation
 
     private let gate: StartGate?
+    private let diesSilently: Bool
 
-    init(configuration: PartnerProcessConfiguration, gate: StartGate? = nil) {
+    /// `diesSilently`: the process exits right after starting, having said nothing.
+    init(configuration: PartnerProcessConfiguration, gate: StartGate? = nil, diesSilently: Bool = false) {
         self.configuration = configuration
         self.gate = gate
+        self.diesSilently = diesSilently
         (stream, continuation) = AsyncStream.makeStream(of: ClaudeStreamMessage.self)
     }
 
@@ -29,7 +32,8 @@ final class FakePartnerProcess: PartnerProcessing, @unchecked Sendable {
 
     func start() async throws {
         await gate?.wait()
-        lock.withLock { running = true }
+        lock.withLock { running = !diesSilently }
+        if diesSilently { continuation.finish() }
     }
     func send(_ text: String) async throws { lock.withLock { sentTexts.append(text) } }
     func messages() -> AsyncStream<ClaudeStreamMessage> { stream }
@@ -86,6 +90,12 @@ final class FakeProcessLog: @unchecked Sendable {
     private let lock = NSLock()
     private var made: [FakePartnerProcess] = []
     private var startGate: StartGate?
+    private var dies: (@Sendable (PartnerProcessConfiguration) -> Bool)?
+    /// Processes made from now on exit silently when this says so for their configuration.
+    var diesSilently: (@Sendable (PartnerProcessConfiguration) -> Bool)? {
+        get { lock.withLock { dies } }
+        set { lock.withLock { dies = newValue } }
+    }
     /// Processes made from now on wait at this gate in `start()`.
     var gate: StartGate? {
         get { lock.withLock { startGate } }
@@ -140,7 +150,8 @@ final class PartnerControllerTests: XCTestCase {
             endpoint: { endpoint },
             findClaude: { "/bin/true" },
             makeProcess: { configuration, _ in
-                let process = FakePartnerProcess(configuration: configuration, gate: log.gate)
+                let process = FakePartnerProcess(configuration: configuration, gate: log.gate,
+                                                 diesSilently: log.diesSilently?(configuration) ?? false)
                 log.add(process)
                 return process
             },
@@ -398,5 +409,40 @@ final class PartnerControllerTests: XCTestCase {
         ])
         XCTAssertEqual(PartnerController.allowedTools("Read\tBash(git log *)\n  Edit "),
                        ["Read", "Bash(git log *)", "Edit"])
+    }
+
+    // MARK: - A session claude no longer knows
+
+    func testResumeThatExitsSilentlyStartsAFreshSessionOnce() async throws {
+        let lost = UUID()
+        try store.setSessionID(lost)
+        log.diesSilently = { $0.resume }
+        let controller = makeController()
+        await controller.start()
+        await waitUntil { log.all.count == 2 && process.sent.count == 1 }
+        XCTAssertEqual(log.all.count, 2)
+        XCTAssertEqual(log.all.first?.configuration.resume, true)
+        XCTAssertEqual(log.all.first?.configuration.sessionID, lost)
+        XCTAssertEqual(process.configuration.resume, false)
+        XCTAssertNotEqual(process.configuration.sessionID, lost)
+        XCTAssertTrue(process.sent.first?.contains("started") ?? false, "\(process.sent)")
+        process.push(Self.result)
+        await waitUntil { controller.state == .idle }
+        XCTAssertEqual(controller.state, .idle)
+        XCTAssertEqual(try store.sessionID(), process.configuration.sessionID)
+        let notices = try store.attentionItems(includeDoneCompletedAfter: nil).filter { $0.kind == .notification }
+        XCTAssertEqual(notices.count, 1, "\(notices)")
+        XCTAssertTrue(notices.first?.text.contains("could not be resumed") ?? false, "\(notices)")
+    }
+
+    func testClaudeThatKeepsExitingStillFails() async throws {
+        try store.setSessionID(UUID())
+        log.diesSilently = { _ in true }
+        let controller = makeController()
+        await controller.start()
+        await waitUntil { controller.state == .failed("partner process exited") }
+        XCTAssertEqual(controller.state, .failed("partner process exited"))
+        XCTAssertEqual(log.all.count, 2)
+        XCTAssertEqual(log.all.last?.configuration.resume, false)
     }
 }
