@@ -49,6 +49,16 @@ public struct ReviewGit: Sendable {
         return try await client.currentBranch(in: repo) ?? "HEAD"
     }
 
+    /// The commit a fully qualified ref (`refs/heads/main`) names, or `nil` when it does not exist.
+    public func resolveCommit(_ ref: String, in repo: URL) async throws -> String? {
+        try await client.resolveCommit(ref, in: repo)
+    }
+
+    /// Every worktree of the repository containing `repo`, main checkout first.
+    public func worktrees(in repo: URL) async throws -> [GitWorktree] {
+        try await client.worktrees(in: repo)
+    }
+
     public func localBranches(in repo: URL) async throws -> [String] {
         try await client.branches(in: repo).map(\.name)
     }

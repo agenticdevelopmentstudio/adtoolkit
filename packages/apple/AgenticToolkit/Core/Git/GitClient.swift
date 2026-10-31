@@ -107,6 +107,33 @@ public actor GitClient {
         return GitWorktree.parse(porcelain: output)
     }
 
+    /// The full hash of the commit `ref` names, or `nil` when no such ref exists.
+    ///
+    /// Pass a fully qualified ref (`refs/heads/main`): an unqualified name that a tag
+    /// shares with a branch resolves to the tag. `--end-of-options` keeps a ref that
+    /// starts with a dash from being read as a flag, and `^{commit}` peels a tag to
+    /// the commit under it. Exit status 1 from `--verify --quiet` is the answer
+    /// "no such ref", not a failure; every other failure still throws.
+    public func resolveCommit(
+        _ ref: String,
+        in directory: URL,
+        caller: GitCaller = GitCaller()
+    ) async throws -> String? {
+        do {
+            let output = try await execute(
+                verb: "rev-parse",
+                arguments: ["--verify", "--quiet", "--end-of-options", "\(ref)^{commit}"],
+                directory: directory,
+                caller: caller,
+                configuration: await configurationProvider()
+            )
+            let hash = output.trimmingCharacters(in: .whitespacesAndNewlines)
+            return hash.isEmpty ? nil : hash
+        } catch GitClientError.commandFailed(_, 1, _) {
+            return nil
+        }
+    }
+
     // MARK: - Verbs no typed method models
 
     /// Runs `git <verb> <arguments>` in `directory` and returns its standard output.

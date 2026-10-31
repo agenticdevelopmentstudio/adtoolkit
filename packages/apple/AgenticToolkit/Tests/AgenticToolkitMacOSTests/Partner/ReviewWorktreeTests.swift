@@ -17,6 +17,7 @@ final class ReviewWorktreeTests: XCTestCase {
         try repo.commit(file: "a.txt", day: 1, message: "first")
         let worktree = FileManager.default.temporaryDirectory
             .appendingPathComponent("PartnerWorktree-\(UUID().uuidString)")
+        addTeardownBlock { try? FileManager.default.removeItem(at: worktree) }
         return Setup(repo: repo, worktree: worktree, sut: ReviewWorktree(git: repo.review))
     }
 
@@ -39,6 +40,8 @@ final class ReviewWorktreeTests: XCTestCase {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
         process.arguments = ["-C", directory.path] + arguments
+        // English output, so assertions on git's wording do not pass vacuously under another locale.
+        process.environment = ProcessInfo.processInfo.environment.merging(["LC_ALL": "C"]) { _, new in new }
         let out = Pipe()
         process.standardOutput = out
         process.standardError = Pipe()
@@ -143,5 +146,89 @@ final class ReviewWorktreeTests: XCTestCase {
         XCTAssertEqual(try currentBranch(of: setup.worktree), fix)
         XCTAssertEqual(try head(of: setup.worktree, "HEAD~1"), tip)
         XCTAssertTrue(FileManager.default.fileExists(atPath: setup.worktree.appendingPathComponent("fix.txt").path))
+    }
+
+    func testUpToDateWhenNothingChanged() async throws {
+        let setup = try makeSetup()
+        _ = try await prepare(setup)
+        let before = try head(of: setup.worktree)
+        let outcome = try await prepare(setup)
+        XCTAssertEqual(outcome, .upToDate)
+        XCTAssertEqual(try head(of: setup.worktree), before)
+    }
+
+    func testRefusesAForeignDirectory() async throws {
+        let setup = try makeSetup()
+        _ = try await prepare(setup)
+        let foreign = FileManager.default.temporaryDirectory
+            .appendingPathComponent("PartnerForeign-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: foreign, withIntermediateDirectories: true)
+        addTeardownBlock { try? FileManager.default.removeItem(at: foreign) }
+        do {
+            _ = try await setup.sut.prepare(repo: setup.repo.directory, branch: "main", fixBranch: fix,
+                                            worktree: foreign)
+            XCTFail("expected .notReviewWorktree")
+        } catch ReviewWorktree.Failure.notReviewWorktree(let reason) {
+            XCTAssertFalse(reason.isEmpty)
+        }
+    }
+
+    func testRefusesTheMainCheckoutAsTheWorktree() async throws {
+        let setup = try makeSetup()
+        _ = try await prepare(setup)
+        do {
+            _ = try await setup.sut.prepare(repo: setup.repo.directory, branch: "main", fixBranch: fix,
+                                            worktree: setup.repo.directory)
+            XCTFail("expected .notReviewWorktree")
+        } catch ReviewWorktree.Failure.notReviewWorktree {
+        }
+    }
+
+    func testPutsADetachedWorktreeBackOnTheFixBranch() async throws {
+        let setup = try makeSetup()
+        _ = try await prepare(setup)
+        try git(in: setup.worktree, "checkout", "--detach")
+        let tip = try setup.repo.commit(file: "b.txt", day: 2, message: "second")
+        let outcome = try await prepare(setup)
+        XCTAssertEqual(outcome, .fastForwarded)
+        XCTAssertEqual(try currentBranch(of: setup.worktree), fix)
+        XCTAssertEqual(try head(of: setup.repo.directory, fix), tip)
+    }
+
+    func testPutsAWorktreeOnAnotherBranchBackWithoutTouchingThatBranch() async throws {
+        let setup = try makeSetup()
+        _ = try await prepare(setup)
+        try git(in: setup.worktree, "checkout", "-b", "other")
+        let other = try commitInWorktree(setup, file: "other.txt", content: "other\n")
+        let tip = try setup.repo.commit(file: "b.txt", day: 2, message: "second")
+        let outcome = try await prepare(setup)
+        XCTAssertEqual(outcome, .fastForwarded)
+        XCTAssertEqual(try currentBranch(of: setup.worktree), fix)
+        XCTAssertEqual(try head(of: setup.worktree), tip)
+        XCTAssertEqual(try head(of: setup.repo.directory, "other"), other)
+    }
+
+    func testDirtyDetachedWorktreeIsLeftAlone() async throws {
+        let setup = try makeSetup()
+        _ = try await prepare(setup)
+        try git(in: setup.worktree, "checkout", "--detach")
+        try "x".write(to: setup.worktree.appendingPathComponent("junk.txt"), atomically: true, encoding: .utf8)
+        try setup.repo.commit(file: "b.txt", day: 2, message: "second")
+        do {
+            _ = try await prepare(setup)
+            XCTFail("expected .dirty")
+        } catch let failure as ReviewWorktree.Failure {
+            XCTAssertEqual(failure, .dirty)
+        }
+        XCTAssertEqual(try currentBranch(of: setup.worktree), "")
+    }
+
+    func testATagNamedLikeTheBranchDoesNotMoveTheTip() async throws {
+        let setup = try makeSetup()
+        try setup.repo.git("tag", "main")
+        let tip = try setup.repo.commit(file: "b.txt", day: 2, message: "second")
+        let outcome = try await prepare(setup)
+        XCTAssertEqual(outcome, .created)
+        XCTAssertEqual(try head(of: setup.worktree), tip)
     }
 }

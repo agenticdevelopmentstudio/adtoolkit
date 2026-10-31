@@ -217,6 +217,23 @@ struct GitClientTests {
             == fixture.worktree.resolvingSymlinksInPath().path)
     }
 
+    @Test("resolveCommit names a branch's commit, returns nil for a missing ref, and ignores a same-named tag")
+    func resolveCommit() async throws {
+        let fixture = try await Fixture.make()
+        defer { fixture.tearDown() }
+        let client = GitClient(configuration: .default)
+        let main = try await client.resolveCommit("refs/heads/main", in: fixture.root)
+        #expect(main?.count == 40)
+        #expect(try await client.resolveCommit("refs/heads/nope", in: fixture.root) == nil)
+        #expect(try await client.resolveCommit("--nope", in: fixture.root) == nil)
+        // A tag named like the branch, on a different commit.
+        _ = try await client.run("commit", ["--allow-empty", "-m", "later"], in: fixture.worktree)
+        _ = try await client.run("tag", ["feature", "main"], in: fixture.root)
+        let branch = try await client.resolveCommit("refs/heads/feature", in: fixture.root)
+        #expect(branch != main)
+        #expect(try await client.resolveCommit("feature", in: fixture.root) == main)
+    }
+
     @Test("a missing executable throws executableNotFound before spawning")
     func missingExecutable() async {
         let configuration = GitClientConfiguration(executableURL: URL(fileURLWithPath: "/nonexistent/git"))
