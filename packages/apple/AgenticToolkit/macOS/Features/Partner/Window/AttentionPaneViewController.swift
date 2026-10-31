@@ -40,8 +40,9 @@ public final class AttentionPaneModel: ObservableObject {
         self.retentionDays = retentionDays
         // `changes` fires on the writing thread; the published arrays are the main actor's.
         subscription = store.changes
-            .filter { $0 == .attention }
+            // Main first: the filter closure is main-actor isolated, and writes arrive from MCP calls off it.
             .receive(on: DispatchQueue.main)
+            .filter { $0 == .attention }
             .sink { [weak self] _ in MainActor.assumeIsolated { self?.reload() } }
         reload()
     }

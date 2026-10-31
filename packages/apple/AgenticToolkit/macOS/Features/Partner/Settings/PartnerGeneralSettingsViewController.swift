@@ -41,11 +41,13 @@ public final class PartnerGeneralSettingsViewController: ComposableSettings.Sett
         let settings = self.settings
 
         let run = ComposableSettings.GroupView(withTitle: "Partner")
-        run.addSettingSubview(ComposableSettings.CheckboxView(with: ComposableSettings.ViewModel<Bool>(
+        let enabled = ComposableSettings.CheckboxView(with: ComposableSettings.ViewModel<Bool>(
             title: "Run the coding partner",
             get: { settings.get(UserSettings.partnerEnabled) },
             set: { settings.set($0, for: UserSettings.partnerEnabled) },
-            explanation: "Off, no partner process runs and nothing is watched.")))
+            explanation: "Off, no partner process runs and nothing is watched."))
+        _ = enabled.toggle.accessibilityID("settings.partner.enabled")
+        run.addSettingSubview(enabled)
         claudeLine.lineBreakMode = .byTruncatingMiddle
         claudeLine.isSelectable = true
         _ = claudeLine.accessibilityID("settings.partner.claude")

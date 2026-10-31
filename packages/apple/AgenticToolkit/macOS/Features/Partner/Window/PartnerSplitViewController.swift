@@ -191,8 +191,9 @@ public final class PartnerSplitViewController: NSSplitViewController {
             .sink { [weak self] sessions in self?.observe(sessions) }
             .store(in: &subscriptions)
         controller.store.changes
-            .filter { $0 == .sessions }
+            // Main first: the filter closure is main-actor isolated, and writes arrive from MCP calls off it.
             .receive(on: DispatchQueue.main)
+            .filter { $0 == .sessions }
             .sink { [weak self] _ in MainActor.assumeIsolated { self?.reloadRows() } }
             .store(in: &subscriptions)
     }

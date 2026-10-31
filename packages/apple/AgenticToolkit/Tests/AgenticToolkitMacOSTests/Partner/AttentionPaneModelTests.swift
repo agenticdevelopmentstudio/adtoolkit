@@ -48,6 +48,23 @@ final class AttentionPaneModelTests: XCTestCase {
         XCTAssertEqual(model.done.map(\.text), ["Old"])
     }
 
+    /// The partner's MCP calls write the store off the main actor; the model's change pipeline must not run
+    /// main-actor code on that thread (it trapped the app on a Confirm before).
+    func testAWriteOffTheMainActorReloadsOnMain() async throws {
+        try seed()
+        let model = AttentionPaneModel(store: store, retentionDays: { 7 })
+        model.reload()
+        let store = self.store!
+        try await Task.detached {
+            try store.insert(AttentionItem(kind: .question, text: "From MCP", createdBy: "partner"))
+        }.value
+        let deadline = Date().addingTimeInterval(3)
+        while model.open.count != 3, Date() < deadline {
+            try await Task.sleep(for: .milliseconds(20))
+        }
+        XCTAssertEqual(model.open.count, 3)
+    }
+
     func testAnAttentionChangeReloads() throws {
         try seed()
         let model = AttentionPaneModel(store: store, retentionDays: { 7 })

@@ -55,8 +55,9 @@ public final class PartnerToolbar: NSObject, NSToolbarDelegate {
             .sink { [weak self] state in MainActor.assumeIsolated { self?.refresh(state: state) } }
             .store(in: &subscriptions)
         controller.store.changes
-            .filter { $0 == .jobs }
+            // Main first: the filter closure is main-actor isolated, and writes arrive from MCP calls off it.
             .receive(on: DispatchQueue.main)
+            .filter { $0 == .jobs }
             .sink { [weak self] _ in
                 MainActor.assumeIsolated {
                     guard let self else { return }
