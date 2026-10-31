@@ -299,7 +299,7 @@ extension ComposableSettings {
         /// The table itself, for layout, tests and accessibility. It takes
         /// the card's own fill, so rows, the space under them and the card
         /// around them read as one surface.
-        public let tableView = ThemedTableView(role: .elevatedSurface)
+        public let tableView = ThemedTableView(role: .card)
         /// Shown over the table while it has no rows.
         public let emptyLabel = ThemedLabel(role: .secondaryText, textRole: .body)
 
@@ -682,7 +682,7 @@ extension ComposableSettings {
                 }
                 tableView.addTableColumn(tableColumn)
             }
-            tableView.headerView = ThemedTableHeaderView(role: .elevatedSurface)
+            tableView.headerView = ThemedTableHeaderView(role: .card)
             tableView.dataSource = self
             tableView.delegate = self
             tableView.usesAlternatingRowBackgroundColors = false
@@ -692,7 +692,7 @@ extension ComposableSettings {
             tableView.accessibilityID("\(accessibilityPrefix).table")
 
             scrollView.documentView = tableView
-            scrollView.backgroundRole = .elevatedSurface
+            scrollView.backgroundRole = .card
             scrollView.hasVerticalScroller = true
             scrollView.translatesAutoresizingMaskIntoConstraints = false
 

@@ -36,6 +36,7 @@ public struct SwiftUIPalette: Equatable, Sendable {
     public var windowBackground: Color { color(.windowBackground) }
     public var surface: Color { color(.surface) }
     public var elevatedSurface: Color { color(.elevatedSurface) }
+    public var card: Color { color(.card) }
     public var controlBackground: Color { color(.controlBackground) }
     public var primaryText: Color { color(.primaryText) }
     public var secondaryText: Color { color(.secondaryText) }
@@ -52,6 +53,7 @@ public struct SwiftUIPalette: Equatable, Sendable {
     public var divider: Color { color(.divider) }
     public var selection: Color { color(.selection) }
     public var selectionText: Color { color(.selectionText) }
+    public var selectionEdge: Color { color(.selectionEdge) }
     public var cursor: Color { color(.cursor) }
 
     /// The 16 ANSI colors, for previews and series palettes.

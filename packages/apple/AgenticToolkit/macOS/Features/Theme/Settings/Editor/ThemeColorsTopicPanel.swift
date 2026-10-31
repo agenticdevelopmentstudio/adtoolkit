@@ -9,14 +9,16 @@ final class ThemeColorsTopicPanel: ThemeTopicPanel {
 
     private static let colorGroups: [(title: String, items: [(ThemeRole, String)])] = [
         ("Backgrounds", [(.windowBackground, "Window"), (.surface, "Panel"),
-                         (.elevatedSurface, "Raised"), (.controlBackground, "Field")]),
+                         (.elevatedSurface, "Raised"), (.card, "Card"),
+                         (.controlBackground, "Field")]),
         ("Text", [(.primaryText, "Primary"), (.secondaryText, "Secondary"),
                   (.tertiaryText, "Tertiary"), (.placeholderText, "Placeholder"),
                   (.onAccentText, "On accent")]),
         ("Accent & status", [(.accent, "Accent"), (.success, "Success"),
                              (.warning, "Warning"), (.danger, "Error"), (.info, "Info")]),
         ("Lines & selection", [(.border, "Border"), (.outline, "Outline"),
-                               (.divider, "Divider"), (.selection, "Selection")])
+                               (.divider, "Divider"), (.selection, "Selection"),
+                               (.selectionEdge, "Selection edge")])
     ]
 
     init(context: ThemeEditorContext) {

@@ -74,7 +74,7 @@ extension ComposableSettings {
         var body: some View {
             VStack(spacing: 0) { content }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(theme.elevatedSurface)
+                .background(theme.card)
                 .clipShape(
                     RoundedRectangle(
                         cornerRadius: SettingsLayout.default[.cardCornerRadius],

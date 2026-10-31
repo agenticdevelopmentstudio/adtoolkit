@@ -124,7 +124,7 @@ extension ComposableSettings {
         /// header — e.g. a picker's detail pane leading with a heading-role label.
         public init(withHeaderView header: NSView) {
             self.cardView = ThemedBox(
-                fill: .elevatedSurface,
+                fill: .card,
                 stroke: nil,
                 cornerRadius: SettingsLayout.default[.cardCornerRadius])
             self.header = header

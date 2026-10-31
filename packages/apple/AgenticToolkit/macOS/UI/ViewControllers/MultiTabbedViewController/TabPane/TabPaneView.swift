@@ -65,6 +65,10 @@ final class TabPaneView: NSView {
 
     /// The card's own padding, inside the border.
     private static let padding = NSEdgeInsets(top: 12, left: 14, bottom: 12, right: 14)
+    /// How strongly the card in front draws its outline when the theme marks
+    /// selections with `selectionEdge` — a third, so the line frames the card
+    /// rather than competing with the agent name in the same colour.
+    private static let selectionEdgeOutlineAlpha: CGFloat = 0.33
 
     let agentLabel = ThemedLabel(role: .primaryText, textRole: .body)
     let sessionLabel = ThemedLabel(role: .primaryText, textRole: .body)
@@ -343,12 +347,17 @@ final class TabPaneView: NSView {
         let palette = resolvedThemeScope.palette
         place(animated: animated)
         background.reachesOverWorkspace = isFrontCard
-        background.fillColor = isFrontCard
-            ? NSColor(palette.projectPaneBackdrop)
-            : palette.nsColor(.windowBackground)
-        background.borderColor = isFrontCard
-            ? NSColor(palette.projectPaneOutline)
-            : palette.nsColor(.border)
+        // A theme that marks selections with `selectionEdge` draws the card in
+        // front as a selection too: the selection fill, outlined in the edge.
+        let marksSelection = palette.selectionEdge.alpha > 0
+        background.fillColor = !isFrontCard
+            ? palette.nsColor(.windowBackground)
+            : marksSelection ? palette.nsColor(.selection) : NSColor(palette.projectPaneBackdrop)
+        background.borderColor = !isFrontCard
+            ? palette.nsColor(.border)
+            : marksSelection
+                ? palette.nsColor(.selectionEdge).withAlphaComponent(Self.selectionEdgeOutlineAlpha)
+                : NSColor(palette.projectPaneOutline)
         agentLabel.role = isFrontCard ? .accent : .primaryText
         sessionLabel.role = isFrontCard ? .primaryText : .secondaryText
         directoryLabel.role = isFrontCard ? .secondaryText : .tertiaryText
