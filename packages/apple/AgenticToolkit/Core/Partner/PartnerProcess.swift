@@ -11,6 +11,8 @@ public protocol PartnerProcessing: Sendable {
     func messages() -> AsyncStream<ClaudeStreamMessage>
     func terminate() async
     var isRunning: Bool { get async }
+    /// What the process wrote to stderr so far, for telling a crash from a clean end.
+    func standardErrorText() async -> String
 }
 
 /// `claude -p --input-format stream-json` over a `SubprocessChannel`.

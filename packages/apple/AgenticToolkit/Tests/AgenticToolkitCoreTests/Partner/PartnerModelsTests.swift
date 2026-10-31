@@ -22,6 +22,14 @@ import Testing
         queue.enqueue(.sessionExited(sessionID: "s1", title: "t"))
         #expect(queue.count == 2)
     }
+    @Test func enqueueFirstGoesAheadOfEverything() {
+        var queue = PartnerTurnQueue()
+        queue.enqueue(.owner(text: "waiting", attribution: nil))
+        queue.enqueueFirst(.lifecycle(.turnTimedOut))
+        #expect(queue.count == 2)
+        #expect(queue.next() == .lifecycle(.turnTimedOut))
+        #expect(queue.next()?.text == "waiting")
+    }
     @Test func defaultsHaveTheTwoBuiltInJobs() {
         let ids = PartnerJobDefaults.all.map(\.id)
         #expect(ids == ["general", "code-reviews"])

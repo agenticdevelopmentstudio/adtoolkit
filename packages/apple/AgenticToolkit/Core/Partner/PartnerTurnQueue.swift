@@ -20,6 +20,12 @@ public struct PartnerTurnQueue: Sendable {
         }
     }
 
+    /// Puts `inbound` ahead of everything queued, without coalescing: for a
+    /// notice the partner must read before any waiting event.
+    public mutating func enqueueFirst(_ inbound: PartnerInbound) {
+        entries.insert(inbound, at: 0)
+    }
+
     public mutating func next() -> PartnerInbound? {
         entries.isEmpty ? nil : entries.removeFirst()
     }
