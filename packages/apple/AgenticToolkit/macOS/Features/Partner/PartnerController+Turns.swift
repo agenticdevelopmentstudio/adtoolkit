@@ -11,17 +11,18 @@ extension PartnerController {
         runNextTurnIfIdle()
     }
 
-    /// Tells the partner the app is quitting, gives it up to ten seconds to answer, then stops it.
-    public func prepareForQuit() async {
+    /// Tells the partner the app is quitting, gives it up to `limit` to answer, then stops it, answered or not.
+    public func prepareForQuit(waitingAtMost limit: Duration = .seconds(10)) async {
         if state == .idle || state == .thinking {
             let ending = sessions.sessions.map(\.id.uuidString)
             queue.enqueueFirst(.lifecycle(.willQuit(endingSessions: ending)))
             setQueuedCount(queue.count)
             quitTurnFinished = false
             runNextTurnIfIdle()
-            let deadline = Date().addingTimeInterval(10)
-            while !quitTurnFinished, process != nil, Date() < deadline {
-                try? await Task.sleep(for: .milliseconds(100))
+            let clock = ContinuousClock()
+            let deadline = clock.now.advanced(by: limit)
+            while !quitTurnFinished, process != nil, clock.now < deadline {
+                try? await Task.sleep(for: .milliseconds(50))
             }
         }
         await stop()
