@@ -47,9 +47,6 @@ final class GitProcessBottleneckTests: XCTestCase {
         // `GitContextFingerprint` the only reader of the output.
         if relativePath == "Core/Process/ReadOnlyGit.swift"
             || relativePath == "Core/ClaudeHooks/GitContextFingerprint.swift" { return true }
-        // The Coding Partner's synchronous review helper: it runs git off the main actor and returns plain
-        // strings, which the async `GitClient` door cannot do. `ReviewGit` is its one spawn point.
-        if relativePath == "macOS/Features/Partner/Reviews/ReviewGit.swift" { return true }
         if relativePath == "macOS/Features/Git/Settings/GitSettingsPanelViewController.swift" {
             return spelling == "gitExecutablePath"
         }

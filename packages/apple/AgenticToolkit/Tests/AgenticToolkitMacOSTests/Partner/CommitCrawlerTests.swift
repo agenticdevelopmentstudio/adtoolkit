@@ -29,9 +29,10 @@ final class CommitCrawlerTests: XCTestCase {
         return (repo, [first, second, third])
     }
 
-    func testCommitsExcludeMergesAndAreOldestFirst() throws {
+    func testCommitsExcludeMergesAndAreOldestFirst() async throws {
         let (repo, shas) = try mergedRepo()
-        let found = try CommitCrawler().commits(in: repo.directory, branch: "main", since: .distantPast)
+        let found = try await CommitCrawler(git: repo.review)
+            .commits(in: repo.directory, branch: "main", since: .distantPast)
         XCTAssertEqual(found.map(\.sha), shas)
         XCTAssertEqual(found.map(\.subject), ["first", "second", "third"])
         XCTAssertEqual(found[0].parent, ReviewGit.emptyTree)
@@ -39,22 +40,23 @@ final class CommitCrawlerTests: XCTestCase {
         XCTAssertEqual(found[0].author, "Ann")
     }
 
-    func testSinceFiltersOldCommits() throws {
+    func testSinceFiltersOldCommits() async throws {
         let (repo, shas) = try mergedRepo()
         let since = ISO8601DateFormatter().date(from: "2026-01-02T18:00:00Z")!
-        let found = try CommitCrawler().commits(in: repo.directory, branch: "main", since: since)
+        let found = try await CommitCrawler(git: repo.review).commits(in: repo.directory, branch: "main", since: since)
         XCTAssertEqual(found.map(\.sha), [shas[2]])
     }
 
-    func testCrawlInsertsOnceThenNothing() throws {
+    func testCrawlInsertsOnceThenNothing() async throws {
         let (repo, shas) = try mergedRepo()
         let repos = [(id: "r1", path: repo.directory.path, name: "repo")]
-        let crawler = CommitCrawler()
-        let crawl = {
-            try crawler.crawl(repos: repos, branches: { _ in ["main"] }, since: .distantPast, store: self.store)
-        }
-        XCTAssertEqual(try crawl(), 3)
-        XCTAssertEqual(try crawl(), 0)
+        let crawler = CommitCrawler(git: repo.review)
+        let first = try await crawler.crawl(repos: repos, branches: { _ in ["main"] },
+                                        since: .distantPast, store: store)
+        let second = try await crawler.crawl(repos: repos, branches: { _ in ["main"] },
+                                        since: .distantPast, store: store)
+        XCTAssertEqual(first, 3)
+        XCTAssertEqual(second, 0)
         let queued = try store.reviews(state: .queued)
         XCTAssertEqual(queued.map(\.sha), shas)
         XCTAssertEqual(queued[0].id, "r1:\(shas[0])")

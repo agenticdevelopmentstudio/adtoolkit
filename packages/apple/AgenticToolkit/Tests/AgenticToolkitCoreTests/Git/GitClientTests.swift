@@ -157,6 +157,33 @@ struct GitClientTests {
         #expect(status.files["a.txt"] == .modified)
     }
 
+    @Test("run executes a verb no typed method models and returns its output")
+    func runUnmodelledVerb() async throws {
+        let fixture = try await Fixture.make()
+        defer { fixture.tearDown() }
+        let client = GitClient(configuration: .default)
+        let subject = try await client.run("log", ["-1", "--format=%s"], in: fixture.root)
+        #expect(subject.trimmingCharacters(in: .whitespacesAndNewlines) == "initial")
+    }
+
+    @Test("run reports a non-zero exit as commandFailed with its status")
+    func runFailureCarriesStatus() async throws {
+        let fixture = try await Fixture.make()
+        defer { fixture.tearDown() }
+        let client = GitClient(configuration: .default)
+        do {
+            _ = try await client.run("merge-base", ["--is-ancestor", "feature", "HEAD~5"], in: fixture.root)
+            Issue.record("expected a failure")
+        } catch let error as GitClientError {
+            guard case let .commandFailed(verb, status, _) = error else {
+                Issue.record("unexpected \(error)")
+                return
+            }
+            #expect(verb == "merge-base")
+            #expect(status != 0)
+        }
+    }
+
     @Test("currentBranch names the checked-out branch")
     func currentBranch() async throws {
         let fixture = try await Fixture.make()

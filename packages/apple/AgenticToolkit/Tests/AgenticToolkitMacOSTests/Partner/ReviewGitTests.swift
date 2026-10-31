@@ -1,80 +1,99 @@
 import XCTest
+import AgenticToolkitCore
 @testable import AgenticToolkitMacOS
 
 final class ReviewGitTests: XCTestCase {
-    private let git = ReviewGit()
 
-    func testDefaultBranchAndLocalBranches() throws {
+    func testDefaultBranchAndLocalBranches() async throws {
         let repo = try PartnerGitFixture()
         try repo.commit(file: "a.txt", day: 1, message: "first")
-        XCTAssertEqual(try git.defaultBranch(in: repo.directory), "main")
-        XCTAssertEqual(try git.localBranches(in: repo.directory), ["main"])
+        let defaultBranch = try await repo.review.defaultBranch(in: repo.directory)
+        let branches = try await repo.review.localBranches(in: repo.directory)
+        XCTAssertEqual(defaultBranch, "main")
+        XCTAssertEqual(branches, ["main"])
     }
 
-    func testIsAncestor() throws {
+    func testIsAncestor() async throws {
         let repo = try PartnerGitFixture()
         try repo.commit(file: "a.txt", day: 1, message: "first")
         let second = try repo.commit(file: "a.txt", day: 2, message: "second")
-        XCTAssertTrue(try git.isAncestor(second, of: "main", in: repo.directory))
+        let onMain = try await repo.review.isAncestor(second, of: "main", in: repo.directory)
+        XCTAssertTrue(onMain)
         try repo.git("branch", "copy")
         try repo.git("branch", "-f", "copy", "HEAD~1")
-        XCTAssertFalse(try git.isAncestor(second, of: "copy", in: repo.directory))
+        let onCopy = try await repo.review.isAncestor(second, of: "copy", in: repo.directory)
+        XCTAssertFalse(onCopy)
     }
 
-    func testParentAndRootParent() throws {
+    func testParentAndRootParent() async throws {
         let repo = try PartnerGitFixture()
         let first = try repo.commit(file: "a.txt", day: 1, message: "first")
         let second = try repo.commit(file: "a.txt", day: 2, message: "second")
-        XCTAssertEqual(try git.parent(of: second, in: repo.directory), first)
-        XCTAssertEqual(try git.parent(of: first, in: repo.directory), ReviewGit.emptyTree)
+        let parentOfSecond = try await repo.review.parent(of: second, in: repo.directory)
+        let parentOfFirst = try await repo.review.parent(of: first, in: repo.directory)
+        XCTAssertEqual(parentOfSecond, first)
+        XCTAssertEqual(parentOfFirst, ReviewGit.emptyTree)
     }
 
-    func testChangedFiles() throws {
+    func testChangedFiles() async throws {
         let repo = try PartnerGitFixture()
         let first = try repo.commit(file: "a.txt", day: 1, message: "first")
         let second = try repo.commit(file: "a.txt", day: 2, message: "second")
-        XCTAssertEqual(try git.changedFiles(parent: first, sha: second, in: repo.directory), ["a.txt"])
+        let files = try await repo.review.changedFiles(parent: first, sha: second, in: repo.directory)
+        XCTAssertEqual(files, ["a.txt"])
     }
 
-    func testSupersedingCommitsAndTipDiffWhenLaterCommitTouchesFile() throws {
+    func testSupersedingCommitsAndTipDiffWhenLaterCommitTouchesFile() async throws {
         let repo = try PartnerGitFixture()
         try repo.commit(file: "a.txt", day: 1, message: "first")
         let second = try repo.commit(file: "a.txt", day: 2, message: "second")
         let third = try repo.commit(file: "a.txt", day: 3, message: "third")
-        let later = try git.supersedingCommits(after: second, on: "main", files: ["a.txt"], in: repo.directory)
+        let later = try await repo.review.supersedingCommits(
+            after: second, on: "main", files: ["a.txt"], in: repo.directory)
         XCTAssertEqual(later, [third])
-        XCTAssertFalse(try git.tipDiff(from: second, to: "main", files: ["a.txt"], in: repo.directory).isEmpty)
-        let cut = try git.tipDiff(from: second, to: "main", files: ["a.txt"], in: repo.directory, maxBytes: 10)
+        let diff = try await repo.review.tipDiff(from: second, to: "main", files: ["a.txt"], in: repo.directory)
+        XCTAssertFalse(diff.isEmpty)
+        let cut = try await repo.review.tipDiff(
+            from: second, to: "main", files: ["a.txt"], in: repo.directory, maxBytes: 10)
         XCTAssertEqual(cut.utf8.count, 10)
     }
 
-    func testSupersedingCommitsEmptyWhenLaterCommitTouchesOtherFile() throws {
+    func testSupersedingCommitsEmptyWhenLaterCommitTouchesOtherFile() async throws {
         let repo = try PartnerGitFixture()
         try repo.commit(file: "a.txt", day: 1, message: "first")
         let second = try repo.commit(file: "a.txt", day: 2, message: "second")
         try repo.commit(file: "b.txt", day: 3, message: "third")
-        XCTAssertEqual(try git.supersedingCommits(after: second, on: "main", files: ["a.txt"], in: repo.directory), [])
-        XCTAssertEqual(try git.tipDiff(from: second, to: "main", files: ["a.txt"], in: repo.directory), "")
+        let later = try await repo.review.supersedingCommits(
+            after: second, on: "main", files: ["a.txt"], in: repo.directory)
+        XCTAssertEqual(later, [])
+        let diff = try await repo.review.tipDiff(from: second, to: "main", files: ["a.txt"], in: repo.directory)
+        XCTAssertEqual(diff, "")
     }
 
-    func testIsCleanAndFailureThrowsGitError() throws {
+    func testIsCleanAndFailureThrowsCommandFailed() async throws {
         let repo = try PartnerGitFixture()
         try repo.commit(file: "a.txt", day: 1, message: "first")
-        XCTAssertTrue(try git.isClean(worktree: repo.directory))
+        let clean = try await repo.review.isClean(worktree: repo.directory)
+        XCTAssertTrue(clean)
         try "x".write(to: repo.directory.appendingPathComponent("new.txt"), atomically: true, encoding: .utf8)
-        XCTAssertFalse(try git.isClean(worktree: repo.directory))
-        XCTAssertThrowsError(try git.run(["rev-parse", "--verify", "nope"], in: repo.directory)) { error in
-            XCTAssertNotEqual((error as? GitError)?.status, 0)
-            XCTAssertNotNil(error as? GitError)
+        let dirty = try await repo.review.isClean(worktree: repo.directory)
+        XCTAssertFalse(dirty)
+        do {
+            _ = try await repo.review.run(["rev-parse", "--verify", "nope"], in: repo.directory)
+            XCTFail("expected a failure")
+        } catch let error as GitClientError {
+            guard case let .commandFailed(verb, status, _) = error else { return XCTFail("unexpected \(error)") }
+            XCTAssertEqual(verb, "rev-parse")
+            XCTAssertNotEqual(status, 0)
         }
     }
 
-    func testLargeOutputDoesNotDeadlock() throws {
+    func testLargeOutputDoesNotDeadlock() async throws {
         let repo = try PartnerGitFixture()
         let first = try repo.commit(file: "a.txt", day: 1, message: "first")
         let second = try repo.commit(file: "a.txt", day: 2, message: "big",
-                                 content: String(repeating: "line of text\n", count: 100_000))
-        let diff = try git.run(["diff", first, second], in: repo.directory)
+                                     content: String(repeating: "line of text\n", count: 100_000))
+        let diff = try await repo.review.run(["diff", first, second], in: repo.directory)
         XCTAssertGreaterThan(diff.utf8.count, 65_536)
     }
 }

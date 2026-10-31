@@ -1,9 +1,15 @@
 import Foundation
+import AgenticToolkitCore
 @testable import AgenticToolkitMacOS
 
 /// A temp git repo for the review git tests; commits carry explicit dates so ordering is deterministic.
+///
+/// The fixture builds its repo with the system git directly, so it never depends on the code under test;
+/// `review` is the facade under test, over a `GitClient` with an explicit `/usr/bin/git` configuration.
 final class PartnerGitFixture {
     let directory: URL
+    let review = ReviewGit(client: GitClient(configuration: GitClientConfiguration(
+        executableURL: URL(fileURLWithPath: "/usr/bin/git"), timeout: 30)))
 
     init() throws {
         directory = FileManager.default.temporaryDirectory
@@ -12,13 +18,14 @@ final class PartnerGitFixture {
         try git("init", "-b", "main")
         try git("config", "user.name", "Ann")
         try git("config", "user.email", "ann@example.com")
+        try git("config", "commit.gpgsign", "false")
     }
 
     deinit { try? FileManager.default.removeItem(at: directory) }
 
     @discardableResult
     func git(_ arguments: String...) throws -> String {
-        try ReviewGit().run(arguments, in: directory)
+        try exec(arguments, day: nil)
     }
 
     /// Writes `file`, commits it dated `day` of January 2026, and returns the sha.
@@ -27,28 +34,37 @@ final class PartnerGitFixture {
         try (content ?? "\(message)\n")
             .write(to: directory.appendingPathComponent(file), atomically: true, encoding: .utf8)
         try git("add", file)
-        try dated(["commit", "-m", message], day: day)
+        try exec(["commit", "-m", message], day: day)
         return try git("rev-parse", "HEAD").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func merge(branch: String, day: Int) throws {
-        try dated(["merge", "--no-ff", "-m", "merge \(branch)", branch], day: day)
+        try exec(["merge", "--no-ff", "-m", "merge \(branch)", branch], day: day)
     }
 
-    private func dated(_ arguments: [String], day: Int) throws {
-        let date = String(format: "2026-01-%02dT12:00:00Z", day)
+    @discardableResult
+    private func exec(_ arguments: [String], day: Int?) throws -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
         process.arguments = arguments
         process.currentDirectoryURL = directory
-        process.environment = ProcessInfo.processInfo.environment
-            .merging(["GIT_COMMITTER_DATE": date, "GIT_AUTHOR_DATE": date]) { $1 }
-        process.standardOutput = FileHandle.nullDevice
+        var environment = ProcessInfo.processInfo.environment
+        if let day {
+            let date = String(format: "2026-01-%02dT12:00:00Z", day)
+            environment["GIT_COMMITTER_DATE"] = date
+            environment["GIT_AUTHOR_DATE"] = date
+        }
+        process.environment = environment
+        let out = Pipe()
+        process.standardOutput = out
         process.standardError = FileHandle.nullDevice
         try process.run()
+        let data = out.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
-        if process.terminationStatus != 0 {
-            throw GitError(status: process.terminationStatus, stderr: "git \(arguments.joined(separator: " ")) failed")
+        guard process.terminationStatus == 0 else {
+            throw GitClientError.commandFailed(verb: arguments.first ?? "", exitStatus: process.terminationStatus,
+                                               standardError: "")
         }
+        return String(bytes: data, encoding: .utf8) ?? ""
     }
 }

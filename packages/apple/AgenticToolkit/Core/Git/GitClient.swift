@@ -107,6 +107,31 @@ public actor GitClient {
         return GitWorktree.parse(porcelain: output)
     }
 
+    // MARK: - Verbs no typed method models
+
+    /// Runs `git <verb> <arguments>` in `directory` and returns its standard output.
+    ///
+    /// The door for verbs that no typed method above models — `log`, `diff`,
+    /// `merge-base` and the like — so a caller that needs one still goes through
+    /// `execute` and is counted, attributed and bounded like every other
+    /// invocation. A non-zero exit throws `GitClientError.commandFailed`, which
+    /// carries the exit status for a caller that treats one as an answer
+    /// (`merge-base --is-ancestor` exits 1 for "no").
+    public func run(
+        _ verb: String,
+        _ arguments: [String],
+        in directory: URL,
+        caller: GitCaller = GitCaller()
+    ) async throws -> String {
+        try await execute(
+            verb: verb,
+            arguments: arguments,
+            directory: directory,
+            caller: caller,
+            configuration: await configurationProvider()
+        )
+    }
+
     // MARK: - Global configuration
 
     /// Everything in the user's global git configuration.
