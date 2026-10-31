@@ -88,6 +88,14 @@ public final class TerminalSession: ObservableObject, Identifiable {
     /// escape sequences and cursor moves have already been applied.
     public let outputActivity = PassthroughSubject<Void, Never>()
 
+    /// Fires each time input is on its way to the shell — typed into the
+    /// view, pasted, or sent through ``sendInput(_:)``. Not for the terminal's
+    /// automatic replies to the program's queries. A new piece of work in a
+    /// shell, a REPL or an agent begins here, which is what makes it the
+    /// signal that a session is busy again; output alone is not, since a
+    /// program can keep printing at a prompt nobody has answered.
+    public let inputActivity = PassthroughSubject<Void, Never>()
+
     /// Sends `text` to the shell exactly as if it had been typed — through
     /// the privacy words, for a private session. Dropped while the shell has
     /// not started, and once it has exited.
@@ -164,6 +172,8 @@ public final class TerminalSession: ObservableObject, Identifiable {
         let view = isPrivate ? PrivateTerminalView(frame: frame) : ThemedTerminalView(frame: frame)
         view.processDelegate = processHandler
         view.onDataReceived = { [weak self] in self?.outputActivity.send() }
+        // `sendInput` types through the view, so this covers it too.
+        view.onDataSent = { [weak self] in self?.inputActivity.send() }
         if !isPrivate { startShellProcess(in: view) }
         return view
     }()

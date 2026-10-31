@@ -61,12 +61,14 @@ final class PrivateTerminalView: ThemedTerminalView {
         outputFlushTimer?.invalidate()
         outputFlushTimer = nil
         guard output.isHolding else { return }
-        outputFlushTimer = Timer.scheduledTimer(withTimeInterval: Self.outputQuiet, repeats: false) { [weak self] _ in
-            MainActor.assumeIsolated { self?.flushOutput() }
-        }
+        // Target and selector rather than a block: the block is `@Sendable`,
+        // and handing this view to it is a region-isolation error. The timer
+        // holds the view for at most `outputQuiet`.
+        outputFlushTimer = Timer.scheduledTimer(timeInterval: Self.outputQuiet, target: self,
+                                                selector: #selector(flushOutput), userInfo: nil, repeats: false)
     }
 
-    private func flushOutput() {
+    @objc private func flushOutput() {
         outputFlushTimer = nil
         let held = output.flush()
         if !held.isEmpty { super.dataReceived(slice: held[...]) }

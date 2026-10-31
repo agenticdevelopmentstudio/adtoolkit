@@ -49,6 +49,12 @@ public struct SessionDTO: Codable, Sendable {
     /// It is a verdict, not a timestamp: the daemon owns the freshness window
     /// (see `DatabaseManager.fetchSessions`), so no client re-derives it.
     public let subagentWorking: Bool
+    /// When `lastEventType` was recorded (`turn_state_at`, SQLite `datetime`
+    /// form): the turn state's own clock, which moves only when the turn state
+    /// does — unlike `lastActivityAt`, which ambient events (an idle-prompt
+    /// `Notification`, a background `SubagentStop`) also advance. Empty from a
+    /// daemon that predates the field.
+    public let turnStateAt: String
 
     public init(
         sessionId: String,
@@ -69,7 +75,8 @@ public struct SessionDTO: Codable, Sendable {
         lastEventType: String = "",
         summaryAt: String = "",
         eventCount: Int,
-        subagentWorking: Bool = false
+        subagentWorking: Bool = false,
+        turnStateAt: String = ""
     ) {
         self.sessionId = sessionId
         self.cwd = cwd
@@ -90,6 +97,7 @@ public struct SessionDTO: Codable, Sendable {
         self.summaryAt = summaryAt
         self.eventCount = eventCount
         self.subagentWorking = subagentWorking
+        self.turnStateAt = turnStateAt
     }
 
     /// Hand-rolled so `project_root` (added later) is optional on decode: a payload
@@ -118,6 +126,7 @@ public struct SessionDTO: Codable, Sendable {
         summaryAt = try container.decodeIfPresent(String.self, forKey: .summaryAt) ?? ""
         eventCount = try container.decode(Int.self, forKey: .eventCount)
         subagentWorking = try container.decodeIfPresent(Bool.self, forKey: .subagentWorking) ?? false
+        turnStateAt = try container.decodeIfPresent(String.self, forKey: .turnStateAt) ?? ""
     }
 }
 
