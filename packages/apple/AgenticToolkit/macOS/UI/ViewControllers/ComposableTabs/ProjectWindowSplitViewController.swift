@@ -219,12 +219,6 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
             splitView.layoutSubtreeIfNeeded()
         }
         let target = visible ? Self.openShelfWidth : 0
-        // The content gives up what the shelf gains, point for point.
-        let contentWidth = content.view.frame.width
-        if contentWidth > 0 {
-            content.view.beginAnimatedResize(
-                expectedWidthScale: (contentWidth + from - target) / contentWidth)
-        }
         let link = view.displayLink(target: self, selector: #selector(stepShelfSlide(_:)))
         shelfSlide = ShelfSlide(
             link: link,
@@ -232,7 +226,14 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
             origin: from,
             target: target,
             completion: completion)
-        link.add(to: .main, forMode: .common)
+        // The content gives up what the shelf gains, point for point. The
+        // slide starts once the panes have drawn for it.
+        content.view.beginAnimatedResize(widthChange: from - target) { [weak self] in
+            // Landed already, by a second toggle, if this is not its slide.
+            guard let self, shelfSlide?.link === link else { return }
+            shelfSlide?.start = CACurrentMediaTime()
+            link.add(to: .main, forMode: .common)
+        }
         onShelfVisibilityChange?()
     }
 
@@ -256,7 +257,8 @@ final class ProjectWindowSplitViewController: NSSplitViewController {
     /// the layout on every frame and the shelf jumped rather than slid.
     private struct ShelfSlide {
         let link: CADisplayLink
-        let start: CFTimeInterval
+        /// Reset when the slide actually starts, once the panes are ready.
+        var start: CFTimeInterval
         let origin: CGFloat
         let target: CGFloat
         let completion: (@MainActor () -> Void)?

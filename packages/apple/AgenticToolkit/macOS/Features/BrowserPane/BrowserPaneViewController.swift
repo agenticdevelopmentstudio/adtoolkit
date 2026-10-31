@@ -263,7 +263,7 @@ public final class BrowserPaneViewController: NSViewController {
 
         // Held still while a shelf slides beside the pane: the page paints
         // behind its frame, so resized on every frame it trails the edge.
-        let page = FrameHoldingView(content: webView)
+        let page = FrameHoldingView(content: webView, leadsWidthChanges: true)
         page.translatesAutoresizingMaskIntoConstraints = false
         root.addSubview(bar)
         root.addSubview(page)
