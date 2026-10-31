@@ -138,7 +138,7 @@ describe("useActivityHistory", () => {
     act(() => result.current.loadOlder());
     await waitFor(() => expect(result.current.error).toBe(true));
     // A 500 says nothing about what lies behind the window. Reporting it as `exhausted`
-    // would put "beginning of recorded activity" under a feed that simply failed to load.
+    // would stop all paging (and hide the error line) for a feed that simply failed to load.
     expect(result.current.exhausted).toBe(false);
     expect(result.current.rows).toEqual([]);
   });

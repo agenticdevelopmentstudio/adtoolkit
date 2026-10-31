@@ -153,7 +153,6 @@ describe("ActivityPanel scroll-back", () => {
       />,
     );
     expect(screen.getByTestId("activity-list")).toBeTruthy();
-    expect(screen.getByText(/beginning of recorded activity/i)).toBeTruthy();
   });
 
   it("reports a failed page as a failure, never as the beginning of history", () => {
@@ -176,11 +175,11 @@ describe("ActivityPanel scroll-back", () => {
     expect(onLoadOlder).not.toHaveBeenCalled();
   });
 
-  it("shows the beginning-of-history affordance only when exhausted", () => {
-    const { rerender } = render(<ActivityPanel {...activityProps({ historyExhausted: false })} />);
-    expect(screen.queryByText(/beginning of recorded activity/i)).toBeNull();
+  it("shows no info line while loading or once history is exhausted", () => {
+    const { rerender } = render(<ActivityPanel {...activityProps({ historyLoading: true })} />);
+    expect(screen.queryByText(/loading older activity/i)).toBeNull();
     rerender(<ActivityPanel {...activityProps({ historyExhausted: true })} />);
-    expect(screen.getByText(/beginning of recorded activity/i)).toBeTruthy();
+    expect(screen.queryByText(/beginning of recorded activity/i)).toBeNull();
   });
 
   it("shows no inline help text — only state", () => {

@@ -529,18 +529,11 @@ export function ActivityPanel({
   // non-option child of a `role="listbox"`, which is what the `role="presentation"` it
   // used to carry was papering over.
   //
-  // One line at most, in priority order: loading, then the error (never conflated with
-  // exhausted — one says nothing is older, the other says we don't know), then exhausted.
-  // It reports state only, never inline instructions ("scroll again…", "set age-out to
-  // never…"): the operator asked for that help text to go.
-  const historyStatus =
-    kind !== "activity" ? null : historyLoading ? (
-      "loading older activity…"
-    ) : historyError ? (
-      "couldn't load older activity"
-    ) : historyExhausted ? (
-      "beginning of recorded activity"
-    ) : null;
+  // Errors only. The operator asked for every inline info label to go — first the
+  // instructions ("scroll again…", "set age-out to never…"), then the state lines too
+  // ("loading older activity…", "beginning of recorded activity"). A failed page still
+  // says so: that is an error, and an empty pane would otherwise hide it.
+  const historyStatus = kind === "activity" && !historyLoading && historyError ? "couldn't load older activity" : null;
 
   const listPane = (
     <div style={{ height: "100%", display: "flex", flexDirection: "column", minHeight: 0 }}>

@@ -20,9 +20,9 @@ const PAGE_SIZE = 300;
  * Without it a request that never settles (a dropped connection, a proxy holding the
  * socket, a laptop suspended mid-flight) strands `inFlight`/`loading` true for the life of
  * the tab: `loadOlder`'s first guard then rejects every later call, the pane's auto-fill is
- * gated on `!loading` so it never retries either, and "loading older activity…" is the last
- * thing the reader ever sees. Abandoning it surfaces the ordinary error line instead, which
- * the next scroll retries.
+ * gated on `!loading` so it never retries either, and the pane silently stops paging for
+ * good. Abandoning it surfaces the ordinary error line instead, which the next scroll
+ * retries.
  */
 const PAGE_TIMEOUT_MS = 20_000;
 
