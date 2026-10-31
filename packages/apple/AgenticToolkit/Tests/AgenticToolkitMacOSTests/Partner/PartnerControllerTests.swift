@@ -14,15 +14,23 @@ final class FakePartnerProcess: PartnerProcessing, @unchecked Sendable {
     private let stream: AsyncStream<ClaudeStreamMessage>
     private let continuation: AsyncStream<ClaudeStreamMessage>.Continuation
 
-    init(configuration: PartnerProcessConfiguration) {
+    private let gate: StartGate?
+
+    init(configuration: PartnerProcessConfiguration, gate: StartGate? = nil) {
         self.configuration = configuration
+        self.gate = gate
         (stream, continuation) = AsyncStream.makeStream(of: ClaudeStreamMessage.self)
     }
 
     var sent: [String] { lock.withLock { sentTexts } }
     var wasTerminated: Bool { lock.withLock { terminated } }
 
-    func start() async throws { lock.withLock { running = true } }
+    var isLive: Bool { lock.withLock { running } }
+
+    func start() async throws {
+        await gate?.wait()
+        lock.withLock { running = true }
+    }
     func send(_ text: String) async throws { lock.withLock { sentTexts.append(text) } }
     func messages() -> AsyncStream<ClaudeStreamMessage> { stream }
     func terminate() async {
@@ -41,10 +49,48 @@ final class FakePartnerProcess: PartnerProcessing, @unchecked Sendable {
     }
 }
 
+/// Holds a fake process's `start()` until the test opens it.
+final class StartGate: @unchecked Sendable {
+    private let lock = NSLock()
+    private var opened = false
+    private var waiters: [CheckedContinuation<Void, Never>] = []
+    private var arrivals = 0
+
+    /// How many starts have reached the gate.
+    var arrived: Int { lock.withLock { arrivals } }
+
+    func wait() async {
+        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+            let pass = lock.withLock {
+                arrivals += 1
+                if opened { return true }
+                waiters.append(continuation)
+                return false
+            }
+            if pass { continuation.resume() }
+        }
+    }
+
+    func open() {
+        let waiting = lock.withLock {
+            opened = true
+            defer { waiters = [] }
+            return waiters
+        }
+        for waiter in waiting { waiter.resume() }
+    }
+}
+
 /// Every process the controller made, in order.
 final class FakeProcessLog: @unchecked Sendable {
     private let lock = NSLock()
     private var made: [FakePartnerProcess] = []
+    private var startGate: StartGate?
+    /// Processes made from now on wait at this gate in `start()`.
+    var gate: StartGate? {
+        get { lock.withLock { startGate } }
+        set { lock.withLock { startGate = newValue } }
+    }
     var all: [FakePartnerProcess] { lock.withLock { made } }
     func add(_ process: FakePartnerProcess) { lock.withLock { made.append(process) } }
 }
@@ -94,7 +140,7 @@ final class PartnerControllerTests: XCTestCase {
             endpoint: { endpoint },
             findClaude: { "/bin/true" },
             makeProcess: { configuration, _ in
-                let process = FakePartnerProcess(configuration: configuration)
+                let process = FakePartnerProcess(configuration: configuration, gate: log.gate)
                 log.add(process)
                 return process
             },
@@ -192,6 +238,8 @@ final class PartnerControllerTests: XCTestCase {
         })
         await controller.start()
         let first = process
+        await waitUntil { first.sent.count == 1 }
+        first.push(Self.assistant("Looking."))
         await waitUntil { log.all.count == 2 }
         XCTAssertTrue(first.wasTerminated)
         XCTAssertEqual(log.all.count, 2)
@@ -275,5 +323,80 @@ final class PartnerControllerTests: XCTestCase {
         XCTAssertEqual(controller.state, .failed("partner process exited"))
         let items = try store.attentionItems(includeDoneCompletedAfter: nil)
         XCTAssertTrue(items.contains { $0.text.contains("boom") }, "\(items)")
+    }
+
+    // MARK: - Lifecycle races
+
+    func testStopDuringTimeoutRelaunchLeavesNothingRunning() async throws {
+        var calls = 0
+        let controller = makeController(turnTimeout: {
+            calls += 1
+            return calls == 1 ? .milliseconds(200) : .seconds(60)
+        })
+        await controller.start()
+        let first = process
+        await waitUntil { first.sent.count == 1 }
+        first.push(Self.assistant("Looking."))
+        let gate = StartGate()
+        log.gate = gate
+        await waitUntil { gate.arrived == 1 }
+        XCTAssertEqual(gate.arrived, 1, "the timeout relaunch never reached start()")
+        await controller.stop()
+        gate.open()
+        await waitUntil { log.all.last?.wasTerminated == true }
+        try? await Task.sleep(for: .milliseconds(100))
+        XCTAssertEqual(controller.state, .stopped)
+        XCTAssertTrue(log.all.allSatisfy { !$0.isLive }, "a claude process is still running")
+        XCTAssertNil(try store.liveLock())
+    }
+
+    func testTwoInterruptsMakeOneRelaunch() async throws {
+        let controller = makeController()
+        await controller.start()
+        await waitUntil { process.sent.count == 1 }
+        process.push(Self.assistant("Looking."))
+        let gate = StartGate()
+        log.gate = gate
+        let first = Task { await controller.interruptTurn() }
+        await waitUntil { gate.arrived == 1 }
+        let second = Task { await controller.interruptTurn() }
+        try? await Task.sleep(for: .milliseconds(100))
+        gate.open()
+        await first.value
+        await second.value
+        XCTAssertEqual(log.all.count, 2)
+        XCTAssertEqual(controller.state, .idle)
+        XCTAssertTrue(log.all.last?.isLive ?? false)
+    }
+
+    func testFirstLaunchThatDiesSilentlyDoesNotResumeNextTime() async throws {
+        let controller = makeController()
+        await controller.start()
+        await waitUntil { process.sent.count == 1 }
+        process.crash(stderr: "not logged in")
+        await waitUntil { controller.state == .failed("partner process exited") }
+        XCTAssertNil(try store.sessionID())
+        await controller.start()
+        XCTAssertEqual(log.all.count, 2)
+        XCTAssertEqual(log.all.last?.configuration.resume, false)
+    }
+
+    func testSessionIsStoredOnceTheProcessSpeaks() async throws {
+        let controller = makeController()
+        await controller.start()
+        await waitUntil { process.sent.count == 1 }
+        XCTAssertNil(try store.sessionID())
+        process.push(Self.result)
+        await waitUntil { controller.state == .idle }
+        XCTAssertEqual(try store.sessionID(), process.configuration.sessionID)
+    }
+
+    func testAllowedToolsDefaultKeepsParenthesisedEntriesWhole() {
+        XCTAssertEqual(PartnerController.allowedTools(settings.get(UserSettings.partnerAllowedTools)), [
+            "mcp__adkitchen", "Bash(git log *)", "Bash(git show *)", "Bash(git diff *)",
+            "Bash(git status *)", "Bash(git branch *)", "Read"
+        ])
+        XCTAssertEqual(PartnerController.allowedTools("Read\tBash(git log *)\n  Edit "),
+                       ["Read", "Bash(git log *)", "Edit"])
     }
 }

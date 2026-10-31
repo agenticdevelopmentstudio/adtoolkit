@@ -61,6 +61,12 @@ extension PartnerController {
     /// One decoded message from the current process.
     func handle(_ message: ClaudeStreamMessage, generation: Int) {
         guard generation == self.generation else { return }
+        if !sessionEstablished, let sessionID = configuration?.sessionID {
+            sessionEstablished = true
+            do { try store.setSessionID(sessionID) } catch {
+                Self.logger.error("Saving the partner session id failed: \(error.localizedDescription)")
+            }
+        }
         for reply in chatSession.apply(message) {
             do { try store.append(reply) } catch {
                 Self.logger.error("Saving a partner reply failed: \(error.localizedDescription)")
@@ -98,13 +104,20 @@ extension PartnerController {
     /// Kills the process mid-turn and resumes the same session in a new one. A timeout also records an
     /// attention item and tells the partner, ahead of anything queued, that its turn was cut off.
     private func abandonTurn(generation: Int, timedOut: Bool) async {
-        guard generation == self.generation, state == .thinking, let process, var configuration else { return }
+        guard !isRelaunching, generation == self.generation, state == .thinking,
+              let process, var configuration else { return }
+        // A `result` that cancelled the timeout after it woke has already ended this turn.
+        if timedOut, Task.isCancelled { return }
+        isRelaunching = true
+        defer { isRelaunching = false }
         // A timeout runs inside `timeoutTask`; cancelling it would cancel the relaunch below.
         if !timedOut { timeoutTask?.cancel() }
         timeoutTask = nil
         self.generation += 1
+        let token = self.generation
         await process.terminate()
         await readerTask?.value
+        guard token == self.generation else { return }  // stopped or restarted meanwhile
         currentInbound = nil
         // Closes the turn in the chat the way an error result would: turnFailed, then ready.
         _ = chatSession.apply(ClaudeStreamMessage(
@@ -118,9 +131,11 @@ extension PartnerController {
                 Self.logger.error("Recording a partner timeout failed: \(error.localizedDescription)")
             }
         }
-        configuration.resume = true
+        configuration.resume = sessionEstablished
         do {
             try await launch(configuration)
+        } catch is CancellationError {
+            return  // A stop or restart overtook the relaunch and owns the state now.
         } catch {
             self.process = nil
             tearDown()

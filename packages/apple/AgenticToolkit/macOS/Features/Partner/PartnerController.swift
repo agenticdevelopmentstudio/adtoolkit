@@ -63,8 +63,15 @@ public final class PartnerController: ObservableObject {
     var timeoutTask: Task<Void, Never>?
     /// Bumped whenever a process is replaced or stopped, so a late message or
     /// stream end from the one before is ignored.
+    /// The lifecycle token: `start`'s launch, `stop` and every relaunch bump it, and each re-checks it after
+    /// every `await`, so whichever of them was overtaken backs out without touching state.
     var generation = 0
     var isStopping = false
+    /// A turn is being abandoned and its process replaced; a second interrupt or timeout is refused meanwhile.
+    var isRelaunching = false
+    /// The process has spoken for this session id, so claude has created it and a relaunch may resume it.
+    /// Only an established id is stored.
+    var sessionEstablished = false
     var currentInbound: PartnerInbound?
     /// Set when the willQuit turn's result arrives.
     var quitTurnFinished = false
@@ -150,11 +157,12 @@ public final class PartnerController: ObservableObject {
             try installer.writeJobFiles(jobs: jobs)
             try installer.writeSystemPrompt(jobs: jobs)
             try installer.installSkills(jobs: jobs)
+            // A new id is stored only once the process speaks (`handle`): claude creates the session on
+            // its first turn, and resuming an id it never created fails every start after.
             let stored = try store.sessionID()
-            let sessionID = stored ?? UUID()
-            if stored == nil { try store.setSessionID(sessionID) }
+            sessionEstablished = stored != nil
             configuration = PartnerProcessConfiguration(
-                executable: claude, sessionID: sessionID, resume: stored != nil,
+                executable: claude, sessionID: stored ?? UUID(), resume: stored != nil,
                 model: settings.get(UserSettings.partnerModel),
                 permissionMode: settings.get(UserSettings.partnerPermissionMode),
                 allowedTools: Self.allowedTools(settings.get(UserSettings.partnerAllowedTools)),
@@ -168,6 +176,8 @@ public final class PartnerController: ObservableObject {
         environment = ["PATH": ClaudeCLI.searchPath(claudeDirectory: ClaudeCLI.directory(ofBinary: claude))]
         do {
             try await launch(configuration)
+        } catch is CancellationError {
+            return  // A stop overtook the launch and owns the state now.
         } catch {
             return failReleasingLock("could not launch claude: \(error.localizedDescription)")
         }
@@ -225,13 +235,18 @@ public final class PartnerController: ObservableObject {
     // MARK: - Process
 
     /// Makes, starts and starts reading a process for `configuration`, replacing any before it.
+    /// Throws `CancellationError`, with the new process terminated, if a stop or another launch overtook it.
     func launch(_ configuration: PartnerProcessConfiguration) async throws {
         generation += 1
         let generation = generation
         let process = makeProcess(configuration, environment)
+        try await process.start()
+        guard generation == self.generation, !isStopping else {
+            await process.terminate()
+            throw CancellationError()
+        }
         self.configuration = configuration
         self.process = process
-        try await process.start()
         let stream = process.messages()
         readerTask = Task { [weak self] in
             for await message in stream {
@@ -336,7 +351,7 @@ public final class PartnerController: ObservableObject {
         sessions.purge(retentionDays: days)
     }
 
-    /// Splits the allowed-tools setting on spaces outside parentheses, so `Bash(git log *)` stays one entry.
+    /// Splits the allowed-tools setting on whitespace outside parentheses, so `Bash(git log *)` stays one entry.
     static func allowedTools(_ setting: String) -> [String] {
         var tools: [String] = []
         var current = ""
@@ -345,7 +360,7 @@ public final class PartnerController: ObservableObject {
             switch character {
             case "(": depth += 1; current.append(character)
             case ")": depth = max(depth - 1, 0); current.append(character)
-            case " " where depth == 0:
+            case _ where character.isWhitespace && depth == 0:
                 if !current.isEmpty { tools.append(current) }
                 current = ""
             default: current.append(character)
