@@ -36,9 +36,12 @@ public final class PartnerSessionRegistry: ObservableObject {
     /// Opens a shell in `directory` and, once it is running, types
     /// `firstCommand` into it.
     ///
-    /// - Parameter title: Defaults to the directory's last path component.
+    /// - Parameters:
+    ///   - title: Defaults to the directory's last path component.
+    ///   - reviewID: The review the session works for, stored with its first record.
     @discardableResult
-    public func open(directory: String, title: String?, firstCommand: String?) -> PartnerSession {
+    public func open(directory: String, title: String?, firstCommand: String?,
+                     reviewID: String? = nil) -> PartnerSession {
         let id = UUID()
         var variables = environment()
         variables["ADKITCHEN_PANE_ID"] = id.uuidString
@@ -60,6 +63,7 @@ public final class PartnerSessionRegistry: ObservableObject {
         let session = PartnerSession(
             id: id, title: title ?? (directory as NSString).lastPathComponent, directory: directory,
             manager: manager, terminal: terminal, chat: chat, viewController: viewController, now: now)
+        session.reviewID = reviewID
         sessions.insert(session, at: 0)
         save(session.record)
         detector.watch(session)

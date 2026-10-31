@@ -41,4 +41,27 @@ extension UserSettings {
         "partner.notify_kinds",
         default: ["question", "blocked", "notification"]
     )
+
+    // MARK: - Code reviews
+
+    /// How far back, in hours, the crawl looks for commits to review.
+    public static let partnerReviewsWindowHours = UserSetting<Int>("partner.reviews_window_hours", default: 24)
+
+    /// How often, in minutes, the code-reviews job crawls for new commits.
+    public static let partnerReviewsCrawlIntervalMinutes = UserSetting<Int>(
+        "partner.reviews_crawl_interval_minutes", default: 30)
+
+    /// How many reviews may run at once (never more than one per repo).
+    public static let partnerReviewsConcurrency = UserSetting<Int>("partner.reviews_concurrency", default: 1)
+
+    /// Whether the crawl covers every local branch, not only the default one.
+    public static let partnerReviewsIncludeOtherBranches = UserSetting<Bool>(
+        "partner.reviews_include_other_branches", default: false)
+
+    /// The model the reviewer's Claude Code runs (`{model}`); "" = Claude Code's own default.
+    public static let partnerReviewsReviewerModel = UserSetting<String>("partner.reviews_reviewer_model", default: "")
+
+    /// The branch each repo's review worktree commits its fixes on.
+    public static let partnerReviewsFixBranch = UserSetting<String>(
+        "partner.reviews_fix_branch", default: "partner/review-fixes")
 }

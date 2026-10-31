@@ -32,14 +32,17 @@ public final class PartnerToolSource: ChatToolSource, @unchecked Sendable {
     /// Tools added by later features (the review tools).
     var extraTools: [(ToolDefinition, Handler)] = []
 
+    /// - Parameter reviews: Answers the review tools; `nil` leaves them out.
     @MainActor
     public init(callerID: @escaping @Sendable () -> String?, store: PartnerStore, sessions: PartnerSessionRegistry,
-                projects: @escaping @MainActor () -> [Project], notifier: PartnerNotifier) {
+                projects: @escaping @MainActor () -> [Project], notifier: PartnerNotifier,
+                reviews: ReviewService? = nil) {
         self.callerID = callerID
         self.store = store
         self.sessions = sessions
         self.projects = projects
         self.notifier = notifier
+        if let reviews { extraTools += Self.reviewTools(reviews) }
     }
 
     public func toolDefinitions() async -> [ToolDefinition] {
