@@ -61,10 +61,13 @@ public final class ReviewService {
         self.now = now
     }
 
-    /// Queued reviews oldest first, the concurrency limit, and how many are running.
-    public func next() throws -> (reviews: [PartnerReview], concurrency: Int, running: Int) {
+    /// Queued reviews oldest first, the running ones (so a partner with a fresh conversation can see what
+    /// holds the limit), the concurrency limit, and how many are running.
+    public func next() throws -> (reviews: [PartnerReview], runningReviews: [PartnerReview], concurrency: Int,
+                                  running: Int) {
         let concurrency = max(1, settings.get(UserSettings.partnerReviewsConcurrency))
-        return (try store.reviews(state: .queued), concurrency, try store.reviewCounts().running)
+        let running = try store.reviews(state: .running)
+        return (try store.reviews(state: .queued), running, concurrency, running.count)
     }
 
     /// Starts one queued review: skips it when its commit has left the branch, otherwise brings the repo's
@@ -153,9 +156,15 @@ public final class ReviewService {
         return review
     }
 
-    /// At app start: every review left `running` by the last run goes back to the queue. Returns how many.
+    /// At every partner start: each review left `running` whose session is not open in this process goes back
+    /// to the queue, since nothing can finish it any more. A review whose session is still open stays running.
+    /// Returns how many were requeued.
     public func requeueInterrupted() throws -> Int {
-        let interrupted = try store.reviews(state: .running)
+        let open = Set(sessions.sessions.map(\.id.uuidString))
+        let interrupted = try store.reviews(state: .running).filter { review in
+            guard let sessionID = review.sessionID else { return true }
+            return !open.contains(sessionID)
+        }
         for var review in interrupted {
             review.state = .queued
             review.sessionID = nil

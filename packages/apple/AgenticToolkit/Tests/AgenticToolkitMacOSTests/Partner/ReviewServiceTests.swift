@@ -443,6 +443,8 @@ final class ReviewServiceTests: XCTestCase {
         let next = try service.next()
 
         XCTAssertEqual(next.reviews.map(\.id), [second.id])
+        XCTAssertEqual(next.runningReviews.map(\.id), [first.id])
+        XCTAssertNotNil(next.runningReviews.first?.sessionID)
         XCTAssertEqual(next.concurrency, 2)
         XCTAssertEqual(next.running, 1)
     }
@@ -499,6 +501,19 @@ final class ReviewServiceTests: XCTestCase {
         XCTAssertEqual(try service.requeueInterrupted(), 0)
     }
 
+    func testRequeueKeepsAReviewWhoseSessionIsOpen() async throws {
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        let review = try queue(file: "b.txt", day: 2, message: "second")
+        _ = try await service.start(id: review.id)
+        XCTAssertEqual(try service.requeueInterrupted(), 0)
+        XCTAssertEqual(try store.review(id: review.id)?.state, .running)
+
+        let session = try XCTUnwrap(registry.sessions.first)
+        registry.close(id: session.id)
+        XCTAssertEqual(try service.requeueInterrupted(), 1)
+        XCTAssertEqual(try store.review(id: review.id)?.state, .queued)
+    }
+
     // MARK: - Tools
 
     private func toolSource() -> PartnerToolSource {
@@ -547,6 +562,13 @@ final class ReviewServiceTests: XCTestCase {
 
         let refused = try await call(source, "partner_review_start", ["id": review.id])
         XCTAssertTrue(refused.isError)
+
+        let during = try object(try await call(source, "partner_review_next").content)
+        let listed = try XCTUnwrap((during["runningReviews"] as? [[String: Any]])?.first)
+        XCTAssertEqual(listed["id"] as? String, review.id)
+        XCTAssertEqual(listed["repo"] as? String, review.repoName)
+        XCTAssertEqual(listed["sessionID"] as? String, registry.sessions.first?.id.uuidString)
+        XCTAssertEqual(during["running"] as? Int, 1)
 
         let finish = try await call(source, "partner_review_finish",
                                     ["id": review.id, "state": "done", "summary": "clean"])

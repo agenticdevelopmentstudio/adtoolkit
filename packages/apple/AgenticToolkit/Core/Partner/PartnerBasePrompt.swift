@@ -55,7 +55,7 @@ public enum PartnerBasePrompt {
     | `partner_attention_update` | Changes an item's text or marks it done. |
     | `partner_attention_list` | Lists open items, and done items still in the window. |
     | `partner_notify` | Posts a macOS notification and records it as an attention item of kind notification. |
-    | `partner_review_next` | Lists the queued code reviews, oldest first. |
+    | `partner_review_next` | Lists the queued code reviews, oldest first, and the running ones with their sessions. |
     | `partner_review_start` | Starts one queued review and returns the job's steps with placeholders filled. |
     | `partner_review_finish` | Marks a review done, failed or skipped with a summary. |
 

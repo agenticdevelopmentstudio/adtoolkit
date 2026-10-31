@@ -156,7 +156,7 @@ final class PartnerCoordinatorTests: XCTestCase {
             branch: "main", subject: "s", author: "Ann", committedAt: Date(), state: .running, supersededBy: []))
     }
 
-    func testInterruptedReviewsAreRequeuedOnceTheLockIsTaken() async throws {
+    func testInterruptedReviewsAreRequeuedWhenTheLockIsTaken() async throws {
         try insertRunningReview()
         let coordinator = makeCoordinator()
         coordinator.startServices()
@@ -168,12 +168,32 @@ final class PartnerCoordinatorTests: XCTestCase {
         await waitUntil { coordinator.controller.state == .thinking }
         XCTAssertEqual(try store.review(id: "repo:abc")?.state, .queued)
 
-        var later = try XCTUnwrap(try store.review(id: "repo:abc"))
-        later.state = .running
-        try store.updateReview(later)
+    }
+
+    func testARestartRequeuesOnlyRunningReviewsWhoseSessionIsGone() async throws {
+        endpointUp()
+        settings.set(true, for: UserSettings.partnerEnabled)
+        let coordinator = makeCoordinator()
+        coordinator.startServices()
+        await waitUntil { coordinator.controller.state == .thinking }
+
+        let live = coordinator.controller.sessions.open(directory: directory.path, title: "review",
+                                                        firstCommand: nil, reviewID: "repo:live")
+        try store.insertReview(PartnerReview(
+            id: "repo:live", repoID: "repo", repoPath: "/tmp/none", repoName: "demo", sha: "live", parent: "def",
+            branch: "main", subject: "s", author: "Ann", committedAt: Date(), state: .running, supersededBy: []))
+        var withSession = try XCTUnwrap(try store.review(id: "repo:live"))
+        withSession.sessionID = live.id.uuidString
+        try store.updateReview(withSession)
+        try insertRunningReview()
+        var orphan = try XCTUnwrap(try store.review(id: "repo:abc"))
+        orphan.sessionID = UUID().uuidString
+        try store.updateReview(orphan)
+
         await coordinator.controller.restart()
         await waitUntil { coordinator.controller.state == .thinking }
-        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .running, "only the first lock requeues")
+        XCTAssertEqual(try store.review(id: "repo:live")?.state, .running, "its session is still open")
+        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .queued, "its session is gone")
     }
 
     func testAnotherCopysLiveReviewIsNotRequeued() async throws {

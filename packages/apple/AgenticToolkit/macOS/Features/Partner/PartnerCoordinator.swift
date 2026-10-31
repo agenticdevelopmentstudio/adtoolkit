@@ -43,7 +43,6 @@ public final class PartnerCoordinator: AppFeature {
     let codeReviewsScheduler: CodeReviewsScheduler
     /// Running reviews left by an earlier run are requeued once per process, by the process that holds the
     /// partner lock: another Debug copy's live reviews are not this process's to requeue.
-    private var interruptedRequeued = false
     private var toolsRegistered = false
     private var subscriptions: Set<AnyCancellable> = []
     /// Starts and stops run one after another, never interleaved.
@@ -101,12 +100,9 @@ public final class PartnerCoordinator: AppFeature {
                                        projects: projects, notifier: notifier, reviews: reviews)
         super.init()
         featureName = "Coding Partner"
-        // Requeued only once this process holds the lock, before its first tick can list the queue.
-        controller.onLockAcquired = { [weak self] in
-            guard let self, !self.interruptedRequeued else { return }
-            self.interruptedRequeued = true
-            self.requeueInterruptedReviews()
-        }
+        // On every start, once this process holds the lock and before its first tick lists the queue: a
+        // restart may begin a fresh conversation, which cannot see the reviews the old one left running.
+        controller.onLockAcquired = { [weak self] in self?.requeueInterruptedReviews() }
 
         commandRegistry.register(AppCommand(
             id: CommandID.showWindow, title: "Coding Partner", category: "Coding Partner",
@@ -318,7 +314,8 @@ public final class PartnerCoordinator: AppFeature {
         controller.restartSchedule(jobID: job.id)
     }
 
-    /// A review left `running` when the app last quit has no session any more; it goes back to the queue.
+    /// A review left `running` with no open session (the app quit, or the session closed) goes back to the
+    /// queue.
     private func requeueInterruptedReviews() {
         do {
             let count = try reviews.requeueInterrupted()
