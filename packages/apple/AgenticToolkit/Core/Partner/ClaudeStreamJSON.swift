@@ -48,11 +48,10 @@ public struct ClaudeStreamMessage: Sendable, Equatable {
     /// What claude says, on stdout and stderr alike, when `--resume` names a session it does not have.
     public static let lostSessionText = "No conversation found"
 
-    /// An error `result` before any turn ran, or one naming a missing conversation: what claude emits,
-    /// then exits, for a `--resume` id it does not have.
+    /// An error `result` naming a missing conversation: what claude emits, then exits, for a `--resume`
+    /// id it does not have. Other errors before any turn ran (auth, quota) are not a lost session.
     public var reportsLostSession: Bool {
-        kind == .result && isError
-            && (numTurns == 0 || errors.contains { $0.contains(Self.lostSessionText) })
+        kind == .result && isError && errors.contains { $0.contains(Self.lostSessionText) }
     }
 
     /// Decodes one line. Throws `DecodingError` when the line is not a JSON object.

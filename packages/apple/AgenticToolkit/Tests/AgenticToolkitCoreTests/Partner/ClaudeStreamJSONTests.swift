@@ -30,6 +30,11 @@ import Testing
         #expect(try !ClaudeStreamMessage.decode(Data(failedTurn.utf8)).reportsLostSession)
         #expect(try ClaudeStreamMessage.decode(Data(success.utf8)).errors.isEmpty)
     }
+    @Test func anErrorBeforeAnyTurnIsNotALostSessionUnlessItSaysSo() throws {
+        let auth = #"{"type":"result","subtype":"error_during_execution","is_error":true,"num_turns":0,"#
+            + #""errors":["Invalid API key"]}"#
+        #expect(try !ClaudeStreamMessage.decode(Data(auth.utf8)).reportsLostSession)
+    }
     @Test func unknownTypeIsOther() throws {
         let msg = try ClaudeStreamMessage.decode(Data(#"{"type":"stream_event","event":{}}"#.utf8))
         #expect(msg.kind == .other("stream_event"))
