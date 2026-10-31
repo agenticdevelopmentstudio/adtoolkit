@@ -36,6 +36,11 @@ public final class PartnerCoordinator: AppFeature {
     private let settings: SettingsStore
     private let registerTools: @MainActor (any ChatToolSource) -> Void
     private let toolSource: PartnerToolSource
+    /// The code-reviews job: the tools' service and the crawl run before each of its ticks.
+    let reviews: ReviewService
+    let codeReviewsScheduler: CodeReviewsScheduler
+    /// Running reviews left by an earlier run are requeued once per launch, before the first tick.
+    private var interruptedRequeued = false
     private var toolsRegistered = false
     private var subscriptions: Set<AnyCancellable> = []
     /// Starts and stops run one after another, never interleaved.
@@ -82,9 +87,14 @@ public final class PartnerCoordinator: AppFeature {
         controller = makeController(store, sessions, notifier, paths, {
             status.port.flatMap { port in status.token.map { PartnerController.Endpoint(port: port, token: $0) } }
         })
+        reviews = ReviewService(store: store, sessions: sessions, notifier: notifier, paths: paths,
+                                settings: settings, steps: { Self.codeReviewSteps(store: store) })
+        codeReviewsScheduler = CodeReviewsScheduler(store: store, projects: projects, settings: settings)
+        let scheduler = codeReviewsScheduler
+        controller.tickPreparers[PartnerJobDefaults.codeReviewsID] = { await scheduler.crawlAndSummarise() }
         let box = callerIDBox
         toolSource = PartnerToolSource(callerID: { box.value }, store: store, sessions: sessions,
-                                       projects: projects, notifier: notifier)
+                                       projects: projects, notifier: notifier, reviews: reviews)
         super.init()
         featureName = "Coding Partner"
 
@@ -117,6 +127,10 @@ public final class PartnerCoordinator: AppFeature {
         if !toolsRegistered {
             toolsRegistered = true
             registerTools(toolSource)
+        }
+        if !interruptedRequeued {
+            interruptedRequeued = true
+            requeueInterruptedReviews()
         }
         guard subscriptions.isEmpty else { return }
         let box = callerIDBox
@@ -226,6 +240,30 @@ public final class PartnerCoordinator: AppFeature {
             return opens ? .open(resolved) : .reveal(url)
         }
         return .ignore(reasons.isEmpty ? "no url or path" : reasons.joined(separator: "; "))
+    }
+
+    // MARK: - Code reviews
+
+    /// The stored code-reviews job's steps (the owner may have edited them), else the shipped ones.
+    private static func codeReviewSteps(store: PartnerStore) -> [PartnerJobStep] {
+        do {
+            if let job = try store.jobs().first(where: { $0.id == PartnerJobDefaults.codeReviewsID }) {
+                return job.steps
+            }
+        } catch {
+            logger.error("Reading the code-reviews job failed: \(error.localizedDescription, privacy: .public)")
+        }
+        return PartnerJobDefaults.codeReviews().steps
+    }
+
+    /// A review left `running` when the app last quit has no session any more; it goes back to the queue.
+    private func requeueInterruptedReviews() {
+        do {
+            let count = try reviews.requeueInterrupted()
+            if count > 0 { Self.logger.notice("Requeued \(count) interrupted reviews") }
+        } catch {
+            Self.logger.error("Requeueing interrupted reviews failed: \(error.localizedDescription, privacy: .public)")
+        }
     }
 
     // MARK: - Run state

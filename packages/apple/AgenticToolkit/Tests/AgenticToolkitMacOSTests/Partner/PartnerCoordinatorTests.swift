@@ -133,6 +133,36 @@ final class PartnerCoordinatorTests: XCTestCase {
         XCTAssertTrue(refused.isError)
     }
 
+    // MARK: - Code reviews
+
+    func testTheCodeReviewsJobHasATickPreparerAndTheReviewTools() async {
+        let coordinator = makeCoordinator()
+        XCTAssertNotNil(coordinator.controller.tickPreparers[PartnerJobDefaults.codeReviewsID])
+        coordinator.startServices()
+        let names = await registered.first?.toolDefinitions().map(\.name) ?? []
+        XCTAssertTrue(names.contains("partner_review_start"), "\(names)")
+        let summary = await coordinator.controller.tickPreparers[PartnerJobDefaults.codeReviewsID]?()
+        XCTAssertEqual(summary, "0 queued, 0 running, 0 inserted this crawl")
+    }
+
+    func testInterruptedReviewsAreRequeuedOnceAtStart() throws {
+        let running = PartnerReview(
+            id: "repo:abc", repoID: "repo", repoPath: "/tmp/none", repoName: "demo", sha: "abc", parent: "def",
+            branch: "main", subject: "s", author: "Ann", committedAt: Date(), state: .running, supersededBy: [])
+        try store.insertReview(running)
+        let coordinator = makeCoordinator()
+        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .running)
+        coordinator.startServices()
+        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .queued)
+
+        var later = try XCTUnwrap(try store.review(id: "repo:abc"))
+        later.state = .running
+        try store.updateReview(later)
+        coordinator.stop()
+        coordinator.startServices()
+        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .running, "only the first start requeues")
+    }
+
     // MARK: - Quit
 
     func testQuitTurnFitsTheFlushBudget() {
