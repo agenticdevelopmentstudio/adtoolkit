@@ -40,6 +40,12 @@ public final class AppearanceSettingsPanelViewController: ComposableSettings.Set
                 body: "A single scale applied across the app's text. It multiplies the "
                     + "theme's own type sizes rather than replacing them, so a theme with "
                     + "deliberately large headings keeps that relationship at every step."
+            ),
+            .init(
+                title: "Menu Bar Icon",
+                body: "The app's icon in the menu bar is drawn in its own colours. Single "
+                    + "colour draws it as a template instead: one shape the system tints to "
+                    + "match the bar and every other status icon beside it."
             )
         ])
     }
@@ -47,6 +53,7 @@ public final class AppearanceSettingsPanelViewController: ComposableSettings.Set
     public override func viewDidLoad() {
         super.viewDidLoad()
         self.settingsView.addGroup(createAppearanceGroup())
+        self.settingsView.addGroup(createMenuBarGroup())
         self.settingsView.addGroup(createTextSizeGroup())
     }
 
@@ -61,6 +68,20 @@ public final class AppearanceSettingsPanelViewController: ComposableSettings.Set
             }
         )
         group.addSettingSubview(ComposableSettings.PopupMenuChoiceView(viewModel: viewModel))
+
+        return group
+    }
+
+    func createMenuBarGroup() -> ComposableSettings.GroupView {
+        let group = ComposableSettings.GroupView(withTitle: "Menu Bar")
+
+        let viewModel = ComposableSettings.ViewModel<Bool>(
+            title: "Single-colour menu bar icon",
+            setting: UserSettings.singleColourMenuBarIcon,
+            explanation: "Draw the icon as one shape the system tints to match the bar, "
+                + "instead of in the app's own colours."
+        )
+        group.addSettingSubview(ComposableSettings.CheckboxView(with: viewModel))
 
         return group
     }
@@ -133,4 +154,11 @@ extension UserSettings {
 
     /// Discrete text-size scale (xSmall…xxxLarge).
     static public var textSize = UserSetting<TextSize>("text_size", default: .medium)
+
+    /// Whether the status item shows the app's icon as a one-colour template
+    /// the system tints, rather than in the app's own colours. The host owns
+    /// the two images and swaps them; this panel owns the switch.
+    static public var singleColourMenuBarIcon = UserSetting<Bool>(
+        "single_colour_menu_bar_icon", default: false
+    )
 }
