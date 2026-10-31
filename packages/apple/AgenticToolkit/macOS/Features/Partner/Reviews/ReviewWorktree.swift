@@ -72,14 +72,32 @@ public struct ReviewWorktree: Sendable {
         do {
             _ = try await git.run(["rebase", tip, fixBranch], in: worktree)
         } catch {
-            // Whatever stopped the rebase (a conflict, a timeout), never leave it half done.
-            _ = try await git.run(["rebase", "--abort"], in: worktree)
-            if case GitClientError.commandFailed(_, _, let standardError) = error {
-                throw Failure.rebaseConflict(standardError)
-            }
-            throw error
+            // Whatever stopped the rebase (a conflict, a timeout), never leave it half done. The abort's own
+            // failure must not replace the rebase's error: that error is what the owner needs to read.
+            var abortError: Error?
+            do { _ = try await git.run(["rebase", "--abort"], in: worktree) } catch { abortError = error }
+            throw Self.rebaseFailure(error, abortError: abortError)
         }
         return .rebased
+    }
+
+    /// The error a failed rebase is reported with: a git failure becomes ``Failure/rebaseConflict(_:)``
+    /// with its stderr, and an abort that also failed is appended as "(abort failed: …)", so the worktree
+    /// left mid-rebase is named. Anything else is passed on unless the abort failed too.
+    static func rebaseFailure(_ error: Error, abortError: Error?) -> Error {
+        let abortNote = abortError.map { abort -> String in
+            var detail = abort.localizedDescription
+            if case GitClientError.commandFailed(_, _, let standardError) = abort,
+               !standardError.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                detail = standardError.trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+            return " (abort failed: \(detail))"
+        }
+        if case GitClientError.commandFailed(_, _, let standardError) = error {
+            return Failure.rebaseConflict(standardError + (abortNote ?? ""))
+        }
+        guard let abortNote else { return error }
+        return Failure.rebaseConflict(error.localizedDescription + abortNote)
     }
 
     /// Standardized with symlinks resolved, so `/var/...` and `/private/var/...` compare equal.

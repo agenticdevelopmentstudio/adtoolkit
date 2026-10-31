@@ -36,7 +36,8 @@ final class PartnerCoordinatorTests: XCTestCase {
         try? FileManager.default.removeItem(at: directory)
     }
 
-    private func makeCoordinator(quitLimit: Duration = PartnerCoordinator.quitTurnLimit) -> PartnerCoordinator {
+    private func makeCoordinator(quitLimit: Duration = PartnerCoordinator.quitTurnLimit,
+                                 isPIDAlive: @escaping (Int32) -> Bool = { _ in false }) -> PartnerCoordinator {
         let log = log!
         let settings = settings!
         let made = PartnerCoordinator(
@@ -53,7 +54,7 @@ final class PartnerCoordinatorTests: XCTestCase {
                         log.add(process)
                         return process
                     },
-                    settings: settings, pid: 4242, isPIDAlive: { _ in false })
+                    settings: settings, pid: 4242, isPIDAlive: isPIDAlive)
             })
         coordinator = made
         return made
@@ -93,12 +94,16 @@ final class PartnerCoordinatorTests: XCTestCase {
         settings.set(true, for: UserSettings.partnerEnabled)
         let coordinator = makeCoordinator()
         coordinator.startServices()
-        try? await Task.sleep(for: .milliseconds(200))
-        XCTAssertEqual(coordinator.controller.state, .stopped, "no endpoint yet, so no start")
+        status.failureReason = "port 22848 is in use"
+        await waitUntil { coordinator.controller.state != .stopped }
+        XCTAssertEqual(coordinator.controller.state,
+                       .failed("waiting for the automation endpoint: port 22848 is in use"),
+                       "no endpoint yet, so no start, and the state says why")
+        XCTAssertTrue(log.all.isEmpty)
         endpointUp()
         await waitUntil { !self.log.all.isEmpty }
         XCTAssertEqual(log.all.count, 1)
-        XCTAssertNotEqual(coordinator.controller.state, .stopped)
+        XCTAssertFalse(coordinator.controller.state.displayText.contains("waiting"))
     }
 
     func testTurningEnabledOnStartsAndOffStops() async {
@@ -145,22 +150,45 @@ final class PartnerCoordinatorTests: XCTestCase {
         XCTAssertEqual(summary, "0 queued, 0 running, 0 inserted this crawl")
     }
 
-    func testInterruptedReviewsAreRequeuedOnceAtStart() throws {
-        let running = PartnerReview(
+    private func insertRunningReview() throws {
+        try store.insertReview(PartnerReview(
             id: "repo:abc", repoID: "repo", repoPath: "/tmp/none", repoName: "demo", sha: "abc", parent: "def",
-            branch: "main", subject: "s", author: "Ann", committedAt: Date(), state: .running, supersededBy: [])
-        try store.insertReview(running)
+            branch: "main", subject: "s", author: "Ann", committedAt: Date(), state: .running, supersededBy: []))
+    }
+
+    func testInterruptedReviewsAreRequeuedOnceTheLockIsTaken() async throws {
+        try insertRunningReview()
         let coordinator = makeCoordinator()
-        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .running)
         coordinator.startServices()
+        try? await Task.sleep(for: .milliseconds(100))
+        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .running, "a disabled partner takes no lock")
+
+        endpointUp()
+        settings.set(true, for: UserSettings.partnerEnabled)
+        await waitUntil { coordinator.controller.state == .thinking }
         XCTAssertEqual(try store.review(id: "repo:abc")?.state, .queued)
 
         var later = try XCTUnwrap(try store.review(id: "repo:abc"))
         later.state = .running
         try store.updateReview(later)
-        coordinator.stop()
+        await coordinator.controller.restart()
+        await waitUntil { coordinator.controller.state == .thinking }
+        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .running, "only the first lock requeues")
+    }
+
+    func testAnotherCopysLiveReviewIsNotRequeued() async throws {
+        try insertRunningReview()
+        XCTAssertTrue(try store.acquireLock(pid: 999, isAlive: { _ in true }))
+        endpointUp()
+        settings.set(true, for: UserSettings.partnerEnabled)
+        let coordinator = makeCoordinator(isPIDAlive: { $0 == 999 })
         coordinator.startServices()
-        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .running, "only the first start requeues")
+        await waitUntil { coordinator.controller.state != .stopped && coordinator.controller.state != .starting }
+        guard case .failed(let reason) = coordinator.controller.state else {
+            return XCTFail("expected the lock refusal, got \(coordinator.controller.state)")
+        }
+        XCTAssertTrue(reason.contains("999"), reason)
+        XCTAssertEqual(try store.review(id: "repo:abc")?.state, .running)
     }
 
     // MARK: - Crawl interval
@@ -307,6 +335,19 @@ final class PartnerCoordinatorTests: XCTestCase {
         XCTAssertEqual(log.all.count, 1)
     }
 
+    func testQuitClosesOpenSessionsKeepingTheirFinalScreens() async throws {
+        let coordinator = makeCoordinator(quitLimit: .milliseconds(100))
+        coordinator.startServices()
+        let session = coordinator.controller.sessions.open(directory: directory.path, title: "review",
+                                                           firstCommand: "echo READY")
+        await waitUntil { session.chat.screen()?.contains("READY") ?? false }
+        await coordinator.terminate()
+        XCTAssertTrue(coordinator.controller.sessions.sessions.isEmpty)
+        let record = try XCTUnwrap(store.sessions().first { $0.id == session.id.uuidString })
+        XCTAssertNotNil(record.closedAt)
+        XCTAssertTrue(record.finalScreen?.contains("READY") ?? false, record.finalScreen ?? "nil")
+    }
+
     func testNothingStartsAfterTerminate() async {
         endpointUp()
         let coordinator = makeCoordinator(quitLimit: .milliseconds(100))
@@ -388,9 +429,19 @@ final class PartnerCoordinatorTests: XCTestCase {
 
     func testLaunchingTypesAreRevealedNotOpened() throws {
         for name in ["run.command", "setup.pkg", "x.tool", "x.terminal", "x.workflow", "x.scpt", "x.sh",
-                     "X.COMMAND", "go.fileloc", "site.webloc"] {
+                     "X.COMMAND", "go.fileloc", "site.webloc", "lib.jar", "disk.dmg", "Xcode.xip", "tool.py",
+                     "x.rb", "x.js", "x.inetloc", "x.mobileconfig", "x.configprofile", "x.action", "x.plist",
+                     "noextension", "x.unknownext"] {
             let path = try file(name)
             XCTAssertEqual(action(["path": path]), .reveal(URL(fileURLWithPath: path)), name)
+        }
+    }
+
+    func testDocumentTypesOpen() throws {
+        for name in ["notes.md", "shot.png", "paper.pdf", "Main.swift", "data.json", "photo.JPG"] {
+            let path = try file(name)
+            XCTAssertEqual(action(["path": path]), .open(URL(fileURLWithPath: path).resolvingSymlinksInPath()),
+                           name)
         }
     }
 

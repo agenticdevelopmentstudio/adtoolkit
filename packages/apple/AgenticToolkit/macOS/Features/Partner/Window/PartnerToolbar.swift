@@ -38,7 +38,8 @@ public final class PartnerToolbar: NSObject, NSToolbarDelegate {
     private let controller: PartnerController
     /// Internal for tests.
     let statusLabel = NSTextField(labelWithString: "")
-    private let startStopButton = NSButton()
+    /// Internal for tests.
+    let startStopButton = NSButton()
     private var subscriptions: Set<AnyCancellable> = []
 
     public init(controller: PartnerController) {
@@ -59,6 +60,17 @@ public final class PartnerToolbar: NSObject, NSToolbarDelegate {
             // Main first: the filter closure is main-actor isolated, and writes arrive from MCP calls off it.
             .receive(on: DispatchQueue.main)
             .filter { $0 == .jobs || $0 == .reviews }
+            .sink { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self else { return }
+                    self.refresh(state: self.controller.state)
+                }
+            }
+            .store(in: &subscriptions)
+        // Start does nothing while Settings' switch is off, so the button says so instead of failing quietly.
+        controller.settings.changes
+            .receive(on: DispatchQueue.main)
+            .filter { $0 == UserSettings.partnerEnabled.name }
             .sink { [weak self] _ in
                 MainActor.assumeIsolated {
                     guard let self else { return }
@@ -94,8 +106,14 @@ public final class PartnerToolbar: NSObject, NSToolbarDelegate {
         let symbol = state.isRunning ? "stop.fill" : "play.fill"
         let title = state.isRunning ? "Stop" : "Start"
         startStopButton.image = NSImage(systemSymbolName: symbol, accessibilityDescription: title)
-        startStopButton.toolTip = title
-        startStopButton.isEnabled = state != .starting
+        let partnerOn = controller.settings.get(UserSettings.partnerEnabled)
+        if state.isRunning || partnerOn {
+            startStopButton.toolTip = title
+            startStopButton.isEnabled = state != .starting
+        } else {
+            startStopButton.toolTip = "Turn on the Coding Partner in Settings to start it"
+            startStopButton.isEnabled = false
+        }
     }
 
     /// The review counts the status line shows.
@@ -126,7 +144,7 @@ public final class PartnerToolbar: NSObject, NSToolbarDelegate {
 
     @objc private func restart() {
         let controller = controller
-        Task { @MainActor in await controller.restart() }
+        Task { @MainActor in await controller.restart(guidelinesChanged: true) }
     }
 
     // MARK: - NSToolbarDelegate

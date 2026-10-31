@@ -77,15 +77,17 @@ public final class PartnerGeneralSettingsViewController: ComposableSettings.Sett
         addGroup(model)
 
         let session = ComposableSettings.GroupView(withTitle: "Session")
-        let store = controller.store
         let controller = self.controller
         session.addSettingSubview(ComposableSettings.ButtonView(viewModel: ComposableSettings.ButtonViewModel(
             title: "Start a new session",
             explanation: "Forgets the partner's current conversation and restarts it.",
             wasPressedCallback: {
                 Task { @MainActor in
-                    do { try store.setSessionID(nil) } catch { return }
-                    await controller.restart()
+                    do { try await controller.startNewSession() } catch {
+                        PartnerController.logger.error(
+                            "Starting a new session failed: \(error.localizedDescription, privacy: .public)")
+                        NSSound.beep()
+                    }
                 }
             })))
         session.addSettingSubview(ComposableSettings.IntegerFieldView(

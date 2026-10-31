@@ -268,6 +268,13 @@ public final class PartnerStore: @unchecked Sendable {
         }
     }
 
+    /// Deletes logged tool calls made before `date`; returns how many. Each row keeps a call's full argument
+    /// text, so the log is kept no longer than the attention items it explains.
+    @discardableResult
+    public func purgeToolCalls(before date: Date) throws -> Int {
+        try locked { try run("DELETE FROM tool_call WHERE at < ?", [.date(date)]) }
+    }
+
     // MARK: - JSON
 
     static func json<T: Encodable>(_ value: T, sorted: Bool = false) throws -> String {

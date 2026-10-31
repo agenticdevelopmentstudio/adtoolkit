@@ -93,6 +93,26 @@ final class AttentionPaneModelTests: XCTestCase {
         XCTAssertEqual(AttentionPaneModel.cardAction(for: item(.question, .done)), .done)
     }
 
+    func testAPressedCardShowsSendingAndDropsRepeatClicks() throws {
+        let item = AttentionItem(kind: .notification, text: "Review done", createdBy: "partner")
+        try store.insert(item)
+        let model = AttentionPaneModel(store: store, retentionDays: { 7 })
+        var confirmed: [String] = []
+        model.onConfirm = { confirmed.append($0) }
+        XCTAssertEqual(model.action(for: item), .confirm)
+
+        model.perform(.confirm, on: item)
+        model.perform(.confirm, on: item)
+        XCTAssertEqual(confirmed, [item.id], "one line per card")
+        XCTAssertEqual(model.action(for: item), .sending)
+
+        model.reload()
+        XCTAssertEqual(model.action(for: item), .confirm, "a reload shows the stored state again")
+        let question = AttentionItem(kind: .question, text: "Which?", createdBy: "partner")
+        model.perform(.discuss, on: question)
+        XCTAssertFalse(model.pressed.contains(question.id), "Discuss sends nothing, so it is never held")
+    }
+
     func testDiscussionReplyCarriesTheItemID() {
         let inbound = PartnerSplitViewController.discussionReply(itemID: "A1", text: "Use main.")
         guard case .owner(let text, let attribution) = inbound else { return XCTFail("not an owner line") }

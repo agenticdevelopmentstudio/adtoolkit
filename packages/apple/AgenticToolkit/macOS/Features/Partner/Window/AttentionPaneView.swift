@@ -88,7 +88,7 @@ struct AttentionCard: View {
 
     @ViewBuilder
     private var actionView: some View {
-        let action = AttentionPaneModel.cardAction(for: item)
+        let action = model.action(for: item)
         switch action {
         case .discuss: button("Discuss", action)
         case .resolved: button("Resolved", action)

@@ -15,11 +15,26 @@ extension UserSettings {
     public static let partnerPermissionMode = UserSetting<String>("partner.permission_mode", default: "dontAsk")
 
     /// Space-separated `--allowedTools` entries: the partner's MCP tools plus read-only git and Read.
+    ///
+    /// No `git branch` entry: `Bash(git branch *)` also matches `-D`, `-f` and `-m`, which delete and move
+    /// the owner's branches, and `partner_projects_list` already gives each repo's branch.
     public static let partnerAllowedTools = UserSetting<String>(
         "partner.allowed_tools",
-        default: "mcp__adkitchen Bash(git log *) Bash(git show *) Bash(git diff *) Bash(git status *) "
-            + "Bash(git branch *) Read"
+        default: "mcp__adkitchen Bash(git log *) Bash(git show *) Bash(git diff *) Bash(git status *) Read"
     )
+
+    /// The default ``partnerAllowedTools`` shipped before `Bash(git branch *)` was dropped.
+    static let partnerAllowedToolsPreviousDefault =
+        "mcp__adkitchen Bash(git log *) Bash(git show *) Bash(git diff *) Bash(git status *) Bash(git branch *) Read"
+
+    /// A stored ``partnerAllowedTools`` that is exactly the old default was never chosen by the owner (it was
+    /// written by the settings field showing the default), so it is removed and the current default applies.
+    /// Anything the owner edited is left alone.
+    public static func migratePartnerAllowedTools(in settings: SettingsStore) {
+        guard settings.contains(partnerAllowedTools),
+              settings.get(partnerAllowedTools) == partnerAllowedToolsPreviousDefault else { return }
+        settings.remove(partnerAllowedTools)
+    }
 
     /// How long a session's output must be quiet before the partner is told it went idle.
     public static let partnerIdleSettleSeconds = UserSetting<Int>("partner.idle_settle_seconds", default: 60)

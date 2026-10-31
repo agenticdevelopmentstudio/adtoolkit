@@ -18,6 +18,20 @@ extension PartnerStore {
         }
     }
 
+    /// Inserts `entry` unless a review of the same repo and commit (or the same id) is already stored; returns
+    /// whether it was inserted. Two crawls racing on the same commit (two Debug copies) both get an answer
+    /// instead of a constraint error.
+    @discardableResult
+    public func insertReviewIfNew(_ entry: PartnerReview) throws -> Bool {
+        let superseded = try Self.json(entry.supersededBy)
+        return try write(.reviews) {
+            try run("""
+                INSERT OR IGNORE INTO review (\(Self.reviewColumns))
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, Self.reviewBinds(entry, superseded: superseded)) == 1
+        }
+    }
+
     /// Replaces every column of the row `entry.id`. Throws when no such review exists.
     public func updateReview(_ entry: PartnerReview) throws {
         let superseded = try Self.json(entry.supersededBy)

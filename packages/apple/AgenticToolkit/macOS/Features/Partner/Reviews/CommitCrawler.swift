@@ -56,11 +56,12 @@ public struct CommitCrawler: Sendable {
             for branch in try await branches(url) {
                 for commit in try await commits(in: url, branch: branch, since: since)
                 where try !store.reviewExists(repoID: repo.id, sha: commit.sha) {
-                    try store.insertReview(PartnerReview(
+                    // OR IGNORE: another crawl (a second Debug copy) may have queued it since the check.
+                    let isNew = try store.insertReviewIfNew(PartnerReview(
                         id: "\(repo.id):\(commit.sha)", repoID: repo.id, repoPath: repo.path, repoName: repo.name,
                         sha: commit.sha, parent: commit.parent, branch: branch, subject: commit.subject,
                         author: commit.author, committedAt: commit.committedAt, state: .queued, supersededBy: []))
-                    inserted += 1
+                    if isNew { inserted += 1 }
                 }
             }
         }

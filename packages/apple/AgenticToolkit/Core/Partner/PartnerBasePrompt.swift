@@ -79,16 +79,40 @@ public enum PartnerBasePrompt {
     A job lists steps. Run them in order. Each step has an environment (a terminal shell or a Claude Code \
     prompt), a command, and a condition. Judge whether the condition holds from the session's screen before \
     you type the command; if it does not hold, wait for the next idle message or raise an attention item. \
-    Never skip a step and never reorder them.
+    Never skip a step and never reorder them. Each job's steps are listed under its heading below; a \
+    `{placeholder}` in a command is a value you fill in from the job's work.
+
+    ## Git
+
+    Use git only to read: log, show, diff and status. Never pass `--output` to a git command, because it \
+    writes a file. Never change the owner's branches, commits or working trees yourself; the code-review \
+    sessions you open do their work in their own worktrees.
     """
 
-    /// The base text, then one `## Job:` section per enabled job.
+    /// The base text, then one `## Job:` section per enabled job, with its guidelines and its steps.
     public static func systemPrompt(jobs: [PartnerJob]) -> String {
         var prompt = text
         for job in jobs where job.isEnabled {
             prompt += "\n\n## Job: \(job.name)\n\n\(job.guidelines)"
+            prompt += stepsSection(for: job)
         }
         return prompt
+    }
+
+    /// The job's steps as a numbered list; empty when the job has none.
+    static func stepsSection(for job: PartnerJob) -> String {
+        guard !job.steps.isEmpty else { return "" }
+        var section = "\n\n### Steps\n\n"
+        if job.id == PartnerJobDefaults.codeReviewsID {
+            section += "These steps arrive filled in from `partner_review_start`; run the filled copy it returns.\n\n"
+        }
+        for (index, step) in job.steps.enumerated() {
+            let place = step.environment == .claude ? "Claude Code prompt" : "terminal shell"
+            section += "\(index + 1). \(step.name) (\(place)): `\(step.command)`"
+            let condition = step.condition.trimmingCharacters(in: .whitespacesAndNewlines)
+            section += condition.isEmpty ? "\n" : ", when \(condition)\n"
+        }
+        return String(section.dropLast())
     }
 
     /// The Claude Code skill that carries a job's guidelines to sessions the partner opens.

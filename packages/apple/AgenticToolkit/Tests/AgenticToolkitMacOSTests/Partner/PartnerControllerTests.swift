@@ -162,7 +162,8 @@ final class PartnerControllerTests: XCTestCase {
     private func makeController(
         endpoint: PartnerController.Endpoint? = .init(port: 1, token: "t"),
         turnTimeout: (() -> Duration)? = nil,
-        isPIDAlive: @escaping (Int32) -> Bool = { _ in false }
+        isPIDAlive: @escaping (Int32) -> Bool = { _ in false },
+        purgeInterval: TimeInterval = 86_400
     ) -> PartnerController {
         let log = log!
         let made = PartnerController(
@@ -175,7 +176,8 @@ final class PartnerControllerTests: XCTestCase {
                 log.add(process)
                 return process
             },
-            settings: settings, turnTimeout: turnTimeout, pid: 4242, isPIDAlive: isPIDAlive)
+            settings: settings, turnTimeout: turnTimeout, pid: 4242, isPIDAlive: isPIDAlive,
+            purgeInterval: purgeInterval)
         controller = made
         return made
     }
@@ -425,10 +427,134 @@ final class PartnerControllerTests: XCTestCase {
     func testAllowedToolsDefaultKeepsParenthesisedEntriesWhole() {
         XCTAssertEqual(PartnerController.allowedTools(settings.get(UserSettings.partnerAllowedTools)), [
             "mcp__adkitchen", "Bash(git log *)", "Bash(git show *)", "Bash(git diff *)",
-            "Bash(git status *)", "Bash(git branch *)", "Read"
+            "Bash(git status *)", "Read"
         ])
         XCTAssertEqual(PartnerController.allowedTools("Read\tBash(git log *)\n  Edit "),
                        ["Read", "Bash(git log *)", "Edit"])
+    }
+
+    func testStartDropsTheOldDefaultAllowListButKeepsAnEditedOne() async {
+        settings.set(UserSettings.partnerAllowedToolsPreviousDefault, for: UserSettings.partnerAllowedTools)
+        await startIdle(makeController())
+        XCTAssertEqual(settings.get(UserSettings.partnerAllowedTools), UserSettings.partnerAllowedTools.defaultValue)
+        XCTAssertFalse(process.configuration.allowedTools.contains("Bash(git branch *)"))
+
+        let edited = UserSettings.partnerAllowedToolsPreviousDefault + " Edit"
+        settings.set(edited, for: UserSettings.partnerAllowedTools)
+        UserSettings.migratePartnerAllowedTools(in: settings)
+        XCTAssertEqual(settings.get(UserSettings.partnerAllowedTools), edited)
+    }
+
+    func testFailureClearsTheCallerID() async {
+        let controller = makeController()
+        await startIdle(controller)
+        XCTAssertNotNil(controller.callerID)
+        process.crash(stderr: "boom")
+        await waitUntil { controller.state == .failed("partner process exited") }
+        XCTAssertNil(controller.callerID)
+    }
+
+    func testRestartForGuidelinesTellsThePartnerAfterItsStartedNotice() async {
+        let controller = makeController()
+        await startIdle(controller)
+        await controller.restart(guidelinesChanged: true)
+        await waitUntil { log.all.count == 2 && process.sent.count == 1 }
+        XCTAssertTrue(process.sent.first?.contains("started") ?? false, "\(process.sent)")
+        process.push(Self.result)
+        await waitUntil { process.sent.count == 2 }
+        XCTAssertEqual(process.sent.last, PartnerInbound.lifecycle(.guidelinesChanged).text)
+    }
+
+    func testPlainRestartSaysNothingAboutGuidelines() async throws {
+        let controller = makeController()
+        await startIdle(controller)
+        await controller.restart()
+        await waitUntil { log.all.count == 2 && process.sent.count == 1 }
+        process.push(Self.result)
+        await waitUntil { controller.state == .idle }
+        try? await Task.sleep(for: .milliseconds(100))
+        XCTAssertEqual(process.sent.count, 1, "\(process.sent)")
+    }
+
+    func testNewSessionMarksTheBoundaryAndStartsFresh() async throws {
+        let controller = makeController()
+        await startIdle(controller)
+        XCTAssertNotNil(try store.sessionID())
+        try await controller.startNewSession()
+        let transcript = try store.transcript(limit: 50)
+        let boundary = try XCTUnwrap(transcript.lastIndex { $0.text == PartnerController.newSessionNotice })
+        XCTAssertEqual(transcript[boundary].role, .notice)
+        XCTAssertTrue(transcript[(boundary + 1)...].contains { $0.text.contains("resumed: false") },
+                      "the fresh session's started notice follows the boundary")
+        XCTAssertEqual(log.all.count, 2)
+        XCTAssertEqual(process.configuration.resume, false)
+    }
+
+    func testASecondButtonPressIsRefused() async throws {
+        let controller = makeController()
+        await startIdle(controller)
+        let item = AttentionItem(kind: .question, text: "Ship it?", createdBy: "partner")
+        try store.insert(item)
+        try controller.performButton(.confirm, itemID: item.id)
+        XCTAssertThrowsError(try controller.performButton(.resolved, itemID: item.id)) { error in
+            XCTAssertEqual(error as? PartnerController.ControllerError, .alreadyAnswered(item.id))
+        }
+        XCTAssertEqual(try store.actions(itemID: item.id).map(\.action), [.confirm])
+    }
+
+    func testSyncSchedulesFollowsEnableDisableAndScheduleEdits() async throws {
+        let controller = makeController()
+        await startIdle(controller)
+        let id = PartnerJobDefaults.generalID
+        var general = try XCTUnwrap(controller.jobs().first { $0.id == id })
+        general.isEnabled = false
+        try store.upsert(general)
+        controller.syncSchedules()
+        XCTAssertNil(controller.refreshers[id])
+
+        general.isEnabled = true
+        general.scheduleSeconds = 3_600
+        try store.upsert(general)
+        controller.syncSchedules()
+        XCTAssertEqual(controller.refreshers[id]?.interval, 3_600)
+
+        let running = controller.refreshers[id]
+        controller.syncSchedules()
+        XCTAssertTrue(controller.refreshers[id] === running, "a timer already right was replaced")
+
+        general.scheduleSeconds = 7_200
+        try store.upsert(general)
+        controller.syncSchedules()
+        XCTAssertEqual(controller.refreshers[id]?.interval, 7_200)
+
+        general.isEnabled = false
+        try store.upsert(general)
+        controller.syncSchedules()
+        XCTAssertNil(controller.refreshers[id])
+    }
+
+    func testRetentionPurgeRunsAgainWhileThePartnerRuns() async throws {
+        settings.set(0, for: UserSettings.partnerAttentionRetentionDays)
+        let controller = makeController(purgeInterval: 0.2)
+        await startIdle(controller)
+        var item = AttentionItem(kind: .notification, text: "Old news", createdBy: "partner")
+        item.state = .done
+        item.completedAt = Date().addingTimeInterval(-60)
+        try store.insert(item)
+        await waitUntil { (try? self.store.attentionItem(id: item.id)) == nil }
+        XCTAssertNil(try store.attentionItem(id: item.id))
+    }
+
+    func testWaitingForTheEndpointIsShownOnlyWhenNotRunning() async throws {
+        let controller = makeController()
+        controller.reportWaitingForEndpoint("port 22848 is in use")
+        XCTAssertEqual(controller.state, .failed("waiting for the automation endpoint: port 22848 is in use"))
+        controller.reportWaitingForEndpoint(nil)
+        XCTAssertEqual(controller.state, .failed("waiting for the automation endpoint: it is not running"))
+        XCTAssertTrue(try store.attentionItems(includeDoneCompletedAfter: nil).isEmpty)
+        await startIdle(controller)
+        controller.reportWaitingForEndpoint("gone")
+        XCTAssertEqual(controller.state, .idle)
     }
 
     // MARK: - A session claude no longer knows

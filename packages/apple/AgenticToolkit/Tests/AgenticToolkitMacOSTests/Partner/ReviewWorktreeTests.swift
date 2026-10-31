@@ -231,4 +231,26 @@ final class ReviewWorktreeTests: XCTestCase {
         XCTAssertEqual(outcome, .created)
         XCTAssertEqual(try head(of: setup.worktree), tip)
     }
+
+    // MARK: - A failed abort
+
+    func testAFailedAbortKeepsTheRebaseErrorAndNamesTheAbort() {
+        let rebase = GitClientError.commandFailed(verb: "rebase", exitStatus: 1, standardError: "CONFLICT in b.txt")
+        let abort = GitClientError.commandFailed(verb: "rebase", exitStatus: 128,
+                                                 standardError: "no rebase in progress")
+
+        let reported = ReviewWorktree.rebaseFailure(rebase, abortError: abort) as? ReviewWorktree.Failure
+        XCTAssertEqual(reported, .rebaseConflict("CONFLICT in b.txt (abort failed: no rebase in progress)"))
+        XCTAssertEqual(ReviewWorktree.rebaseFailure(rebase, abortError: nil) as? ReviewWorktree.Failure,
+                       .rebaseConflict("CONFLICT in b.txt"))
+    }
+
+    func testAnUnexpectedErrorPassesThroughUnlessTheAbortFailedToo() {
+        let timeout = CocoaError(.fileReadUnknown)
+        XCTAssertEqual(ReviewWorktree.rebaseFailure(timeout, abortError: nil) as? CocoaError, timeout)
+        let abort = GitClientError.commandFailed(verb: "rebase", exitStatus: 128, standardError: "locked")
+        guard case .rebaseConflict(let detail)? = ReviewWorktree.rebaseFailure(timeout, abortError: abort)
+                as? ReviewWorktree.Failure else { return XCTFail("not a rebase failure") }
+        XCTAssertTrue(detail.hasSuffix(" (abort failed: locked)"), detail)
+    }
 }

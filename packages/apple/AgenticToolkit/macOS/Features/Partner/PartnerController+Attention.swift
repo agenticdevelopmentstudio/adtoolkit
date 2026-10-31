@@ -15,6 +15,8 @@ extension PartnerController {
         case .discuss, .reopen: throw ControllerError.unsupportedAction(action)
         }
         guard var item = try store.attentionItem(id: itemID) else { throw ControllerError.unknownItem(itemID) }
+        // A second click, or a click on a card the window has not redrawn yet, must not send the line twice.
+        guard item.state != .sent, item.state != .done else { throw ControllerError.alreadyAnswered(itemID) }
         let source = Self.attentionSourcePrefix + itemID
         let messageID = UUID().uuidString
         try store.record(AttentionAction(itemID: itemID, action: action, at: now(), messageID: messageID))

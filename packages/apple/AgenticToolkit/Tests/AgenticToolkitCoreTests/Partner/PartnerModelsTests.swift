@@ -7,6 +7,11 @@ import Testing
         let filled = PartnerStepTemplate.fill("/code-review high {sha} {nope}", values: ["sha": "abc"])
         #expect(filled == "/code-review high abc {nope}")
     }
+    @Test func fillIsOnePassSoAValueIsNeverReSubstituted() {
+        let filled = PartnerStepTemplate.fill("{subject} {sha}",
+                                              values: ["subject": "fix {sha} {nope}", "sha": "abc"])
+        #expect(filled == "fix {sha} {nope} abc")
+    }
     @Test func ticksForSameJobCoalesceAndOwnerMessagesDoNot() {
         var queue = PartnerTurnQueue()
         queue.enqueue(.tick(jobID: "a", jobName: "A", previousTick: nil, summary: nil))

@@ -28,7 +28,12 @@ public final class PartnerController: ObservableObject {
     public enum ControllerError: Error, Equatable {
         case unknownItem(String)
         case unsupportedAction(AttentionActionKind)
+        /// The item's button line has already gone out (`.sent`) or the item is done.
+        case alreadyAnswered(String)
     }
+
+    /// The line put in the transcript when the owner starts a new conversation.
+    public static let newSessionNotice = "New conversation: the partner does not remember anything above this line."
 
     @Published public private(set) var state: State = .stopped
     @Published public private(set) var queuedCount: Int = 0
@@ -44,6 +49,10 @@ public final class PartnerController: ObservableObject {
     /// jobID → summary appended to that job's tick. Awaited before the tick is queued.
     public var tickPreparers: [String: @MainActor () async -> String?] = [:]
 
+    /// Called each time `start()` takes the live lock, before anything else runs. Work that only the
+    /// process running the partner may do (requeueing reviews it left running) hangs off this.
+    public var onLockAcquired: (@MainActor () -> Void)?
+
     let paths: PartnerPaths
     let endpoint: @MainActor () -> Endpoint?
     let findClaude: () -> String?
@@ -53,6 +62,8 @@ public final class PartnerController: ObservableObject {
     let pid: Int32
     let isPIDAlive: (Int32) -> Bool
     let now: () -> Date
+    /// How often a running partner drops done attention items, closed sessions and old tool calls.
+    let purgeInterval: TimeInterval
 
     // Turn machinery, shared with the extensions.
     var queue = PartnerTurnQueue()
@@ -86,6 +97,8 @@ public final class PartnerController: ObservableObject {
     var quitTurnFinished = false
     /// Each scheduled job's timer, by job id.
     var refreshers: [String: PeriodicRefresher] = [:]
+    /// The retention purge's timer; its first run is at start.
+    var purgeRefresher: PeriodicRefresher?
     var lastTick: [String: Date] = [:]
     /// Message ids chosen for a button's line before it is sent, by attribution source.
     var presetMessageIDs: [String: String] = [:]
@@ -101,8 +114,10 @@ public final class PartnerController: ObservableObject {
                 turnTimeout: (() -> Duration)? = nil,
                 pid: Int32 = ProcessInfo.processInfo.processIdentifier,
                 isPIDAlive: @escaping (Int32) -> Bool = { kill($0, 0) == 0 },
-                now: @escaping () -> Date = Date.init) {
+                now: @escaping () -> Date = Date.init,
+                purgeInterval: TimeInterval = 86_400) {
         self.store = store
+        self.purgeInterval = purgeInterval
         self.sessions = sessions
         self.notifier = notifier
         self.paths = paths
@@ -153,6 +168,8 @@ public final class PartnerController: ObservableObject {
             fail("could not take the partner lock: \(error.localizedDescription)", notify: true)
             return
         }
+        onLockAcquired?()
+        UserSettings.migratePartnerAllowedTools(in: settings)
         guard let claude = findClaude() else { return failReleasingLock("claude not found") }
         guard let endpoint = endpoint() else { return failReleasingLock("automation endpoint is not running") }
 
@@ -199,7 +216,7 @@ public final class PartnerController: ObservableObject {
         queuedCount = queue.count
         // Read again: a schedule changed while claude launched is stored, and `jobs` predates it.
         startSchedules(jobs: self.jobs())
-        purge()
+        startPurge()
         runNextTurnIfIdle()
     }
 
@@ -223,9 +240,38 @@ public final class PartnerController: ObservableObject {
     }
 
     /// Stops and starts again, re-reading the guidelines files.
-    public func restart() async {
+    ///
+    /// - Parameter guidelinesChanged: The owner restarted to apply edited guidelines or steps; once the
+    ///   partner is running again it is told so, after its `started` notice.
+    public func restart(guidelinesChanged: Bool = false) async {
         await stop()
         await start()
+        guard guidelinesChanged, state == .idle || state == .thinking else { return }
+        enqueue(.lifecycle(.guidelinesChanged))
+    }
+
+    /// "Start a new session": forgets the stored session id, marks the boundary in the transcript and the
+    /// chat with ``newSessionNotice`` so the owner can see where the partner's memory begins, then restarts.
+    public func startNewSession() async throws {
+        try store.setSessionID(nil)
+        let notice = ChatMessage(role: .notice, text: Self.newSessionNotice, timestamp: now())
+        do { try store.append(notice) } catch {
+            Self.logger.error("Saving the new-session notice failed: \(error.localizedDescription)")
+        }
+        chatSession.noteUserMessage(notice)
+        await restart()
+    }
+
+    /// The partner is switched on but the automation endpoint it needs is not running, so it cannot start.
+    /// Says so in the state, without a notification: the endpoint usually comes up moments later, and
+    /// then the partner starts. Only a stopped or failed partner is changed.
+    public func reportWaitingForEndpoint(_ reason: String?) {
+        switch state {
+        case .stopped, .failed: break
+        case .starting, .idle, .thinking: return
+        }
+        let detail = reason.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) } ?? ""
+        fail("waiting for the automation endpoint: \(detail.isEmpty ? "it is not running" : detail)", notify: false)
     }
 
     /// The store's jobs. Built-in jobs missing from the store are seeded from their defaults first.
@@ -350,6 +396,8 @@ public final class PartnerController: ObservableObject {
 
     func fail(_ reason: String, notify: Bool, detail: String = "") {
         Self.logger.error("Partner failed: \(reason, privacy: .public)")
+        // Cleared before the state changes: the coordinator mirrors `callerID` on each state change.
+        callerID = nil
         state = .failed(reason)
         chatSession.setState(.failed(ChatError(message: reason, isRetryable: true)))
         guard notify else { return }
@@ -378,6 +426,8 @@ public final class PartnerController: ObservableObject {
         timeoutTask = nil
         for refresher in refreshers.values { refresher.stop() }
         refreshers = [:]
+        purgeRefresher?.stop()
+        purgeRefresher = nil
     }
 
     // MARK: - Start helpers
@@ -427,12 +477,43 @@ public final class PartnerController: ObservableObject {
         startSchedule(job)
     }
 
-    private func purge() {
+    /// Brings every job's timer in line with its stored row: a job enabled, disabled, rescheduled or
+    /// deleted since its timer started gets a new timer or none. Timers already right are left running,
+    /// so their next tick is not moved. Only a running partner has timers.
+    public func syncSchedules() {
+        guard state == .idle || state == .thinking else { return }
+        let jobs = jobs()
+        for jobID in refreshers.keys where !jobs.contains(where: { $0.id == jobID }) {
+            refreshers.removeValue(forKey: jobID)?.stop()
+        }
+        for job in jobs {
+            let wanted = job.isEnabled ? job.scheduleSeconds.flatMap { $0 > 0 ? TimeInterval($0) : nil } : nil
+            if refreshers[job.id]?.interval != wanted { restartSchedule(jobID: job.id) }
+        }
+    }
+
+    /// Purges now, then every ``purgeInterval`` while the partner runs: a menu-bar app runs for weeks.
+    private func startPurge() {
+        purgeRefresher?.stop()
+        let refresher = PeriodicRefresher(interval: purgeInterval)
+        refresher.start(for: self) { controller in controller.purge() }
+        purgeRefresher = refresher
+    }
+
+    /// Drops done attention items and closed sessions past the retention period, and tool calls past
+    /// the same period.
+    func purge() {
         let days = settings.get(UserSettings.partnerAttentionRetentionDays)
+        let cutoff = now().addingTimeInterval(-TimeInterval(days) * 86_400)
         do {
-            _ = try store.purgeDone(completedBefore: now().addingTimeInterval(-TimeInterval(days) * 86_400))
+            _ = try store.purgeDone(completedBefore: cutoff)
         } catch {
             Self.logger.error("Purging done attention items failed: \(error.localizedDescription)")
+        }
+        do {
+            _ = try store.purgeToolCalls(before: cutoff)
+        } catch {
+            Self.logger.error("Purging partner tool calls failed: \(error.localizedDescription)")
         }
         sessions.purge(retentionDays: days)
     }
