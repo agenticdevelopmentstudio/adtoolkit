@@ -21,6 +21,10 @@ public final class PartnerCoordinator: AppFeature {
         public static let showWindow = "partner.showWindow"
     }
 
+    /// How long the partner's quit turn may run: three fifths of the app's flush budget (5 s gives 3 s), so
+    /// its `stop()` and the features terminated after it still fit inside that budget.
+    public static let quitTurnLimit = ApplicationShutdownCoordinator.defaultFlushBudget * 3 / 5
+
     typealias MakeController = @MainActor (
         _ store: PartnerStore, _ sessions: PartnerSessionRegistry, _ notifier: PartnerNotifier,
         _ paths: PartnerPaths, _ endpoint: @escaping @MainActor () -> PartnerController.Endpoint?
@@ -36,6 +40,9 @@ public final class PartnerCoordinator: AppFeature {
     private var subscriptions: Set<AnyCancellable> = []
     /// Starts and stops run one after another, never interleaved.
     private var lifecycleTask: Task<Void, Never>?
+    /// The quit turn and the stop after it; `terminate()` may be awaited more than once.
+    private var quitTask: Task<Void, Never>?
+    private let quitLimit: Duration
     /// The partner's pane id, readable off the main actor by the tool source.
     private let callerIDBox = CallerIDBox()
 
@@ -48,7 +55,7 @@ public final class PartnerCoordinator: AppFeature {
                             commandRegistry: CommandRegistry, detector: (any PartnerSessionEventDetecting)? = nil) {
         self.init(store: store, paths: paths, status: status, terminalEnvironment: terminalEnvironment,
                   registerTools: registerTools, projects: projects, commandRegistry: commandRegistry,
-                  detector: detector, settings: UserSettings.shared,
+                  detector: detector, settings: UserSettings.shared, quitLimit: Self.quitTurnLimit,
                   makeController: { store, sessions, notifier, paths, endpoint in
                       PartnerController(store: store, sessions: sessions, notifier: notifier, paths: paths,
                                         endpoint: endpoint)
@@ -60,9 +67,11 @@ public final class PartnerCoordinator: AppFeature {
          registerTools: @escaping @MainActor (any ChatToolSource) -> Void,
          projects: @escaping @MainActor () -> [PartnerToolSource.Project],
          commandRegistry: CommandRegistry, detector: (any PartnerSessionEventDetecting)?,
-         settings: SettingsStore, makeController: MakeController) {
+         settings: SettingsStore, quitLimit: Duration = PartnerCoordinator.quitTurnLimit,
+         makeController: MakeController) {
         self.status = status
         self.settings = settings
+        self.quitLimit = quitLimit
         self.registerTools = registerTools
         let sessions = PartnerSessionRegistry(
             store: store, environment: { terminalEnvironment() },
@@ -92,9 +101,13 @@ public final class PartnerCoordinator: AppFeature {
         // Registered unopened so the toolkit's restore-on-launch can reopen it.
         PartnerWindowController.ensureCurrent(controller: controller)
         PartnerWindowController.current?.splitViewController.onOpenReference = { reference in
-            guard let url = Self.referenceURL(reference) else { return }
-            // `open` hands the URL to its app without activating the Kitchen.
-            NSWorkspace.shared.open(url)
+            // Neither call activates the Kitchen.
+            switch Self.referenceAction(reference) {
+            case .open(let url): NSWorkspace.shared.open(url)
+            case .reveal(let url): NSWorkspace.shared.activateFileViewerSelecting([url])
+            case .ignore(let reason):
+                Self.logger.notice("Ignored an attention reference: \(reason, privacy: .public)")
+            }
         }
         startServices()
     }
@@ -131,9 +144,19 @@ public final class PartnerCoordinator: AppFeature {
         subscriptions.removeAll()
     }
 
+    /// Sends the quit turn, waits at most ``quitTurnLimit`` for it, then stops the partner either way.
+    ///
+    /// The host terminates the partner before the automation endpoint, so the turn's `partner_*` calls
+    /// still reach it. A start or stop still queued is cancelled rather than awaited: the controller's
+    /// `stop()` overtakes a launch in flight, and waiting for one would spend the budget.
     public override func terminate() async {
-        await lifecycleTask?.value
-        await controller.prepareForQuit()
+        if quitTask == nil {
+            lifecycleTask?.cancel()
+            let controller = controller
+            let limit = quitLimit
+            quitTask = Task { @MainActor in await controller.prepareForQuit(waitingAtMost: limit) }
+        }
+        await quitTask?.value
     }
 
     public func settingsPanel() -> ComposableSettings.SectionTabsPanel {
@@ -151,28 +174,74 @@ public final class PartnerCoordinator: AppFeature {
         PartnerWindowController.present(controller: controller)
     }
 
-    /// What an attention item's reference opens: its http(s) `url`, else its `path` as a file.
-    static func referenceURL(_ reference: [String: String]) -> URL? {
-        if let text = reference["url"], let url = URL(string: text),
-           let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https" {
-            return url
+    /// What clicking an attention item's reference does.
+    enum ReferenceAction: Equatable {
+        /// Hand it to its default app.
+        case open(URL)
+        /// Show it selected in Finder, unopened.
+        case reveal(URL)
+        /// Do nothing; the reason is logged.
+        case ignore(String)
+    }
+
+    /// Extensions whose default app runs, installs or redirects rather than shows. Matched lowercased.
+    static let launchingExtensions: Set<String> = [
+        "app", "command", "pkg", "mpkg", "tool", "terminal", "workflow", "action", "scpt", "scptd",
+        "sh", "zsh", "bash", "csh", "ksh", "fileloc", "webloc", "inetloc", "mobileconfig", "configprofile"
+    ]
+
+    /// References come from the partner's tool calls, which text in any repo or session it reads can steer,
+    /// so only what is safe to open on one click is opened.
+    ///
+    /// - An http(s) `url` opens. Any other scheme (`file:` spelled as a URL, `javascript:`, a custom scheme)
+    ///   is ignored; a `path` beside it is still judged on its own.
+    /// - An absolute `path` (after `~` expansion) that resolves, through symlinks, to a regular file that is
+    ///   not executable, not a package and not of a ``launchingExtensions`` type opens.
+    /// - Any other existing path is revealed in Finder. A relative or missing path is ignored.
+    static func referenceAction(_ reference: [String: String],
+                                fileManager: FileManager = .default) -> ReferenceAction {
+        var reasons: [String] = []
+        if let text = reference["url"] {
+            if let url = URL(string: text), let scheme = url.scheme?.lowercased(),
+               scheme == "http" || scheme == "https", url.host?.isEmpty == false {
+                return .open(url)
+            }
+            reasons.append("url with scheme \(URL(string: text)?.scheme ?? "none") is not http(s)")
         }
         if let path = reference["path"], !path.isEmpty {
-            return URL(fileURLWithPath: (path as NSString).expandingTildeInPath)
+            let expanded = (path as NSString).expandingTildeInPath
+            guard expanded.hasPrefix("/") else { return .ignore("path \(path) is not absolute") }
+            let url = URL(fileURLWithPath: expanded).standardizedFileURL
+            let resolved = url.resolvingSymlinksInPath()
+            guard let attributes = try? fileManager.attributesOfItem(atPath: resolved.path) else {
+                return .ignore("path \(path) does not exist")
+            }
+            let isRegular = attributes[.type] as? FileAttributeType == .typeRegular
+            let permissions = (attributes[.posixPermissions] as? NSNumber)?.intValue ?? 0o777
+            let opens = isRegular
+                && permissions & 0o111 == 0
+                && !launchingExtensions.contains(resolved.pathExtension.lowercased())
+                && !launchingExtensions.contains(url.pathExtension.lowercased())
+                && !NSWorkspace.shared.isFilePackage(atPath: resolved.path)
+            return opens ? .open(resolved) : .reveal(url)
         }
-        return nil
+        return .ignore(reasons.isEmpty ? "no url or path" : reasons.joined(separator: "; "))
     }
 
     // MARK: - Run state
 
     /// Starts the partner when it is enabled and the endpoint is up; stops it when it is disabled.
     private func reconcile() {
+        // Once the quit has begun, the partner stays stopped whatever the setting says.
+        guard quitTask == nil else { return }
         let enabled = settings.get(UserSettings.partnerEnabled)
         let previous = lifecycleTask
         let controller = controller
         let status = status
         lifecycleTask = Task { @MainActor in
             await previous?.value
+            // Cancelled by `terminate()`: nothing may start after the quit.
+            guard !Task.isCancelled else { return }
             if enabled {
                 guard status.port != nil, status.token != nil else { return }
                 switch controller.state {

@@ -36,7 +36,8 @@ public final class PartnerToolbar: NSObject, NSToolbarDelegate {
     }
 
     private let controller: PartnerController
-    private let statusLabel = NSTextField(labelWithString: "")
+    /// Internal for tests.
+    let statusLabel = NSTextField(labelWithString: "")
     private let startStopButton = NSButton()
     private var subscriptions: Set<AnyCancellable> = []
 
