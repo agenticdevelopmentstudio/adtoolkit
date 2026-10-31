@@ -769,6 +769,7 @@
 		4345E97716EE9DB61E631898 /* ProviderPickerInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B34A549A9DB4762084ACA258 /* ProviderPickerInfo.swift */; };
 		43603FFBEFCD2705714DD91A /* SystemMonitorEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = E12BA83D3F867FD3D57700AF /* SystemMonitorEngine.swift */; };
 		437E56F6E8C1314614366360 /* BillingDTOsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9A0B33BE7A2A0CE89DFE2FA /* BillingDTOsTests.swift */; };
+		43B23F406E0F3FE766F6E99C /* ReviewWorktree.swift in Sources */ = {isa = PBXBuildFile; fileRef = B86B423085340722CB7D0412 /* ReviewWorktree.swift */; };
 		43FFF0BB54CB9E75A243854F /* AtomicFileTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B2DB673CB23830DC23A5BA5 /* AtomicFileTests.swift */; };
 		440E7A84E552F5157D41D02B /* DefaultsDomainMigrationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D66CD2B6E0AD2A56D923D9C3 /* DefaultsDomainMigrationTests.swift */; };
 		4440607FA5FBEB98400D8A12 /* AuthSettingsTopic.swift in Sources */ = {isa = PBXBuildFile; fileRef = 306FED6A6185F0A913779264 /* AuthSettingsTopic.swift */; };
@@ -932,6 +933,7 @@
 		52EEEB2189AEB350F90C2DB2 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = C44178A173495CCDBE1371AC /* libsqlite3.tbd */; };
 		52FCD63A022E2A8E06493757 /* HubEnvironmentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F1F5B51E2A4B2B408E601DC /* HubEnvironmentTests.swift */; };
 		5336B00724A8E2DEE3EC1718 /* HTDVLayoutEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64D9D12E6D1FA5ED6AB1483D /* HTDVLayoutEngine.swift */; };
+		533A01710223B473A0055405 /* ReviewWorktreeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 82C32E06579751E2B4FE0A65 /* ReviewWorktreeTests.swift */; };
 		533AEB3D0652FA90160D2719 /* SettingsCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EEBEDAB495EA3A0C6AA40A6 /* SettingsCoordinator.swift */; };
 		533B6A5CAA3E1D05495FAD9D /* ApplicationsTopicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = ABD9C53982B57BB7A91BC63A /* ApplicationsTopicTests.swift */; };
 		53498C48394A9F9ABF2DE39B /* WindowDiscoveryWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB98434EF421DF7AD41BB449 /* WindowDiscoveryWindowController.swift */; };
@@ -5929,6 +5931,7 @@
 		82538E75945AB1B852828948 /* FormSheetTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FormSheetTests.swift; sourceTree = "<group>"; };
 		826CDAA2A6D6987982ADBDD5 /* CustomersAdapterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomersAdapterTests.swift; sourceTree = "<group>"; };
 		82A5A8F3A23FA0BDA066E3F4 /* HubPermissions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HubPermissions.swift; sourceTree = "<group>"; };
+		82C32E06579751E2B4FE0A65 /* ReviewWorktreeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewWorktreeTests.swift; sourceTree = "<group>"; };
 		82E0A9A23CCBB78B19FF480C /* BrowserPaneViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserPaneViewController.swift; sourceTree = "<group>"; };
 		82F1AAA0CCD47BFD24A2C13C /* SetupStamp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetupStamp.swift; sourceTree = "<group>"; };
 		831448F23EB8464AE194DE61 /* SqliteStorageProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SqliteStorageProvider.swift; sourceTree = "<group>"; };
@@ -6320,6 +6323,7 @@
 		B8271004133BEF8589B85B66 /* BrowserConsoleLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrowserConsoleLog.swift; sourceTree = "<group>"; };
 		B82AFFD6F7D84E224E80CD05 /* StenographerWindowKeyCommands.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerWindowKeyCommands.swift; sourceTree = "<group>"; };
 		B83776DCA648EA0D07B84C48 /* HTDVViewController+UIKit.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HTDVViewController+UIKit.swift"; sourceTree = "<group>"; };
+		B86B423085340722CB7D0412 /* ReviewWorktree.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewWorktree.swift; sourceTree = "<group>"; };
 		B8748B4F811CCE16DBD2435B /* VSCodeThemeImporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VSCodeThemeImporter.swift; sourceTree = "<group>"; };
 		B89939C84939B1E30B0D26A4 /* StenographerPreferenceDTOsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StenographerPreferenceDTOsTests.swift; sourceTree = "<group>"; };
 		B8A26092D4C82B491A28D3B8 /* AuthenticationAdaptersTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthenticationAdaptersTests.swift; sourceTree = "<group>"; };
@@ -10165,6 +10169,7 @@
 				5BC6B5C1A26F81A2C1122879 /* PartnerToolSourceTests.swift */,
 				7CCAF4855632C0F654234A5E /* QuietPeriodDetectorTests.swift */,
 				8D382D409CAB8E51631508BB /* ReviewGitTests.swift */,
+				82C32E06579751E2B4FE0A65 /* ReviewWorktreeTests.swift */,
 			);
 			path = Partner;
 			sourceTree = "<group>";
@@ -10746,6 +10751,7 @@
 			children = (
 				31A38B19A03B6EB29D53EC40 /* CommitCrawler.swift */,
 				AB020DA4EA170BD52AF20886 /* ReviewGit.swift */,
+				B86B423085340722CB7D0412 /* ReviewWorktree.swift */,
 			);
 			path = Reviews;
 			sourceTree = "<group>";
@@ -15479,6 +15485,7 @@
 				4E9D73F89B84255A420D7568 /* RefusalFeedback.swift in Sources */,
 				750147665D21A4AA50DE2086 /* ReopenOnLaunchPolicy.swift in Sources */,
 				E8BC0BE08D8A537FEED8FFC9 /* ReviewGit.swift in Sources */,
+				43B23F406E0F3FE766F6E99C /* ReviewWorktree.swift in Sources */,
 				8C0C8D40CCFBA9A9C395B931 /* RunningAppsProvider.swift in Sources */,
 				824106A9FAA5BBA72233BDB3 /* ScreenChange.swift in Sources */,
 				8689D95F1399DC6AE3881371 /* ScreenFingerprint.swift in Sources */,
@@ -16838,6 +16845,7 @@
 				EFA49C92E289060D0EAA3199 /* RefusalRecorder.swift in Sources */,
 				D05B43C7B4AD560380776DD2 /* ReopenOnLaunchPolicyTests.swift in Sources */,
 				74826DBB901FB161B6EAA14C /* ReviewGitTests.swift in Sources */,
+				533A01710223B473A0055405 /* ReviewWorktreeTests.swift in Sources */,
 				9DDE7FCD702043164ED0844C /* ScreenManagerObservationTests.swift in Sources */,
 				63DB102B342074B1FF9223B2 /* ScreenManagerTests.swift in Sources */,
 				29C34DE7636859C833F72C67 /* ScreenMatcherTests.swift in Sources */,
