@@ -197,7 +197,8 @@ public final class PartnerController: ObservableObject {
 
         queue.enqueueFirst(.lifecycle(.started(resumed: configuration.resume, goneSessions: closeGoneSessions())))
         queuedCount = queue.count
-        startSchedules(jobs: jobs)
+        // Read again: a schedule changed while claude launched is stored, and `jobs` predates it.
+        startSchedules(jobs: self.jobs())
         purge()
         runNextTurnIfIdle()
     }
@@ -418,8 +419,8 @@ public final class PartnerController: ObservableObject {
     }
 
     /// Replaces one job's timer with one built from its stored row, so a changed schedule applies without a
-    /// restart. Only a running partner has timers; one stopped or still starting reads the schedule when its
-    /// start finishes.
+    /// restart. Only a running partner has timers; one stopped or still starting reads the stored schedule
+    /// when its start finishes.
     public func restartSchedule(jobID: String) {
         refreshers.removeValue(forKey: jobID)?.stop()
         guard state == .idle || state == .thinking, let job = jobs().first(where: { $0.id == jobID }) else { return }

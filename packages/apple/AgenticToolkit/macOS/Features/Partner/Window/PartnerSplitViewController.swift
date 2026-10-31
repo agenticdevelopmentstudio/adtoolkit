@@ -223,13 +223,15 @@ public final class PartnerSplitViewController: NSSplitViewController {
         var rows: [PartnerShelfRow] = [.partner(status: controller.state.displayText)]
         for session in live {
             let subtitle = PartnerShelfRow.sessionSubtitle(
-                directory: session.directory, state: session.state.rawValue, review: review(id: session.reviewID))
+                directory: session.directory, state: session.state.rawValue, review: review(id: session.reviewID),
+                sessionID: session.id.uuidString)
             rows.append(.session(id: session.id.uuidString, title: session.title, subtitle: subtitle,
                                  isLive: true))
         }
         for record in storedRecords() where !liveIDs.contains(record.id) {
             let subtitle = PartnerShelfRow.sessionSubtitle(
-                directory: record.directory, state: "closed", review: review(id: record.reviewID))
+                directory: record.directory, state: "closed", review: review(id: record.reviewID),
+                sessionID: record.id)
             rows.append(.session(id: record.id, title: record.title, subtitle: subtitle, isLive: false))
         }
         shelf.rows = rows

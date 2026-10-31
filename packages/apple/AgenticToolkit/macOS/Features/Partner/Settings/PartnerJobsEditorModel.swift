@@ -40,6 +40,14 @@ public final class PartnerJobsEditorModel: ObservableObject {
         reload()
     }
 
+    /// Changes only the job's guidelines, on its current stored row, and writes them to its file, so a
+    /// schedule or enabled flag written elsewhere since the last reload is kept.
+    public func saveGuidelines(jobID: String, text: String) throws {
+        try update(jobID) { $0.guidelines = text }
+        try guidelines.saveGuidelines(jobID: jobID, text: text)
+        reload()
+    }
+
     /// Restores a built-in job to its bundled default, and removes its edited guidelines file.
     public func resetToDefault(id: String) throws {
         guard let original = PartnerJobDefaults.all.first(where: { $0.id == id }) else {

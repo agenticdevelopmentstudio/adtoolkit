@@ -22,8 +22,13 @@ public enum PartnerShelfRow: Identifiable, Equatable {
     /// - Parameters:
     ///   - state: The session's state, "closed" for a stored one.
     ///   - review: The review the session works for, when it has one and it can be read.
-    static func sessionSubtitle(directory: String, state: String, review: PartnerReview?) -> String {
-        guard let review else { return "\((directory as NSString).lastPathComponent) · \(state)" }
+    ///   - sessionID: The session the row is for. A requeued review runs again in a new session, so the
+    ///     earlier session still names it; only the session the review records as its own shows its state.
+    static func sessionSubtitle(directory: String, state: String, review: PartnerReview?,
+                                sessionID: String) -> String {
+        guard let review, review.sessionID == sessionID else {
+            return "\((directory as NSString).lastPathComponent) · \(state)"
+        }
         let summary = review.summary?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         let detail = summary.isEmpty ? review.skipReason ?? "" : summary
         return detail.isEmpty ? "review \(review.state.rawValue)" : "review \(review.state.rawValue) · \(detail)"

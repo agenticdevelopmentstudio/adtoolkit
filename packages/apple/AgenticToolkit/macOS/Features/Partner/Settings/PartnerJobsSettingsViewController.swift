@@ -146,12 +146,21 @@ public final class PartnerJobsSettingsViewController: ComposableSettings.Setting
             .sink { [weak self] _ in MainActor.assumeIsolated { self?.showStoredFields() } }
     }
 
+    /// The code-reviews job's schedule follows the crawl interval, which the coordinator writes back over
+    /// any other value, so its field is read-only here and says where to set it.
+    private func showSchedule(of job: PartnerJob?) {
+        scheduleField.stringValue = job?.scheduleSeconds.map { String($0 / 60) } ?? ""
+        let followsCrawl = job?.id == PartnerJobDefaults.codeReviewsID
+        scheduleField.isEnabled = !followsCrawl
+        scheduleField.toolTip = followsCrawl ? "Set on the Code Reviews tab (crawl interval)" : nil
+    }
+
     /// Re-reads the jobs and redraws the enabled box and the schedule, leaving the guidelines alone.
     func showStoredFields() {
         model.reload()
         let job = current
         enabledBox.state = job?.isEnabled == true ? .on : .off
-        scheduleField.stringValue = job?.scheduleSeconds.map { String($0 / 60) } ?? ""
+        showSchedule(of: job)
     }
 
     // MARK: - Setup
@@ -210,7 +219,7 @@ public final class PartnerJobsSettingsViewController: ComposableSettings.Setting
         let job = current
         detail.isHidden = job == nil
         enabledBox.state = job?.isEnabled == true ? .on : .off
-        scheduleField.stringValue = job?.scheduleSeconds.map { String($0 / 60) } ?? ""
+        showSchedule(of: job)
         // Text the owner is typing is kept until it is flushed; anything else shows the stored guidelines.
         if !guidelinesEdited, guidelinesView.string != job?.guidelines ?? "" {
             guidelinesView.string = job?.guidelines ?? ""
@@ -383,9 +392,9 @@ public final class PartnerJobsSettingsViewController: ComposableSettings.Setting
     func flushGuidelines() {
         guard guidelinesEdited else { return }
         guidelinesEdited = false
-        guard var job = current, guidelinesView.string != job.guidelines else { return }
-        job.guidelines = guidelinesView.string
-        perform { try model.save(job) }
+        guard let job = current, guidelinesView.string != job.guidelines else { return }
+        let text = guidelinesView.string
+        perform { try model.saveGuidelines(jobID: job.id, text: text) }
     }
 }
 

@@ -255,7 +255,9 @@ final class PartnerCoordinatorTests: XCTestCase {
         let coordinator = makeCoordinator()
         let split = PartnerSplitViewController(controller: coordinator.controller)
         split.loadViewIfNeeded()
-        try store.insertReview(review("abc1234", state: .running))
+        var owned = review("abc1234", state: .running)
+        owned.sessionID = "s1"  // the session the review is running in
+        try store.insertReview(owned)
         try store.upsert(PartnerStore.SessionRecord(id: "s1", title: "review abc1234", directory: "/w/demo",
                                                     openedAt: Date(), closedAt: Date(), reviewID: "repo:abc1234"))
         await waitUntil { split.shelf.rows.contains { $0.id == "s1" } }
