@@ -122,7 +122,7 @@ public final class BrowserPaneViewController: NSViewController {
         self.fallbackHomeURL = homeURL
         let configuration = Self.makeConfiguration(settings: settings, consoleLog: consoleLog)
         self.siteData = BrowserSiteData(dataStore: configuration.websiteDataStore)
-        webView = WKWebView(frame: NSRect(x: 0, y: 0, width: 640, height: 480), configuration: configuration)
+        webView = LiveResizingWebView(frame: NSRect(x: 0, y: 0, width: 640, height: 480), configuration: configuration)
         super.init(nibName: nil, bundle: nil)
         webView.navigationDelegate = self
         webView.uiDelegate = self

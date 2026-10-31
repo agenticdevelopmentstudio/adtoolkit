@@ -630,6 +630,7 @@
 		372BA2A59B254D50B5962978 /* AIChatBubbleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A03F07547FB18B08B6160740 /* AIChatBubbleView.swift */; };
 		3732A4748BAF0041715C35C0 /* BubbleTruncationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73060587A0928DEA8E5E7597 /* BubbleTruncationTests.swift */; };
 		374F1FFE28DA7EFD6F7C1320 /* OversightRoutes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 701A87A135A83B3D41926B6E /* OversightRoutes.swift */; };
+		3767718F86AFF7956D4FC33B /* LiveResizingWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 934544E7947755642CD19E3D /* LiveResizingWebView.swift */; };
 		37F15E9C43322DA487B27929 /* QuarantineServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 08D2E2EE494DC5369127688A /* QuarantineServiceTests.swift */; };
 		37F2D8DBE09BFFF028A3F60A /* GitGlobalConfigTableViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6170A42638BD6625DAC97BF1 /* GitGlobalConfigTableViewTests.swift */; };
 		38019B307616D6D724C972AB /* ToolDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5B5FFC62731DADB19C5D55C4 /* ToolDefinition.swift */; };
@@ -5955,6 +5956,7 @@
 		92BC829BEB60F0C39032D831 /* HubError+Wrap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "HubError+Wrap.swift"; sourceTree = "<group>"; };
 		9319B761DD5270D28B8481E2 /* ViewLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewLayout.swift; sourceTree = "<group>"; };
 		931C426EF3D8D45D35C8F887 /* ProjectsWindowControllerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectsWindowControllerTests.swift; sourceTree = "<group>"; };
+		934544E7947755642CD19E3D /* LiveResizingWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LiveResizingWebView.swift; sourceTree = "<group>"; };
 		934FAAEB406E8B94F56B793A /* UserSettingsThemeStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserSettingsThemeStorage.swift; sourceTree = "<group>"; };
 		93538E2B72A565920A9791A2 /* GitProjectRootTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GitProjectRootTests.swift; sourceTree = "<group>"; };
 		935E6D6BD290281F72BFF2AC /* AIPluginChatBackend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIPluginChatBackend.swift; sourceTree = "<group>"; };
@@ -7939,6 +7941,7 @@
 		1F555C32F16532FA6F49BD2E /* WebKit */ = {
 			isa = PBXGroup;
 			children = (
+				934544E7947755642CD19E3D /* LiveResizingWebView.swift */,
 				DA238C676B49BEF35D7FD21F /* WKWebView+PageBackground.swift */,
 				9922EAD1757334923B5A796E /* WKWebView+QuietPresentation.swift */,
 			);
@@ -15024,6 +15027,7 @@
 				AD3DC287D65570F564C791D4 /* LanguageServersPanelViewController.swift in Sources */,
 				E917C415CCDAF5F4CEA9E32B /* LaunchAtLoginManager.swift in Sources */,
 				D9938102DED8B3536E94DBE2 /* LayoutNode.swift in Sources */,
+				3767718F86AFF7956D4FC33B /* LiveResizingWebView.swift in Sources */,
 				774F4765E6C84D29C97D1E25 /* LiveTimerListView.swift in Sources */,
 				989E40B186C95ACD04374CCD /* LiveTimerRowView.swift in Sources */,
 				7285E6F06AFDD2885258B86D /* LocalChatSession.swift in Sources */,
