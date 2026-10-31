@@ -8,9 +8,22 @@ public struct ReviewGit: Sendable {
     /// The hash of git's empty tree: the "parent" of a root commit, so a diff against it still works.
     public static let emptyTree = "4b825dc642cb6eb9a060e54bf8d69288fbee4904"
 
+    /// Review verbs (`log`, `diff`, `worktree add`, `rebase`, `reset`) must never be killed partway, so they get
+    /// far longer than the status-poll budget the shared client takes from settings.
+    public static let reviewTimeoutSeconds: TimeInterval = 300
+
+    /// The client reviews use: the user's executable path and settings, with a review-sized timeout and
+    /// submodules included, so a dirty submodule never reads as a clean worktree.
+    public static let reviewClient = GitClient(configuration: {
+        var configuration = await GitClientConfiguration.fromSettings()
+        configuration.timeout = reviewTimeoutSeconds
+        configuration.submoduleHandling = .include
+        return configuration
+    })
+
     private let client: GitClient
 
-    public init(client: GitClient = .shared) {
+    public init(client: GitClient = ReviewGit.reviewClient) {
         self.client = client
     }
 
@@ -24,9 +37,12 @@ public struct ReviewGit: Sendable {
 
     /// The target of `origin/HEAD`, else `main`, else `master`, else the current branch (`HEAD` when detached).
     public func defaultBranch(in repo: URL) async throws -> String {
-        if let origin = try? await run(["symbolic-ref", "--short", "refs/remotes/origin/HEAD"], in: repo)
-            .trimmingCharacters(in: .whitespacesAndNewlines), origin.hasPrefix("origin/") {
-            return String(origin.dropFirst("origin/".count))
+        do {
+            let origin = try await run(["symbolic-ref", "--short", "refs/remotes/origin/HEAD"], in: repo)
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if origin.hasPrefix("origin/") { return String(origin.dropFirst("origin/".count)) }
+        } catch GitClientError.commandFailed {
+            // No origin/HEAD: fall through to the local branches. Cancellation and timeouts still propagate.
         }
         let branches = try await localBranches(in: repo)
         for candidate in ["main", "master"] where branches.contains(candidate) { return candidate }
@@ -68,6 +84,7 @@ public struct ReviewGit: Sendable {
     /// The diff of `files` from `sha` to the tip of `branch`, cut at `maxBytes`.
     public func tipDiff(from sha: String, to branch: String, files: [String], in repo: URL,
                         maxBytes: Int = 200_000) async throws -> String {
+        guard !files.isEmpty else { return "" }
         let diff = try await run(["diff", sha, branch, "--"] + files, in: repo)
         guard diff.utf8.count > maxBytes else { return diff }
         // Back off at most three bytes so the cut never lands inside a multi-byte character.
@@ -77,7 +94,8 @@ public struct ReviewGit: Sendable {
         return ""
     }
 
-    /// No modified, staged or untracked files; submodule changes follow the client's submodule setting.
+    /// No modified, staged or untracked files. Submodule changes count only when the client includes
+    /// submodules, which `reviewClient` does.
     public func isClean(worktree: URL) async throws -> Bool {
         try await client.status(in: worktree).files.isEmpty
     }

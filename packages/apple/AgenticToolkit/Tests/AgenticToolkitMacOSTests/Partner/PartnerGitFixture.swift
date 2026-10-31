@@ -9,7 +9,7 @@ import AgenticToolkitCore
 final class PartnerGitFixture {
     let directory: URL
     let review = ReviewGit(client: GitClient(configuration: GitClientConfiguration(
-        executableURL: URL(fileURLWithPath: "/usr/bin/git"), timeout: 30)))
+        executableURL: URL(fileURLWithPath: "/usr/bin/git"), timeout: 30, submoduleHandling: .include)))
 
     init() throws {
         directory = FileManager.default.temporaryDirectory
@@ -25,7 +25,13 @@ final class PartnerGitFixture {
 
     @discardableResult
     func git(_ arguments: String...) throws -> String {
-        try exec(arguments, day: nil)
+        try exec(arguments, day: nil, in: directory)
+    }
+
+    /// Runs git inside `subdirectory` of the repo (a submodule's working tree, say).
+    @discardableResult
+    func git(in subdirectory: String, _ arguments: String...) throws -> String {
+        try exec(arguments, day: nil, in: directory.appendingPathComponent(subdirectory))
     }
 
     /// Writes `file`, commits it dated `day` of January 2026, and returns the sha.
@@ -34,16 +40,16 @@ final class PartnerGitFixture {
         try (content ?? "\(message)\n")
             .write(to: directory.appendingPathComponent(file), atomically: true, encoding: .utf8)
         try git("add", file)
-        try exec(["commit", "-m", message], day: day)
+        try exec(["commit", "-m", message], day: day, in: directory)
         return try git("rev-parse", "HEAD").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func merge(branch: String, day: Int) throws {
-        try exec(["merge", "--no-ff", "-m", "merge \(branch)", branch], day: day)
+        try exec(["merge", "--no-ff", "-m", "merge \(branch)", branch], day: day, in: directory)
     }
 
     @discardableResult
-    private func exec(_ arguments: [String], day: Int?) throws -> String {
+    private func exec(_ arguments: [String], day: Int?, in directory: URL) throws -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/git")
         process.arguments = arguments

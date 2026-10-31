@@ -88,6 +88,59 @@ final class ReviewGitTests: XCTestCase {
         }
     }
 
+    /// A parent repo with `sub` as a committed submodule, built from a local temp repo.
+    private func repoWithSubmodule() throws -> (parent: PartnerGitFixture, inner: PartnerGitFixture) {
+        let inner = try PartnerGitFixture()
+        try inner.commit(file: "s.txt", day: 1, message: "inner")
+        let repo = try PartnerGitFixture()
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        try repo.git("-c", "protocol.file.allow=always", "submodule", "add", inner.directory.path, "sub")
+        try repo.git("commit", "-m", "add submodule")
+        return (repo, inner)
+    }
+
+    func testIsCleanSeesDirtySubmoduleContent() async throws {
+        let (repo, _) = try repoWithSubmodule()
+        let clean = try await repo.review.isClean(worktree: repo.directory)
+        XCTAssertTrue(clean)
+        try "changed\n".write(to: repo.directory.appendingPathComponent("sub/s.txt"),
+                               atomically: true, encoding: .utf8)
+        let dirty = try await repo.review.isClean(worktree: repo.directory)
+        XCTAssertFalse(dirty)
+    }
+
+    func testIsCleanSeesMovedSubmoduleGitlink() async throws {
+        let (repo, _) = try repoWithSubmodule()
+        try "more\n".write(to: repo.directory.appendingPathComponent("sub/t.txt"),
+                            atomically: true, encoding: .utf8)
+        try repo.git(in: "sub", "add", "t.txt")
+        try repo.git(in: "sub", "-c", "user.name=Ann", "-c", "user.email=ann@example.com", "-c", "commit.gpgsign=false",
+                     "commit", "-m", "inner two")
+        let dirty = try await repo.review.isClean(worktree: repo.directory)
+        XCTAssertFalse(dirty)
+    }
+
+    func testIsAncestorRethrowsOtherFailures() async throws {
+        let repo = try PartnerGitFixture()
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        do {
+            _ = try await repo.review.isAncestor("deadbeefdeadbeefdeadbeefdeadbeefdeadbeef", of: "main",
+                                                 in: repo.directory)
+            XCTFail("expected a failure")
+        } catch let error as GitClientError {
+            guard case let .commandFailed(_, status, _) = error else { return XCTFail("unexpected \(error)") }
+            XCTAssertNotEqual(status, 1)
+        }
+    }
+
+    func testTipDiffWithNoFilesIsEmpty() async throws {
+        let repo = try PartnerGitFixture()
+        let first = try repo.commit(file: "a.txt", day: 1, message: "first")
+        try repo.commit(file: "a.txt", day: 2, message: "second")
+        let diff = try await repo.review.tipDiff(from: first, to: "main", files: [], in: repo.directory)
+        XCTAssertEqual(diff, "")
+    }
+
     func testLargeOutputDoesNotDeadlock() async throws {
         let repo = try PartnerGitFixture()
         let first = try repo.commit(file: "a.txt", day: 1, message: "first")
