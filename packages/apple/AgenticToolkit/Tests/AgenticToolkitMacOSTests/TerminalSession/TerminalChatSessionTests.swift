@@ -71,6 +71,20 @@ final class TerminalChatSessionTests: XCTestCase {
         XCTAssertFalse(terminal.isRunning)
     }
 
+    /// Claude Code reads a long line arriving in one write as a paste and keeps
+    /// a Return inside it as pasted text, so the message never sends. Return
+    /// has to reach the program as a read of its own.
+    func testReturnArrivesAsAWriteOfItsOwn() async throws {
+        let (chat, terminal) = try await connectedShell()
+        defer { withExtendedLifetime(terminal) {} }
+        // Reads two raw chunks and prints them, putting the tty back first.
+        let reader = #"/usr/bin/python3 -c 'import os,termios,tty; o=termios.tcgetattr(0); tty.setraw(0); "#
+            + #"a=os.read(0,99); b=os.read(0,99); termios.tcsetattr(0,termios.TCSADRAIN,o); print("CHUNKS",a,b)'"#
+        _ = await chat.run(reader, settle: .seconds(1), timeout: .seconds(3))
+        let reply = await chat.run("hello", settle: .milliseconds(800), timeout: .seconds(5))
+        XCTAssertTrue(reply.contains(#"CHUNKS b'hello' b'\r'"#), reply)
+    }
+
     // MARK: - Helpers
 
     /// A chat connected to a freshly started shell, once its first prompt is up.

@@ -22,8 +22,8 @@ extension PartnerController.State {
     }
 }
 
-/// The Coding Partner window's toolbar: the partner's state and enabled jobs, Start/Stop, Restart, and the
-/// inspector toggle that shows or hides "Needs you".
+/// The Coding Partner window's toolbar: the partner's state, enabled jobs and review queue, Start/Stop,
+/// Restart, and the inspector toggle that shows or hides "Needs you".
 ///
 /// Held by the window controller for the window's life: a toolbar keeps its delegate weakly.
 @MainActor
@@ -58,7 +58,7 @@ public final class PartnerToolbar: NSObject, NSToolbarDelegate {
         controller.store.changes
             // Main first: the filter closure is main-actor isolated, and writes arrive from MCP calls off it.
             .receive(on: DispatchQueue.main)
-            .filter { $0 == .jobs }
+            .filter { $0 == .jobs || $0 == .reviews }
             .sink { [weak self] _ in
                 MainActor.assumeIsolated {
                     guard let self else { return }
@@ -79,11 +79,16 @@ public final class PartnerToolbar: NSObject, NSToolbarDelegate {
 
     /// `state` is passed in: `$state` publishes before the property changes.
     private func refresh(state: PartnerController.State) {
-        // The status line: the state, then the enabled jobs.
+        // The status line: the state, the enabled jobs, then the review queue.
         // A plain read: the controller seeds missing jobs at start, and the toolbar never writes. Unreadable
         // jobs show as none rather than as the defaults.
-        let jobs = ((try? controller.store.jobs()) ?? []).filter(\.isEnabled).map(\.name)
-        let text = jobs.isEmpty ? state.displayText : "\(state.displayText) · \(jobs.joined(separator: ", "))"
+        let enabled = ((try? controller.store.jobs()) ?? []).filter(\.isEnabled)
+        let queue = (try? controller.store.reviewCounts()).map {
+            ReviewQueue(waiting: $0.queued, running: $0.running, done: $0.done)
+        }
+        let text = Self.statusText(
+            state: state, jobs: enabled.map(\.name), queue: queue,
+            reviewsEnabled: enabled.contains { $0.id == PartnerJobDefaults.codeReviewsID })
         statusLabel.stringValue = text
         statusLabel.toolTip = text
         let symbol = state.isRunning ? "stop.fill" : "play.fill"
@@ -91,6 +96,25 @@ public final class PartnerToolbar: NSObject, NSToolbarDelegate {
         startStopButton.image = NSImage(systemSymbolName: symbol, accessibilityDescription: title)
         startStopButton.toolTip = title
         startStopButton.isEnabled = state != .starting
+    }
+
+    /// The review counts the status line shows.
+    struct ReviewQueue: Equatable {
+        var waiting: Int
+        var running: Int
+        var done: Int
+    }
+
+    /// "State · job, job · queue: Q waiting · R running · D done". The queue shows while the code-reviews job
+    /// is enabled, and after it is turned off while any review is still listed. Unreadable counts show nothing.
+    static func statusText(state: PartnerController.State, jobs: [String], queue: ReviewQueue?,
+                           reviewsEnabled: Bool) -> String {
+        var parts = [state.displayText]
+        if !jobs.isEmpty { parts.append(jobs.joined(separator: ", ")) }
+        if let queue, reviewsEnabled || queue != ReviewQueue(waiting: 0, running: 0, done: 0) {
+            parts.append("queue: \(queue.waiting) waiting · \(queue.running) running · \(queue.done) done")
+        }
+        return parts.joined(separator: " · ")
     }
 
     @objc private func startOrStop() {

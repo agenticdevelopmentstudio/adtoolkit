@@ -53,9 +53,23 @@ public final class TerminalChatSession {
     private var droppedUnclaimedOutput = false
     private static let unclaimedLimit = 64 * 1024
 
-    public init(quietPeriod: Duration = .milliseconds(300), maximumLatency: Duration = .seconds(1)) {
+    /// How long ``send(_:)`` waits between typing the text and pressing
+    /// Return. A program that reads its input as keystrokes, Claude Code
+    /// among them, takes a long line arriving in one write for a paste and
+    /// keeps a Return inside that write as part of the pasted text (Claude
+    /// Code strips it and shows "review and press Enter to send"), so the
+    /// message would sit unsent. Return on a write of its own, after a pause,
+    /// reads as a key press.
+    private let returnDelay: Duration
+    /// The writes ``send(_:)`` has queued, so a second message never lands
+    /// between the first one's text and its Return.
+    private var pendingInput: Task<Void, Never>?
+
+    public init(quietPeriod: Duration = .milliseconds(300), maximumLatency: Duration = .seconds(1),
+                returnDelay: Duration = .milliseconds(250)) {
         self.quietPeriod = quietPeriod
         self.maximumLatency = maximumLatency
+        self.returnDelay = returnDelay
     }
 
     /// Connects to `terminal`, or disconnects when it is nil. What the
@@ -327,8 +341,8 @@ extension TerminalChatSession: @preconcurrency ChatSession {
     }
 
     /// Shows `text` as the user wrote it and types it into the terminal,
-    /// followed by Return. A multi-line message goes in as several
-    /// lines, the way a paste would.
+    /// followed by Return as a write of its own after ``returnDelay``. A
+    /// multi-line message goes in as several lines, the way a paste would.
     public func send(_ text: String) {
         continuation?.yield(.userMessage(ChatMessage(role: .user, text: text)))
         guard let terminal else {
@@ -341,7 +355,16 @@ extension TerminalChatSession: @preconcurrency ChatSession {
         // terminal shows it, which a private terminal may have changed.
         let echoed = terminal.presentable(text)
         tracker.noteSent(echoed.components(separatedBy: "\n").last ?? echoed)
-        terminal.sendInput(text.replacingOccurrences(of: "\n", with: "\r") + "\r")
+        let typed = text.replacingOccurrences(of: "\n", with: "\r")
+        let previous = pendingInput
+        pendingInput = Task { [weak terminal, returnDelay] in
+            await previous?.value
+            if !typed.isEmpty {
+                terminal?.sendInput(typed)
+                try? await Task.sleep(for: returnDelay)
+            }
+            terminal?.sendInput("\r")
+        }
     }
 
     /// Control-C, which is what interrupting a terminal means.

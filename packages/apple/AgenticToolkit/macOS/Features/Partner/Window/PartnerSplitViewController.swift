@@ -193,7 +193,8 @@ public final class PartnerSplitViewController: NSSplitViewController {
         controller.store.changes
             // Main first: the filter closure is main-actor isolated, and writes arrive from MCP calls off it.
             .receive(on: DispatchQueue.main)
-            .filter { $0 == .sessions }
+            // A review's state and summary are in its session's subtitle.
+            .filter { $0 == .sessions || $0 == .reviews }
             .sink { [weak self] _ in MainActor.assumeIsolated { self?.reloadRows() } }
             .store(in: &subscriptions)
     }
@@ -221,12 +222,14 @@ public final class PartnerSplitViewController: NSSplitViewController {
         let liveIDs = Set(live.map(\.id.uuidString))
         var rows: [PartnerShelfRow] = [.partner(status: controller.state.displayText)]
         for session in live {
-            let subtitle = "\((session.directory as NSString).lastPathComponent) · \(session.state.rawValue)"
+            let subtitle = PartnerShelfRow.sessionSubtitle(
+                directory: session.directory, state: session.state.rawValue, review: review(id: session.reviewID))
             rows.append(.session(id: session.id.uuidString, title: session.title, subtitle: subtitle,
                                  isLive: true))
         }
         for record in storedRecords() where !liveIDs.contains(record.id) {
-            let subtitle = "\((record.directory as NSString).lastPathComponent) · closed"
+            let subtitle = PartnerShelfRow.sessionSubtitle(
+                directory: record.directory, state: "closed", review: review(id: record.reviewID))
             rows.append(.session(id: record.id, title: record.title, subtitle: subtitle, isLive: false))
         }
         shelf.rows = rows
@@ -243,6 +246,15 @@ public final class PartnerSplitViewController: NSSplitViewController {
         do { return try controller.store.sessions() } catch {
             Self.logger.error("Loading partner sessions failed: \(error.localizedDescription)")
             return []
+        }
+    }
+
+    /// An unreadable review leaves the row with its plain folder-and-state line.
+    private func review(id: String?) -> PartnerReview? {
+        guard let id else { return nil }
+        do { return try controller.store.review(id: id) } catch {
+            Self.logger.error("Loading review \(id) failed: \(error.localizedDescription)")
+            return nil
         }
     }
 

@@ -84,7 +84,8 @@ public final class PartnerController: ObservableObject {
     var currentInbound: PartnerInbound?
     /// Set when the willQuit turn's result arrives.
     var quitTurnFinished = false
-    var refreshers: [PeriodicRefresher] = []
+    /// Each scheduled job's timer, by job id.
+    var refreshers: [String: PeriodicRefresher] = [:]
     var lastTick: [String: Date] = [:]
     /// Message ids chosen for a button's line before it is sent, by attribution source.
     var presetMessageIDs: [String: String] = [:]
@@ -374,8 +375,8 @@ public final class PartnerController: ObservableObject {
     func tearDown() {
         timeoutTask?.cancel()
         timeoutTask = nil
-        for refresher in refreshers { refresher.stop() }
-        refreshers = []
+        for refresher in refreshers.values { refresher.stop() }
+        refreshers = [:]
     }
 
     // MARK: - Start helpers
@@ -397,19 +398,32 @@ public final class PartnerController: ObservableObject {
     }
 
     private func startSchedules(jobs: [PartnerJob]) {
-        for job in jobs where job.isEnabled {
-            guard let seconds = job.scheduleSeconds, seconds > 0 else { continue }
-            let refresher = PeriodicRefresher(interval: TimeInterval(seconds))
-            let jobID = job.id
-            let jobName = job.name
-            refresher.start(for: self) { controller in
-                let summary = await controller.tickPreparers[jobID]?()
-                let previous = controller.lastTick[jobID]
-                controller.lastTick[jobID] = controller.now()
-                controller.enqueue(.tick(jobID: jobID, jobName: jobName, previousTick: previous, summary: summary))
-            }
-            refreshers.append(refresher)
+        for job in jobs { startSchedule(job) }
+    }
+
+    /// Starts `job`'s timer when it is enabled and scheduled; its first tick comes at once.
+    private func startSchedule(_ job: PartnerJob) {
+        guard job.isEnabled, let seconds = job.scheduleSeconds, seconds > 0 else { return }
+        let refresher = PeriodicRefresher(interval: TimeInterval(seconds))
+        let jobID = job.id
+        let jobName = job.name
+        refresher.start(for: self) { controller in
+            let summary = await controller.tickPreparers[jobID]?()
+            let previous = controller.lastTick[jobID]
+            controller.lastTick[jobID] = controller.now()
+            controller.enqueue(.tick(jobID: jobID, jobName: jobName, previousTick: previous, summary: summary))
         }
+        refreshers[jobID]?.stop()
+        refreshers[jobID] = refresher
+    }
+
+    /// Replaces one job's timer with one built from its stored row, so a changed schedule applies without a
+    /// restart. Only a running partner has timers; one stopped or still starting reads the schedule when its
+    /// start finishes.
+    public func restartSchedule(jobID: String) {
+        refreshers.removeValue(forKey: jobID)?.stop()
+        guard state == .idle || state == .thinking, let job = jobs().first(where: { $0.id == jobID }) else { return }
+        startSchedule(job)
     }
 
     private func purge() {

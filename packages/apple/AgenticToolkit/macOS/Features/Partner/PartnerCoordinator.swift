@@ -35,6 +35,7 @@ public final class PartnerCoordinator: AppFeature {
     private let status: AutomationServerStatus
     private let settings: SettingsStore
     private let registerTools: @MainActor (any ChatToolSource) -> Void
+    private let projects: @MainActor () -> [PartnerToolSource.Project]
     private let toolSource: PartnerToolSource
     /// The code-reviews job: the tools' service and the crawl run before each of its ticks.
     let reviews: ReviewService
@@ -78,6 +79,7 @@ public final class PartnerCoordinator: AppFeature {
         self.settings = settings
         self.quitLimit = quitLimit
         self.registerTools = registerTools
+        self.projects = projects
         let sessions = PartnerSessionRegistry(
             store: store, environment: { terminalEnvironment() },
             detector: detector ?? QuietPeriodDetector(settle: {
@@ -144,6 +146,19 @@ public final class PartnerCoordinator: AppFeature {
             .filter { $0 == UserSettings.partnerEnabled.name }
             .sink { [weak self] _ in self?.reconcile() }
             .store(in: &subscriptions)
+        settings.changes
+            .receive(on: DispatchQueue.main)
+            .filter { $0 == UserSettings.partnerReviewsCrawlIntervalMinutes.name }
+            .sink { [weak self] _ in self?.applyCrawlInterval() }
+            .store(in: &subscriptions)
+        // A job write (Reset to default, a schedule typed on the Jobs tab) is brought back to the setting.
+        // The rewrite is itself a jobs change, which finds the schedule already right and stops.
+        controller.store.changes
+            .receive(on: DispatchQueue.main)
+            .filter { $0 == .jobs }
+            .sink { [weak self] _ in self?.applyCrawlInterval() }
+            .store(in: &subscriptions)
+        applyCrawlInterval()
         // The endpoint binds after every feature has started, so an enabled partner waits for it.
         status.$port
             .removeDuplicates()
@@ -174,7 +189,7 @@ public final class PartnerCoordinator: AppFeature {
     }
 
     public func settingsPanel() -> ComposableSettings.SectionTabsPanel {
-        PartnerSettingsPanel.make(controller: controller)
+        PartnerSettingsPanel.make(controller: controller, projects: projects)
     }
 
     /// The system-wide key command that opens the window. Ships switched off.
@@ -254,6 +269,24 @@ public final class PartnerCoordinator: AppFeature {
             logger.error("Reading the code-reviews job failed: \(error.localizedDescription, privacy: .public)")
         }
         return PartnerJobDefaults.codeReviews().steps
+    }
+
+    /// The code-reviews job's schedule follows ``UserSettings/partnerReviewsCrawlIntervalMinutes``: the stored
+    /// job is rewritten and its timer restarted. Internal for tests.
+    func applyCrawlInterval() {
+        let seconds = max(settings.get(UserSettings.partnerReviewsCrawlIntervalMinutes), 1) * 60
+        // `jobs()` seeds the job when it has never been stored, so the first change still lands.
+        guard var job = controller.jobs().first(where: { $0.id == PartnerJobDefaults.codeReviewsID }),
+              job.scheduleSeconds != seconds else { return }
+        job.scheduleSeconds = seconds
+        do {
+            try controller.store.upsert(job)
+        } catch {
+            Self.logger.error(
+                "Saving the code-reviews schedule failed: \(error.localizedDescription, privacy: .public)")
+            return
+        }
+        controller.restartSchedule(jobID: job.id)
     }
 
     /// A review left `running` when the app last quit has no session any more; it goes back to the queue.

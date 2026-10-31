@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 
 import AgenticToolkitCore
 import os
@@ -27,6 +28,9 @@ public final class PartnerJobsSettingsViewController: ComposableSettings.Setting
     private let applyButton = NSButton(title: "Apply (restart partner)", target: nil, action: nil)
     private let errorLine = NSTextField(labelWithString: "")
     private var detail: NSStackView!
+    private var jobsChanges: AnyCancellable?
+    /// Whether the guidelines view holds typing not yet saved. Programmatic `string` writes do not set it.
+    private var guidelinesEdited = false
 
     public init(controller: PartnerController, model: PartnerJobsEditorModel) {
         self.controller = controller
@@ -73,6 +77,9 @@ public final class PartnerJobsSettingsViewController: ComposableSettings.Setting
         enabledBox.target = self
         enabledBox.action = #selector(enabledChanged)
         _ = enabledBox.accessibilityID("settings.partner.job.enabled")
+        _ = scheduleField.accessibilityID("settings.partner.job.schedule")
+        _ = resetButton.accessibilityID("settings.partner.job.reset")
+        _ = applyButton.accessibilityID("settings.partner.job.apply")
 
         guidelinesView.isRichText = false
         guidelinesView.isAutomaticQuoteSubstitutionEnabled = false
@@ -131,6 +138,20 @@ public final class PartnerJobsSettingsViewController: ComposableSettings.Setting
     public override func viewDidLoad() {
         super.viewDidLoad()
         refresh()
+        // A job written elsewhere (the coordinator following the crawl interval) shows here at once. Only the
+        // stored fields are redrawn: guidelines being typed are not in the store yet and must not be replaced.
+        jobsChanges = controller.store.changes
+            .receive(on: DispatchQueue.main)
+            .filter { $0 == .jobs }
+            .sink { [weak self] _ in MainActor.assumeIsolated { self?.showStoredFields() } }
+    }
+
+    /// Re-reads the jobs and redraws the enabled box and the schedule, leaving the guidelines alone.
+    func showStoredFields() {
+        model.reload()
+        let job = current
+        enabledBox.state = job?.isEnabled == true ? .on : .off
+        scheduleField.stringValue = job?.scheduleSeconds.map { String($0 / 60) } ?? ""
     }
 
     // MARK: - Setup
@@ -190,7 +211,10 @@ public final class PartnerJobsSettingsViewController: ComposableSettings.Setting
         detail.isHidden = job == nil
         enabledBox.state = job?.isEnabled == true ? .on : .off
         scheduleField.stringValue = job?.scheduleSeconds.map { String($0 / 60) } ?? ""
-        if guidelinesView.string != job?.guidelines ?? "" { guidelinesView.string = job?.guidelines ?? "" }
+        // Text the owner is typing is kept until it is flushed; anything else shows the stored guidelines.
+        if !guidelinesEdited, guidelinesView.string != job?.guidelines ?? "" {
+            guidelinesView.string = job?.guidelines ?? ""
+        }
         resetButton.isHidden = job?.isBuiltIn != true
         stepsTable.reloadData()
         updateStepButtons()
@@ -337,7 +361,7 @@ public final class PartnerJobsSettingsViewController: ComposableSettings.Setting
 
     @objc private func resetJob() {
         guard let job = current, job.isBuiltIn else { return }
-        guidelinesView.string = ""
+        guidelinesEdited = false
         perform { try model.resetToDefault(id: job.id) }
     }
 
@@ -349,10 +373,16 @@ public final class PartnerJobsSettingsViewController: ComposableSettings.Setting
 
     // MARK: - Guidelines
 
+    public func textDidChange(_ notification: Notification) { guidelinesEdited = true }
+
     public func textDidEndEditing(_ notification: Notification) { flushGuidelines() }
 
-    /// Saves the guidelines text to the job's file when it differs from what the job holds.
-    private func flushGuidelines() {
+    /// Saves the guidelines text to the job's file, only once the owner has typed in it. Comparing the text
+    /// alone was not enough: the first `refresh()` selects a row before the text view is filled, and the
+    /// selection flush then saved the empty view over the job's guidelines.
+    func flushGuidelines() {
+        guard guidelinesEdited else { return }
+        guidelinesEdited = false
         guard var job = current, guidelinesView.string != job.guidelines else { return }
         job.guidelines = guidelinesView.string
         perform { try model.save(job) }
