@@ -90,7 +90,8 @@ public final class BrowserPaneViewController: NSViewController {
     let reloadButton = NSButton()
 
     private var observations: [NSKeyValueObservation] = []
-    /// The theme's window background, for the area around a blank page.
+    /// The theme's window background, for the area around a blank page and
+    /// the backdrop under every page.
     private var themedUnderPageColor: NSColor?
     /// The window's first responder, followed while the pane is on screen.
     private var firstResponderObservation: NSKeyValueObservation?
@@ -334,9 +335,6 @@ public final class BrowserPaneViewController: NSViewController {
             },
             webView.observe(\.canGoForward, options: [.initial, .new]) { [weak self] _, _ in
                 MainActor.assumeIsolated { self?.forwardButton.isEnabled = self?.webView.canGoForward ?? false }
-            },
-            webView.observe(\.underPageBackgroundColor, options: [.initial, .new]) { [weak self] _, _ in
-                MainActor.assumeIsolated { self?.updatePageBackdrop() }
             }
         ]
     }
@@ -383,30 +381,22 @@ public final class BrowserPaneViewController: NSViewController {
     /// page it is the theme's. Around a real page it is left to WebKit, which
     /// takes the page's own background.
     ///
-    /// The backdrop under a real page is the page's background too. WebKit
+    /// The backdrop under every page is the theme's window background. WebKit
     /// paints out of process, a frame or more behind the web view's frame, so
-    /// while a divider drag widens the pane the strip it uncovers at the
-    /// trailing edge shows only that backdrop until the page catches up. Left
-    /// at WebKit's default, `controlBackgroundColor`, it was a grey bar
-    /// chasing the edge. In the page's colour it disappears wherever the
-    /// page's declared background is what it shows; a page that paints its
-    /// own dark sections over a white body still flashes white there. The
-    /// backdrop follows the page's background as it changes (see
-    /// `observeWebView`).
+    /// a resize that widens the pane uncovers a strip at the trailing edge
+    /// that shows only that backdrop until the page catches up. Left at
+    /// WebKit's default, `controlBackgroundColor`, it was a grey bar chasing
+    /// the edge; in the page's own colour it still flashed wherever the page
+    /// painted something else over its declared background. In the theme's
+    /// colour it reads as the window showing through, the same surface as
+    /// the pane around it. The backdrop shows only where the page has not
+    /// painted: a page with no background of its own still draws white.
     private func updatePageBackground() {
         let url = webView.url
         let isPage = url != nil && url != Self.blankPage
         webView.setDrawsPageBackground(isPage)
         webView.underPageBackgroundColor = isPage ? nil : themedUnderPageColor
-        updatePageBackdrop()
-    }
-
-    /// Only the backdrop: setting `underPageBackgroundColor` from its own
-    /// observer would notify that observer again.
-    private func updatePageBackdrop() {
-        let url = webView.url
-        let isPage = url != nil && url != Self.blankPage
-        webView.setPageBackdropColor(isPage ? webView.underPageBackgroundColor : nil)
+        webView.setPageBackdropColor(themedUnderPageColor)
     }
 
     /// Writes the address the pane will reopen on. Once per committed
