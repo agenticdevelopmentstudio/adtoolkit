@@ -18,6 +18,33 @@ struct PartnerBasePromptTests {
         #expect(!prompt.contains("## Job: Sleeper"))
     }
 
+    @Test func systemPromptListsEachEnabledJobsStepsUnderItsHeading() throws {
+        var general = job("General coding partner", enabled: true)
+        general.steps = [
+            PartnerJobStep(name: "open session", environment: .claude, command: "claude {dir}",
+                           condition: "the shell prompt is showing")
+        ]
+        let prompt = PartnerBasePrompt.systemPrompt(jobs: [general])
+        let heading = try #require(prompt.range(of: "## Job: General coding partner"))
+        let section = String(prompt[heading.upperBound...])
+        #expect(section.contains("1. open session (Claude Code prompt): `claude {dir}`"))
+        #expect(section.contains("when the shell prompt is showing"))
+    }
+
+    @Test func onlyCodeReviewStepsSayTheyArriveFilledFromReviewStart() {
+        let line = "arrive filled in from `partner_review_start`"
+        var reviews = PartnerJobDefaults.codeReviews()
+        reviews.isEnabled = true
+        var general = PartnerJobDefaults.general()
+        general.isEnabled = true
+        #expect(PartnerBasePrompt.systemPrompt(jobs: [reviews]).contains(line))
+        #expect(!PartnerBasePrompt.systemPrompt(jobs: [general]).contains(line))
+    }
+
+    @Test func baseTextForbidsGitOutput() {
+        #expect(PartnerBasePrompt.text.contains("Never pass `--output` to a git command"))
+    }
+
     @Test func baseTextNamesEveryToolAndKeyPhrases() {
         let tools = [
             "partner_projects_list", "partner_session_open", "partner_session_list", "partner_session_screen",

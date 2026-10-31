@@ -241,6 +241,15 @@ final class PartnerStoreTests: XCTestCase {
         XCTAssertEqual(rows, ["open:-:1", "close:pane-1:0"])
     }
 
+    func testToolCallsArePurgedBeforeTheCutoffOnly() throws {
+        try store.logToolCall(caller: nil, name: "open", arguments: "{}", isError: false)
+        try store.logToolCall(caller: nil, name: "close", arguments: "{}", isError: false)
+        XCTAssertEqual(try store.purgeToolCalls(before: Date().addingTimeInterval(-3_600)), 0)
+        XCTAssertEqual(try rawQuery("SELECT name FROM tool_call ORDER BY id"), ["open", "close"])
+        XCTAssertEqual(try store.purgeToolCalls(before: Date().addingTimeInterval(3_600)), 2)
+        XCTAssertEqual(try rawQuery("SELECT name FROM tool_call"), [])
+    }
+
     func testLockRefusesLivePidAndTakesOverDeadOne() throws {
         XCTAssertNil(try store.liveLock())
         XCTAssertTrue(try store.acquireLock(pid: 100, isAlive: { _ in true }))

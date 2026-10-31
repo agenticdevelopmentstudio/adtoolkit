@@ -34,16 +34,41 @@ public final class PartnerNotifier {
         return item
     }
 
+    /// The one permission request this process makes; every post waits for it.
+    private static var authorization: Task<Void, Never>?
+
+    /// Asks for alert and sound permission once per process, then posts. macOS shows its prompt only the
+    /// first time ever; afterwards the request returns the owner's standing answer at once. A notification
+    /// refused there is not shown, and the attention item already written still carries it.
+    /// Outside an app bundle (a test runner, a command-line host) the notification center traps on first
+    /// use, so nothing is posted there; the attention item still records it.
     public static func postSystemNotification(title: String, body: String) {
-        let content = UNMutableNotificationContent()
-        content.title = title
-        content.body = body
-        content.sound = .default
-        let request = UNNotificationRequest(identifier: "partner-\(UUID().uuidString)", content: content,
-                                            trigger: nil)
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error {
-                Self.logger.error("Partner notification failed: \(error.localizedDescription, privacy: .public)")
+        guard Bundle.main.bundleURL.pathExtension == "app" else {
+            logger.notice("Not an app bundle, so no system notification for: \(title, privacy: .public)")
+            return
+        }
+        let asked = authorization ?? Task { @MainActor in
+            do {
+                let center = UNUserNotificationCenter.current()
+                if try await !center.requestAuthorization(options: [.alert, .sound]) {
+                    logger.notice("Partner notifications are not allowed; attention items still record them")
+                }
+            } catch {
+                logger.error("Partner notification permission failed: \(error.localizedDescription)")
+            }
+        }
+        authorization = asked
+        Task { @MainActor in
+            await asked.value
+            let center = UNUserNotificationCenter.current()
+            let content = UNMutableNotificationContent()
+            content.title = title
+            content.body = body
+            content.sound = .default
+            let request = UNNotificationRequest(identifier: "partner-\(UUID().uuidString)", content: content,
+                                                trigger: nil)
+            do { try await center.add(request) } catch {
+                logger.error("Partner notification failed: \(error.localizedDescription, privacy: .public)")
             }
         }
     }

@@ -11,6 +11,8 @@ public enum ReviewError: Error, LocalizedError, Equatable {
     case anotherRunningInRepo(String)
     /// `finish` takes `done`, `failed` or `skipped`, for a review that is still queued or running.
     case cannotFinish(String, PartnerReviewState)
+    /// ``UserSettings/partnerReviewsConcurrency`` reviews are already running, across all repos.
+    case concurrencyLimit(Int)
 
     public var errorDescription: String? {
         switch self {
@@ -18,6 +20,8 @@ public enum ReviewError: Error, LocalizedError, Equatable {
         case .notQueued(let id, let state): return "review \(id) is \(state.rawValue), not queued"
         case .anotherRunningInRepo(let repo): return "another review is already running in \(repo)"
         case .cannotFinish(let id, let state): return "review \(id) cannot be finished as or from \(state.rawValue)"
+        case .concurrencyLimit(let limit):
+            return "\(limit) review\(limit == 1 ? " is" : "s are") already running, the most allowed at once"
         }
     }
 }
@@ -57,10 +61,13 @@ public final class ReviewService {
         self.now = now
     }
 
-    /// Queued reviews oldest first, the concurrency limit, and how many are running.
-    public func next() throws -> (reviews: [PartnerReview], concurrency: Int, running: Int) {
+    /// Queued reviews oldest first, the running ones (so a partner with a fresh conversation can see what
+    /// holds the limit), the concurrency limit, and how many are running.
+    public func next() throws -> (reviews: [PartnerReview], runningReviews: [PartnerReview], concurrency: Int,
+                                  running: Int) {
         let concurrency = max(1, settings.get(UserSettings.partnerReviewsConcurrency))
-        return (try store.reviews(state: .queued), concurrency, try store.reviewCounts().running)
+        let running = try store.reviews(state: .running)
+        return (try store.reviews(state: .queued), running, concurrency, running.count)
     }
 
     /// Starts one queued review: skips it when its commit has left the branch, otherwise brings the repo's
@@ -72,10 +79,14 @@ public final class ReviewService {
     public func start(id: String) async throws -> PartnerReviewStart {
         guard let review = try store.review(id: id) else { throw ReviewError.notFound(id) }
         guard review.state == .queued else { throw ReviewError.notQueued(id, review.state) }
-        guard !startingRepos.contains(review.repoID),
-              try !store.reviews(state: .running).contains(where: { $0.repoID == review.repoID }) else {
+        let running = try store.reviews(state: .running)
+        guard !startingRepos.contains(review.repoID), !running.contains(where: { $0.repoID == review.repoID }) else {
             throw ReviewError.anotherRunningInRepo(review.repoName)
         }
+        // The guidelines ask the partner to respect the limit; this holds it to it. Starts still in their git
+        // work count, so overlapping starts in different repos cannot together pass it.
+        let limit = max(1, settings.get(UserSettings.partnerReviewsConcurrency))
+        guard running.count + startingRepos.count < limit else { throw ReviewError.concurrencyLimit(limit) }
         startingRepos.insert(review.repoID)
         defer { startingRepos.remove(review.repoID) }
 
@@ -100,13 +111,13 @@ public final class ReviewService {
 
         let session = sessions.open(directory: prepared.worktree.path, title: "review \(review.sha.prefix(7))",
                                     firstCommand: nil, reviewID: review.id)
-        var running = current
-        running.state = .running
-        running.sessionID = session.id.uuidString
-        running.startedAt = now()
-        running.supersededBy = prepared.superseded
+        var started = current
+        started.state = .running
+        started.sessionID = session.id.uuidString
+        started.startedAt = now()
+        started.supersededBy = prepared.superseded
         do {
-            try store.updateReview(running)
+            try store.updateReview(started)
         } catch {
             sessions.close(id: session.id)
             throw error
@@ -124,7 +135,7 @@ public final class ReviewService {
             "parent": review.parent, "subject": review.subject, "model": model, "fix_branch": prepared.fixBranch,
             "superseded": prepared.superseded.isEmpty ? "none" : prepared.superseded.joined(separator: ", ")
         ]
-        return PartnerReviewStart(review: running, worktreePath: prepared.worktree.path, fixBranch: prepared.fixBranch,
+        return PartnerReviewStart(review: started, worktreePath: prepared.worktree.path, fixBranch: prepared.fixBranch,
                                   tipDiff: prepared.tipDiff, steps: Self.fill(steps(), values: values))
     }
 
@@ -145,9 +156,15 @@ public final class ReviewService {
         return review
     }
 
-    /// At app start: every review left `running` by the last run goes back to the queue. Returns how many.
+    /// At every partner start: each review left `running` whose session is not open in this process goes back
+    /// to the queue, since nothing can finish it any more. A review whose session is still open stays running.
+    /// Returns how many were requeued.
     public func requeueInterrupted() throws -> Int {
-        let interrupted = try store.reviews(state: .running)
+        let open = Set(sessions.sessions.map(\.id.uuidString))
+        let interrupted = try store.reviews(state: .running).filter { review in
+            guard let sessionID = review.sessionID else { return true }
+            return !open.contains(sessionID)
+        }
         for var review in interrupted {
             review.state = .queued
             review.sessionID = nil
@@ -173,8 +190,11 @@ public final class ReviewService {
         case ready(Prepared)
     }
 
-    /// The default branch's reviews use `baseFixBranch` and `reviews/<repo>`; any other branch gets
-    /// `<base>-<branch>` and `reviews/<repo>-<branch>`, since git checks a branch out in one worktree only.
+    /// The default branch's reviews use `baseFixBranch` and `reviews/<repo>-<id>`; any other branch gets
+    /// `<base>-<branch>` and `reviews/<repo>-<id>-<branch>`, since git checks a branch out in one worktree only.
+    /// `<id>` is the first 8 characters of the repo id, so two listed repos with one name get two directories.
+    /// A worktree already recorded for the repo and branch is reused wherever it is: its fix branch is checked
+    /// out there, and git refuses to check it out a second time.
     private func prepare(_ review: PartnerReview, baseFixBranch: String) async throws -> Preparation {
         let repo = URL(fileURLWithPath: review.repoPath)
         let branchRef = "refs/heads/\(review.branch)"
@@ -188,16 +208,23 @@ public final class ReviewService {
         let isDefault = try await review.branch == git.defaultBranch(in: repo)
         let suffix = isDefault ? "" : "-\(Self.refSafe(review.branch))"
         let fixBranch = baseFixBranch + suffix
-        let directory = paths.reviewsDirectory.appendingPathComponent(Self.refSafe(review.repoName) + suffix)
+        let worktreeKey = isDefault ? "worktree_path" : "worktree_path:\(review.branch)"
+        let directory = try store.reviewSetting(repoID: review.repoID, key: worktreeKey)
+            .flatMap { $0.isEmpty ? nil : URL(fileURLWithPath: $0) }
+            ?? paths.reviewsDirectory.appendingPathComponent(Self.worktreeName(review) + suffix)
         try FileManager.default.createDirectory(at: paths.reviewsDirectory, withIntermediateDirectories: true)
         _ = try await worktree.prepare(repo: repo, branch: review.branch, fixBranch: fixBranch, worktree: directory)
 
         let files = try await git.changedFiles(parent: review.parent, sha: review.sha, in: repo)
         let superseded = try await git.supersedingCommits(after: review.sha, on: branchRef, files: files, in: repo)
         let tipDiff = try await git.tipDiff(from: review.sha, to: branchRef, files: files, in: repo)
-        return .ready(Prepared(worktree: directory,
-                               worktreeKey: isDefault ? "worktree_path" : "worktree_path:\(review.branch)",
+        return .ready(Prepared(worktree: directory, worktreeKey: worktreeKey,
                                fixBranch: fixBranch, superseded: superseded, tipDiff: tipDiff))
+    }
+
+    /// `<repo name>-<first 8 of the repo id>`, both made safe as a file name.
+    static func worktreeName(_ review: PartnerReview) -> String {
+        "\(refSafe(review.repoName))-\(refSafe(review.repoID).prefix(8))"
     }
 
     /// `name` with every character git refuses in a ref, and `/`, turned into `-`; also safe as a file name.

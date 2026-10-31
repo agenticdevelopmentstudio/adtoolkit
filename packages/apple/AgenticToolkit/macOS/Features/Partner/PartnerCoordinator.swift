@@ -2,6 +2,7 @@ import AppKit
 import Combine
 import KeyboardShortcuts
 import os
+import UniformTypeIdentifiers
 import AgenticToolkitCore
 
 /// The Coding Partner as an app feature: its controller, its `partner_*` tools on
@@ -40,8 +41,8 @@ public final class PartnerCoordinator: AppFeature {
     /// The code-reviews job: the tools' service and the crawl run before each of its ticks.
     let reviews: ReviewService
     let codeReviewsScheduler: CodeReviewsScheduler
-    /// Running reviews left by an earlier run are requeued once per launch, before the first tick.
-    private var interruptedRequeued = false
+    /// Running reviews left by an earlier run are requeued once per process, by the process that holds the
+    /// partner lock: another Debug copy's live reviews are not this process's to requeue.
     private var toolsRegistered = false
     private var subscriptions: Set<AnyCancellable> = []
     /// Starts and stops run one after another, never interleaved.
@@ -99,6 +100,9 @@ public final class PartnerCoordinator: AppFeature {
                                        projects: projects, notifier: notifier, reviews: reviews)
         super.init()
         featureName = "Coding Partner"
+        // On every start, once this process holds the lock and before its first tick lists the queue: a
+        // restart may begin a fresh conversation, which cannot see the reviews the old one left running.
+        controller.onLockAcquired = { [weak self] in self?.requeueInterruptedReviews() }
 
         commandRegistry.register(AppCommand(
             id: CommandID.showWindow, title: "Coding Partner", category: "Coding Partner",
@@ -130,10 +134,6 @@ public final class PartnerCoordinator: AppFeature {
             toolsRegistered = true
             registerTools(toolSource)
         }
-        if !interruptedRequeued {
-            interruptedRequeued = true
-            requeueInterruptedReviews()
-        }
         guard subscriptions.isEmpty else { return }
         let box = callerIDBox
         // `callerID` is set before the state leaves `.starting` and cleared before it reaches `.stopped`.
@@ -156,11 +156,21 @@ public final class PartnerCoordinator: AppFeature {
         controller.store.changes
             .receive(on: DispatchQueue.main)
             .filter { $0 == .jobs }
-            .sink { [weak self] _ in self?.applyCrawlInterval() }
+            .sink { [weak self] _ in
+                self?.applyCrawlInterval()
+                // Any other enable, disable or schedule edit reaches the running timers too.
+                self?.controller.syncSchedules()
+            }
             .store(in: &subscriptions)
         applyCrawlInterval()
         // The endpoint binds after every feature has started, so an enabled partner waits for it.
         status.$port
+            .removeDuplicates()
+            .dropFirst()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.reconcile() }
+            .store(in: &subscriptions)
+        status.$failureReason
             .removeDuplicates()
             .dropFirst()
             .receive(on: DispatchQueue.main)
@@ -173,7 +183,8 @@ public final class PartnerCoordinator: AppFeature {
         subscriptions.removeAll()
     }
 
-    /// Sends the quit turn, waits at most ``quitTurnLimit`` for it, then stops the partner either way.
+    /// Sends the quit turn, waits at most ``quitTurnLimit`` for it, then stops the partner either way, and
+    /// closes every open session so its final screen is stored before the shells die with the app.
     ///
     /// The host terminates the partner before the automation endpoint, so the turn's `partner_*` calls
     /// still reach it. A start or stop still queued is cancelled rather than awaited: the controller's
@@ -183,7 +194,10 @@ public final class PartnerCoordinator: AppFeature {
             lifecycleTask?.cancel()
             let controller = controller
             let limit = quitLimit
-            quitTask = Task { @MainActor in await controller.prepareForQuit(waitingAtMost: limit) }
+            quitTask = Task { @MainActor in
+                await controller.prepareForQuit(waitingAtMost: limit)
+                _ = controller.sessions.closeAll()
+            }
         }
         await quitTask?.value
     }
@@ -213,11 +227,21 @@ public final class PartnerCoordinator: AppFeature {
         case ignore(String)
     }
 
-    /// Extensions whose default app runs, installs or redirects rather than shows. Matched lowercased.
-    static let launchingExtensions: Set<String> = [
-        "app", "command", "pkg", "mpkg", "tool", "terminal", "workflow", "action", "scpt", "scptd",
-        "sh", "zsh", "bash", "csh", "ksh", "fileloc", "webloc", "inetloc", "mobileconfig", "configprofile"
-    ]
+    /// Types a click may hand to their default app: documents that app shows rather than runs.
+    static let showableTypes: [UTType] = [.text, .image, .pdf, .sourceCode]
+    /// Types refused even when they are also showable: a script is source code and text too, and a
+    /// configuration profile is XML that installs.
+    static let launchingTypes: [UTType] = [.script, .executable, .applicationBundle, .package, .bundle]
+    static let launchingIdentifiers: Set<String> = ["com.apple.mobileconfig", "com.apple.configprofile"]
+
+    /// Whether a file with extension `pathExtension` is a type that only shows when opened. An unknown
+    /// extension (a dynamic type) is not.
+    static func opensAsDocument(pathExtension: String) -> Bool {
+        guard !pathExtension.isEmpty, let type = UTType(filenameExtension: pathExtension) else { return false }
+        return showableTypes.contains { type.conforms(to: $0) }
+            && !launchingTypes.contains { type.conforms(to: $0) }
+            && !launchingIdentifiers.contains(type.identifier)
+    }
 
     /// References come from the partner's tool calls, which text in any repo or session it reads can steer,
     /// so only what is safe to open on one click is opened.
@@ -225,7 +249,8 @@ public final class PartnerCoordinator: AppFeature {
     /// - An http(s) `url` opens. Any other scheme (`file:` spelled as a URL, `javascript:`, a custom scheme)
     ///   is ignored; a `path` beside it is still judged on its own.
     /// - An absolute `path` (after `~` expansion) that resolves, through symlinks, to a regular file that is
-    ///   not executable, not a package and not of a ``launchingExtensions`` type opens.
+    ///   not executable, not a package and whose type is showable (``opensAsDocument(pathExtension:)``)
+    ///   under both its own and its target's extension opens.
     /// - Any other existing path is revealed in Finder. A relative or missing path is ignored.
     static func referenceAction(_ reference: [String: String],
                                 fileManager: FileManager = .default) -> ReferenceAction {
@@ -249,8 +274,8 @@ public final class PartnerCoordinator: AppFeature {
             let permissions = (attributes[.posixPermissions] as? NSNumber)?.intValue ?? 0o777
             let opens = isRegular
                 && permissions & 0o111 == 0
-                && !launchingExtensions.contains(resolved.pathExtension.lowercased())
-                && !launchingExtensions.contains(url.pathExtension.lowercased())
+                && opensAsDocument(pathExtension: resolved.pathExtension)
+                && opensAsDocument(pathExtension: url.pathExtension)
                 && !NSWorkspace.shared.isFilePackage(atPath: resolved.path)
             return opens ? .open(resolved) : .reveal(url)
         }
@@ -289,7 +314,8 @@ public final class PartnerCoordinator: AppFeature {
         controller.restartSchedule(jobID: job.id)
     }
 
-    /// A review left `running` when the app last quit has no session any more; it goes back to the queue.
+    /// A review left `running` with no open session (the app quit, or the session closed) goes back to the
+    /// queue.
     private func requeueInterruptedReviews() {
         do {
             let count = try reviews.requeueInterrupted()
@@ -314,7 +340,10 @@ public final class PartnerCoordinator: AppFeature {
             // Cancelled by `terminate()`: nothing may start after the quit.
             guard !Task.isCancelled else { return }
             if enabled {
-                guard status.port != nil, status.token != nil else { return }
+                guard status.port != nil, status.token != nil else {
+                    controller.reportWaitingForEndpoint(status.failureReason)
+                    return
+                }
                 switch controller.state {
                 case .stopped, .failed: await controller.start()
                 case .starting, .idle, .thinking: break

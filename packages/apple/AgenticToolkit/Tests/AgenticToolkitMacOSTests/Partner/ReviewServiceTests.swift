@@ -134,6 +134,55 @@ final class ReviewServiceTests: XCTestCase {
         }
     }
 
+    func testConcurrencyLimitHoldsAcrossRepos() async throws {
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        let first = try queue(file: "b.txt", day: 2, message: "second")
+        let other = try queue(file: "c.txt", day: 3, message: "third", repoID: "other")
+        try store.setReviewSetting(repoID: "other", key: "fix_branch", value: "other/fixes")
+        _ = try await service.start(id: first.id)
+
+        do {
+            _ = try await service.start(id: other.id)
+            XCTFail("a second review started past a concurrency of 1")
+        } catch ReviewError.concurrencyLimit(let limit) {
+            XCTAssertEqual(limit, 1)
+        }
+        XCTAssertEqual(try store.review(id: other.id)?.state, .queued)
+        XCTAssertEqual(registry.sessions.count, 1)
+
+        settings.set(2, for: UserSettings.partnerReviewsConcurrency)
+        let started = try await service.start(id: other.id)
+        XCTAssertEqual(started.review.state, .running)
+    }
+
+    func testTwoReposWithOneNameGetTheirOwnWorktrees() async throws {
+        settings.set(2, for: UserSettings.partnerReviewsConcurrency)
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        let mine = try queue(file: "b.txt", day: 2, message: "second")
+        let theirs = try queue(file: "c.txt", day: 3, message: "third", repoID: "0123456789-other")
+        try store.setReviewSetting(repoID: "0123456789-other", key: "fix_branch", value: "other/fixes")
+
+        let one = try await service.start(id: mine.id)
+        let two = try await service.start(id: theirs.id)
+
+        XCTAssertEqual(one.worktreePath, paths.reviewsDirectory.appendingPathComponent("demo-repo").path)
+        XCTAssertEqual(two.worktreePath, paths.reviewsDirectory.appendingPathComponent("demo-01234567").path)
+        XCTAssertEqual(two.review.state, .running)
+    }
+
+    func testARecordedWorktreeIsReusedWhereverItIs() async throws {
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        let review = try queue(file: "b.txt", day: 2, message: "second")
+        // An install from before the repo-id suffix recorded `reviews/<name>`.
+        let old = paths.reviewsDirectory.appendingPathComponent("demo")
+        try store.setReviewSetting(repoID: "repo", key: "worktree_path", value: old.path)
+
+        let started = try await service.start(id: review.id)
+
+        XCTAssertEqual(started.worktreePath, old.path)
+        XCTAssertEqual(try currentBranch(old.path), fixBranch)
+    }
+
     func testStartRefusesAReviewThatIsNotQueued() async throws {
         try repo.commit(file: "a.txt", day: 1, message: "first")
         let review = try queue(file: "b.txt", day: 2, message: "second")
@@ -151,7 +200,7 @@ final class ReviewServiceTests: XCTestCase {
 
         let started = try await service.start(id: review.id)
 
-        XCTAssertEqual(started.worktreePath, paths.reviewsDirectory.appendingPathComponent("demo").path)
+        XCTAssertEqual(started.worktreePath, paths.reviewsDirectory.appendingPathComponent("demo-repo").path)
         XCTAssertTrue(FileManager.default.fileExists(atPath: started.worktreePath))
         XCTAssertEqual(try repo.git("-C", started.worktreePath, "branch", "--show-current")
                         .trimmingCharacters(in: .whitespacesAndNewlines), fixBranch)
@@ -196,7 +245,7 @@ final class ReviewServiceTests: XCTestCase {
 
         let started = try await service.start(id: review.id)
 
-        XCTAssertEqual(started.worktreePath, paths.reviewsDirectory.appendingPathComponent("demo-feature-x").path)
+        XCTAssertEqual(started.worktreePath, paths.reviewsDirectory.appendingPathComponent("demo-repo-feature-x").path)
         XCTAssertEqual(started.review.state, .running)
         XCTAssertEqual(started.fixBranch, "\(fixBranch)-feature-x")
         XCTAssertEqual(try currentBranch(started.worktreePath), "\(fixBranch)-feature-x")
@@ -342,7 +391,7 @@ final class ReviewServiceTests: XCTestCase {
         try repo.commit(file: "a.txt", day: 1, message: "first")
         let review = try queue(file: "b.txt", day: 2, message: "second")
         try repo.git("branch", fixBranch)
-        try FileManager.default.createDirectory(at: paths.reviewsDirectory.appendingPathComponent("demo"),
+        try FileManager.default.createDirectory(at: paths.reviewsDirectory.appendingPathComponent("demo-repo"),
                                                 withIntermediateDirectories: true)
 
         do {
@@ -394,6 +443,8 @@ final class ReviewServiceTests: XCTestCase {
         let next = try service.next()
 
         XCTAssertEqual(next.reviews.map(\.id), [second.id])
+        XCTAssertEqual(next.runningReviews.map(\.id), [first.id])
+        XCTAssertNotNil(next.runningReviews.first?.sessionID)
         XCTAssertEqual(next.concurrency, 2)
         XCTAssertEqual(next.running, 1)
     }
@@ -450,6 +501,19 @@ final class ReviewServiceTests: XCTestCase {
         XCTAssertEqual(try service.requeueInterrupted(), 0)
     }
 
+    func testRequeueKeepsAReviewWhoseSessionIsOpen() async throws {
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        let review = try queue(file: "b.txt", day: 2, message: "second")
+        _ = try await service.start(id: review.id)
+        XCTAssertEqual(try service.requeueInterrupted(), 0)
+        XCTAssertEqual(try store.review(id: review.id)?.state, .running)
+
+        let session = try XCTUnwrap(registry.sessions.first)
+        registry.close(id: session.id)
+        XCTAssertEqual(try service.requeueInterrupted(), 1)
+        XCTAssertEqual(try store.review(id: review.id)?.state, .queued)
+    }
+
     // MARK: - Tools
 
     private func toolSource() -> PartnerToolSource {
@@ -498,6 +562,13 @@ final class ReviewServiceTests: XCTestCase {
 
         let refused = try await call(source, "partner_review_start", ["id": review.id])
         XCTAssertTrue(refused.isError)
+
+        let during = try object(try await call(source, "partner_review_next").content)
+        let listed = try XCTUnwrap((during["runningReviews"] as? [[String: Any]])?.first)
+        XCTAssertEqual(listed["id"] as? String, review.id)
+        XCTAssertEqual(listed["repo"] as? String, review.repoName)
+        XCTAssertEqual(listed["sessionID"] as? String, registry.sessions.first?.id.uuidString)
+        XCTAssertEqual(during["running"] as? Int, 1)
 
         let finish = try await call(source, "partner_review_finish",
                                     ["id": review.id, "state": "done", "summary": "clean"])

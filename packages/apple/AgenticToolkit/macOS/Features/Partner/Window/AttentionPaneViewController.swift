@@ -25,6 +25,9 @@ public final class AttentionPaneModel: ObservableObject {
     @Published public private(set) var open: [AttentionItem] = []
     /// Done items completed within the retention period.
     @Published public private(set) var done: [AttentionItem] = []
+    /// Items whose Resolved or Confirm was clicked since the last reload. Their cards show ``CardAction/sending``
+    /// at once and ignore further clicks; the store write that follows reloads, and the reload clears this.
+    @Published public private(set) var pressed: Set<String> = []
 
     public var onDiscuss: ((String) -> Void)?
     public var onResolved: ((String) -> Void)?
@@ -53,6 +56,7 @@ public final class AttentionPaneModel: ObservableObject {
             let items = try store.attentionItems(includeDoneCompletedAfter: cutoff)
             open = items.filter { $0.state != .done }
             done = items.filter { $0.state == .done }
+            pressed = []
         } catch {
             Self.logger.error("Loading attention items failed: \(error.localizedDescription)")
         }
@@ -71,11 +75,20 @@ public final class AttentionPaneModel: ObservableObject {
         }
     }
 
+    /// ``cardAction(for:)``, except that an item just clicked shows ``CardAction/sending``.
+    public func action(for item: AttentionItem) -> CardAction {
+        let action = Self.cardAction(for: item)
+        guard pressed.contains(item.id), action == .resolved || action == .confirm else { return action }
+        return .sending
+    }
+
     func perform(_ action: CardAction, on item: AttentionItem) {
         switch action {
         case .discuss: onDiscuss?(item.id)
-        case .resolved: onResolved?(item.id)
-        case .confirm: onConfirm?(item.id)
+        case .resolved, .confirm:
+            // One line per click: a second click before the store catches up is dropped.
+            guard pressed.insert(item.id).inserted else { return }
+            if action == .resolved { onResolved?(item.id) } else { onConfirm?(item.id) }
         case .sending, .done: break
         }
     }

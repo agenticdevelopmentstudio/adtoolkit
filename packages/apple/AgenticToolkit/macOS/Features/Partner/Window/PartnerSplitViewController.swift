@@ -160,6 +160,8 @@ public final class PartnerSplitViewController: NSSplitViewController {
             if discussionItemID == itemID { discussionItemID = nil }
         } catch {
             Self.logger.error("\(action.rawValue) on \(itemID) failed: \(error.localizedDescription)")
+            // Nothing was written, so no reload is coming: redraw the card from the store now.
+            attention.model.reload()
             NSSound.beep()
         }
     }

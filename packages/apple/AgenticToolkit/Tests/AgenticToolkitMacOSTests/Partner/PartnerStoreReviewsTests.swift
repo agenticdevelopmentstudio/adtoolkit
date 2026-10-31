@@ -53,6 +53,14 @@ final class PartnerStoreReviewsTests: XCTestCase {
         XCTAssertNoThrow(try store.insertReview(makeReview("c", sha: "s", repo: "repo-b")))
     }
 
+    func testInsertIfNewSkipsACommitAlreadyListed() throws {
+        XCTAssertTrue(try store.insertReviewIfNew(makeReview("a", sha: "s")))
+        XCTAssertFalse(try store.insertReviewIfNew(makeReview("b", sha: "s")))
+        XCTAssertFalse(try store.insertReviewIfNew(makeReview("a", sha: "other")))
+        XCTAssertTrue(try store.insertReviewIfNew(makeReview("c", sha: "s", repo: "repo-b")))
+        XCTAssertEqual(try store.reviews(state: nil).map(\.id).sorted(), ["a", "c"])
+    }
+
     func testUpdateReplacesFieldsAndRejectsUnknownID() throws {
         try store.insertReview(makeReview("a"))
         var item = try XCTUnwrap(try store.review(id: "a"))

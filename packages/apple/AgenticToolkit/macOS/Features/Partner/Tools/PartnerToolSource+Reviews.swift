@@ -5,8 +5,16 @@ extension PartnerToolSource {
 
     private struct ReviewQueue: Encodable {
         var reviews: [PartnerReview]
+        var runningReviews: [RunningReview]
         var concurrency: Int
         var running: Int
+    }
+
+    /// A running review, as much as the partner needs to find its session again.
+    private struct RunningReview: Encodable {
+        var id: String
+        var repo: String
+        var sessionID: String?
     }
 
     /// The `partner_review_*` tools, answered by `service`.
@@ -15,14 +23,17 @@ extension PartnerToolSource {
         return [
             (ToolDefinition(
                 name: "partner_review_next",
-                description: "Lists the queued reviews, oldest first, with the concurrency limit and how many "
-                    + "are running.",
+                description: "Lists the queued reviews, oldest first, the running reviews with their repo "
+                    + "and session id, the concurrency limit and how many are running.",
                 parametersJSONSchema: ToolJSONSchema.object(properties: [:])),
              { _ in
                  do {
                      let next = try await MainActor.run { try service.next() }
-                     return Self.encode(ReviewQueue(reviews: next.reviews, concurrency: next.concurrency,
-                                                    running: next.running))
+                     let running = next.runningReviews.map {
+                         RunningReview(id: $0.id, repo: $0.repoName, sessionID: $0.sessionID)
+                     }
+                     return Self.encode(ReviewQueue(reviews: next.reviews, runningReviews: running,
+                                                    concurrency: next.concurrency, running: next.running))
                  } catch {
                      return Self.failure("partner_review_next failed: \(error.localizedDescription)")
                  }

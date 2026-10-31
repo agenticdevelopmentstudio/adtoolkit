@@ -86,6 +86,8 @@ final class CombinedSessionEventDetectorTests: XCTestCase {
         XCTAssertEqual(exits, [session.id])
     }
 
+    /// A compile-time check, deliberately without assertions: it builds the detector exactly as the Kitchen's
+    /// Features wiring does, so a signature change there breaks this bundle's build instead of the app's.
     func testConstructibleAsTheAppWill() {
         _ = CombinedSessionEventDetector(
             primary: AdkdStopEventDetector(source: DaemonSessionActivitySource(service: StubDaemonService())),

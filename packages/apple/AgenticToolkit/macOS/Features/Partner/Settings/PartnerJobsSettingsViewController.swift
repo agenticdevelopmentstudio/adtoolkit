@@ -377,7 +377,7 @@ public final class PartnerJobsSettingsViewController: ComposableSettings.Setting
     @objc private func apply() {
         flushGuidelines()
         let controller = self.controller
-        Task { @MainActor in await controller.restart() }
+        Task { @MainActor in await controller.restart(guidelinesChanged: true) }
     }
 
     // MARK: - Guidelines
