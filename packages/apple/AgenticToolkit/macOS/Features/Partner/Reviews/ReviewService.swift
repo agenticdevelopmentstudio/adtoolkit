@@ -65,8 +65,10 @@ public final class ReviewService {
 
     /// Starts one queued review: skips it when its commit has left the branch, otherwise brings the repo's
     /// review worktree to the branch tip, works out what later commits changed, opens a session in the worktree
-    /// and returns the job's steps filled in. Any failure on the way marks the review `failed`, raises a
-    /// `blocked` attention item and is rethrown, so a review never stays queued or running because git failed.
+    /// and returns the job's steps filled in. A failure in the git work marks the review `failed`, raises a
+    /// `blocked` attention item and is rethrown, so a review never stays queued because git failed. A store
+    /// failure after that leaves the review queued, closes any session it opened and is rethrown; nothing ever
+    /// leaves it running without a session.
     public func start(id: String) async throws -> PartnerReviewStart {
         guard let review = try store.review(id: id) else { throw ReviewError.notFound(id) }
         guard review.state == .queued else { throw ReviewError.notQueued(id, review.state) }
@@ -77,13 +79,14 @@ public final class ReviewService {
         startingRepos.insert(review.repoID)
         defer { startingRepos.remove(review.repoID) }
 
-        let fixBranch = settings.get(UserSettings.partnerReviewsFixBranch)
+        let baseFixBranch = try store.reviewSetting(repoID: review.repoID, key: "fix_branch")
+            .flatMap { $0.isEmpty ? nil : $0 } ?? settings.get(UserSettings.partnerReviewsFixBranch)
         let prepared: Prepared
         do {
-            guard let found = try await prepare(review, fixBranch: fixBranch) else {
-                return try skip(review, fixBranch: fixBranch)
+            switch try await prepare(review, baseFixBranch: baseFixBranch) {
+            case .skip(let reason): return try skip(review, reason: reason, fixBranch: baseFixBranch)
+            case .ready(let found): prepared = found
             }
-            prepared = found
         } catch {
             markFailed(review, reason: Self.reason(error))
             throw error
@@ -109,7 +112,8 @@ public final class ReviewService {
             throw error
         }
         do {
-            try store.setReviewSetting(repoID: review.repoID, key: "worktree_path", value: prepared.worktree.path)
+            try store.setReviewSetting(repoID: review.repoID, key: prepared.worktreeKey,
+                                       value: prepared.worktree.path)
         } catch {
             Self.logger.error("Recording the review worktree failed: \(error.localizedDescription)")
         }
@@ -117,10 +121,10 @@ public final class ReviewService {
         let model = settings.get(UserSettings.partnerReviewsReviewerModel)
         let values = [
             "repo": review.repoName, "path": prepared.worktree.path, "branch": review.branch, "sha": review.sha,
-            "parent": review.parent, "subject": review.subject, "model": model, "fix_branch": fixBranch,
+            "parent": review.parent, "subject": review.subject, "model": model, "fix_branch": prepared.fixBranch,
             "superseded": prepared.superseded.isEmpty ? "none" : prepared.superseded.joined(separator: ", ")
         ]
-        return PartnerReviewStart(review: running, worktreePath: prepared.worktree.path, fixBranch: fixBranch,
+        return PartnerReviewStart(review: running, worktreePath: prepared.worktree.path, fixBranch: prepared.fixBranch,
                                   tipDiff: prepared.tipDiff, steps: Self.fill(steps(), values: values))
     }
 
@@ -157,45 +161,76 @@ public final class ReviewService {
 
     private struct Prepared {
         var worktree: URL
+        /// The `review_setting` key the worktree's path is recorded under.
+        var worktreeKey: String
+        var fixBranch: String
         var superseded: [String]
         var tipDiff: String
     }
 
-    /// `nil` when the commit is no longer in its branch.
-    private func prepare(_ review: PartnerReview, fixBranch: String) async throws -> Prepared? {
+    private enum Preparation {
+        case skip(String)
+        case ready(Prepared)
+    }
+
+    /// The default branch's reviews use `baseFixBranch` and `reviews/<repo>`; any other branch gets
+    /// `<base>-<branch>` and `reviews/<repo>-<branch>`, since git checks a branch out in one worktree only.
+    private func prepare(_ review: PartnerReview, baseFixBranch: String) async throws -> Preparation {
         let repo = URL(fileURLWithPath: review.repoPath)
         let branchRef = "refs/heads/\(review.branch)"
-        guard try await git.isAncestor(review.sha, of: branchRef, in: repo) else { return nil }
+        guard try await git.resolveCommit(branchRef, in: repo) != nil else {
+            return .skip("branch \(review.branch) no longer exists")
+        }
+        guard try await git.isAncestor(review.sha, of: branchRef, in: repo) else {
+            return .skip("commit is no longer in \(review.branch)")
+        }
 
-        let defaultBranch = try await git.defaultBranch(in: repo)
-        let name = review.branch == defaultBranch
-            ? review.repoName
-            : "\(review.repoName)-\(review.branch.replacingOccurrences(of: "/", with: "-"))"
-        let directory = paths.reviewsDirectory.appendingPathComponent(name)
+        let isDefault = try await review.branch == git.defaultBranch(in: repo)
+        let suffix = isDefault ? "" : "-\(Self.refSafe(review.branch))"
+        let fixBranch = baseFixBranch + suffix
+        let directory = paths.reviewsDirectory.appendingPathComponent(Self.refSafe(review.repoName) + suffix)
         try FileManager.default.createDirectory(at: paths.reviewsDirectory, withIntermediateDirectories: true)
         _ = try await worktree.prepare(repo: repo, branch: review.branch, fixBranch: fixBranch, worktree: directory)
 
         let files = try await git.changedFiles(parent: review.parent, sha: review.sha, in: repo)
         let superseded = try await git.supersedingCommits(after: review.sha, on: branchRef, files: files, in: repo)
         let tipDiff = try await git.tipDiff(from: review.sha, to: branchRef, files: files, in: repo)
-        return Prepared(worktree: directory, superseded: superseded, tipDiff: tipDiff)
+        return .ready(Prepared(worktree: directory,
+                               worktreeKey: isDefault ? "worktree_path" : "worktree_path:\(review.branch)",
+                               fixBranch: fixBranch, superseded: superseded, tipDiff: tipDiff))
     }
 
-    private func skip(_ review: PartnerReview, fixBranch: String) throws -> PartnerReviewStart {
-        var skipped = review
+    /// `name` with every character git refuses in a ref, and `/`, turned into `-`; also safe as a file name.
+    static func refSafe(_ name: String) -> String {
+        let allowed = Set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-")
+        var result = String(name.map { allowed.contains($0) ? $0 : "-" })
+        while result.contains("..") { result = result.replacingOccurrences(of: "..", with: "-") }
+        if result.hasSuffix(".lock") { result.removeLast(".lock".count) }
+        result = result.trimmingCharacters(in: CharacterSet(charactersIn: "."))
+        return result.isEmpty ? "-" : result
+    }
+
+    /// Writes only over a review still queued: one finished while git ran keeps what its finisher wrote.
+    private func skip(_ review: PartnerReview, reason: String, fixBranch: String) throws -> PartnerReviewStart {
+        guard var skipped = try store.review(id: review.id), skipped.state == .queued else {
+            let current = try store.review(id: review.id) ?? review
+            return PartnerReviewStart(review: current, worktreePath: "", fixBranch: fixBranch, tipDiff: "",
+                                      steps: [])
+        }
         skipped.state = .skipped
-        skipped.skipReason = "commit is no longer in \(review.branch)"
+        skipped.skipReason = reason
         skipped.finishedAt = now()
         try store.updateReview(skipped)
         return PartnerReviewStart(review: skipped, worktreePath: "", fixBranch: fixBranch, tipDiff: "", steps: [])
     }
 
+    /// Like `skip`, leaves a review someone finished while git ran alone, and raises no item for it.
     private func markFailed(_ review: PartnerReview, reason: String) {
-        var failed = review
-        failed.state = .failed
-        failed.summary = reason
-        failed.finishedAt = now()
         do {
+            guard var failed = try store.review(id: review.id), failed.state == .queued else { return }
+            failed.state = .failed
+            failed.summary = reason
+            failed.finishedAt = now()
             try store.updateReview(failed)
             try notifier.notify(kind: .blocked, title: "review of \(review.repoName) \(review.sha.prefix(7)) failed",
                                 body: reason, reference: ["review": review.id], createdBy: "partner")

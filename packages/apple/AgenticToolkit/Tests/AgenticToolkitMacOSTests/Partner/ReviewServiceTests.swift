@@ -51,8 +51,8 @@ final class ReviewServiceTests: XCTestCase {
     /// Commits `file` on main and queues a review for that commit.
     @discardableResult
     private func queue(file: String, day: Int, message: String, branch: String = "main",
-                       repoID: String = "repo") throws -> PartnerReview {
-        let sha = try repo.commit(file: file, day: day, message: message)
+                       repoID: String = "repo", content: String? = nil) throws -> PartnerReview {
+        let sha = try repo.commit(file: file, day: day, message: message, content: content)
         return try queueReview(sha: sha, subject: message, branch: branch, repoID: repoID, day: day)
     }
 
@@ -198,6 +198,69 @@ final class ReviewServiceTests: XCTestCase {
 
         XCTAssertEqual(started.worktreePath, paths.reviewsDirectory.appendingPathComponent("demo-feature-x").path)
         XCTAssertEqual(started.review.state, .running)
+        XCTAssertEqual(started.fixBranch, "\(fixBranch)-feature-x")
+        XCTAssertEqual(try currentBranch(started.worktreePath), "\(fixBranch)-feature-x")
+        XCTAssertEqual(try store.reviewSetting(repoID: "repo", key: "worktree_path:feature/x"), started.worktreePath)
+        XCTAssertNil(try store.reviewSetting(repoID: "repo", key: "worktree_path"))
+    }
+
+    func testDefaultBranchThenFeatureBranchReviewsEachGetTheirOwnFixBranchAndWorktree() async throws {
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        let onMain = try queue(file: "b.txt", day: 2, message: "second")
+        try repo.git("switch", "-c", "feature/x")
+        let onFeature = try queue(file: "c.txt", day: 3, message: "third", branch: "feature/x")
+        try repo.git("switch", "main")
+
+        let mainStart = try await service.start(id: onMain.id)
+        _ = try service.finish(id: onMain.id, state: .done, summary: "ok")
+        let featureStart = try await service.start(id: onFeature.id)
+
+        XCTAssertEqual(mainStart.fixBranch, fixBranch)
+        XCTAssertEqual(featureStart.fixBranch, "\(fixBranch)-feature-x")
+        XCTAssertEqual(featureStart.review.state, .running)
+        XCTAssertNotEqual(mainStart.worktreePath, featureStart.worktreePath)
+        XCTAssertEqual(try currentBranch(mainStart.worktreePath), fixBranch)
+        XCTAssertEqual(try currentBranch(featureStart.worktreePath), "\(fixBranch)-feature-x")
+        XCTAssertTrue(featureStart.steps[2].command.contains("on \(fixBranch)-feature-x"),
+                      featureStart.steps[2].command)
+        XCTAssertEqual(try store.reviewSetting(repoID: "repo", key: "worktree_path"), mainStart.worktreePath)
+        XCTAssertEqual(try store.reviewSetting(repoID: "repo", key: "worktree_path:feature/x"),
+                       featureStart.worktreePath)
+    }
+
+    func testPerRepoFixBranchOverridesTheSetting() async throws {
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        let review = try queue(file: "b.txt", day: 2, message: "second")
+        try store.setReviewSetting(repoID: "repo", key: "fix_branch", value: "custom/fixes")
+
+        let started = try await service.start(id: review.id)
+
+        XCTAssertEqual(started.fixBranch, "custom/fixes")
+        XCTAssertEqual(try currentBranch(started.worktreePath), "custom/fixes")
+        XCTAssertTrue(started.steps[2].command.contains("on custom/fixes"), started.steps[2].command)
+    }
+
+    func testAnEmptyPerRepoFixBranchFallsBackToTheSetting() async throws {
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        let review = try queue(file: "b.txt", day: 2, message: "second")
+        try store.setReviewSetting(repoID: "repo", key: "fix_branch", value: "")
+
+        let started = try await service.start(id: review.id)
+
+        XCTAssertEqual(started.fixBranch, fixBranch)
+    }
+
+    func testRefSafeReplacesCharactersGitRefuses() {
+        XCTAssertEqual(ReviewService.refSafe("feature/x"), "feature-x")
+        XCTAssertEqual(ReviewService.refSafe("a b~c^d:e?f*g[h\\i"), "a-b-c-d-e-f-g-h-i")
+        XCTAssertEqual(ReviewService.refSafe("a..b"), "a-b")
+        XCTAssertEqual(ReviewService.refSafe("topic.lock"), "topic")
+        XCTAssertEqual(ReviewService.refSafe(".hidden."), "hidden")
+        XCTAssertEqual(ReviewService.refSafe("release-1.2_rc"), "release-1.2_rc")
+    }
+
+    private func currentBranch(_ worktree: String) throws -> String {
+        try repo.git("-C", worktree, "branch", "--show-current").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func testSupersededListAndTipDiffComputedAtStart() async throws {
@@ -241,13 +304,29 @@ final class ReviewServiceTests: XCTestCase {
         XCTAssertEqual(registry.sessions.count, 1, "no session for the failed review")
     }
 
-    func testGitFailureDuringStartFailsTheReviewInsteadOfLeavingItQueued() async throws {
+    func testStartSkipsAReviewWhoseBranchIsGone() async throws {
         let sha = try repo.commit(file: "a.txt", day: 1, message: "first")
         let review = try queueReview(sha: sha, subject: "first", branch: "gone")
 
+        let started = try await service.start(id: review.id)
+
+        XCTAssertEqual(started.review.state, .skipped)
+        XCTAssertEqual(started.review.skipReason, "branch gone no longer exists")
+        XCTAssertTrue(try attentionItems().filter { $0.kind == .blocked }.isEmpty)
+    }
+
+    func testGitFailureDuringStartFailsTheReviewInsteadOfLeavingItQueued() async throws {
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        let bogus = String(repeating: "0123456789", count: 4)
+        let review = PartnerReview(
+            id: "repo:\(bogus)", repoID: "repo", repoPath: repo.directory.path, repoName: "demo", sha: bogus,
+            parent: bogus, branch: "main", subject: "missing", author: "Ann",
+            committedAt: Date(timeIntervalSince1970: 1_767_225_600))
+        try store.insertReview(review)
+
         do {
             _ = try await service.start(id: review.id)
-            XCTFail("a review of a missing branch started")
+            XCTFail("a review of a commit git does not have started")
         } catch is GitClientError {
         }
 
@@ -257,6 +336,50 @@ final class ReviewServiceTests: XCTestCase {
         let next = try queue(file: "b.txt", day: 2, message: "second")
         let started = try await service.start(id: next.id)
         XCTAssertEqual(started.review.state, .running)
+    }
+
+    func testAPlainDirectoryWhereTheWorktreeGoesFailsTheReview() async throws {
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        let review = try queue(file: "b.txt", day: 2, message: "second")
+        try repo.git("branch", fixBranch)
+        try FileManager.default.createDirectory(at: paths.reviewsDirectory.appendingPathComponent("demo"),
+                                                withIntermediateDirectories: true)
+
+        do {
+            _ = try await service.start(id: review.id)
+            XCTFail("a plain directory was used as the review worktree")
+        } catch ReviewWorktree.Failure.notReviewWorktree {
+        }
+
+        let stored = try XCTUnwrap(store.review(id: review.id))
+        XCTAssertEqual(stored.state, .failed)
+        XCTAssertTrue(stored.summary?.contains("is not a worktree of") ?? false, stored.summary ?? "nil")
+        XCTAssertEqual(try attentionItems().filter { $0.kind == .blocked }.count, 1)
+        XCTAssertTrue(registry.sessions.isEmpty)
+    }
+
+    func testAFixBranchThatConflictsWithTheTipFailsTheReview() async throws {
+        try repo.commit(file: "a.txt", day: 1, message: "first")
+        let first = try queue(file: "b.txt", day: 2, message: "second")
+        let started = try await service.start(id: first.id)
+        try "fixed by the reviewer\n".write(to: URL(fileURLWithPath: started.worktreePath)
+            .appendingPathComponent("b.txt"), atomically: true, encoding: .utf8)
+        try repo.git("-C", started.worktreePath, "commit", "-am", "review fix")
+        _ = try service.finish(id: first.id, state: .done, summary: "fixed b")
+        let second = try queue(file: "b.txt", day: 3, message: "rewrite b", content: "rewritten on main\n")
+
+        do {
+            _ = try await service.start(id: second.id)
+            XCTFail("a conflicting fix branch was rebased")
+        } catch ReviewWorktree.Failure.rebaseConflict {
+        }
+
+        let stored = try XCTUnwrap(store.review(id: second.id))
+        XCTAssertEqual(stored.state, .failed)
+        XCTAssertTrue(stored.summary?.hasPrefix("rebasing the fix branch onto the tip conflicted") ?? false,
+                      stored.summary ?? "nil")
+        XCTAssertEqual(try attentionItems().filter { $0.kind == .blocked }.count, 1)
+        XCTAssertEqual(try currentBranch(started.worktreePath), fixBranch, "the rebase was aborted")
     }
 
     // MARK: - next, finish, requeue
