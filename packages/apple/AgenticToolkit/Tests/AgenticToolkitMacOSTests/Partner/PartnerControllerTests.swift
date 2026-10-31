@@ -471,10 +471,24 @@ final class PartnerControllerTests: XCTestCase {
     func testResumeThatExitsSilentlyStartsAFreshSessionOnce() async throws {
         let lost = UUID()
         try store.setSessionID(lost)
-        log.ending = { $0.resume ? .silently : .none }
+        log.ending = { $0.resume ? .unknownSession : .none }
         let controller = makeController()
         await controller.start()
         try await assertFreshSessionAfterLost(lost, controller)
+    }
+
+    /// Killed, out of memory, crashed at startup: claude said nothing about the session, so it is kept.
+    func testResumeThatExitsSilentlyFailsAndKeepsSession() async throws {
+        let kept = UUID()
+        try store.setSessionID(kept)
+        log.ending = { $0.resume ? .silently : .none }
+        let controller = makeController()
+        await controller.start()
+        await waitUntil { controller.state == .failed("partner process exited") }
+        XCTAssertEqual(controller.state, .failed("partner process exited"))
+        XCTAssertEqual(log.all.count, 1)
+        XCTAssertEqual(try store.sessionID(), kept)
+        XCTAssertFalse(try notices().contains { $0.text.contains(Self.lostSessionNotice) })
     }
 
     func testStderrSayingNoConversationStartsAFreshSession() async throws {
@@ -491,7 +505,7 @@ final class PartnerControllerTests: XCTestCase {
 
     func testReSentTurnIsRecordedOnce() async throws {
         try store.setSessionID(UUID())
-        log.ending = { $0.resume ? .silently : .none }
+        log.ending = { $0.resume ? .unknownSession : .none }
         let controller = makeController()
         await controller.start()
         await waitUntil { log.all.count == 2 && process.sent.count == 1 }
@@ -506,7 +520,7 @@ final class PartnerControllerTests: XCTestCase {
 
     func testClaudeThatKeepsExitingStillFails() async throws {
         try store.setSessionID(UUID())
-        log.ending = { _ in .silently }
+        log.ending = { $0.resume ? .unknownSession : .silently }
         let controller = makeController()
         await controller.start()
         await waitUntil { controller.state == .failed("partner process exited") }

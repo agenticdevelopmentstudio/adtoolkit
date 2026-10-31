@@ -74,8 +74,10 @@ public final class PartnerController: ObservableObject {
     var sessionEstablished = false
     /// The current process has emitted a message.
     var processSpoke = false
-    /// Once per start, a resumed process that exits without a word is taken to mean claude no longer has
-    /// the session, and a fresh one is launched in its place.
+    /// The current process answered with claude's lost-session result, which `handle` held back.
+    var lostSessionSeen = false
+    /// Once per start, a resumed process that claude says no longer has its session is replaced by a
+    /// fresh session.
     var freshSessionAvailable = false
     /// A turn sent again to a replacement process: already in the transcript and the chat, so not recorded twice.
     var resentInbound: PartnerInbound?
@@ -256,6 +258,7 @@ public final class PartnerController: ObservableObject {
         self.configuration = configuration
         self.process = process
         processSpoke = false
+        lostSessionSeen = false
         let stream = process.messages()
         readerTask = Task { [weak self] in
             for await message in stream {
@@ -271,10 +274,11 @@ public final class PartnerController: ObservableObject {
         if await process.isRunning { await process.terminate() }
         let stderr = await process.standardErrorText().trimmingCharacters(in: .whitespacesAndNewlines)
         guard generation == self.generation, !isStopping else { return }
-        // claude no longer has the session: it said so in a result (which `handle` held back, leaving
-        // `processSpoke` unset), said so on stderr, or exited without a word.
+        // claude no longer has the session: it said so in a result (which `handle` held back) or on
+        // stderr. A silent exit (killed, out of memory, a crash at startup) is a failure and keeps the
+        // session, so the conversation is not thrown away.
         if freshSessionAvailable, let configuration, configuration.resume,
-           !processSpoke || stderr.contains(ClaudeStreamMessage.lostSessionText) {
+           lostSessionSeen || stderr.contains(ClaudeStreamMessage.lostSessionText) {
             return await startFreshSession(replacing: configuration, stderr: stderr)
         }
         self.generation += 1
@@ -285,7 +289,7 @@ public final class PartnerController: ObservableObject {
         fail("partner process exited", notify: true, detail: String(stderr.suffix(2_000)))
     }
 
-    /// A resumed process exited without a word: claude no longer has that session. Forgets it, says so,
+    /// claude reported it no longer has the resumed session. Forgets it, says so,
     /// and launches a new session, once per start, so a claude that keeps exiting still ends in failure.
     private func startFreshSession(replacing previous: PartnerProcessConfiguration, stderr: String) async {
         freshSessionAvailable = false

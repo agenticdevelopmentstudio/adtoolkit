@@ -70,6 +70,7 @@ extension PartnerController {
         // A resumed claude without the session answers with one error result and exits. Held back from
         // the chat and the transcript: `readerEnded` starts a fresh session instead of a failed turn.
         if !processSpoke, configuration?.resume == true, message.reportsLostSession {
+            lostSessionSeen = true
             let ending = process
             Task { await ending?.terminate() }
             return
