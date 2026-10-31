@@ -16,6 +16,20 @@ import Testing
         let msg = try ClaudeStreamMessage.decode(Data(line.utf8))
         #expect(msg.kind == .result && msg.isError && msg.subtype == "error_max_turns")
     }
+    @Test func decodesClaudesUnknownSessionResult() throws {
+        let msg = try ClaudeStreamMessage.decode(ClaudeStreamFixtures.unknownSessionResultLine())
+        #expect(msg.kind == .result && msg.isError && msg.subtype == "error_during_execution")
+        #expect(msg.numTurns == 0)
+        #expect(msg.errors == ["No conversation found with session ID: 11111111-2222-3333-4444-555555555555"])
+        #expect(msg.reportsLostSession)
+    }
+    @Test func anOrdinaryResultDoesNotReportALostSession() throws {
+        let success = #"{"type":"result","subtype":"success","is_error":false,"num_turns":1,"result":"x"}"#
+        let failedTurn = #"{"type":"result","subtype":"error_max_turns","is_error":true,"num_turns":3}"#
+        #expect(try !ClaudeStreamMessage.decode(Data(success.utf8)).reportsLostSession)
+        #expect(try !ClaudeStreamMessage.decode(Data(failedTurn.utf8)).reportsLostSession)
+        #expect(try ClaudeStreamMessage.decode(Data(success.utf8)).errors.isEmpty)
+    }
     @Test func unknownTypeIsOther() throws {
         let msg = try ClaudeStreamMessage.decode(Data(#"{"type":"stream_event","event":{}}"#.utf8))
         #expect(msg.kind == .other("stream_event"))

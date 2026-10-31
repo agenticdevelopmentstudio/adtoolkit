@@ -14,14 +14,24 @@ final class FakePartnerProcess: PartnerProcessing, @unchecked Sendable {
     private let stream: AsyncStream<ClaudeStreamMessage>
     private let continuation: AsyncStream<ClaudeStreamMessage>.Continuation
 
-    private let gate: StartGate?
-    private let diesSilently: Bool
+    /// How a fake process ends on its own, right after starting.
+    enum Ending: Sendable {
+        /// It runs until the test ends it.
+        case none
+        /// It exits having said nothing.
+        case silently
+        /// It does what real claude does for a `--resume` id it does not have: one error `result`
+        /// (the captured line), the captured stderr, exit.
+        case unknownSession
+    }
 
-    /// `diesSilently`: the process exits right after starting, having said nothing.
-    init(configuration: PartnerProcessConfiguration, gate: StartGate? = nil, diesSilently: Bool = false) {
+    private let gate: StartGate?
+    private let ending: Ending
+
+    init(configuration: PartnerProcessConfiguration, gate: StartGate? = nil, ending: Ending = .none) {
         self.configuration = configuration
         self.gate = gate
-        self.diesSilently = diesSilently
+        self.ending = ending
         (stream, continuation) = AsyncStream.makeStream(of: ClaudeStreamMessage.self)
     }
 
@@ -32,8 +42,18 @@ final class FakePartnerProcess: PartnerProcessing, @unchecked Sendable {
 
     func start() async throws {
         await gate?.wait()
-        lock.withLock { running = !diesSilently }
-        if diesSilently { continuation.finish() }
+        switch ending {
+        case .none:
+            lock.withLock { running = true }
+        case .silently:
+            continuation.finish()
+        case .unknownSession:
+            let line = try ClaudeStreamFixtures.unknownSessionResultLine()
+            let text = try ClaudeStreamFixtures.unknownSessionStderr()
+            continuation.yield(try ClaudeStreamMessage.decode(line))
+            lock.withLock { stderr = text }
+            continuation.finish()
+        }
     }
     func send(_ text: String) async throws { lock.withLock { sentTexts.append(text) } }
     func messages() -> AsyncStream<ClaudeStreamMessage> { stream }
@@ -90,11 +110,11 @@ final class FakeProcessLog: @unchecked Sendable {
     private let lock = NSLock()
     private var made: [FakePartnerProcess] = []
     private var startGate: StartGate?
-    private var dies: (@Sendable (PartnerProcessConfiguration) -> Bool)?
-    /// Processes made from now on exit silently when this says so for their configuration.
-    var diesSilently: (@Sendable (PartnerProcessConfiguration) -> Bool)? {
-        get { lock.withLock { dies } }
-        set { lock.withLock { dies = newValue } }
+    private var endingFor: (@Sendable (PartnerProcessConfiguration) -> FakePartnerProcess.Ending)?
+    /// How processes made from now on end, by their configuration.
+    var ending: (@Sendable (PartnerProcessConfiguration) -> FakePartnerProcess.Ending)? {
+        get { lock.withLock { endingFor } }
+        set { lock.withLock { endingFor = newValue } }
     }
     /// Processes made from now on wait at this gate in `start()`.
     var gate: StartGate? {
@@ -151,7 +171,7 @@ final class PartnerControllerTests: XCTestCase {
             findClaude: { "/bin/true" },
             makeProcess: { configuration, _ in
                 let process = FakePartnerProcess(configuration: configuration, gate: log.gate,
-                                                 diesSilently: log.diesSilently?(configuration) ?? false)
+                                                 ending: log.ending?(configuration) ?? .none)
                 log.add(process)
                 return process
             },
@@ -413,12 +433,14 @@ final class PartnerControllerTests: XCTestCase {
 
     // MARK: - A session claude no longer knows
 
-    func testResumeThatExitsSilentlyStartsAFreshSessionOnce() async throws {
-        let lost = UUID()
-        try store.setSessionID(lost)
-        log.diesSilently = { $0.resume }
-        let controller = makeController()
-        await controller.start()
+    private static let lostSessionNotice = "could not be resumed"
+
+    private func notices() throws -> [AttentionItem] {
+        try store.attentionItems(includeDoneCompletedAfter: nil).filter { $0.kind == .notification }
+    }
+
+    /// The fresh process got the started notice, answered it, and the partner is idle on the new session.
+    private func assertFreshSessionAfterLost(_ lost: UUID, _ controller: PartnerController) async throws {
         await waitUntil { log.all.count == 2 && process.sent.count == 1 }
         XCTAssertEqual(log.all.count, 2)
         XCTAssertEqual(log.all.first?.configuration.resume, true)
@@ -430,14 +452,61 @@ final class PartnerControllerTests: XCTestCase {
         await waitUntil { controller.state == .idle }
         XCTAssertEqual(controller.state, .idle)
         XCTAssertEqual(try store.sessionID(), process.configuration.sessionID)
-        let notices = try store.attentionItems(includeDoneCompletedAfter: nil).filter { $0.kind == .notification }
+        let notices = try notices()
         XCTAssertEqual(notices.count, 1, "\(notices)")
-        XCTAssertTrue(notices.first?.text.contains("could not be resumed") ?? false, "\(notices)")
+        XCTAssertTrue(notices.first?.text.contains(Self.lostSessionNotice) ?? false, "\(notices)")
+    }
+
+    func testUnknownSessionResultStartsAFreshSessionOnce() async throws {
+        let lost = UUID()
+        try store.setSessionID(lost)
+        log.ending = { $0.resume ? .unknownSession : .none }
+        let controller = makeController()
+        await controller.start()
+        try await assertFreshSessionAfterLost(lost, controller)
+        let transcript = try store.transcript(limit: 50)
+        XCTAssertFalse(transcript.contains { $0.text.contains("No conversation found") }, "\(transcript)")
+    }
+
+    func testResumeThatExitsSilentlyStartsAFreshSessionOnce() async throws {
+        let lost = UUID()
+        try store.setSessionID(lost)
+        log.ending = { $0.resume ? .silently : .none }
+        let controller = makeController()
+        await controller.start()
+        try await assertFreshSessionAfterLost(lost, controller)
+    }
+
+    func testStderrSayingNoConversationStartsAFreshSession() async throws {
+        let lost = UUID()
+        try store.setSessionID(lost)
+        let controller = makeController()
+        await controller.start()
+        let first = process
+        await waitUntil { first.sent.count == 1 }
+        first.push(ClaudeStreamMessage(kind: .systemInit, sessionID: lost.uuidString))
+        first.crash(stderr: try ClaudeStreamFixtures.unknownSessionStderr())
+        try await assertFreshSessionAfterLost(lost, controller)
+    }
+
+    func testReSentTurnIsRecordedOnce() async throws {
+        try store.setSessionID(UUID())
+        log.ending = { $0.resume ? .silently : .none }
+        let controller = makeController()
+        await controller.start()
+        await waitUntil { log.all.count == 2 && process.sent.count == 1 }
+        XCTAssertEqual(log.all.count, 2)
+        process.push(Self.result)
+        await waitUntil { controller.state == .idle }
+        XCTAssertEqual(try store.transcript(limit: 50).filter { $0.role == .user }.count, 1)
+        var events = controller.chatSession.events().makeAsyncIterator()
+        guard case .transcriptLoaded(let shown)? = await events.next() else { return XCTFail("no transcript") }
+        XCTAssertEqual(shown.filter { $0.role == .user }.count, 1, "\(shown)")
     }
 
     func testClaudeThatKeepsExitingStillFails() async throws {
         try store.setSessionID(UUID())
-        log.diesSilently = { _ in true }
+        log.ending = { _ in .silently }
         let controller = makeController()
         await controller.start()
         await waitUntil { controller.state == .failed("partner process exited") }

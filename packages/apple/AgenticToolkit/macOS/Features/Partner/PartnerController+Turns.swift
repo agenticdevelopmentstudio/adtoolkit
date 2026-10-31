@@ -32,19 +32,9 @@ extension PartnerController {
         guard state == .idle, let process, let inbound = queue.next() else { return }
         setQueuedCount(queue.count)
         currentInbound = inbound
-
-        let attribution = inbound.attribution
-        var messageID = UUID().uuidString
-        if let source = attribution?.sourceID, let preset = presetMessageIDs.removeValue(forKey: source) {
-            messageID = preset
-            awaitingDone.append(String(source.dropFirst(Self.attentionSourcePrefix.count)))
-        }
-        let message = ChatMessage(id: messageID, role: .user, text: inbound.text, timestamp: now(),
-                                  attribution: attribution)
-        do { try store.append(message) } catch {
-            Self.logger.error("Saving a partner message failed: \(error.localizedDescription)")
-        }
-        chatSession.noteUserMessage(message)
+        let isResend = inbound == resentInbound
+        resentInbound = nil
+        if !isResend { record(inbound) }
         chatSession.setState(.responding)
         setState(.thinking)
         startTurnTimeout()
@@ -58,9 +48,32 @@ extension PartnerController {
         }
     }
 
+    /// Puts an outgoing turn in the transcript and the chat, under a button's preset id when it has one.
+    private func record(_ inbound: PartnerInbound) {
+        let attribution = inbound.attribution
+        var messageID = UUID().uuidString
+        if let source = attribution?.sourceID, let preset = presetMessageIDs.removeValue(forKey: source) {
+            messageID = preset
+            awaitingDone.append(String(source.dropFirst(Self.attentionSourcePrefix.count)))
+        }
+        let message = ChatMessage(id: messageID, role: .user, text: inbound.text, timestamp: now(),
+                                  attribution: attribution)
+        do { try store.append(message) } catch {
+            Self.logger.error("Saving a partner message failed: \(error.localizedDescription)")
+        }
+        chatSession.noteUserMessage(message)
+    }
+
     /// One decoded message from the current process.
     func handle(_ message: ClaudeStreamMessage, generation: Int) {
         guard generation == self.generation else { return }
+        // A resumed claude without the session answers with one error result and exits. Held back from
+        // the chat and the transcript: `readerEnded` starts a fresh session instead of a failed turn.
+        if !processSpoke, configuration?.resume == true, message.reportsLostSession {
+            let ending = process
+            Task { await ending?.terminate() }
+            return
+        }
         processSpoke = true
         if !sessionEstablished, let sessionID = configuration?.sessionID {
             sessionEstablished = true

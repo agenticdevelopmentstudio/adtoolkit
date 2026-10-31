@@ -77,6 +77,8 @@ public final class PartnerController: ObservableObject {
     /// Once per start, a resumed process that exits without a word is taken to mean claude no longer has
     /// the session, and a fresh one is launched in its place.
     var freshSessionAvailable = false
+    /// A turn sent again to a replacement process: already in the transcript and the chat, so not recorded twice.
+    var resentInbound: PartnerInbound?
     var currentInbound: PartnerInbound?
     /// Set when the willQuit turn's result arrives.
     var quitTurnFinished = false
@@ -269,7 +271,10 @@ public final class PartnerController: ObservableObject {
         if await process.isRunning { await process.terminate() }
         let stderr = await process.standardErrorText().trimmingCharacters(in: .whitespacesAndNewlines)
         guard generation == self.generation, !isStopping else { return }
-        if !processSpoke, freshSessionAvailable, let configuration, configuration.resume {
+        // claude no longer has the session: it said so in a result (which `handle` held back, leaving
+        // `processSpoke` unset), said so on stderr, or exited without a word.
+        if freshSessionAvailable, let configuration, configuration.resume,
+           !processSpoke || stderr.contains(ClaudeStreamMessage.lostSessionText) {
             return await startFreshSession(replacing: configuration, stderr: stderr)
         }
         self.generation += 1
@@ -317,19 +322,15 @@ public final class PartnerController: ObservableObject {
             fail("could not launch claude: \(error.localizedDescription)", notify: true)
             return
         }
-        // The turn in flight went to the dead process: close it in the chat and send it again,
-        // a `started` notice now saying the session is new.
-        if state == .thinking {
-            _ = chatSession.apply(ClaudeStreamMessage(
-                kind: .result, isError: true, resultText: "The earlier conversation could not be resumed."))
+        // The turn in flight went to the dead process: send it again, still open in the chat and
+        // already in the transcript, with a `started` notice now saying the session is new.
+        var resend = interrupted
+        if case .lifecycle(.started(_, let gone))? = interrupted {
+            resend = .lifecycle(.started(resumed: false, goneSessions: gone))
         }
-        switch interrupted {
-        case .lifecycle(.started(_, let gone))?:
-            queue.enqueueFirst(.lifecycle(.started(resumed: false, goneSessions: gone)))
-        case let inbound?:
-            queue.enqueueFirst(inbound)
-        case nil:
-            break
+        if let resend {
+            queue.enqueueFirst(resend)
+            resentInbound = resend
         }
         setQueuedCount(queue.count)
         setState(.idle)

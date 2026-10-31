@@ -668,7 +668,10 @@ targets:
     templates:
       - SwiftLint
     sources:
-      - Tests/AgenticToolkitCoreTests
+      - path: Tests/AgenticToolkitCoreTests
+        excludes: ["Partner/Fixtures/**"]
+      - path: Tests/AgenticToolkitCoreTests/Partner/Fixtures
+        buildPhase: resources
     dependencies:
       - target: AgenticToolkitCore
         embed: true
@@ -927,6 +930,10 @@ targets:
         buildPhase: resources
       # The in-memory billing service, shared with the Core billing tests.
       - path: Tests/AgenticToolkitCoreTests/Billing/FakeBillingClient.swift
+      # Real claude output, shared with the Core stream-json tests.
+      - path: Tests/AgenticToolkitCoreTests/Partner/ClaudeStreamFixtures.swift
+      - path: Tests/AgenticToolkitCoreTests/Partner/Fixtures
+        buildPhase: resources
     dependencies:
       - target: AgenticToolkitMacOS
         embed: true

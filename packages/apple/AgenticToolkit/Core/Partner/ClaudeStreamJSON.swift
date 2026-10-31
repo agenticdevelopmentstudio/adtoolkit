@@ -28,15 +28,31 @@ public struct ClaudeStreamMessage: Sendable, Equatable {
     public var blocks: [Block]
     public var isError: Bool
     public var resultText: String?
+    /// A `result`'s `num_turns`.
+    public var numTurns: Int?
+    /// A `result`'s `errors`: why an error result failed, when claude says.
+    public var errors: [String]
 
     public init(kind: Kind, subtype: String? = nil, sessionID: String? = nil, blocks: [Block] = [],
-                isError: Bool = false, resultText: String? = nil) {
+                isError: Bool = false, resultText: String? = nil, numTurns: Int? = nil, errors: [String] = []) {
         self.kind = kind
         self.subtype = subtype
         self.sessionID = sessionID
         self.blocks = blocks
         self.isError = isError
         self.resultText = resultText
+        self.numTurns = numTurns
+        self.errors = errors
+    }
+
+    /// What claude says, on stdout and stderr alike, when `--resume` names a session it does not have.
+    public static let lostSessionText = "No conversation found"
+
+    /// An error `result` before any turn ran, or one naming a missing conversation: what claude emits,
+    /// then exits, for a `--resume` id it does not have.
+    public var reportsLostSession: Bool {
+        kind == .result && isError
+            && (numTurns == 0 || errors.contains { $0.contains(Self.lostSessionText) })
     }
 
     /// Decodes one line. Throws `DecodingError` when the line is not a JSON object.
@@ -69,7 +85,8 @@ public struct ClaudeStreamMessage: Sendable, Equatable {
         }
         return ClaudeStreamMessage(kind: kind, subtype: subtype, sessionID: obj["session_id"] as? String,
                                    blocks: blocks, isError: obj["is_error"] as? Bool ?? false,
-                                   resultText: obj["result"] as? String)
+                                   resultText: obj["result"] as? String, numTurns: obj["num_turns"] as? Int,
+                                   errors: (obj["errors"] as? [Any])?.compactMap { $0 as? String } ?? [])
     }
 
     private static func block(from raw: [String: Any]) -> Block {
