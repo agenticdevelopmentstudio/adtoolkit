@@ -78,7 +78,9 @@ public final class PartnerToolbar: NSObject, NSToolbarDelegate {
     /// `state` is passed in: `$state` publishes before the property changes.
     private func refresh(state: PartnerController.State) {
         // The status line: the state, then the enabled jobs.
-        let jobs = controller.jobs().filter(\.isEnabled).map(\.name)
+        // A plain read: the controller seeds missing jobs at start, and the toolbar never writes. Unreadable
+        // jobs show as none rather than as the defaults.
+        let jobs = ((try? controller.store.jobs()) ?? []).filter(\.isEnabled).map(\.name)
         let text = jobs.isEmpty ? state.displayText : "\(state.displayText) · \(jobs.joined(separator: ", "))"
         statusLabel.stringValue = text
         statusLabel.toolTip = text

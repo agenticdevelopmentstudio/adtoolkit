@@ -52,8 +52,8 @@ public final class PartnerSplitViewController: NSSplitViewController {
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        splitView.autosaveName = "partner.split"
-
+        // No split autosave: it would also restore the inspector's collapsed state, a second source of truth
+        // beside `partnerAttentionPaneVisible`.
         let shelfItem = NSSplitViewItem(sidebarWithViewController: shelf)
         shelfItem.minimumThickness = 180
         shelfItem.canCollapse = true
