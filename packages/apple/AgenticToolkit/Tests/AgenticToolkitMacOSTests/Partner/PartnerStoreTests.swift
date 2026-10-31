@@ -60,7 +60,7 @@ final class PartnerStoreTests: XCTestCase {
                        [String(PartnerStore.currentSchemaVersion)])
         store = nil
         store = try PartnerStore(path: databasePath)
-        XCTAssertEqual(try rawQuery("SELECT COUNT(*) FROM schema_migrations"), ["1"])
+        XCTAssertEqual(try rawQuery("SELECT COUNT(*) FROM schema_migrations"), ["2"])
     }
 
     func testNewerSchemaFileFailsToOpen() throws {
@@ -108,13 +108,13 @@ final class PartnerStoreTests: XCTestCase {
     func testMigrationCreatesTablesAndVersion() throws {
         let expected: Set<String> = [
             "attention_item", "attention_action", "partner_message", "job", "partner_session",
-            "tool_call", "partner_lock", "partner_setting", "schema_migrations"
+            "tool_call", "partner_lock", "partner_setting", "schema_migrations", "review", "review_setting"
         ]
         XCTAssertTrue(expected.isSubset(of: try tableNames()))
         store = nil
         store = try PartnerStore(path: databasePath)
         XCTAssertTrue(expected.isSubset(of: try tableNames()))
-        XCTAssertEqual(PartnerStore.currentSchemaVersion, 1)
+        XCTAssertEqual(PartnerStore.currentSchemaVersion, 2)
     }
 
     func testDefaultPathNamesPartnerDB() {
