@@ -72,10 +72,8 @@ public struct NoticeRoutingRules: Codable, Sendable, Equatable {
     public var flood: FloodFolder.Configuration
     public var escalation: EscalationPolicy
     public var hideFromScreenSharing: Bool
-    /// Still stored and read by the app until per-action shortcuts replace it.
-    public var hotkeysEnabled: Bool
-    /// A 0.7.x `hotkeysEnabled`, surfaced once by the legacy decoder for the
-    /// keyboard migration. Decoded only, never encoded.
+    /// The `hotkeysEnabled` switch a 0.7.x or 0.8.x build stored, surfaced by
+    /// the decoder for the keyboard migration. Decoded only, never encoded.
     public var legacyHotkeysEnabled: Bool?
 
     public init(
@@ -87,7 +85,6 @@ public struct NoticeRoutingRules: Codable, Sendable, Equatable {
         flood: FloodFolder.Configuration = .init(),
         escalation: EscalationPolicy = .init(),
         hideFromScreenSharing: Bool = true,
-        hotkeysEnabled: Bool = true,
         legacyHotkeysEnabled: Bool? = nil
     ) {
         self.styles = styles
@@ -98,7 +95,6 @@ public struct NoticeRoutingRules: Codable, Sendable, Equatable {
         self.flood = flood
         self.escalation = escalation
         self.hideFromScreenSharing = hideFromScreenSharing
-        self.hotkeysEnabled = hotkeysEnabled
         self.legacyHotkeysEnabled = legacyHotkeysEnabled
     }
 
@@ -158,7 +154,9 @@ public struct NoticeRoutingRules: Codable, Sendable, Equatable {
 
     private enum CodingKeys: String, CodingKey {
         case styles, overrides, screens, crawl, toastStackLimit, flood, escalation
-        case hideFromScreenSharing, hotkeysEnabled
+        case hideFromScreenSharing
+        /// Decode-only: 0.8.1-0.8.8 wrote it beside the new shape.
+        case hotkeysEnabled
     }
 
     /// Every key is optional, falling back to `defaults`, so rules stored by an
@@ -190,7 +188,7 @@ public struct NoticeRoutingRules: Codable, Sendable, Equatable {
             self.screens = try container.decodeIfPresent(String.self, forKey: .screens)
                 .flatMap(ScreenSelection.init(rawValue:)) ?? base.screens
             self.crawl = try container.decodeIfPresent(CrawlSettings.self, forKey: .crawl) ?? base.crawl
-            self.legacyHotkeysEnabled = nil
+            self.legacyHotkeysEnabled = try container.decodeIfPresent(Bool.self, forKey: .hotkeysEnabled)
         }
         self.toastStackLimit = try container.decodeIfPresent(Int.self, forKey: .toastStackLimit)
             ?? base.toastStackLimit
@@ -199,8 +197,6 @@ public struct NoticeRoutingRules: Codable, Sendable, Equatable {
             ?? base.escalation
         self.hideFromScreenSharing = try container.decodeIfPresent(Bool.self, forKey: .hideFromScreenSharing)
             ?? base.hideFromScreenSharing
-        self.hotkeysEnabled = try container.decodeIfPresent(Bool.self, forKey: .hotkeysEnabled)
-            ?? base.hotkeysEnabled
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -216,6 +212,5 @@ public struct NoticeRoutingRules: Codable, Sendable, Equatable {
         try container.encode(flood, forKey: .flood)
         try container.encode(escalation, forKey: .escalation)
         try container.encode(hideFromScreenSharing, forKey: .hideFromScreenSharing)
-        try container.encode(hotkeysEnabled, forKey: .hotkeysEnabled)
     }
 }

@@ -1,177 +1,195 @@
-import Carbon.HIToolbox
 import XCTest
+@preconcurrency import KeyboardShortcuts
+import AgenticDeveloperHubSDKCore
+import AgenticDeveloperHubSDKMacOS
 import AgenticDeveloperHubSDKNotifications
 @testable import AgenticDeveloperHubSDKNotificationsUI
-
-/// Registers nothing with the system: a hotkey test must not grab real keys.
-@MainActor
-private final class FakeRegistrar: HotkeyRegistrar {
-    private(set) var registered: [(keyCode: UInt32, modifiers: UInt32)] = []
-    private var handlers: [@MainActor () -> Void] = []
-    private(set) var unregisterCount = 0
-    /// Key codes the "system" refuses, as if another app held them.
-    var refused: Set<UInt32> = []
-
-    func register(keyCode: UInt32, modifiers: UInt32, handler: @escaping @MainActor () -> Void) -> Bool {
-        guard !refused.contains(keyCode) else { return false }
-        registered.append((keyCode, modifiers))
-        handlers.append(handler)
-        return true
-    }
-
-    func unregisterAll() {
-        unregisterCount += 1
-        registered = []
-        handlers = []
-    }
-
-    func press(_ index: Int) { handlers[index]() }
-}
 
 @MainActor
 final class NoticeHotkeysTests: XCTestCase {
 
-    func testBindingsMatchSpec() {
-        let bindings = NoticeHotkeys.bindings
-        XCTAssertEqual(bindings.map(\.keyCode), [
-            UInt32(kVK_Return), UInt32(kVK_Delete), UInt32(kVK_ANSI_S), UInt32(kVK_ANSI_H)
-        ])
-        XCTAssertEqual(bindings.map(\.command), [.act, .archive, .snooze, .history])
-        let modifiers = UInt32(controlKey | optionKey | cmdKey)
-        XCTAssertTrue(bindings.allSatisfy { $0.modifiers == modifiers })
+    private static let ids = ["notice.act", "notice.archive", "notice.snooze", "notice.history"]
+    private static let chordModifiers: NSEvent.ModifierFlags = [.control, .option, .command]
+
+    private var suiteNames: [String] = []
+    private var defaults = UserDefaults.standard
+    private var store: SettingsStore!
+
+    override func setUp() async throws {
+        try await super.setUp()
+        resetSharedBindings()
+        freshDomain()
+    }
+
+    override func tearDown() async throws {
+        resetSharedBindings()
+        for name in suiteNames {
+            UserDefaults.standard.removePersistentDomain(forName: name)
+        }
+        try await super.tearDown()
+    }
+
+    /// The registry keeps what the user authored in the shared `UserSettings`,
+    /// so each test starts and ends with none of these ids authored.
+    private func resetSharedBindings() {
+        let registry = KeyCommandRegistry()
+        Self.ids.forEach(registry.resetBinding(for:))
+    }
+
+    private func freshDomain() {
+        let name = "NoticeHotkeysTests.\(UUID().uuidString)"
+        suiteNames.append(name)
+        defaults = UserDefaults(suiteName: name) ?? .standard
+        store = SettingsStore(
+            with: UserDefaultsSettingsStorageProvider(defaults: defaults),
+            secureSettingsProvider: InMemorySecureSettingsStorageProvider())
+    }
+
+    private final class Rules {
+        var value = NoticeRoutingRules.defaults
     }
 
     private struct Env {
         let center: NoticePresentationCenter
         let handler: RecordingHandler
         let clock: Clock
+        let registry: KeyCommandRegistry
+        let rules: Rules
     }
 
     private func makeEnv() -> Env {
         let handler = RecordingHandler()
         let clock = Clock()
+        let rules = Rules()
         let center = NoticePresentationCenter(
-            handler: handler, rules: { .defaults }, filter: { NoticeFilter() },
+            handler: handler, rules: { rules.value }, filter: { NoticeFilter() },
             idle: IdleMonitor(idleSeconds: { 0 }), clock: { clock.now })
         center.presenters = [.toast: RecordingPresenter(), .alert: RecordingPresenter()]
-        return Env(center: center, handler: handler, clock: clock)
+        let registry = KeyCommandRegistry()
+        NoticeHotkeys.install(center: center, registry: registry)
+        return Env(center: center, handler: handler, clock: clock, registry: registry, rules: rules)
     }
 
-    func testEnablingRegistersEveryBindingAndDisablingRemovesThem() {
-        let env = makeEnv()
-        let registrar = FakeRegistrar()
-        let hotkeys = NoticeHotkeys(center: env.center, registrar: registrar)
-        XCTAssertTrue(registrar.registered.isEmpty, "nothing is grabbed until enabled")
-
-        hotkeys.setEnabled(true)
-        XCTAssertEqual(registrar.registered.map(\.keyCode), NoticeHotkeys.bindings.map(\.keyCode))
-        hotkeys.setEnabled(true)
-        XCTAssertEqual(registrar.registered.count, 4, "enabling twice registers once")
-
-        hotkeys.setEnabled(false)
-        XCTAssertTrue(registrar.registered.isEmpty)
-        XCTAssertEqual(registrar.unregisterCount, 1)
-    }
-
-    func testARefusedHotkeyIsReported() {
-        let env = makeEnv()
-        let registrar = FakeRegistrar()
-        registrar.refused = [UInt32(kVK_ANSI_S)]
-        let hotkeys = NoticeHotkeys(center: env.center, registrar: registrar)
-        hotkeys.setEnabled(true)
-        XCTAssertTrue(hotkeys.isEnabled)
-        XCTAssertEqual(hotkeys.unavailableCommands, [.snooze])
-        hotkeys.setEnabled(false)
-        XCTAssertTrue(hotkeys.unavailableCommands.isEmpty)
-    }
-
-    func testEveryHotkeyRefusedLeavesThemOff() {
-        let env = makeEnv()
-        let registrar = FakeRegistrar()
-        registrar.refused = Set(NoticeHotkeys.bindings.map(\.keyCode))
-        let hotkeys = NoticeHotkeys(center: env.center, registrar: registrar)
-        hotkeys.setEnabled(true)
-        XCTAssertFalse(hotkeys.isEnabled, "isEnabled reflects what the system accepted")
-        XCTAssertEqual(hotkeys.unavailableCommands, [.act, .archive, .snooze, .history])
-
-        registrar.refused = []
-        hotkeys.setEnabled(true)
-        XCTAssertTrue(hotkeys.isEnabled, "a later attempt tries again")
-        XCTAssertEqual(registrar.registered.count, 4)
-    }
-
-    /// Another app may let go of a combination later. Enabling again while
-    /// already on retries just the refused hotkeys, and never registers an
-    /// accepted one twice.
-    func testEnablingAgainRetriesOnlyTheRefusedHotkeys() {
-        let env = makeEnv()
-        let registrar = FakeRegistrar()
-        registrar.refused = [UInt32(kVK_ANSI_S), UInt32(kVK_ANSI_H)]
-        let hotkeys = NoticeHotkeys(center: env.center, registrar: registrar)
-        hotkeys.setEnabled(true)
-        XCTAssertEqual(hotkeys.unavailableCommands, [.snooze, .history])
-
-        registrar.refused = [UInt32(kVK_ANSI_H)]
-        hotkeys.setEnabled(true)
-        XCTAssertTrue(hotkeys.isEnabled)
-        XCTAssertEqual(hotkeys.unavailableCommands, [.history], "the snooze hotkey was retried and taken")
-        XCTAssertEqual(registrar.registered.map(\.keyCode),
-                       [UInt32(kVK_Return), UInt32(kVK_Delete), UInt32(kVK_ANSI_S)],
-                       "accepted hotkeys are not registered again")
-
-        registrar.refused = []
-        hotkeys.setEnabled(true)
-        XCTAssertTrue(hotkeys.unavailableCommands.isEmpty)
-        XCTAssertEqual(registrar.registered.count, 4)
-
-        hotkeys.setEnabled(true)
-        XCTAssertEqual(registrar.registered.count, 4, "with nothing refused, enabling again does nothing")
-    }
-
-    /// Turning the hotkeys off when the system had refused every one still
-    /// clears the refused list, so nothing reports a problem with a switch
-    /// that is off.
-    func testDisablingAfterEveryHotkeyWasRefusedClearsTheRefusedList() {
-        let env = makeEnv()
-        let registrar = FakeRegistrar()
-        registrar.refused = Set(NoticeHotkeys.bindings.map(\.keyCode))
-        let hotkeys = NoticeHotkeys(center: env.center, registrar: registrar)
-        hotkeys.setEnabled(true)
-        hotkeys.setEnabled(false)
-        XCTAssertTrue(hotkeys.unavailableCommands.isEmpty)
-        XCTAssertFalse(hotkeys.isEnabled)
-    }
-
-    func testCommandsActOnTheNewestShownNotice() {
-        let env = makeEnv()
-        let registrar = FakeRegistrar()
-        let hotkeys = NoticeHotkeys(center: env.center, registrar: registrar)
-        hotkeys.setEnabled(true)
-        for id in ["a", "b", "c", "d"] {
+    private func post(_ env: Env, _ ids: [String]) {
+        for id in ids {
             env.center.receive(Notice(id: id, timestamp: env.clock.now, source: "ci", title: id, urgency: .soon))
         }
+    }
 
-        registrar.press(1) // archive: d
-        registrar.press(2) // snooze 15 minutes: c
-        registrar.press(0) // act: b, which has no action, so it is marked read
-        registrar.press(3) // history
+    private func press(_ env: Env, _ id: String) -> Bool {
+        env.registry.descriptor(for: id)?.perform() ?? false
+    }
 
-        XCTAssertEqual(env.handler.calls, [
-            .setState("d", .archived),
-            .snooze("c", env.clock.now.addingTimeInterval(15 * 60)),
-            .setState("b", .read),
-            .showHistory
+    // MARK: The section
+
+    func testSectionHasFourGlobalCommandsWithSpecDefaults() throws {
+        let env = makeEnv()
+        let section = try XCTUnwrap(env.registry.sections.first { $0.title == NoticeHotkeys.sectionTitle })
+        XCTAssertEqual(NoticeHotkeys.sectionTitle, "Notifications")
+        XCTAssertEqual(section.scope, .global)
+        XCTAssertEqual(section.caption, "Act on the newest notification from any app.")
+        XCTAssertEqual(section.allCommands.map(\.id), Self.ids)
+        XCTAssertEqual(section.allCommands.map(\.title), [
+            "Act on newest notification", "Archive newest notification",
+            "Snooze newest notification", "Show notification history"
+        ])
+        XCTAssertEqual(section.allCommands.map(\.defaultShortcut), [
+            KeyboardShortcuts.Shortcut(.return, modifiers: Self.chordModifiers),
+            KeyboardShortcuts.Shortcut(.delete, modifiers: Self.chordModifiers),
+            KeyboardShortcuts.Shortcut(.s, modifiers: Self.chordModifiers),
+            KeyboardShortcuts.Shortcut(.h, modifiers: Self.chordModifiers)
         ])
     }
 
-    func testCommandsWithNothingShownDoNothingButHistory() {
+    func testCommandsOffByDefault() {
         let env = makeEnv()
-        let hotkeys = NoticeHotkeys(center: env.center, registrar: FakeRegistrar())
-        hotkeys.perform(.act)
-        hotkeys.perform(.archive)
-        hotkeys.perform(.snooze)
+        for id in Self.ids {
+            XCTAssertFalse(env.registry.binding(for: id).isEnabled, id)
+            XCTAssertNil(env.registry.shortcut(for: id), id)
+        }
+    }
+
+    // MARK: Behavior
+
+    func testActArchiveHistoryReachCenter() {
+        let env = makeEnv()
+        post(env, ["a", "b"])
+
+        XCTAssertTrue(press(env, "notice.archive")) // b
+        XCTAssertTrue(press(env, "notice.act")) // a: no action, so it is marked read
+        XCTAssertTrue(press(env, "notice.history"))
+        XCTAssertEqual(env.handler.calls, [.setState("b", .archived), .setState("a", .read), .showHistory])
+    }
+
+    func testNothingShownDeclinesEverythingButHistory() {
+        let env = makeEnv()
+        XCTAssertFalse(press(env, "notice.act"))
+        XCTAssertFalse(press(env, "notice.archive"))
+        XCTAssertFalse(press(env, "notice.snooze"))
         XCTAssertTrue(env.handler.calls.isEmpty)
-        hotkeys.perform(.history)
+        XCTAssertTrue(press(env, "notice.history"))
         XCTAssertEqual(env.handler.calls, [.showHistory])
+    }
+
+    func testSnoozePrefersFifteenMinutesElseFirstOfferedElseDeclines() {
+        let env = makeEnv()
+        post(env, ["a"])
+        XCTAssertTrue(press(env, "notice.snooze"))
+        XCTAssertEqual(env.handler.calls, [.snooze("a", env.clock.now.addingTimeInterval(15 * 60))])
+
+        env.handler.calls = []
+        env.rules.value.styles[.soon]?.snooze = SnoozeSettings(isEnabled: true, options: [.oneHour, .untilBack])
+        post(env, ["b"])
+        XCTAssertTrue(press(env, "notice.snooze"))
+        XCTAssertEqual(env.handler.calls, [.snooze("b", env.clock.now.addingTimeInterval(60 * 60))],
+                       "15 minutes is not offered, so the first offered option is used")
+
+        env.handler.calls = []
+        env.rules.value.styles[.soon]?.snooze = SnoozeSettings(isEnabled: false, options: SnoozeOption.allCases)
+        post(env, ["c"])
+        XCTAssertFalse(press(env, "notice.snooze"), "not snoozable")
+        XCTAssertTrue(env.handler.calls.isEmpty)
+    }
+
+    // MARK: Migration
+
+    private var authored: [String: KeyCommandBinding] { store.get(UserSettings.keyCommandBindings) }
+
+    private func migrate(_ enabled: Bool?) {
+        NoticeHotkeys.migrateLegacyHotkeys(enabled: enabled, store: store, defaults: defaults)
+    }
+
+    func testLegacyEnabledMigratesBindingsOnceAndKeepsUserEdits() {
+        let edited = KeyCommandBinding(
+            shortcut: KeyboardShortcuts.Shortcut(.k, modifiers: .command), isEnabled: true)
+        store.set(["notice.snooze": edited], for: UserSettings.keyCommandBindings)
+
+        migrate(true)
+        XCTAssertEqual(Set(authored.keys), Set(Self.ids))
+        XCTAssertEqual(authored["notice.snooze"], edited, "an id already authored is skipped")
+        XCTAssertEqual(authored["notice.act"], KeyCommandBinding(
+            shortcut: KeyboardShortcuts.Shortcut(.return, modifiers: Self.chordModifiers), isEnabled: true))
+        XCTAssertEqual(authored["notice.history"]?.isEnabled, true)
+        XCTAssertTrue(defaults.bool(forKey: "notice_hotkeys_migrated_v1"))
+
+        // The user switches one off; a second run must not turn it back on.
+        var off = authored["notice.act"] ?? edited
+        off.isEnabled = false
+        store.set(authored.merging(["notice.act": off]) { $1 }, for: UserSettings.keyCommandBindings)
+        migrate(true)
+        XCTAssertEqual(authored["notice.act"]?.isEnabled, false)
+    }
+
+    func testLegacyNilOrFalseWritesNothing() {
+        migrate(nil)
+        XCTAssertTrue(authored.isEmpty)
+        XCTAssertTrue(defaults.bool(forKey: "notice_hotkeys_migrated_v1"), "the marker is set either way")
+
+        freshDomain()
+        migrate(false)
+        XCTAssertTrue(authored.isEmpty)
+
+        migrate(true)
+        XCTAssertTrue(authored.isEmpty, "a decision already made is not revisited")
     }
 }

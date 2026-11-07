@@ -38,6 +38,16 @@ final class KeyCommandsPanelHierarchyTests: XCTestCase {
             ["widgets.open", "widgets.undo", "widgets.sort"])
     }
 
+    // MARK: - The panel
+
+    func testPanelTitleDefaultsToKeyCommandsAndAcceptsKeyboard() {
+        let registry = KeyCommandRegistry()
+        XCTAssertEqual(KeyCommandsSettingsPanelViewController(registry: registry).descriptor.title, "Key Commands")
+        XCTAssertEqual(
+            KeyCommandsSettingsPanelViewController(registry: registry, title: "Keyboard").descriptor.title,
+            "Keyboard")
+    }
+
     // MARK: - The registry
 
     /// A command declared inside a feature is a command like any other: it has

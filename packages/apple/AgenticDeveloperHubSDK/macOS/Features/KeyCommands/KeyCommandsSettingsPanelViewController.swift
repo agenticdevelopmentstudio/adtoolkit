@@ -14,10 +14,12 @@ public final class KeyCommandsSettingsPanelViewController: ComposableSettings.Se
 
     private let registry: KeyCommandRegistry
 
-    public init(registry: KeyCommandRegistry = .shared) {
+    /// `title` is what the sidebar calls the panel; a host whose settings say
+    /// "Keyboard" passes that.
+    public init(registry: KeyCommandRegistry = .shared, title: String = "Key Commands") {
         self.registry = registry
         super.init(with: ComposableSettings.SettingsPanelDescriptor(
-            title: "Key Commands",
+            title: title,
             icon: NSImage(systemSymbolName: "command", accessibilityDescription: nil)
         ))
     }

@@ -1,183 +1,101 @@
-import Carbon.HIToolbox
-import Foundation
-import OSLog
+import AppKit
+@preconcurrency import KeyboardShortcuts
+import AgenticDeveloperHubSDKCore
+import AgenticDeveloperHubSDKMacOS
 import AgenticDeveloperHubSDKNotifications
 
-/// Registers system-wide hotkeys. A seam, so tests never grab real keys.
-@MainActor
-protocol HotkeyRegistrar: AnyObject {
-    /// Registers one hotkey; `false` when the system refused it (another app
-    /// already holds the combination).
-    func register(keyCode: UInt32, modifiers: UInt32, handler: @escaping @MainActor () -> Void) -> Bool
-    func unregisterAll()
-}
-
 /// Keyboard control of the newest notice on screen, from any app. Notice
-/// panels never take key focus, so these global hotkeys are how a keyboard
-/// user acts on them:
+/// panels never take key focus, so these global commands are how a keyboard
+/// user acts on them. They are a section of the shared key-command registry,
+/// which owns the chords, the off-by-default policy for global commands, the
+/// conflict checks and the Keyboard settings panel.
 ///
-/// - ⌃⌥⌘Return: act on it (its primary action)
-/// - ⌃⌥⌘Delete: archive it
-/// - ⌃⌥⌘S: snooze it 15 minutes
-/// - ⌃⌥⌘H: open the history
-@MainActor
-public final class NoticeHotkeys {
+/// - act: the notice's primary action
+/// - archive
+/// - snooze: 15 minutes when the set offers it, else its first option
+/// - history
+public enum NoticeHotkeys {
 
-    public enum Command: Sendable, Equatable {
-        case act, archive, snooze, history
+    public static let sectionTitle = "Notifications"
+
+    /// The binding the ids are stored under; do not rename.
+    enum CommandID {
+        static let act = "notice.act"
+        static let archive = "notice.archive"
+        static let snooze = "notice.snooze"
+        static let history = "notice.history"
+        static let all = [act, archive, snooze, history]
     }
 
-    struct Binding: Equatable {
-        let keyCode: UInt32
-        let modifiers: UInt32
-        let command: Command
+    /// Marker in the host's defaults: the legacy switch is carried over once.
+    static let migratedMarkerKey = "notice_hotkeys_migrated_v1"
+
+    private static let modifiers: NSEvent.ModifierFlags = [.control, .option, .command]
+
+    private static let defaultChords: [String: KeyboardShortcuts.Shortcut] = [
+        CommandID.act: .init(.return, modifiers: modifiers),
+        CommandID.archive: .init(.delete, modifiers: modifiers),
+        CommandID.snooze: .init(.s, modifiers: modifiers),
+        CommandID.history: .init(.h, modifiers: modifiers)
+    ]
+
+    /// Declares the commands to `registry`. Installing again replaces them.
+    @MainActor
+    public static func install(center: NoticePresentationCenter, registry: KeyCommandRegistry = .shared) {
+        registry.install(section(center: center))
     }
 
-    static let bindings: [Binding] = {
-        let modifiers = UInt32(controlKey | optionKey | cmdKey)
-        return [
-            Binding(keyCode: UInt32(kVK_Return), modifiers: modifiers, command: .act),
-            Binding(keyCode: UInt32(kVK_Delete), modifiers: modifiers, command: .archive),
-            Binding(keyCode: UInt32(kVK_ANSI_S), modifiers: modifiers, command: .snooze),
-            Binding(keyCode: UInt32(kVK_ANSI_H), modifiers: modifiers, command: .history)
-        ]
-    }()
-
-    private static let log = Logger(subsystem: "com.agentic-cookbook.adhsdk", category: "NoticeHotkeys")
-
-    private weak var center: NoticePresentationCenter?
-    private let registrar: HotkeyRegistrar
-    /// Whether at least one hotkey is registered. Stays `false` when the
-    /// system refused every one, so a later `setEnabled(true)` tries again.
-    public private(set) var isEnabled = false
-    /// The commands whose hotkey the system refused (another app holds the
-    /// combination). Empty while disabled.
-    public private(set) var unavailableCommands: [Command] = []
-
-    /// Nothing is registered until `setEnabled(true)`.
-    public convenience init(center: NoticePresentationCenter) {
-        self.init(center: center, registrar: CarbonHotkeyRegistrar())
-    }
-
-    init(center: NoticePresentationCenter, registrar: HotkeyRegistrar) {
-        self.center = center
-        self.registrar = registrar
-    }
-
-    isolated deinit {
-        if isEnabled {
-            registrar.unregisterAll()
-        }
-    }
-
-    /// Turns the hotkeys on or off (the settings switch). A hotkey the
-    /// system refuses is logged and listed in `unavailableCommands`; the rest
-    /// still work. Enabling again while already on retries only the refused
-    /// ones (another app may have let go of the combination), so an accepted
-    /// hotkey is never registered twice; with nothing refused it does nothing.
-    public func setEnabled(_ enabled: Bool) {
-        if enabled {
-            let pending = isEnabled
-                ? Self.bindings.filter { unavailableCommands.contains($0.command) }
-                : Self.bindings
-            guard !pending.isEmpty else { return }
-            var refused: [Command] = []
-            for binding in pending {
-                let command = binding.command
-                let handler: @MainActor () -> Void = { [weak self] in self?.perform(command) }
-                let registered = registrar.register(
-                    keyCode: binding.keyCode, modifiers: binding.modifiers, handler: handler)
-                if !registered {
-                    refused.append(command)
-                    Self.log.error("hotkey for \(String(describing: command), privacy: .public) was refused")
+    @MainActor
+    static func section(center: NoticePresentationCenter) -> KeyCommandSection {
+        func command(_ id: String, _ title: String, perform: @escaping @MainActor (String) -> Bool)
+            -> KeyCommandDescriptor {
+            KeyCommandDescriptor(id: id, title: title, defaultShortcut: defaultChords[id], perform: {
+                // Registry callbacks arrive on the main thread.
+                MainActor.assumeIsolated {
+                    guard let newest = center.newestShownID else { return false }
+                    return perform(newest)
                 }
-            }
-            unavailableCommands = refused
-            isEnabled = isEnabled || refused.count < pending.count
-        } else {
-            if isEnabled {
-                registrar.unregisterAll()
-            }
-            unavailableCommands = []
-            isEnabled = false
+            })
         }
+        return KeyCommandSection(
+            title: sectionTitle,
+            caption: "Act on the newest notification from any app.",
+            scope: .global,
+            commands: [
+                command(CommandID.act, "Act on newest notification") { center.act(id: $0); return true },
+                command(CommandID.archive, "Archive newest notification") { center.archive(id: $0); return true },
+                command(CommandID.snooze, "Snooze newest notification") { id in
+                    let options = center.snoozeOptions(of: id)
+                    guard let option = options.contains(.fifteenMinutes) ? .fifteenMinutes : options.first
+                    else { return false }
+                    center.snooze(id: id, option: option)
+                    return true
+                },
+                KeyCommandDescriptor(
+                    id: CommandID.history, title: "Show notification history",
+                    defaultShortcut: defaultChords[CommandID.history],
+                    run: { MainActor.assumeIsolated { center.showHistory() } })
+            ])
     }
 
-    /// Runs a command on the newest notice still on screen. With none shown,
-    /// only `history` does anything.
-    public func perform(_ command: Command) {
-        guard let center else { return }
-        if command == .history {
-            center.showHistory()
-            return
+    /// Carries the old "global hotkeys" switch over, once. A user who had them
+    /// on keeps them on: each command is written with its default chord and
+    /// enabled, unless the user already authored that id. Anyone else
+    /// (switch off, or never stored) starts with the registry's policy: off.
+    /// Run before `install`, so the chords are applied from the start.
+    @MainActor
+    public static func migrateLegacyHotkeys(
+        enabled: Bool?,
+        store: SettingsStore = UserSettings.shared,
+        defaults: UserDefaults
+    ) {
+        guard !defaults.bool(forKey: migratedMarkerKey) else { return }
+        defer { defaults.set(true, forKey: migratedMarkerKey) }
+        guard enabled == true else { return }
+        var bindings = store.get(UserSettings.keyCommandBindings)
+        for id in CommandID.all where bindings[id] == nil {
+            bindings[id] = KeyCommandBinding(shortcut: defaultChords[id], isEnabled: true)
         }
-        guard let id = center.newestShownID else { return }
-        switch command {
-        case .act: center.act(id: id)
-        case .archive: center.archive(id: id)
-        case .snooze: center.snooze(id: id, option: .fifteenMinutes)
-        case .history: break
-        }
-    }
-}
-
-/// Carbon `RegisterEventHotKey`, the one public API for system-wide hotkeys
-/// that needs no Accessibility permission. One application event handler
-/// serves every registrar; it maps the pressed hotkey's id back to its
-/// closure through a main-actor table.
-@MainActor
-final class CarbonHotkeyRegistrar: HotkeyRegistrar {
-
-    nonisolated private static let signature: OSType = 0x524E_4F54 // "RNOT"
-    private static var handlers: [UInt32: @MainActor () -> Void] = [:]
-    private static var nextID: UInt32 = 1
-    private static var eventHandler: EventHandlerRef?
-
-    private var refs: [UInt32: EventHotKeyRef] = [:]
-
-    func register(keyCode: UInt32, modifiers: UInt32, handler: @escaping @MainActor () -> Void) -> Bool {
-        Self.installEventHandlerIfNeeded()
-        let id = Self.nextID
-        Self.nextID += 1
-        var ref: EventHotKeyRef?
-        let status = RegisterEventHotKey(
-            keyCode, modifiers, EventHotKeyID(signature: Self.signature, id: id),
-            GetApplicationEventTarget(), 0, &ref)
-        guard status == noErr, let ref else { return false }
-        refs[id] = ref
-        Self.handlers[id] = handler
-        return true
-    }
-
-    func unregisterAll() {
-        for (id, ref) in refs {
-            UnregisterEventHotKey(ref)
-            Self.handlers[id] = nil
-        }
-        refs = [:]
-    }
-
-    isolated deinit {
-        unregisterAll()
-    }
-
-    private static func installEventHandlerIfNeeded() {
-        guard eventHandler == nil else { return }
-        var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
-        var installed: EventHandlerRef?
-        InstallEventHandler(GetApplicationEventTarget(), { _, event, _ in
-            var hotKeyID = EventHotKeyID()
-            let status = GetEventParameter(
-                event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
-                nil, MemoryLayout<EventHotKeyID>.size, nil, &hotKeyID)
-            guard status == noErr, hotKeyID.signature == CarbonHotkeyRegistrar.signature else {
-                return OSStatus(eventNotHandledErr)
-            }
-            let id = hotKeyID.id
-            // Hotkey events arrive on the main thread's event loop.
-            MainActor.assumeIsolated { CarbonHotkeyRegistrar.handlers[id]?() }
-            return noErr
-        }, 1, &spec, nil, &installed)
-        eventHandler = installed
+        store.set(bindings, for: UserSettings.keyCommandBindings)
     }
 }

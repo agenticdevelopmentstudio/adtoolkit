@@ -5,7 +5,7 @@ import AgenticDeveloperHubSDKMacOS
 import AgenticDeveloperHubSDKNotifications
 
 /// Notifications › Behavior: the toast stack, escalation and flood
-/// thresholds, screen sharing, hotkeys and Focus —
+/// thresholds, screen sharing and Focus —
 /// everything about presentation that is not one urgency's style.
 @MainActor
 final class NotificationBehaviorSettingsPanel: ComposableSettings.SettingsPanelViewController {
@@ -23,7 +23,7 @@ final class NotificationBehaviorSettingsPanel: ComposableSettings.SettingsPanelV
     required init?(coder: NSCoder) { fatalError() }
 
     override var searchKeywords: [String] {
-        ["stack", "escalation", "flood", "screen sharing", "hotkeys", "focus"]
+        ["stack", "escalation", "flood", "screen sharing", "focus"]
     }
 
     override func viewDidLoad() {
@@ -67,15 +67,11 @@ final class NotificationBehaviorSettingsPanel: ComposableSettings.SettingsPanelV
 
     private func privacyGroup() -> ComposableSettings.GroupView {
         let controls = controls
-        let group = ComposableSettings.GroupView(withTitle: "Sharing and keyboard")
+        let group = ComposableSettings.GroupView(withTitle: "Sharing")
         let rules = controls.rules
         group.addSettingSubview(controls.row("Hide from screen sharing", controls.checkbox(
             rules.hideFromScreenSharing) { isOn in
                 controls.mutate { $0.hideFromScreenSharing = isOn }
-            }))
-        group.addSettingSubview(controls.row("Global hotkeys (⌃⌥⌘ Return, Delete, S, H)", controls.checkbox(
-            rules.hotkeysEnabled) { isOn in
-                controls.mutate { $0.hotkeysEnabled = isOn }
             }))
         return group
     }

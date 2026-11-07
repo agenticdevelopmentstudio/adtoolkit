@@ -385,7 +385,8 @@ targets:
       - target: AgenticDeveloperHubSDKMacOS
       - target: AgenticDeveloperHubSDKUI-macOS
       - sdk: UserNotifications.framework
-      - sdk: Carbon.framework
+      # `NoticeHotkeys` declares its chords as `KeyboardShortcuts.Shortcut`.
+      - package: KeyboardShortcuts
     # AppKit: the presentation center that routes notices to presenters, the
     # non-activating NoticePanel, the card, and the toast and alert presenters.
     # AgenticDeveloperHubSDKMacOS for ComposableSettings and menu targets;
@@ -399,6 +400,7 @@ targets:
     sources:
       - Tests/AgenticDeveloperHubSDKNotificationsUITests
     dependencies:
+      - package: KeyboardShortcuts
       - target: AgenticDeveloperHubSDKNotificationsUI
         embed: true
         codeSign: true
@@ -1140,6 +1142,9 @@ targets:
       # completion as Sparkle above.
       - package: FlyingFox
         product: FlyingFox
+      # The key-command tests drive `KeyboardShortcuts` directly (chord
+      # recording, registration), so the bundle links it itself.
+      - package: KeyboardShortcuts
 
   # A per-platform pair rather than one `supportedDestinations: [macOS, iOS]`
   # target, for the reason spelled out above AgenticDeveloperHubSDKMarkdown: this

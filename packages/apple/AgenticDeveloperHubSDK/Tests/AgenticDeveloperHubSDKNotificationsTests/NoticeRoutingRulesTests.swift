@@ -46,7 +46,6 @@ final class NoticeRoutingRulesTests: XCTestCase {
         XCTAssertEqual(rules.escalation.soonToNowAfter, 900)
         XCTAssertEqual(rules.escalation.eventuallyToSoonAfter, 0)
         XCTAssertTrue(rules.hideFromScreenSharing)
-        XCTAssertTrue(rules.hotkeysEnabled)
         XCTAssertNil(rules.legacyHotkeysEnabled)
         XCTAssertTrue(rules.overrides.isEmpty)
     }
@@ -142,7 +141,7 @@ final class NoticeRoutingRulesTests: XCTestCase {
             XCTAssertTrue(json.contains(key), "missing \(key)")
         }
         for key in ["\"profiles\"", "\"crawlLeftToRight\"", "\"forwardToSystem\"", "\"legacyHotkeysEnabled\"",
-                    "\"autoDismiss\":8,\"layer\""] {
+                    "\"hotkeysEnabled\"", "\"autoDismiss\":8,\"layer\""] {
             XCTAssertFalse(json.contains(key), "still writes \(key)")
         }
         XCTAssertTrue(json.contains(#""fyi":{"#), "styles are keyed by urgency name, not a flat array")
@@ -215,11 +214,21 @@ final class NoticeRoutingRulesTests: XCTestCase {
         XCTAssertEqual(rules.screens, .all)
         XCTAssertTrue(rules.crawl.leftToRight)
         XCTAssertEqual(rules.legacyHotkeysEnabled, true)
-        XCTAssertTrue(rules.hotkeysEnabled)
         XCTAssertEqual(rules.overrides, [
             .init(source: "ci", target: .hide), .init(category: "x", target: .style(.now))
         ])
         XCTAssertEqual(rules.toastStackLimit, 4)
+    }
+
+    /// Settings saved by 0.8.1-0.8.8 are in the new shape but still carry
+    /// `hotkeysEnabled`; the keyboard migration must see it.
+    func testBlobSavedBy08xSurfacesItsHotkeysFlag() throws {
+        let enabled = try decode(#"{"styles":{},"screens":"all","hotkeysEnabled":true}"#)
+        XCTAssertEqual(enabled.legacyHotkeysEnabled, true)
+        let disabled = try decode(#"{"styles":{},"hotkeysEnabled":false}"#)
+        XCTAssertEqual(disabled.legacyHotkeysEnabled, false)
+        let none = try decode(#"{"styles":{}}"#)
+        XCTAssertNil(none.legacyHotkeysEnabled)
     }
 
     func testLegacyMigrationIsCompletedByTheNextSave() throws {

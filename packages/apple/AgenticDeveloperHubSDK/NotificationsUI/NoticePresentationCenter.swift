@@ -340,6 +340,14 @@ public final class NoticePresentationCenter {
         }
     }
 
+    /// The snooze times the notice's set offers; empty for an unknown notice,
+    /// a summary, or a set that is not snoozable. What a shortcut consults to
+    /// pick a time.
+    public func snoozeOptions(of id: String) -> [SnoozeOption] {
+        guard let entry = entries[id], !entry.isSummary, entry.set.snooze.isSnoozable else { return [] }
+        return entry.set.snooze.options
+    }
+
     public func snooze(id: String, option: SnoozeOption) {
         guard let entry = entries[id] else { return }
         if entry.isSummary {
