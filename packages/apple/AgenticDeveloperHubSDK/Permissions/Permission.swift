@@ -4,8 +4,7 @@ import Foundation
 ///
 /// Extensible by design — add a case here (and its metadata in the extension
 /// below) to support a new permission. The package intentionally models only
-/// what current consumers need; Full Disk Access is not modeled yet (YAGNI),
-/// but adding it is a localized change.
+/// what current consumers need.
 public enum Permission: Sendable, Hashable {
     /// Accessibility (AX) — read window titles and move/raise other apps' windows.
     case accessibility
@@ -34,6 +33,12 @@ public enum Permission: Sendable, Hashable {
     /// So each service is its own grant and gets its own row, the way each
     /// automation target does.
     case keychain(service: String)
+    /// Full Disk Access for *another* binary — a helper that reads data other
+    /// apps keep, such as Notification Center's history. The app cannot test
+    /// another process's grant, so the helper writes what it learned to the
+    /// JSON file at `statusFilePath` (`{"granted": Bool, "checkedAt": ISO-8601}`)
+    /// and `SystemPermissionChecker.status` reads it back.
+    case fullDiskAccess(statusFilePath: String)
 }
 
 extension Permission {
@@ -47,6 +52,7 @@ extension Permission {
         case .microphone: "Microphone"
         case .screenCapture: "Screen Capture"
         case .keychain: "Keychain"
+        case .fullDiskAccess: "Full Disk Access"
         }
     }
 
@@ -73,6 +79,7 @@ extension Permission {
                 .components(separatedBy: CharacterSet.alphanumerics.inverted)
                 .filter { !$0.isEmpty }
                 .joined(separator: "-")
+        case .fullDiskAccess: "full-disk-access"
         }
     }
 
@@ -86,6 +93,7 @@ extension Permission {
         case .microphone: "mic"
         case .screenCapture: "display"
         case .keychain: "key.fill"
+        case .fullDiskAccess: "externaldrive.badge.checkmark"
         }
     }
 
@@ -125,6 +133,8 @@ extension Permission {
         case .keychain(let service):
             "Lets this app read the \u{201C}\(service)\u{201D} item in your keychain "
                 + "directly, instead of asking another tool for it."
+        case .fullDiskAccess:
+            "Lets a helper read data other apps keep, such as Notification Center's history."
         }
     }
 
@@ -159,6 +169,8 @@ extension Permission {
             "x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture"
         case .keychain:
             nil
+        case .fullDiskAccess:
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
         }
     }
 

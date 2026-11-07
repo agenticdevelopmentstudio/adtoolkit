@@ -99,3 +99,25 @@ struct AutomationMappingTests {
         #expect(recorder.lastPromptIfNeeded == true)
     }
 }
+
+@Suite("Full Disk Access status file")
+struct FullDiskAccessStatusTests {
+    private func status(writing contents: String?) async throws -> PermissionStatus {
+        let dir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("fda-\(UUID().uuidString)", isDirectory: true)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("notifyd-access.json")
+        if let contents { try contents.write(to: file, atomically: true, encoding: .utf8) }
+        return await SystemPermissionChecker().status(.fullDiskAccess(statusFilePath: file.path))
+    }
+
+    @Test("testFullDiskAccessStatusFromFile: granted, denied, missing, garbage")
+    func testFullDiskAccessStatusFromFile() async throws {
+        #expect(try await status(writing: #"{"granted":true,"checkedAt":"2026-11-07T10:00:00Z"}"#) == .granted)
+        #expect(try await status(writing: #"{"granted":false,"checkedAt":"2026-11-07T10:00:00Z"}"#) == .denied)
+        #expect(try await status(writing: nil) == .undetermined)
+        #expect(try await status(writing: "not json") == .undetermined)
+        #expect(try await status(writing: #"{"granted":"yes"}"#) == .undetermined)
+    }
+}

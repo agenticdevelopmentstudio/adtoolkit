@@ -84,4 +84,21 @@ struct PermissionMetadataTests {
         #expect(Permission.keychain(service: "Claude Code-credentials").actionTitle == "Allow\u{2026}")
         #expect(Permission.accessibility.actionTitle == "Open Settings")
     }
+
+    @Test("Full Disk Access metadata")
+    func testFullDiskAccessMetadata() {
+        let permission = Permission.fullDiskAccess(statusFilePath: "/tmp/notifyd-access.json")
+        #expect(permission.displayName == "Full Disk Access")
+        #expect(permission.identifierToken == "full-disk-access")
+        #expect(permission.systemImageName == "externaldrive.badge.checkmark")
+        #expect(
+            permission.settingsPaneURL?.absoluteString
+                == "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
+        )
+        #expect(permission.actionTitle == "Open Settings")
+        #expect(
+            permission.explanation
+                == "Lets a helper read data other apps keep, such as Notification Center's history."
+        )
+    }
 }

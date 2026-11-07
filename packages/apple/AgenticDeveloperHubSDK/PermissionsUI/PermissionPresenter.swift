@@ -66,6 +66,12 @@ public enum PermissionPresenter {
             guard await checker.request(permission) == .denied else { return }
             guard let pane = permission.settingsPaneURL else { return }
             NSWorkspace.shared.open(pane)
+        case .fullDiskAccess:
+            // Another binary holds this grant and only System Settings can make
+            // it, so the button is always the handoff — whatever the status.
+            // Asking first would only re-read a file the helper writes.
+            guard let pane = permission.settingsPaneURL else { return }
+            NSWorkspace.shared.open(pane)
         case .keychain(let service):
             // Asking for this one *is* a read of the item, which gives it a
             // third outcome the permissions above do not have: the item was not

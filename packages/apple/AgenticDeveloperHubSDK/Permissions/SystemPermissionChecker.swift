@@ -63,6 +63,8 @@ public struct SystemPermissionChecker: PermissionChecking {
             // refreshes every row on every app activation, so a status check
             // that could raise the ACL dialog would raise it over and over.
             return KeychainPermissionLedger.status(service: service)
+        case .fullDiskAccess(let statusFilePath):
+            return Self.fullDiskAccessStatus(statusFilePath: statusFilePath)
         }
     }
 
@@ -110,7 +112,24 @@ public struct SystemPermissionChecker: PermissionChecking {
             let status = await Self.keychainReadStatus(service: service)
             KeychainPermissionLedger.record(status, service: service)
             return status
+        case .fullDiskAccess:
+            // Nothing to ask: the grant belongs to the helper, and the only way
+            // to make it is System Settings. Opening that pane is the UI
+            // layer's job (this target is daemon-safe), so a request is just a
+            // fresh read of what the helper last reported.
+            return await status(permission)
         }
+    }
+
+    /// Reads the helper's status file: `true` is granted, `false` is denied,
+    /// and a missing, unreadable or malformed file is undetermined — the
+    /// helper has not reported, which is not the same as being refused.
+    static func fullDiskAccessStatus(statusFilePath: String) -> PermissionStatus {
+        struct Report: Decodable { let granted: Bool }
+        guard let data = FileManager.default.contents(atPath: statusFilePath),
+              let report = try? JSONDecoder().decode(Report.self, from: data)
+        else { return .undetermined }
+        return report.granted ? .granted : .denied
     }
 
     /// Reads the item on a GCD queue, for the same reason the Apple Events
