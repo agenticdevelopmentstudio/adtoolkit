@@ -159,6 +159,15 @@ describe("grouping", () => {
     const groups = groupRuntimeEntries(entries);
     expect(groups).toHaveLength(1);
     expect(groups[0]).toMatchObject({ count: 40, path: "/api/orders/:id", message: "Order 8231 not found" });
+    // Over 200 characters, an id of varying length shifts where the head is cut; the shape is
+    // taken before the cut, so it is still one error.
+    const tail = " failed after 3 retries: " + "the upstream answered with something long ".repeat(6);
+    const short = groupIdentity(entry({ message: `Job 7${tail}` }));
+    const long = groupIdentity(entry({ message: `Job 1234567${tail}` }));
+    expect(short.message).toHaveLength(200);
+    expect(long.key).toBe(short.key);
+    const uuid = (u: string) => groupIdentity(entry({ message: `${"x".repeat(190)} ${u} gone` })).key;
+    expect(uuid("3f2504e0-4f89-11d3-9a0c-0305e82c3301")).toBe(uuid("9a0c0305-11d3-4f89-3f25-04e04f8911d3"));
     // Different words stay different errors.
     expect(groupIdentity(entry({ message: "Order 1 not found" })).key).not.toBe(groupIdentity(entry({ message: "Order 1 shipped" })).key);
   });

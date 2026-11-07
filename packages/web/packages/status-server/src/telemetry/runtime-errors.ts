@@ -133,9 +133,13 @@ export function normalizePath(path: string | null): string | null {
     .join("/");
 }
 
+function firstLine(message: string): string {
+  return (message.split(/\r?\n/)[0] ?? "").trim();
+}
+
 /** The first line of a message, at most 200 characters. */
 export function messageHead(message: string): string {
-  return (message.split(/\r?\n/)[0] ?? "").trim().slice(0, MESSAGE_MAX);
+  return firstLine(message).slice(0, MESSAGE_MAX);
 }
 
 /**
@@ -153,6 +157,10 @@ export function messageShape(head: string): string {
 /**
  * The grouping fields of an entry, and their stable hash. The key uses the message's shape;
  * `message` is the head as written, for a group to show as its sample.
+ *
+ * The shape is taken from the whole first line and only then cut, never from the cut head: a
+ * number of varying length, or an id crossing the cut, would otherwise move where the cut lands
+ * and split one error into a group per occurrence.
  */
 export function groupIdentity(e: RuntimeLogEntry): {
   key: string;
@@ -162,7 +170,9 @@ export function groupIdentity(e: RuntimeLogEntry): {
   const path = normalizePath(e.path);
   const message = messageHead(e.message);
   const key = createHash("sha256")
-    .update(JSON.stringify([e.project, e.source, e.method, path, e.status, messageShape(message)]))
+    .update(
+      JSON.stringify([e.project, e.source, e.method, path, e.status, messageShape(firstLine(e.message)).slice(0, MESSAGE_MAX)]),
+    )
     .digest("hex")
     .slice(0, 32);
   return { key, path, message };
