@@ -467,9 +467,25 @@ describe("vercelRuntimeFetcher", () => {
   it("fails on any other error, so the store keeps what it had", async () => {
     fakeVercel({
       projects: [project("p1", "a-production")],
-      events: { "vercel.proxy_response": { status: 500 } },
+      events: { "vercel.log": { status: 500 } },
     });
     expect(await fetcher().fetch()).toEqual({ ok: false, items: [] });
+  });
+
+  it("keeps the runtime logs when only the 5xx responses query fails, and is not complete", async () => {
+    for (const status of [402, 429, 500]) {
+      _resetProviderCooldowns();
+      fakeVercel({
+        projects: [project("p1", "a-production")],
+        events: {
+          "vercel.log": { pages: [[logEvent("1")]] },
+          "vercel.proxy_response": { status },
+        },
+      });
+      const res = await fetcher().fetch();
+      expect(res).toMatchObject({ ok: true, complete: false });
+      expect(res.items.map((e) => e.requestId)).toEqual(["1"]);
+    }
   });
 
   it("fails on a 429, records the shared cooldown, and then asks nothing while it lasts", async () => {

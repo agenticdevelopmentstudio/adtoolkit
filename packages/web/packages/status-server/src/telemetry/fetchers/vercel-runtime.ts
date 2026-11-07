@@ -188,15 +188,24 @@ export function vercelRuntimeFetcher(env: VercelEnv, opts: VercelRuntimeOptions 
           maxPages,
           signal,
         );
-        const responses = await runQuery(
-          env,
-          ownerId,
-          ids,
-          range,
-          { event: "vercel.proxy_response", select: RESPONSE_SELECT, filter: RESPONSE_FILTER },
-          maxPages,
-          signal,
-        );
+        // The responses query can fail on its own (a 402 without Observability Plus, a 429, the
+        // deadline) after the logs have arrived. Keep the logs and call the read incomplete, rather
+        // than throwing away the half that worked.
+        let responses: Awaited<ReturnType<typeof runQuery>>;
+        try {
+          responses = await runQuery(
+            env,
+            ownerId,
+            ids,
+            range,
+            { event: "vercel.proxy_response", select: RESPONSE_SELECT, filter: RESPONSE_FILTER },
+            maxPages,
+            signal,
+          );
+        } catch (err) {
+          console.error("[telemetry] Vercel 5xx responses read failed; keeping the runtime logs", err);
+          responses = { events: [], whole: false };
+        }
         const items: RuntimeLogEntry[] = [];
         for (const raw of logs.events) {
           const entry = logEventToEntry(raw, projects);
