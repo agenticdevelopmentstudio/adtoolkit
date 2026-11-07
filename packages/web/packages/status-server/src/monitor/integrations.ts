@@ -320,7 +320,8 @@ async function checkPosthog(config: StatusConfig): Promise<IntegrationCheck> {
  *
  * Failures are debounced like every other platform: one failed read in a row is a blip (a 429
  * cooldown, a slow answer) and the stored snapshot still stands, so it stays green and says so.
- * Only {@link PLATFORM_UNREACHABLE_POLLS} in a row turn it red.
+ * Only {@link PLATFORM_UNREACHABLE_POLLS} in a row turn it red, whether or not a read has ever
+ * succeeded.
  */
 async function checkVercelRuntime(storage: Storage, config: StatusConfig, nowMs: number): Promise<IntegrationCheck> {
   const id = "vercel-runtime";
@@ -328,7 +329,23 @@ async function checkVercelRuntime(storage: Storage, config: StatusConfig, nowMs:
   if (!vercelConfigured(config)) return missingWarn(id, label, ["VERCEL_API_TOKEN"]);
   const fact = (await storage.board.readPlatformFacts()).find((p) => p.source === "vercel-runtime");
   const read = await storage.telemetry.runtimeErrors.lastRead();
-  if (!fact || !fact.configured || !read) {
+  if (!fact || !fact.configured) {
+    return { id, label, configured: true, ok: false, state: "warn", detail: "first runtime-log read pending" };
+  }
+  if (!read) {
+    // No read has ever been saved. A failure streak still counts, or a read that always fails
+    // (a bad team id, a plan without the API) would sit at "pending" for ever.
+    if (!fact.ok && fact.streak >= PLATFORM_UNREACHABLE_POLLS) {
+      const failedAgo = timeAgo(new Date(fact.sampledAtMs).toISOString(), nowMs);
+      return {
+        id,
+        label,
+        configured: true,
+        ok: false,
+        state: "error",
+        detail: `no read has succeeded yet; the last failed ${failedAgo} ago (${fact.streak} in a row)`,
+      };
+    }
     return { id, label, configured: true, ok: false, state: "warn", detail: "first runtime-log read pending" };
   }
   const readAgo = timeAgo(new Date(read.readAtMs).toISOString(), nowMs);

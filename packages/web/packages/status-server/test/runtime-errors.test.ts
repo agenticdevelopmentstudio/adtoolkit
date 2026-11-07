@@ -592,6 +592,18 @@ describe("Vercel runtime errors in the cycle and the self-check", () => {
     expect(await storage.telemetry.runtimeErrors.load()).toHaveLength(1);
   });
 
+  it("turns red after two failures even when no read has ever succeeded", async () => {
+    process.env.VERCEL_API_TOKEN = "tok";
+    const storage = createLibsqlStorage(await freshDb());
+    const failing = fixed({ ok: false, items: [] });
+    await collectTelemetry(storage, testConfig(), { runtimeErrors: failing });
+    expect(await runtimeCheck(storage)).toMatchObject({ state: "warn", detail: "first runtime-log read pending" });
+    await collectTelemetry(storage, testConfig(), { runtimeErrors: failing });
+    const red = await runtimeCheck(storage);
+    expect(red).toMatchObject({ state: "error", ok: false });
+    expect(red?.detail).toMatch(/^no read has succeeded yet; .*\(2 in a row\)$/);
+  });
+
   it("warns when the read was cut short", async () => {
     process.env.VERCEL_API_TOKEN = "tok";
     const storage = createLibsqlStorage(await freshDb());
