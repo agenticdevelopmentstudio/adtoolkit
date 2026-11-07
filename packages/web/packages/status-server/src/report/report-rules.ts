@@ -11,6 +11,7 @@ import type {
   SiteHealthRow,
 } from '../telemetry/dashboard/types';
 import type { RuntimeErrorGroup, RuntimeErrorsReport } from '../telemetry/types';
+import { isFailureRateHigh } from '../telemetry/dashboard/views';
 import {
   REPORT_SCHEMA,
   REPORT_SOURCES,
@@ -395,6 +396,17 @@ export function activeIssueOrder(a: ErrorIssue, b: ErrorIssue): number {
 const siteTrouble = (r: SiteHealthRow): number => (r.errors ?? 0) + (r.failures ?? 0);
 
 /**
+ * A site is a finding when its client errors and failed requests together reach the dashboard's
+ * own failure-rate line (FAILURE_RATE_HIGH in views.ts, 5% of its requests), so one aborted request in a
+ * month of traffic is not "attention". Errors with no requests to weigh them against still count.
+ */
+export function siteTroubled(r: SiteHealthRow): boolean {
+  const trouble = siteTrouble(r);
+  if ((r.requests ?? 0) === 0) return trouble > 0;
+  return isFailureRateHigh(trouble, r.requests);
+}
+
+/**
  * True only when the GlitchTip issue list can stand in for the board's per-project errors
  * problems: it was read, its last refresh did not fail, no GlitchTip refresh was still running
  * at the deadline, and it was read to the end. A cached list from before a new crash would
@@ -451,7 +463,7 @@ export function digestErrors(data: ErrorsDashboardResponse): Digest<ErrorsReport
 
   const siteRows = [...(sites.data ?? [])].sort((a, b) => siteTrouble(b) - siteTrouble(a) || byText(a.host, b.host));
   for (const row of siteRows.slice(0, SITE_ROW_CAP)) {
-    if (siteTrouble(row) === 0) continue;
+    if (!siteTroubled(row)) continue;
     findings.push(
       finding('minor', 'posthog', `${row.host}: ${row.errors ?? 0} client errors, ${row.failures ?? 0} failed of ${row.requests ?? 0} requests`, {
         detail: row.p95Ms !== null ? `p95 ${row.p95Ms}ms` : null,

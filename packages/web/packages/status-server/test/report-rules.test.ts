@@ -478,6 +478,10 @@ describe("buildReport — ported digest rules", () => {
     const sites = [
       { host: "a.dev", errors: 3, requests: 50, failures: 2, p95Ms: 800 },
       { host: "b.dev", errors: 0, requests: 9, failures: 0, p95Ms: null },
+      // One aborted request in 100,000 is under the 5% line: not a finding.
+      { host: "c.dev", errors: 0, requests: 100_000, failures: 1, p95Ms: null },
+      // Errors with no requests to weigh them against still are.
+      { host: "d.dev", errors: 2, requests: 0, failures: 0, p95Ms: null },
     ];
     const uptime: UptimeResponse = {
       days: 7, overallUptimePercent: null, overallUptimeTone: "unknown",
@@ -488,6 +492,8 @@ describe("buildReport — ported digest rules", () => {
     expect(titles).toContain("a.dev: 3 client errors, 2 failed of 50 requests");
     expect(titles).toContain("Shop: 97.50% up over 7d");
     expect(titles.some((t) => t.startsWith("b.dev"))).toBe(false);
+    expect(titles.some((t) => t.startsWith("c.dev"))).toBe(false);
+    expect(titles).toContain("d.dev: 2 client errors, 0 failed of 0 requests");
     expect(report.verdict).toBe("attention");
   });
 
