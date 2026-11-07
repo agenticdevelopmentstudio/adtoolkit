@@ -180,21 +180,29 @@ function apiRoutesOf(blocks) {
   };
   for (const block of blocks) {
     let pending = [];
+    let last = null;
     for (const match of block.matchAll(/<code>([\s\S]*?)<\/code>/g)) {
       const text = plainText(match[1] ?? "");
       const upper = text.toUpperCase();
       if (METHODS.has(upper)) {
+        const after = block.slice((match.index ?? 0) + match[0].length);
+        if (last && /^\s*(?:to|of|on|from)\s+it\b/i.test(plainText(after.split("<code>")[0] ?? ""))) {
+          add([upper], last);
+          continue;
+        }
         pending.push(upper);
         continue;
       }
       const both = /^([A-Za-z]+)\s+(\/\S*)$/.exec(text);
       if (both && METHODS.has(both[1].toUpperCase())) {
         add([both[1].toUpperCase()], both[2]);
+        last = both[2].split(/[?#]/)[0] ?? both[2];
         pending = [];
         continue;
       }
       if (!text.startsWith("/")) continue;
       add(pending.length ? pending : [void 0], text);
+      last = text.split(/[?#]/)[0] ?? text;
       pending = [];
     }
   }

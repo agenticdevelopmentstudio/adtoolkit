@@ -180,6 +180,18 @@ describe('parts', () => {
     ).toEqual([{ path: '/x' }, { method: 'GET', path: '/auth/me' }])
   })
 
+  it('gives a method written "to it" the path before it, not the next one', () => {
+    expect(
+      apiRoutesOf([
+        '<p>A <code>GET</code> of <code>/p</code> lists them, a <code>POST</code> to it adds more, and a <code>DELETE</code> of <code>/p/{id}</code> removes one.</p>',
+      ]),
+    ).toEqual([
+      { method: 'GET', path: '/p' },
+      { method: 'POST', path: '/p' },
+      { method: 'DELETE', path: '/p/{id}' },
+    ])
+  })
+
   it('matches a term when every word typed is in its name or definition', () => {
     const term = { title: 'Feature', text: 'Part of an ecosystem' }
     expect(termMatches(term, '')).toBe(true)
