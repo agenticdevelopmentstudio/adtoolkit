@@ -119,7 +119,15 @@ function Source({ lead, from }: { lead: string; from: DocRef }) {
   );
 }
 
+/** A link to another page of this site (`/hub/…`), not to somewhere else on the web. */
+function isInternal(url: string): boolean {
+  return url.startsWith("/") && !url.startsWith("//");
+}
+
 function LinkIcon({ link }: { link: DocLink }) {
+  if (link.url && isInternal(link.url)) {
+    return <BookOpenText className="size-4 text-apt-gold" strokeWidth={2.2} />;
+  }
   if (link.kind === "github") {
     return (
       <span className="inline-flex size-4 items-center justify-center text-apt-text [&_svg]:size-4">
@@ -144,6 +152,30 @@ function LinkRow({ link }: { link: DocLink }) {
       </li>
     );
   }
+  const note = link.note ? (
+    <span className="block text-xs text-apt-text-dim" dangerouslySetInnerHTML={{ __html: link.note }} />
+  ) : null;
+  // Another help page opens in place, by client navigation, and is named rather than shown as a
+  // bare path; a link off the site opens in a new tab with its address showing.
+  if (isInternal(link.url)) {
+    return (
+      <li className="flex items-start gap-2.5">
+        <span className="mt-[3px] inline-flex">
+          <LinkIcon link={link} />
+        </span>
+        <span className="min-w-0 text-sm leading-6">
+          <Link
+            href={link.url}
+            className="font-semibold text-apt-gold underline-offset-2 hover:underline"
+            data-testid="doc-internal-link"
+          >
+            {link.name}
+          </Link>
+          {note}
+        </span>
+      </li>
+    );
+  }
   return (
     <li className="flex items-start gap-2.5">
       <span className="mt-[3px] inline-flex">
@@ -159,12 +191,7 @@ function LinkRow({ link }: { link: DocLink }) {
         >
           {link.url}
         </a>
-        {link.note ? (
-          <span
-            className="block text-xs text-apt-text-dim"
-            dangerouslySetInnerHTML={{ __html: link.note }}
-          />
-        ) : null}
+        {note}
       </span>
     </li>
   );

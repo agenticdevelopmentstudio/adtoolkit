@@ -571,7 +571,13 @@ function Source({ lead, from }) {
     /* @__PURE__ */ jsx2(Link2, { href: from.href, className: "text-apt-gold underline-offset-2 hover:underline", children: from.name })
   ] });
 }
+function isInternal(url) {
+  return url.startsWith("/") && !url.startsWith("//");
+}
 function LinkIcon({ link }) {
+  if (link.url && isInternal(link.url)) {
+    return /* @__PURE__ */ jsx2(BookOpenText, { className: "size-4 text-apt-gold", strokeWidth: 2.2 });
+  }
   if (link.kind === "github") {
     return /* @__PURE__ */ jsx2("span", { className: "inline-flex size-4 items-center justify-center text-apt-text [&_svg]:size-4", children: /* @__PURE__ */ jsx2(GithubMark, {}) });
   }
@@ -587,6 +593,24 @@ function LinkIcon({ link }) {
 function LinkRow({ link }) {
   if (!link.url) {
     return /* @__PURE__ */ jsx2("li", { children: /* @__PURE__ */ jsx2(Copy, { html: link.note ?? link.name, className: "text-sm" }) });
+  }
+  const note = link.note ? /* @__PURE__ */ jsx2("span", { className: "block text-xs text-apt-text-dim", dangerouslySetInnerHTML: { __html: link.note } }) : null;
+  if (isInternal(link.url)) {
+    return /* @__PURE__ */ jsxs2("li", { className: "flex items-start gap-2.5", children: [
+      /* @__PURE__ */ jsx2("span", { className: "mt-[3px] inline-flex", children: /* @__PURE__ */ jsx2(LinkIcon, { link }) }),
+      /* @__PURE__ */ jsxs2("span", { className: "min-w-0 text-sm leading-6", children: [
+        /* @__PURE__ */ jsx2(
+          Link2,
+          {
+            href: link.url,
+            className: "font-semibold text-apt-gold underline-offset-2 hover:underline",
+            "data-testid": "doc-internal-link",
+            children: link.name
+          }
+        ),
+        note
+      ] })
+    ] });
   }
   return /* @__PURE__ */ jsxs2("li", { className: "flex items-start gap-2.5", children: [
     /* @__PURE__ */ jsx2("span", { className: "mt-[3px] inline-flex", children: /* @__PURE__ */ jsx2(LinkIcon, { link }) }),
@@ -606,13 +630,7 @@ function LinkRow({ link }) {
           children: link.url
         }
       ),
-      link.note ? /* @__PURE__ */ jsx2(
-        "span",
-        {
-          className: "block text-xs text-apt-text-dim",
-          dangerouslySetInnerHTML: { __html: link.note }
-        }
-      ) : null
+      note
     ] })
   ] });
 }
