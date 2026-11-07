@@ -340,6 +340,7 @@ export const dashboardPaths: Paths = {
           object({
             generatedAt: str,
             refreshing: bool,
+            refreshingSources: object({ glitchtip: bool, posthog: bool }),
             configured: object({ glitchtip: bool, posthog: bool, vercel: bool }),
             sections: errorsSections,
             views: ref('ErrorsViews'),

@@ -30,6 +30,7 @@ function errorsDash(refreshing: boolean): ErrorsDashboardResponse {
   return {
     generatedAt: "x",
     refreshing,
+    refreshingSources: { glitchtip: refreshing, posthog: false },
     configured: { glitchtip: false, posthog: false, vercel: false },
     sections,
     views: errorsViews(sections, { posthog: false }),

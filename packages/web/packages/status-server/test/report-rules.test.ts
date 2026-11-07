@@ -175,6 +175,7 @@ function errorsDashboard(over: Partial<ErrorsDashboardResponse["sections"]> = {}
   return {
     generatedAt: "x",
     refreshing: false,
+    refreshingSources: { glitchtip: false, posthog: false },
     configured: { glitchtip: true, posthog: true, vercel: true },
     sections,
     views: errorsViews(sections, { posthog: true }),
@@ -522,7 +523,7 @@ describe("buildReport — rules the server adds", () => {
     const cached = base.sections.issues.data!;
     const cases: Record<string, ErrorsDashboardResponse> = {
       "failed refresh": errorsDashboard({ issues: { data: cached, error: "GlitchTip 500", updatedAt: "2026-11-06T09:00:00Z" } }),
-      "still refreshing": { ...base, refreshing: true },
+      "still refreshing": { ...base, refreshing: true, refreshingSources: { glitchtip: true, posthog: false } },
       "read partway": errorsDashboard({ issues: section({ ...cached, summary: { ...cached.summary, complete: false } }) }),
     };
     for (const [why, data] of Object.entries(cases)) {
@@ -532,6 +533,14 @@ describe("buildReport — rules the server adds", () => {
       expect(report.verdict, why).toBe("degraded");
     }
     expect(glitchtipListCurrent(base)).toBe(true);
+  });
+
+  it("a PostHog refresh leaves the GlitchTip list current, so a crash is counted once", () => {
+    const err = problem({ target: "errors|web", source: "glitchtip", name: "web", environment: null, severity: "major", state: "erroring" });
+    const data = { ...errorsDashboard(), refreshing: true, refreshingSources: { glitchtip: false, posthog: true } };
+    expect(glitchtipListCurrent(data)).toBe(true);
+    const report = build({ monitor: ok({ ...MONITOR, problems: [err] }), errors: ok(data) });
+    expect(report.findings.map((f) => f.source)).not.toContain("monitor:glitchtip");
   });
 
   it("an unreachable provider is one finding at the board's severity, not also its board problem", () => {

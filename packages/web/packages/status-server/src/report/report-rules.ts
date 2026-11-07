@@ -396,13 +396,16 @@ const siteTrouble = (r: SiteHealthRow): number => (r.errors ?? 0) + (r.failures 
 
 /**
  * True only when the GlitchTip issue list can stand in for the board's per-project errors
- * problems: it was read, its last refresh did not fail, no refresh was still running at the
- * deadline, and it was read to the end. A cached list from before a new crash would otherwise
- * hide that crash from every finding.
+ * problems: it was read, its last refresh did not fail, no GlitchTip refresh was still running
+ * at the deadline, and it was read to the end. A cached list from before a new crash would
+ * otherwise hide that crash from every finding. A PostHog refresh says nothing about the list,
+ * so it does not count: a slow PostHog would otherwise put every crash in twice.
  */
 export function glitchtipListCurrent(data: ErrorsDashboardResponse): boolean {
   const { issues } = data.sections;
-  return issues.data !== null && issues.error === null && !data.refreshing && issues.data.summary.complete;
+  return (
+    issues.data !== null && issues.error === null && !data.refreshingSources.glitchtip && issues.data.summary.complete
+  );
 }
 
 export function digestErrors(data: ErrorsDashboardResponse): Digest<ErrorsReportSection> {

@@ -178,6 +178,7 @@ export function createDashboardSet(config: StatusConfig, storage: Storage): Dash
       return {
         generatedAt: new Date(nowMs).toISOString(),
         refreshing: Boolean(gt?.refreshing || sites?.refreshing),
+        refreshingSources: { glitchtip: Boolean(gt?.refreshing), posthog: Boolean(sites?.refreshing) },
         configured: { glitchtip: glitchtipOn, posthog: posthogOn, vercel: vercelOn },
         sections,
         // Runtime is read fresh every request and no view uses it, so it is not an input.

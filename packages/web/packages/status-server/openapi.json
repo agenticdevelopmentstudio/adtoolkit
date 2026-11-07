@@ -7141,6 +7141,7 @@
                   "required": [
                     "generatedAt",
                     "refreshing",
+                    "refreshingSources",
                     "configured",
                     "sections",
                     "views"
@@ -7151,6 +7152,21 @@
                     },
                     "refreshing": {
                       "type": "boolean"
+                    },
+                    "refreshingSources": {
+                      "type": "object",
+                      "required": [
+                        "glitchtip",
+                        "posthog"
+                      ],
+                      "properties": {
+                        "glitchtip": {
+                          "type": "boolean"
+                        },
+                        "posthog": {
+                          "type": "boolean"
+                        }
+                      }
                     },
                     "configured": {
                       "type": "object",

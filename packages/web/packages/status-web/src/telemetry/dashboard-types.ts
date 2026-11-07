@@ -264,6 +264,8 @@ export interface ErrorsSectionData {
 export interface ErrorsDashboardResponse {
   generatedAt: string;
   refreshing: boolean;
+  /** Which source is still refreshing; `refreshing` is either of them. */
+  refreshingSources: { glitchtip: boolean; posthog: boolean };
   configured: { glitchtip: boolean; posthog: boolean; vercel: boolean };
   sections: DashboardSections<ErrorsSectionData>;
   views: ErrorsViews;

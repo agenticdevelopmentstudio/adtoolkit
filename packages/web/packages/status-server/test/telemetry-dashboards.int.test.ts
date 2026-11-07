@@ -63,6 +63,7 @@ describe('dashboard routes, with no provider configured', () => {
     expect(res.headers.get('cache-control')).toBe('no-store');
     const body = await parse(res);
     expect(body.refreshing).toBe(false);
+    expect(body.refreshingSources).toEqual({ glitchtip: false, posthog: false });
     expect(body.configured).toEqual({ glitchtip: false, posthog: false, vercel: false });
     expect(Object.keys(body.sections).sort()).toEqual(['detail', 'issues', 'runtime', 'sites']);
     for (const section of Object.values<Record<string, unknown>>(body.sections)) {
