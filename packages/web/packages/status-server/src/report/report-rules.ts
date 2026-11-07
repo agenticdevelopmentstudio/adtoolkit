@@ -290,7 +290,13 @@ export function digestDeploys(input: DeploysInput, boardProblems: readonly Probl
   if (live.configDegraded) notes.push(`monitor config fell back to the static list: ${live.configReason ?? 'reason unknown'}`);
   for (const [name, health] of Object.entries(live.providers).sort(([a], [b]) => byText(a, b))) {
     if (!health.configured) unconfigured.push(name);
-    else if (!health.ok) findings.push(finding('major', `provider:${name}`, `${name} API unreachable from the monitor`));
+    else if (!health.ok) {
+      // The board grades an unreachable platform (minor: the deploys it watches are not down), and
+      // this finding replaces the board's problem, so it keeps the board's grade rather than
+      // inventing a worse one.
+      const board = boardProblems?.find((p) => parsePlatformHealthTarget(p.target) === name);
+      findings.push(finding(board?.severity ?? 'minor', `provider:${name}`, `${name} API unreachable from the monitor`));
+    }
   }
 
   const latest = newestPerTarget(live.deployments);

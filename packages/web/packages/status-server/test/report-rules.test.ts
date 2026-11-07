@@ -534,11 +534,17 @@ describe("buildReport — rules the server adds", () => {
     expect(glitchtipListCurrent(base)).toBe(true);
   });
 
-  it("an unreachable provider is one major finding, not also its board problem", () => {
+  it("an unreachable provider is one finding at the board's severity, not also its board problem", () => {
     const platform = problem({ target: "platform-health|vercel", source: "vercel", name: "Vercel", environment: null, severity: "minor", state: "unreachable" });
     const live = { ...LIVE, providers: { ...LIVE.providers, vercel: { configured: true, ok: false } } };
     const report = build({ monitor: ok({ ...MONITOR, problems: [platform] }), deploys: ok({ live }) });
-    expect(report.findings).toEqual([{ severity: "major", source: "provider:vercel", title: "vercel API unreachable from the monitor" }]);
+    expect(report.findings).toEqual([{ severity: "minor", source: "provider:vercel", title: "vercel API unreachable from the monitor" }]);
+    expect(report.verdict).toBe("attention");
+
+    // With no board problem to follow (the board unread, or not yet graded) it is minor too.
+    expect(build({ deploys: ok({ live }) }).findings).toEqual([
+      { severity: "minor", source: "provider:vercel", title: "vercel API unreachable from the monitor" },
+    ]);
   });
 
   it("a stale deploy keeps the board's severity: major in production, minor in testing", () => {
